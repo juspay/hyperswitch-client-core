@@ -1,0 +1,8 @@
+[submodule "ios"]
+	path = ios
+	url = git@github.com:juspay/hyperswitch-sdk-ios.git
+	branch = main
+[submodule "android"]
+	path = android
+	url = git@github.com:juspay/hyperswitch-sdk-android.git
+	branch = main

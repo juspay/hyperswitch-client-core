@@ -1,0 +1,59 @@
+diff --git a/node_modules/react-native-svg/src/ReactNativeSVG.web.tsx b/node_modules/react-native-svg/src/ReactNativeSVG.web.tsx
+new file mode 100644
+index 0000000..8ee4d6d
+--- /dev/null
++++ b/node_modules/react-native-svg/src/ReactNativeSVG.web.tsx
+@@ -0,0 +1,53 @@
++import React from 'react';
++import { Float } from 'react-native/Libraries/Types/CodegenTypes';
++
++interface SvgProps {
++  xml: string,
++  uri: string,
++  height: Float,
++  width: Float,
++  fill: string,
++  onLoad: () => void,
++  onError: () => void,
++}
++
++export const SvgCss: React.FC<SvgProps> = ({ xml, height, width, fill, onLoad, onError }) => {
++  if (!xml || xml.trim().slice(-6) != "</svg>") {
++    return <div />;
++  }
++  return <div dangerouslySetInnerHTML={{ __html: xml.replace("<svg", `<svg height="${height}" width="${width}" fill="${fill}"`) }} />;
++};
++
++export const SvgCssUri: React.FC<SvgProps> = ({ uri, height, width, fill, onLoad, onError }) => {
++  const [svg, setSvg] = React.useState<string | null>(null);
++  const [loading, setLoading] = React.useState<boolean>(false);
++
++  React.useEffect(() => {
++    setLoading(true);
++    fetch(uri)
++      .then((res) => res.text())
++      .then((text) => {
++        setLoading(false);
++        if (!text || text.trim().slice(-6) != "</svg>") {
++          onError();
++        } else {
++          setSvg(text.replace("<svg", `<svg height="${height}" width="${width}" fill="${fill}"`));
++          onLoad();
++        }
++      })
++      .catch((err) => {
++        onError();
++      });
++  }, [uri]);
++
++  if (!svg) {
++    return <div />;
++  }
++  return <div dangerouslySetInnerHTML={{ __html: svg }} />;
++};
++
++export class Svg {
++  tag = 'svg';
++}
++
++export default Svg;
