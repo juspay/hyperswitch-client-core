@@ -56,6 +56,7 @@ let make = (
         ~justifyContent=#center,
         (),
       )}>
+      <SafeAreaView />
       {children}
     </View>
     // </TouchableWithoutFeedback>
