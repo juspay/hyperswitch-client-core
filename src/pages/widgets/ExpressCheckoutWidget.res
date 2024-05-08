@@ -45,10 +45,10 @@ let make = () => {
     <View style={viewStyle(~alignItems=#center, ~flexDirection=#row, ())}>
       <Icon name="visa" height=32. width=32. />
       <Space />
-      <Text> {"**** 4242"->React.string} </Text>
+      <TextWrapper textType={PlaceholderText}> {"**** 4242"->React.string} </TextWrapper>
     </View>
     <TouchableOpacity onPress={_ => HyperModule.launchWidgetPaymentSheet("", _ => {()})}>
-      <Text style={textStyle(~color="#8DBD00", ())}> {"Change"->React.string} </Text>
+      <TextWrapper textType={LinkText}> {"Change"->React.string} </TextWrapper>
     </TouchableOpacity>
   </View>
 }

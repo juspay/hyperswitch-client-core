@@ -1,6 +1,3 @@
-open ReactNative
-open Style
-
 @react.component
 let make = (~text=None) => {
   let {errorTextInputColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -8,12 +5,11 @@ let make = (~text=None) => {
 
   switch text {
   | None => React.null
-  | Some(val) => val == ""
+  | Some(val) =>
+    val == ""
       ? React.null
       : <>
-          <Text style={textStyle(~color={errorTextInputColor}, ~fontFamily, ~fontSize=12., ())}>
-            {val->React.string}
-          </Text>
+          <TextWrapper textType={ErrorText}> {val->React.string} </TextWrapper>
         </>
   }
 }

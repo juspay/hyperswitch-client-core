@@ -48,7 +48,6 @@ let make = (
   ~enableShadow=true,
 ) => {
   let {
-    textPrimary,
     placeholderColor,
     bgColor,
     focusedTextInputBoderColor,
@@ -57,6 +56,7 @@ let make = (
     component,
     shadowColor,
     shadowIntensity,
+    placeholderTextSizeAdjust,
   } = ThemebasedStyle.useThemeBasedStyle()
   let shadowOffsetHeight = shadowIntensity
   let elevation = shadowIntensity
@@ -86,25 +86,10 @@ let make = (
     : viewStyle()
   <View style={viewStyle(~width=100.->pct, ())}>
     {heading != ""
-      ? <TextWrapper
-          //          fontFamily=IBMPlexSans_Medium
-          textType=CustomCssText(
-            array([
-              textStyle(~fontStyle=#normal, ~fontSize=12., ~marginBottom=2.5->pct, ()),
-              textPrimary,
-            ]),
-          )>
+      ? <TextWrapper textType={PlaceholderText}>
           {React.string(heading)}
           {mandatory
-            ? <TextWrapper
-                //   fontFamily=IBMPlexSans_Regular
-                textType=CustomCssText(
-                  textStyle(
-                    //  ~fontFamily=FontFamily.getFontFamily(IBMPlexSans_Regular),
-                    ~color={"red"},
-                    (),
-                  ),
-                )>
+            ? <TextWrapper textType={ErrorText}>
                 {" *"->React.string}
               </TextWrapper>
             : React.null}
@@ -150,7 +135,7 @@ let make = (
             ~color=textColor,
             ~fontFamily,
             //    ~fontFamily=FontFamily.getFontFamily(IBMPlexSans_Medium),
-            ~fontSize,
+            ~fontSize={fontSize +. placeholderTextSizeAdjust},
             //  ~lineHeight=1.5,
             ~textAlign?,
             (),
@@ -207,7 +192,7 @@ let make = (
             <TouchableOpacity
               style={viewStyle(~height=100.->pct, ~justifyContent=#center, ~paddingLeft=5.->dp, ())}
               onPress={_ => {setShowPass(prev => !prev)}}>
-              <Text> {"eye"->React.string} </Text>
+              <TextWrapper textType={PlaceholderText}> {"eye"->React.string} </TextWrapper>
             </TouchableOpacity>
           }
         : React.null}

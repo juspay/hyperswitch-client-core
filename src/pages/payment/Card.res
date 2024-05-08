@@ -226,6 +226,26 @@ let make = (
       // <TextWrapper text=localeObject.countryOrRegion textType=Subheading />
       // <Space height=5. />
       // <BillingElement updateBilllingValues={updateBilllingValues} />
+
+      {PaymentUtils.showUseExisitingSavedCardsBtn(
+        ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
+        ~pmList=savedPaymentMethodsData.pmList,
+        ~mandateType=allApiData.mandateType,
+        ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
+      )
+        ? <>
+            <Space height=16. />
+            <ClickableTextElement
+              initialIconName="cardv1"
+              text=localeObject.useExisitingSavedCards
+              isSelected=true
+              setIsSelected={_ => ()}
+              textType={LinkTextBold}
+              fillIcon=true
+            />
+          </>
+        : React.null}
+      <Space />
       // {cardVal.required_field->Array.length != 0
       //   ? <DynamicFields
       //       setIsAllDynamicFieldValid
