@@ -119,6 +119,14 @@ type shapes = {
 type font = {
   family: option<fontFamilyTypes>,
   scale: option<float>,
+  headingTextSizeAdjust:option<float>,
+  subHeadingTextSizeAdjust:option<float>,
+  placeholderTextSizeAdjust:option<float>,
+  buttonTextSizeAdjust:option<float>,
+  errorTextSizeAdjust:option<float>,
+  linkTextSizeAdjust:option<float>,
+  modalTextSizeAdjust:option<float>,
+  cardTextSizeAdjust:option<float>,
 }
 
 type primaryButtonColor = {
@@ -131,7 +139,6 @@ type primaryButtonColorType =
   | PrimaryButtonDefault({light: option<primaryButtonColor>, dark: option<primaryButtonColor>})
 
 type primaryButton = {
-  font: option<font>,
   shapes: option<shapes>,
   primaryButtonColor: option<primaryButtonColorType>,
 }
@@ -272,6 +279,7 @@ type nativeProp = {
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
 }
+
 let deafultAppearance: appearance = {
   locale: None,
   colors: switch ReactNative.Platform.os {
@@ -308,9 +316,16 @@ let deafultAppearance: appearance = {
   font: Some({
     family: None,
     scale: None,
+    headingTextSizeAdjust: None,
+    subHeadingTextSizeAdjust: None,
+    placeholderTextSizeAdjust: None,
+    buttonTextSizeAdjust: None,
+    errorTextSizeAdjust: None,
+    linkTextSizeAdjust: None,
+    modalTextSizeAdjust: None,
+    cardTextSizeAdjust: None,
   }),
   primaryButton: Some({
-    font: None,
     shapes: Some({
       borderRadius: None,
       borderWidth: None,
@@ -382,7 +397,6 @@ let getAppearanceObj = (
 ) => {
   let fontDict = getObj(appearanceDict, keys.font, Dict.make())
   let primaryButtonDict = getObj(appearanceDict, keys.primaryButton, Dict.make())
-  let primaryButtonFontDict = getObj(primaryButtonDict, keys.font, Dict.make())
   let primaryButtonShapesDict = getObj(primaryButtonDict, keys.primaryButton_shapes, Dict.make())
 
   {
@@ -487,15 +501,16 @@ let getAppearanceObj = (
         }->Some
       },
       scale: retOptionalFloat(getProp(keys.scale, fontDict)),
+      headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust,fontDict)),
+      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust,fontDict)),
+      placeholderTextSizeAdjust: retOptionalFloat(getProp(keys.placeholderTextSizeAdjust,fontDict)),
+      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust,fontDict)),
+      errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust,fontDict)),
+      linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust,fontDict)),
+      modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust,fontDict)),
+      cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust,fontDict)),
     }),
     primaryButton: Some({
-      font: Some({
-        family: switch retOptionalStr(getProp(keys.primaryButton_family, primaryButtonFontDict)) {
-        | Some(str) => Some(CustomFont(str))
-        | None => Some(DefaultIOS)
-        },
-        scale: retOptionalFloat(getProp(keys.primaryButton_scale, primaryButtonFontDict)),
-      }),
       shapes: Some({
         borderRadius: retOptionalFloat(
           getProp(keys.primaryButton_borderRadius, primaryButtonShapesDict),

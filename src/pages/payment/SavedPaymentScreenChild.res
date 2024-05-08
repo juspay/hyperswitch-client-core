@@ -47,7 +47,7 @@ let make = (
           text="Add new payment method"
           isSelected=selected
           setIsSelected=isSelected
-          textType={TextWrapper.TextActive}
+          textType={LinkTextBold}
           fillIcon=false
         />
       </View>

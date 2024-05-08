@@ -240,7 +240,7 @@ let make = (
               text=localeObject.useExisitingSavedCards
               isSelected=true
               setIsSelected={_ => ()}
-              textType={TextWrapper.TextActive}
+              textType={LinkTextBold}
               fillIcon=true
             />
           </>
