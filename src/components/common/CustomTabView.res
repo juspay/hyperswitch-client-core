@@ -50,23 +50,11 @@ let make = (
   let dimensions = Dimensions.useWindowDimensions()
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
   let setIndexInFocus = React.useCallback1(ind => setIndexInFocus(_ => ind), [setIndexInFocus])
-  let (heightPosition, _) = React.useState(_ => Animated.Value.create(0.))
+  let (height, setHeight) = React.useState(_ => 0.)
 
   let setDynamicHeight = height => {
-    Animated.timing(
-      heightPosition,
-      Animated.Value.Timing.config(
-        ~toValue={
-          height->Animated.Value.Timing.fromRawValue
-        },
-        ~isInteraction=true,
-        ~useNativeDriver=false,
-        ~delay=0.,
-        ~duration=130.,
-        ~easing=Easing.linear,
-        (),
-      ),
-    )->Animated.start()
+    setHeight(_ => height)
+    ()
   }
 
   let data = React.useMemo1(() => {
@@ -102,12 +90,12 @@ let make = (
       | None => true
       }
 
-  <Animated.View
+  <View
     style={viewStyle(
       ~minHeight=115.->dp,
       ~width=100.->pct,
       ~overflow=#hidden,
-      ~height=heightPosition->Animated.StyleProp.size,
+      ~height=height->dp,
       (),
     )}>
     {switch data->Array.length {
@@ -149,5 +137,5 @@ let make = (
         // pagerStyle={viewStyle(~height={heightPosition->Animated.StyleProp.size}, ())}
       />
     }}
-  </Animated.View>
+  </View>
 }
