@@ -24,6 +24,7 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected) => {
           borderLeftWidth=borderWidth
           borderRightWidth=borderWidth
         />
+        <Space height=5. />
       </>
     : React.null
 }

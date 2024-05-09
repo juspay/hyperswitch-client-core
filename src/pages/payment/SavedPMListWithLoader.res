@@ -61,7 +61,7 @@ let make = (
 
   savedPaymentMethordContextObj == Loading
     ? <LoadingPmList />
-    : <ScrollView style={viewStyle(~minHeight=200.->dp, ())}>
+    : <ScrollView style={viewStyle(~minHeight=0.->dp, ())}>
         {Some(listArr)
         ->Option.getOr([])
         ->Array.mapWithIndex((item, i) => {

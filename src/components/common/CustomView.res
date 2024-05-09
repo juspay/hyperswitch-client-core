@@ -66,25 +66,74 @@ let make = (
 module Wrapper = {
   @react.component
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
-    let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
+  let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
 
-    <ScrollView
-      style={array([
-        viewStyle(
-          ~width,
-          //    ~overflow=#hidden,
-          ~minHeight=250.->dp,
-          ~borderRadius=15.,
-          ~borderBottomLeftRadius=0.,
-          ~borderBottomRightRadius=0.,
-          (),
-        ),
-        bgColor,
-      ])}>
+  let (viewHeight, setViewHeight) = React.useState(_ => 0.)
+  let updateScrollViewHeight = (event: Event.layoutEvent) => {
+    let nativeEvent = Event.LayoutEvent.nativeEvent(event)
+    let vheight =
+      nativeEvent
+      ->JSON.Decode.object
+      ->Option.getOr(Dict.make())
+      ->Dict.get("layout")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.object
+      ->Option.getOr(Dict.make())
+      ->Dict.get("height")
+
+ 
+    switch vheight {
+    | Some(height) => {
+        let height = height->JSON.Decode.float->Option.getOr(0.)
+        setViewHeight(_ => height +. 90.)
+      }
+    | None => ()
+    }
+  }
+
+  let (heightPosition, _) = React.useState(_ => Animated.Value.create(0.))
+  let setAnimation = _ => {
+    Animated.timing(
+      heightPosition,
+      Animated.Value.Timing.config(
+        ~toValue={
+          viewHeight->Animated.Value.Timing.fromRawValue
+        },
+        ~isInteraction=true,
+        ~useNativeDriver=false,
+        ~delay=0.,
+        ~duration=150.,
+        ~easing=Easing.linear,
+        (),
+      )
+    )->Animated.start()
+  }
+
+  React.useEffect(() => {
+    setAnimation()
+    None
+  }, [viewHeight])
+
+  <Animated.ScrollView
+    style={array([
+      viewStyle(
+        ~height=heightPosition->Animated.StyleProp.size,
+        ~width,
+        //    ~overflow=#hidden,
+        ~minHeight=250.->dp,
+        ~borderRadius=15.,
+        ~borderBottomLeftRadius=0.,
+        ~borderBottomRightRadius=0.,
+        (),
+      ),
+      bgColor,
+    ])}>
       <ModalHeader onModalClose />
-      {children}
+      <View onLayout=updateScrollViewHeight>
+        {children}
+      </View>
       <Space height={Platform.os == #ios ? 48. : 24.} />
       <LoadingOverlay />
-    </ScrollView>
+  </Animated.ScrollView>
   }
 }
