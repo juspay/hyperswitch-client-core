@@ -53,7 +53,7 @@ let make = (
   )> => [])
   // let (isAllBillingValuesValid, setIsAllBillingValuesValid) = React.useState(_ => false)
   let (isConfirmButtonValid, setIsConfirmButtonValid) = React.useState(_ => false)
-  let (error, setError) = React.useState(_ => "")
+  let (error, setError) = React.useState(_ => None)
 
   React.useEffect2(
     () => {
@@ -84,7 +84,7 @@ let make = (
       if !closeSDK {
         setLoading(FillingDetails)
         switch errorMessage.message {
-        | Some(message) => setError(_ => message)
+        | Some(message) => setError(_ => Some(message))
         | None => ()
         }
       }
@@ -136,16 +136,16 @@ let make = (
     processRequest(cardVal)
   }
 
-  React.useEffect2(() => {
+  React.useEffect3(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false isAllValuesValid=isConfirmButtonValid handlePress paymentMethod="CARD"
+          loading=false isAllValuesValid=isConfirmButtonValid handlePress paymentMethod="CARD" errorText=error
         />,
       )
     }
     None
-  }, (isConfirmButtonValid, isScreenFocus))
+  }, (isConfirmButtonValid, isScreenFocus,error))
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
     <View>
@@ -194,7 +194,7 @@ let make = (
         // switch customer.id {
         // | Some(_) =>
         <>
-          <Space height=16. />
+          <Space height=8. />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
@@ -226,26 +226,6 @@ let make = (
       // <TextWrapper text=localeObject.countryOrRegion textType=Subheading />
       // <Space height=5. />
       // <BillingElement updateBilllingValues={updateBilllingValues} />
-
-      {PaymentUtils.showUseExisitingSavedCardsBtn(
-        ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
-        ~pmList=savedPaymentMethodsData.pmList,
-        ~mandateType=allApiData.mandateType,
-        ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
-      )
-        ? <>
-            <Space height=16. />
-            <ClickableTextElement
-              initialIconName="cardv1"
-              text=localeObject.useExisitingSavedCards
-              isSelected=true
-              setIsSelected={_ => ()}
-              textType={TextWrapper.TextActive}
-              fillIcon=true
-            />
-          </>
-        : React.null}
-      <Space />
       // {cardVal.required_field->Array.length != 0
       //   ? <DynamicFields
       //       setIsAllDynamicFieldValid
@@ -258,6 +238,6 @@ let make = (
       //     />
       //   : React.null}
     </View>
-    <ErrorText text=error />
+
   </View>
 }

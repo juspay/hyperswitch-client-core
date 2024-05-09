@@ -8,7 +8,7 @@ let make = (
   // let savedMandates = AllPaymentHooks.useGetSavedMandatesHook()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
-  let (error, setError) = React.useState(_ => "")
+  let (error, setError) = React.useState(_ => None)
   let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let useRedirectHook = AllPaymentHooks.useRedirectHook()
@@ -40,7 +40,7 @@ let make = (
       if !closeSDK {
         setLoading(FillingDetails)
         switch errorMessage.message {
-        | Some(message) => setError(_ => message)
+        | Some(message) => setError(_ => Some(message))
         | None => ()
         }
       }
@@ -122,7 +122,7 @@ let make = (
   //   None
   // }, [savedPaymentMethodsData])
 
-  React.useEffect4(() => {
+  React.useEffect5(() => {
     let selectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
       walletName: NONE,
       token: Some(""),
@@ -140,6 +140,7 @@ let make = (
         handlePress
         hasSomeFields=false
         paymentMethod
+        errorText=error
       />,
     )
     None
@@ -148,6 +149,7 @@ let make = (
     allApiData,
     isAllDynamicFieldValid,
     dynamicFieldsJson,
+    error
   ))
 
   // React.useEffect1(() => {
@@ -177,7 +179,6 @@ let make = (
     <Space />
     <SavedPaymentScreenChild
       savedPaymentMethodsData={savedPaymentMethordContextObj.pmList->Option.getOr([])}
-      error
       setIsAllDynamicFieldValid
       setDynamicFieldsJson
     />

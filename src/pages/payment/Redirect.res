@@ -137,7 +137,7 @@ let make = (
     setSelectedBank(val)
   }
 
-  let (error, setError) = React.useState(_ => "")
+  let (error, setError) = React.useState(_ => None)
 
   let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let useRedirectHook = AllPaymentHooks.useRedirectHook()
@@ -161,7 +161,7 @@ let make = (
     if !closeSDK {
       setLoading(FillingDetails)
       switch errorMessage.message {
-      | Some(message) => setError(_ => message)
+      | Some(message) => setError(_ => Some(message))
       | None => ()
       }
     }
@@ -390,8 +390,8 @@ let make = (
       )
     | "User has canceled" =>
       setLoading(FillingDetails)
-      setError(_ => "Payment was Cancelled")
-    | err => setError(_ => err)
+      setError(_ => Some("Payment was Cancelled"))
+    | err => setError(_ => Some(err))
     }
   }
 
@@ -427,10 +427,10 @@ let make = (
       )
     | "Cancel" =>
       setLoading(FillingDetails)
-      setError(_ => "Payment was Cancelled")
+      setError(_ => Some("Payment was Cancelled"))
     | err =>
       setLoading(FillingDetails)
-      setError(_ => err)
+      setError(_ => Some(err))
     }
   }
 
@@ -442,13 +442,13 @@ let make = (
     ->Option.getOr("") {
     | "Cancelled" =>
       setLoading(FillingDetails)
-      setError(_ => "Cancelled")
+      setError(_ => Some("Cancelled"))
     | "Failed" =>
       setLoading(FillingDetails)
-      setError(_ => "Failed")
+      setError(_ =>Some( "Failed"))
     | "Error" =>
       setLoading(FillingDetails)
-      setError(_ => "Error")
+      setError(_ => Some("Error"))
     | _ =>
       let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
 
@@ -459,7 +459,7 @@ let make = (
 
       if transaction_identifier->JSON.stringify == "Simulated Identifier" {
         setLoading(FillingDetails)
-        setError(_ => "Apple Pay is not supported in Simulated Environment")
+        setError(_ => Some("Apple Pay is not supported in Simulated Environment"))
       } else {
         let paymentData =
           [
@@ -608,7 +608,7 @@ let make = (
             sessionObject.payment_request_data == JSON.Encode.null
         ) {
           setLoading(FillingDetails)
-          setError(_ => "Waiting for Sessions API")
+          setError(_ => Some("Waiting for Sessions API"))
         } else {
           HyperModule.launchApplePay(
             [
@@ -688,16 +688,16 @@ let make = (
     )) || (fields.name == "klarna" && isKlarna)
   }, (isEmailValid, isNameValid, sessionData))
 
-  React.useEffect5(() => {
+  React.useEffect6(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false isAllValuesValid handlePress hasSomeFields paymentMethod ?paymentExperience
+          loading=false isAllValuesValid handlePress hasSomeFields paymentMethod ?paymentExperience errorText=error
         />,
       )
     }
     None
-  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus))
+  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus,error))
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
@@ -796,11 +796,10 @@ let make = (
               </View>
             )
             ->React.array}
-            <ErrorText text=error />
             <Space />
             <RedirectionText />
           </>}
     </ErrorBoundary>
-    <Space height=18. />
+    <Space height=5. />
   </View>
 }
