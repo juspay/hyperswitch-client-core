@@ -1,15 +1,14 @@
 @react.component
-let make = (~text=None) => {
-  let {errorTextInputColor} = ThemebasedStyle.useThemeBasedStyle()
-  let fontFamily = FontFamily.useCustomFontFamily()
-
+let make = (~text) => {
   switch text {
   | None => React.null
   | Some(val) =>
     val == ""
       ? React.null
       : <>
+          <Space height=4. />
           <TextWrapper textType={ErrorText}> {val->React.string} </TextWrapper>
+          <Space />
         </>
   }
 }
