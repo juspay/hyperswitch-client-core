@@ -41,7 +41,7 @@ let make = (~setConfirmButtonDataRef) => {
               text=localeObject.useExisitingSavedCards
               isSelected=true
               setIsSelected={_ => ()}
-              textType={TextWrapper.TextActive}
+              textType={TextWrapper.LinkText}
               fillIcon=true
             />
             <Space height=25. />

@@ -445,7 +445,7 @@ let make = (
       setError(_ => Some("Cancelled"))
     | "Failed" =>
       setLoading(FillingDetails)
-      setError(_ =>Some( "Failed"))
+      setError(_ => Some("Failed"))
     | "Error" =>
       setLoading(FillingDetails)
       setError(_ => Some("Error"))
@@ -692,12 +692,18 @@ let make = (
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false isAllValuesValid handlePress hasSomeFields paymentMethod ?paymentExperience errorText=error
+          loading=false
+          isAllValuesValid
+          handlePress
+          hasSomeFields
+          paymentMethod
+          ?paymentExperience
+          errorText=error
         />,
       )
     }
     None
-  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus,error))
+  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus, error))
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />

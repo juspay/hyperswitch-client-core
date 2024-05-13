@@ -2,11 +2,7 @@ open ReactNative
 open ReactNative.Style
 
 @react.component
-let make = (
-  ~savedPaymentMethodsData,
-  ~setIsAllDynamicFieldValid,
-  ~setDynamicFieldsJson,
-) => {
+let make = (~savedPaymentMethodsData, ~setIsAllDynamicFieldValid, ~setDynamicFieldsJson) => {
   let {borderRadius, component, shadowColor, shadowIntensity} = ThemebasedStyle.useThemeBasedStyle()
   let (selected, isSelected) = React.useState(_ => true)
   let shadowOffsetHeight = shadowIntensity
@@ -50,7 +46,7 @@ let make = (
           fillIcon=false
         />
       </View>
-      <Space height=25./>
+      <Space height=25. />
     </View>
   </View>
 }
