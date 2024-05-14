@@ -428,6 +428,7 @@ let useRedirectHook = () => {
       switch nextAction->ThreeDsUtils.getActionType {
       | "three_ds_invoke" =>
         handleNetcetera(
+          ~baseUrl,
           ~netceteraSDKApiKey,
           ~clientSecret,
           ~publishableKey,

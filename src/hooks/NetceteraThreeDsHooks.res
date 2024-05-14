@@ -2,6 +2,7 @@ open ExternalThreeDsTypes
 open ThreeDsUtils
 
 let shortPollexternalThreeDsAuthStatus = (
+  ~baseUrl,
   ~pollConfig: PaymentConfirmTypes.pollConfig,
   ~publishableKey,
   ~onSuccess,
@@ -20,7 +21,7 @@ let shortPollexternalThreeDsAuthStatus = (
       }
     }
 
-    let uri = `https://sandbox.hyperswitch.io/poll/status/${pollConfig.pollId}`
+    let uri = `${baseUrl}/poll/status/${pollConfig.pollId}`
     let headers = getAuthCallHeaders(publishableKey)
     fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
     ->Promise.then(data => {
@@ -191,7 +192,15 @@ let handleNetcetera3DS = (
 }
 
 let useNetceteraThreeDsHook = (~retrievePayment) => {
-  (~netceteraSDKApiKey, ~clientSecret, ~publishableKey, ~nextAction, ~onSuccess, ~onFailure) => {
+  (
+    ~baseUrl,
+    ~netceteraSDKApiKey,
+    ~clientSecret,
+    ~publishableKey,
+    ~nextAction,
+    ~onSuccess,
+    ~onFailure,
+  ) => {
     let retriveAndShowStatus = () => {
       retrievePayment(Types.Payment, clientSecret, publishableKey)
       ->Promise.then(res => {
@@ -212,6 +221,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
 
     let shortPollStatusAndRetrieve = (~pollConfig, ~publishableKey) => {
       shortPollexternalThreeDsAuthStatus(
+        ~baseUrl,
         ~pollConfig,
         ~publishableKey,
         ~onSuccess=retriveAndShowStatus,
