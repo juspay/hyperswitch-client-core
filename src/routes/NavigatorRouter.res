@@ -11,8 +11,8 @@ let make = () => {
   let (_, setSessionData) = React.useContext(SessionContext.sessionContext)
   let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
-  let error = ErrorUtils.useErrorWarningValidationOnLoad()
-  let errorOnApiCalls = ErrorUtils.useShowErrorOrWarning()
+  let error = ErrorHooks.useErrorWarningValidationOnLoad()
+  let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
   let logger = LoggerHook.useLoggerHook()
 
   React.useEffect1(() => {
