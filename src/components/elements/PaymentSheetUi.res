@@ -242,7 +242,7 @@ let make = (
       </View>
     </View>
     {!isCardNumberValid || !isExpireDateValid || !isCvvValid
-      ? <ErrorText text=localeObject.inValidCardErrorText />
+      ? <ErrorText text=Some(localeObject.inValidCardErrorText) />
       : React.null}
   </ErrorBoundary>
 }

@@ -4,7 +4,6 @@ open ReactNative.Style
 @react.component
 let make = (
   ~savedPaymentMethodsData,
-  ~error,
   ~setIsAllDynamicFieldValid,
   ~setDynamicFieldsJson,
 ) => {
@@ -51,8 +50,7 @@ let make = (
           fillIcon=false
         />
       </View>
-      <Space />
+      <Space height=25./>
     </View>
-    <ErrorText text=error />
   </View>
 }
