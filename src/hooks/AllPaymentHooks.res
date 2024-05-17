@@ -433,15 +433,15 @@ let useRedirectHook = () => {
           ~clientSecret,
           ~publishableKey,
           ~nextAction,
-          ~onSuccess=() => {
+          ~onSuccess=message => {
             responseCallback(
               ~paymentStatus=PaymentSuccess,
-              ~status={status: "challenge successful", message: "", code: "", type_: ""},
+              ~status={status: "", message, code: "", type_: ""},
             )
           },
-          ~onFailure=() => {
+          ~onFailure=message => {
             errorCallback(
-              ~errorMessage={status: "challenge failed", message: "", type_: "", code: ""},
+              ~errorMessage={status: "", message, type_: "", code: ""},
               ~closeSDK={true},
               (),
             )
