@@ -425,6 +425,7 @@ let useRedirectHook = () => {
 
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
+
       switch nextAction->ThreeDsUtils.getActionType {
       | "three_ds_invoke" =>
         handleNetcetera(
@@ -436,12 +437,12 @@ let useRedirectHook = () => {
           ~onSuccess=message => {
             responseCallback(
               ~paymentStatus=PaymentSuccess,
-              ~status={status: "", message, code: "", type_: ""},
+              ~status={status: "succeeded", message, code: "", type_: ""},
             )
           },
           ~onFailure=message => {
             errorCallback(
-              ~errorMessage={status: "", message, type_: "", code: ""},
+              ~errorMessage={status: "failed", message, type_: "", code: ""},
               ~closeSDK={true},
               (),
             )
