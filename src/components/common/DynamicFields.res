@@ -2,6 +2,19 @@ open ReactNative
 open Style
 
 module RenderField = {
+  let getValueForKey = (finalJson, key) => {
+    finalJson
+    ->Array.filterMap(((currKey, value, _)) => {
+      if key === currKey {
+        Some(value)
+      } else {
+        None
+      }
+    })
+    ->Array.get(0)
+    ->Option.getOr(JSON.Encode.null)
+  }
+
   @react.component
   let make = (
     ~required_fields_type: RequiredFieldsTypes.required_fields_type,
@@ -9,16 +22,28 @@ module RenderField = {
     ~isSaveCardsFlow,
     ~statesJson: option<JSON.t>,
     ~country,
-    ~finalJson: array<(RequiredFieldsTypes.requiredField, Core__JSON.t, bool)>,
+    ~finalJson: array<(string, JSON.t, bool)>,
   ) => {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
 
-    let (_, value, _) =
-      finalJson
-      ->Array.find(((key, _, _)) => {
-        required_fields_type.required_field === key
-      })
-      ->Option.getOr((StringField(""), JSON.Encode.null, false))
+    let value = switch required_fields_type.required_field {
+    | StringField(x) => finalJson->getValueForKey(x)
+
+    | FullNameField(firstName, lastName) =>
+      let firstNameValue = finalJson->getValueForKey(firstName)
+      let lastNameValue = finalJson->getValueForKey(lastName)
+
+      switch (firstNameValue, lastNameValue) {
+      | (String(firstName), String(lastName)) =>
+        if firstName === "" && lastName === "" {
+          JSON.Encode.null
+        } else {
+          JSON.Encode.string([firstName, lastName]->Array.join(" "))
+        }
+
+      | _ => JSON.Encode.null
+      }
+    }
 
     let initialValue = switch value->JSON.Decode.string->Option.getOr("") {
     | "" => None
@@ -32,31 +57,69 @@ module RenderField = {
     }, (required_fields_type, isSaveCardsFlow))
 
     let (isValid, setIsValid) = React.useState(_ => None)
+
     let (isFocus, setisFocus) = React.useState(_ => false)
     React.useEffect1(() => {
       switch val {
       | Some(text) => {
-          let tempValid = RequiredFieldsTypes.checkIsValid(
-            ~text,
-            ~field_type=required_fields_type.field_type,
+          let requiredFieldPath = RequiredFieldsTypes.getRequiredFieldPath(
+            ~isSaveCardsFlow,
+            ~requiredField={required_fields_type},
           )
-          setIsValid(_ => tempValid)
-          setFinalJson(prev => {
-            prev->Array.map(
-              item => {
-                let requiredFieldPath = RequiredFieldsTypes.getRequiredFieldPath(
-                  ~isSaveCardsFlow,
-                  ~requiredField={required_fields_type},
-                )
-                let (key, _, _) = item
-                if key == requiredFieldPath {
-                  (key, text->JSON.Encode.string, tempValid->Option.getOr(false))
-                } else {
-                  item
-                }
-              },
+
+          switch requiredFieldPath {
+          | StringField(stringFieldPath) =>
+            let tempValid = RequiredFieldsTypes.checkIsValid(
+              ~text,
+              ~field_type=required_fields_type.field_type,
             )
-          })
+
+            setIsValid(_ => tempValid)
+            setFinalJson(prev => {
+              prev->Array.map(
+                item => {
+                  let (key, _, _) = item
+
+                  if key == stringFieldPath {
+                    (key, text->JSON.Encode.string, tempValid->Option.getOr(false))
+                  } else {
+                    item
+                  }
+                },
+              )
+            })
+          | FullNameField(firstNameFieldPath, lastNameFieldPath) =>
+            let arr = text->String.split(" ")
+
+            let firstNameVal = arr->Array.get(0)->Option.getOr("")
+            let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
+
+            let (firstNameVal, isFirstNameValid) =
+              firstNameVal === ""
+                ? (JSON.Encode.null, false)
+                : (JSON.Encode.string(firstNameVal), true)
+            let (lastNameVal, isLastNameValid) =
+              lastNameVal === ""
+                ? (JSON.Encode.null, false)
+                : (JSON.Encode.string(lastNameVal), true)
+
+            setIsValid(_ => Some(isFirstNameValid && isLastNameValid))
+            setFinalJson(prev => {
+              prev->Array.map(
+                item => {
+                  let (key, _, _) = item
+
+                  if key === firstNameFieldPath {
+                    (key, firstNameVal, isFirstNameValid)
+                  } else if key === lastNameFieldPath {
+                    (key, lastNameVal, isLastNameValid)
+                  } else {
+                    item
+                  }
+                },
+              )
+            })
+          }
         }
       | None => ()
       }
@@ -213,7 +276,7 @@ let make = (
     let countryVal =
       finalJson
       ->Array.find(((path, _, _)) => {
-        path->RequiredFieldsTypes.getRequiredFieldName->String.includes("country")
+        path->String.includes("country")
       })
       ->Option.flatMap(((_, value, _)) => Some(value))
       ->Option.flatMap(JSON.Decode.string)
@@ -227,13 +290,7 @@ let make = (
     })
     setIsAllDynamicFieldValid(_ => temp)
 
-    let modifiedFinalJson = finalJson->Array.map(tuple => {
-      let (a, b, c) = tuple
-
-      (a->RequiredFieldsTypes.getRequiredFieldName, b, c)
-    })
-
-    setDynamicFieldsJson(_ => modifiedFinalJson)
+    setDynamicFieldsJson(_ => finalJson)
     None
   }, [finalJson])
 
