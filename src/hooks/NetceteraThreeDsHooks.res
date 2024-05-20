@@ -9,6 +9,8 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     ~clientSecret,
     ~publishableKey,
     ~nextAction,
+    ~threeDSMessageVersion,
+    ~sdkEnvironment: GlobalVars.envType,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {
@@ -212,24 +214,31 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
       ~clientSecret: string,
       ~publishableKey: string,
       ~threeDsData: PaymentConfirmTypes.threeDsData,
+      ~threeDSMessageVersion: string,
+      ~sdkEnvironment: GlobalVars.envType,
       ~onSuccess: string => unit,
       ~onFailure: string => unit,
     ) => {
       try {
-        Netcetera3dsModule.initialiseNetceteraSDK(netceteraSDKApiKey, status => {
-          Netcetera3dsModule.generateAReqParams((aReqParams, status) => {
-            status->isStatusSuccess
-              ? hsThreeDsAuthCall(
-                  clientSecret,
-                  publishableKey,
-                  aReqParams,
-                  threeDsData,
-                  onSuccess,
-                  onFailure,
-                )->ignore
-              : onFailure(threeDsSDKGetAReqStatus.errorMsg)
-          })
-        })
+        Netcetera3dsModule.initialiseNetceteraSDK(
+          netceteraSDKApiKey,
+          sdkEnvironment->sdkEnvironmentToStrMapper,
+          threeDSMessageVersion,
+          status => {
+            Netcetera3dsModule.generateAReqParams((aReqParams, status) => {
+              status->isStatusSuccess
+                ? hsThreeDsAuthCall(
+                    clientSecret,
+                    publishableKey,
+                    aReqParams,
+                    threeDsData,
+                    onSuccess,
+                    onFailure,
+                  )->ignore
+                : onFailure(threeDsSDKGetAReqStatus.errorMsg)
+            })
+          },
+        )
       } catch {
       | err => onFailure("")
       }
@@ -266,6 +275,8 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         ~clientSecret,
         ~publishableKey,
         ~threeDsData,
+        ~threeDSMessageVersion,
+        ~sdkEnvironment,
         ~onSuccess=onChallengeCompletionCallback,
         ~onFailure,
       )->ignore

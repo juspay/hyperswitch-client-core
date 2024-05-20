@@ -423,7 +423,13 @@ let useRedirectHook = () => {
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
-    let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
+    let handleApiRes = (
+      ~status,
+      ~reUri,
+      ~error: error,
+      ~nextAction: option<nextAction>=?,
+      ~threeDSMessageVersion: option<string>=?,
+    ) => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
 
       switch nextAction->ThreeDsUtils.getActionType {
@@ -434,6 +440,8 @@ let useRedirectHook = () => {
           ~clientSecret,
           ~publishableKey,
           ~nextAction,
+          ~threeDSMessageVersion=threeDSMessageVersion->Option.getOr(""),
+          ~sdkEnvironment=nativeProp.env,
           ~onSuccess=message => {
             responseCallback(
               ~paymentStatus=PaymentSuccess,
@@ -664,11 +672,20 @@ let useRedirectHook = () => {
           }
         })
         ->Promise.then(jsonResponse => {
-          let {nextAction, status, error} = itemToObjMapper(
-            jsonResponse->JSON.Decode.object->Option.getOr(Dict.make()),
+          let confirmResponse = jsonResponse->JSON.Decode.object->Option.getOr(Dict.make())
+          let {nextAction, status, error} = itemToObjMapper(confirmResponse)
+          let threeDSMessageVersion = ThreeDsUtils.getMessageVersionFromConfirmResponse(
+            confirmResponse,
           )
 
-          handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
+          handleApiRes(
+            ~status,
+            ~reUri=nextAction.redirectToUrl,
+            ~error,
+            ~nextAction,
+            ~threeDSMessageVersion,
+          )
+
           Promise.resolve()
         })
         ->Promise.catch(err => {

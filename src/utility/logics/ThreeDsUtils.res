@@ -79,3 +79,21 @@ let getAuthCallHeaders = publishableKey => {
 let isStatusSuccess = (status: statusType) => {
   status.status === "success"
 }
+
+let getMessageVersionFromConfirmResponse = dict => {
+  let externalAuthDict =
+    Dict.get(dict, "external_authentication_details")
+    ->Option.getOr(JSON.Encode.null)
+    ->JSON.Decode.object
+    ->Option.getOr(Dict.make())
+
+  Utils.getString(externalAuthDict, "version", "")
+}
+
+let sdkEnvironmentToStrMapper = (env: GlobalVars.envType) => {
+  switch env {
+  | GlobalVars.SANDBOX => "SANDBOX"
+  | GlobalVars.PROD => "PROD"
+  | GlobalVars.INTEG => "INTEG"
+  }
+}
