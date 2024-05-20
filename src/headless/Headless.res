@@ -26,8 +26,7 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
   }
   if Next.getNextEnv != "next" {
     let data = logFile->LoggerHook.logFileToObj->JSON.stringify
-    let fetchApi = CommonHooks.useApiFetcher()
-    fetchApi(~uri, ~method_=Post, ~bodyStr=data, ~headers=Dict.make(), ~mode=NoCORS, ())
+    CommonHooks.fetchApi(~uri, ~method_=Post, ~bodyStr=data, ~headers=Dict.make(), ~mode=NoCORS, ())
     ->Promise.then(res => res->Fetch.Response.json)
     ->Promise.catch(_ => {
       Promise.resolve(JSON.Encode.null)
@@ -105,7 +104,6 @@ let logWrapper = (
 }
 
 let savedPaymentMethodAPICall = (publishableKey, clientSecret, appId, env, customLogUrl) => {
-  let fetchApi = CommonHooks.useApiFetcher()
   let paymentId = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
 
   let uri = `https://sandbox.hyperswitch.io/customers/payment_methods?client_secret=${clientSecret}`
@@ -128,7 +126,7 @@ let savedPaymentMethodAPICall = (publishableKey, clientSecret, appId, env, custo
     ~latency=0.,
     (),
   )
-  fetchApi(~uri, ~method_=Get, ~headers=Utils.getHeader(publishableKey, appId), ())
+  CommonHooks.fetchApi(~uri, ~method_=Get, ~headers=Utils.getHeader(publishableKey, appId), ())
   ->Promise.then(data => {
     let respTimestamp = Date.now()
     let statusCode = data->Fetch.Response.status->string_of_int
@@ -239,9 +237,7 @@ let confirmAPICall = (publishableKey, clientSecret, body, appId, env, customLogU
     (),
   )
 
-  let fetchApi = CommonHooks.useApiFetcher()
-
-  fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
+  CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
   ->Promise.then(data => {
     let respTimestamp = Date.now()
     let statusCode = data->Fetch.Response.status->string_of_int

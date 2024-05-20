@@ -5,11 +5,11 @@ open Style
 let make = (~children) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
 
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let onModalClose = () => {
     setLoading(PaymentCancelled)
     setTimeout(() => {
-      useHandleSuccessFailure(
+      handleSuccessFailure(
         ~apiResStatus=PaymentConfirmTypes.defaultCancelError,
         ~closeSDK=true,
         ~reset=false,

@@ -3,7 +3,7 @@ open Style
 
 @react.component
 let make = () => {
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
   React.useEffect0(() => {
     let nee = NativeEventEmitter.make(
@@ -12,7 +12,7 @@ let make = () => {
     let event = NativeEventEmitter.addListener(nee, "confirmEC", var => {
       let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
       Console.log(responseFromJava)
-      useHandleSuccessFailure(
+      handleSuccessFailure(
         ~apiResStatus={
           message: "",
           code: "",
