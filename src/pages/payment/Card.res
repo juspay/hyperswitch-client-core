@@ -136,16 +136,20 @@ let make = (
     processRequest(cardVal)
   }
 
-  React.useEffect3(() => {
+  React.useEffect5(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false isAllValuesValid=isConfirmButtonValid handlePress paymentMethod="CARD" errorText=error
+          loading=false
+          isAllValuesValid=isConfirmButtonValid
+          handlePress
+          paymentMethod="CARD"
+          errorText=error
         />,
       )
     }
     None
-  }, (isConfirmButtonValid, isScreenFocus,error))
+  }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname))
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
     <View>
@@ -238,6 +242,5 @@ let make = (
       //     />
       //   : React.null}
     </View>
-
   </View>
 }
