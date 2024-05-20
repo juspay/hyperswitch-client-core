@@ -9,16 +9,16 @@ module RenderField = {
     ~isSaveCardsFlow,
     ~statesJson: option<JSON.t>,
     ~country,
-    ~finalJson: array<(string, JSON.t, bool)>,
+    ~finalJson: array<(RequiredFieldsTypes.requiredField, Core__JSON.t, bool)>,
   ) => {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
 
     let (_, value, _) =
       finalJson
       ->Array.find(((key, _, _)) => {
-        key === required_fields_type.required_field
+        required_fields_type.required_field === key
       })
-      ->Option.getOr(("", JSON.Encode.null, false))
+      ->Option.getOr((StringField(""), JSON.Encode.null, false))
 
     let initialValue = switch value->JSON.Decode.string->Option.getOr("") {
     | "" => None
@@ -151,6 +151,36 @@ module RenderField = {
     </>
   }
 }
+
+module Fields = {
+  @react.component
+  let make = (
+    ~fields: array<RequiredFieldsTypes.required_fields_type>,
+    ~setFinalJson,
+    ~isSaveCardsFlow,
+    ~statesJson,
+    ~country,
+    ~finalJson,
+  ) => {
+    fields
+    ->Array.mapWithIndex((item, index) =>
+      <React.Fragment key={index->Int.toString}>
+        {index == 0 ? React.null : <Space height=18. />}
+        <RenderField
+          required_fields_type=item
+          setFinalJson
+          key={index->Int.toString}
+          isSaveCardsFlow
+          statesJson
+          country
+          finalJson
+        />
+      </React.Fragment>
+    )
+    ->React.array
+  }
+}
+
 @react.component
 let make = (
   ~requiredFields: RequiredFieldsTypes.required_fields,
@@ -183,7 +213,7 @@ let make = (
     let countryVal =
       finalJson
       ->Array.find(((path, _, _)) => {
-        path->String.includes("country")
+        path->RequiredFieldsTypes.getRequiredFieldName->String.includes("country")
       })
       ->Option.flatMap(((_, value, _)) => Some(value))
       ->Option.flatMap(JSON.Decode.string)
@@ -196,7 +226,14 @@ let make = (
       accumulator && key
     })
     setIsAllDynamicFieldValid(_ => temp)
-    setDynamicFieldsJson(_ => finalJson)
+
+    let modifiedFinalJson = finalJson->Array.map(tuple => {
+      let (a, b, c) = tuple
+
+      (a->RequiredFieldsTypes.getRequiredFieldName, b, c)
+    })
+
+    setDynamicFieldsJson(_ => modifiedFinalJson)
     None
   }, [finalJson])
 
@@ -221,69 +258,51 @@ let make = (
     None
   })
 
-  let (
-    requiredFieldsOutsideBilling,
-    requiredFieldsInsideBilling,
-  ) = filteredRequiredFieldsFromRendering->Array.reduce(([], []), (
-    (outsideBilling, insideBilling),
-    item,
-  ) => {
-    let isBillingAvailable =
+  let requiredFieldsOutsideBilling = []
+  let requiredFieldsInsideBilling = []
+  filteredRequiredFieldsFromRendering->Array.forEach(item => {
+    let isBillingSectionField =
       item.required_field
+      ->RequiredFieldsTypes.getRequiredFieldName
       ->String.split(".")
-      ->Array.get(0)
-      ->Option.getOr("") == "billing"
-    let _ = isBillingAvailable ? insideBilling->Array.push(item) : outsideBilling->Array.push(item)
-    (outsideBilling, insideBilling)
+      ->Array.includes("billing")
+
+    if isBillingSectionField {
+      requiredFieldsInsideBilling->Array.push(item)
+    } else {
+      requiredFieldsOutsideBilling->Array.push(item)
+    }
   })
 
-  {
-    filteredRequiredFieldsFromRendering->Array.length > 0
-      ? <View style={viewStyle()}>
-          {requiredFieldsOutsideBilling->Array.length > 0
-            ? <>
-                {requiredFieldsOutsideBilling
-                ->Array.mapWithIndex((item: RequiredFieldsTypes.required_fields_type, index) =>
-                  <React.Fragment key={index->Int.toString}>
-                    {index == 0 ? React.null : <Space height=18. />}
-                    <RenderField
-                      required_fields_type=item
-                      setFinalJson
-                      key={index->Int.toString}
-                      isSaveCardsFlow
-                      statesJson
-                      country
-                      finalJson
-                    />
-                  </React.Fragment>
-                )
-                ->React.array}
-              </>
-            : React.null}
-          {requiredFieldsInsideBilling->Array.length > 0
-            ? <>
-                <Space height=24. />
-                <TextWrapper text=localeObject.billingDetails textType={SubheadingBold} />
-                <Space height=8. />
-                {requiredFieldsInsideBilling
-                ->Array.mapWithIndex((item: RequiredFieldsTypes.required_fields_type, index) =>
-                  <React.Fragment key={index->Int.toString}>
-                    {index == 0 ? React.null : <Space height=18. />}
-                    <RenderField
-                      required_fields_type=item
-                      setFinalJson
-                      key={index->Int.toString}
-                      isSaveCardsFlow
-                      statesJson
-                      country
-                      finalJson
-                    />
-                  </React.Fragment>
-                )
-                ->React.array}
-              </>
-            : React.null}
-        </View>
-      : React.null
+  if filteredRequiredFieldsFromRendering->Array.length > 0 {
+    <View style={viewStyle()}>
+      <Fields
+        fields=requiredFieldsOutsideBilling
+        setFinalJson
+        isSaveCardsFlow
+        statesJson
+        country
+        finalJson
+      />
+      {if requiredFieldsInsideBilling->Array.length > 0 {
+        <>
+          <Space height=24. />
+          <TextWrapper text=localeObject.billingDetails textType={SubheadingBold} />
+          <Space height=8. />
+          <Fields
+            fields=requiredFieldsInsideBilling
+            setFinalJson
+            isSaveCardsFlow
+            statesJson
+            country
+            finalJson
+          />
+        </>
+      } else {
+        React.null
+      }}
+    </View>
+  } else {
+    React.null
   }
 }
