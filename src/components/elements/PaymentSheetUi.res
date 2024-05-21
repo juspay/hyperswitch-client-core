@@ -45,7 +45,7 @@ let make = (
   let expireRef = React.useRef(Nullable.null)
   let cvvRef = React.useRef(Nullable.null)
   let cardBrand = getCardBrand(cardNumber)
-  let useAlerts = AlertHook.useAlerts()
+  let showAlert = AlertHook.useAlerts()
   let logger = LoggerHook.useLoggerHook()
   let nullRef = React.useRef(Nullable.null)
 
@@ -58,10 +58,10 @@ let make = (
     | Cancelled =>
       logger(~logType=WARNING, ~value="Cancelled", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
     | Failed => {
-        useAlerts(~errorType="warning", ~message="Failed to scan card")
+        showAlert(~errorType="warning", ~message="Failed to scan card")
         logger(~logType=ERROR, ~value="Failed", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
       }
-    | _ => useAlerts(~errorType="warning", ~message="Failed to scan card")
+    | _ => showAlert(~errorType="warning", ~message="Failed to scan card")
     }
   }
   let getScanCardComponent = (isScanCardAvailable, cardBrand, cardNumber) => {

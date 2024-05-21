@@ -5,7 +5,7 @@ let make = (~setConfirmButtonDataRef) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (sessionData, _) = React.useContext(SessionContext.sessionContext)
   //getting payment list data here
-  let {tabArr, elementArr} = PMListModifier.useListModifier()()
+  let {tabArr, elementArr} = PMListModifier.useListModifier()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
   let (savedPaymentMethodsData, _) = React.useContext(

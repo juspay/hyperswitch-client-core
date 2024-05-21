@@ -159,7 +159,7 @@ let logFileToObj = logFile => {
   ->JSON.Encode.object
 }
 
-let calculateLatencyHook = () => {
+let useCalculateLatency = () => {
   let (events, _setEvents) = React.useContext(LoggerContext.loggingContext)
   eventName => {
     let currentTimestamp = Date.now()
@@ -222,8 +222,7 @@ let getCodePushVersionNoFromRef = () => {
 let sendLogs = (logFile, uri, publishableKey, appId) => {
   if Next.getNextEnv != "next" {
     let data = logFile->logFileToObj->JSON.stringify
-    let fetchApi = CommonHooks.useApiFetcher()
-    fetchApi(
+    CommonHooks.fetchApi(
       ~uri,
       ~method_=Post,
       ~bodyStr=data,
@@ -312,7 +311,7 @@ let cancel = () => Nullable.forEach(timeOut.contents, intervalId => clearTimeout
 let useLoggerHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (events, setEvents) = React.useContext(LoggerContext.loggingContext)
-  let calculateLatencyHook = calculateLatencyHook()
+  let calculateLatency = useCalculateLatency()
   let getLoggingEndpointHook = GlobalHooks.useGetLoggingUrl()
   getGetPushVersion()
   (
@@ -333,7 +332,7 @@ let useLoggerHook = () => {
     let timestamp = Date.now()
     let latency = switch latency {
     | Some(latency) => latency->Float.toString
-    | None => calculateLatencyHook(eventName->eventToStrMapper)
+    | None => calculateLatency(eventName->eventToStrMapper)
     }
     let uri = getLoggingEndpointHook()
     let logFile = {

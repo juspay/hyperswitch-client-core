@@ -1,7 +1,7 @@
 open ReactNative
 
 let useAlerts = () => {
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   (
     // let exitRN = HyperModule.useExitRN()
     ~errorType: string,
@@ -17,10 +17,10 @@ let useAlerts = () => {
     switch (errorType, Platform.os) {
     | ("error", #android) =>
       ToastAndroid.show(message, ToastAndroid.long)
-      useHandleSuccessFailure(~apiResStatus, ())
+      handleSuccessFailure(~apiResStatus, ())
     | ("error", #ios) =>
       Alert.alert(~title="Error", ~message, ())
-      useHandleSuccessFailure(~apiResStatus, ())
+      handleSuccessFailure(~apiResStatus, ())
     | ("warning", #android) => ToastAndroid.show(message, ToastAndroid.long)
     | ("warning", #ios) => Alert.alert(~title="Warning", ~message, ())
     | ("error", _) => Exn.raiseError(message)
