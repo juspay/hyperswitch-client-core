@@ -38,7 +38,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
       ~onSuccess,
       ~onFailure: string => unit,
     ) => {
-      let fetchApi = CommonHooks.useApiFetcher()
+      // let fetchApi = CommonHooks.fetchApi()
       let pollCounter = ref(0)
       let paymentStatus = ref("")
 
@@ -53,7 +53,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
 
         let uri = `${baseUrl}/poll/status/${pollConfig.pollId}`
         let headers = getAuthCallHeaders(publishableKey)
-        fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
+        CommonHooks.fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
         ->Promise.then(data => {
           pollCounter := pollCounter.contents + 1
           let statusCode = data->Fetch.Response.status->string_of_int
@@ -88,9 +88,8 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
       ~onSuccess: string => unit,
       ~onFailure: string => unit,
     ) => {
-      let fetchApi = CommonHooks.useApiFetcher()
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
-      fetchApi(
+      CommonHooks.fetchApi(
         ~uri=authoriseUrl,
         ~bodyStr="",
         ~headers,
@@ -166,8 +165,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
       let bodyStr = generateAuthenticationCallBody(clientSecret, aReqParams)
       let headers = getAuthCallHeaders(publishableKey)
 
-      let fetchApi = CommonHooks.useApiFetcher()
-      fetchApi(~uri, ~bodyStr, ~headers, ~method_=Post, ())
+      CommonHooks.fetchApi(~uri, ~bodyStr, ~headers, ~method_=Post, ())
       ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
