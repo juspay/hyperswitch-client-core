@@ -8,6 +8,8 @@ let getThreeDsNextActionObj = (
     threeDsData: {
       threeDsAuthenticationUrl: "",
       threeDsAuthorizeUrl: "",
+      messageVersion: "",
+      directoryServerId: "",
       pollConfig: {
         pollId: "",
         delayInSecs: 0,
@@ -23,6 +25,8 @@ let getThreeDsDataObj = (
   nextActionObj.threeDsData->Option.getOr({
     threeDsAuthenticationUrl: "",
     threeDsAuthorizeUrl: "",
+    messageVersion: "",
+    directoryServerId: "",
     pollConfig: {
       pollId: "",
       delayInSecs: 0,
@@ -80,15 +84,15 @@ let isStatusSuccess = (status: statusType) => {
   status.status === "success"
 }
 
-let getMessageVersionFromConfirmResponse = dict => {
-  let externalAuthDict =
-    Dict.get(dict, "external_authentication_details")
-    ->Option.getOr(JSON.Encode.null)
-    ->JSON.Decode.object
-    ->Option.getOr(Dict.make())
+// let getMessageVersionFromConfirmResponse = dict => {
+//   let externalAuthDict =
+//     Dict.get(dict, "external_authentication_details")
+//     ->Option.getOr(JSON.Encode.null)
+//     ->JSON.Decode.object
+//     ->Option.getOr(Dict.make())
 
-  Utils.getString(externalAuthDict, "version", "")
-}
+//   Utils.getString(externalAuthDict, "version", "")
+// }
 
 let sdkEnvironmentToStrMapper = (env: GlobalVars.envType) => {
   switch env {

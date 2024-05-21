@@ -9,7 +9,6 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     ~clientSecret,
     ~publishableKey,
     ~nextAction,
-    ~threeDSMessageVersion,
     ~sdkEnvironment: GlobalVars.envType,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
@@ -214,7 +213,6 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
       ~clientSecret: string,
       ~publishableKey: string,
       ~threeDsData: PaymentConfirmTypes.threeDsData,
-      ~threeDSMessageVersion: string,
       ~sdkEnvironment: GlobalVars.envType,
       ~onSuccess: string => unit,
       ~onFailure: string => unit,
@@ -223,7 +221,8 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         Netcetera3dsModule.initialiseNetceteraSDK(
           netceteraSDKApiKey,
           sdkEnvironment->sdkEnvironmentToStrMapper,
-          threeDSMessageVersion,
+          threeDsData.messageVersion,
+          threeDsData.directoryServerId,
           status => {
             Netcetera3dsModule.generateAReqParams((aReqParams, status) => {
               status->isStatusSuccess
@@ -275,7 +274,6 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         ~clientSecret,
         ~publishableKey,
         ~threeDsData,
-        ~threeDSMessageVersion,
         ~sdkEnvironment,
         ~onSuccess=onChallengeCompletionCallback,
         ~onFailure,

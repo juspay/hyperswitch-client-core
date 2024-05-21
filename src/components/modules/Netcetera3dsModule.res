@@ -1,7 +1,7 @@
 open ExternalThreeDsTypes
 
 type module_ = {
-  initialiseNetceteraSDK: (string, string, string, statusType => unit) => unit,
+  initialiseNetceteraSDK: (string, string, string, string, statusType => unit) => unit,
   generateAReqParams: ((aReqParams, statusType) => unit) => unit,
   recieveChallengeParamsFromRN: (
     string,
@@ -34,5 +34,5 @@ let (
     mod.generateChallenge,
     true,
   )
-| None => ((_, _, _, _) => (), _ => (), (_, _, _, _, _, _) => (), _ => (), false)
+| None => ((_, _, _, _, _) => (), _ => (), (_, _, _, _, _, _) => (), _ => (), false)
 }

@@ -11,6 +11,8 @@ type pollConfig = {
 type threeDsData = {
   threeDsAuthenticationUrl: string,
   threeDsAuthorizeUrl: string,
+  messageVersion: string,
+  directoryServerId: string,
   pollConfig: pollConfig,
 }
 
@@ -89,6 +91,8 @@ let getNextAction = (dict, str) => {
       threeDsData: {
         threeDsAuthorizeUrl: getString(threeDSDataDict, "three_ds_authorize_url", ""),
         threeDsAuthenticationUrl: getString(threeDSDataDict, "three_ds_authentication_url", ""),
+        messageVersion: getString(threeDSDataDict, "message_version", ""),
+        directoryServerId: getString(threeDSDataDict, "directory_server_id", ""),
         pollConfig: {
           pollId: getString(pollConfigDict, "poll_id", ""),
           delayInSecs: getOptionFloat(pollConfigDict, "delay_in_secs")
