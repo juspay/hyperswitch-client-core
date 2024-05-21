@@ -9,10 +9,10 @@ let make = () => {
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (reset, setReset) = React.useState(_ => false)
   let (isCardValuesValid, setIsCardValuesValid) = React.useState(_ => false)
-  let useRedirectHook = AllPaymentHooks.useRedirectHook()
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let useRetrieveHook = AllPaymentHooks.useRetrieveHook()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let retrievePayment = AllPaymentHooks.useRetrieveHook()
 
   let processRequest = (
     prop: PaymentMethodListType.payment_method_types_card,
@@ -23,7 +23,7 @@ let make = () => {
       if !closeSDK {
         setLoading(FillingDetails)
       }
-      useHandleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (
       ~paymentStatus: LoadingContext.sdkPaymentState,
@@ -35,10 +35,10 @@ let make = () => {
           setLoading(PaymentSuccess)
           setTimeout(() => {
             setLoading(FillingDetails)
-            useHandleSuccessFailure(~apiResStatus=status, ())
+            handleSuccessFailure(~apiResStatus=status, ())
           }, 800)->ignore
         }
-      | _ => useHandleSuccessFailure(~apiResStatus=status, ())
+      | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
     let (month, year) = Validation.getExpiryDates(expireDate)
@@ -80,7 +80,7 @@ let make = () => {
       shipping: ?nativeProp.configuration.shippingDetails,
     }
 
-    useRedirectHook(
+    fetchAndRedirect(
       ~body=body->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey,
       ~clientSecret,
@@ -90,10 +90,10 @@ let make = () => {
       (),
     )
   }
-  let useAlerts = AlertHook.useAlerts()
+  let showAlert = AlertHook.useAlerts()
   let handlePress = (clientSecret, publishableKey) => {
     setLoading(ProcessingPayments)
-    useRetrieveHook(List, clientSecret, publishableKey)
+    retrievePayment(List, clientSecret, publishableKey)
     ->Promise.then(res => {
       let paymentList =
         res
@@ -111,7 +111,7 @@ let make = () => {
         | CARD(prop) => processRequest(prop, clientSecret, publishableKey)
         | _ => ()
         }->ignore
-      | None => useAlerts(~errorType="warning", ~message="Card Payment is not enabled")
+      | None => showAlert(~errorType="warning", ~message="Card Payment is not enabled")
       }
 
       Promise.resolve(res)

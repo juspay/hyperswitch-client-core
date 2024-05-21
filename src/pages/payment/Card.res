@@ -11,8 +11,8 @@ let make = (
 
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let useRedirectHook = AllPaymentHooks.useRedirectHook()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   // Custom context
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -88,17 +88,17 @@ let make = (
         | None => ()
         }
       }
-      useHandleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       switch paymentStatus {
       | PaymentSuccess => {
           setLoading(PaymentSuccess)
           setTimeout(() => {
-            useHandleSuccessFailure(~apiResStatus=status, ())
+            handleSuccessFailure(~apiResStatus=status, ())
           }, 300)->ignore
         }
-      | _ => useHandleSuccessFailure(~apiResStatus=status, ())
+      | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
     // let (month, year) = Validation.getExpiryDates(expireDate)
@@ -121,7 +121,7 @@ let make = (
     )
 
     let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(body, dynamicFieldsJson)
-    useRedirectHook(
+    fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,

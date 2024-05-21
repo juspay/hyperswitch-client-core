@@ -139,8 +139,8 @@ let make = (
 
   let (error, setError) = React.useState(_ => None)
 
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let useRedirectHook = AllPaymentHooks.useRedirectHook()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let localeObject = GetLocale.useGetLocalObj()
   let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
 
@@ -165,17 +165,17 @@ let make = (
       | None => ()
       }
     }
-    useHandleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
   }
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
     switch paymentStatus {
     | PaymentSuccess => {
         setLoading(PaymentSuccess)
         setTimeout(() => {
-          useHandleSuccessFailure(~apiResStatus=status, ())
+          handleSuccessFailure(~apiResStatus=status, ())
         }, 300)->ignore
       }
-    | _ => useHandleSuccessFailure(~apiResStatus=status, ())
+    | _ => handleSuccessFailure(~apiResStatus=status, ())
     }
     /* setLoading(PaymentSuccess)
     animateFlex(
@@ -183,7 +183,7 @@ let make = (
       ~value=0.01,
       ~endCallback=() => {
         setTimeout(() => {
-          useHandleSuccessFailure(~apiResStatus=status, ())
+          handleSuccessFailure(~apiResStatus=status, ())
         }, 300)->ignore
       },
       (),
@@ -248,7 +248,7 @@ let make = (
       },
     }
 
-    useRedirectHook(
+    fetchAndRedirect(
       ~body=body->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,
@@ -445,7 +445,7 @@ let make = (
       setError(_ => Some("Cancelled"))
     | "Failed" =>
       setLoading(FillingDetails)
-      setError(_ =>Some( "Failed"))
+      setError(_ => Some("Failed"))
     | "Error" =>
       setLoading(FillingDetails)
       setError(_ => Some("Error"))
@@ -692,12 +692,18 @@ let make = (
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false isAllValuesValid handlePress hasSomeFields paymentMethod ?paymentExperience errorText=error
+          loading=false
+          isAllValuesValid
+          handlePress
+          hasSomeFields
+          paymentMethod
+          ?paymentExperience
+          errorText=error
         />,
       )
     }
     None
-  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus,error))
+  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus, error))
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
