@@ -25,15 +25,27 @@ type paymentMethodsFields =
   | AddressCountry(array<string>)
   | BlikCode
   | Currency(array<string>)
-  | None
+  | UnKnownField123
+
+type requiredField =
+  | StringField(string)
+  | FullNameField(string, string)
 
 type required_fields_type = {
-  required_field: string,
+  required_field: requiredField,
   display_name: string,
   field_type: paymentMethodsFields,
   value: string,
 }
+
 type required_fields = array<required_fields_type>
+
+let getRequiredFieldName = (requiredField: requiredField) => {
+  switch requiredField {
+  | StringField(name) => name
+  | FullNameField(firstName, _lastName) => firstName
+  }
+}
 
 let getPaymentMethodsFieldTypeFromString = str => {
   switch str {
@@ -76,11 +88,11 @@ let getPaymentMethodsFieldTypeFromDict = (dict: Dict.t<JSON.t>) => {
   | (_, _, Some(user_address_country)) =>
     let options = user_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
-    | "" => None
+    | "" => UnKnownField123
     | "ALL" => AddressCountry(Country.country->Array.map(item => item.isoAlpha2))
     | _ => AddressCountry(options)
     }
-  | _ => None
+  | _ => UnKnownField123
   }
 }
 let getFieldType = dict => {
@@ -89,7 +101,7 @@ let getFieldType = dict => {
   switch fieldClass {
   | String(val) => val->getPaymentMethodsFieldTypeFromString
   | Object(dict) => dict->getPaymentMethodsFieldTypeFromDict
-  | _ => None
+  | _ => UnKnownField123
   }
 }
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
@@ -115,7 +127,8 @@ let sortRequirFields = (
   secondPaymentMethodField: required_fields_type,
 ) => {
   if firstPaymentMethodField.field_type === secondPaymentMethodField.field_type {
-    let requiredFieldsPath = firstPaymentMethodField.required_field->String.split(".")
+    let requiredFieldsPath =
+      firstPaymentMethodField.required_field->getRequiredFieldName->String.split(".")
     let fieldName =
       requiredFieldsPath
       ->Array.get(requiredFieldsPath->Array.length - 1)
@@ -134,29 +147,61 @@ let getRequiredFieldsFromDict = dict => {
   let requiredFields = dict->Dict.get("required_fields")->Option.flatMap(JSON.Decode.object)
   switch requiredFields {
   | Some(val) =>
-    val
-    ->Dict.valuesToArray
-    ->Array.map(item => {
-      let itemToObj = item->JSON.Decode.object->Option.getOr(Dict.make())
-      {
-        required_field: Utils.getString(itemToObj, "required_field", ""),
-        display_name: Utils.getString(itemToObj, "display_name", ""),
-        field_type: itemToObj->getFieldType,
-        value: Utils.getString(itemToObj, "value", ""),
-      }
+    let arr =
+      val
+      ->Dict.valuesToArray
+      ->Array.map(item => {
+        let itemToObj = item->JSON.Decode.object->Option.getOr(Dict.make())
+        {
+          required_field: Utils.getString(itemToObj, "required_field", "")->StringField,
+          display_name: Utils.getString(itemToObj, "display_name", ""),
+          field_type: itemToObj->getFieldType,
+          value: Utils.getString(itemToObj, "value", ""),
+        }
+      })
+      ->Belt.SortArray.stableSortBy(sortRequirFields)
+
+    // merge logic here
+    let fullCardHolderNameFields = arr->Array.filter(requiredField => {
+      requiredField.field_type === FullName && requiredField.display_name === "card_holder_name"
     })
-    ->Belt.SortArray.stableSortBy(sortRequirFields)
+
+    switch (fullCardHolderNameFields[0], fullCardHolderNameFields[1]) {
+    | (Some(firstNameField), Some(lastNameField)) =>
+      arr->Array.filterMap(x => {
+        if x === firstNameField {
+          {
+            ...x,
+            required_field: FullNameField(
+              firstNameField.required_field->getRequiredFieldName,
+              lastNameField.required_field->getRequiredFieldName,
+            ),
+          }->Some
+        } else if x === lastNameField {
+          None
+        } else {
+          Some(x)
+        }
+      })
+
+    | _ => arr
+    }
+
   | _ => []
   }
 }
 
 let checkIsValid = (~text: string, ~field_type: paymentMethodsFields) => {
   if text == "" {
-    Some(false)
+    Some("Required")
   } else {
     switch field_type {
-    | Email => text->ValidationFunctions.isValidEmail
-    | _ => Some(true)
+    | Email =>
+      switch text->ValidationFunctions.isValidEmail {
+      | Some(false) => Some("Invalid email")
+      | _ => None
+      }
+    | _ => None
     }
   }
 }
@@ -168,33 +213,40 @@ let getKeyboardType = (~field_type: paymentMethodsFields) => {
   }
 }
 
+let toCamelCase = str => {
+  str
+  ->String.split("_")
+  ->Array.map(item => {
+    let arr = item->String.split("")
+    let firstChar = arr->Array.get(0)->Option.getOr("")->String.toUpperCase
+    [firstChar]->Array.concat(arr->Array.sliceToEnd(~start=1))->Array.join("")
+  })
+  ->Array.join(" ")
+}
+
 let useGetPlaceholder = (
   ~field_type: paymentMethodsFields,
   ~display_name: string,
-  ~required_field: string,
+  ~required_field: requiredField,
 ) => {
   let localeObject = GetLocale.useGetLocalObj()
-  let display_name =
-    display_name
-    ->String.split("_")
-    ->Array.map(item => {
-      let arr = item->String.split("")
-      let firstChar = arr->Array.get(0)->Option.getOr("")->String.toUpperCase
-      [firstChar]->Array.concat(arr->Array.sliceToEnd(~start=1))->Array.join("")
-    })
-    ->Array.join(" ")
 
   let getName = placeholder => {
-    let requiredFieldsPath = required_field->String.split(".")
+    let requiredFieldsPath = required_field->getRequiredFieldName->String.split(".")
     let fieldName =
       requiredFieldsPath
       ->Array.get(requiredFieldsPath->Array.length - 1)
       ->Option.getOr("")
-    switch fieldName {
-    | "first_name" => localeObject.firstName
-    | "last_name" => localeObject.lastName
-    | "card_holder_name" => localeObject.cardHolderName
-    | _ => placeholder
+
+    if field_type === FullName && display_name === "card_holder_name" {
+      localeObject.cardHolderName
+    } else {
+      switch fieldName {
+      | "first_name" => localeObject.firstName
+      | "last_name" => localeObject.lastName
+      | "card_holder_name" => localeObject.cardHolderName
+      | _ => placeholder
+      }
     }
   }
 
@@ -202,24 +254,25 @@ let useGetPlaceholder = (
     switch field_type {
     | Email => localeObject.emailLabel
     | FullName => localeObject.fullNamePlaceholder->getName
-    | InfoElement => display_name
     | Country => localeObject.countryLabel
     | Bank => localeObject.bankLabel
-    | SpecialField(_) => display_name
-    | UnKnownField(_) => display_name
     | BillingName => localeObject.billingNamePlaceholder->getName
-    | PhoneNumber => display_name
     | AddressLine1 => localeObject.line1Placeholder
     | AddressLine2 => localeObject.line2Placeholder
     | AddressCity => localeObject.cityLabel
-    | StateAndCity => display_name
-    | CountryAndPincode(_) => display_name
     | AddressPincode => localeObject.postalCodeLabel
     | AddressState => localeObject.stateLabel
     | AddressCountry(_) => localeObject.countryLabel
-    | BlikCode => display_name
     | Currency(_) => localeObject.currencyLabel
-    | None => display_name
+    | InfoElement
+    | SpecialField(_)
+    | UnKnownField(_)
+    | PhoneNumber
+    | StateAndCity
+    | CountryAndPincode(_)
+    | BlikCode
+    | UnKnownField123 =>
+      display_name->toCamelCase
     }
 }
 
@@ -360,10 +413,10 @@ let getRequiredFieldPath = (~isSaveCardsFlow, ~requiredField: required_fields_ty
     requiredField.field_type === FullName || requiredField.field_type === BillingName
   let isDisplayNameCardHolderName = requiredField.display_name === "card_holder_name"
   let isRequiedFieldCardHolderName =
-    requiredField.required_field === "payment_method_data.card.card_holder_name"
+    requiredField.required_field === StringField("payment_method_data.card.card_holder_name")
 
   isSaveCardsFlow && isFieldTypeName && isDisplayNameCardHolderName && isRequiedFieldCardHolderName
-    ? "payment_method_data.card_token.card_holder_name"
+    ? StringField("payment_method_data.card_token.card_holder_name")
     : requiredField.required_field
 }
 
@@ -397,15 +450,36 @@ let filterRequiredFields = (
 }
 
 let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
-  requiredFields->Array.map(requiredField => {
+  requiredFields->Array.reduce([], (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
-    | ("", AddressCountry(_)) => (clientCountry->JSON.Encode.string, true)
-    | ("", _) => (JSON.Encode.null, false)
-    | (value, _) => (value->JSON.Encode.string, true)
+    | ("", AddressCountry(_)) => (clientCountry->JSON.Encode.string, None)
+    | ("", _) => (JSON.Encode.null, Some("Required"))
+    | (value, _) => (value->JSON.Encode.string, None)
     }
 
     let requiredFieldPath = getRequiredFieldPath(~isSaveCardsFlow, ~requiredField)
 
-    (requiredFieldPath, value, isValid)
+    switch requiredFieldPath {
+    | StringField(fieldPath) => acc->Array.push((fieldPath, value, isValid))
+
+    | FullNameField(firstName, lastName) =>
+      let arr = requiredField.value->String.split(" ")
+      let firstNameVal = arr->Array.get(0)->Option.getOr("")
+      let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
+
+      let (firstNameVal, isFirstNameValid) =
+        firstNameVal === ""
+          ? (JSON.Encode.null, Some("First Name is required"))
+          : (JSON.Encode.string(firstNameVal), None)
+      let (lastNameVal, isLastNameValid) =
+        lastNameVal === ""
+          ? (JSON.Encode.null, Some("Last Name is required"))
+          : (JSON.Encode.string(lastNameVal), None)
+
+      acc->Array.push((firstName, firstNameVal, isFirstNameValid))
+      acc->Array.push((lastName, lastNameVal, isLastNameValid))
+    }
+
+    acc
   })
 }
