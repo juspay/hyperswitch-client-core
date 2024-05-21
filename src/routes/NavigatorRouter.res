@@ -4,12 +4,12 @@ external unsubscribe: ReactNative.BackHandler.remove => remove = "%identity"
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let useRetrieveHook = AllPaymentHooks.useRetrieveHook()
-  let useSessionToken = AllPaymentHooks.useSessionToken()
+  let retrievePayment = AllPaymentHooks.useRetrieveHook()
+  let getSessionToken = AllPaymentHooks.useSessionToken()
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setPaymentList) = React.useContext(PaymentListContext.paymentListContext)
   let (_, setSessionData) = React.useContext(SessionContext.sessionContext)
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
   let error = ErrorHooks.useErrorWarningValidationOnLoad()
   let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
@@ -25,12 +25,12 @@ let make = () => {
     //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => /* Console.log(x) */ ())
 
     if nativeProp.clientSecret != "" && nativeProp.publishableKey != "" {
-      useRetrieveHook(List, nativeProp.clientSecret, nativeProp.publishableKey)
+      retrievePayment(List, nativeProp.clientSecret, nativeProp.publishableKey)
       ->Promise.then(retrieve => {
         if ErrorUtils.isError(retrieve) {
           errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(retrieve)))), ())
         } else if retrieve == JSON.Encode.null {
-          useHandleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
+          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
           let {mandateType, paymentType} = PaymentMethodListType.jsonToMandateData(retrieve)
 
@@ -44,7 +44,7 @@ let make = () => {
           let list = PaymentMethodListType.jsonTopaymentMethodListType(retrieve)
           if list->Array.length !== 0 || !nativeProp.hyperParams.defaultView {
             setPaymentList(list)
-            useSessionToken()
+            getSessionToken()
             ->Promise.then(
               session => {
                 if session->ErrorUtils.isError {
@@ -91,7 +91,7 @@ let make = () => {
         loading !== LoadingContext.ProcessingPayments &&
           [SdkTypes.PaymentSheet, SdkTypes.HostedCheckout]->Array.includes(nativeProp.sdkState)
       ) {
-        useHandleSuccessFailure(
+        handleSuccessFailure(
           ~apiResStatus=PaymentConfirmTypes.defaultCancelError,
           ~closeSDK=true,
           ~reset=false,

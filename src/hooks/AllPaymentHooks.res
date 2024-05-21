@@ -53,7 +53,7 @@ let jsonToSavedPMObj = data => {
   })
 }
 
-let apiLogWrapper = () => {
+let useApiLogWrapper = () => {
   let logger = LoggerHook.useLoggerHook()
   (
     ~logType,
@@ -105,22 +105,22 @@ let apiLogWrapper = () => {
 let useHandleSuccessFailure = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {exit} = HyperModule.useExitPaymentsheet()
-  let useExitCard = HyperModule.useExitCard()
-  let useExitWidget = HyperModule.useExitWidget()
+  let exitCard = HyperModule.useExitCard()
+  let exitWidget = HyperModule.useExitWidget()
   (~apiResStatus: error, ~closeSDK=true, ~reset=true, ()) => {
     switch nativeProp.sdkState {
     | PaymentSheet | HostedCheckout =>
       if closeSDK {
         exit(apiResStatus, reset)
       }
-    | CardWidget => useExitCard(apiResStatus)
+    | CardWidget => exitCard(apiResStatus)
     | WidgetPaymentSheet =>
       if closeSDK {
         exit(apiResStatus, reset)
       }
     | CustomWidget(str) =>
-      useExitWidget(apiResStatus, str->SdkTypes.widgetToStrMapper->String.toLowerCase)
-    | ExpressCheckoutWidget => useExitWidget(apiResStatus, "expressCheckout")
+      exitWidget(apiResStatus, str->SdkTypes.widgetToStrMapper->String.toLowerCase)
+    | ExpressCheckoutWidget => exitWidget(apiResStatus, "expressCheckout")
     | _ => ()
     }
   }
@@ -128,9 +128,8 @@ let useHandleSuccessFailure = () => {
 
 let useSessionToken = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let fetchApi = CommonHooks.useApiFetcher()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = apiLogWrapper()
+  let apiLogWrapper = useApiLogWrapper()
 
   (~wallet=[], ()) => {
     switch Next.getNextEnv {
@@ -161,7 +160,7 @@ let useSessionToken = () => {
         ~data=JSON.Encode.null,
         (),
       )
-      fetchApi(~uri=url, ~method_=Post, ~headers, ~bodyStr=body, ())
+      CommonHooks.fetchApi(~uri=url, ~method_=Post, ~headers, ~bodyStr=body, ())
       ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
@@ -218,8 +217,7 @@ let useSessionToken = () => {
 
 let useRetrieveHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let fetchApi = CommonHooks.useApiFetcher()
-  let apiLogWrapper = apiLogWrapper()
+  let apiLogWrapper = useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   (type_, clientSecret, publishableKey) => {
@@ -255,7 +253,7 @@ let useRetrieveHook = () => {
         (),
       )
 
-      fetchApi(~uri, ~method_=Get, ~headers, ())
+      CommonHooks.fetchApi(~uri, ~method_=Get, ~headers, ())
       ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
@@ -400,11 +398,10 @@ let useBrowserHook = () => {
 
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let fetchApi = CommonHooks.useApiFetcher()
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let redirectioBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
-  let apiLogWrapper = apiLogWrapper()
+  let apiLogWrapper = useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNetcetera = NetceteraThreeDsHooks.useNetceteraThreeDsHook(~retrievePayment)
@@ -550,7 +547,7 @@ let useRedirectHook = () => {
               ~data=JSON.Encode.null,
               (),
             )
-            fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
+            CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
             ->Promise.then(data => {
               let statusCode = data->Fetch.Response.status->string_of_int
               if statusCode->String.charAt(0) === "2" {
@@ -624,7 +621,7 @@ let useRedirectHook = () => {
           ~data=JSON.Encode.null,
           (),
         )
-        fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
+        CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
         ->Promise.then(data => {
           let statusCode = data->Fetch.Response.status->string_of_int
           if statusCode->String.charAt(0) === "2" {
@@ -692,9 +689,8 @@ let useRedirectHook = () => {
 }
 
 let useGetSavedCardHook = () => {
-  let fetchApi = CommonHooks.useApiFetcher()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = apiLogWrapper()
+  let apiLogWrapper = useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   () => {
@@ -710,7 +706,7 @@ let useGetSavedCardHook = () => {
       ~data=JSON.Encode.null,
       (),
     )
-    fetchApi(
+    CommonHooks.fetchApi(
       ~uri,
       ~method_=Get,
       ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),

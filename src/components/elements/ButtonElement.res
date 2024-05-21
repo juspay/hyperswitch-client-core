@@ -20,9 +20,9 @@ let make = (
 ) => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let useAlerts = AlertHook.useAlerts()
+  let showAlert = AlertHook.useAlerts()
 
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
@@ -34,7 +34,7 @@ let make = (
     buttonBorderRadius,
   } = ThemebasedStyle.useThemeBasedStyle()
 
-  let useRedirectHook = AllPaymentHooks.useRedirectHook()
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   // let (show, setShow) = React.useState(_ => true)
   let animateFlex = (~flexval, ~value, ~endCallback=() => (), ()) => {
     Animated.timing(
@@ -111,7 +111,7 @@ let make = (
       if !closeSDK {
         setLoading(FillingDetails)
       }
-      useHandleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       logger(
@@ -155,13 +155,13 @@ let make = (
             ~value=0.01,
             ~endCallback=() => {
               setTimeout(() => {
-                useHandleSuccessFailure(~apiResStatus=status, ())
+                handleSuccessFailure(~apiResStatus=status, ())
               }, 1500)->ignore
             },
             (),
           )
         }
-      | _ => useHandleSuccessFailure(~apiResStatus=status, ())
+      | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
 
@@ -215,7 +215,7 @@ let make = (
       },
     }
 
-    useRedirectHook(
+    fetchAndRedirect(
       ~body=body->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,
@@ -249,8 +249,8 @@ let make = (
       processRequest(~payment_method_data, ())
     | "User has canceled" =>
       setLoading(FillingDetails)
-      useAlerts(~errorType="warning", ~message="Payment was Cancelled")
-    | err => useAlerts(~errorType="error", ~message=err)
+      showAlert(~errorType="warning", ~message="Payment was Cancelled")
+    | err => showAlert(~errorType="error", ~message=err)
     }
   }
 
@@ -274,10 +274,10 @@ let make = (
       processRequest(~payment_method_data, ())
     | "Cancel" =>
       setLoading(FillingDetails)
-      useAlerts(~errorType="warning", ~message="Payment was Cancelled")
+      showAlert(~errorType="warning", ~message="Payment was Cancelled")
     | err =>
       setLoading(FillingDetails)
-      useAlerts(~errorType="error", ~message=err)
+      showAlert(~errorType="error", ~message=err)
     }
   }
 
@@ -289,13 +289,13 @@ let make = (
     ->Option.getOr("") {
     | "Cancelled" =>
       setLoading(FillingDetails)
-      useAlerts(~errorType="warning", ~message="Cancelled")
+      showAlert(~errorType="warning", ~message="Cancelled")
     | "Failed" =>
       setLoading(FillingDetails)
-      useAlerts(~errorType="error", ~message="Failed")
+      showAlert(~errorType="error", ~message="Failed")
     | "Error" =>
       setLoading(FillingDetails)
-      useAlerts(~errorType="warning", ~message="Error")
+      showAlert(~errorType="warning", ~message="Error")
     | _ =>
       let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
 
@@ -306,7 +306,7 @@ let make = (
 
       if transaction_identifier->JSON.stringify == "Simulated Identifier" {
         setLoading(FillingDetails)
-        useAlerts(
+        showAlert(
           ~errorType="warning",
           ~message="Apple Pay is not supported in Simulated Environment",
         )
@@ -396,7 +396,7 @@ let make = (
             sessionObject.payment_request_data == JSON.Encode.null
         ) {
           setLoading(FillingDetails)
-          useAlerts(~errorType="warning", ~message="Waiting for Sessions API")
+          showAlert(~errorType="warning", ~message="Waiting for Sessions API")
         } else {
           HyperModule.launchApplePay(
             [

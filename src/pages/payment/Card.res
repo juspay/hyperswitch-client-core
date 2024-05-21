@@ -11,8 +11,8 @@ let make = (
 
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let useRedirectHook = AllPaymentHooks.useRedirectHook()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   // Custom context
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -49,30 +49,13 @@ let make = (
   let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
     RescriptCoreFuture.Dict.key,
     JSON.t,
-    bool,
+    option<string>,
   )> => [])
   // let (isAllBillingValuesValid, setIsAllBillingValuesValid) = React.useState(_ => false)
-  let (isConfirmButtonValid, setIsConfirmButtonValid) = React.useState(_ => false)
   let (error, setError) = React.useState(_ => None)
 
-  React.useEffect2(
-    () => {
-      // setIsAllValuesValid(_ =>
-      //   (isSaveCardSelected && selectedToken->Option.isSome) ||
-      //     (isAllCardVlauesValid && isAllBillingValuesValid && !isSaveCardSelected)
-      // )
-      setIsConfirmButtonValid(_ => isAllCardVlauesValid && isAllDynamicFieldValid)
-      None
-    },
-    (
-      isAllCardVlauesValid,
-      isAllDynamicFieldValid,
-      // cardHolderName,
-      // isAllCardVlauesValid && isAllBillingValuesValid,
-      // isSaveCardSelected,
-      // selectedToken->Option.isSome,
-    ),
-  )
+  let isConfirmButtonValid = isAllCardVlauesValid && isAllDynamicFieldValid
+
   // let updateBilllingValues = (~country, ~zip, ~isAllValid) => {
   //   setCountry(_ => country)
   //   setZip(_ => zip)
@@ -88,17 +71,17 @@ let make = (
         | None => ()
         }
       }
-      useHandleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       switch paymentStatus {
       | PaymentSuccess => {
           setLoading(PaymentSuccess)
           setTimeout(() => {
-            useHandleSuccessFailure(~apiResStatus=status, ())
+            handleSuccessFailure(~apiResStatus=status, ())
           }, 300)->ignore
         }
-      | _ => useHandleSuccessFailure(~apiResStatus=status, ())
+      | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
     // let (month, year) = Validation.getExpiryDates(expireDate)
@@ -121,7 +104,7 @@ let make = (
     )
 
     let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(body, dynamicFieldsJson)
-    useRedirectHook(
+    fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,

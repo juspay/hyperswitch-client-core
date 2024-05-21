@@ -9,9 +9,9 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let (error, setError) = React.useState(_ => None)
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let useRedirectHook = AllPaymentHooks.useRedirectHook()
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   // let useMandatePaymentHook = AllPaymentHooks.useMandatePaymentHook()
 
   // let (pmCardVal, setPmCardVal) = React.useState(_ => [])
@@ -31,7 +31,7 @@ let make = (
   let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
     RescriptCoreFuture.Dict.key,
     JSON.t,
-    bool,
+    option<string>,
   )> => [])
 
   let processSavedPMRequest = () => {
@@ -44,17 +44,17 @@ let make = (
         | None => ()
         }
       }
-      useHandleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       switch paymentStatus {
       | PaymentSuccess => {
           setLoading(PaymentSuccess)
           setTimeout(() => {
-            useHandleSuccessFailure(~apiResStatus=status, ())
+            handleSuccessFailure(~apiResStatus=status, ())
           }, 300)->ignore
         }
-      | _ => useHandleSuccessFailure(~apiResStatus=status, ())
+      | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
 
@@ -83,7 +83,7 @@ let make = (
 
     let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(body, dynamicFieldsJson)
 
-    useRedirectHook(
+    fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,
@@ -149,7 +149,7 @@ let make = (
     allApiData,
     isAllDynamicFieldValid,
     dynamicFieldsJson,
-    error
+    error,
   ))
 
   // React.useEffect1(() => {

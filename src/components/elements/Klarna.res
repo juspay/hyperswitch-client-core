@@ -16,7 +16,7 @@ let make = (
   let paymentMethods = ["pay_later"] //["pay_now", "pay_later", "pay_over_time", "pay_in_parts"]
 
   let refs = React.useRef(Nullable.null)
-  let useHandleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
   React.useEffect1(() => {
     switch refs.current->Nullable.toOption {
@@ -63,7 +63,7 @@ let make = (
       switch launchKlarna {
       | Some(prop) => processRequest(prop, params.authToken->Option.getOr(""))
       | _ =>
-        useHandleSuccessFailure(
+        handleSuccessFailure(
           ~apiResStatus={status: "failed", message: "", code: "", type_: ""},
           ~closeSDK=false,
           (),
@@ -72,12 +72,9 @@ let make = (
     } else {
       switch params.errorMessage {
       | None =>
-        useHandleSuccessFailure(
-          ~apiResStatus={status: "failed", message: "", code: "", type_: ""},
-          (),
-        )
+        handleSuccessFailure(~apiResStatus={status: "failed", message: "", code: "", type_: ""}, ())
       | Some(err) =>
-        useHandleSuccessFailure(~apiResStatus={status: err, message: "", code: "", type_: ""}, ())
+        handleSuccessFailure(~apiResStatus={status: err, message: "", code: "", type_: ""}, ())
       }
     }
   }
