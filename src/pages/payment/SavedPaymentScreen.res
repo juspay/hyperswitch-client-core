@@ -31,7 +31,7 @@ let make = (
   let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
     RescriptCoreFuture.Dict.key,
     JSON.t,
-    bool,
+    option<string>,
   )> => [])
 
   let processSavedPMRequest = () => {
