@@ -22,7 +22,7 @@ module RenderField = {
     ~isSaveCardsFlow,
     ~statesJson: option<JSON.t>,
     ~country,
-    ~finalJson: array<(string, JSON.t, bool)>,
+    ~finalJson: array<(string, JSON.t, option<string>)>,
   ) => {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
 
@@ -56,7 +56,7 @@ module RenderField = {
       None
     }, (required_fields_type, isSaveCardsFlow))
 
-    let (isValid, setIsValid) = React.useState(_ => None)
+    let (errorMessage, setErrorMesage) = React.useState(_ => None)
 
     let (isFocus, setisFocus) = React.useState(_ => false)
     React.useEffect1(() => {
@@ -74,14 +74,14 @@ module RenderField = {
               ~field_type=required_fields_type.field_type,
             )
 
-            setIsValid(_ => tempValid)
+            setErrorMesage(_ => tempValid)
             setFinalJson(prev => {
               prev->Array.map(
                 item => {
                   let (key, _, _) = item
 
                   if key == stringFieldPath {
-                    (key, text->JSON.Encode.string, tempValid->Option.getOr(false))
+                    (key, text->JSON.Encode.string, tempValid)
                   } else {
                     item
                   }
@@ -94,25 +94,30 @@ module RenderField = {
             let firstNameVal = arr->Array.get(0)->Option.getOr("")
             let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
 
-            let (firstNameVal, isFirstNameValid) =
+            let (firstNameVal, firstNameErrorMessage) =
               firstNameVal === ""
-                ? (JSON.Encode.null, false)
-                : (JSON.Encode.string(firstNameVal), true)
-            let (lastNameVal, isLastNameValid) =
+                ? (JSON.Encode.null, Some("Required"))
+                : (JSON.Encode.string(firstNameVal), None)
+            let (lastNameVal, lastNameErrorMessage) =
               lastNameVal === ""
-                ? (JSON.Encode.null, false)
-                : (JSON.Encode.string(lastNameVal), true)
+                ? (JSON.Encode.null, Some("Last Name Required"))
+                : (JSON.Encode.string(lastNameVal), None)
 
-            setIsValid(_ => Some(isFirstNameValid && isLastNameValid))
+            setErrorMesage(_ =>
+              switch firstNameErrorMessage {
+              | Some(_) => firstNameErrorMessage
+              | None => lastNameErrorMessage
+              }
+            )
             setFinalJson(prev => {
               prev->Array.map(
                 item => {
                   let (key, _, _) = item
 
                   if key === firstNameFieldPath {
-                    (key, firstNameVal, isFirstNameValid)
+                    (key, firstNameVal, firstNameErrorMessage)
                   } else if key === lastNameFieldPath {
-                    (key, lastNameVal, isLastNameValid)
+                    (key, lastNameVal, lastNameErrorMessage)
                   } else {
                     item
                   }
@@ -131,9 +136,9 @@ module RenderField = {
     let onChange = text => {
       setVal(_ => Some(text))
     }
-    let isValidForFocus = {
-      isFocus ? true : isValid->Option.getOr(true)
-    }
+    let isValid = errorMessage->Option.isNone
+    let isValidForFocus = isFocus || isValid
+
     let {borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
     let getStateData = states => {
       states
@@ -209,6 +214,11 @@ module RenderField = {
           }}
           textColor={component.color}
         />
+      }}
+      {if isFocus {
+        React.null
+      } else {
+        <ErrorText text=errorMessage />
       }}
       //    <Space />
     </>
@@ -286,7 +296,7 @@ let make = (
 
     let temp = Array.reduce(finalJson, true, (accumulator, item) => {
       let (_, _, key) = item
-      accumulator && key
+      accumulator && key->Option.isNone
     })
     setIsAllDynamicFieldValid(_ => temp)
 

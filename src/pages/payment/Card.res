@@ -49,30 +49,13 @@ let make = (
   let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
     RescriptCoreFuture.Dict.key,
     JSON.t,
-    bool,
+    option<string>,
   )> => [])
   // let (isAllBillingValuesValid, setIsAllBillingValuesValid) = React.useState(_ => false)
-  let (isConfirmButtonValid, setIsConfirmButtonValid) = React.useState(_ => false)
   let (error, setError) = React.useState(_ => None)
 
-  React.useEffect2(
-    () => {
-      // setIsAllValuesValid(_ =>
-      //   (isSaveCardSelected && selectedToken->Option.isSome) ||
-      //     (isAllCardVlauesValid && isAllBillingValuesValid && !isSaveCardSelected)
-      // )
-      setIsConfirmButtonValid(_ => isAllCardVlauesValid && isAllDynamicFieldValid)
-      None
-    },
-    (
-      isAllCardVlauesValid,
-      isAllDynamicFieldValid,
-      // cardHolderName,
-      // isAllCardVlauesValid && isAllBillingValuesValid,
-      // isSaveCardSelected,
-      // selectedToken->Option.isSome,
-    ),
-  )
+  let isConfirmButtonValid = isAllCardVlauesValid && isAllDynamicFieldValid
+
   // let updateBilllingValues = (~country, ~zip, ~isAllValid) => {
   //   setCountry(_ => country)
   //   setZip(_ => zip)

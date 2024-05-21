@@ -25,7 +25,7 @@ type paymentMethodsFields =
   | AddressCountry(array<string>)
   | BlikCode
   | Currency(array<string>)
-  | None
+  | UnKnownField123
 
 type requiredField =
   | StringField(string)
@@ -88,11 +88,11 @@ let getPaymentMethodsFieldTypeFromDict = (dict: Dict.t<JSON.t>) => {
   | (_, _, Some(user_address_country)) =>
     let options = user_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
-    | "" => None
+    | "" => UnKnownField123
     | "ALL" => AddressCountry(Country.country->Array.map(item => item.isoAlpha2))
     | _ => AddressCountry(options)
     }
-  | _ => None
+  | _ => UnKnownField123
   }
 }
 let getFieldType = dict => {
@@ -101,7 +101,7 @@ let getFieldType = dict => {
   switch fieldClass {
   | String(val) => val->getPaymentMethodsFieldTypeFromString
   | Object(dict) => dict->getPaymentMethodsFieldTypeFromDict
-  | _ => None
+  | _ => UnKnownField123
   }
 }
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
@@ -193,11 +193,15 @@ let getRequiredFieldsFromDict = dict => {
 
 let checkIsValid = (~text: string, ~field_type: paymentMethodsFields) => {
   if text == "" {
-    Some(false)
+    Some("Required")
   } else {
     switch field_type {
-    | Email => text->ValidationFunctions.isValidEmail
-    | _ => Some(true)
+    | Email =>
+      switch text->ValidationFunctions.isValidEmail {
+      | Some(false) => Some("Invalid email")
+      | _ => None
+      }
+    | _ => None
     }
   }
 }
@@ -267,7 +271,7 @@ let useGetPlaceholder = (
     | StateAndCity
     | CountryAndPincode(_)
     | BlikCode
-    | None =>
+    | UnKnownField123 =>
       display_name->toCamelCase
     }
 }
@@ -448,9 +452,9 @@ let filterRequiredFields = (
 let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
   requiredFields->Array.reduce([], (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
-    | ("", AddressCountry(_)) => (clientCountry->JSON.Encode.string, true)
-    | ("", _) => (JSON.Encode.null, false)
-    | (value, _) => (value->JSON.Encode.string, true)
+    | ("", AddressCountry(_)) => (clientCountry->JSON.Encode.string, None)
+    | ("", _) => (JSON.Encode.null, Some("Required"))
+    | (value, _) => (value->JSON.Encode.string, None)
     }
 
     let requiredFieldPath = getRequiredFieldPath(~isSaveCardsFlow, ~requiredField)
@@ -464,9 +468,13 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
       let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
 
       let (firstNameVal, isFirstNameValid) =
-        firstNameVal === "" ? (JSON.Encode.null, false) : (JSON.Encode.string(firstNameVal), true)
+        firstNameVal === ""
+          ? (JSON.Encode.null, Some("First Name is required"))
+          : (JSON.Encode.string(firstNameVal), None)
       let (lastNameVal, isLastNameValid) =
-        lastNameVal === "" ? (JSON.Encode.null, false) : (JSON.Encode.string(lastNameVal), true)
+        lastNameVal === ""
+          ? (JSON.Encode.null, Some("Last Name is required"))
+          : (JSON.Encode.string(lastNameVal), None)
 
       acc->Array.push((firstName, firstNameVal, isFirstNameValid))
       acc->Array.push((lastName, lastNameVal, isLastNameValid))
