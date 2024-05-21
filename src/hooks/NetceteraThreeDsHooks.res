@@ -187,7 +187,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
               | _ => frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
               }
             | AUTH_ERROR(errorObj) =>
-              onFailure(authenticationCallStatus.apiCallFailure ++ " " ++ errorObj.errorMessage)
+              frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
             }
 
             Some(data)->Promise.resolve
