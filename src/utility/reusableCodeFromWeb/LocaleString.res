@@ -12,6 +12,7 @@ type localeStrings = {
   sortCodeText: string,
   cvcTextLabel: string,
   emailLabel: string,
+  emailInvalidText: string,
   accountNumberText: string,
   fullNameLabel: string,
   line1Label: string,
@@ -50,6 +51,8 @@ type localeStrings = {
   firstName: string,
   lastName: string,
   billingDetails: string,
+  requiredText: string,
+  lastNameRequiredText: string,
 }
 
 let defaultLocale = {
@@ -67,6 +70,7 @@ let defaultLocale = {
   accountNumberText: "Account Number",
   cvcTextLabel: "CVC",
   emailLabel: "Email",
+  emailInvalidText: "Invalid email address",
   line1Label: "Address line 1",
   line1Placeholder: "Street address",
   line2Label: "Address line 2",
@@ -107,6 +111,8 @@ let defaultLocale = {
   firstName: "First name",
   lastName: "Last name",
   billingDetails: "Billing Details",
+  requiredText: "Required",
+  lastNameRequiredText: "Last Name Required",
 }
 
 type locale = {localeStrings: array<localeStrings>}
@@ -136,6 +142,7 @@ let localeStrings = [
     stateLabel: "State",
     accountNumberText: "Account Number",
     emailLabel: "Email",
+    emailInvalidText: "Invalid email address",
     fullNameLabel: "Full name",
     fullNamePlaceholder: "First and last name",
     countryLabel: "Country",
@@ -167,6 +174,8 @@ let localeStrings = [
     firstName: "First name",
     lastName: "Last name",
     billingDetails: "Billing Details",
+    requiredText: "Required",
+    lastNameRequiredText: "Last Name Required",
   },
   //  locale: "he",
   {
@@ -193,6 +202,7 @@ let localeStrings = [
     stateLabel: `מדינה`,
     accountNumberText: `מספר חשבון`,
     emailLabel: `אימייל`,
+    emailInvalidText: `כתובת אימייל לא חוקית`,
     fullNameLabel: `שם מלא`,
     fullNamePlaceholder: `שם פרטי ושם משפחה`,
     countryLabel: `מדינה`,
@@ -224,6 +234,8 @@ let localeStrings = [
     firstName: `שם פרטי`,
     lastName: `שם משפחה`,
     billingDetails: `פרטי תשלום`,
+    requiredText: `נדרש`,
+    lastNameRequiredText: `שם משפחה נדרש`,
   },
   //  locale: `fr`,
   {
@@ -250,6 +262,7 @@ let localeStrings = [
     stateLabel: `État`,
     accountNumberText: `Numéro de compte`,
     emailLabel: `E-mail`,
+    emailInvalidText: `Adresse e-mail invalide`,
     fullNameLabel: `Nom complet`,
     fullNamePlaceholder: `Prénom et nom de famille`,
     countryLabel: `Pays`,
@@ -281,6 +294,8 @@ let localeStrings = [
     firstName: `Prénom`,
     lastName: "Nom de famille",
     billingDetails: `Détails de la facturation`,
+    requiredText: `Requis`,
+    lastNameRequiredText: `Nom de famille requis`,
   },
   //  locale: "en-GB",
   {
@@ -299,6 +314,7 @@ let localeStrings = [
     sortCodeText: "Sort Code",
     cvcTextLabel: "CVC",
     emailLabel: "Email",
+    emailInvalidText: "Invalid email address",
     line1Label: "Address line 1",
     line1Placeholder: "Street address",
     line2Label: "Address line 2",
@@ -338,6 +354,8 @@ let localeStrings = [
     firstName: "First name",
     lastName: "Last name",
     billingDetails: "Billing Details",
+    requiredText: "Required",
+    lastNameRequiredText: "Last Name Required",
   },
   //  locale: "ar",
   {
@@ -357,6 +375,7 @@ let localeStrings = [
     accountNumberText: `رقم حساب`,
     cvcTextLabel: `رمز الحماية`,
     emailLabel: `البريد الإلكتروني`,
+    emailInvalidText: `عنوان البريد الإلكتروني غير صالح`,
     fullNameLabel: `الاسم الكامل`,
     line1Label: `العنوان سطر 1`,
     line1Placeholder: `.عنوان الشارع`,
@@ -395,6 +414,8 @@ let localeStrings = [
     firstName: `الاسم الأول`,
     lastName: `اسم العائلة`,
     billingDetails: `تفاصيل الفاتورة`,
+    requiredText: `مطلوب`,
+    lastNameRequiredText: `نشاط اسم مطلوب`,
   },
   //  locale: "ja",
   {
@@ -414,6 +435,7 @@ let localeStrings = [
     cvcTextLabel: `セキュリティコード`,
     accountNumberText: `口座番号`,
     emailLabel: `Eメール`,
+    emailInvalidText: `無効なメールアドレス`,
     fullNameLabel: `フルネーム`,
     fullNamePlaceholder: `名前と苗字`,
     line1Label: `住所1`,
@@ -452,6 +474,8 @@ let localeStrings = [
     firstName: `ファーストネーム`,
     lastName: `苗字`,
     billingDetails: `支払明細`,
+    requiredText: `必須`,
+    lastNameRequiredText: `姓が必要です`,
   },
   //  locale: "de",
   {
@@ -478,6 +502,7 @@ let localeStrings = [
     stateLabel: `Zustand`,
     accountNumberText: `Accountnummer`,
     emailLabel: `Email`,
+    emailInvalidText: `Ungültige E-Mail-Adresse`,
     fullNameLabel: `Vollständiger Name`,
     fullNamePlaceholder: `Vor-und Nachname`,
     countryLabel: `Land`,
@@ -509,6 +534,8 @@ let localeStrings = [
     firstName: `Vorname`,
     lastName: `Familienname, Nachname`,
     billingDetails: `Rechnungsdetails`,
+    requiredText: `Erforderlich`,
+    lastNameRequiredText: `Nachname erforderlich`,
   },
   //:"French (Belgium) (fr-BE)",
   {
@@ -533,6 +560,7 @@ let localeStrings = [
     stateLabel: "État",
     accountNumberText: "Numéro dAccount Number",
     emailLabel: "E-mail",
+    emailInvalidText: `Adresse e-mail invalide`,
     fullNameLabel: "Nom cFull name",
     fullNamePlaceholder: "Nom et prénom",
     countryLabel: "Pays",
@@ -566,6 +594,8 @@ let localeStrings = [
     firstName: `Prénom`,
     lastName: `Nom de famille`,
     billingDetails: `Détails de la facturation`,
+    requiredText: `Requis`,
+    lastNameRequiredText: `Nom de famille requis`,
   },
   //    Spanish (es)
   {
@@ -590,6 +620,7 @@ let localeStrings = [
     stateLabel: "Provincia/estado",
     accountNumberText: "Número de cuenta",
     emailLabel: "Correo electrónico",
+    emailInvalidText: `Dirección de correo electrónico no válida`,
     fullNameLabel: "Nombre completo",
     fullNamePlaceholder: "Nombre y apellidos",
     countryLabel: "País",
@@ -623,6 +654,8 @@ let localeStrings = [
     firstName: `Nombre de pila`,
     lastName: `Apellido`,
     billingDetails: `Detalles de facturación`,
+    requiredText: `Requerido`,
+    lastNameRequiredText: `Apellido Necesario`,
   },
   //    Catalan (ca)
   {
@@ -647,6 +680,7 @@ let localeStrings = [
     stateLabel: "Estat",
     accountNumberText: "Número de compte",
     emailLabel: "Adreça electrònica",
+    emailInvalidText: `adressa de correu invàlida`,
     fullNameLabel: "Nom complet",
     fullNamePlaceholder: "Nom i cognoms",
     countryLabel: "País",
@@ -680,6 +714,8 @@ let localeStrings = [
     firstName: "Nom",
     lastName: "Cognom",
     billingDetails: `Detalls de facturació`,
+    requiredText: `Requerit`,
+    lastNameRequiredText: `Cognom necessari`,
   },
   //    Portuguese (pt)
   {
@@ -704,6 +740,7 @@ let localeStrings = [
     stateLabel: "Distrito",
     accountNumberText: "Número de conta",
     emailLabel: "E-mail",
+    emailInvalidText: `Endereço de email invalido`,
     fullNameLabel: "Nome completo",
     fullNamePlaceholder: "Nome e apelido",
     countryLabel: "País",
@@ -737,6 +774,8 @@ let localeStrings = [
     firstName: "Primeiro nome",
     lastName: "Sobrenome",
     billingDetails: `Detalhes de cobrança`,
+    requiredText: `obrigatório`,
+    lastNameRequiredText: `Sobrenome necessário`,
   },
   //    Italian (it)
   {
@@ -761,6 +800,7 @@ let localeStrings = [
     stateLabel: "Stato",
     accountNumberText: "Numero del conto",
     emailLabel: "E-mail",
+    emailInvalidText: `indirizzo email non valido`,
     fullNameLabel: "Nome e cognome",
     fullNamePlaceholder: "Nome e cognome",
     countryLabel: "Paese",
@@ -794,6 +834,8 @@ let localeStrings = [
     firstName: "Nome di battesimo",
     lastName: "Cognome",
     billingDetails: `Dettagli di fatturazione`,
+    requiredText: `Obbligatorio`,
+    lastNameRequiredText: `Cognome richiesto`,
   },
   //    Polish (pl)
   {
@@ -818,6 +860,7 @@ let localeStrings = [
     stateLabel: "Stan",
     accountNumberText: "Numer rachunku",
     emailLabel: "E-mail",
+    emailInvalidText: `Niepoprawny adres email`,
     fullNameLabel: "Imię i nazwisko",
     fullNamePlaceholder: "Imię i nazwisko",
     countryLabel: "Państwo",
@@ -851,6 +894,8 @@ let localeStrings = [
     firstName: `Imię`,
     lastName: `Nazwisko`,
     billingDetails: `Szczegóły płatności`,
+    requiredText: `Wymagany`,
+    lastNameRequiredText: `Wymagane nazwisko`,
   },
   //    Dutch (nl)
   {
@@ -875,6 +920,7 @@ let localeStrings = [
     stateLabel: "Region",
     accountNumberText: "Kontonummer",
     emailLabel: "E-mail",
+    emailInvalidText: `Ongeldig e-mailadres`,
     fullNameLabel: "Fulde navn",
     fullNamePlaceholder: "For- og efternavn",
     countryLabel: "Land",
@@ -908,10 +954,12 @@ let localeStrings = [
     firstName: `Voornaam`,
     lastName: `Achternaam`,
     billingDetails: `Factureringsgegevens`,
+    requiredText: `Vereist`,
+    lastNameRequiredText: `Achternaam vereist`,
   },
-  //    Dutch (Belgium) (nI-BE)
+  //    Dutch (Belgium) (nl-BE)
   {
-    locale: "nI-BE",
+    locale: "nl-BE",
     localeDirection: "v-p",
     cardDetailsLabel: "Kaartgegevens",
     cardNumberLabel: "Kaardi number",
@@ -932,6 +980,7 @@ let localeStrings = [
     stateLabel: "Maakond",
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
+    emailInvalidText: `Ongeldig e-mailadres`,
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -965,6 +1014,8 @@ let localeStrings = [
     firstName: `Voornaam`,
     lastName: `Achternaam`,
     billingDetails: `Factureringsgegevens`,
+    requiredText: `Vereist`,
+    lastNameRequiredText: `Achternaam vereist`,
   },
   //    Swedish (sv)
   {
@@ -989,6 +1040,7 @@ let localeStrings = [
     stateLabel: "Region",
     accountNumberText: "Kontonummer",
     emailLabel: "E-postadress",
+    emailInvalidText: `Ogiltig e-postadress`,
     fullNameLabel: "Fullständigt namn",
     fullNamePlaceholder: "För- och efternamn",
     countryLabel: "Land",
@@ -1022,6 +1074,8 @@ let localeStrings = [
     firstName: `Förnamn`,
     lastName: "Efternamn",
     billingDetails: `Faktureringsuppgifter`,
+    requiredText: `Nödvändig`,
+    lastNameRequiredText: `Efternamn krävs`,
   },
   //    Russian (ru)
   {
@@ -1046,6 +1100,7 @@ let localeStrings = [
     stateLabel: "Область",
     accountNumberText: "Номер счета",
     emailLabel: "Электронная почта",
+    emailInvalidText: `Неверный адрес электронной почты`,
     fullNameLabel: "Ф.И.О.",
     fullNamePlaceholder: "Имя и фамилия",
     countryLabel: "Страна",
@@ -1079,6 +1134,8 @@ let localeStrings = [
     firstName: `Имя`,
     lastName: `Фамилия`,
     billingDetails: `Платежные реквизиты`,
+    requiredText: `Необходимый`,
+    lastNameRequiredText: `Требуется фамилия`,
   },
   //    Lithuanian (lt)
   {
@@ -1103,6 +1160,7 @@ let localeStrings = [
     stateLabel: "Valstija",
     accountNumberText: "Sąskaitos nr.",
     emailLabel: "El. paštas",
+    emailInvalidText: `Neteisingas el. pašto adresas`,
     fullNameLabel: "Vardas ir pavardė",
     fullNamePlaceholder: "Vardas ir pavardė",
     countryLabel: "Šalis",
@@ -1136,6 +1194,8 @@ let localeStrings = [
     firstName: `Pirmas vardas`,
     lastName: `Pavardė`,
     billingDetails: `Atsiskaitymo informacija`,
+    requiredText: `Būtinas`,
+    lastNameRequiredText: `Reikalingas pavardė`,
   },
   //    Czech (cs)
   {
@@ -1160,6 +1220,7 @@ let localeStrings = [
     stateLabel: "Stát",
     accountNumberText: "Číslo účtu",
     emailLabel: "E-mail",
+    emailInvalidText: `neplatná emailová adresa`,
     fullNameLabel: "Celé jméno",
     fullNamePlaceholder: "Jméno a příjmení",
     countryLabel: "Země",
@@ -1193,6 +1254,8 @@ let localeStrings = [
     firstName: `Jméno`,
     lastName: `Příjmení`,
     billingDetails: `Fakturační údaje`,
+    requiredText: `Požadované`,
+    lastNameRequiredText: `Požadováno příjmení`,
   },
   //    Slovak (sk)
   {
@@ -1217,6 +1280,7 @@ let localeStrings = [
     stateLabel: "Štát",
     accountNumberText: "Číslo účtu",
     emailLabel: "E-mail",
+    emailInvalidText: `neplatná emailová adresa`,
     fullNameLabel: "Celé meno",
     fullNamePlaceholder: "Meno a priezvisko",
     countryLabel: "Krajina",
@@ -1250,10 +1314,12 @@ let localeStrings = [
     firstName: `Krstné meno`,
     lastName: `Priezvisko`,
     billingDetails: `fakturačné údaje`,
+    requiredText: `Požadovaný`,
+    lastNameRequiredText: `Vyžadované priezvisko`,
   },
-  //    Icelandic (ls)
+  //    Icelandic (is)
   {
-    locale: "ls",
+    locale: "is",
     localeDirection: "Vinstri til hægri",
     cardDetailsLabel: "Kortagögn",
     cardNumberLabel: "Kortanúmer",
@@ -1274,6 +1340,7 @@ let localeStrings = [
     stateLabel: "Ríki",
     accountNumberText: "Númer reiknings",
     emailLabel: "Netfang",
+    emailInvalidText: `ógilt netfang`,
     fullNameLabel: "Fullt nafn",
     fullNamePlaceholder: "Fullt nafn",
     countryLabel: "Land",
@@ -1307,6 +1374,8 @@ let localeStrings = [
     firstName: `Fyrsta nafn`,
     lastName: `Eftirnafn`,
     billingDetails: `Innheimtuupplýsingar`,
+    requiredText: `Nauðsynlegt`,
+    lastNameRequiredText: `Eftirnafn krafist`,
   },
   //    Welsh (cy)
   {
@@ -1331,6 +1400,7 @@ let localeStrings = [
     stateLabel: "Talaith",
     accountNumberText: "Rhif y Cyfrif",
     emailLabel: "E-bost",
+    emailInvalidText: `Cyfeiriad e -bost annilys`,
     fullNameLabel: "Enw llawn",
     fullNamePlaceholder: "Enw cyntaf ac olaf",
     countryLabel: "Gwlad",
@@ -1364,6 +1434,8 @@ let localeStrings = [
     firstName: `Enw cyntaf`,
     lastName: `Enw olaf`,
     billingDetails: `Manylion Bilio`,
+    requiredText: `Yn ofynnol`,
+    lastNameRequiredText: `Enw olaf Angenrheidiol`,
   },
   //    Greek (el)
   {
@@ -1388,6 +1460,7 @@ let localeStrings = [
     stateLabel: "Maakond",
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
+    emailInvalidText: `Μη έγκυρη διεύθυνση e-mail`,
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -1421,6 +1494,8 @@ let localeStrings = [
     firstName: `Ονομα`,
     lastName: `Επίθετο`,
     billingDetails: `λεπτομέρειες χρέωσης`,
+    requiredText: `Απαιτείται`,
+    lastNameRequiredText: `Απαιτείται επώνυμο`,
   },
   //Estonian (et)
   {
@@ -1445,6 +1520,7 @@ let localeStrings = [
     stateLabel: "Maakond",
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
+    emailInvalidText: `vale emaili aadress`,
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -1478,6 +1554,8 @@ let localeStrings = [
     firstName: `Eesnimi`,
     lastName: `Perekonnanimi`,
     billingDetails: `Arvelduse üksikasjad`,
+    requiredText: `Nõutud`,
+    lastNameRequiredText: `Vajalik perekonnanimi`,
   },
   //Finnish (fi)
   {
@@ -1502,6 +1580,7 @@ let localeStrings = [
     stateLabel: "Maakond",
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
+    emailInvalidText: `Virheellinen sähköpostiosoite`,
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -1535,10 +1614,12 @@ let localeStrings = [
     firstName: `Etunimi`,
     lastName: `Sukunimi`,
     billingDetails: `laskutustiedot`,
+    requiredText: `Edellytetään`,
+    lastNameRequiredText: `Sukunimi vaaditaan`,
   },
-  //Norwegian (nb)
+  //Norwegian (no)
   {
-    locale: "nb",
+    locale: "no",
     localeDirection: "ltr",
     cardDetailsLabel: "Kortdetaljer",
     cardNumberLabel: "Kortnummer",
@@ -1559,6 +1640,7 @@ let localeStrings = [
     stateLabel: "Delstat",
     accountNumberText: "Kontonummer",
     emailLabel: "E-postadresse",
+    emailInvalidText: `Ugyldig epostadresse`,
     fullNameLabel: "Fullt navn",
     fullNamePlaceholder: "For- og etternavn",
     countryLabel: "Land",
@@ -1592,6 +1674,8 @@ let localeStrings = [
     firstName: `Fornavn`,
     lastName: `Etternavn`,
     billingDetails: `Fakturadetaljer`,
+    requiredText: `Påkrevd`,
+    lastNameRequiredText: `Etternavn påkrevd`,
   },
   //Bosnian (bs)
   {
@@ -1616,6 +1700,7 @@ let localeStrings = [
     stateLabel: "Država",
     accountNumberText: "Broj računa",
     emailLabel: "E-mail",
+    emailInvalidText: `pogrešna email adresa`,
     fullNameLabel: "Ime i prezime",
     fullNamePlaceholder: "Ime i prezime",
     countryLabel: "Država",
@@ -1649,6 +1734,8 @@ let localeStrings = [
     firstName: "Ime",
     lastName: "Prezime",
     billingDetails: `Detalji naplate`,
+    requiredText: `Potreban`,
+    lastNameRequiredText: `Potrebno je prezime`,
   },
   //Danish (da)
   {
@@ -1673,6 +1760,7 @@ let localeStrings = [
     stateLabel: "Region",
     accountNumberText: "Kontonummer",
     emailLabel: "E-mail",
+    emailInvalidText: `ugyldig emailadresse`,
     fullNameLabel: "Fulde navn",
     fullNamePlaceholder: "For- og efternavn",
     countryLabel: "Land",
@@ -1706,6 +1794,8 @@ let localeStrings = [
     firstName: "Fornavn",
     lastName: "Efternavn",
     billingDetails: `Faktureringsdetaljer`,
+    requiredText: `Krævet`,
+    lastNameRequiredText: `Efternavn krævet`,
   },
   //Malay (ms)
   {
@@ -1730,6 +1820,7 @@ let localeStrings = [
     stateLabel: "Negeri",
     accountNumberText: "Nombor Akaun",
     emailLabel: "E-mel",
+    emailInvalidText: `alamat email tidak sah`,
     fullNameLabel: "Nama penuh",
     fullNamePlaceholder: "Nama pertama dan akhir",
     countryLabel: "Negara",
@@ -1763,6 +1854,8 @@ let localeStrings = [
     firstName: "Nama pertama",
     lastName: "Nama terakhir",
     billingDetails: `maklumat Bil`,
+    requiredText: `Diperlukan`,
+    lastNameRequiredText: `Nama terakhir diperluka`,
   },
   //Turkish (tr-CY)
   {
@@ -1787,6 +1880,7 @@ let localeStrings = [
     stateLabel: "Eyalet",
     accountNumberText: "Hesap Numarası",
     emailLabel: "E-posta",
+    emailInvalidText: `Geçersiz e-posta adresi`,
     fullNameLabel: "İsim ve soyisim",
     fullNamePlaceholder: "Ad ve soyadı",
     countryLabel: "Ülke",
@@ -1820,5 +1914,7 @@ let localeStrings = [
     firstName: `İlk adı`,
     lastName: "Soy isim",
     billingDetails: `Fatura Detayları`,
+    requiredText: `Gerekli`,
+    lastNameRequiredText: `Soyad gerekli`,
   },
 ]

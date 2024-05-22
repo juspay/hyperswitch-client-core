@@ -25,7 +25,6 @@ type paymentMethodsFields =
   | AddressCountry(array<string>)
   | BlikCode
   | Currency(array<string>)
-  | UnKnownField123
 
 type requiredField =
   | StringField(string)
@@ -88,11 +87,11 @@ let getPaymentMethodsFieldTypeFromDict = (dict: Dict.t<JSON.t>) => {
   | (_, _, Some(user_address_country)) =>
     let options = user_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
-    | "" => UnKnownField123
+    | "" => UnKnownField("empty_list")
     | "ALL" => AddressCountry(Country.country->Array.map(item => item.isoAlpha2))
     | _ => AddressCountry(options)
     }
-  | _ => UnKnownField123
+  | _ => UnKnownField("empty_list")
   }
 }
 let getFieldType = dict => {
@@ -101,7 +100,7 @@ let getFieldType = dict => {
   switch fieldClass {
   | String(val) => val->getPaymentMethodsFieldTypeFromString
   | Object(dict) => dict->getPaymentMethodsFieldTypeFromDict
-  | _ => UnKnownField123
+  | _ => UnKnownField("unknown_field_type")
   }
 }
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
@@ -168,6 +167,12 @@ let getRequiredFieldsFromDict = dict => {
 
     switch (fullCardHolderNameFields[0], fullCardHolderNameFields[1]) {
     | (Some(firstNameField), Some(lastNameField)) =>
+      let value = if firstNameField.value === "" && lastNameField.value === "" {
+        ""
+      } else {
+        [firstNameField.value, lastNameField.value]->Array.join(" ")
+      }
+
       arr->Array.filterMap(x => {
         if x === firstNameField {
           {
@@ -176,6 +181,7 @@ let getRequiredFieldsFromDict = dict => {
               firstNameField.required_field->getRequiredFieldName,
               lastNameField.required_field->getRequiredFieldName,
             ),
+            value,
           }->Some
         } else if x === lastNameField {
           None
@@ -191,14 +197,18 @@ let getRequiredFieldsFromDict = dict => {
   }
 }
 
-let checkIsValid = (~text: string, ~field_type: paymentMethodsFields) => {
+let checkIsValid = (
+  ~text: string,
+  ~field_type: paymentMethodsFields,
+  ~localeObject: LocaleString.localeStrings,
+) => {
   if text == "" {
-    Some("Required")
+    Some(localeObject.requiredText)
   } else {
     switch field_type {
     | Email =>
       switch text->ValidationFunctions.isValidEmail {
-      | Some(false) => Some("Invalid email")
+      | Some(false) => Some(localeObject.emailInvalidText)
       | _ => None
       }
     | _ => None
@@ -270,8 +280,7 @@ let useGetPlaceholder = (
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
-    | BlikCode
-    | UnKnownField123 =>
+    | BlikCode =>
       display_name->toCamelCase
     }
 }
