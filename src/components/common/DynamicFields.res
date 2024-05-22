@@ -24,6 +24,7 @@ module RenderField = {
     ~country,
     ~finalJson: array<(string, JSON.t, option<string>)>,
   ) => {
+    let localeObject = GetLocale.useGetLocalObj()
     let {component} = ThemebasedStyle.useThemeBasedStyle()
 
     let value = switch required_fields_type.required_field {
@@ -72,6 +73,7 @@ module RenderField = {
             let tempValid = RequiredFieldsTypes.checkIsValid(
               ~text,
               ~field_type=required_fields_type.field_type,
+              ~localeObject,
             )
 
             setErrorMesage(_ => tempValid)
@@ -96,11 +98,11 @@ module RenderField = {
 
             let (firstNameVal, firstNameErrorMessage) =
               firstNameVal === ""
-                ? (JSON.Encode.null, Some("Required"))
+                ? (JSON.Encode.null, Some(localeObject.requiredText))
                 : (JSON.Encode.string(firstNameVal), None)
             let (lastNameVal, lastNameErrorMessage) =
               lastNameVal === ""
-                ? (JSON.Encode.null, Some("Last Name Required"))
+                ? (JSON.Encode.null, Some(localeObject.lastNameRequiredText))
                 : (JSON.Encode.string(lastNameVal), None)
 
             setErrorMesage(_ =>
