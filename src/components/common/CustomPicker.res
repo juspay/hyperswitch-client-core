@@ -42,7 +42,7 @@ let make = (
       <CustomInput
         state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
         | Some(y) => y.name
-        | _ => ""
+        | _ => value->Option.getOr("")
         }}
         setState={_ => ()}
         borderBottomLeftRadius
