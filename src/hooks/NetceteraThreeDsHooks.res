@@ -222,18 +222,20 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
           threeDsData.messageVersion,
           threeDsData.directoryServerId,
           status => {
-            Netcetera3dsModule.generateAReqParams((aReqParams, status) => {
-              status->isStatusSuccess
-                ? hsThreeDsAuthCall(
-                    clientSecret,
-                    publishableKey,
-                    aReqParams,
-                    threeDsData,
-                    onSuccess,
-                    onFailure,
-                  )->ignore
-                : onFailure(threeDsSDKGetAReqStatus.errorMsg)
-            })
+            status->isStatusSuccess
+              ? Netcetera3dsModule.generateAReqParams((aReqParams, status) => {
+                  status->isStatusSuccess
+                    ? hsThreeDsAuthCall(
+                        clientSecret,
+                        publishableKey,
+                        aReqParams,
+                        threeDsData,
+                        onSuccess,
+                        onFailure,
+                      )->ignore
+                    : onFailure(threeDsSDKGetAReqStatus.errorMsg)
+                })
+              : onFailure(status.message)
           },
         )
       } catch {
