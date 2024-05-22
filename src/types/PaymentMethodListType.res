@@ -269,6 +269,7 @@ type mandateType = NORMAL | NEW_MANDATE | SETUP_MANDATE
 type jsonToMandateData = {
   mandateType: mandateType,
   paymentType: option<string>,
+  merchantName: option<string>,
 }
 
 let jsonToMandateData: JSON.t => jsonToMandateData = res => {
@@ -284,8 +285,13 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
       | _ => NORMAL
       },
       paymentType: Some(pType),
+      merchantName: res
+      ->getDictFromJson
+      ->Dict.get("merchant_name")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.string,
     }
-  | None => {mandateType: NORMAL, paymentType: None}
+  | None => {mandateType: NORMAL, paymentType: None, merchantName: None}
   }
 }
 
