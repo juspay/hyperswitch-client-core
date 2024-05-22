@@ -308,7 +308,7 @@ let make = (
   }, [finalJson])
 
   let filteredRequiredFieldsFromRendering =
-    filteredRequiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(finalJson)
+    filteredRequiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(keysValArray)
 
   let (statesJson, setStatesJson) = React.useState(_ => None)
 

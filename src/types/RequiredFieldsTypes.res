@@ -422,7 +422,7 @@ let filterDynamicFieldsFromRendering = (
     | FullNameField(firstNameVal, lastNameVal) =>
       finalJson->Array.reduce(false, (acc, (key, _, errorMsg)) => {
         if key === firstNameVal || key === lastNameVal {
-          acc || errorMsg->Option.isNone
+          acc || errorMsg->Option.isSome
         } else {
           acc
         }
