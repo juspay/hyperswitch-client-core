@@ -119,7 +119,7 @@ let make = (
     processRequest(cardVal)
   }
 
-  React.useEffect5(() => {
+  React.useEffect6(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
@@ -132,7 +132,14 @@ let make = (
       )
     }
     None
-  }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname))
+  }, (
+    isConfirmButtonValid,
+    isScreenFocus,
+    error,
+    isNicknameSelected,
+    nickname,
+    dynamicFieldsJson,
+  ))
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
     <View>
