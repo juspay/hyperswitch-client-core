@@ -53,10 +53,10 @@ module RenderField = {
     }
     let (val, setVal) = React.useState(_ => initialValue)
 
-    React.useEffect2(() => {
+    React.useEffect(() => {
       setVal(_ => initialValue)
       None
-    }, (required_fields_type, isSaveCardsFlow))
+    }, (required_fields_type, isSaveCardsFlow, initialValue))
 
     let (errorMessage, setErrorMesage) = React.useState(_ => None)
 
@@ -77,13 +77,22 @@ module RenderField = {
               ~localeObject,
             )
 
+            let isCountryField = switch required_fields_type.field_type {
+            | AddressCountry(_) => true
+            | _ => false
+            }
+
             setErrorMesage(_ => tempValid)
             setFinalJson(prev => {
               prev->Array.map(
                 item => {
                   let (key, _, _) = item
 
-                  if key == stringFieldPath {
+                  let isStateKey = key->String.split(".")->Array.includes("state")
+
+                  if isCountryField && isStateKey {
+                    (key, JSON.Encode.null, Some(localeObject.requiredText))
+                  } else if key == stringFieldPath {
                     (key, text->JSON.Encode.string, tempValid)
                   } else {
                     item
