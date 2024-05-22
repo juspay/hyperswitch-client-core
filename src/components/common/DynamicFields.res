@@ -41,7 +41,8 @@ module RenderField = {
         } else {
           JSON.Encode.string([firstName, lastName]->Array.join(" "))
         }
-
+      | (String(firstName), _) => JSON.Encode.string(firstName)
+      | (_, String(lastName)) => JSON.Encode.string(lastName)
       | _ => JSON.Encode.null
       }
     }
@@ -307,7 +308,7 @@ let make = (
   }, [finalJson])
 
   let filteredRequiredFieldsFromRendering =
-    filteredRequiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering
+    filteredRequiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(finalJson)
 
   let (statesJson, setStatesJson) = React.useState(_ => None)
 
