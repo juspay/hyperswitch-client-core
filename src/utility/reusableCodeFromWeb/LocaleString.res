@@ -101,8 +101,7 @@ let defaultLocale = {
   sepaDebitTerms: str =>
     `By providing your payment information and confirming this payment, you authorise (A) ${str} and our payment service provider(s) to send instructions to your bank to debit your account and (B) your bank to debit your account in accordance with those instructions. As part of your rights, you are entitled to a refund from your bank under the terms and conditions of your agreement with your bank. Your rights are explained in a statement that you can obtain from your bank. You agree to receive notifications for future debits up to 2 days before they occur.`,
   becsDebitTerms: `By providing your bank account details and confirming this payment, you agree to this Direct Debit Request and the Direct Debit Request service agreement and authorise to debit your account through the Bulk Electronic Clearing System (BECS) on behalf of Hyperswitch Payment Widget (the "Merchant") for any amounts separately communicated to you by the Merchant. You certify that you are either an account holder or an authorised signatory on the account listed above.`,
-  cardTerms: str =>
-    `By providing your card information, you allow ${str} to charge your card for future payments in accordance with their terms.`,
+  cardTerms: str => `You allow ${str} to automatically charge your card for future payments.`,
   payNowButton: "Pay Now",
   cardNumberEmptyText: "Card Number cannot be empty",
   cardExpiryDateEmptyText: "Card expiry date cannot be empty",
@@ -169,8 +168,7 @@ let localeStrings = [
     sepaDebitTerms: str =>
       `By providing your payment information and confirming this payment, you authorise (A) ${str} and Hyperswitch, our payment service provider and/or PPRO, its local service provider, to send instructions to your bank to debit your account and (B) your bank to debit your account in accordance with those instructions. As part of your rights, you are entitled to a refund from your bank under the terms and conditions of your agreement with your bank. A refund must be claimed within 8 weeks starting from the date on which your account was debited. Your rights are explained in a statement that you can obtain from your bank. You agree to receive notifications for future debits up to 2 days before they occur.`,
     becsDebitTerms: `By providing your bank account details and confirming this payment, you agree to this Direct Debit Request and the Direct Debit Request service agreement and authorise Hyperswitch Payments Australia Pty Ltd ACN 160 180 343 Direct Debit User ID number 507156 (“Hyperswitch”) to debit your account through the Bulk Electronic Clearing System (BECS) on behalf of Hyperswitch Payment Widget (the "Merchant") for any amounts separately communicated to you by the Merchant. You certify that you are either an account holder or an authorised signatory on the account listed above.`,
-    cardTerms: str =>
-      `By providing your card information, you allow ${str} to charge your card for future payments in accordance with their terms.`,
+    cardTerms: str => `You allow ${str} to automatically charge your card for future payments.`,
     payNowButton: "Pay Now",
     cardNumberEmptyText: "Card Number cannot be empty",
     cardExpiryDateEmptyText: "Card expiry date cannot be empty",

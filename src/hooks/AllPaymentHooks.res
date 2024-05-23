@@ -31,6 +31,7 @@ let jsonToSavedPMObj = data => {
             payment_token: savedPMData->Utils.getString("payment_token", ""),
             nick_name: card->Utils.getString("nick_name", ""),
             isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
+            requiresCVV: savedPMData->Utils.getBool("requires_cvv", false),
           }),
         )
       | None => ()

@@ -8,12 +8,14 @@ type allApiData = {
   redirect_url: option<string>,
   mandateType: PaymentMethodListType.mandateType,
   paymentType: option<string>,
+  merchantName: option<string>,
 }
 let dafaultVal = {
   retryEnabled: None,
   redirect_url: None,
   mandateType: NORMAL,
   paymentType: None,
+  merchantName: None,
 }
 
 let allApiDataContext = React.createContext((dafaultVal, (_: allApiData) => ()))

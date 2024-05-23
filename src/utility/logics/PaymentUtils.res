@@ -143,11 +143,27 @@ let generateCardConfirmBody = (
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
+  ~allApiData: AllApiDataContext.allApiData,
+  ~isSaveCardCheckboxSelected,
 ): PaymentMethodListType.redirectType => {
   {
     client_secret: nativeProp.clientSecret,
     payment_method: "card",
     payment_token,
+    customer_acceptance: ?(
+      allApiData.mandateType == NEW_MANDATE && isSaveCardCheckboxSelected
+        ? Some({
+            {
+              acceptance_type: "online",
+              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+              online: {
+                ip_address: ?nativeProp.hyperParams.ip,
+                user_agent: ?nativeProp.hyperParams.userAgent,
+              },
+            }
+          })
+        : None
+    ),
   }
 }
 let generateWalletConfirmBody = (
