@@ -10,8 +10,7 @@ let make = () => {
       Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
     )
     let event = NativeEventEmitter.addListener(nee, "confirmEC", var => {
-      let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
-      Console.log(responseFromJava)
+      let _responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
       handleSuccessFailure(
         ~apiResStatus={
           message: "",

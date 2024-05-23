@@ -89,7 +89,6 @@ module PaymentMethordListView = {
       | Some(_) =>
         switch pmObject {
         | SdkTypes.SAVEDLISTCARD(_) =>
-          // Console.log2("payment type-------->card!!!!!!!", savedPaymentMethod)
           setSavedPaymentMethordContextObj(
             Some({
               ...savedPaymentMethordContextObj,
@@ -100,9 +99,6 @@ module PaymentMethordListView = {
             }),
           )
         | SdkTypes.SAVEDLISTWALLET(obj) => {
-            // Console.log2("payment type------->wallet!!!!!!", savedPaymentMethod)
-            // Console.log2("wallet spotted", obj.walletType)
-
             let walletType = obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
             setSavedPaymentMethordContextObj(
               Some({
