@@ -1,6 +1,83 @@
 open ReactNative
 open Style
 // @send external focus: ReactNative.TouchableOpacity.ref => unit = "focus"
+
+module CVVComponent = {
+  @react.component
+  let make = (
+    ~savedCardCvv,
+    ~setSavedCardCvv,
+    ~component: ThemebasedStyle.componentConfig,
+    ~pmObject,
+    ~isPaymentMethodSelected,
+  ) => {
+    React.useEffect1(() => {
+      setSavedCardCvv(_ => None)
+      None
+    }, [isPaymentMethodSelected])
+
+    let (isCvcFocus, setIsCvcFocus) = React.useState(_ => false)
+
+    let cardScheme = switch pmObject {
+    | SdkTypes.SAVEDLISTCARD(card) => card.cardScheme->Option.getOr("")
+    | _ => ""
+    }
+
+    let isCvcValid =
+      isCvcFocus || savedCardCvv->Option.isNone
+        ? true
+        : savedCardCvv->Option.getOr("")->String.length > 0 &&
+            Validation.cvcNumberInRange(savedCardCvv->Option.getOr(""), cardScheme)
+
+    let localeObject = GetLocale.useGetLocalObj()
+
+    let errorMsgText = !isCvcValid ? Some(localeObject.inCompleteCVCErrorText) : None
+
+    let onCvvChange = cvv => setSavedCardCvv(_ => Some(cvv))
+
+    {
+      isPaymentMethodSelected
+        ? <>
+            <View
+              style={viewStyle(
+                ~display=#flex,
+                ~flexDirection=#row,
+                ~alignItems=#center,
+                ~paddingHorizontal=40.->dp,
+                ~marginTop=10.->dp,
+                (),
+              )}>
+              <View style={viewStyle(~width={50.->dp}, ())}>
+                <TextWrapper text="CVC:" textType={ModalText} />
+              </View>
+              <CustomInput
+                state={isPaymentMethodSelected ? savedCardCvv->Option.getOr("") : ""}
+                setState={isPaymentMethodSelected ? onCvvChange : _ => ()}
+                placeholder="123"
+                fontSize=12.
+                keyboardType=#"number-pad"
+                enableCrossIcon=false
+                width={60.->dp}
+                height=40.
+                isValid={isPaymentMethodSelected ? isCvcValid : true}
+                maxLength=Some(3)
+                textColor={component.color}
+                onFocus={() => {
+                  setIsCvcFocus(_ => true)
+                }}
+                onBlur={() => {
+                  setIsCvcFocus(_ => false)
+                }}
+              />
+            </View>
+            {errorMsgText->Option.isSome && isPaymentMethodSelected
+              ? <ErrorText text=errorMsgText />
+              : React.null}
+          </>
+        : React.null
+    }
+  }
+}
 module PMWithNickNameComponent = {
   @react.component
   let make = (~pmDetails: SdkTypes.savedDataType) => {
@@ -58,13 +135,15 @@ module CardDetailsComponent = {
   }
 }
 
-module PaymentMethordListView = {
+module PaymentMethodListView = {
   @react.component
   let make = (
     ~pmObject: SdkTypes.savedDataType,
     ~isButtomBorder=true,
     ~setIsAllDynamicFieldValid,
     ~setDynamicFieldsJson,
+    ~savedCardCvv,
+    ~setSavedCardCvv,
   ) => {
     let (pmList, _) = React.useContext(PaymentListContext.paymentListContext)
 
@@ -149,7 +228,7 @@ module PaymentMethordListView = {
       None
     })
 
-    let {component} = ThemebasedStyle.useThemeBasedStyle()
+    let {component, dangerColor, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
 
     let pmToken = switch pmObject {
     | SdkTypes.SAVEDLISTCARD(obj) =>
@@ -247,6 +326,9 @@ module PaymentMethordListView = {
         | SAVEDLISTWALLET(_) | NONE => React.null
         }}
       </View>
+      {pmObject->PaymentUtils.checkIsCVCRequired
+        ? <CVVComponent savedCardCvv setSavedCardCvv component pmObject isPaymentMethodSelected />
+        : React.null}
       {isPaymentMethodSelected && requiredFields->Array.length != 0
         ? <View style={viewStyle(~paddingHorizontal=10.->dp, ())}>
             <DynamicFields

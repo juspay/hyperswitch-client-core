@@ -52,6 +52,7 @@ let make = (
     nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
     isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
   )
+  let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
 
   let processSavedPMRequest = () => {
     //processRequestWallet( obj->SdkTypes.walletTypeToStrMapper->getWalletValFromWalletArr)
@@ -88,6 +89,7 @@ let make = (
           ~payment_token=selectedObj.token->Option.getOr(""),
           ~allApiData,
           ~isSaveCardCheckboxSelected,
+          ~savedCardCvv,
         ),
         "card",
       )
@@ -143,7 +145,7 @@ let make = (
   //   None
   // }, [savedPaymentMethodsData])
 
-  React.useEffect6(() => {
+  React.useEffect7(() => {
     setShowSavePMCheckbox(_ =>
       allApiData.mandateType == NEW_MANDATE &&
       nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
@@ -178,6 +180,7 @@ let make = (
     dynamicFieldsJson,
     isSaveCardCheckboxSelected,
     error,
+    savedCardCvv,
   ))
 
   // React.useEffect1(() => {
@@ -215,6 +218,8 @@ let make = (
       merchantName={nativeProp.configuration.merchantDisplayName == ""
         ? allApiData.merchantName->Option.getOr("")
         : nativeProp.configuration.merchantDisplayName}
+      savedCardCvv
+      setSavedCardCvv
     />
   </>
 }

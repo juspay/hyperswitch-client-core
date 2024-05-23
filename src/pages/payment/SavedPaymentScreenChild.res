@@ -10,6 +10,8 @@ let make = (
   ~setSaveCardChecboxSelected,
   ~showSavePMCheckbox,
   ~merchantName,
+  ~savedCardCvv,
+  ~setSavedCardCvv,
 ) => {
   let {borderRadius, component, shadowColor, shadowIntensity} = ThemebasedStyle.useThemeBasedStyle()
   let (selected, isSelected) = React.useState(_ => true)
@@ -41,7 +43,11 @@ let make = (
           ),
         ])}>
         <SavedPMListWithLoader
-          listArr={savedPaymentMethodsData} setIsAllDynamicFieldValid setDynamicFieldsJson
+          listArr={savedPaymentMethodsData}
+          setIsAllDynamicFieldValid
+          setDynamicFieldsJson
+          savedCardCvv
+          setSavedCardCvv
         />
       </View>
       <Space height=20. />
