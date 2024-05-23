@@ -27,9 +27,9 @@ type fallbackArg = {
 type props = {fallback: fallbackArg => React.element, children: React.element}
 
 type module_ = {
-  init: (. sentryInitArg) => unit,
-  \"BrowserTracing": (. newBrowserTracingArg) => integration,
-  reactRouterV6Instrumentation: (. (. unit => option<unit => unit>) => unit) => instrumentation,
+  init: sentryInitArg => unit,
+  \"BrowserTracing": newBrowserTracingArg => integration,
+  reactRouterV6Instrumentation: ((unit => option<unit => unit>) => unit) => instrumentation,
   \"Replay": unit => integration,
   \"ErrorBoundary": option<React.component<props>>,
   wrap: React.element => React.element,
@@ -44,9 +44,9 @@ let sentryReactNative = switch try {
 } {
 | Some(mod) => mod
 | None => {
-    init: (. _) => (),
-    \"BrowserTracing": (. _) => (),
-    reactRouterV6Instrumentation: (. _) => (),
+    init: _ => (),
+    \"BrowserTracing": _ => (),
+    reactRouterV6Instrumentation: _ => (),
     \"Replay": () => (),
     \"ErrorBoundary": None,
     wrap: component => component,
@@ -79,19 +79,19 @@ let initiateSentry = (~dsn) => {
       ReactNative.Platform.os === #web
         ? [
             newBrowserTracing({
-              routingInstrumentation: sentryReactNative.reactRouterV6Instrumentation(.
+              routingInstrumentation: sentryReactNative.reactRouterV6Instrumentation(
                 ReactModule.useEffect,
               ),
             }),
             newSentryReplay(),
           ]
         : []
-    sentryReactNative.init(. {
+    sentryReactNative.init({
       dsn,
       integrations,
       tracesSampleRate: 1.0,
     })
   } catch {
-  | err => Console.log(err)
+  | _ => ()
   }
 }
