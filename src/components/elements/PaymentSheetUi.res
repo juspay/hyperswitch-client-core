@@ -49,6 +49,16 @@ let make = (
   let logger = LoggerHook.useLoggerHook()
   let nullRef = React.useRef(Nullable.null)
 
+  let errorMsgText = if !isCardNumberValid {
+    Some(localeObject.inValidCardErrorText)
+  } else if !isExpireDateValid {
+    Some(localeObject.inCompleteExpiryErrorText)
+  } else if !isCvvValid {
+    Some(localeObject.inCompleteCVCErrorText)
+  } else {
+    None
+  }
+
   let scanCardCallback = (scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
     switch scanCardReturnType {
     | Succeeded(data) => {
@@ -241,8 +251,8 @@ let make = (
         </View>
       </View>
     </View>
-    {!isCardNumberValid || !isExpireDateValid || !isCvvValid
-      ? <ErrorText text=Some(localeObject.inValidCardErrorText) />
+    {errorMsgText->Option.isSome
+      ? <ErrorText text=errorMsgText />
       : React.null}
   </ErrorBoundary>
 }

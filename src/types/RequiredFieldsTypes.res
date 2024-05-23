@@ -197,13 +197,25 @@ let getRequiredFieldsFromDict = dict => {
   }
 }
 
+let getErrorMsg = (
+  ~field_type: paymentMethodsFields,
+  ~localeObject: LocaleString.localeStrings,
+) => {
+  switch field_type {
+  | AddressLine1 => localeObject.line1EmptyText
+  | AddressCity => localeObject.cityEmptyText
+  | AddressPincode => localeObject.postalCodeEmptyText
+  | _ => localeObject.requiredText
+  }
+}
+
 let checkIsValid = (
   ~text: string,
   ~field_type: paymentMethodsFields,
   ~localeObject: LocaleString.localeStrings,
 ) => {
   if text == "" {
-    Some(localeObject.requiredText)
+    getErrorMsg(~field_type, ~localeObject)->Some
   } else {
     switch field_type {
     | Email =>
