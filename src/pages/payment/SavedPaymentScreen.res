@@ -34,6 +34,25 @@ let make = (
     option<string>,
   )> => [])
 
+  let isCVVRequiredByAnyPm = (pmList: option<array<SdkTypes.savedDataType>>) => {
+    pmList
+    ->Option.getOr([])
+    ->Array.reduce(false, (accumulator, item) =>
+      accumulator ||
+      switch item {
+      | SAVEDLISTCARD(obj) => obj.requiresCVV == true
+      | _ => false
+      }
+    )
+  }
+
+  let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
+  let (showSavePMCheckbox, setShowSavePMCheckbox) = React.useState(_ =>
+    allApiData.mandateType == NEW_MANDATE &&
+    nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
+    isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
+  )
+
   let processSavedPMRequest = () => {
     //processRequestWallet( obj->SdkTypes.walletTypeToStrMapper->getWalletValFromWalletArr)
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -67,6 +86,8 @@ let make = (
         PaymentUtils.generateSavedCardConfirmBody(
           ~nativeProp,
           ~payment_token=selectedObj.token->Option.getOr(""),
+          ~allApiData,
+          ~isSaveCardCheckboxSelected,
         ),
         "card",
       )
@@ -122,7 +143,13 @@ let make = (
   //   None
   // }, [savedPaymentMethodsData])
 
-  React.useEffect5(() => {
+  React.useEffect6(() => {
+    setShowSavePMCheckbox(_ =>
+      allApiData.mandateType == NEW_MANDATE &&
+      nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
+      isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
+    )
+
     let selectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
       walletName: NONE,
       token: Some(""),
@@ -149,6 +176,7 @@ let make = (
     allApiData,
     isAllDynamicFieldValid,
     dynamicFieldsJson,
+    isSaveCardCheckboxSelected,
     error,
   ))
 
@@ -181,6 +209,12 @@ let make = (
       savedPaymentMethodsData={savedPaymentMethordContextObj.pmList->Option.getOr([])}
       setIsAllDynamicFieldValid
       setDynamicFieldsJson
+      isSaveCardCheckboxSelected
+      setSaveCardChecboxSelected
+      showSavePMCheckbox
+      merchantName={nativeProp.configuration.merchantDisplayName == ""
+        ? allApiData.merchantName->Option.getOr("")
+        : nativeProp.configuration.merchantDisplayName}
     />
   </>
 }

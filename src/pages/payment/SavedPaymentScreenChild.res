@@ -6,6 +6,10 @@ let make = (
   ~savedPaymentMethodsData,
   ~setIsAllDynamicFieldValid,
   ~setDynamicFieldsJson,
+  ~isSaveCardCheckboxSelected,
+  ~setSaveCardChecboxSelected,
+  ~showSavePMCheckbox,
+  ~merchantName,
 ) => {
   let {borderRadius, component, shadowColor, shadowIntensity} = ThemebasedStyle.useThemeBasedStyle()
   let (selected, isSelected) = React.useState(_ => true)
@@ -14,8 +18,9 @@ let make = (
   let shadowRadius = shadowIntensity
   let shadowOpacity = 0.2
   let shadowOffsetWidth = 0.
+  let localeObj = GetLocale.useGetLocalObj()
 
-  <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
+  <View style={viewStyle(~marginHorizontal=5.->pct, ())}>
     <View>
       <View
         style={array([
@@ -50,7 +55,24 @@ let make = (
           fillIcon=false
         />
       </View>
-      <Space height=25./>
+      {showSavePMCheckbox
+        ? <>
+            <Space height=20. />
+            // <View style={viewStyle(~margin=5.->pct, ())}>
+            <ClickableTextElement
+              disabled={false}
+              initialIconName="checkboxClicked"
+              updateIconName="checkboxNotClicked"
+              text={localeObj.cardTerms(merchantName)}
+              isSelected={isSaveCardCheckboxSelected}
+              setIsSelected={setSaveCardChecboxSelected}
+              textType={TextWrapper.ModalText}
+              disableScreenSwitch=true
+            />
+            // </View>
+          </>
+        : React.null}
+      <Space height=25. />
     </View>
   </View>
 }

@@ -64,6 +64,7 @@ type savedCard = {
   mandate_id?: string,
   nick_name?: string,
   isDefaultPaymentMethod?: bool,
+  requiresCVV: bool,
 }
 
 type savedWallet = {
