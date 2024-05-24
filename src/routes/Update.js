@@ -6,7 +6,6 @@ import {
   sentryReactNative,
   initiateSentry,
 } from '../components/modules/Sentry.bs.js';
-initiateSentry(process.env.HYPERSWITCH_SENTRY_DSN);
 
 const NewApp = props => {
   useEffect(() => {
@@ -47,7 +46,13 @@ const NewApp = props => {
   );
 };
 
+const SentryApp = props => {
+  return React.useMemo(() => {
+    initiateSentry(process.env.HYPERSWITCH_SENTRY_DSN);
+    return sentryReactNative.wrap(NewApp)(props);
+  }, []);
+};
+
 export default CodePush({checkFrequency: CodePush.CheckFrequency.MANUAL})(
-  sentryReactNative.wrap(NewApp),
-  // NewApp,
+  SentryApp,
 );
