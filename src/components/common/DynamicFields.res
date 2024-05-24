@@ -355,6 +355,7 @@ let make = (
 
   if filteredRequiredFieldsFromRendering->Array.length > 0 {
     <View style={viewStyle()}>
+      {requiredFieldsOutsideBilling->Array.length > 0 ? <Space height=24. /> : React.null}
       <Fields
         fields=requiredFieldsOutsideBilling
         setFinalJson

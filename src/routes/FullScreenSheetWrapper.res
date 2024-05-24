@@ -40,7 +40,7 @@ let make = (~children) => {
         heightPosition,
         Animated.Value.Timing.config(
           ~toValue={
-            500.->Animated.Value.Timing.fromRawValue
+            1000.->Animated.Value.Timing.fromRawValue
           },
           ~isInteraction=true,
           ~useNativeDriver=false,
