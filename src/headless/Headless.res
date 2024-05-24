@@ -55,12 +55,12 @@ let logWrapper = (
 ) => {
   let (value, internalMetadata) = switch apiLogType {
   | None => ([], [])
-  | Some(AllPaymentHooks.Request) => ([("url", url->JSON.Encode.string)], [])
-  | Some(AllPaymentHooks.Response) => (
+  | Some(LoggerHook.Request) => ([("url", url->JSON.Encode.string)], [])
+  | Some(LoggerHook.Response) => (
       [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
       [("response", data)],
     )
-  | Some(AllPaymentHooks.NoResponse) => (
+  | Some(LoggerHook.NoResponse) => (
       [
         ("url", url->JSON.Encode.string),
         ("statusCode", "504"->JSON.Encode.string),
@@ -68,7 +68,7 @@ let logWrapper = (
       ],
       [("response", data)],
     )
-  | Some(AllPaymentHooks.Err) => (
+  | Some(LoggerHook.Err) => (
       [
         ("url", url->JSON.Encode.string),
         ("statusCode", statusCode->JSON.Encode.string),

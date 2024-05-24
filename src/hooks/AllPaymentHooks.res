@@ -4,7 +4,6 @@ external parse: Fetch.response => JSON.t = "%identity"
 external toJson: 't => JSON.t = "%identity"
 external toString: option<JSON.t> => string = "%identity"
 
-type apiLogType = Request | Response | NoResponse | Err
 external jsonToString: JSON.t => string = "%identity"
 let jsonToSavedPMObj = data => {
   let cards = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
@@ -53,55 +52,6 @@ let jsonToSavedPMObj = data => {
   })
 }
 
-let useApiLogWrapper = () => {
-  let logger = LoggerHook.useLoggerHook()
-  (
-    ~logType,
-    ~eventName,
-    ~url,
-    ~statusCode,
-    ~apiLogType,
-    ~data,
-    ~paymentMethod=?,
-    ~paymentExperience=?,
-    (),
-  ) => {
-    let (value, internalMetadata) = switch apiLogType {
-    | Request => ([("url", url->JSON.Encode.string)], [])
-    | Response => (
-        [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
-        [("response", data)],
-      )
-    | NoResponse => (
-        [
-          ("url", url->JSON.Encode.string),
-          ("statusCode", "504"->JSON.Encode.string),
-          ("response", data),
-        ],
-        [("response", data)],
-      )
-    | Err => (
-        [
-          ("url", url->JSON.Encode.string),
-          ("statusCode", statusCode->JSON.Encode.string),
-          ("response", data),
-        ],
-        [("response", data)],
-      )
-    }
-    logger(
-      ~logType,
-      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-      ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-      ~category=API,
-      ~eventName,
-      ~paymentMethod?,
-      ~paymentExperience?,
-      (),
-    )
-  }
-}
-
 let useHandleSuccessFailure = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {exit} = HyperModule.useExitPaymentsheet()
@@ -129,7 +79,7 @@ let useHandleSuccessFailure = () => {
 let useSessionToken = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
 
   (~wallet=[], ()) => {
     switch Next.getNextEnv {
@@ -217,7 +167,7 @@ let useSessionToken = () => {
 
 let useRetrieveHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   (type_, clientSecret, publishableKey) => {
@@ -401,7 +351,7 @@ let useRedirectHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let redirectioBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNetcetera = NetceteraThreeDsHooks.useNetceteraThreeDsHook(~retrievePayment)
@@ -424,8 +374,7 @@ let useRedirectHook = () => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
 
       switch nextAction->ThreeDsUtils.getActionType {
-      | "three_ds_invoke" =>
-        handleNetcetera(
+      | "three_ds_invoke" => handleNetcetera(
           ~baseUrl,
           ~netceteraSDKApiKey,
           ~clientSecret,
@@ -690,7 +639,7 @@ let useRedirectHook = () => {
 
 let useGetSavedCardHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   () => {
