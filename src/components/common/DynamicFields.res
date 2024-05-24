@@ -25,7 +25,7 @@ module RenderField = {
     ~finalJson: array<(string, JSON.t, option<string>)>,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
-    let {component} = ThemebasedStyle.useThemeBasedStyle()
+    let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
     let value = switch required_fields_type.required_field {
     | StringField(x) => finalJson->getValueForKey(x)
@@ -224,7 +224,13 @@ module RenderField = {
           onBlur={_ => {
             setisFocus(_ => false)
           }}
-          textColor={component.color}
+          textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
+          borderTopLeftRadius=borderRadius
+          borderTopRightRadius=borderRadius
+          borderBottomWidth=borderWidth
+          borderLeftWidth=borderWidth
+          borderRightWidth=borderWidth
+          borderTopWidth=borderWidth
         />
       }}
       {if isFocus {
