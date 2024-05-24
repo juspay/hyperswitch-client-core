@@ -132,21 +132,14 @@ let make = (
       )
     }
     None
-  }, (
-    isConfirmButtonValid,
-    isScreenFocus,
-    error,
-    isNicknameSelected,
-    nickname,
-    dynamicFieldsJson,
-  ))
+  }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson))
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={SubheadingBold} />
       <Space height=8. />
       <CardElement setIsAllValid=setIsAllCardVlauesValid reset=false />
-      <Space height=24. />
+      // <Space height=24. />
       // <TextWrapper text=localeObject.cardHolderName textType={SubheadingBold} />
       // <Space height=8. />
       // <CustomInput
@@ -176,7 +169,7 @@ let make = (
               isSaveCardsFlow={false}
               saveCardsData=None
             />
-            <Space />
+            <Space height=8. />
           </>
         : React.null}
       {switch (
