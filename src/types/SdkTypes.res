@@ -790,7 +790,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       disableBranding: getBool(hyperParams, "disableBranding", true),
       ip: getOptionString(hyperParams, "ip"),
       userAgent: getOptionString(hyperParams, "user-agent"),
-      defaultView: getBool(hyperParams, "defaultView", true),
+      defaultView: getBool(hyperParams, "defaultView", false),
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),
     },
