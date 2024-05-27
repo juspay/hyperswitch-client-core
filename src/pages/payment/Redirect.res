@@ -396,7 +396,6 @@ let make = (
   }
 
   let confirmGPay = var => {
-    Console.log2("gpay", var)
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
@@ -479,8 +478,6 @@ let make = (
           ]
           ->Dict.fromArray
           ->JSON.Encode.object
-
-        Console.log(payment_method_data->JSON.Decode.string)
 
         processRequest(
           ~payment_method=walletType.payment_method,

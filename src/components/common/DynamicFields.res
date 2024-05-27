@@ -25,7 +25,7 @@ module RenderField = {
     ~finalJson: array<(string, JSON.t, option<string>)>,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
-    let {component} = ThemebasedStyle.useThemeBasedStyle()
+    let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
     let value = switch required_fields_type.required_field {
     | StringField(x) => finalJson->getValueForKey(x)
@@ -41,7 +41,8 @@ module RenderField = {
         } else {
           JSON.Encode.string([firstName, lastName]->Array.join(" "))
         }
-
+      | (String(firstName), _) => JSON.Encode.string(firstName)
+      | (_, String(lastName)) => JSON.Encode.string(lastName)
       | _ => JSON.Encode.null
       }
     }
@@ -52,10 +53,10 @@ module RenderField = {
     }
     let (val, setVal) = React.useState(_ => initialValue)
 
-    React.useEffect2(() => {
+    React.useEffect(() => {
       setVal(_ => initialValue)
       None
-    }, (required_fields_type, isSaveCardsFlow))
+    }, (required_fields_type, isSaveCardsFlow, initialValue))
 
     let (errorMessage, setErrorMesage) = React.useState(_ => None)
 
@@ -76,13 +77,22 @@ module RenderField = {
               ~localeObject,
             )
 
+            let isCountryField = switch required_fields_type.field_type {
+            | AddressCountry(_) => true
+            | _ => false
+            }
+
             setErrorMesage(_ => tempValid)
             setFinalJson(prev => {
               prev->Array.map(
                 item => {
                   let (key, _, _) = item
 
-                  if key == stringFieldPath {
+                  let isStateKey = key->String.split(".")->Array.includes("state")
+
+                  if isCountryField && isStateKey {
+                    (key, JSON.Encode.null, Some(localeObject.requiredText))
+                  } else if key == stringFieldPath {
                     (key, text->JSON.Encode.string, tempValid)
                   } else {
                     item
@@ -214,7 +224,13 @@ module RenderField = {
           onBlur={_ => {
             setisFocus(_ => false)
           }}
-          textColor={component.color}
+          textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
+          borderTopLeftRadius=borderRadius
+          borderTopRightRadius=borderRadius
+          borderBottomWidth=borderWidth
+          borderLeftWidth=borderWidth
+          borderRightWidth=borderWidth
+          borderTopWidth=borderWidth
         />
       }}
       {if isFocus {
@@ -307,7 +323,7 @@ let make = (
   }, [finalJson])
 
   let filteredRequiredFieldsFromRendering =
-    filteredRequiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering
+    filteredRequiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(keysValArray)
 
   let (statesJson, setStatesJson) = React.useState(_ => None)
 
@@ -345,6 +361,7 @@ let make = (
 
   if filteredRequiredFieldsFromRendering->Array.length > 0 {
     <View style={viewStyle()}>
+      {requiredFieldsOutsideBilling->Array.length > 0 ? <Space height=24. /> : React.null}
       <Fields
         fields=requiredFieldsOutsideBilling
         setFinalJson

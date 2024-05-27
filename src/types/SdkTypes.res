@@ -64,6 +64,7 @@ type savedCard = {
   mandate_id?: string,
   nick_name?: string,
   isDefaultPaymentMethod?: bool,
+  requiresCVV: bool,
 }
 
 type savedWallet = {
@@ -791,7 +792,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       disableBranding: getBool(hyperParams, "disableBranding", true),
       ip: getOptionString(hyperParams, "ip"),
       userAgent: getOptionString(hyperParams, "user-agent"),
-      defaultView: getBool(hyperParams, "defaultView", true),
+      defaultView: getBool(hyperParams, "defaultView", false),
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),
     },

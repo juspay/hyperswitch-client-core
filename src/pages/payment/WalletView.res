@@ -9,12 +9,13 @@ module WalletDisclaimer = {
       <View
         style={viewStyle(
           ~display=#flex,
-          ~justifyContent=#"flex-start",
+          ~justifyContent=#center,
           ~alignContent=#center,
           ~flexDirection=#row,
           ~alignItems=#center,
           (),
         )}>
+        <Icon name="lock" />
         <TextWrapper text="Wallet details will be saved upon selection" textType={ModalText} />
       </View>
     </>

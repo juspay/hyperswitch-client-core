@@ -167,10 +167,10 @@ let getRequiredFieldsFromDict = dict => {
 
     switch (fullCardHolderNameFields[0], fullCardHolderNameFields[1]) {
     | (Some(firstNameField), Some(lastNameField)) =>
-      let value = if firstNameField.value === "" && lastNameField.value === "" {
-        ""
-      } else {
-        [firstNameField.value, lastNameField.value]->Array.join(" ")
+      let value = switch (firstNameField.value, lastNameField.value) {
+      | (firstNameValue, "") => firstNameValue
+      | ("", lastNameValue) => lastNameValue
+      | (firstNameValue, lastNameValue) => [firstNameValue, lastNameValue]->Array.join(" ")
       }
 
       arr->Array.filterMap(x => {
@@ -197,13 +197,25 @@ let getRequiredFieldsFromDict = dict => {
   }
 }
 
+let getErrorMsg = (
+  ~field_type: paymentMethodsFields,
+  ~localeObject: LocaleString.localeStrings,
+) => {
+  switch field_type {
+  | AddressLine1 => localeObject.line1EmptyText
+  | AddressCity => localeObject.cityEmptyText
+  | AddressPincode => localeObject.postalCodeEmptyText
+  | _ => localeObject.requiredText
+  }
+}
+
 let checkIsValid = (
   ~text: string,
   ~field_type: paymentMethodsFields,
   ~localeObject: LocaleString.localeStrings,
 ) => {
   if text == "" {
-    Some(localeObject.requiredText)
+    getErrorMsg(~field_type, ~localeObject)->Some
   } else {
     switch field_type {
     | Email =>
@@ -409,11 +421,27 @@ let getIsAnyBillingDetailEmpty = (requiredFields: array<required_fields_type>) =
   })
 }
 
-let filterDynamicFieldsFromRendering = (requiredFields: array<required_fields_type>) => {
+let filterDynamicFieldsFromRendering = (
+  requiredFields: array<required_fields_type>,
+  finalJson: array<(string, Core__JSON.t, option<string>)>,
+) => {
   let isAnyBillingDetailEmpty = requiredFields->getIsAnyBillingDetailEmpty
   requiredFields->Array.filter(requiredField => {
     let isShowBillingField = getIsBillingField(requiredField.field_type) && isAnyBillingDetailEmpty
-    requiredField.value === "" || isShowBillingField
+
+    let isRenderRequiredField = switch requiredField.required_field {
+    | StringField(_) => requiredField.value === ""
+    | FullNameField(firstNameVal, lastNameVal) =>
+      finalJson->Array.reduce(false, (acc, (key, _, errorMsg)) => {
+        if key === firstNameVal || key === lastNameVal {
+          acc || errorMsg->Option.isSome
+        } else {
+          acc
+        }
+      })
+    }
+
+    isRenderRequiredField || isShowBillingField
   })
 }
 

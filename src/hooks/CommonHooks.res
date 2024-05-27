@@ -30,7 +30,6 @@ let fetchApi = (
       ),
     )
     ->catch(err => {
-      Console.log2("err", err)
       exception Error(string)
       Promise.reject(Error(err->toJson))
     })

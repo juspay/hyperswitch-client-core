@@ -32,13 +32,16 @@ let make = () => {
         } else if retrieve == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          let {mandateType, paymentType} = PaymentMethodListType.jsonToMandateData(retrieve)
+          let {mandateType, paymentType, merchantName} = PaymentMethodListType.jsonToMandateData(
+            retrieve,
+          )
 
           setAllApiData({
             ...allApiData,
             redirect_url: PaymentMethodListType.jsonToRedirectUrlType(retrieve),
             mandateType,
             paymentType,
+            merchantName,
           })
 
           let list = PaymentMethodListType.jsonTopaymentMethodListType(retrieve)
