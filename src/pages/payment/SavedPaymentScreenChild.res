@@ -78,7 +78,7 @@ let make = (
             // </View>
           </>
         : React.null}
-      <Space height=25. />
+      <Space height=12. />
     </View>
   </View>
 }

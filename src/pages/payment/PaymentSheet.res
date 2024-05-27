@@ -44,7 +44,7 @@ let make = (~setConfirmButtonDataRef) => {
               textType={TextWrapper.TextActive}
               fillIcon=true
             />
-            <Space height=25. />
+            <Space height=12. />
           </>
         : React.null}
     </View>
