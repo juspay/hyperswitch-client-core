@@ -148,7 +148,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     ) => {
       apiLogWrapper(
         ~logType=INFO,
-        ~eventName=AUTHORISE_CALL_INIT,
+        ~eventName=AUTHORIZE_CALL_INIT,
         ~url=authoriseUrl,
         ~statusCode="",
         ~apiLogType=Request,
@@ -167,7 +167,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         if statusCode->String.charAt(0) === "2" {
           apiLogWrapper(
             ~logType=INFO,
-            ~eventName=AUTHORISE_CALL,
+            ~eventName=AUTHORIZE_CALL,
             ~url=authoriseUrl,
             ~statusCode,
             ~apiLogType=Request,
@@ -182,7 +182,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
           ->Promise.then(error => {
             apiLogWrapper(
               ~logType=ERROR,
-              ~eventName=AUTHORISE_CALL,
+              ~eventName=AUTHORIZE_CALL,
               ~url=authoriseUrl,
               ~statusCode,
               ~apiLogType=Response,
@@ -300,7 +300,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
             | AUTH_RESPONSE(challengeParams) =>
               logger(
                 ~logType=INFO,
-                ~value=`trans_status=${challengeParams.transStatus}`,
+                ~value=challengeParams.transStatus,
                 ~category=USER_EVENT,
                 ~eventName=DISPLAY_THREE_DS_SDK,
                 (),
@@ -398,7 +398,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     let handleNativeThreeDs = nextAction => {
       if !Netcetera3dsModule.isAvailable {
         logger(
-          ~logType=INFO,
+          ~logType=DEBUG,
           ~value="Netcetera SDK dependency not added",
           ~category=USER_EVENT,
           ~eventName=NETCETERA_SDK,
