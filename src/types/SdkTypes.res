@@ -568,14 +568,9 @@ let getAppearanceObj = (
                   }),
             )
           }
-        : switch keys.primaryButtonColor {
+        : switch keys.primaryButton_color {
           | "" =>
-            let primaryButtonColors = getObj(
-              primaryButtonDict,
-              keys.primaryButton_color,
-              Dict.make(),
-            )
-            Some(PrimaryButtonColor(Some(getPrimaryButtonColorFromDict(primaryButtonColors, keys))))
+            Some(PrimaryButtonColor(Some(getPrimaryButtonColorFromDict(primaryButtonDict, keys))))
           | _ =>
             let primaryButtonColorLightDict = getObj(
               primaryButtonDict,
