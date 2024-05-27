@@ -85,7 +85,7 @@ module BottomTabList = {
           : <TextWrapper
               text=routeName
               textType={switch isFocused {
-              | true => TextActive
+              | true => LinkTextBold
               | _ => CardText
               }}
             />}

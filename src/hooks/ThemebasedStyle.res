@@ -20,6 +20,17 @@ type statusColor = {
   blue: statusColorConfig,
 }
 
+type maxTextSize = {
+  maxHeadingTextSize: float,
+  maxSubHeadingTextSize: float,
+  maxPlaceholderTextSize: float,
+  maxButtonTextSize: float,
+  maxErrorTextSize: float,
+  maxLinkTextSize: float,
+  maxModalTextSize: float,
+  maxCardTextSize: float,
+}
+
 let getStrProp = (~overRideProp, ~defaultProp) => {
   let x = switch overRideProp {
   | Some(val) => val
@@ -33,6 +44,17 @@ let getStyleProp = (~override, ~fn, ~default) => {
   | None => default
   }
   x
+}
+
+let maxTextSize = {
+  maxHeadingTextSize : 10.,
+  maxSubHeadingTextSize: 10.,
+  maxPlaceholderTextSize: 5.,
+  maxButtonTextSize: 15.,
+  maxErrorTextSize: 15.,
+  maxLinkTextSize: 7.,
+  maxModalTextSize: 6.,
+  maxCardTextSize: 7.,
 }
 
 let status_color = {
@@ -128,6 +150,14 @@ type themeBasedStyleObj = {
   component: componentConfig,
   locale: SdkTypes.localeTypes,
   fontFamily: SdkTypes.fontFamilyTypes,
+  headingTextSizeAdjust: float,
+  subHeadingTextSizeAdjust: float,
+  placeholderTextSizeAdjust: float,
+  buttonTextSizeAdjust: float,
+  errorTextSizeAdjust: float,
+  linkTextSizeAdjust: float,
+  modalTextSizeAdjust: float,
+  cardTextSizeAdjust: float,
   paypalButonColor: buttonColorConfig,
   applePayButtonColor: buttonColorConfig,
   googlePayButtonColor: buttonColorConfig,
@@ -196,6 +226,14 @@ let darkRecord = {
   | #web => DefaultWeb
   | _ => DefaultAndroid
   },
+  headingTextSizeAdjust: 0.,
+  subHeadingTextSizeAdjust: 0.,
+  placeholderTextSizeAdjust: 0.,
+  buttonTextSizeAdjust: 0.,
+  errorTextSizeAdjust: 0.,
+  linkTextSizeAdjust: 0.,
+  modalTextSizeAdjust: 0.,
+  cardTextSizeAdjust: 0.,
   paypalButonColor: ("#ffffff", "#ffffff"),
   payNowButtonTextColor: "#FFFFFF",
   applePayButtonColor: ("#000000", "#000000"),
@@ -263,6 +301,14 @@ let lightRecord = {
   | #web => DefaultWeb
   | _ => DefaultAndroid
   },
+  headingTextSizeAdjust: 0.,
+  subHeadingTextSizeAdjust: 0.,
+  placeholderTextSizeAdjust: 0.,
+  buttonTextSizeAdjust: 0.,
+  errorTextSizeAdjust: 0.,
+  linkTextSizeAdjust: 0.,
+  modalTextSizeAdjust: 0.,
+  cardTextSizeAdjust: 0.,
   paypalButonColor: ("#F6C657", "#F6C657"),
   applePayButtonColor: ("#000000", "#000000"),
   googlePayButtonColor: ("#000000", "#000000"),
@@ -331,6 +377,14 @@ let minimal = {
   | #web => DefaultWeb
   | _ => DefaultAndroid
   },
+  headingTextSizeAdjust: 0.,
+  subHeadingTextSizeAdjust: 0.,
+  placeholderTextSizeAdjust: 0.,
+  buttonTextSizeAdjust: 0.,
+  errorTextSizeAdjust: 0.,
+  linkTextSizeAdjust: 0.,
+  modalTextSizeAdjust: 0.,
+  cardTextSizeAdjust: 0.,
   paypalButonColor: ("#ffc439", "#ffd500"),
   applePayButtonColor: ("#000000", "#444444"),
   googlePayButtonColor: ("#000000", "#444444"),
@@ -399,6 +453,14 @@ let flatMinimal = {
   | #web => DefaultWeb
   | _ => DefaultAndroid
   },
+  headingTextSizeAdjust: 0.,
+  subHeadingTextSizeAdjust: 0.,
+  placeholderTextSizeAdjust: 0.,
+  buttonTextSizeAdjust: 0.,
+  errorTextSizeAdjust: 0.,
+  linkTextSizeAdjust: 0.,
+  modalTextSizeAdjust: 0.,
+  cardTextSizeAdjust: 0.,
   paypalButonColor: ("#ffc439", "#ffd500"),
   applePayButtonColor: ("#000000", "#444444"),
   googlePayButtonColor: ("#000000", "#444444"),
@@ -606,6 +668,70 @@ let itemToObj = (
       | None => themeObj.fontFamily
       }
     | None => themeObj.fontFamily
+    },
+    headingTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.headingTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxHeadingTextSize ? maxTextSize.maxHeadingTextSize : size
+          | None => themeObj.headingTextSizeAdjust
+        }
+      | None => themeObj.headingTextSizeAdjust
+    },
+    subHeadingTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.subHeadingTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxSubHeadingTextSize ? maxTextSize.maxSubHeadingTextSize : size
+          | None => themeObj.subHeadingTextSizeAdjust
+        }
+      | None => themeObj.subHeadingTextSizeAdjust
+    },
+    placeholderTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.placeholderTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxPlaceholderTextSize ? maxTextSize.maxPlaceholderTextSize : size
+          | None => themeObj.placeholderTextSizeAdjust
+        }
+      | None => themeObj.placeholderTextSizeAdjust
+    },
+    buttonTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.buttonTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxButtonTextSize ? maxTextSize.maxButtonTextSize : size
+          | None => themeObj.buttonTextSizeAdjust
+        }
+      | None => themeObj.buttonTextSizeAdjust
+    },
+    errorTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.errorTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxErrorTextSize ? maxTextSize.maxErrorTextSize : size
+          | None => themeObj.errorTextSizeAdjust
+        }
+      | None => themeObj.errorTextSizeAdjust
+    },
+    linkTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.linkTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxLinkTextSize ? maxTextSize.maxLinkTextSize : size
+          | None => themeObj.linkTextSizeAdjust
+        }
+      | None => themeObj.linkTextSizeAdjust
+    },
+    modalTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.modalTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxModalTextSize ? maxTextSize.maxModalTextSize : size
+          | None => themeObj.modalTextSizeAdjust
+        }
+      | None => themeObj.modalTextSizeAdjust
+    },
+    cardTextSizeAdjust: switch appearance.font {
+      | Some(obj) =>
+        switch obj.cardTextSizeAdjust {
+          | Some(size) => size >= maxTextSize.maxCardTextSize ? maxTextSize.maxCardTextSize : size
+          | None => themeObj.cardTextSizeAdjust
+        }
+      | None => themeObj.cardTextSizeAdjust
     },
     paypalButonColor: themeObj.paypalButonColor,
     applePayButtonColor: themeObj.applePayButtonColor,

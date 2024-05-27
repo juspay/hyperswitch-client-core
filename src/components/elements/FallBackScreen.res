@@ -27,12 +27,12 @@ let make = (~error: Sentry.fallbackArg, ~level, ~rootTag) => {
         <View style={viewStyle(~flexDirection=#row, ~padding=20.->dp, ())}>
           <Icon name="errorIcon" fill="black" height=60. width=60. />
           <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
-            <Text style={textStyle(~fontWeight=FontWeight._500, ~fontSize=16., ~color="black", ())}>
+            <TextWrapper textType={ErrorTextBold}>
               {"Oops, something went wrong!"->React.string}
-            </Text>
-            <Text style={textStyle(~color="black", ())}>
+            </TextWrapper>
+            <TextWrapper textType={ErrorText}>
               {"We'll be back with you shortly :)"->React.string}
-            </Text>
+            </TextWrapper>
           </View>
         </View>
         <Space />
@@ -54,12 +54,12 @@ let make = (~error: Sentry.fallbackArg, ~level, ~rootTag) => {
       <View style={viewStyle(~flexDirection=#row, ~backgroundColor="white", ())}>
         <Icon name="errorIcon" fill="black" height=60. width=60. />
         <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
-          <Text style={textStyle(~fontWeight=FontWeight._500, ~fontSize=16., ~color="black", ())}>
+          <TextWrapper textType={ErrorTextBold}>
             {"Oops, something went wrong!"->React.string}
-          </Text>
-          <Text style={textStyle(~color="black", ())}>
+          </TextWrapper>
+          <TextWrapper textType={ErrorText}>
             {"Try another payment method :)"->React.string}
-          </Text>
+          </TextWrapper>
         </View>
       </View>
     </View>
@@ -76,9 +76,9 @@ let make = (~error: Sentry.fallbackArg, ~level, ~rootTag) => {
       <View style={viewStyle(~flexDirection=#row, ~backgroundColor="white", ())}>
         <Icon name="errorIcon" fill="black" height=32. width=32. />
         <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
-          <Text style={textStyle(~fontWeight=FontWeight._500, ~fontSize=16., ~color="black", ())}>
+          <TextWrapper textType={ErrorTextBold}>
             {"Oops, something went wrong!"->React.string}
-          </Text>
+          </TextWrapper>
         </View>
       </View>
     </View>
