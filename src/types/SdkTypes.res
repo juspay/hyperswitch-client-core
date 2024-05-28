@@ -120,14 +120,14 @@ type shapes = {
 type font = {
   family: option<fontFamilyTypes>,
   scale: option<float>,
-  headingTextSizeAdjust:option<float>,
-  subHeadingTextSizeAdjust:option<float>,
-  placeholderTextSizeAdjust:option<float>,
-  buttonTextSizeAdjust:option<float>,
-  errorTextSizeAdjust:option<float>,
-  linkTextSizeAdjust:option<float>,
-  modalTextSizeAdjust:option<float>,
-  cardTextSizeAdjust:option<float>,
+  headingTextSizeAdjust: option<float>,
+  subHeadingTextSizeAdjust: option<float>,
+  placeholderTextSizeAdjust: option<float>,
+  buttonTextSizeAdjust: option<float>,
+  errorTextSizeAdjust: option<float>,
+  linkTextSizeAdjust: option<float>,
+  modalTextSizeAdjust: option<float>,
+  cardTextSizeAdjust: option<float>,
 }
 
 type primaryButtonColor = {
@@ -501,14 +501,16 @@ let getAppearanceObj = (
         }->Some
       },
       scale: retOptionalFloat(getProp(keys.scale, fontDict)),
-      headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust,fontDict)),
-      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust,fontDict)),
-      placeholderTextSizeAdjust: retOptionalFloat(getProp(keys.placeholderTextSizeAdjust,fontDict)),
-      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust,fontDict)),
-      errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust,fontDict)),
-      linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust,fontDict)),
-      modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust,fontDict)),
-      cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust,fontDict)),
+      headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust, fontDict)),
+      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust, fontDict)),
+      placeholderTextSizeAdjust: retOptionalFloat(
+        getProp(keys.placeholderTextSizeAdjust, fontDict),
+      ),
+      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust, fontDict)),
+      errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust, fontDict)),
+      linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust, fontDict)),
+      modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust, fontDict)),
+      cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust, fontDict)),
     }),
     primaryButton: Some({
       shapes: Some({
@@ -685,7 +687,7 @@ let parseConfigurationDict = (configObj, from) => {
     },
     primaryButtonLabel: getOptionString(configObj, "primaryButtonLabel"),
     paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
-    savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentScreenHeaderLabel"),
+    savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
     // customer: switch customerDict {
     // | Some(obj) =>
     //   Some({
