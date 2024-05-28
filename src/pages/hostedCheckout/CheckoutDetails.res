@@ -28,7 +28,7 @@ let make = (~toggleModal) => {
             ~borderRadius=5.,
             (),
           )}>
-          <TextWrapper text="View Details" textType=TextWrapper.CardText />
+          <TextWrapper text="View Details" textType={LinkText} />
           <Space width=8. />
           <Icon
             style={viewStyle(~transform=[rotate(~rotate=270.->deg)], ())}
