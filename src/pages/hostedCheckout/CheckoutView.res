@@ -4,13 +4,13 @@ module TermsView = {
   @react.component
   let make = () => {
     <View style={viewStyle(~flexDirection=#row, ~width=100.->pct, ())}>
-      <TextWrapper text="Powerd by Hyperswitch" textType=TextWrapper.ModalText />
+      <TextWrapper text="Powerd by Hyperswitch" textType={ModalText} />
       <Space />
-      <TextWrapper text="|" textType=TextWrapper.ModalText />
+      <TextWrapper text="|" textType={ModalText} />
       <Space />
-      <TextWrapper text="Terms" textType=TextWrapper.ModalText />
+      <TextWrapper text="Terms" textType={ModalText} />
       <Space />
-      <TextWrapper text="Privacy" textType=TextWrapper.ModalText />
+      <TextWrapper text="Privacy" textType={ModalText} />
     </View>
   }
 }
@@ -19,7 +19,6 @@ module CheckoutHeader = {
   @react.component
   let make = (~toggleModal) => {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
-    let fontFamily = FontFamily.useCustomFontFamily()
     let useMediaView = WindowDimension.useMediaView()()
 
     <View
@@ -41,7 +40,7 @@ module CheckoutHeader = {
           uri="https://stripe-camo.global.ssl.fastly.net/63f4ec8cbe3d41be42a10161d3a86d3a3bda2d541052dc077e4d5e164c3386e1/68747470733a2f2f66696c65732e7374726970652e636f6d2f66696c65732f4d44423859574e6a64463878534559775a317044536c4978626d7470597a4a5866475a666447567a6446394263456c304f453952576e5a7652454a555330566f4d47564d62464e34546b38303063713345486f6c71"
         />
         <Space width=10. />
-        <TextWrapper text="Powdur" textType=TextWrapper.CardText />
+        <TextWrapper text="Powdur" textType={CardText} />
         <Space width=10. />
         <View
           style={viewStyle(
@@ -51,16 +50,9 @@ module CheckoutHeader = {
             ~borderRadius=3.,
             (),
           )}>
-          <Text
-            style={textStyle(
-              ~fontSize=12.,
-              ~color="#8b5810",
-              ~fontWeight=FontWeight._500,
-              ~fontFamily,
-              (),
-            )}>
+          <TextWrapper textType={ModalTextBold}>
             {"TEST MODE"->React.string}
-          </Text>
+          </TextWrapper>
         </View>
       </View>
       {useMediaView == Mobile
@@ -68,7 +60,7 @@ module CheckoutHeader = {
             <TouchableOpacity
               onPress={_ => toggleModal()}
               style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
-              <TextWrapper text="Details" textType=TextWrapper.ModalText />
+              <TextWrapper text="Details" textType={ModalText} />
               <Space width=10. />
               <Icon
                 style={viewStyle(~transform=[rotate(~rotate=270.->deg)], ())}
@@ -101,11 +93,11 @@ module Cart = {
         />
         <Space />
         <View>
-          <TextWrapper text="The Pure Set" textType=TextWrapper.ModalText />
-          <TextWrapper text="Qty 1" textType=TextWrapper.ModalText />
+          <TextWrapper text="The Pure Set" textType={ModalText} />
+          <TextWrapper text="Qty 1" textType={ModalText} />
         </View>
       </View>
-      <TextWrapper text="US$65.00" textType=TextWrapper.CardText />
+      <TextWrapper text="US$65.00" textType={CardText} />
     </View>
   }
 }
@@ -131,8 +123,8 @@ module CartView = {
           ~paddingHorizontal=20.->dp,
           (),
         )}>
-        <TextWrapper text="Total" textType=TextWrapper.ModalText />
-        <TextWrapper text="US$129.00" textType=TextWrapper.CardText />
+        <TextWrapper text="Total" textType={ModalText} />
+        <TextWrapper text="US$129.00" textType={CardText} />
       </View>
       <Space height=20. />
     </Animated.View>

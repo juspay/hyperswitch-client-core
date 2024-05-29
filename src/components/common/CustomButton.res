@@ -201,12 +201,7 @@ let make = (
                 | _ => textStr
                 }}
                 // textType=CardText
-                textType=CustomCssText(
-                  array([
-                    textStyle(~color=payNowButtonTextColor, ~fontWeight=FontWeight._400, ()),
-                    styles["buttonTextClass"],
-                  ]),
-                )
+                textType={ButtonTextBold}
               />
             </View>
       | None => React.null
