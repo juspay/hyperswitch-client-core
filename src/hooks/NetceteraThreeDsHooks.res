@@ -1,7 +1,7 @@
 open ExternalThreeDsTypes
 open ThreeDsUtils
 open SdkStatusMessages
-
+external toJson: 't => JSON.t = "%identity"
 let useNetceteraThreeDsHook = (~retrievePayment) => {
   let logger = LoggerHook.useLoggerHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
@@ -17,15 +17,15 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     ~onFailure: string => unit,
   ) => {
     let retriveAndShowStatus = () => {
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName=RETRIEVE_CALL_INIT,
-        ~url=baseUrl,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
+      // apiLogWrapper(
+      //   ~logType=INFO,
+      //   ~eventName=RETRIEVE_CALL_INIT,
+      //   ~url=baseUrl,
+      //   ~statusCode="",
+      //   ~apiLogType=Request,
+      //   ~data=JSON.Encode.null,
+      //   (),
+      // )
       retrievePayment(Types.Payment, clientSecret, publishableKey)
       ->Promise.then(res => {
         if res == JSON.Encode.null {
@@ -33,21 +33,33 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         } else {
           let status = res->Utils.getDictFromJson->Utils.getString("status", "")
 
-          apiLogWrapper(
-            ~logType=INFO,
-            ~eventName=RETRIEVE_CALL,
-            ~url=baseUrl,
-            ~statusCode="",
-            ~apiLogType=Response,
-            ~data=res,
-            (),
-          )
+          // apiLogWrapper(
+          //   ~logType=INFO,
+          //   ~eventName=RETRIEVE_CALL,
+          //   ~url=baseUrl,
+          //   ~statusCode="",
+          //   ~apiLogType=Response,
+          //   ~data=res,
+          //   (),
+          // )
 
           switch status {
           | "processing" | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
           | _ => onFailure(retrievePaymentStatus.errorMsg)
           }
         }->ignore
+        Promise.resolve()
+      })
+      ->Promise.catch(err => {
+        // apiLogWrapper(
+        //   ~logType=ERROR,
+        //   ~eventName=RETRIEVE_CALL,
+        //   ~url=baseUrl,
+        //   ~statusCode="504",
+        //   ~apiLogType=NoResponse,
+        //   ~data=err->toJson,
+        //   (),
+        // )
         Promise.resolve()
       })
       ->ignore
@@ -125,18 +137,38 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
               },
             )
           } else {
-            apiLogWrapper(
-              ~logType=ERROR,
-              ~eventName=POLL_STATUS_CALL,
-              ~url=uri,
-              ~statusCode,
-              ~apiLogType=Request,
-              ~data=JSON.Encode.null,
-              (),
+            data
+            ->Fetch.Response.json
+            ->Promise.then(
+              res => {
+                apiLogWrapper(
+                  ~logType=ERROR,
+                  ~eventName=POLL_STATUS_CALL,
+                  ~url=uri,
+                  ~statusCode,
+                  ~apiLogType=Err,
+                  ~data=res,
+                  (),
+                )
+                Some(data)->Promise.resolve
+              },
             )
+            ->ignore
             onFailure(pollingCallStatus.apiCallFailure)
             Some(data)->Promise.resolve
           }
+        })
+        ->Promise.catch(err => {
+          apiLogWrapper(
+            ~logType=ERROR,
+            ~eventName=POLL_STATUS_CALL,
+            ~url=uri,
+            ~statusCode="504",
+            ~apiLogType=NoResponse,
+            ~data=err->toJson,
+            (),
+          )
+          Promise.resolve(None)
         })
         ->ignore
       }, pollConfig.delayInSecs * 1000)
@@ -156,13 +188,8 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         (),
       )
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
-      CommonHooks.fetchApi(
-        ~uri=authoriseUrl,
-        ~bodyStr="",
-        ~headers,
-        ~method_=Fetch.Post,
-        (),
-      )->Promise.then(data => {
+      CommonHooks.fetchApi(~uri=authoriseUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
+      ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
           apiLogWrapper(
@@ -170,7 +197,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
             ~eventName=AUTHORIZE_CALL,
             ~url=authoriseUrl,
             ~statusCode,
-            ~apiLogType=Request,
+            ~apiLogType=Response,
             ~data=JSON.Encode.null,
             (),
           )
@@ -185,7 +212,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
               ~eventName=AUTHORIZE_CALL,
               ~url=authoriseUrl,
               ~statusCode,
-              ~apiLogType=Response,
+              ~apiLogType=Err,
               ~data=error,
               (),
             )
@@ -193,6 +220,18 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
             Some(data)->Promise.resolve
           })
         }
+      })
+      ->Promise.catch(err => {
+        apiLogWrapper(
+          ~logType=ERROR,
+          ~eventName=AUTHORIZE_CALL,
+          ~url=authoriseUrl,
+          ~statusCode="504",
+          ~apiLogType=NoResponse,
+          ~data=err->toJson,
+          (),
+        )
+        Promise.resolve(None)
       })
     }
     let shortPollStatusAndRetrieve = (~pollConfig, ~publishableKey) => {
@@ -234,14 +273,12 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
                   ~eventName=NETCETERA_SDK,
                   (),
                 )
-                switch (status.status, status.message) {
-                | ("success", _) => {
-                    let authoriseUrl = threeDsData.threeDsAuthorizeUrl
-                    hsAuthoriseCall(~authoriseUrl, ~onSuccess, ~onFailure)->ignore
-                  }
-                | (_, _) =>
-                  shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig, ~publishableKey)
-                }
+                status->isStatusSuccess
+                  ? {
+                      let authoriseUrl = threeDsData.threeDsAuthorizeUrl
+                      hsAuthoriseCall(~authoriseUrl, ~onSuccess, ~onFailure)->ignore
+                    }
+                  : shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig, ~publishableKey)
               })
             : onFailure(threeDsSdkChallengeStatus.errorMsg)
         },
@@ -315,8 +352,16 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
                 )
               | _ => frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
               }
-            | AUTH_ERROR(errorObj) =>
-              frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
+            | AUTH_ERROR(errObj) => {
+                logger(
+                  ~logType=ERROR,
+                  ~value=errObj.errorMessage,
+                  ~category=USER_EVENT,
+                  ~eventName=DISPLAY_THREE_DS_SDK,
+                  (),
+                )
+                frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
+              }
             }
 
             Some(data)->Promise.resolve
@@ -324,14 +369,14 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         } else {
           data
           ->Fetch.Response.json
-          ->Promise.then(error => {
+          ->Promise.then(err => {
             apiLogWrapper(
               ~logType=ERROR,
               ~eventName=AUTHENTICATION_CALL,
               ~url=uri,
               ~statusCode,
-              ~apiLogType=Response,
-              ~data=error,
+              ~apiLogType=Err,
+              ~data=err->toJson,
               (),
             )
             frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
@@ -340,7 +385,16 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         }
       })
       ->Promise.catch(err => {
-        None->Promise.resolve
+        apiLogWrapper(
+          ~logType=ERROR,
+          ~eventName=AUTHENTICATION_CALL,
+          ~url=uri,
+          ~statusCode="504",
+          ~apiLogType=NoResponse,
+          ~data=err->toJson,
+          (),
+        )
+        Promise.resolve(None)
       })
     }
 
