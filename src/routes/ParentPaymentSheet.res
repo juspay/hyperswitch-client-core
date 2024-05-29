@@ -23,23 +23,32 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   AllPaymentHooks.useFetchPaymentMethods()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (savedPaymentMethordContextObj, _) = React.useContext(
+  let (savedPaymentMethodContextObj, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
   )
 
-  React.useEffect0(() => {
+  React.useEffect2(() => {
     if !nativeProp.configuration.displaySavedPaymentMethods {
       setPaymentScreenType(PAYMENTSHEET)
     }
+
+    switch savedPaymentMethodContextObj {
+    | Some(data) =>
+      if data.pmList->Option.getOr([])->Array.length == 0 {
+        setPaymentScreenType(PAYMENTSHEET)
+      }
+    | _ => ()
+    }
+
     None
-  })
+  }, (nativeProp.configuration.displaySavedPaymentMethods, savedPaymentMethodContextObj))
   let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
 
   <FullScreenSheetWrapper>
-    {switch (savedPaymentMethordContextObj, allApiData.paymentType) {
+    {switch (savedPaymentMethodContextObj, allApiData.paymentType) {
     | (_, None)
     | (Loading, _) =>
       nativeProp.hyperParams.defaultView
@@ -51,6 +60,7 @@ let make = () => {
       allApiData.mandateType !== SETUP_MANDATE
         ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
         : <PaymentSheet setConfirmButtonDataRef />
+
     | (None, _) => <PaymentSheet setConfirmButtonDataRef />
     }}
     <GlobalConfirmButton confirmButtonDataRef />
