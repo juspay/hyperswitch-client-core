@@ -8,7 +8,7 @@ let make = (~text) => {
       style={viewStyle(
         ~height=1.->dp,
         ~marginHorizontal=10.->dp,
-        ~backgroundColor="hsla(0,0%, 85% , 0.5 )",
+        ~backgroundColor="#CCCCCC",
         ~flex=1.,
         (),
       )}
@@ -18,7 +18,7 @@ let make = (~text) => {
       style={viewStyle(
         ~height=1.->dp,
         ~marginHorizontal=10.->dp,
-        ~backgroundColor="hsla(0,0%, 85% , 0.5 )",
+        ~backgroundColor="#CCCCCC",
         ~flex=1.,
         (),
       )}

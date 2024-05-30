@@ -39,7 +39,13 @@ let make = (
     cvvIsFocus ? isCvvValid || !cvcNumberInRange(cvv, getCardBrand(cardNumber)) : isCvvValid
   }
 
-  let {component, dangerColor, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
+  let {
+    primaryColor,
+    component,
+    dangerColor,
+    borderRadius,
+    borderWidth,
+  } = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
   let cardRef = React.useRef(Nullable.null)
   let expireRef = React.useRef(Nullable.null)
@@ -109,7 +115,7 @@ let make = (
                   (),
                 )
               }}>
-              <Icon name={"CAMERA"} height=25. width=25. fill="black" />
+              <Icon name={"CAMERA"} height=25. width=25. fill=primaryColor />
             </TouchableOpacity>
           </>}
         </UIUtils.RenderIf>
@@ -219,7 +225,6 @@ let make = (
             borderBottomWidth=borderWidth
             borderRightWidth=borderWidth
             secureTextEntry=true
-            showEyeIconaftersecureTextEntry=false
             state=cvv
             isValid=isCvvValid
             setState={text => onChangeCvv(text, cvvRef)}
@@ -251,8 +256,6 @@ let make = (
         </View>
       </View>
     </View>
-    {errorMsgText->Option.isSome
-      ? <ErrorText text=errorMsgText />
-      : React.null}
+    {errorMsgText->Option.isSome ? <ErrorText text=errorMsgText /> : React.null}
   </ErrorBoundary>
 }

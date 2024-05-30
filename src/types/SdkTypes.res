@@ -193,7 +193,7 @@ type placeholder = {
 
 type configurationType = {
   allowsDelayedPaymentMethods: bool,
-  appearance: option<appearance>,
+  appearance: appearance,
   shippingDetails: option<addressDetails>,
   primaryButtonLabel: option<string>,
   paymentSheetHeaderText: option<string>,
@@ -280,7 +280,7 @@ type nativeProp = {
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
 }
-let deafultAppearance: appearance = {
+let defaultAppearance: appearance = {
   locale: None,
   colors: switch ReactNative.Platform.os {
   | #android =>
@@ -397,7 +397,10 @@ let getAppearanceObj = (
 ) => {
   let fontDict = getObj(appearanceDict, keys.font, Dict.make())
   let primaryButtonDict = getObj(appearanceDict, keys.primaryButton, Dict.make())
-  let primaryButtonShapesDict = getObj(primaryButtonDict, keys.primaryButton_shapes, Dict.make())
+  let primaryButtonShapesDict = switch keys.primaryButton_shapes {
+  | "" => primaryButtonDict
+  | _ => getObj(primaryButtonDict, keys.primaryButton_shapes, Dict.make())
+  }
 
   {
     locale: switch retOptionalStr(getProp(keys.locale, appearanceDict)) {
@@ -501,16 +504,24 @@ let getAppearanceObj = (
         }->Some
       },
       scale: retOptionalFloat(getProp(keys.scale, fontDict)),
-      headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust, fontDict)),
-      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust, fontDict)),
-      placeholderTextSizeAdjust: retOptionalFloat(
-        getProp(keys.placeholderTextSizeAdjust, fontDict),
-      ),
-      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust, fontDict)),
-      errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust, fontDict)),
-      linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust, fontDict)),
-      modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust, fontDict)),
-      cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust, fontDict)),
+      // headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust, fontDict)),
+      // subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust, fontDict)),
+      // placeholderTextSizeAdjust: retOptionalFloat(
+      // getProp(keys.placeholderTextSizeAdjust, fontDict),
+      // ),
+      // buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust, fontDict)),
+      // errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust, fontDict)),
+      // linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust, fontDict)),
+      // modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust, fontDict)),
+      // cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust, fontDict)),
+      headingTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      placeholderTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      errorTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      linkTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      modalTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      cardTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
     }),
     primaryButton: Some({
       shapes: Some({
@@ -625,29 +636,27 @@ let parseConfigurationDict = (configObj, from) => {
     ->String.split(" ")
 
   let appearanceDict = configObj->Dict.get("appearance")->Option.flatMap(JSON.Decode.object)
-  let appearanceObj: option<appearance> = {
-    Some(
-      from == "rn" || from == "flutter"
-        ? switch appearanceDict {
-          | Some(appObj) => getAppearanceObj(appObj, NativeSdkPropsKeys.rnKeys, from)
-          | None => deafultAppearance
-          }
-        : switch appearanceDict {
-          | Some(appObj) =>
-            switch ReactNative.Platform.os {
-            | #ios
-            | #web =>
-              //For Ios
-              getAppearanceObj(appObj, NativeSdkPropsKeys.iosKeys, from)
-            | #android =>
-              // For Android
-              getAppearanceObj(appObj, NativeSdkPropsKeys.androidKeys, from)
+  let appearance = {
+    from == "rn" || from == "flutter"
+      ? switch appearanceDict {
+        | Some(appObj) => getAppearanceObj(appObj, NativeSdkPropsKeys.rnKeys, from)
+        | None => defaultAppearance
+        }
+      : switch appearanceDict {
+        | Some(appObj) =>
+          switch ReactNative.Platform.os {
+          | #ios
+          | #web =>
+            //For Ios
+            getAppearanceObj(appObj, NativeSdkPropsKeys.iosKeys, from)
+          | #android =>
+            // For Android
+            getAppearanceObj(appObj, NativeSdkPropsKeys.androidKeys, from)
 
-            | _ => deafultAppearance
-            }
-          | None => deafultAppearance
-          },
-    )
+          | _ => defaultAppearance
+          }
+        | None => defaultAppearance
+        }
   }
   let placeholderDict =
     configObj
@@ -657,7 +666,7 @@ let parseConfigurationDict = (configObj, from) => {
 
   let configuration = {
     allowsDelayedPaymentMethods: getBool(configObj, "allowsDelayedPaymentMethods", false),
-    appearance: appearanceObj,
+    appearance,
     shippingDetails: switch shippingDetailsDict {
     | Some(shippingObj) =>
       let addressObj = getObj(shippingObj, "address", Dict.make())

@@ -156,7 +156,7 @@ let androidKeys = {
   primaryButton_family: "fontResId",
   primaryButton_scale: "fontSizeSp",
   primaryButton_shapes: "shapes",
-  primaryButton_borderRadius: "borderRadius",
+  primaryButton_borderRadius: "cornerRadiusDp",
   primaryButton_borderWidth: "borderWidth",
   primaryButton_shadow: "shadow",
   primaryButton_color: "color",

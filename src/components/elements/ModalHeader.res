@@ -26,13 +26,13 @@ let make = (~onModalClose) => {
       ~flexDirection=#row,
       ~alignItems=#center,
       ~justifyContent=#"space-between",
-      ~padding=13.->dp,
-      ~width=100.->pct,
+      ~margin=5.->pct,
+      ~marginBottom=0.->pct,
       (),
     )}>
     {switch heading {
     | Some(var) =>
-      <View style={viewStyle(~maxWidth=60.->pct, ~marginLeft=8.->dp, ())}>
+      <View style={viewStyle(~maxWidth=60.->pct, ())}>
         <TextWrapper text={var} textType={HeadingBold} />
       </View>
     | None => <View />
@@ -45,15 +45,25 @@ let make = (~onModalClose) => {
         ~maxWidth=40.->pct,
         (),
       )}>
-      {nativeProp.env === GlobalVars.PROD
+      {isLoadingScreenActive
         ? React.null
-        : <View
-            style={viewStyle(~backgroundColor="#ffdd93", ~padding=5.->dp, ~borderRadius=5., ())}>
-            <TextWrapper textType={ModalTextBold} text="Test Mode" />
-          </View>}
-      <TouchableOpacity onPress={_ => onModalClose()} style={viewStyle(~padding=5.->dp, ())}>
-        <Icon name="close" width=20. height=20. fill=iconColor />
-      </TouchableOpacity>
+        : <>
+            {nativeProp.env === GlobalVars.PROD
+              ? React.null
+              : <View
+                  style={viewStyle(
+                    ~backgroundColor="#ffdd93",
+                    ~marginHorizontal=5.->dp,
+                    ~padding=5.->dp,
+                    ~borderRadius=5.,
+                    (),
+                  )}>
+                  <TextWrapper textType={ModalTextBold} text="Test Mode" />
+                </View>}
+            <TouchableOpacity onPress={_ => onModalClose()}>
+              <Icon name="close" width=16. height=16. fill=iconColor />
+            </TouchableOpacity>
+          </>}
     </View>
   </View>
 }
