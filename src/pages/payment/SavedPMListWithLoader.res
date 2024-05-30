@@ -45,7 +45,30 @@ let placeDefaultPMAtTopOfArr = (listArr: array<SdkTypes.savedDataType>) => {
       }->Option.getOr(false)
     )
   })
-  defaultPm->Option.isSome ? [defaultPm->Option.getOr(NONE)]->Array.concat(listArr) : listArr
+  open SdkTypes
+
+  let x =
+    defaultPm->Option.isSome ? [defaultPm->Option.getOr(NONE)]->Array.concat(listArr) : listArr
+  x->Array.pushMany([
+    SAVEDLISTCARD({
+      cardHolderName: "joseph Doe",
+      cardNumber: "**** 4111",
+      cardScheme: "AmericanExpress",
+      expiry_date: "04/25",
+      isDefaultPaymentMethod: false,
+      name: "Test Test",
+      nick_name: "Test Test",
+      payment_token: "token_5eWOA255Trh9TKSyXija",
+      requiresCVV: true,
+    }),
+    SAVEDLISTWALLET({
+      payment_method_type: "wallet",
+      walletType: "Apple Pay",
+      isDefaultPaymentMethod: false,
+      payment_token: "token_5eWOA255Trh9TKSyXijb",
+    }),
+  ])
+  x
 }
 @react.component
 let make = (
@@ -54,6 +77,7 @@ let make = (
   ~setDynamicFieldsJson,
   ~savedCardCvv,
   ~setSavedCardCvv,
+  ~setIsCvcValid,
 ) => {
   let (savedPaymentMethordContextObj, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
@@ -63,9 +87,8 @@ let make = (
 
   savedPaymentMethordContextObj == Loading
     ? <LoadingPmList />
-    : <ScrollView style={viewStyle(~minHeight=0.->dp, ())}>
-        {Some(listArr)
-        ->Option.getOr([])
+    : <ScrollView>
+        {listArr
         ->Array.mapWithIndex((item, i) => {
           <SaveCardsList.PaymentMethodListView
             key={i->Int.toString}
@@ -75,6 +98,7 @@ let make = (
             setDynamicFieldsJson
             savedCardCvv
             setSavedCardCvv
+            setIsCvcValid
           />
         })
         ->React.array}

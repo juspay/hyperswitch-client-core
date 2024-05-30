@@ -10,7 +10,7 @@ let make = () => {
     <Icon name="redirection" width=40. height=35. fill=component.color />
     <Space width=10. />
     <View style={viewStyle(~width=90.->pct, ())}>
-      <TextWrapper text=localeObject.redirectText textType=Subheading />
+      <TextWrapper text=localeObject.redirectText textType=ModalText />
     </View>
   </View>
 }

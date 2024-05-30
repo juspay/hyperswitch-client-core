@@ -47,7 +47,7 @@ let getStyleProp = (~override, ~fn, ~default) => {
 }
 
 let maxTextSize = {
-  maxHeadingTextSize : 10.,
+  maxHeadingTextSize: 10.,
   maxSubHeadingTextSize: 10.,
   maxPlaceholderTextSize: 5.,
   maxButtonTextSize: 15.,
@@ -86,11 +86,11 @@ let styles = {
     "dark_textPrimary": textStyle(~color="#FFFFFF", ()),
     "flatMinimal_textPrimary": textStyle(~color="#e0e0e0", ()),
     "minimal_textPrimary": textStyle(~color="black", ()),
-    "light_textSecondary": textStyle(~color="hsla(0,0%, 10% , 0.5 )", ()),
+    "light_textSecondary": textStyle(~color="#767676", ()),
     "dark_textSecondary": textStyle(~color="#F6F8F9", ()),
     "flatMinimal_textSeconadry": textStyle(~color="#F6F8FA", ()),
     "minimal_textSeconadry": textStyle(~color="blue", ()),
-    "light_textSecondary_Bold": textStyle(~color="hsla(0,0%, 10% , 0.7 )", ()),
+    "light_textSecondary_Bold": textStyle(~color="#000000", ()),
     "dark_textSecondaryBold": textStyle(~color="#F6F8F9", ()),
     "flatMinimal_textSeconadryBold": textStyle(~color="#F6F8FA", ()),
     "minimal_textSeconadryBold": textStyle(~color="blue", ()),
@@ -670,68 +670,70 @@ let itemToObj = (
     | None => themeObj.fontFamily
     },
     headingTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.headingTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxHeadingTextSize ? maxTextSize.maxHeadingTextSize : size
-          | None => themeObj.headingTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.headingTextSizeAdjust {
+      | Some(size) => size >= maxTextSize.maxHeadingTextSize ? maxTextSize.maxHeadingTextSize : size
       | None => themeObj.headingTextSizeAdjust
+      }
+    | None => themeObj.headingTextSizeAdjust
     },
     subHeadingTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.subHeadingTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxSubHeadingTextSize ? maxTextSize.maxSubHeadingTextSize : size
-          | None => themeObj.subHeadingTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.subHeadingTextSizeAdjust {
+      | Some(size) =>
+        size >= maxTextSize.maxSubHeadingTextSize ? maxTextSize.maxSubHeadingTextSize : size
       | None => themeObj.subHeadingTextSizeAdjust
+      }
+    | None => themeObj.subHeadingTextSizeAdjust
     },
     placeholderTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.placeholderTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxPlaceholderTextSize ? maxTextSize.maxPlaceholderTextSize : size
-          | None => themeObj.placeholderTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.placeholderTextSizeAdjust {
+      | Some(size) =>
+        size >= maxTextSize.maxPlaceholderTextSize ? maxTextSize.maxPlaceholderTextSize : size
       | None => themeObj.placeholderTextSizeAdjust
+      }
+    | None => themeObj.placeholderTextSizeAdjust
     },
     buttonTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.buttonTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxButtonTextSize ? maxTextSize.maxButtonTextSize : size
-          | None => themeObj.buttonTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.buttonTextSizeAdjust {
+      | Some(size) => size >= maxTextSize.maxButtonTextSize ? maxTextSize.maxButtonTextSize : size
       | None => themeObj.buttonTextSizeAdjust
+      }
+    | None => themeObj.buttonTextSizeAdjust
     },
     errorTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.errorTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxErrorTextSize ? maxTextSize.maxErrorTextSize : size
-          | None => themeObj.errorTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.errorTextSizeAdjust {
+      | Some(size) => size >= maxTextSize.maxErrorTextSize ? maxTextSize.maxErrorTextSize : size
       | None => themeObj.errorTextSizeAdjust
+      }
+    | None => themeObj.errorTextSizeAdjust
     },
     linkTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.linkTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxLinkTextSize ? maxTextSize.maxLinkTextSize : size
-          | None => themeObj.linkTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.linkTextSizeAdjust {
+      | Some(size) => size >= maxTextSize.maxLinkTextSize ? maxTextSize.maxLinkTextSize : size
       | None => themeObj.linkTextSizeAdjust
+      }
+    | None => themeObj.linkTextSizeAdjust
     },
     modalTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.modalTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxModalTextSize ? maxTextSize.maxModalTextSize : size
-          | None => themeObj.modalTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.modalTextSizeAdjust {
+      | Some(size) => size >= maxTextSize.maxModalTextSize ? maxTextSize.maxModalTextSize : size
       | None => themeObj.modalTextSizeAdjust
+      }
+    | None => themeObj.modalTextSizeAdjust
     },
     cardTextSizeAdjust: switch appearance.font {
-      | Some(obj) =>
-        switch obj.cardTextSizeAdjust {
-          | Some(size) => size >= maxTextSize.maxCardTextSize ? maxTextSize.maxCardTextSize : size
-          | None => themeObj.cardTextSizeAdjust
-        }
+    | Some(obj) =>
+      switch obj.cardTextSizeAdjust {
+      | Some(size) => size >= maxTextSize.maxCardTextSize ? maxTextSize.maxCardTextSize : size
       | None => themeObj.cardTextSizeAdjust
+      }
+    | None => themeObj.cardTextSizeAdjust
     },
     paypalButonColor: themeObj.paypalButonColor,
     applePayButtonColor: themeObj.applePayButtonColor,
@@ -850,10 +852,8 @@ let useThemeBasedStyle = () => {
   | _ => None
   }
   let themerecordOverridedWithAppObj = switch themeType {
-  | Light(appearance) =>
-    itemToObj(themerecord->Option.getOr(lightRecord), appearance->Option.getExn, false)
-  | Dark(appearance) =>
-    itemToObj(themerecord->Option.getOr(darkRecord), appearance->Option.getExn, true)
+  | Light(appearance) => itemToObj(themerecord->Option.getOr(lightRecord), appearance, false)
+  | Dark(appearance) => itemToObj(themerecord->Option.getOr(darkRecord), appearance, true)
   }
   themerecordOverridedWithAppObj
 }

@@ -4,20 +4,20 @@ let make = (~initialIconName, ~updateIconName, ~isSelected, ~fillIcon) => {
   let fill = fillIcon ? Some(primaryColor) : None
 
   switch updateIconName {
-  | "" => <Icon name={initialIconName} height=20. width=20. ?fill />
-  | _ =>
+  | None => <Icon name={initialIconName} height=18. width=18. ?fill />
+  | Some(updateIconName) =>
     <>
       <Icon
         name={initialIconName}
-        height=20.
-        width=20.
+        height=18.
+        width=18.
         ?fill
         style={ReactNative.Style.viewStyle(~display=isSelected ? #flex : #none, ())}
       />
       <Icon
         name={updateIconName}
-        height=20.
-        width=20.
+        height=18.
+        width=18.
         ?fill
         style={ReactNative.Style.viewStyle(~display=isSelected ? #none : #flex, ())}
       />

@@ -71,7 +71,7 @@ let make = (
     | Normal => ("#0048a0", "#0570de")
     | LoadingButton => ("#0048a0", "#0570de")
     | Completed => ("#0048a0", "#0570de")
-    | Disabled => ("#E7EAF1", "#E7EAF1")
+    | Disabled => ("#808080", "#808080")
     }
   }
 
@@ -86,10 +86,10 @@ let make = (
   | Normal => false
   | _ => true
   }
-  let isdisabledColor = switch buttonState {
-  | Disabled => true
-  | _ => false
-  }
+  // let isdisabledColor = switch buttonState {
+  // | Disabled => true
+  // | _ => false
+  // }
 
   let loaderIconColor = switch buttonType {
   | Primary => Some(payNowButtonTextColor)
@@ -163,7 +163,7 @@ let make = (
           ~alignItems=#center,
           ~borderRadius,
           ~overflow=#hidden,
-          ~opacity={isdisabledColor ? 0.6 : 1.},
+          ~opacity=1., //{isdisabledColor ? 0.6 : 1.},
           (),
         ),
       ])}

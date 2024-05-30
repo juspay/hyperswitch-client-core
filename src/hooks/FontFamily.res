@@ -2,7 +2,7 @@ let useCustomFontFamily = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   switch ThemebasedStyle.itemToObj(
     ThemebasedStyle.lightRecord,
-    nativeProp.configuration.appearance->Option.getExn,
+    nativeProp.configuration.appearance,
     false,
   ).fontFamily {
   | CustomFont(font) => font
