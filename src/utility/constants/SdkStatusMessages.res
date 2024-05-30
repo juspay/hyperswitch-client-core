@@ -25,7 +25,7 @@ let externalThreeDsModuleStatus = {
 let authorizeCallStatus = {
   successMsg: "payment authorised successfully",
   errorMsg: "authorize failed",
-  apiCallFailure: "authorise failure, cannot process this payment",
+  apiCallFailure: "authorize failure, cannot process this payment",
 }
 
 let authenticationCallStatus = {
