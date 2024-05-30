@@ -45,30 +45,7 @@ let placeDefaultPMAtTopOfArr = (listArr: array<SdkTypes.savedDataType>) => {
       }->Option.getOr(false)
     )
   })
-  open SdkTypes
-
-  let x =
-    defaultPm->Option.isSome ? [defaultPm->Option.getOr(NONE)]->Array.concat(listArr) : listArr
-  x->Array.pushMany([
-    SAVEDLISTCARD({
-      cardHolderName: "joseph Doe",
-      cardNumber: "**** 4111",
-      cardScheme: "AmericanExpress",
-      expiry_date: "04/25",
-      isDefaultPaymentMethod: false,
-      name: "Test Test",
-      nick_name: "Test Test",
-      payment_token: "token_5eWOA255Trh9TKSyXija",
-      requiresCVV: true,
-    }),
-    SAVEDLISTWALLET({
-      payment_method_type: "wallet",
-      walletType: "Apple Pay",
-      isDefaultPaymentMethod: false,
-      payment_token: "token_5eWOA255Trh9TKSyXijb",
-    }),
-  ])
-  x
+  defaultPm->Option.isSome ? [defaultPm->Option.getOr(NONE)]->Array.concat(listArr) : listArr
 }
 @react.component
 let make = (
