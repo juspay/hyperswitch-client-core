@@ -4,12 +4,12 @@ open Style
 @react.component
 let make = (
   ~initialIconName,
-  ~updateIconName="",
+  ~updateIconName=None,
   ~text,
   ~isSelected,
   ~setIsSelected,
   ~textType,
-  ~fillIcon=false,
+  ~fillIcon=true,
   ~disabled=false,
   ~disableScreenSwitch=false,
 ) => {

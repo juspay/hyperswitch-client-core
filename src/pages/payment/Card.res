@@ -136,7 +136,7 @@ let make = (
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
     <View>
-      <TextWrapper text=localeObject.cardDetailsLabel textType={SubheadingBold} />
+      <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
       <CardElement setIsAllValid=setIsAllCardVlauesValid reset=false />
       // <Space height=24. />
@@ -163,11 +163,7 @@ let make = (
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields
-              setIsAllDynamicFieldValid
-              setDynamicFieldsJson
-              requiredFields
-              isSaveCardsFlow={false}
-              saveCardsData=None
+              setIsAllDynamicFieldValid setDynamicFieldsJson requiredFields isSaveCardsFlow={false}
             />
             <Space height=8. />
           </>
@@ -185,11 +181,11 @@ let make = (
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
-            updateIconName="checkboxNotClicked"
+            updateIconName=Some("checkboxNotClicked")
             text=localeObject.saveCardDetails
             isSelected=isNicknameSelected
             setIsSelected=setIsNicknameSelected
-            textType={TextWrapper.Subheading}
+            textType={TextWrapper.ModalTextBold}
             disableScreenSwitch=true
           />
         </>

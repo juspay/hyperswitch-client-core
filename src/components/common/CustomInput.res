@@ -30,7 +30,7 @@ let make = (
   ~textAlign=None,
   ~onPressIconRight=?,
   ~isValid=true,
-  ~showEyeIconaftersecureTextEntry=true,
+  ~showEyeIconaftersecureTextEntry=false,
   ~borderTopWidth=1.,
   ~borderBottomWidth=1.,
   ~borderLeftWidth=1.,
@@ -50,7 +50,7 @@ let make = (
   let {
     placeholderColor,
     bgColor,
-    focusedTextInputBoderColor,
+    primaryColor,
     errorTextInputColor,
     normalTextInputBoderColor,
     component,
@@ -71,8 +71,8 @@ let make = (
   // let focusedTextInputBoderColor = "rgba(0, 153, 255, 1)"
   // let errorTextInputColor = "rgba(218, 14, 15, 1)"
   // let normalTextInputBoderColor = "rgba(204, 210, 226, 0.75)"
-  let _ = state != "" && secureTextEntry == false && enableCrossIcon
-  let shadwoStyle = enableShadow
+  // let _ = state != "" && secureTextEntry == false && enableCrossIcon
+  let shadowStyle = enableShadow
     ? viewStyle(
         ~elevation,
         ~shadowRadius,
@@ -89,9 +89,7 @@ let make = (
       ? <TextWrapper textType={PlaceholderText}>
           {React.string(heading)}
           {mandatory
-            ? <TextWrapper textType={ErrorText}>
-                {" *"->React.string}
-              </TextWrapper>
+            ? <TextWrapper textType={ErrorText}> {" *"->React.string} </TextWrapper>
             : React.null}
         </TextWrapper>
       : React.null}
@@ -111,7 +109,7 @@ let make = (
           ~height=height->dp,
           ~flexDirection=#row,
           ~borderColor=isValid
-            ? isFocused ? focusedTextInputBoderColor : normalTextInputBoderColor
+            ? isFocused ? primaryColor : normalTextInputBoderColor
             : errorTextInputColor,
           ~width,
           ~paddingHorizontal=13.->dp,
@@ -119,7 +117,7 @@ let make = (
           ~justifyContent=#center,
           (),
         ),
-        shadwoStyle,
+        shadowStyle,
         // bgColor,
       ])}>
       {switch iconLeft {

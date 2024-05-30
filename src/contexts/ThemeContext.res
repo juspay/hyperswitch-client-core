@@ -1,7 +1,7 @@
-type appObj = option<SdkTypes.appearance>
+type appObj = SdkTypes.appearance
 type themeType = Light(appObj) | Dark(appObj)
 
-let defaultValue: themeType = Light(None)
+let defaultValue: themeType = Light(SdkTypes.defaultAppearance)
 let defaultSetter = (_: themeType) => ()
 let themeContext = React.createContext((defaultValue, defaultSetter))
 

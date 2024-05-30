@@ -278,27 +278,21 @@ let make = (
   ~setIsAllDynamicFieldValid,
   ~setDynamicFieldsJson,
   ~isSaveCardsFlow=false,
-  ~saveCardsData: option<SdkTypes.savedDataType>,
 ) => {
   let localeObject = GetLocale.useGetLocalObj()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let filteredRequiredFields =
-    requiredFields->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, saveCardsData)
 
   let clientTimeZone = Utils.dateTimeFormat().resolvedOptions().timeZone
   let clientCountry = Utils.getClientCountry(clientTimeZone)
 
   let keysValArray =
-    filteredRequiredFields->RequiredFieldsTypes.getKeysValArray(
-      isSaveCardsFlow,
-      clientCountry.isoAlpha2,
-    )
+    requiredFields->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2)
   let (finalJson, setFinalJson) = React.useState(_ => keysValArray)
 
-  React.useEffect2(() => {
+  React.useEffect1(() => {
     setFinalJson(_ => keysValArray)
     None
-  }, (isSaveCardsFlow, saveCardsData))
+  }, [isSaveCardsFlow])
   let (country, setCountry) = React.useState(_ => nativeProp.hyperParams.country)
   React.useEffect1(() => {
     let countryVal =
@@ -323,7 +317,7 @@ let make = (
   }, [finalJson])
 
   let filteredRequiredFieldsFromRendering =
-    filteredRequiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(keysValArray)
+    requiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(keysValArray)
 
   let (statesJson, setStatesJson) = React.useState(_ => None)
 
@@ -373,7 +367,7 @@ let make = (
       {if requiredFieldsInsideBilling->Array.length > 0 {
         <>
           <Space height=24. />
-          <TextWrapper text=localeObject.billingDetails textType={SubheadingBold} />
+          <TextWrapper text=localeObject.billingDetails textType={ModalText} />
           <Space height=8. />
           <Fields
             fields=requiredFieldsInsideBilling
