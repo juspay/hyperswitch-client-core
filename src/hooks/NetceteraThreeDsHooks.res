@@ -17,31 +17,12 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     ~onFailure: string => unit,
   ) => {
     let retriveAndShowStatus = () => {
-      // apiLogWrapper(
-      //   ~logType=INFO,
-      //   ~eventName=RETRIEVE_CALL_INIT,
-      //   ~url=baseUrl,
-      //   ~statusCode="",
-      //   ~apiLogType=Request,
-      //   ~data=JSON.Encode.null,
-      //   (),
-      // )
       retrievePayment(Types.Payment, clientSecret, publishableKey)
       ->Promise.then(res => {
         if res == JSON.Encode.null {
           onFailure(retrievePaymentStatus.apiCallFailure)
         } else {
           let status = res->Utils.getDictFromJson->Utils.getString("status", "")
-
-          // apiLogWrapper(
-          //   ~logType=INFO,
-          //   ~eventName=RETRIEVE_CALL,
-          //   ~url=baseUrl,
-          //   ~statusCode="",
-          //   ~apiLogType=Response,
-          //   ~data=res,
-          //   (),
-          // )
 
           switch status {
           | "processing" | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
@@ -50,16 +31,8 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         }->ignore
         Promise.resolve()
       })
-      ->Promise.catch(err => {
-        // apiLogWrapper(
-        //   ~logType=ERROR,
-        //   ~eventName=RETRIEVE_CALL,
-        //   ~url=baseUrl,
-        //   ~statusCode="504",
-        //   ~apiLogType=NoResponse,
-        //   ~data=err->toJson,
-        //   (),
-        // )
+      ->Promise.catch(_ => {
+        onFailure(SdkStatusMessages.retrievePaymentStatus.apiCallFailure)
         Promise.resolve()
       })
       ->ignore
@@ -231,6 +204,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
           ~data=err->toJson,
           (),
         )
+        retriveAndShowStatus()
         Promise.resolve(None)
       })
     }
@@ -398,7 +372,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
       })
     }
 
-    let handleNetcetera3DS = (
+    let startNetcetera3DSFlow = (
       ~netceteraSDKApiKey: string,
       ~clientSecret: string,
       ~publishableKey: string,
@@ -445,7 +419,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
           },
         )
       } catch {
-      | err => onFailure("")
+      | _ => retriveAndShowStatus()
       }
     }
 
@@ -473,16 +447,21 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
             let status = res->Utils.getDictFromJson->Utils.getString("status", "")
             switch status {
             | "processing" => onSuccess(retrievePaymentStatus.successMsg)
+            | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
             | "failed" => onFailure(retrievePaymentStatus.errorMsg)
             | _ => shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig, ~publishableKey)
             }
           }
           Promise.resolve()
         })
+        ->Promise.catch(_ => {
+          onFailure(retrievePaymentStatus.apiCallFailure)
+          Promise.resolve()
+        })
         ->ignore
       }
 
-      handleNetcetera3DS(
+      startNetcetera3DSFlow(
         ~netceteraSDKApiKey,
         ~clientSecret,
         ~publishableKey,
