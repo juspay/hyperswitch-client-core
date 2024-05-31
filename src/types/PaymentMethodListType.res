@@ -98,6 +98,7 @@ type redirectType = {
   mandate_data?: mandate_data,
   browser_info?: online,
   customer_acceptance?: customer_acceptance,
+  card_cvc?: string,
 }
 
 let flattenPaymentListArray = (plist, item) => {

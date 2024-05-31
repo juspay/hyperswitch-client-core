@@ -1,6 +1,79 @@
 open ReactNative
 open Style
 // @send external focus: ReactNative.TouchableOpacity.ref => unit = "focus"
+
+module CVVComponent = {
+  @react.component
+  let make = (~savedCardCvv, ~setSavedCardCvv, ~isPaymentMethodSelected, ~cardScheme) => {
+    let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+
+    React.useEffect1(() => {
+      setSavedCardCvv(_ => None)
+      None
+    }, [isPaymentMethodSelected])
+
+    let (isCvcFocus, setIsCvcFocus) = React.useState(_ => false)
+
+    let isCvcValid =
+      isCvcFocus || savedCardCvv->Option.isNone
+        ? true
+        : savedCardCvv->Option.getOr("")->String.length > 0 &&
+            Validation.cvcNumberInRange(savedCardCvv->Option.getOr(""), cardScheme)
+
+    let localeObject = GetLocale.useGetLocalObj()
+
+    let errorMsgText = !isCvcValid ? Some(localeObject.inCompleteCVCErrorText) : None
+
+    let onCvvChange = cvv => setSavedCardCvv(_ => Some(Validation.formatCVCNumber(cvv, cardScheme)))
+
+    {
+      isPaymentMethodSelected
+        ? <>
+            <View
+              style={viewStyle(
+                ~display=#flex,
+                ~flexDirection=#row,
+                ~alignItems=#center,
+                ~paddingHorizontal=40.->dp,
+                ~marginTop=10.->dp,
+                (),
+              )}>
+              <View style={viewStyle(~width={50.->dp}, ())}>
+                <TextWrapper text="CVC:" textType={ModalText} />
+              </View>
+              <CustomInput
+                state={isPaymentMethodSelected ? savedCardCvv->Option.getOr("") : ""}
+                setState={isPaymentMethodSelected ? onCvvChange : _ => ()}
+                placeholder="123"
+                fontSize=12.
+                keyboardType=#"number-pad"
+                enableCrossIcon=false
+                width={100.->dp}
+                height=40.
+                isValid={isPaymentMethodSelected ? isCvcValid : true}
+                onFocus={() => {
+                  setIsCvcFocus(_ => true)
+                }}
+                onBlur={() => {
+                  setIsCvcFocus(_ => false)
+                }}
+                secureTextEntry=true
+                textColor={isCvcValid ? component.color : dangerColor}
+                iconRight=CustomIcon({
+                  Validation.checkCardCVC(savedCardCvv->Option.getOr(""), cardScheme)
+                    ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
+                    : <Icon name="cvvempty" height=35. width=35. fill="black" />
+                })
+              />
+            </View>
+            {errorMsgText->Option.isSome && isPaymentMethodSelected
+              ? <ErrorText text=errorMsgText />
+              : React.null}
+          </>
+        : React.null
+    }
+  }
+}
 module PMWithNickNameComponent = {
   @react.component
   let make = (~pmDetails: SdkTypes.savedDataType) => {
@@ -8,34 +81,56 @@ module PMWithNickNameComponent = {
     | SAVEDLISTCARD(obj) => obj.nick_name
     | _ => None
     }
+    let isDefaultPm = switch pmDetails {
+    | SAVEDLISTCARD(obj) => obj.isDefaultPaymentMethod
+    | SAVEDLISTWALLET(obj) => obj.isDefaultPaymentMethod
+    | NONE => Some(false)
+    }->Option.getOr(false)
 
     <View style={viewStyle(~display=#flex, ~flexDirection=#column, ())}>
       {switch nickName {
       | Some(val) =>
         val != ""
-          ? <>
+          ? <View style={viewStyle(~display=#flex, ~flexDirection=#row, ~alignItems=#center, ())}>
               <TextWrapper
                 text={val->String.length > 12
                   ? val->String.slice(~start=0, ~end=15)->String.concat("...")
                   : val}
-                textType={CardText}
+                textType={CardTextBold}
               />
               <Space height=5. />
-            </>
+              {isDefaultPm
+                ? <Icon name="defaultTick" height=14. width=14. fill="black" />
+                : React.null}
+            </View>
           : React.null
       | None => React.null
       }}
-      <TextWrapper
-        text={switch pmDetails {
-        | SAVEDLISTWALLET(obj) => obj.walletType
-        | SAVEDLISTCARD(obj) => obj.cardNumber
-        | NONE => None
-        }->Option.getOr("")}
-        textType={switch pmDetails {
-        | SAVEDLISTWALLET(_) => CardText
-        | _ => ModalText
-        }}
-      />
+      <View style={viewStyle(~display=#flex, ~flexDirection=#row, ~alignItems=#center, ())}>
+        <Icon
+          name={switch pmDetails {
+          | SAVEDLISTCARD(obj) => obj.cardScheme
+          | SAVEDLISTWALLET(obj) => obj.walletType
+          | NONE => None
+          }->Option.getOr("")}
+          height=24.
+          width=24.
+          style={viewStyle(~marginEnd=5.->dp, ())}
+        />
+        <TextWrapper
+          text={switch pmDetails {
+          | SAVEDLISTWALLET(obj) => obj.walletType
+          | SAVEDLISTCARD(obj) => obj.cardNumber
+          | NONE => None
+          }
+          ->Option.getOr("")
+          ->String.replaceAll("*", "●")}
+          textType={switch pmDetails {
+          | SAVEDLISTWALLET(_) => CardTextBold
+          | _ => CardText
+          }}
+        />
+      </View>
     </View>
   }
 }
@@ -43,28 +138,23 @@ module PMWithNickNameComponent = {
 module CardDetailsComponent = {
   @react.component
   let make = (~pmDetails: SdkTypes.savedDataType) => {
-    let isDefaultPm = switch pmDetails {
-    | SAVEDLISTCARD(obj) => obj.isDefaultPaymentMethod
-    | SAVEDLISTWALLET(obj) => obj.isDefaultPaymentMethod
-    | NONE => Some(false)
-    }->Option.getOr(false)
-
     <View
       style={viewStyle(~display=#flex, ~flexDirection=#row, ~justifyContent=#"space-between", ())}>
       <PMWithNickNameComponent pmDetails />
-      <Space />
-      {isDefaultPm ? <Icon name="defaultTick" height=14. width=14. fill="black" /> : React.null}
     </View>
   }
 }
 
-module PaymentMethordListView = {
+module PaymentMethodListView = {
   @react.component
   let make = (
     ~pmObject: SdkTypes.savedDataType,
     ~isButtomBorder=true,
     ~setIsAllDynamicFieldValid,
     ~setDynamicFieldsJson,
+    ~savedCardCvv,
+    ~setSavedCardCvv,
+    ~setIsCvcValid,
   ) => {
     let (pmList, _) = React.useContext(PaymentListContext.paymentListContext)
 
@@ -149,14 +239,14 @@ module PaymentMethordListView = {
       None
     })
 
-    let {component} = ThemebasedStyle.useThemeBasedStyle()
+    let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
 
     let pmToken = switch pmObject {
     | SdkTypes.SAVEDLISTCARD(obj) =>
       obj.mandate_id->Option.isSome
-        ? obj.mandate_id->Option.getExn
-        : obj.payment_token->Option.getExn
-    | SdkTypes.SAVEDLISTWALLET(obj) => obj.payment_token->Option.getExn
+        ? obj.mandate_id->Option.getOr("")
+        : obj.payment_token->Option.getOr("")
+    | SdkTypes.SAVEDLISTWALLET(obj) => obj.payment_token->Option.getOr("")
     | NONE => ""
     }
 
@@ -197,13 +287,35 @@ module PaymentMethordListView = {
     | Some(val) => val == pmToken
     | None => false
     }
+
+    let cardScheme = switch pmObject {
+    | SdkTypes.SAVEDLISTCARD(card) => card.cardScheme->Option.getOr("")
+    | _ => "NotCard"
+    }
+
+    React.useEffect2(() => {
+      if isPaymentMethodSelected {
+        setIsCvcValid(_ =>
+          switch cardScheme {
+          | "NotCard" => true
+          | _ =>
+            switch savedCardCvv {
+            | Some(cvv) => cvv->String.length > 0 && Validation.cvcNumberInRange(cvv, cardScheme)
+            | None => !(pmObject->PaymentUtils.checkIsCVCRequired)
+            }
+          }
+        )
+      }
+      None
+    }, (isPaymentMethodSelected, savedCardCvv))
+
     <TouchableOpacity
       onPress={_ => {
         onPress()
       }}
       style={viewStyle(
         ~minHeight=60.->dp,
-        ~paddingVertical=12.->dp,
+        ~paddingVertical=16.->dp,
         ~borderBottomWidth={isButtomBorder ? 0.8 : 0.},
         ~borderBottomColor=component.borderColor,
         ~justifyContent=#center,
@@ -214,27 +326,18 @@ module PaymentMethordListView = {
         style={viewStyle(
           ~flexDirection=#row,
           ~flexWrap=#wrap,
+          ~alignItems=#center,
           ~justifyContent=#"space-between",
           (),
         )}>
-        <View style={viewStyle(~flexDirection=#row, ())}>
+        <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
           <CustomRadioButton
             size=20.5
             selected=isPaymentMethodSelected
-
+            color=primaryColor
             // selected={selectedToken->Option.isSome
             //   ? selectedToken->Option.getOr("") == cardToken
             //   : false}
-          />
-          <Space />
-          <Icon
-            name={switch pmObject {
-            | SAVEDLISTCARD(obj) => obj.cardScheme
-            | SAVEDLISTWALLET(obj) => obj.walletType
-            | NONE => None
-            }->Option.getOr("")}
-            height=26.
-            width=34.
           />
           <Space />
           <CardDetailsComponent pmDetails=pmObject />
@@ -242,58 +345,21 @@ module PaymentMethordListView = {
         {switch pmObject {
         | SAVEDLISTCARD(obj) =>
           <TextWrapper
-            text={"expires " ++ obj.expiry_date->Option.getOr("")} textType={ModalText}
+            text={"expires " ++ obj.expiry_date->Option.getOr("")} textType={ModalTextLight}
           />
         | SAVEDLISTWALLET(_) | NONE => React.null
         }}
       </View>
+      {pmObject->PaymentUtils.checkIsCVCRequired
+        ? <CVVComponent savedCardCvv setSavedCardCvv isPaymentMethodSelected cardScheme />
+        : React.null}
       {isPaymentMethodSelected && requiredFields->Array.length != 0
         ? <View style={viewStyle(~paddingHorizontal=10.->dp, ())}>
             <DynamicFields
-              setIsAllDynamicFieldValid
-              setDynamicFieldsJson
-              requiredFields
-              isSaveCardsFlow=true
-              saveCardsData=Some(pmObject)
+              setIsAllDynamicFieldValid setDynamicFieldsJson requiredFields isSaveCardsFlow=true
             />
-            <Space height=18. />
           </View>
         : React.null}
     </TouchableOpacity>
   }
 }
-
-// @react.component
-// let make = (~saveCardsData: option<array<SdkTypes.savedDataType>>) => {
-//   let {borderWidth, borderRadius, component} = ThemebasedStyle.useThemeBasedStyle()
-//   <View>
-//     <TextWrapper text="Saved Cards" textType=Subheading />
-//     <Space height=8. />
-//     <View
-//       style={viewStyle(
-//         ~paddingHorizontal=15.->dp,
-//         ~paddingVertical=6.->dp,
-//         ~borderWidth={borderWidth /. 2.},
-//         ~borderRadius,
-//         ~borderColor=component.borderColor,
-//         ~backgroundColor="white",
-//         (),
-//       )}>
-//       <ScrollView style={viewStyle(~maxHeight=200.->dp, ())}>
-//         {switch saveCardsData {
-//         | Some(data) =>
-//           data
-//           ->Array.mapWithIndex((item, i) => {
-//             <PaymentMethordListView
-//               key={i->Int.toString}
-//               pmObject={item}
-//               isButtomBorder={data->Array.length - 1 === i ? false : true}
-//             />
-//           })
-//           ->React.array
-//         | None => React.null
-//         }}
-//       </ScrollView>
-//     </View>
-//   </View>
-// }

@@ -101,7 +101,7 @@ let make = (
       //     : <Icon name="lock" width=40. height=16. fill=payNowButtonTextColor />,
       // )
       loadingText="Processing..."
-      linearGradientColorTuple=Some(payNowButtonColor)
+      linearGradientColorTuple=Some(isAllValuesValid ? payNowButtonColor : ("#CCCCCC", "#CCCCCC"))
       // leftIcon=CustomIcon(
       //   loading == PaymentSuccess ? <> </> : <View style={viewStyle(~width=40.->dp, ())} />,
       // )

@@ -52,6 +52,8 @@ let make = (
     nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
     isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
   )
+  let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
+  let (isCvcValid, setIsCvcValid) = React.useState(_ => false)
 
   let processSavedPMRequest = () => {
     //processRequestWallet( obj->SdkTypes.walletTypeToStrMapper->getWalletValFromWalletArr)
@@ -88,6 +90,7 @@ let make = (
           ~payment_token=selectedObj.token->Option.getOr(""),
           ~allApiData,
           ~isSaveCardCheckboxSelected,
+          ~savedCardCvv,
         ),
         "card",
       )
@@ -120,30 +123,7 @@ let make = (
     processSavedPMRequest()
   }
 
-  // React.useEffect0(() => {
-  //   setConfirmButtonDataRef(
-  //     <ConfirmButton
-  //       loading=false isAllValuesValid={false} handlePress hasSomeFields=false paymentMethod=""
-  //     />,
-  //   )
-  //   None
-  // })
-
-  // React.useEffect1(() => {
-  //   // Console.log2(
-  //   //   "payment method changed----->",
-  //   //   getWalletValFromWalletArr(savedPaymentMethodsData.selectedPaymentMethod.W)
-  //   // )
-
-  //   switch savedPaymentMethodsData.selectedPaymentMethod {
-  //   | SavedPaymentMethodContext.WALLET(obj) =>
-  //     Console.log2("payment method changed", obj->getWalletValFromWalletArr)
-  //   | _ => ()
-  //   }
-  //   None
-  // }, [savedPaymentMethodsData])
-
-  React.useEffect6(() => {
+  React.useEffect7(() => {
     setShowSavePMCheckbox(_ =>
       allApiData.mandateType == NEW_MANDATE &&
       nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
@@ -158,12 +138,14 @@ let make = (
     | NONE => "card"
     | wallet => wallet->SdkTypes.walletTypeToStrMapper
     }
+
     setConfirmButtonDataRef(
       <ConfirmButton
         loading=false
         isAllValuesValid={savedPaymentMethordContextObj.selectedPaymentMethod->Option.isSome &&
         allApiData.paymentType->Option.isSome &&
-        isAllDynamicFieldValid}
+        isAllDynamicFieldValid &&
+        isCvcValid}
         handlePress
         hasSomeFields=false
         paymentMethod
@@ -178,43 +160,21 @@ let make = (
     dynamicFieldsJson,
     isSaveCardCheckboxSelected,
     error,
+    isCvcValid,
   ))
 
-  // React.useEffect1(() => {
-  //   pmList
-  //   ->Array.forEach(payment_method => {
-  //     // Console.log2("paymentMethod--->", payment_method)
-  //     switch payment_method {
-  //     | CARD(cardVal) =>
-  //       if cardVal.card_networks->Array.length > 0 {
-  //         // Console.log2("pm list flow bird--->", cardVal)
-  //         pmCardVal->Array.push(cardVal)
-  //         setPmCardVal(_ => pmCardVal)
-  //       }
-  //     | WALLET(walletVal) => {
-  //         // Console.log2("wallet val------>", walletVal)
-  //         pmWalletVal->Array.push(walletVal)
-  //         setPmWalletVal(_ => pmWalletVal)
-  //       }
-  //     | _ => ()
-  //     }
-  //   })
-  //   ->ignore
-  //   None
-  // }, [pmList])
-
-  <>
-    <Space />
-    <SavedPaymentScreenChild
-      savedPaymentMethodsData={savedPaymentMethordContextObj.pmList->Option.getOr([])}
-      setIsAllDynamicFieldValid
-      setDynamicFieldsJson
-      isSaveCardCheckboxSelected
-      setSaveCardChecboxSelected
-      showSavePMCheckbox
-      merchantName={nativeProp.configuration.merchantDisplayName == ""
-        ? allApiData.merchantName->Option.getOr("")
-        : nativeProp.configuration.merchantDisplayName}
-    />
-  </>
+  <SavedPaymentScreenChild
+    savedPaymentMethodsData={savedPaymentMethordContextObj.pmList->Option.getOr([])}
+    setIsAllDynamicFieldValid
+    setDynamicFieldsJson
+    isSaveCardCheckboxSelected
+    setSaveCardChecboxSelected
+    showSavePMCheckbox
+    merchantName={nativeProp.configuration.merchantDisplayName == ""
+      ? allApiData.merchantName->Option.getOr("")
+      : nativeProp.configuration.merchantDisplayName}
+    savedCardCvv
+    setSavedCardCvv
+    setIsCvcValid
+  />
 }

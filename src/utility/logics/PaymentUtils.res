@@ -140,11 +140,19 @@ let generateCardConfirmBody = (
   }
 }
 
+let checkIsCVCRequired = (pmObject: SdkTypes.savedDataType) => {
+  switch pmObject {
+  | SAVEDLISTCARD(obj) => obj.requiresCVV
+  | _ => false
+  }
+}
+
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
   ~allApiData: AllApiDataContext.allApiData,
   ~isSaveCardCheckboxSelected,
+  ~savedCardCvv,
 ): PaymentMethodListType.redirectType => {
   {
     client_secret: nativeProp.clientSecret,
@@ -164,6 +172,7 @@ let generateSavedCardConfirmBody = (
           })
         : None
     ),
+    card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
   }
 }
 let generateWalletConfirmBody = (

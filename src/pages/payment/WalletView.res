@@ -15,7 +15,7 @@ module WalletDisclaimer = {
           ~alignItems=#center,
           (),
         )}>
-        <Icon name="lock" />
+        <Icon name="lock" fill="#767676" style={viewStyle(~marginEnd=5.->dp, ())} />
         <TextWrapper text="Wallet details will be saved upon selection" textType={ModalText} />
       </View>
     </>

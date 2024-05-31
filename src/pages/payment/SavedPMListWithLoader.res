@@ -52,6 +52,9 @@ let make = (
   ~listArr: array<SdkTypes.savedDataType>,
   ~setIsAllDynamicFieldValid,
   ~setDynamicFieldsJson,
+  ~savedCardCvv,
+  ~setSavedCardCvv,
+  ~setIsCvcValid,
 ) => {
   let (savedPaymentMethordContextObj, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
@@ -61,16 +64,18 @@ let make = (
 
   savedPaymentMethordContextObj == Loading
     ? <LoadingPmList />
-    : <ScrollView style={viewStyle(~minHeight=0.->dp, ())}>
-        {Some(listArr)
-        ->Option.getOr([])
+    : <ScrollView>
+        {listArr
         ->Array.mapWithIndex((item, i) => {
-          <SaveCardsList.PaymentMethordListView
+          <SaveCardsList.PaymentMethodListView
             key={i->Int.toString}
             pmObject={item}
             isButtomBorder={Some(listArr)->Option.getOr([])->Array.length - 1 === i ? false : true}
             setIsAllDynamicFieldValid
             setDynamicFieldsJson
+            savedCardCvv
+            setSavedCardCvv
+            setIsCvcValid
           />
         })
         ->React.array}
