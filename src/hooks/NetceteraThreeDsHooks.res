@@ -366,8 +366,6 @@ let useNetceteraThreeDsHook = () => {
         Netcetera3dsModule.initialiseNetceteraSDK(
           netceteraSDKApiKey,
           sdkEnvironment->sdkEnvironmentToStrMapper,
-          threeDsData.messageVersion,
-          threeDsData.directoryServerId,
           status => {
             logger(
               ~logType=INFO,
@@ -377,18 +375,22 @@ let useNetceteraThreeDsHook = () => {
               (),
             )
             status->isStatusSuccess
-              ? Netcetera3dsModule.generateAReqParams((aReqParams, status) => {
-                  logger(
-                    ~logType=INFO,
-                    ~value=status->JSON.stringifyAny->Option.getOr(""),
-                    ~category=USER_EVENT,
-                    ~eventName=NETCETERA_SDK,
-                    (),
-                  )
-                  status->isStatusSuccess
-                    ? hsThreeDsAuthCall(aReqParams, onSuccess, onFailure)->ignore
-                    : onFailure(threeDsSDKGetAReqStatus.errorMsg)
-                })
+              ? Netcetera3dsModule.generateAReqParams(
+                  threeDsData.messageVersion,
+                  threeDsData.directoryServerId,
+                  (aReqParams, status) => {
+                    logger(
+                      ~logType=INFO,
+                      ~value=status->JSON.stringifyAny->Option.getOr(""),
+                      ~category=USER_EVENT,
+                      ~eventName=NETCETERA_SDK,
+                      (),
+                    )
+                    status->isStatusSuccess
+                      ? hsThreeDsAuthCall(aReqParams, onSuccess, onFailure)->ignore
+                      : onFailure(threeDsSDKGetAReqStatus.errorMsg)
+                  },
+                )
               : onFailure(status.message)
           },
         )
