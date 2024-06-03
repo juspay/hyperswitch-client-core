@@ -2,7 +2,7 @@ open ExternalThreeDsTypes
 open ThreeDsUtils
 open SdkStatusMessages
 external toJson: 't => JSON.t = "%identity"
-let useNetceteraThreeDsHook = (~retrievePayment) => {
+let useNetceteraThreeDsHook = () => {
   let logger = LoggerHook.useLoggerHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
 
@@ -13,9 +13,12 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     ~publishableKey,
     ~nextAction,
     ~sdkEnvironment: GlobalVars.envType,
+    ~retrievePayment,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {
+    let threeDsData =
+      nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
     let retriveAndShowStatus = () => {
       retrievePayment(Types.Payment, clientSecret, publishableKey)
       ->Promise.then(res => {
@@ -39,9 +42,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     }
 
     let shortPollexternalThreeDsAuthStatus = (
-      ~baseUrl,
       ~pollConfig: PaymentConfirmTypes.pollConfig,
-      ~publishableKey,
       ~onSuccess,
       ~onFailure: string => unit,
     ) => {
@@ -146,29 +147,29 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         ->ignore
       }, pollConfig.delayInSecs * 1000)
     }
-    let hsAuthoriseCall = (
-      ~authoriseUrl,
+    let hsAuthorizeCall = (
+      ~authorizeUrl,
       ~onSuccess: string => unit,
       ~onFailure: string => unit,
     ) => {
       apiLogWrapper(
         ~logType=INFO,
         ~eventName=AUTHORIZE_CALL_INIT,
-        ~url=authoriseUrl,
+        ~url=authorizeUrl,
         ~statusCode="",
         ~apiLogType=Request,
         ~data=JSON.Encode.null,
         (),
       )
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
-      CommonHooks.fetchApi(~uri=authoriseUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
+      CommonHooks.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
       ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
           apiLogWrapper(
             ~logType=INFO,
             ~eventName=AUTHORIZE_CALL,
-            ~url=authoriseUrl,
+            ~url=authorizeUrl,
             ~statusCode,
             ~apiLogType=Response,
             ~data=JSON.Encode.null,
@@ -183,7 +184,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
             apiLogWrapper(
               ~logType=ERROR,
               ~eventName=AUTHORIZE_CALL,
-              ~url=authoriseUrl,
+              ~url=authorizeUrl,
               ~statusCode,
               ~apiLogType=Err,
               ~data=error,
@@ -198,7 +199,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         apiLogWrapper(
           ~logType=ERROR,
           ~eventName=AUTHORIZE_CALL,
-          ~url=authoriseUrl,
+          ~url=authorizeUrl,
           ~statusCode="504",
           ~apiLogType=NoResponse,
           ~data=err->toJson,
@@ -208,19 +209,12 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         Promise.resolve(None)
       })
     }
-    let shortPollStatusAndRetrieve = (~pollConfig, ~publishableKey) => {
-      shortPollexternalThreeDsAuthStatus(
-        ~baseUrl,
-        ~pollConfig,
-        ~publishableKey,
-        ~onSuccess=retriveAndShowStatus,
-        ~onFailure,
-      )
+    let shortPollStatusAndRetrieve = (~pollConfig) => {
+      shortPollexternalThreeDsAuthStatus(~pollConfig, ~onSuccess=retriveAndShowStatus, ~onFailure)
     }
 
     let sendChallengeParamsAndGenerateChallenge = (
       ~challengeParams,
-      ~threeDsData: PaymentConfirmTypes.threeDsData,
       ~onSuccess: string => unit,
       ~onFailure: string => unit,
     ) => {
@@ -249,10 +243,10 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
                 )
                 status->isStatusSuccess
                   ? {
-                      let authoriseUrl = threeDsData.threeDsAuthorizeUrl
-                      hsAuthoriseCall(~authoriseUrl, ~onSuccess, ~onFailure)->ignore
+                      let authorizeUrl = threeDsData.threeDsAuthorizeUrl
+                      hsAuthorizeCall(~authorizeUrl, ~onSuccess, ~onFailure)->ignore
                     }
-                  : shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig, ~publishableKey)
+                  : shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig)
               })
             : onFailure(threeDsSdkChallengeStatus.errorMsg)
         },
@@ -260,18 +254,14 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
     }
 
     let frictionlessAuthroiseAndContinue = (
-      ~threeDsData: PaymentConfirmTypes.threeDsData,
       ~onSuccess: string => unit,
       ~onFailure: string => unit,
     ) => {
-      hsAuthoriseCall(~authoriseUrl=threeDsData.threeDsAuthorizeUrl, ~onSuccess, ~onFailure)->ignore
+      hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl, ~onSuccess, ~onFailure)->ignore
     }
 
     let hsThreeDsAuthCall = (
-      clientSecret: string,
-      publishableKey: string,
       aReqParams: aReqParams,
-      threeDsData: PaymentConfirmTypes.threeDsData,
       onSuccess: string => unit,
       onFailure: string => unit,
     ) => {
@@ -318,13 +308,8 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
               )
               switch challengeParams.transStatus {
               | "C" =>
-                sendChallengeParamsAndGenerateChallenge(
-                  ~challengeParams,
-                  ~threeDsData,
-                  ~onSuccess,
-                  ~onFailure,
-                )
-              | _ => frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
+                sendChallengeParamsAndGenerateChallenge(~challengeParams, ~onSuccess, ~onFailure)
+              | _ => frictionlessAuthroiseAndContinue(~onSuccess, ~onFailure)
               }
             | AUTH_ERROR(errObj) => {
                 logger(
@@ -334,7 +319,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
                   ~eventName=DISPLAY_THREE_DS_SDK,
                   (),
                 )
-                frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
+                frictionlessAuthroiseAndContinue(~onSuccess, ~onFailure)
               }
             }
 
@@ -353,7 +338,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
               ~data=err->toJson,
               (),
             )
-            frictionlessAuthroiseAndContinue(~threeDsData, ~onSuccess, ~onFailure)
+            frictionlessAuthroiseAndContinue(~onSuccess, ~onFailure)
             Some(data)->Promise.resolve
           })
         }
@@ -374,10 +359,6 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
 
     let startNetcetera3DSFlow = (
       ~netceteraSDKApiKey: string,
-      ~clientSecret: string,
-      ~publishableKey: string,
-      ~threeDsData: PaymentConfirmTypes.threeDsData,
-      ~sdkEnvironment: GlobalVars.envType,
       ~onSuccess: string => unit,
       ~onFailure: string => unit,
     ) => {
@@ -405,14 +386,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
                     (),
                   )
                   status->isStatusSuccess
-                    ? hsThreeDsAuthCall(
-                        clientSecret,
-                        publishableKey,
-                        aReqParams,
-                        threeDsData,
-                        onSuccess,
-                        onFailure,
-                      )->ignore
+                    ? hsThreeDsAuthCall(aReqParams, onSuccess, onFailure)->ignore
                     : onFailure(threeDsSDKGetAReqStatus.errorMsg)
                 })
               : onFailure(status.message)
@@ -423,7 +397,7 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
       }
     }
 
-    let handleNativeThreeDs = nextAction => {
+    let handleNativeThreeDs = () => {
       if !Netcetera3dsModule.isAvailable {
         logger(
           ~logType=DEBUG,
@@ -435,9 +409,6 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
         onFailure(externalThreeDsModuleStatus.errorMsg)
       }
 
-      let threeDsData =
-        nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
-
       let onChallengeCompletionCallback = message => {
         retrievePayment(Payment, clientSecret, publishableKey)
         ->Promise.then(res => {
@@ -446,10 +417,11 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
           } else {
             let status = res->Utils.getDictFromJson->Utils.getString("status", "")
             switch status {
-            | "processing" => onSuccess(retrievePaymentStatus.successMsg)
-            | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
+            | "processing"
+            | "succeeded" =>
+              onSuccess(retrievePaymentStatus.successMsg)
             | "failed" => onFailure(retrievePaymentStatus.errorMsg)
-            | _ => shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig, ~publishableKey)
+            | _ => shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig)
             }
           }
           Promise.resolve()
@@ -463,14 +435,10 @@ let useNetceteraThreeDsHook = (~retrievePayment) => {
 
       startNetcetera3DSFlow(
         ~netceteraSDKApiKey,
-        ~clientSecret,
-        ~publishableKey,
-        ~threeDsData,
-        ~sdkEnvironment,
         ~onSuccess=onChallengeCompletionCallback,
         ~onFailure,
       )->ignore
     }
-    handleNativeThreeDs(nextAction)
+    handleNativeThreeDs()
   }
 }

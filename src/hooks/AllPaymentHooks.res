@@ -355,7 +355,7 @@ let useRedirectHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let handleNetcetera = NetceteraThreeDsHooks.useNetceteraThreeDsHook(~retrievePayment)
+  let handleNetcetera = NetceteraThreeDsHooks.useNetceteraThreeDsHook()
 
   (
     ~body: string,
@@ -375,13 +375,15 @@ let useRedirectHook = () => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
 
       switch nextAction->ThreeDsUtils.getActionType {
-      | "three_ds_invoke" => handleNetcetera(
+      | "three_ds_invoke" =>
+        handleNetcetera(
           ~baseUrl,
           ~netceteraSDKApiKey,
           ~clientSecret,
           ~publishableKey,
           ~nextAction,
           ~sdkEnvironment=nativeProp.env,
+          ~retrievePayment,
           ~onSuccess=message => {
             responseCallback(
               ~paymentStatus=PaymentSuccess,
