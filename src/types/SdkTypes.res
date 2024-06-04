@@ -65,6 +65,8 @@ type savedCard = {
   nick_name?: string,
   isDefaultPaymentMethod?: bool,
   requiresCVV: bool,
+  created?: string,
+  lastUsedAt?: string,
 }
 
 type savedWallet = {
@@ -72,6 +74,8 @@ type savedWallet = {
   walletType?: string,
   payment_token?: string,
   isDefaultPaymentMethod?: bool,
+  created?: string,
+  lastUsedAt?: string,
 }
 
 type savedDataType =

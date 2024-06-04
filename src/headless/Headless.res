@@ -1,4 +1,5 @@
 open ReactNative
+open SdkTypes
 open LoggerHook
 
 type jsonFun = JSON.t => unit
@@ -93,7 +94,7 @@ let logWrapper = (
     userAgent: "userAgent",
     eventName,
     firstEvent: true,
-    source: Headless->SdkTypes.sdkStateToStrMapper,
+    source: Headless->sdkStateToStrMapper,
     paymentMethod: paymentMethod->Option.getOr(""),
     paymentExperience: paymentExperience->Option.getOr(
       (NONE: PaymentMethodListType.payment_experience_type),
@@ -377,29 +378,53 @@ let registerHeadless = headless => {
         jsonToStrFun2WithCallback(getPaymentSession)(
           defaultSpmData->toJson,
           spmData->toJson,
-          _response => {
-            let body = switch defaultSpmData {
-            | SAVEDLISTCARD(data) =>
-              [
-                ("client_secret", clientSecret->JSON.Encode.string),
-                ("payment_method", "card"->JSON.Encode.string),
-                ("payment_token", data.payment_token->Option.getOr("")->JSON.Encode.string),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
-            | SAVEDLISTWALLET(data) =>
-              [
-                ("client_secret", clientSecret->JSON.Encode.string),
-                ("payment_method", "wallet"->JSON.Encode.string),
-                (
-                  "payment_method_type",
-                  data.payment_method_type->Option.getOr("")->JSON.Encode.string,
-                ),
-                ("payment_token", data.payment_token->Option.getOr("")->JSON.Encode.string),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
-            | NONE => JSON.Encode.null
+          response => {
+            let bodyData = data =>
+              switch data {
+              | SAVEDLISTCARD(data) =>
+                [
+                  ("client_secret", clientSecret->JSON.Encode.string),
+                  ("payment_method", "card"->JSON.Encode.string),
+                  ("payment_token", data.payment_token->Option.getOr("")->JSON.Encode.string),
+                  (
+                    "card_cvc",
+                    switch response->Utils.getDictFromJson->Dict.get("cvc") {
+                    | Some(cvc) => cvc
+                    | None => JSON.Encode.null
+                    },
+                  ),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object
+              | SAVEDLISTWALLET(data) =>
+                [
+                  ("client_secret", clientSecret->JSON.Encode.string),
+                  ("payment_method", "wallet"->JSON.Encode.string),
+                  (
+                    "payment_method_type",
+                    data.payment_method_type->Option.getOr("")->JSON.Encode.string,
+                  ),
+                  ("payment_token", data.payment_token->Option.getOr("")->JSON.Encode.string),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object
+              | NONE => JSON.Encode.null
+              }
+
+            let body = switch response->Utils.getDictFromJson->Dict.get("paymentToken") {
+            | Some(token) =>
+              switch spmData->Array.find(x =>
+                switch x {
+                | SAVEDLISTCARD(savedCard) => savedCard.payment_token == token->JSON.Decode.string
+                | SAVEDLISTWALLET(savedWallet) =>
+                  savedWallet.payment_token == token->JSON.Decode.string
+                | NONE => false
+                }
+              ) {
+              | Some(data) => bodyData(data)
+              | None => JSON.Encode.null
+              }
+            | None => bodyData(defaultSpmData)
             }
 
             confirmAPICall(
@@ -491,7 +516,7 @@ let registerHeadless = headless => {
     }
 
   let getNativePropCallback = response => {
-    let nativeProp = SdkTypes.nativeJsonToRecord(response, 0)
+    let nativeProp = nativeJsonToRecord(response, 0)
 
     if nativeProp.publishableKey != "" && nativeProp.clientSecret != "" {
       let timestamp = Date.now()
@@ -499,6 +524,7 @@ let registerHeadless = headless => {
         String.split(nativeProp.clientSecret, "_secret_")
         ->Array.get(0)
         ->Option.getOr("")
+
       logWrapper(
         ~logType=INFO,
         ~eventName=PAYMENT_SESSION_INITIATED,

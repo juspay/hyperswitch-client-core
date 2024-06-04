@@ -32,6 +32,8 @@ let jsonToSavedPMObj = data => {
             nick_name: card->Utils.getString("nick_name", ""),
             isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
             requiresCVV: savedPMData->Utils.getBool("requires_cvv", false),
+            created: savedPMData->Utils.getString("created", ""),
+            lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
           }),
         )
       | None => ()
@@ -45,6 +47,8 @@ let jsonToSavedPMObj = data => {
           ->SdkTypes.walletNameMapper,
           payment_token: savedPMData->Utils.getString("payment_token", ""),
           isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
+          created: savedPMData->Utils.getString("created", ""),
+          lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
         }),
       )
     | _ => ()

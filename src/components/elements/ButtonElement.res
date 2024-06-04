@@ -347,86 +347,88 @@ let make = (
       ),
       (),
     )
-    switch walletType.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    ) {
-    | Some(INVOKE_SDK_CLIENT) =>
-      switch walletType.payment_method_type_wallet {
-      | GOOGLE_PAY =>
-        HyperModule.launchGPay(
-          GooglePayType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env),
-          confirmGPay,
-        )
-      | PAYPAL =>
-        if sessionObject.session_token !== "" && ReactNative.Platform.os == #android {
-          PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
-        } else {
-          let redirectData = []->Dict.fromArray->JSON.Encode.object
-          let payment_method_data =
-            [
-              (
-                walletType.payment_method,
-                [(walletType.payment_method_type ++ "_redirect", redirectData)]
-                ->Dict.fromArray
-                ->JSON.Encode.object,
-              ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
-          let altPaymentExperience =
-            walletType.payment_experience->Array.find(x =>
-              x.payment_experience_type_decode === REDIRECT_TO_URL
-            )
-          let walletTypeAlt = {
-            ...walletType,
-            payment_experience: [
-              altPaymentExperience->Option.getOr({
-                payment_experience_type: "",
-                payment_experience_type_decode: NONE,
-                eligible_connectors: [],
-              }),
-            ],
-          }
-          // when session token for paypal is absent, switch to redirect flow
-          processRequest(~payment_method_data, ~walletTypeAlt, ())
-        }
-      | APPLE_PAY =>
-        if (
-          sessionObject.session_token_data == JSON.Encode.null ||
-            sessionObject.payment_request_data == JSON.Encode.null
-        ) {
-          setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Waiting for Sessions API")
-        } else {
-          HyperModule.launchApplePay(
-            [
-              ("session_token_data", sessionObject.session_token_data),
-              ("payment_request_data", sessionObject.payment_request_data),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
-            ->JSON.stringify,
-            confirmApplePay,
+    setTimeout(_ => {
+      switch walletType.payment_experience[0]->Option.map(paymentExperience =>
+        paymentExperience.payment_experience_type_decode
+      ) {
+      | Some(INVOKE_SDK_CLIENT) =>
+        switch walletType.payment_method_type_wallet {
+        | GOOGLE_PAY =>
+          HyperModule.launchGPay(
+            GooglePayType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env),
+            confirmGPay,
           )
+        | PAYPAL =>
+          if sessionObject.session_token !== "" && ReactNative.Platform.os == #android {
+            PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
+          } else {
+            let redirectData = []->Dict.fromArray->JSON.Encode.object
+            let payment_method_data =
+              [
+                (
+                  walletType.payment_method,
+                  [(walletType.payment_method_type ++ "_redirect", redirectData)]
+                  ->Dict.fromArray
+                  ->JSON.Encode.object,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object
+            let altPaymentExperience =
+              walletType.payment_experience->Array.find(x =>
+                x.payment_experience_type_decode === REDIRECT_TO_URL
+              )
+            let walletTypeAlt = {
+              ...walletType,
+              payment_experience: [
+                altPaymentExperience->Option.getOr({
+                  payment_experience_type: "",
+                  payment_experience_type_decode: NONE,
+                  eligible_connectors: [],
+                }),
+              ],
+            }
+            // when session token for paypal is absent, switch to redirect flow
+            processRequest(~payment_method_data, ~walletTypeAlt, ())
+          }
+        | APPLE_PAY =>
+          if (
+            sessionObject.session_token_data == JSON.Encode.null ||
+              sessionObject.payment_request_data == JSON.Encode.null
+          ) {
+            setLoading(FillingDetails)
+            showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+          } else {
+            HyperModule.launchApplePay(
+              [
+                ("session_token_data", sessionObject.session_token_data),
+                ("payment_request_data", sessionObject.payment_request_data),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object
+              ->JSON.stringify,
+              confirmApplePay,
+            )
+          }
+        | _ => ()
         }
+      | Some(REDIRECT_TO_URL) =>
+        let redirectData = []->Dict.fromArray->JSON.Encode.object
+        let payment_method_data =
+          [
+            (
+              walletType.payment_method,
+              [(walletType.payment_method_type ++ "_redirect", redirectData)]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object
+        processRequest(~payment_method_data, ())
       | _ => ()
       }
-    | Some(REDIRECT_TO_URL) =>
-      let redirectData = []->Dict.fromArray->JSON.Encode.object
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [(walletType.payment_method_type ++ "_redirect", redirectData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-      processRequest(~payment_method_data, ())
-    | _ => ()
-    }
+    }, 1000)->ignore
   }
 
   React.useEffect1(_ => {
