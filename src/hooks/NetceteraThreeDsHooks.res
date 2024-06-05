@@ -5,7 +5,7 @@ external toJson: 't => JSON.t = "%identity"
 let useNetceteraThreeDsHook = () => {
   let logger = LoggerHook.useLoggerHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
-
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   (
     ~baseUrl,
     ~netceteraSDKApiKey,
@@ -19,116 +19,90 @@ let useNetceteraThreeDsHook = () => {
   ) => {
     let threeDsData =
       nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
-    let retriveAndShowStatus = () => {
-      retrievePayment(Types.Payment, clientSecret, publishableKey)
-      ->Promise.then(res => {
-        if res == JSON.Encode.null {
-          onFailure(retrievePaymentStatus.apiCallFailure)
-        } else {
-          let status = res->Utils.getDictFromJson->Utils.getString("status", "")
 
-          switch status {
-          | "processing" | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
-          | _ => onFailure(retrievePaymentStatus.errorMsg)
-          }
-        }->ignore
-        Promise.resolve()
-      })
-      ->Promise.catch(_ => {
-        onFailure(SdkStatusMessages.retrievePaymentStatus.apiCallFailure)
-        Promise.resolve()
-      })
-      ->ignore
-    }
-
-    let shortPollexternalThreeDsAuthStatus = (
+    let rec shortPollExternalThreeDsAuthStatus = (
       ~pollConfig: PaymentConfirmTypes.pollConfig,
-      ~onSuccess,
-      ~onFailure: string => unit,
+      ~pollCount,
+      ~onPollCompletion: (~isFinalRetrieve: bool=?) => unit,
     ) => {
-      let uri = `${baseUrl}/poll/status/${pollConfig.pollId}`
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName=POLL_STATUS_CALL_INIT,
-        ~url=uri,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
-
-      let pollCounter = ref(0)
-      let paymentStatus = ref("")
-
-      let intervalId: ref<RescriptCore.intervalId> = ref(setInterval(() => (), 0))
-      intervalId.contents = setInterval(() => {
-        if pollCounter.contents >= pollConfig.frequency {
-          clearInterval(intervalId.contents)
-          if paymentStatus.contents !== "completed" {
-            onSuccess()
-          }
-        }
+      if pollCount >= pollConfig.frequency {
+        onPollCompletion()
+      } else {
+        setLoading(ProcessingPayments)
+        let uri = `${baseUrl}/poll/status/${pollConfig.pollId}`
+        apiLogWrapper(
+          ~logType=INFO,
+          ~eventName=POLL_STATUS_CALL_INIT,
+          ~url=uri,
+          ~statusCode="",
+          ~apiLogType=Request,
+          ~data=JSON.Encode.null,
+          (),
+        )
 
         let headers = getAuthCallHeaders(publishableKey)
         CommonHooks.fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
         ->Promise.then(data => {
-          pollCounter := pollCounter.contents + 1
           let statusCode = data->Fetch.Response.status->string_of_int
           if statusCode->String.charAt(0) === "2" {
             data
             ->Fetch.Response.json
-            ->Promise.then(
-              res => {
-                let pollResponse =
-                  res
-                  ->Utils.getDictFromJson
-                  ->ExternalThreeDsTypes.pollResponseItemToObjMapper
+            ->Promise.then(res => {
+              let pollResponse =
+                res
+                ->Utils.getDictFromJson
+                ->ExternalThreeDsTypes.pollResponseItemToObjMapper
 
-                let logData =
-                  [
-                    ("url", uri->JSON.Encode.string),
-                    ("statusCode", statusCode->JSON.Encode.string),
-                    ("response", pollResponse.status->JSON.Encode.string),
-                  ]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object
-                apiLogWrapper(
-                  ~logType=INFO,
-                  ~eventName=POLL_STATUS_CALL,
-                  ~url=uri,
-                  ~statusCode,
-                  ~apiLogType=Response,
-                  ~data=logData,
-                  (),
-                )
-
-                paymentStatus := pollResponse.status
-                if pollResponse.status === "completed" {
-                  clearInterval(intervalId.contents)
-                  onSuccess()
-                }
-                Some(data)->Promise.resolve
-              },
-            )
+              let logData =
+                [
+                  ("url", uri->JSON.Encode.string),
+                  ("statusCode", statusCode->JSON.Encode.string),
+                  ("response", pollResponse.status->JSON.Encode.string),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object
+              apiLogWrapper(
+                ~logType=INFO,
+                ~eventName=POLL_STATUS_CALL,
+                ~url=uri,
+                ~statusCode,
+                ~apiLogType=Response,
+                ~data=logData,
+                (),
+              )
+              if pollResponse.status === "completed" {
+                onPollCompletion()
+              } else {
+                setTimeout(
+                  () => {
+                    shortPollExternalThreeDsAuthStatus(
+                      ~pollConfig,
+                      ~pollCount=pollCount + 1,
+                      ~onPollCompletion,
+                    )
+                  },
+                  pollConfig.delayInSecs * 1000,
+                )->ignore
+              }
+              Some(data)->Promise.resolve
+            })
           } else {
             data
             ->Fetch.Response.json
-            ->Promise.then(
-              res => {
-                apiLogWrapper(
-                  ~logType=ERROR,
-                  ~eventName=POLL_STATUS_CALL,
-                  ~url=uri,
-                  ~statusCode,
-                  ~apiLogType=Err,
-                  ~data=res,
-                  (),
-                )
-                Some(data)->Promise.resolve
-              },
-            )
+            ->Promise.then(res => {
+              apiLogWrapper(
+                ~logType=ERROR,
+                ~eventName=POLL_STATUS_CALL,
+                ~url=uri,
+                ~statusCode,
+                ~apiLogType=Err,
+                ~data=res,
+                (),
+              )
+              Some(data)->Promise.resolve
+            })
             ->ignore
-            onFailure(pollingCallStatus.apiCallFailure)
+            onPollCompletion()
             Some(data)->Promise.resolve
           }
         })
@@ -142,16 +116,54 @@ let useNetceteraThreeDsHook = () => {
             ~data=err->toJson,
             (),
           )
+          onPollCompletion()
           Promise.resolve(None)
         })
         ->ignore
-      }, pollConfig.delayInSecs * 1000)
+      }
     }
-    let hsAuthorizeCall = (
-      ~authorizeUrl,
-      ~onSuccess: string => unit,
-      ~onFailure: string => unit,
-    ) => {
+
+    let rec retrieveAndShowStatus = (~isFinalRetrieve=?) => {
+      apiLogWrapper(
+        ~logType=INFO,
+        ~eventName=RETRIEVE_CALL_INIT,
+        ~url=baseUrl,
+        ~statusCode="",
+        ~apiLogType=Request,
+        ~data=JSON.Encode.null,
+        (),
+      )
+      setLoading(ProcessingPayments)
+
+      retrievePayment(Types.Payment, clientSecret, publishableKey)
+      ->Promise.then(res => {
+        if res == JSON.Encode.null {
+          onFailure(retrievePaymentStatus.apiCallFailure)
+        } else {
+          let status = res->Utils.getDictFromJson->Utils.getString("status", "")
+          let isFinalRetrieve = isFinalRetrieve->Option.getOr(true)
+          switch (status, isFinalRetrieve) {
+          | ("processing" | "succeeded", _) => onSuccess(retrievePaymentStatus.successMsg)
+          | ("failed", _) => onFailure(retrievePaymentStatus.errorMsg)
+          | (_, true) => onFailure(retrievePaymentStatus.errorMsg)
+          | (_, false) =>
+            shortPollExternalThreeDsAuthStatus(
+              ~pollConfig=threeDsData.pollConfig,
+              ~pollCount=0,
+              ~onPollCompletion=retrieveAndShowStatus,
+            )
+          }
+        }->ignore
+        Promise.resolve()
+      })
+      ->Promise.catch(_ => {
+        onFailure(retrievePaymentStatus.apiCallFailure)
+        Promise.resolve()
+      })
+      ->ignore
+    }
+
+    let hsAuthorizeCall = (~authorizeUrl) => {
       apiLogWrapper(
         ~logType=INFO,
         ~eventName=AUTHORIZE_CALL_INIT,
@@ -164,6 +176,7 @@ let useNetceteraThreeDsHook = () => {
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
       CommonHooks.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
       ->Promise.then(data => {
+        setLoading(ProcessingPayments)
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
           apiLogWrapper(
@@ -175,7 +188,7 @@ let useNetceteraThreeDsHook = () => {
             ~data=JSON.Encode.null,
             (),
           )
-          onSuccess("")
+          retrieveAndShowStatus(~isFinalRetrieve=false)
           Some(data)->Promise.resolve
         } else {
           data
@@ -190,7 +203,7 @@ let useNetceteraThreeDsHook = () => {
               ~data=error,
               (),
             )
-            retriveAndShowStatus()
+            retrieveAndShowStatus(~isFinalRetrieve=false)
             Some(data)->Promise.resolve
           })
         }
@@ -205,19 +218,12 @@ let useNetceteraThreeDsHook = () => {
           ~data=err->toJson,
           (),
         )
-        retriveAndShowStatus()
+        retrieveAndShowStatus()
         Promise.resolve(None)
       })
     }
-    let shortPollStatusAndRetrieve = (~pollConfig) => {
-      shortPollexternalThreeDsAuthStatus(~pollConfig, ~onSuccess=retriveAndShowStatus, ~onFailure)
-    }
 
-    let sendChallengeParamsAndGenerateChallenge = (
-      ~challengeParams,
-      ~onSuccess: string => unit,
-      ~onFailure: string => unit,
-    ) => {
+    let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
       Netcetera3dsModule.recieveChallengeParamsFromRN(
         challengeParams.acsSignedContent,
         challengeParams.acsRefNumber,
@@ -241,30 +247,21 @@ let useNetceteraThreeDsHook = () => {
                   ~eventName=NETCETERA_SDK,
                   (),
                 )
-                status->isStatusSuccess
-                  ? {
-                      let authorizeUrl = threeDsData.threeDsAuthorizeUrl
-                      hsAuthorizeCall(~authorizeUrl, ~onSuccess, ~onFailure)->ignore
-                    }
-                  : shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig)
+                let authorizeUrl = threeDsData.threeDsAuthorizeUrl
+                hsAuthorizeCall(~authorizeUrl)->ignore
+                // status->isStatusSuccess
+                //   ? {
+                //       let authorizeUrl = threeDsData.threeDsAuthorizeUrl
+                //       hsAuthorizeCall(~authorizeUrl, ~onSuccess, ~onFailure)->ignore
+                //     }
+                //   : retrieveAndShowStatus()
               })
-            : onFailure(threeDsSdkChallengeStatus.errorMsg)
+            : retrieveAndShowStatus()
         },
       )
     }
 
-    let frictionlessAuthroiseAndContinue = (
-      ~onSuccess: string => unit,
-      ~onFailure: string => unit,
-    ) => {
-      hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl, ~onSuccess, ~onFailure)->ignore
-    }
-
-    let hsThreeDsAuthCall = (
-      aReqParams: aReqParams,
-      onSuccess: string => unit,
-      onFailure: string => unit,
-    ) => {
+    let hsThreeDsAuthCall = (aReqParams: aReqParams) => {
       let uri = threeDsData.threeDsAuthenticationUrl
       let bodyStr = generateAuthenticationCallBody(clientSecret, aReqParams)
       let headers = getAuthCallHeaders(publishableKey)
@@ -307,9 +304,11 @@ let useNetceteraThreeDsHook = () => {
                 (),
               )
               switch challengeParams.transStatus {
-              | "C" =>
-                sendChallengeParamsAndGenerateChallenge(~challengeParams, ~onSuccess, ~onFailure)
-              | _ => frictionlessAuthroiseAndContinue(~onSuccess, ~onFailure)
+              | "C" => {
+                  setLoading(ExternalThreeDSLoading)
+                  sendChallengeParamsAndGenerateChallenge(~challengeParams)
+                }
+              | _ => hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
               }
             | AUTH_ERROR(errObj) => {
                 logger(
@@ -319,7 +318,7 @@ let useNetceteraThreeDsHook = () => {
                   ~eventName=DISPLAY_THREE_DS_SDK,
                   (),
                 )
-                frictionlessAuthroiseAndContinue(~onSuccess, ~onFailure)
+                hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
               }
             }
 
@@ -338,7 +337,7 @@ let useNetceteraThreeDsHook = () => {
               ~data=err->toJson,
               (),
             )
-            frictionlessAuthroiseAndContinue(~onSuccess, ~onFailure)
+            hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
             Some(data)->Promise.resolve
           })
         }
@@ -357,11 +356,7 @@ let useNetceteraThreeDsHook = () => {
       })
     }
 
-    let startNetcetera3DSFlow = (
-      ~netceteraSDKApiKey: string,
-      ~onSuccess: string => unit,
-      ~onFailure: string => unit,
-    ) => {
+    let startNetcetera3DSFlow = () => {
       try {
         Netcetera3dsModule.initialiseNetceteraSDK(
           netceteraSDKApiKey,
@@ -387,15 +382,15 @@ let useNetceteraThreeDsHook = () => {
                       (),
                     )
                     status->isStatusSuccess
-                      ? hsThreeDsAuthCall(aReqParams, onSuccess, onFailure)->ignore
-                      : onFailure(threeDsSDKGetAReqStatus.errorMsg)
+                      ? hsThreeDsAuthCall(aReqParams)->ignore
+                      : retrieveAndShowStatus()
                   },
                 )
-              : onFailure(status.message)
+              : retrieveAndShowStatus()
           },
         )
       } catch {
-      | _ => retriveAndShowStatus()
+      | _ => retrieveAndShowStatus()
       }
     }
 
@@ -409,37 +404,9 @@ let useNetceteraThreeDsHook = () => {
           (),
         )
         onFailure(externalThreeDsModuleStatus.errorMsg)
+      } else {
+        startNetcetera3DSFlow()->ignore
       }
-
-      let onChallengeCompletionCallback = message => {
-        retrievePayment(Payment, clientSecret, publishableKey)
-        ->Promise.then(res => {
-          if res == JSON.Encode.null {
-            onFailure(retrievePaymentStatus.apiCallFailure)
-          } else {
-            let status = res->Utils.getDictFromJson->Utils.getString("status", "")
-            switch status {
-            | "processing"
-            | "succeeded" =>
-              onSuccess(retrievePaymentStatus.successMsg)
-            | "failed" => onFailure(retrievePaymentStatus.errorMsg)
-            | _ => shortPollStatusAndRetrieve(~pollConfig=threeDsData.pollConfig)
-            }
-          }
-          Promise.resolve()
-        })
-        ->Promise.catch(_ => {
-          onFailure(retrievePaymentStatus.apiCallFailure)
-          Promise.resolve()
-        })
-        ->ignore
-      }
-
-      startNetcetera3DSFlow(
-        ~netceteraSDKApiKey,
-        ~onSuccess=onChallengeCompletionCallback,
-        ~onFailure,
-      )->ignore
     }
     handleNativeThreeDs()
   }

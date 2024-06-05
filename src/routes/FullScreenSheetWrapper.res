@@ -68,8 +68,13 @@ let make = (~children) => {
         ~flex={sheetFlex->Animated.StyleProp.float},
         (),
       )}>
-      <CustomView closeOnClickOutSide=true onDismiss=onModalClose modalPosition=#bottom>
-        <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
+      <CustomView
+        closeOnClickOutSide=true
+        onDismiss=onModalClose
+        modalPosition=#bottom
+        viewShownAfterExpansion={<PaymentSheetProcessingElement />}
+        expandViewVertically={loading == ExternalThreeDSLoading}>
+        {<CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>}
       </CustomView>
     </Animated.View>
   </View>
