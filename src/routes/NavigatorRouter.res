@@ -32,9 +32,12 @@ let make = () => {
         } else if retrieve == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          let {mandateType, paymentType, merchantName} = PaymentMethodListType.jsonToMandateData(
-            retrieve,
-          )
+          let {
+            mandateType,
+            paymentType,
+            merchantName,
+            requestExternalThreeDsAuthentication,
+          } = PaymentMethodListType.jsonToMandateData(retrieve)
 
           setAllApiData({
             ...allApiData,
@@ -42,6 +45,7 @@ let make = () => {
             mandateType,
             paymentType,
             merchantName,
+            requestExternalThreeDsAuthentication,
           })
 
           let list = PaymentMethodListType.jsonTopaymentMethodListType(retrieve)
