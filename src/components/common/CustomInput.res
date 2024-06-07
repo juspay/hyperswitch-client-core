@@ -20,7 +20,6 @@ let make = (
   ~multiline: bool=false,
   ~heading="",
   ~mandatory=false,
-  ~textContentType=#username,
   ~reference=None,
   ~autoFocus=false,
   ~clearTextOnFocus=false,
@@ -162,7 +161,8 @@ let make = (
         }}
         keyboardType
         autoFocus
-        textContentType
+        autoComplete={#off}
+        textContentType={#oneTimeCode}
         onFocus={_ => {
           setIsFocused(_ => true)
           onFocus()
