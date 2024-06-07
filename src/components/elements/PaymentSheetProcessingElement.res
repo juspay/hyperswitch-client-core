@@ -32,6 +32,8 @@ let make = () => {
         ~display=#flex,
         ~alignItems=#center,
         ~backgroundColor=component.background,
+        ~justifyContent=#center,
+        ~height=100.->pct,
         ~width=100.->pct,
         (),
       ),

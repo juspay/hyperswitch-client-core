@@ -8,7 +8,6 @@ module ExpandedCustomViewHoc = {
   @react.component
   let make = (
     ~children,
-    ~customViewFlex,
     ~width,
     ~borderRadius,
     ~borderBottomLeftRadius,
@@ -19,24 +18,26 @@ module ExpandedCustomViewHoc = {
   ) => {
     let expandViewVertically = expandViewVertically->Option.getOr(false)
     let {component} = ThemebasedStyle.useThemeBasedStyle()
-    <Animated.View
-      style={viewStyle(
-        ~width,
-        ~borderRadius,
-        ~borderBottomLeftRadius,
-        ~borderBottomRightRadius,
-        ~overflow=#hidden,
-        ~flex=customViewFlex->Animated.StyleProp.float,
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        ~backgroundColor=component.background,
-        (),
-      )}>
-      {isContentHidden && !expandViewVertically
-        ? viewShownAfterExpansion->Option.getOr(React.null)
-        : React.null}
-      {children}
-    </Animated.View>
+    <>
+      <View
+        style={viewStyle(
+          ~width,
+          ~display=#flex,
+          ~borderRadius,
+          ~borderBottomLeftRadius,
+          ~borderBottomRightRadius,
+          ~marginTop={Platform.os === #android ? StatusBar.currentHeight->dp : 0.->dp},
+          ~overflow=#hidden,
+          ~flex={expandViewVertically ? 1. : 0.},
+          ~backgroundColor=component.background,
+          (),
+        )}>
+        {isContentHidden && !expandViewVertically
+          ? viewShownAfterExpansion->Option.getOr(React.null)
+          : React.null}
+        {children}
+      </View>
+    </>
   }
 }
 
@@ -63,14 +64,14 @@ let make = (
   }
 
   //  let (locationY, setLocationY) = React.useState(_ => 0.)
-  let customViewFlex = React.useRef(Animated.Value.create(0.)).current
+  let customViewFlex = React.useRef(Animated.Value.create(1.)).current
   let (isContentHidden, setIsContentHidden) = React.useState(_ => false)
 
   React.useEffect1(() => {
     let toValue =
       expandViewVertically->Option.getOr(false)
-        ? 10.->Animated.Value.Timing.fromRawValue
-        : 0.->Animated.Value.Timing.fromRawValue
+        ? 0.->Animated.Value.Timing.fromRawValue
+        : 1.->Animated.Value.Timing.fromRawValue
 
     if expandViewVertically->Option.getOr(false) {
       setIsContentHidden(_ => true)
@@ -96,15 +97,18 @@ let make = (
       viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
       modalPosStyle,
     ])}>
-    <TouchableOpacity
-      style={viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ())}
-      disabled=disableClickOutside
-      onPress={_ => {
-        if closeOnClickOutSide {
-          onDismiss()
-        }
-      }}
-    />
+    <Animated.View
+      style={viewStyle(~flex={customViewFlex->Animated.StyleProp.float}, ~width=100.->pct, ())}>
+      <TouchableOpacity
+        style={viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ())}
+        disabled=disableClickOutside
+        onPress={_ => {
+          if closeOnClickOutSide {
+            onDismiss()
+          }
+        }}
+      />
+    </Animated.View>
     // <TouchableWithoutFeedback
     //   onPressIn={e => setLocationY(_ => e.nativeEvent.locationY)}
     //   onPressOut={e => {
@@ -114,7 +118,6 @@ let make = (
     //   }}>
 
     <ExpandedCustomViewHoc
-      customViewFlex
       width=bottomModalWidth
       borderRadius=15.
       borderBottomLeftRadius=0.
@@ -122,19 +125,11 @@ let make = (
       isContentHidden
       expandViewVertically
       viewShownAfterExpansion>
-      <Animated.View
-        style={viewStyle(
-          ~width=bottomModalWidth,
-          ~overflow=#hidden,
-          ~alignItems=#center,
-          ~justifyContent=#center,
-          ~opacity={isContentHidden ? 0. : 1.},
-          ~display={isContentHidden ? #none : #flex},
-          (),
-        )}>
+      <View
+        style={viewStyle(~width=bottomModalWidth, ~display={isContentHidden ? #none : #flex}, ())}>
         <SafeAreaView />
         {children}
-      </Animated.View>
+      </View>
     </ExpandedCustomViewHoc>
 
     // </TouchableWithoutFeedback>

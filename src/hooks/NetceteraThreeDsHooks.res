@@ -268,6 +268,7 @@ let useNetceteraThreeDsHook = () => {
                     ~eventName=NETCETERA_SDK,
                     (),
                   )
+                  setLoading(ProcessingPayments)
                   let authorizeUrl = threeDsData.threeDsAuthorizeUrl
                   hsAuthorizeCall(~authorizeUrl)->ignore
 
