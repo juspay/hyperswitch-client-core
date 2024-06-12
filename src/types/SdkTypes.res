@@ -210,6 +210,7 @@ type configurationType = {
 
   // Android Specific
   googlePay: option<googlePayConfiguration>,
+  displayDefaultSavedPaymentIcon: bool,
 
   // IOS specific
 }
@@ -697,6 +698,7 @@ let parseConfigurationDict = (configObj, from) => {
     primaryButtonLabel: getOptionString(configObj, "primaryButtonLabel"),
     paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
     savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
+    displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
     // customer: switch customerDict {
     // | Some(obj) =>
     //   Some({
