@@ -173,3 +173,52 @@ let getClientCountry = clientTimeZone => {
   ->Array.find(item => item.timeZones->Array.find(i => i == clientTimeZone)->Option.isSome)
   ->Option.getOr(Country.defaultTimeZone)
 }
+
+let getStateNameFromStateCodeAndCountry = (
+  list: option<JSON.t>,
+  stateCode: string,
+  country: option<string>,
+) => {
+  switch (list, country) {
+  | (Some(list), Some(country)) =>
+    let options =
+      list
+      ->getDictFromJson
+      ->getOptionalArrayFromDict(country)
+      ->Option.getOr([])
+
+    let val = options->Array.find(item =>
+      item
+      ->getDictFromJson
+      ->getString("code", "") === stateCode
+    )
+
+    switch val {
+    | Some(stateObj) =>
+      stateObj
+      ->getDictFromJson
+      ->getString("name", stateCode)
+    | None => stateCode
+    }
+  | (_, _) => stateCode
+  }
+}
+
+let splitName = (str: option<string>) => {
+  switch str {
+  | None => ("", "")
+  | Some(s) =>
+    if s == "" {
+      ("", "")
+    } else {
+      let lastSpaceIndex = String.lastIndexOf(s, " ")
+      if lastSpaceIndex === -1 {
+        (s, "")
+      } else {
+        let first = String.slice(s, ~start=0, ~end=lastSpaceIndex)
+        let last = String.slice(s, ~start=lastSpaceIndex + 1, ~end=s->String.length)
+        (first, last)
+      }
+    }
+  }
+}

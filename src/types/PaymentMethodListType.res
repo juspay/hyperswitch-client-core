@@ -85,6 +85,7 @@ type redirectType = {
   client_secret: string,
   return_url?: string,
   customer_id?: string,
+  email?: string,
   payment_method?: string,
   payment_method_type?: string,
   payment_experience?: string,

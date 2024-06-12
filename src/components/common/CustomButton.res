@@ -175,7 +175,6 @@ let make = (
       onPress={switch onPress {
       | Some(val) =>
         x => {
-          fillButton()
           val(x)
         }
       | None => _ => ()
@@ -185,6 +184,7 @@ let make = (
       | NoIcon => React.null
       }}
       {if buttonState == LoadingButton {
+        fillButton()
         <Animated.View style={array([fillStyle, widthStyle])} />
       } else {
         React.null
