@@ -353,23 +353,28 @@ let make = (
           [
             (
               walletType.payment_method,
-              [
-                (walletType.payment_method_type, paymentData),
-                (
-                  "billing",
-                  switch var->GooglePayTypeNew.getBillingContact("billingContact", statesJson) {
-                  | Some(billing) => billing->parser2
-                  | None => JSON.Encode.null
-                  },
-                ),
-              ]
+              [(walletType.payment_method_type, paymentData)]
               ->Dict.fromArray
               ->JSON.Encode.object,
+            ),
+            (
+              "billing",
+              switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+              | Some(billing) => billing->parser2
+              | None => JSON.Encode.null
+              },
             ),
           ]
           ->Dict.fromArray
           ->JSON.Encode.object
-        processRequest(~payment_method_data, ())
+        processRequest(
+          ~payment_method_data,
+          ~email=?switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+          | Some(billing) => billing.email
+          | None => None
+          },
+          (),
+        )
       }
     }
   }

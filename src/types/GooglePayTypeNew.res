@@ -146,7 +146,7 @@ let getBillingContact = (dict, str, statesList) => {
     let name = json->Dict.get("name")->Option.getOr(JSON.Encode.null)->getDictFromJson
     let postalAddress =
       json->Dict.get("postalAddress")->Option.getOr(JSON.Encode.null)->getDictFromJson
-    let country = switch getOptionString(json, "countryCode") {
+    let country = switch getOptionString(postalAddress, "isoCountryCode") {
     | Some(country) => Some(country->String.toUpperCase)
     | None => None
     }
@@ -155,7 +155,7 @@ let getBillingContact = (dict, str, statesList) => {
         first_name: ?getOptionString(name, "givenName"),
         last_name: ?getOptionString(name, "familyName"),
         city: ?getOptionString(postalAddress, "city"),
-        country: ?getOptionString(postalAddress, "country"),
+        ?country,
         line1: ?getOptionString(postalAddress, "street"),
         zip: ?getOptionString(postalAddress, "postalCode"),
         state: ?switch getOptionString(postalAddress, "state") {
