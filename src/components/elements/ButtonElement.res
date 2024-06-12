@@ -1,9 +1,8 @@
 open ReactNative
 open PaymentMethodListType
-open GooglePayType
 
-external parser: paymentMethodData => JSON.t = "%identity"
-external parser2: GooglePayType.requestType => JSON.t = "%identity"
+external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
+external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
 
 type item = {
   linearGradientColorTuple: option<ThemebasedStyle.buttonColorConfig>,
@@ -90,7 +89,7 @@ let make = (
     }
   }
 
-  let processRequest = (~payment_method_data, ~walletTypeAlt=?, ()) => {
+  let processRequest = (~payment_method_data, ~walletTypeAlt=?, ~email=?, ()) => {
     let walletType = switch walletTypeAlt {
     | Some(wallet) => wallet
     | None => walletType
@@ -171,6 +170,7 @@ let make = (
       | Some(id) => Some(id ++ ".hyperswitch://")
       | None => None
       },
+      ?email,
       // customer_id: ?switch nativeProp.configuration.customer {
       // | Some(customer) => customer.id
       // | None => None
@@ -254,12 +254,30 @@ let make = (
     }
   }
 
+  let (statesJson, setStatesJson) = React.useState(_ => None)
+
+  React.useEffect0(() => {
+    // Dynamically import/download Postal codes and states JSON
+    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    ->Promise.then(res => {
+      setStatesJson(_ => Some(res.states))
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      setStatesJson(_ => None)
+      Promise.resolve()
+    })
+    ->ignore
+
+    None
+  })
+
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj = json->Utils.getDictFromJson->itemToObjMapper
+      let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
       let payment_method_data =
         [
           (
@@ -268,10 +286,21 @@ let make = (
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
+          (
+            "billing",
+            switch obj.paymentMethodData.info {
+            | Some(info) =>
+              switch info.billing_address {
+              | Some(address) => address->parser2
+              | None => JSON.Encode.null
+              }
+            | None => JSON.Encode.null
+            },
+          ),
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
-      processRequest(~payment_method_data, ())
+      processRequest(~payment_method_data, ~email=?obj.email, ())
     | "Cancel" =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
@@ -324,7 +353,18 @@ let make = (
           [
             (
               walletType.payment_method,
-              [(walletType.payment_method_type, paymentData)]->Dict.fromArray->JSON.Encode.object,
+              [
+                (walletType.payment_method_type, paymentData),
+                (
+                  "billing",
+                  switch var->GooglePayTypeNew.getBillingContact("billingContact", statesJson) {
+                  | Some(billing) => billing->parser2
+                  | None => JSON.Encode.null
+                  },
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
             ),
           ]
           ->Dict.fromArray
@@ -355,7 +395,11 @@ let make = (
         switch walletType.payment_method_type_wallet {
         | GOOGLE_PAY =>
           HyperModule.launchGPay(
-            GooglePayType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env),
+            GooglePayTypeNew.getGpayToken(
+              ~obj=sessionObject,
+              ~appEnv=nativeProp.env,
+              ~requiredFields=walletType.required_field,
+            ),
             confirmGPay,
           )
         | PAYPAL =>

@@ -14,6 +14,9 @@ external jsonToStrFunWithCallback: JSON.t => jsonFunWithCallback = "%identity"
 type jsonFun2WithCallback = (JSON.t, JSON.t, JSON.t => unit) => unit
 external jsonToStrFun2WithCallback: JSON.t => jsonFun2WithCallback = "%identity"
 
+type jsonFun3WithCallback = (JSON.t, JSON.t, JSON.t, JSON.t => unit) => unit
+external jsonToStrFun3WithCallback: JSON.t => jsonFun3WithCallback = "%identity"
+
 external toJson: 't => JSON.t = "%identity"
 
 let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
@@ -374,9 +377,47 @@ let registerHeadless = headless => {
         )
         ->Option.getOr(NONE)
 
-      if spmData->Array.length > 0 && defaultSpmData != NONE {
-        jsonToStrFun2WithCallback(getPaymentSession)(
+      let compareDates = (date1: string, date2: string) => {
+        let d1 = Date.fromString(date1)->Js.Date.getTime
+        let d2 = Date.fromString(date2)->Js.Date.getTime
+        compare(d1, d2)
+      }
+
+      let latestSpmData = spmData->Array.reduce(None, (
+        a: option<SdkTypes.savedDataType>,
+        b: SdkTypes.savedDataType,
+      ) => {
+        let lastUsedAtA = switch a {
+        | Some(a) =>
+          switch a {
+          | SAVEDLISTCARD(savedCard) => savedCard.lastUsedAt
+          | SAVEDLISTWALLET(savedWallet) => savedWallet.lastUsedAt
+          | NONE => None
+          }
+        | None => None
+        }
+        let lastUsedAtB = switch b {
+        | SAVEDLISTCARD(savedCard) => savedCard.lastUsedAt
+        | SAVEDLISTWALLET(savedWallet) => savedWallet.lastUsedAt
+        | NONE => None
+        }
+        switch (lastUsedAtA, lastUsedAtB) {
+        | (None, Some(_)) => Some(b)
+        | (Some(_), None) => a
+        | (Some(dateA), Some(dateB)) =>
+          if compareDates(dateA, dateB) < 0 {
+            Some(b)
+          } else {
+            a
+          }
+        | (None, None) => a
+        }
+      })
+
+      if spmData->Array.length > 0 {
+        jsonToStrFun3WithCallback(getPaymentSession)(
           defaultSpmData->toJson,
+          latestSpmData->toJson,
           spmData->toJson,
           response => {
             let bodyData = data =>
@@ -424,7 +465,7 @@ let registerHeadless = headless => {
               | Some(data) => bodyData(data)
               | None => JSON.Encode.null
               }
-            | None => bodyData(defaultSpmData)
+            | None => JSON.Encode.null
             }
 
             confirmAPICall(
