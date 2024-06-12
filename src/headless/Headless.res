@@ -549,7 +549,7 @@ let registerHeadless = headless => {
 
         let error = itemToObjMapper(data)->toJson
 
-        jsonToStrFun2WithCallback(getPaymentSession)(error, []->toJson, _response => {
+        jsonToStrFun3WithCallback(getPaymentSession)(error, Js.Json.null, []->toJson, _response => {
           exitHeadless(error)
         })
       }
