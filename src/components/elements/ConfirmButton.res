@@ -15,25 +15,24 @@ let make = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
-    <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
-   {errorText->Belt.Option.isSome? <ErrorText text={errorText} />:React.null}
-      {loading
-        ? <>
-            <CustomLoader />
-            <Space />
-            <HyperSwitchBranding />
-          </>
-        : <ConfirmButtonAnimation
-            isAllValuesValid
-            handlePress
-            paymentMethod
-            ?hasSomeFields
-            ?paymentExperience
-            displayText={switch nativeProp.configuration.primaryButtonLabel {
-            | Some(str) => str
-            | None => allApiData.mandateType != NORMAL ? "Pay Now" : localeObject.payNowButton
-            }}
-          />}
-    </View>
-  
+  <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
+    {errorText->Belt.Option.isSome ? <ErrorText text={errorText} /> : React.null}
+    {loading
+      ? <>
+          <CustomLoader />
+          <Space />
+          <HyperSwitchBranding />
+        </>
+      : <ConfirmButtonAnimation
+          isAllValuesValid
+          handlePress
+          paymentMethod
+          ?hasSomeFields
+          ?paymentExperience
+          displayText={switch nativeProp.configuration.primaryButtonLabel {
+          | Some(str) => str
+          | None => allApiData.mandateType != NORMAL ? "Pay Now" : localeObject.payNowButton
+          }}
+        />}
+  </View>
 }
