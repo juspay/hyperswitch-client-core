@@ -2,8 +2,8 @@ open ReactNative
 open SdkTypes
 open LoggerHook
 
-type jsonFun = JSON.t => unit
-external jsonToStrFun: JSON.t => jsonFun = "%identity"
+type strFun = string => unit
+external jsonToStrFun: JSON.t => strFun = "%identity"
 
 type jsonWithCallback = (JSON.t => unit) => unit
 external jsonWithCallback: JSON.t => jsonWithCallback = "%identity"
@@ -383,41 +383,61 @@ let registerHeadless = headless => {
         compare(d1, d2)
       }
 
-      let latestSpmData = spmData->Array.reduce(None, (
-        a: option<SdkTypes.savedDataType>,
-        b: SdkTypes.savedDataType,
-      ) => {
-        let lastUsedAtA = switch a {
-        | Some(a) =>
-          switch a {
+      let latestSpmData =
+        spmData
+        ->Array.reduce(None, (a: option<SdkTypes.savedDataType>, b: SdkTypes.savedDataType) => {
+          let lastUsedAtA = switch a {
+          | Some(a) =>
+            switch a {
+            | SAVEDLISTCARD(savedCard) => savedCard.lastUsedAt
+            | SAVEDLISTWALLET(savedWallet) => savedWallet.lastUsedAt
+            | NONE => None
+            }
+          | None => None
+          }
+          let lastUsedAtB = switch b {
           | SAVEDLISTCARD(savedCard) => savedCard.lastUsedAt
           | SAVEDLISTWALLET(savedWallet) => savedWallet.lastUsedAt
           | NONE => None
           }
-        | None => None
-        }
-        let lastUsedAtB = switch b {
-        | SAVEDLISTCARD(savedCard) => savedCard.lastUsedAt
-        | SAVEDLISTWALLET(savedWallet) => savedWallet.lastUsedAt
-        | NONE => None
-        }
-        switch (lastUsedAtA, lastUsedAtB) {
-        | (None, Some(_)) => Some(b)
-        | (Some(_), None) => a
-        | (Some(dateA), Some(dateB)) =>
-          if compareDates(dateA, dateB) < 0 {
-            Some(b)
-          } else {
-            a
+          switch (lastUsedAtA, lastUsedAtB) {
+          | (None, Some(_)) => Some(b)
+          | (Some(_), None) => a
+          | (Some(dateA), Some(dateB)) =>
+            if compareDates(dateA, dateB) < 0 {
+              Some(b)
+            } else {
+              a
+            }
+          | (None, None) => a
           }
-        | (None, None) => a
-        }
-      })
+        })
+        ->Option.getOr(NONE)
 
       if spmData->Array.length > 0 {
         jsonToStrFun3WithCallback(getPaymentSession)(
-          defaultSpmData->toJson,
-          latestSpmData->toJson,
+          switch defaultSpmData {
+          | NONE =>
+            let error: PaymentConfirmTypes.error = {
+              message: "There is no customer default saved payment method data",
+              code: "no_data",
+              type_: "no_data",
+              status: "failed",
+            }
+            error->toJson
+          | x => x->toJson
+          },
+          switch latestSpmData {
+          | NONE =>
+            let error: PaymentConfirmTypes.error = {
+              message: "There is no customer saved payment method data",
+              code: "no_data",
+              type_: "no_data",
+              status: "failed",
+            }
+            error->toJson
+          | x => x->toJson
+          },
           spmData->toJson,
           response => {
             let bodyData = data =>
@@ -482,7 +502,7 @@ let registerHeadless = headless => {
                 ->Option.getOr(JSON.Encode.null)
                 ->Utils.getDictFromJson
                 ->PaymentConfirmTypes.itemToObjMapper
-              exitHeadless(confirmRes.error->toJson)
+              exitHeadless(confirmRes.error->HyperModule.stringifiedResStatus)
               Promise.resolve()
             })
             ->ignore
@@ -547,11 +567,16 @@ let registerHeadless = headless => {
           }
         }
 
-        let error = itemToObjMapper(data)->toJson
+        let error = itemToObjMapper(data)
 
-        jsonToStrFun3WithCallback(getPaymentSession)(error, error, []->toJson, _response => {
-          exitHeadless(error)
-        })
+        jsonToStrFun3WithCallback(getPaymentSession)(
+          error->toJson,
+          error->toJson,
+          []->toJson,
+          _response => {
+            exitHeadless(error->HyperModule.stringifiedResStatus)
+          },
+        )
       }
     | None => ()
     }
