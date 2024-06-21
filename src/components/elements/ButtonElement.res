@@ -1,4 +1,5 @@
 open ReactNative
+open Style
 open PaymentMethodListType
 
 external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
@@ -495,8 +496,19 @@ let make = (
       leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
       onPress={_ => pressHandler()}
       name
-      ?buttonSize
-    />
+      ?buttonSize>
+      {switch walletType.payment_method_type_wallet {
+      | APPLE_PAY =>
+        Some(
+          <ApplePayButtonView
+            style={viewStyle(~height=100.->pct, ~width=100.->pct, ())}
+            cornerRadius=22.
+            onPaymentResultCallback={_ => pressHandler()}
+          />,
+        )
+      | _ => None
+      }}
+    </CustomButton>
     <Space height=8. />
   </>
 }
