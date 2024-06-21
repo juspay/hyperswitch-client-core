@@ -35,8 +35,6 @@ let make = (
               offset(~width=shadowOffsetWidth, ~height=shadowOffsetHeight /. 2.)
             },
             ~shadowColor,
-            ~paddingHorizontal=24.->dp,
-            ~paddingVertical=5.->dp,
             ~borderRadius,
             ~borderColor=component.borderColor,
             ~backgroundColor=component.background,
