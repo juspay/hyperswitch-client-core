@@ -62,16 +62,19 @@ let make = (
         fillIcon=false
       />
       {showSavePMCheckbox
-        ? <ClickableTextElement
-            disabled={false}
-            initialIconName="checkboxClicked"
-            updateIconName=Some("checkboxNotClicked")
-            text={localeObj.cardTerms(merchantName)}
-            isSelected={isSaveCardCheckboxSelected}
-            setIsSelected={setSaveCardChecboxSelected}
-            textType={TextWrapper.ModalText}
-            disableScreenSwitch=true
-          />
+        ? <>
+            <Space />
+            <ClickableTextElement
+              disabled={false}
+              initialIconName="checkboxClicked"
+              updateIconName=Some("checkboxNotClicked")
+              text={localeObj.cardTerms(merchantName)}
+              isSelected={isSaveCardCheckboxSelected}
+              setIsSelected={setSaveCardChecboxSelected}
+              textType={TextWrapper.ModalText}
+              disableScreenSwitch=true
+            />
+          </>
         : React.null}
     </View>
   </View>

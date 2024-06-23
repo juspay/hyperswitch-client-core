@@ -313,3 +313,60 @@ let getPaymentBody = (body, dynamicFieldsJson) => {
   ->Dict.fromArray
   ->JSON.Encode.object
 }
+
+let jsonToSavedPMObj = data => {
+  let cards = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
+
+  cards->Array.reduce([], (acc, obj) => {
+    let savedPMData = obj->Utils.getDictFromJson
+    let cardData = savedPMData->Dict.get("card")->Option.flatMap(JSON.Decode.object)
+
+    let paymentMethodType =
+      savedPMData
+      ->Dict.get("payment_method")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.string
+      ->Option.getOr("")
+
+    switch paymentMethodType {
+    | "card" =>
+      switch cardData {
+      | Some(card) =>
+        acc->Array.push(
+          SdkTypes.SAVEDLISTCARD({
+            cardScheme: card->Utils.getString("scheme", "cardv1"),
+            name: card->Utils.getString("nick_name", ""),
+            cardHolderName: card->Utils.getString("card_holder_name", ""),
+            cardNumber: "**** "->String.concat(card->Utils.getString("last4_digits", "")),
+            expiry_date: card->Utils.getString("expiry_month", "") ++
+            "/" ++
+            card->Utils.getString("expiry_year", "")->String.sliceToEnd(~start=-2),
+            payment_token: savedPMData->Utils.getString("payment_token", ""),
+            nick_name: card->Utils.getString("nick_name", ""),
+            isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
+            requiresCVV: savedPMData->Utils.getBool("requires_cvv", false),
+            created: savedPMData->Utils.getString("created", ""),
+            lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
+          }),
+        )
+      | None => ()
+      }
+    | "wallet" =>
+      acc->Array.push(
+        SdkTypes.SAVEDLISTWALLET({
+          payment_method_type: savedPMData->Utils.getString("payment_method_type", ""),
+          walletType: savedPMData
+          ->Utils.getString("payment_method_type", "")
+          ->SdkTypes.walletNameMapper,
+          payment_token: savedPMData->Utils.getString("payment_token", ""),
+          isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
+          created: savedPMData->Utils.getString("created", ""),
+          lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
+        }),
+      )
+    | _ => ()
+    }
+
+    acc
+  })
+}

@@ -228,16 +228,20 @@ let arrayJsonToCamelCase = arr => {
 let getGpayToken = (
   ~obj: SessionsType.sessions,
   ~appEnv: GlobalVars.envType,
-  ~requiredFields: RequiredFieldsTypes.required_fields,
+  ~requiredFields: option<RequiredFieldsTypes.required_fields>=?,
 ) => {
   {
     environment: appEnv == PROD ? "PRODUCTION"->JSON.Encode.string : "Test"->JSON.Encode.string,
     paymentDataRequest: obj->itemToObject(
-      requiredFields
-      ->Array.find(v => {
-        v.display_name == "email"
-      })
-      ->Option.isSome,
+      switch requiredFields {
+      | Some(fields) =>
+        fields
+        ->Array.find(v => {
+          v.display_name == "email"
+        })
+        ->Option.isSome
+      | None => true
+      },
     ),
   }
   ->parser2

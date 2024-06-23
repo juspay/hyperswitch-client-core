@@ -334,12 +334,14 @@ let make = (
       let transaction_identifier =
         var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
-      if transaction_identifier->JSON.stringify == "Simulated Identifier" {
-        setLoading(FillingDetails)
-        showAlert(
-          ~errorType="warning",
-          ~message="Apple Pay is not supported in Simulated Environment",
-        )
+      if transaction_identifier == "Simulated Identifier"->JSON.Encode.string {
+        setTimeout(() => {
+          setLoading(FillingDetails)
+          showAlert(
+            ~errorType="warning",
+            ~message="Apple Pay is not supported in Simulated Environment",
+          )
+        }, 2000)->ignore
       } else {
         let paymentData =
           [
