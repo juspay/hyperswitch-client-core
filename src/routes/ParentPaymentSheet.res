@@ -21,7 +21,6 @@ let make = () => {
     PaymentScreenContext.paymentScreenTypeContext,
   )
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  AllPaymentHooks.useFetchPaymentMethods()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (savedPaymentMethodContextObj, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,

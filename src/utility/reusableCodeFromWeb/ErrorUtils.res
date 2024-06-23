@@ -12,6 +12,7 @@ type errorKey =
   | INVALID_FORMAT(errorTupple)
   | USED_CL(errorTupple)
   | INVALID_CL(errorTupple)
+  | NO_DATA(errorTupple)
 
 type errorWarning = {
   invalidPk: errorKey,
@@ -24,6 +25,7 @@ type errorWarning = {
   invalidFormat: errorKey,
   usedCL: errorKey,
   invalidCL: errorKey,
+  noData: errorKey,
 }
 
 let isError = (res: JSON.t) => {
@@ -113,6 +115,7 @@ let errorWarning = {
   invalidFormat: INVALID_FORMAT(Error, Dynamic(str => {str})),
   usedCL: USED_CL(Error, Static("Data Error: The client secret has been already used.")),
   invalidCL: INVALID_CL(Error, Static("Data Error: The client secret is invalid.")),
+  noData: NO_DATA(Error, Static("There is no customer default saved payment method data")),
 }
 
 let useShowErrorOrWarning = () => {
@@ -129,6 +132,7 @@ let useShowErrorOrWarning = () => {
     | INVALID_FORMAT(var) => var
     | USED_CL(var) => var
     | INVALID_CL(var) => var
+    | NO_DATA(var) => var
     }
     switch (type_, str) {
     | (Error, Static(string)) => customAlert(~errorType="error", ~message=string)

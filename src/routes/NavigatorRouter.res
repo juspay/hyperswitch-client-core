@@ -6,14 +6,124 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let retrievePayment = AllPaymentHooks.useRetrieveHook()
   let getSessionToken = AllPaymentHooks.useSessionToken()
+  let savedPaymentMethods = AllPaymentHooks.useGetSavedPMHook()
+
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setPaymentList) = React.useContext(PaymentListContext.paymentListContext)
   let (_, setSessionData) = React.useContext(SessionContext.sessionContext)
+  let (_, setSavedPMData) = React.useContext(SavedPaymentMethodContext.savedPaymentMethodContext)
+
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
   let error = ErrorUtils.useErrorWarningValidationOnLoad()
   let errorOnApiCalls = ErrorUtils.useShowErrorOrWarning()
   let logger = LoggerHook.useLoggerHook()
+
+  let handlePMLResponse = retrieve => {
+    let {mandateType, paymentType, merchantName} = PaymentMethodListType.jsonToMandateData(retrieve)
+    let redirect_url = PaymentMethodListType.jsonToRedirectUrlType(retrieve)
+
+    setAllApiData({
+      ...allApiData,
+      redirect_url,
+      mandateType,
+      paymentType,
+      merchantName,
+    })
+
+    PaymentMethodListType.jsonTopaymentMethodListType(retrieve)->setPaymentList
+  }
+
+  let handleSessionResponse = session => {
+    let sessionList: SessionContext.sessions = if session->ErrorUtils.isError {
+      if session->ErrorUtils.getErrorCode == "\"IR_16\"" {
+        errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
+      } else if session->ErrorUtils.getErrorCode == "\"IR_09\"" {
+        errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
+      }
+      None
+    } else if session != JSON.Encode.null {
+      switch session->Utils.getDictFromJson->SessionsType.itemToObjMapper {
+      | Some(sessions) => Some(sessions)
+      | None => None
+      }
+    } else {
+      None
+    }
+    setSessionData(sessionList)
+    sessionList
+  }
+
+  let handleCustomerPMLResponse = (customerSavedPMData, sessions: SessionContext.sessions) => {
+    switch customerSavedPMData {
+    | Some(obj) => {
+        let spmData = obj->PaymentMethodListType.jsonToSavedPMObj
+        let sessionSpmData = spmData->Array.filter(data => {
+          switch data {
+          | SAVEDLISTWALLET(val) =>
+            let walletType = val.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
+            switch (walletType, ReactNative.Platform.os) {
+            | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
+            | _ => false
+            }
+          | _ => false
+          }
+        })
+
+        let walletSpmData = spmData->Array.filter(data => {
+          switch data {
+          | SAVEDLISTWALLET(val) =>
+            let walletType = val.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
+            switch (walletType, ReactNative.Platform.os) {
+            | (GOOGLE_PAY, _) | (APPLE_PAY, _) => false
+            | _ => true
+            }
+          | _ => false
+          }
+        })
+
+        let cardSpmData = spmData->Array.filter(data => {
+          switch data {
+          | SAVEDLISTCARD(_) => true
+          | _ => false
+          }
+        })
+
+        let filteredSpmData = switch sessions {
+        | Some(sessions) =>
+          let walletNameArray = sessions->Array.map(wallet => wallet.wallet_name)
+          let filteredSessionSpmData = sessionSpmData->Array.filter(data =>
+            switch data {
+            | SAVEDLISTWALLET(data) =>
+              walletNameArray->Array.includes(
+                data.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper,
+              )
+            | _ => false
+            }
+          )
+          filteredSessionSpmData->Array.concat(walletSpmData->Array.concat(cardSpmData))
+
+        | _ => walletSpmData->Array.concat(cardSpmData)
+        }
+
+        let isGuestFromPMList =
+          obj
+          ->Utils.getDictFromJson
+          ->Dict.get("is_guest_customer")
+          ->Option.flatMap(JSON.Decode.bool)
+          ->Option.getOr(false)
+
+        setSavedPMData(
+          Some({
+            pmList: Some(filteredSpmData),
+            isGuestCustomer: isGuestFromPMList,
+            selectedPaymentMethod: None,
+          }),
+        )
+      }
+    | None => ()
+    }
+  }
 
   React.useEffect1(() => {
     let launchTime = nativeProp.hyperParams.launchTime->Option.getOr(Date.now())
@@ -25,51 +135,22 @@ let make = () => {
     //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => /* Console.log(x) */ ())
 
     if nativeProp.clientSecret != "" && nativeProp.publishableKey != "" {
-      retrievePayment(List, nativeProp.clientSecret, nativeProp.publishableKey)
-      ->Promise.then(retrieve => {
-        if ErrorUtils.isError(retrieve) {
-          errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(retrieve)))), ())
-        } else if retrieve == JSON.Encode.null {
+      Promise.all3((
+        retrievePayment(List, nativeProp.clientSecret, nativeProp.publishableKey),
+        savedPaymentMethods(),
+        getSessionToken(),
+      ))
+      ->Promise.then(((paymentMethodListData, customerSavedPMData, sessionTokenData)) => {
+        if ErrorUtils.isError(paymentMethodListData) {
+          errorOnApiCalls(
+            INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(paymentMethodListData)))),
+            (),
+          )
+        } else if paymentMethodListData == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          let {mandateType, paymentType, merchantName} = PaymentMethodListType.jsonToMandateData(
-            retrieve,
-          )
-
-          setAllApiData({
-            ...allApiData,
-            redirect_url: PaymentMethodListType.jsonToRedirectUrlType(retrieve),
-            mandateType,
-            paymentType,
-            merchantName,
-          })
-
-          let list = PaymentMethodListType.jsonTopaymentMethodListType(retrieve)
-          if list->Array.length !== 0 || !nativeProp.hyperParams.defaultView {
-            setPaymentList(list)
-            getSessionToken()
-            ->Promise.then(
-              session => {
-                if session->ErrorUtils.isError {
-                  if session->ErrorUtils.getErrorCode == "\"IR_16\"" {
-                    errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
-                  } else if session->ErrorUtils.getErrorCode == "\"IR_09\"" {
-                    errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
-                  }
-                  setSessionData(None)
-                } else if session != JSON.Encode.null {
-                  switch session->Utils.getDictFromJson->SessionsType.itemToObjMapper {
-                  | Some(sessions) => setSessionData(Some(sessions))
-                  | None => setSessionData(None)
-                  }
-                } else {
-                  setSessionData(None)
-                }
-                Promise.resolve()
-              },
-            )
-            ->ignore
-          }
+          handlePMLResponse(paymentMethodListData)
+          handleCustomerPMLResponse(customerSavedPMData, handleSessionResponse(sessionTokenData))
 
           let latency = Date.now() -. launchTime
           logger(

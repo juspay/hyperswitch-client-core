@@ -51,16 +51,14 @@ let getStrFunWithCallbackFromKey = key => {
 }
 
 let hyperModule = {
-  {
-    sendMessageToNative: getStrFunFromKey("sendMessageToNative"),
-    launchApplePay: getStrFunWithCallbackFromKey("launchApplePay"),
-    launchGPay: getStrFunWithCallbackFromKey("launchGPay"),
-    exitPaymentsheet: getIntStrBoolFunFromKey("exitPaymentsheet"),
-    exitWidget: getStrFun2FromKey("exitWidget"),
-    exitCardForm: getStrFunFromKey("exitCardForm"),
-    launchWidgetPaymentSheet: getStrFunWithCallbackFromKey("launchWidgetPaymentSheet"),
-    exitWidgetPaymentsheet: getIntStrBoolFunFromKey("exitWidgetPaymentsheet"),
-  }
+  sendMessageToNative: getStrFunFromKey("sendMessageToNative"),
+  launchApplePay: getStrFunWithCallbackFromKey("launchApplePay"),
+  launchGPay: getStrFunWithCallbackFromKey("launchGPay"),
+  exitPaymentsheet: getIntStrBoolFunFromKey("exitPaymentsheet"),
+  exitWidget: getStrFun2FromKey("exitWidget"),
+  exitCardForm: getStrFunFromKey("exitCardForm"),
+  launchWidgetPaymentSheet: getStrFunWithCallbackFromKey("launchWidgetPaymentSheet"),
+  exitWidgetPaymentsheet: getIntStrBoolFunFromKey("exitWidgetPaymentsheet"),
 }
 
 let sendMessageToNative = str => {
