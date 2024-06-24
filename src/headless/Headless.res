@@ -429,6 +429,8 @@ let registerHeadless = headless => {
               Promise.resolve()
             })
             ->ignore
+          } else {
+            getPaymentSession(nativeProp, walletSpmData->Array.concat(cardSpmData), None)
           }
 
         | None => customerSavedPMData->getErrorFromResponse->getDefaultPaymentSession
