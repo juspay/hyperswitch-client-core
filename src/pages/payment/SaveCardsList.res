@@ -357,7 +357,11 @@ module PaymentMethodListView = {
       {isPaymentMethodSelected && requiredFields->Array.length != 0
         ? <View style={viewStyle(~paddingHorizontal=10.->dp, ())}>
             <DynamicFields
-              setIsAllDynamicFieldValid setDynamicFieldsJson requiredFields isSaveCardsFlow=true
+              setIsAllDynamicFieldValid
+              setDynamicFieldsJson
+              requiredFields
+              isSaveCardsFlow=true
+              savedCardsData=Some(pmObject)
             />
           </View>
         : React.null}
