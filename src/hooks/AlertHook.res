@@ -16,10 +16,10 @@ let useAlerts = () => {
 
     switch (errorType, Platform.os) {
     | ("error", #android) =>
-      ToastAndroid.show(message, ToastAndroid.long)
+      // ToastAndroid.show(message, ToastAndroid.long)
       handleSuccessFailure(~apiResStatus, ())
     | ("error", #ios) =>
-      Alert.alert(~title="Error", ~message, ())
+      // Alert.alert(~title="Error", ~message, ())
       handleSuccessFailure(~apiResStatus, ())
     | ("warning", #android) => ToastAndroid.show(message, ToastAndroid.long)
     | ("warning", #ios) => Alert.alert(~title="Warning", ~message, ())

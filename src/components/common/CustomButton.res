@@ -30,6 +30,7 @@ let make = (
   ~borderWidth=0.,
   ~borderRadius=0.,
   ~borderColor="#ffffff",
+  ~children=None,
 ) => {
   let fillAnimation = React.useRef(Animated.Value.create(0.)).current
   let {
@@ -151,69 +152,60 @@ let make = (
       styles["lengthStyle"],
       styles["buttonSizeClass"],
     ])}>
-    <TouchableOpacity
-      disabled
-      style={array([
-        viewStyle(
-          ~width=100.->pct,
-          ~height=100.->pct,
-          ~flex=1.,
-          ~flexDirection=#row,
-          ~justifyContent=#center,
-          ~alignItems=#center,
-          ~borderRadius,
-          ~overflow=#hidden,
-          ~opacity=1., //{isdisabledColor ? 0.6 : 1.},
-          (),
-        ),
-      ])}
-      // onPress={if Platform.os === #web {
-      //   _ => Window.alert(name->Option.getOr("") ++ " Button Pressed")
-      // } else {
-      //   onPress->Option.getOr(_ => ())
-      // }}
-      onPress={switch onPress {
-      | Some(val) =>
-        x => {
-          fillButton()
-          val(x)
-        }
-      | None => _ => ()
-      }}>
-      {switch leftIcon {
-      | CustomIcon(element) => element
-      | NoIcon => React.null
-      }}
-      {if buttonState == LoadingButton {
-        <Animated.View style={array([fillStyle, widthStyle])} />
-      } else {
-        React.null
-      }}
-      {switch text {
-      | Some(textStr) =>
-        textStr == ""
-          ? React.null
-          : <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
-              <TextWrapper
-                text={switch buttonState {
-                | LoadingButton => loadingText
-                | Completed => "Complete"
-                | _ => textStr
-                }}
-                // textType=CardText
-                textType={ButtonTextBold}
-              />
-            </View>
-      | None => React.null
-      }}
-      {if buttonState == LoadingButton || buttonState == Completed {
-        <Loadericon iconColor=?loaderIconColor />
-      } else {
-        switch rightIcon {
+    {switch children {
+    | Some(child) => child
+    | _ =>
+      <TouchableOpacity
+        disabled
+        style={array([
+          viewStyle(
+            ~width=100.->pct,
+            ~height=100.->pct,
+            ~flex=1.,
+            ~flexDirection=#row,
+            ~justifyContent=#center,
+            ~alignItems=#center,
+            ~borderRadius,
+            ~overflow=#hidden,
+            ~opacity=1., //{isdisabledColor ? 0.6 : 1.},
+            (),
+          ),
+        ])}
+        ?onPress>
+        {switch leftIcon {
         | CustomIcon(element) => element
         | NoIcon => React.null
-        }
-      }}
-    </TouchableOpacity>
+        }}
+        {if buttonState == LoadingButton {
+          fillButton()
+          <Animated.View style={array([fillStyle, widthStyle])} />
+        } else {
+          React.null
+        }}
+        {switch text {
+        | Some(textStr) if textStr !== "" =>
+          <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
+            <TextWrapper
+              text={switch buttonState {
+              | LoadingButton => loadingText
+              | Completed => "Complete"
+              | _ => textStr
+              }}
+              // textType=CardText
+              textType={ButtonTextBold}
+            />
+          </View>
+        | _ => React.null
+        }}
+        {if buttonState == LoadingButton || buttonState == Completed {
+          <Loadericon iconColor=?loaderIconColor />
+        } else {
+          switch rightIcon {
+          | CustomIcon(element) => element
+          | NoIcon => React.null
+          }
+        }}
+      </TouchableOpacity>
+    }}
   </View>
 }

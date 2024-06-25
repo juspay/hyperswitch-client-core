@@ -2,55 +2,57 @@ open PaymentConfirmTypes
 
 external parse: Fetch.response => JSON.t = "%identity"
 external toJson: 't => JSON.t = "%identity"
-external toString: option<JSON.t> => string = "%identity"
-
+type retrieve = Payment | List
+type apiLogType = Request | Response | NoResponse | Err
 external jsonToString: JSON.t => string = "%identity"
-let jsonToSavedPMObj = data => {
-  let cards = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
 
-  cards->Array.reduce([], (acc, obj) => {
-    let savedPMData = obj->Utils.getDictFromJson
-    let cardData = savedPMData->Dict.get("card")->Option.flatMap(JSON.Decode.object)
-
-    let paymentMethodType = savedPMData->Dict.get("payment_method")->toString
-
-    switch paymentMethodType {
-    | "card" =>
-      switch cardData {
-      | Some(card) =>
-        acc->Array.push(
-          SdkTypes.SAVEDLISTCARD({
-            cardScheme: card->Utils.getString("scheme", "cardv1"),
-            name: card->Utils.getString("nick_name", ""),
-            cardHolderName: card->Utils.getString("card_holder_name", ""),
-            cardNumber: "**** "->String.concat(card->Utils.getString("last4_digits", "")),
-            expiry_date: card->Utils.getString("expiry_month", "") ++
-            "/" ++
-            card->Utils.getString("expiry_year", "")->String.sliceToEnd(~start=-2),
-            payment_token: savedPMData->Utils.getString("payment_token", ""),
-            nick_name: card->Utils.getString("nick_name", ""),
-            isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
-            requiresCVV: savedPMData->Utils.getBool("requires_cvv", false),
-          }),
-        )
-      | None => ()
-      }
-    | "wallet" =>
-      acc->Array.push(
-        SdkTypes.SAVEDLISTWALLET({
-          payment_method_type: savedPMData->Utils.getString("payment_method_type", ""),
-          walletType: savedPMData
-          ->Utils.getString("payment_method_type", "")
-          ->SdkTypes.walletNameMapper,
-          payment_token: savedPMData->Utils.getString("payment_token", ""),
-          isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
-        }),
+let useApiLogWrapper = () => {
+  let logger = LoggerHook.useLoggerHook()
+  (
+    ~logType,
+    ~eventName,
+    ~url,
+    ~statusCode,
+    ~apiLogType,
+    ~data,
+    ~paymentMethod=?,
+    ~paymentExperience=?,
+    (),
+  ) => {
+    let (value, internalMetadata) = switch apiLogType {
+    | Request => ([("url", url->JSON.Encode.string)], [])
+    | Response => (
+        [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
+        [("response", data)],
       )
-    | _ => ()
+    | NoResponse => (
+        [
+          ("url", url->JSON.Encode.string),
+          ("statusCode", "504"->JSON.Encode.string),
+          ("response", data),
+        ],
+        [("response", data)],
+      )
+    | Err => (
+        [
+          ("url", url->JSON.Encode.string),
+          ("statusCode", statusCode->JSON.Encode.string),
+          ("response", data),
+        ],
+        [("response", data)],
+      )
     }
-
-    acc
-  })
+    logger(
+      ~logType,
+      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~category=API,
+      ~eventName,
+      ~paymentMethod?,
+      ~paymentExperience?,
+      (),
+    )
+  }
 }
 
 let useHandleSuccessFailure = () => {
@@ -640,7 +642,7 @@ let useRedirectHook = () => {
   }
 }
 
-let useGetSavedCardHook = () => {
+let useGetSavedPMHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
@@ -720,42 +722,4 @@ let useGetSavedCardHook = () => {
       None->Promise.resolve
     })
   }
-}
-
-// TO BE REMOVED
-let useFetchPaymentMethods = () => {
-  let savedPaymentMethods = useGetSavedCardHook()
-  let (_, setSavedPMData) = React.useContext(SavedPaymentMethodContext.savedPaymentMethodContext)
-
-  React.useEffect0(() => {
-    savedPaymentMethods()
-    ->Promise.then(async data => {
-      switch data {
-      | Some(obj) => {
-          let cardData = obj->jsonToSavedPMObj
-
-          let isGuestFromPMList =
-            obj
-            ->Utils.getDictFromJson
-            ->Dict.get("is_guest_customer")
-            ->Option.flatMap(JSON.Decode.bool)
-            ->Option.getOr(false)
-
-          setSavedPMData(
-            Some({
-              pmList: Some(cardData),
-              isGuestCustomer: isGuestFromPMList,
-              selectedPaymentMethod: None,
-            }),
-          )->ignore
-        }
-      | None => ()
-      }
-
-      Promise.resolve()
-    })
-    ->ignore
-
-    None
-  })
 }

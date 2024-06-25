@@ -140,12 +140,11 @@ let generateCardConfirmBody = (
   }
 }
 
-let checkIsCVCRequired = (pmObject: SdkTypes.savedDataType) => {
+let checkIsCVCRequired = (pmObject: SdkTypes.savedDataType) =>
   switch pmObject {
   | SAVEDLISTCARD(obj) => obj.requiresCVV
   | _ => false
   }
-}
 
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
@@ -154,36 +153,32 @@ let generateSavedCardConfirmBody = (
   ~isSaveCardCheckboxSelected,
   ~savedCardCvv,
 ): PaymentMethodListType.redirectType => {
-  {
-    client_secret: nativeProp.clientSecret,
-    payment_method: "card",
-    payment_token,
-    customer_acceptance: ?(
-      allApiData.mandateType == NEW_MANDATE && isSaveCardCheckboxSelected
-        ? Some({
-            {
-              acceptance_type: "online",
-              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-              online: {
-                ip_address: ?nativeProp.hyperParams.ip,
-                user_agent: ?nativeProp.hyperParams.userAgent,
-              },
-            }
-          })
-        : None
-    ),
-    card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  }
+  client_secret: nativeProp.clientSecret,
+  payment_method: "card",
+  payment_token,
+  customer_acceptance: ?(
+    allApiData.mandateType == NEW_MANDATE && isSaveCardCheckboxSelected
+      ? Some({
+          {
+            acceptance_type: "online",
+            accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+            online: {
+              ip_address: ?nativeProp.hyperParams.ip,
+              user_agent: ?nativeProp.hyperParams.userAgent,
+            },
+          }
+        })
+      : None
+  ),
+  card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
 }
 let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
   ~payment_method_type,
 ): PaymentMethodListType.redirectType => {
-  {
-    client_secret: nativeProp.clientSecret,
-    payment_token,
-    payment_method: "wallet",
-    payment_method_type,
-  }
+  client_secret: nativeProp.clientSecret,
+  payment_token,
+  payment_method: "wallet",
+  payment_method_type,
 }

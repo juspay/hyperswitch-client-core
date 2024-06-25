@@ -77,6 +77,7 @@ module CVVComponent = {
 module PMWithNickNameComponent = {
   @react.component
   let make = (~pmDetails: SdkTypes.savedDataType) => {
+    let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
     let nickName = switch pmDetails {
     | SAVEDLISTCARD(obj) => obj.nick_name
     | _ => None
@@ -99,7 +100,7 @@ module PMWithNickNameComponent = {
                 textType={CardTextBold}
               />
               <Space height=5. />
-              {isDefaultPm
+              {nativeProp.configuration.displayDefaultSavedPaymentIcon && isDefaultPm
                 ? <Icon name="defaultTick" height=14. width=14. fill="black" />
                 : React.null}
             </View>
