@@ -278,6 +278,7 @@ let make = (
   ~setIsAllDynamicFieldValid,
   ~setDynamicFieldsJson,
   ~isSaveCardsFlow=false,
+  ~savedCardsData: option<SdkTypes.savedDataType>,
 ) => {
   let localeObject = GetLocale.useGetLocalObj()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -286,7 +287,10 @@ let make = (
   let clientCountry = Utils.getClientCountry(clientTimeZone)
 
   let keysValArray =
-    requiredFields->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2)
+    requiredFields
+    ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
+    ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2)
+
   let (finalJson, setFinalJson) = React.useState(_ => keysValArray)
 
   React.useEffect1(() => {
