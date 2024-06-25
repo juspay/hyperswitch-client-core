@@ -1,6 +1,6 @@
 external toJson: 't => string = "%identity"
 external dictToObj: Dict.t<'a> => {..} = "%identity"
-
+external toPlatform: ReactNative.Platform.os => string = "%identity"
 let fetchApi = (
   ~uri,
   ~bodyStr: string="",
@@ -10,7 +10,7 @@ let fetchApi = (
   (),
 ) => {
   Dict.set(headers, "Content-Type", "application/json")
-
+  Dict.set(headers, "X-Client-Platform", ReactNative.Platform.os->toPlatform)
   let body = switch method_ {
   | Get => Promise.resolve(None)
   | _ => Promise.resolve(Some(Fetch.BodyInit.make(bodyStr)))
