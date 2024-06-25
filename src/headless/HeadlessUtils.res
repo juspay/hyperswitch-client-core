@@ -497,7 +497,7 @@ let errorOnApiCalls = (inputKey: ErrorUtils.errorKey, ~dynamicStr="") => {
   }
 }
 
-let getDefaultError = errorOnApiCalls(NO_DATA(Error, Static("")))
+let getDefaultError = errorOnApiCalls(ErrorUtils.errorWarning.noData)
 
 let getErrorFromResponse = data => {
   switch data {
