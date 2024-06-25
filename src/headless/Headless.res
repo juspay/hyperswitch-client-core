@@ -63,13 +63,29 @@ let registerHeadless = headless => {
         ("payment_method", "wallet"->JSON.Encode.string),
         ("payment_method_type", data.payment_method_type->Option.getOr("")->JSON.Encode.string),
         ("payment_method_data", payment_method_data),
-        // (
-        //   "card_cvc",
-        //   switch response->Utils.getDictFromJson->Dict.get("cvc") {
-        //   | Some(cvc) => cvc
-        //   | None => JSON.Encode.null
-        //   },
-        // ),
+        ("setup_future_usage", "off_session"->JSON.Encode.string),
+        ("payment_type", "new_mandate"->JSON.Encode.string),
+        (
+          "customer_acceptance",
+          [
+            ("acceptance_type", "online"->JSON.Encode.string),
+            ("accepted_at", Date.now()->Date.fromTime->Date.toISOString->JSON.Encode.string),
+            (
+              "online",
+              [
+                ("ip_address", nativeProp.hyperParams.ip->Option.getOr("")->JSON.Encode.string),
+                (
+                  "user_agent",
+                  nativeProp.hyperParams.userAgent->Option.getOr("")->JSON.Encode.string,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
       ]
       ->Dict.fromArray
       ->JSON.Encode.object
@@ -150,6 +166,29 @@ let registerHeadless = headless => {
           ("payment_method", "wallet"->JSON.Encode.string),
           ("payment_method_type", data.payment_method_type->Option.getOr("")->JSON.Encode.string),
           ("payment_method_data", payment_method_data),
+          ("setup_future_usage", "off_session"->JSON.Encode.string),
+          ("payment_type", "new_mandate"->JSON.Encode.string),
+          (
+            "customer_acceptance",
+            [
+              ("acceptance_type", "online"->JSON.Encode.string),
+              ("accepted_at", Date.now()->Date.fromTime->Date.toISOString->JSON.Encode.string),
+              (
+                "online",
+                [
+                  ("ip_address", nativeProp.hyperParams.ip->Option.getOr("")->JSON.Encode.string),
+                  (
+                    "user_agent",
+                    nativeProp.hyperParams.userAgent->Option.getOr("")->JSON.Encode.string,
+                  ),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object,
+              ),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
