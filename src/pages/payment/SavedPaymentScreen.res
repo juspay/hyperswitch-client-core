@@ -17,12 +17,12 @@ let make = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
 
-  let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
-  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
-    RescriptCoreFuture.Dict.key,
-    JSON.t,
-    option<string>,
-  )> => [])
+  // let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
+  // let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
+  //   RescriptCoreFuture.Dict.key,
+  //   JSON.t,
+  //   option<string>,
+  // )> => [])
 
   let isCVVRequiredByAnyPm = (pmList: option<array<SdkTypes.savedDataType>>) => {
     pmList
@@ -369,10 +369,11 @@ let make = (
         "card",
       )
 
-      let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
-        body,
-        dynamicFieldsJson,
-      )
+      // let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
+      //   body,
+      //   dynamicFieldsJson,
+      // )
+      let paymentBodyWithDynamicFields = body
 
       fetchAndRedirect(
         ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
@@ -394,10 +395,11 @@ let make = (
         "wallet",
       )
 
-      let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
-        body,
-        dynamicFieldsJson,
-      )
+      // let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
+      //   body,
+      //   dynamicFieldsJson,
+      // )
+      let paymentBodyWithDynamicFields = body
 
       fetchAndRedirect(
         ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
@@ -416,7 +418,7 @@ let make = (
     processSavedPMRequest()
   }
 
-  React.useEffect7(() => {
+  React.useEffect5(() => {
     setShowSavePMCheckbox(_ =>
       allApiData.mandateType == NEW_MANDATE &&
       nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
@@ -437,7 +439,6 @@ let make = (
         loading=false
         isAllValuesValid={savedPaymentMethordContextObj.selectedPaymentMethod->Option.isSome &&
         allApiData.paymentType->Option.isSome &&
-        isAllDynamicFieldValid &&
         isCvcValid}
         handlePress
         hasSomeFields=false
@@ -449,8 +450,6 @@ let make = (
   }, (
     savedPaymentMethordContextObj.selectedPaymentMethod,
     allApiData,
-    isAllDynamicFieldValid,
-    dynamicFieldsJson,
     isSaveCardCheckboxSelected,
     error,
     isCvcValid,
@@ -458,8 +457,6 @@ let make = (
 
   <SavedPaymentScreenChild
     savedPaymentMethodsData={savedPaymentMethordContextObj.pmList->Option.getOr([])}
-    setIsAllDynamicFieldValid
-    setDynamicFieldsJson
     isSaveCardCheckboxSelected
     setSaveCardChecboxSelected
     showSavePMCheckbox

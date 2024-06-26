@@ -4,8 +4,6 @@ open ReactNative.Style
 @react.component
 let make = (
   ~savedPaymentMethodsData,
-  ~setIsAllDynamicFieldValid,
-  ~setDynamicFieldsJson,
   ~isSaveCardCheckboxSelected,
   ~setSaveCardChecboxSelected,
   ~showSavePMCheckbox,
@@ -44,12 +42,7 @@ let make = (
           ),
         ])}>
         <SavedPMListWithLoader
-          listArr={savedPaymentMethodsData}
-          setIsAllDynamicFieldValid
-          setDynamicFieldsJson
-          savedCardCvv
-          setSavedCardCvv
-          setIsCvcValid
+          listArr={savedPaymentMethodsData} savedCardCvv setSavedCardCvv setIsCvcValid
         />
       </View>
       <Space height=20. />
