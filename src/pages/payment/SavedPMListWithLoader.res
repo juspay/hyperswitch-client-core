@@ -50,19 +50,56 @@ let placeDefaultPMAtTopOfArr = (listArr: array<SdkTypes.savedDataType>) => {
 @react.component
 let make = (
   ~listArr: array<SdkTypes.savedDataType>,
-  ~setIsAllDynamicFieldValid,
-  ~setDynamicFieldsJson,
   ~savedCardCvv,
   ~setSavedCardCvv,
   ~setIsCvcValid,
 ) => {
-  let (savedPaymentMethordContextObj, _) = React.useContext(
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (savedPaymentMethodContext, setSavedPaymentMethodContext) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
   )
+  let savedPaymentMethodContextObj = switch savedPaymentMethodContext {
+  | Some(data) => data
+  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  }
 
-  let listArr = listArr->placeDefaultPMAtTopOfArr
+  let listArr = nativeProp.configuration.displayDefaultSavedPaymentIcon
+    ? listArr->placeDefaultPMAtTopOfArr
+    : listArr
 
-  savedPaymentMethordContextObj == Loading
+  React.useEffect0(_ => {
+    switch listArr->Array.get(0) {
+    | Some(obj) =>
+      switch obj {
+      | SdkTypes.SAVEDLISTCARD(obj) =>
+        setSavedPaymentMethodContext(
+          Some({
+            ...savedPaymentMethodContextObj,
+            selectedPaymentMethod: Some({
+              walletName: NONE,
+              token: obj.payment_token,
+            }),
+          }),
+        )
+      | SAVEDLISTWALLET(obj) =>
+        let walletType = obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
+        setSavedPaymentMethodContext(
+          Some({
+            ...savedPaymentMethodContextObj,
+            selectedPaymentMethod: Some({
+              walletName: walletType,
+              token: obj.payment_token,
+            }),
+          }),
+        )
+      | _ => ()
+      }
+    | None => ()
+    }
+    None
+  })
+
+  savedPaymentMethodContext == Loading
     ? <LoadingPmList />
     : <ScrollView>
         {listArr
@@ -71,8 +108,6 @@ let make = (
             key={i->Int.toString}
             pmObject={item}
             isButtomBorder={Some(listArr)->Option.getOr([])->Array.length - 1 === i ? false : true}
-            setIsAllDynamicFieldValid
-            setDynamicFieldsJson
             savedCardCvv
             setSavedCardCvv
             setIsCvcValid
