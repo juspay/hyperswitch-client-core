@@ -49,6 +49,12 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "ideal",
+      text: "iDEAL",
+      header: "",
+      fields: [],
+    },
+    {
       name: "we_chat_pay",
       text: "WeChat Pay",
       header: "",
