@@ -9,6 +9,7 @@ type allApiData = {
   mandateType: PaymentMethodListType.mandateType,
   paymentType: option<string>,
   merchantName: option<string>,
+  requestExternalThreeDsAuthentication: option<bool>,
 }
 let dafaultVal = {
   retryEnabled: None,
@@ -16,6 +17,7 @@ let dafaultVal = {
   mandateType: NORMAL,
   paymentType: None,
   merchantName: None,
+  requestExternalThreeDsAuthentication: None,
 }
 
 let allApiDataContext = React.createContext((dafaultVal, (_: allApiData) => ()))

@@ -209,6 +209,7 @@ type configurationType = {
   displaySavedPaymentMethodsCheckbox: bool,
   displaySavedPaymentMethods: bool,
   placeholder: placeholder,
+  netceteraSDKApiKey: option<string>,
   // themes: string,
 
   // Android Specific
@@ -762,6 +763,7 @@ let parseConfigurationDict = (configObj, from) => {
       }
     | _ => None
     },
+    netceteraSDKApiKey: getOptionString(configObj, "netceteraSDKApiKey"),
     placeholder: {
       cardNumber: getString(placeholderDict, "cardNumber", "1234 1234 1234 1234"),
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),

@@ -2,6 +2,7 @@ external toPlatform: ReactNative.Platform.os => string = "%identity"
 type logType = DEBUG | INFO | ERROR | WARNING
 type logCategory = API | USER_ERROR | USER_EVENT | MERCHANT_EVENT
 type logComponent = MOBILE
+type apiLogType = Request | Response | NoResponse | Err
 
 type eventName =
   | APP_RENDERED
@@ -32,6 +33,14 @@ type eventName =
   | PAYMENT_SESSION_INITIATED
   | LOADER_CHANGED
   | SCAN_CARD
+  | AUTHENTICATION_CALL_INIT
+  | AUTHENTICATION_CALL
+  | AUTHORIZE_CALL_INIT
+  | AUTHORIZE_CALL
+  | POLL_STATUS_CALL_INIT
+  | POLL_STATUS_CALL
+  | DISPLAY_THREE_DS_SDK
+  | NETCETERA_SDK
 
 type logFile = {
   timestamp: string,
@@ -86,6 +95,14 @@ let eventToStrMapper = eventName => {
   | PAYMENT_SESSION_INITIATED => "PAYMENT_SESSION_INITIATED"
   | LOADER_CHANGED => "LOADER_CHANGED"
   | SCAN_CARD => "SCAN_CARD"
+  | AUTHENTICATION_CALL_INIT => "AUTHENTICATION_CALL_INIT"
+  | AUTHENTICATION_CALL => "AUTHENTICATION_CALL"
+  | AUTHORIZE_CALL_INIT => "AUTHORIZE_CALL_INIT"
+  | AUTHORIZE_CALL => "AUTHORIZE_CALL"
+  | POLL_STATUS_CALL_INIT => "POLL_STATUS_CALL_INIT"
+  | POLL_STATUS_CALL => "POLL_STATUS_CALL"
+  | DISPLAY_THREE_DS_SDK => "DISPLAY_THREE_DS_SDK"
+  | NETCETERA_SDK => "NETCETERA_SDK"
   }
 }
 
@@ -372,6 +389,54 @@ let useLoggerHook = () => {
       ~setEvents,
       ~nativeProp,
       ~uri,
+    )
+  }
+}
+let useApiLogWrapper = () => {
+  let logger = useLoggerHook()
+  (
+    ~logType,
+    ~eventName,
+    ~url,
+    ~statusCode,
+    ~apiLogType,
+    ~data,
+    ~paymentMethod=?,
+    ~paymentExperience=?,
+    (),
+  ) => {
+    let (value, internalMetadata) = switch apiLogType {
+    | Request => ([("url", url->JSON.Encode.string)], [])
+    | Response => (
+        [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
+        [("response", data)],
+      )
+    | NoResponse => (
+        [
+          ("url", url->JSON.Encode.string),
+          ("statusCode", "504"->JSON.Encode.string),
+          ("response", data),
+        ],
+        [("response", data)],
+      )
+    | Err => (
+        [
+          ("url", url->JSON.Encode.string),
+          ("statusCode", statusCode->JSON.Encode.string),
+          ("response", data),
+        ],
+        [("response", data)],
+      )
+    }
+    logger(
+      ~logType,
+      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~category=API,
+      ~eventName,
+      ~paymentMethod?,
+      ~paymentExperience?,
+      (),
     )
   }
 }

@@ -1,4 +1,10 @@
-type sdkPaymentState = FillingDetails | ProcessingPayments | PaymentSuccess | PaymentCancelled
+type sdkPaymentState =
+  | FillingDetails
+  | ProcessingPayments
+  | PaymentSuccess
+  | PaymentCancelled
+  | ExternalThreeDSLoading
+
 let defaultSetter = (_: sdkPaymentState) => ()
 let loadingContext = React.createContext((FillingDetails, defaultSetter))
 

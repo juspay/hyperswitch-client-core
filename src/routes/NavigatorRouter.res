@@ -15,8 +15,8 @@ let make = () => {
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
-  let error = ErrorUtils.useErrorWarningValidationOnLoad()
-  let errorOnApiCalls = ErrorUtils.useShowErrorOrWarning()
+  let error = ErrorHooks.useErrorWarningValidationOnLoad()
+  let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
   let logger = LoggerHook.useLoggerHook()
 
   let handlePMLResponse = retrieve => {
