@@ -13,4 +13,5 @@ type props = {
   onPaymentResultCallback: nativeSyntheticEvent<Dict.t<JSON.t>> => unit,
 }
 
-let make: React.component<props> = NativeModules.requireNativeComponent("ApplePayView")
+let make: React.component<props> =
+  Platform.os == #ios ? NativeModules.requireNativeComponent("ApplePayView") : _ => React.null

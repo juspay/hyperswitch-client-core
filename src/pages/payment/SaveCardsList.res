@@ -151,14 +151,10 @@ module PaymentMethodListView = {
   let make = (
     ~pmObject: SdkTypes.savedDataType,
     ~isButtomBorder=true,
-    ~setIsAllDynamicFieldValid,
-    ~setDynamicFieldsJson,
     ~savedCardCvv,
     ~setSavedCardCvv,
     ~setIsCvcValid,
   ) => {
-    let (pmList, _) = React.useContext(PaymentListContext.paymentListContext)
-
     //~hashedCardNumber, ~expDate, ~selectedx
     let (savedPaymentMethordContextObj, setSavedPaymentMethordContextObj) = React.useContext(
       SavedPaymentMethodContext.savedPaymentMethodContext,
@@ -206,40 +202,6 @@ module PaymentMethodListView = {
       }
     }
 
-    //selecting default card/pm
-    React.useEffect0(() => {
-      switch pmObject {
-      | SdkTypes.SAVEDLISTCARD(obj) =>
-        if obj.isDefaultPaymentMethod->Option.getOr(false) {
-          setSavedPaymentMethordContextObj(
-            Some({
-              ...savedPaymentMethordContextObj,
-              selectedPaymentMethod: Some({
-                walletName: NONE,
-                token: obj.payment_token,
-              }),
-            }),
-          )
-        }
-      | SAVEDLISTWALLET(obj) =>
-        if obj.isDefaultPaymentMethod->Option.getOr(false) {
-          let walletType = obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-          setSavedPaymentMethordContextObj(
-            Some({
-              ...savedPaymentMethordContextObj,
-              selectedPaymentMethod: Some({
-                walletName: walletType,
-                token: obj.payment_token,
-              }),
-            }),
-          )
-        }
-      | _ => ()
-      }
-
-      None
-    })
-
     let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
 
     let pmToken = switch pmObject {
@@ -254,30 +216,6 @@ module PaymentMethodListView = {
     let onPress = () => {
       checkAndProcessIfWallet(~newToken={Some(pmToken)})
     }
-
-    let requiredFields =
-      pmList
-      ->Array.find(paymentMethod =>
-        switch (pmObject, paymentMethod) {
-        | (SAVEDLISTCARD(_), CARD(_))
-        | (SAVEDLISTWALLET(_), WALLET(_)) => true
-        | (_, _) => false
-        }
-      )
-      ->Option.flatMap(paymentMethod => {
-        switch paymentMethod {
-        | CARD(cardVal) => Some(cardVal.required_field)
-        | WALLET(walletVal) => Some(walletVal.required_field)
-        | _ => Some([])
-        }
-      })
-      ->Option.getOr([])
-      ->Array.filter(val => {
-        switch val.field_type {
-        | RequiredFieldsTypes.UnKnownField(_) => false
-        | _ => true
-        }
-      })
 
     let preSelectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
       walletName: NONE,
@@ -353,13 +291,6 @@ module PaymentMethodListView = {
       </View>
       {pmObject->PaymentUtils.checkIsCVCRequired
         ? <CVVComponent savedCardCvv setSavedCardCvv isPaymentMethodSelected cardScheme />
-        : React.null}
-      {isPaymentMethodSelected && requiredFields->Array.length != 0
-        ? <View style={viewStyle(~paddingHorizontal=10.->dp, ())}>
-            <DynamicFields
-              setIsAllDynamicFieldValid setDynamicFieldsJson requiredFields isSaveCardsFlow=true
-            />
-          </View>
         : React.null}
     </TouchableOpacity>
   }

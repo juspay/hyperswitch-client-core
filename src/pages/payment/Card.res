@@ -175,7 +175,11 @@ let make = (
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields
-              setIsAllDynamicFieldValid setDynamicFieldsJson requiredFields isSaveCardsFlow={false}
+              setIsAllDynamicFieldValid
+              setDynamicFieldsJson
+              requiredFields
+              isSaveCardsFlow={false}
+              savedCardsData=None
             />
             <Space height=8. />
           </>
