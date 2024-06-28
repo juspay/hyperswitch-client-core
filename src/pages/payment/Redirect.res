@@ -310,9 +310,13 @@ let make = (
           prop.payment_method,
           [
             (
-              prop.payment_method_type,
+              prop.payment_method_type, 
               [
-                ("country", country->Option.getOr("")->JSON.Encode.string),
+                ("country", switch country {
+                 | Some(country) => country != "" ? country->JSON.Encode.string : JSON.Encode.null
+                 | _ => JSON.Encode.null
+                 }
+                ),
                 ("bank_name", selectedBank->Option.getOr("")->JSON.Encode.string),
                 ("blik_code", "777987"->JSON.Encode.string),
                 ("preferred_language", "en"->JSON.Encode.string),
