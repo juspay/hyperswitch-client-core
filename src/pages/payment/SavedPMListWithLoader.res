@@ -101,7 +101,13 @@ let make = (
 
   savedPaymentMethodContext == Loading
     ? <LoadingPmList />
-    : <ScrollView>
+    : <ScrollView
+        style={viewStyle(
+          ~maxHeight=250.->dp,
+          ~paddingHorizontal=24.->dp,
+          ~paddingVertical=5.->dp,
+          (),
+        )}>
         {listArr
         ->Array.mapWithIndex((item, i) => {
           <SaveCardsList.PaymentMethodListView
