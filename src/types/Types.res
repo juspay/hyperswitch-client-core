@@ -49,6 +49,12 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "giropay",
+      text: "GiroPay",
+      header: "",
+      fields: [],
+    },
+    {
       name: "we_chat_pay",
       text: "WeChat Pay",
       header: "",
