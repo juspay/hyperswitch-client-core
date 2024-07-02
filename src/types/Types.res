@@ -1,3 +1,4 @@
+type retrieve = Payment | List
 type redirectTypeJson = {
   name: string,
   text: string,

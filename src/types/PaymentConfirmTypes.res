@@ -2,8 +2,20 @@
 //   returnUrl: string,
 //   url: string,
 // }
+type pollConfig = {
+  pollId: string,
+  delayInSecs: int,
+  frequency: int,
+}
+type threeDsData = {
+  threeDsAuthenticationUrl: string,
+  threeDsAuthorizeUrl: string,
+  messageVersion: string,
+  directoryServerId: string,
+  pollConfig: pollConfig,
+}
 
-type nextAction = {redirectToUrl: string, type_: string}
+type nextAction = {redirectToUrl: string, type_: string, threeDsData?: threeDsData}
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
 open Utils
