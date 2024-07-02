@@ -15,12 +15,17 @@ let make = () => {
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
-  let error = ErrorUtils.useErrorWarningValidationOnLoad()
-  let errorOnApiCalls = ErrorUtils.useShowErrorOrWarning()
+  let error = ErrorHooks.useErrorWarningValidationOnLoad()
+  let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
   let logger = LoggerHook.useLoggerHook()
 
   let handlePMLResponse = retrieve => {
-    let {mandateType, paymentType, merchantName} = PaymentMethodListType.jsonToMandateData(retrieve)
+    let {
+      mandateType,
+      paymentType,
+      merchantName,
+      requestExternalThreeDsAuthentication,
+    } = PaymentMethodListType.jsonToMandateData(retrieve)
     let redirect_url = PaymentMethodListType.jsonToRedirectUrlType(retrieve)
 
     setAllApiData({
@@ -29,6 +34,7 @@ let make = () => {
       mandateType,
       paymentType,
       merchantName,
+      requestExternalThreeDsAuthentication,
     })
 
     PaymentMethodListType.jsonTopaymentMethodListType(retrieve)->setPaymentList

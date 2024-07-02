@@ -17,7 +17,17 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (initialiseNetcetera, _) = NetceteraThreeDsHooks.useNetceteraThreeDsHook()
 
+  React.useEffect1(() => {
+    if allApiData.requestExternalThreeDsAuthentication->Option.getOr(false) {
+      initialiseNetcetera(
+        ~netceteraSDKApiKey=nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
+        ~sdkEnvironment=nativeProp.env,
+      )
+    }
+    None
+  }, [allApiData.requestExternalThreeDsAuthentication])
   let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
   let (savedPaymentMethodsData, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
