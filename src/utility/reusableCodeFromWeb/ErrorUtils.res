@@ -149,7 +149,7 @@ let useErrorWarningValidationOnLoad = () => {
   let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
 
   let isClientSecretValid = RegExp.test(
-    `.+_secret_[A-Za-z0-9]+`->Re.fromString,
+    `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
     nativeProp.clientSecret,
   )
   let showErrorOrWarning = useShowErrorOrWarning()
