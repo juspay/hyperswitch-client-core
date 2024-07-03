@@ -621,7 +621,12 @@ let useRedirectHook = () => {
             jsonResponse->JSON.Decode.object->Option.getOr(Dict.make()),
           )
 
-          handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error)
+          handleApiRes(
+            ~status,
+            ~reUri=nextAction.redirectToUrl,
+            ~error,
+            ~nextAction=Some(nextAction),
+          )
           Promise.resolve()
         })
         ->Promise.catch(err => {
