@@ -19,8 +19,26 @@ try {
 app.get('/create-payment-intent', async (req, res) => {
   try {
     var paymentIntent = await hyper.paymentIntents.create({
-      amount: 2999,
+      amount: 12999,
       currency: 'USD',
+      profile_id: 'pro_iwkbcjQlzbckggkI4vpN',
+      customer_id: 'cus_x2elbRbuiRyQfEO1ae2B',
+      setup_future_usage: 'off_session',
+      authentication_type: 'no_three_ds',
+      request_external_three_ds_authentication: true,
+      billing: {
+        address: {
+          line1: '1467',
+          line2: 'Harrison Street',
+          line3: 'Harrison Street',
+          city: 'San Fransico',
+          state: 'California',
+          zip: '94122',
+          country: 'US',
+          // first_name: 'PiX',
+          // last_name: "grgv",
+        },
+      },
     });
 
     // Send publishable key and PaymentIntent details to client
