@@ -2,7 +2,7 @@ open PaymentConfirmTypes
 
 external parse: Fetch.response => JSON.t = "%identity"
 external toJson: 't => JSON.t = "%identity"
-type retrieve = Payment | List
+
 type apiLogType = Request | Response | NoResponse | Err
 external jsonToString: JSON.t => string = "%identity"
 
@@ -374,32 +374,33 @@ let useRedirectHook = () => {
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
-      let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
-
       switch nextAction->ThreeDsUtils.getActionType {
-      | "three_ds_invoke" =>
-        handleNativeThreeDS(
-          ~baseUrl,
-          ~netceteraSDKApiKey,
-          ~clientSecret,
-          ~publishableKey,
-          ~nextAction,
-          ~retrievePayment,
-          ~sdkEnvironment=nativeProp.env,
-          ~onSuccess=message => {
-            responseCallback(
-              ~paymentStatus=PaymentSuccess,
-              ~status={status: "succeeded", message, code: "", type_: ""},
-            )
-          },
-          ~onFailure=message => {
-            errorCallback(
-              ~errorMessage={status: "failed", message, type_: "", code: ""},
-              ~closeSDK={true},
-              (),
-            )
-          },
-        )
+      | "three_ds_invoke" => {
+          let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
+
+          handleNativeThreeDS(
+            ~baseUrl,
+            ~netceteraSDKApiKey,
+            ~clientSecret,
+            ~publishableKey,
+            ~nextAction,
+            ~retrievePayment,
+            ~sdkEnvironment=nativeProp.env,
+            ~onSuccess=message => {
+              responseCallback(
+                ~paymentStatus=PaymentSuccess,
+                ~status={status: "succeeded", message, code: "", type_: ""},
+              )
+            },
+            ~onFailure=message => {
+              errorCallback(
+                ~errorMessage={status: "failed", message, type_: "", code: ""},
+                ~closeSDK={true},
+                (),
+              )
+            },
+          )
+        }
       | _ =>
         switch status {
         | "succeeded" =>
