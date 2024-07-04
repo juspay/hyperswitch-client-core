@@ -272,6 +272,7 @@ type jsonToMandateData = {
   mandateType: mandateType,
   paymentType: option<string>,
   merchantName: option<string>,
+  requestExternalThreeDsAuthentication: option<bool>,
 }
 
 let jsonToMandateData: JSON.t => jsonToMandateData = res => {
@@ -292,8 +293,18 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
       ->Dict.get("merchant_name")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.string,
+      requestExternalThreeDsAuthentication: res
+      ->getDictFromJson
+      ->Dict.get("request_external_three_ds_authentication")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.bool,
     }
-  | None => {mandateType: NORMAL, paymentType: None, merchantName: None}
+  | None => {
+      mandateType: NORMAL,
+      paymentType: None,
+      merchantName: None,
+      requestExternalThreeDsAuthentication: None,
+    }
   }
 }
 
