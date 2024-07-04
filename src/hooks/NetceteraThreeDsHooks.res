@@ -43,7 +43,7 @@ let useInitNetcetera = () => {
 type postAReqParamsGenerationDecision = RetrieveAgain | Make3DsCall(ExternalThreeDsTypes.aReqParams)
 type threeDsAuthCallDecision =
   | GenerateChallenge({challengeParams: ExternalThreeDsTypes.authCallResponse})
-  | ChallengeNotNeeded
+  | FrictionlessFlow
 
 let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
@@ -352,7 +352,7 @@ let useExternalThreeDs = () => {
               )
               switch challengeParams.transStatus {
               | "C" => GenerateChallenge({challengeParams: challengeParams})
-              | _ => ChallengeNotNeeded
+              | _ => FrictionlessFlow
               }
             | AUTH_ERROR(errObj) => {
                 logger(
@@ -362,7 +362,7 @@ let useExternalThreeDs = () => {
                   ~eventName=DISPLAY_THREE_DS_SDK,
                   (),
                 )
-                ChallengeNotNeeded
+                FrictionlessFlow
               }
             }
           })
@@ -379,7 +379,7 @@ let useExternalThreeDs = () => {
               ~data=err->toJson,
               (),
             )
-            ChallengeNotNeeded
+            FrictionlessFlow
           })
         }
       })
@@ -393,7 +393,7 @@ let useExternalThreeDs = () => {
           ~data=err->toJson,
           (),
         )
-        Promise.resolve(ChallengeNotNeeded)
+        Promise.resolve(FrictionlessFlow)
       })
     }
 
@@ -464,7 +464,7 @@ let useExternalThreeDs = () => {
       })
     }
     let handleNativeThreeDs = async () => {
-      try {
+      let isFinalRetrieve = try {
         await checkSDKPresence()
         let aReqParams = await startNetcetera3DSFlow()
         let authCallDecision = await hsThreeDsAuthCall(aReqParams)
@@ -475,13 +475,16 @@ let useExternalThreeDs = () => {
           await sendChallengeParamsAndGenerateChallenge(~challengeParams)
           setLoading(ProcessingPayments)
 
-        | ChallengeNotNeeded => ()
+        | FrictionlessFlow => ()
         }
-        let isFinalRetrieve = await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
-        retrieveAndShowStatus(~isFinalRetrieve)
+        await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
       } catch {
-      | err => Console.log2("unknown error", err)
+      | err =>
+        Console.log2("unknown error", err)
+        true
       }
+
+      retrieveAndShowStatus(~isFinalRetrieve)
     }
     handleNativeThreeDs()->ignore
   }
