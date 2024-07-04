@@ -4,6 +4,7 @@ type redirectTypeJson = {
   header: string,
   fields: array<string>,
 }
+type retrieve = Payment | List
 
 let defaultRedirectType = {
   name: "",

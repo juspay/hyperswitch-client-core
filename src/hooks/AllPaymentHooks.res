@@ -2,7 +2,7 @@ open PaymentConfirmTypes
 
 external parse: Fetch.response => JSON.t = "%identity"
 external toJson: 't => JSON.t = "%identity"
-type retrieve = Payment | List
+
 type apiLogType = Request | Response | NoResponse | Err
 external jsonToString: JSON.t => string = "%identity"
 
@@ -82,7 +82,7 @@ let useHandleSuccessFailure = () => {
 let useSessionToken = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
 
   (~wallet=[], ()) => {
     switch Next.getNextEnv {
@@ -170,12 +170,12 @@ let useSessionToken = () => {
 
 let useRetrieveHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   (type_, clientSecret, publishableKey) => {
     switch (Next.getNextEnv, type_) {
-    | ("next", List) => Promise.resolve(Next.listRes)
+    | ("next", Types.List) => Promise.resolve(Next.listRes)
     | (_, type_) =>
       let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
       let (
@@ -354,9 +354,10 @@ let useRedirectHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let redirectioBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
+  let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
 
   (
     ~body: string,
@@ -372,69 +373,99 @@ let useRedirectHook = () => {
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
-    let handleApiRes = (~status, ~reUri, ~error: error) => {
-      switch status {
-      | "succeeded" =>
-        logger(
-          ~logType=INFO,
-          ~value="",
-          ~category=USER_EVENT,
-          ~eventName=PAYMENT_SUCCESS,
-          ~paymentMethod={paymentMethod},
-          ~paymentExperience?,
-          (),
-        )
-        setAllApiData({...allApiData, retryEnabled: None})
-        responseCallback(
-          ~paymentStatus=PaymentSuccess,
-          ~status={status, message: "", code: "", type_: ""},
-        )
-      | "requires_capture"
-      | "processing"
-      | "requires_confirmation"
-      | "requires_merchant_action" => {
-          setAllApiData({...allApiData, retryEnabled: None})
-          responseCallback(
-            ~paymentStatus=ProcessingPayments,
-            ~status={status, message: "", code: "", type_: ""},
+    let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
+      switch nextAction->ThreeDsUtils.getActionType {
+      | "three_ds_invoke" => {
+          let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
+
+          handleNativeThreeDS(
+            ~baseUrl,
+            ~netceteraSDKApiKey,
+            ~clientSecret,
+            ~publishableKey,
+            ~nextAction,
+            ~retrievePayment,
+            ~sdkEnvironment=nativeProp.env,
+            ~onSuccess=message => {
+              responseCallback(
+                ~paymentStatus=PaymentSuccess,
+                ~status={status: "succeeded", message, code: "", type_: ""},
+              )
+            },
+            ~onFailure=message => {
+              errorCallback(
+                ~errorMessage={status: "failed", message, type_: "", code: ""},
+                ~closeSDK={true},
+                (),
+              )
+            },
           )
         }
-      | "requires_customer_action" =>
-        setAllApiData({...allApiData, retryEnabled: None})
-        logger(
-          ~logType=INFO,
-          ~category=USER_EVENT,
-          ~value="",
-          ~internalMetadata=reUri,
-          ~eventName=REDIRECTING_USER,
-          ~paymentMethod,
-          (),
-        )
-        redirectioBrowserHook(
-          ~clientSecret,
-          ~publishableKey,
-          ~openUrl=reUri,
-          ~responseCallback,
-          ~errorCallback,
-          ~processor=body,
-        )
-      | statusVal =>
-        logger(
-          ~logType=ERROR,
-          ~value={statusVal ++ error.message->Option.getOr("")},
-          ~category=USER_EVENT,
-          ~eventName=PAYMENT_FAILED,
-          ~paymentMethod={paymentMethod},
-          ~paymentExperience?,
-          (),
-        )
-        setAllApiData({...allApiData, retryEnabled: None})
-        errorCallback(
-          ~errorMessage=error,
-          //~closeSDK={error.code == "IR_16" || error.code == "HE_00"},
-          ~closeSDK=true,
-          (),
-        )
+      | _ =>
+        switch status {
+        | "succeeded" =>
+          logger(
+            ~logType=INFO,
+            ~value="",
+            ~category=USER_EVENT,
+            ~eventName=PAYMENT_SUCCESS,
+            ~paymentMethod={paymentMethod},
+            ~paymentExperience?,
+            (),
+          )
+          setAllApiData({...allApiData, retryEnabled: None})
+          responseCallback(
+            ~paymentStatus=PaymentSuccess,
+            ~status={status, message: "", code: "", type_: ""},
+          )
+        | "requires_capture"
+        | "processing"
+        | "requires_confirmation"
+        | "requires_merchant_action" => {
+            setAllApiData({...allApiData, retryEnabled: None})
+            responseCallback(
+              ~paymentStatus=ProcessingPayments,
+              ~status={status, message: "", code: "", type_: ""},
+            )
+          }
+        | "requires_customer_action" => {
+            setAllApiData({...allApiData, retryEnabled: None})
+            logger(
+              ~logType=INFO,
+              ~category=USER_EVENT,
+              ~value="",
+              ~internalMetadata=reUri,
+              ~eventName=REDIRECTING_USER,
+              ~paymentMethod,
+              (),
+            )
+            redirectioBrowserHook(
+              ~clientSecret,
+              ~publishableKey,
+              ~openUrl=reUri,
+              ~responseCallback,
+              ~errorCallback,
+              ~processor=body,
+            )
+          }
+        | statusVal =>
+          logger(
+            ~logType=ERROR,
+            ~value={statusVal ++ error.message->Option.getOr("")},
+            ~category=USER_EVENT,
+            ~eventName=PAYMENT_FAILED,
+            ~paymentMethod={paymentMethod},
+            ~paymentExperience?,
+            (),
+          )
+          setAllApiData({...allApiData, retryEnabled: None})
+          errorCallback(
+            ~errorMessage=error,
+            //~closeSDK={error.code == "IR_16" || error.code == "HE_00"},
+            ~closeSDK=true,
+            (),
+          )
+        }
       }
     }
 
@@ -586,11 +617,11 @@ let useRedirectHook = () => {
           }
         })
         ->Promise.then(jsonResponse => {
-          let {nextAction, status, error} = itemToObjMapper(
-            jsonResponse->JSON.Decode.object->Option.getOr(Dict.make()),
-          )
+          let confirmResponse = jsonResponse->JSON.Decode.object->Option.getOr(Dict.make())
+          let {nextAction, status, error} = itemToObjMapper(confirmResponse)
 
-          handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error)
+          handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
+
           Promise.resolve()
         })
         ->Promise.catch(err => {
@@ -614,7 +645,7 @@ let useRedirectHook = () => {
 
 let useGetSavedPMHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = useApiLogWrapper()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   () => {
