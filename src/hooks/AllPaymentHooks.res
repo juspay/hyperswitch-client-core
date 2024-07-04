@@ -357,7 +357,7 @@ let useRedirectHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let (_, handleNativeThreeDS) = NetceteraThreeDsHooks.useNetceteraThreeDsHook()
+  let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
 
   (
     ~body: string,

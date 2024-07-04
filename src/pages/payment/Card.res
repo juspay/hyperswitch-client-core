@@ -63,7 +63,7 @@ let make = (
   //   ()
   // }
 
-  let (initialiseNetcetera, _) = NetceteraThreeDsHooks.useNetceteraThreeDsHook()
+  let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
 
   React.useEffect1(() => {
     if (
