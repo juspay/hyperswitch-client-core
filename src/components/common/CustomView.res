@@ -1,46 +1,6 @@
 open ReactNative
 open Style
 type modalPosition = [#center | #top | #bottom]
-
-external parseAnimatedValue: ReactNative.Animated.Value.t => float = "%identity"
-
-module ExpandedCustomViewHoc = {
-  @react.component
-  let make = (
-    ~children,
-    ~width,
-    ~borderRadius,
-    ~borderBottomLeftRadius,
-    ~borderBottomRightRadius,
-    ~isContentHidden,
-    ~expandViewVertically,
-    ~viewShownAfterExpansion,
-  ) => {
-    let expandViewVertically = expandViewVertically->Option.getOr(false)
-    let {component} = ThemebasedStyle.useThemeBasedStyle()
-    <>
-      <View
-        style={viewStyle(
-          ~width,
-          ~display=#flex,
-          ~borderRadius,
-          ~borderBottomLeftRadius,
-          ~borderBottomRightRadius,
-          ~marginTop={Platform.os === #android ? StatusBar.currentHeight->dp : 0.->dp},
-          ~overflow=#hidden,
-          ~flex={expandViewVertically ? 1. : 0.},
-          ~backgroundColor=component.background,
-          (),
-        )}>
-        {isContentHidden && !expandViewVertically
-          ? viewShownAfterExpansion->Option.getOr(React.null)
-          : React.null}
-        {children}
-      </View>
-    </>
-  }
-}
-
 @react.component
 let make = (
   ~onDismiss=() => (),
@@ -48,8 +8,6 @@ let make = (
   ~closeOnClickOutSide=false,
   ~modalPosition: modalPosition=#center,
   ~bottomModalWidth=100.->pct,
-  ~expandViewVertically=?,
-  ~viewShownAfterExpansion=?,
   (),
 ) => {
   let modalPosStyle = switch modalPosition {
@@ -64,51 +22,21 @@ let make = (
   }
 
   //  let (locationY, setLocationY) = React.useState(_ => 0.)
-  let customViewFlex = React.useRef(Animated.Value.create(1.)).current
-  let (isContentHidden, setIsContentHidden) = React.useState(_ => false)
-
-  React.useEffect1(() => {
-    let toValue =
-      expandViewVertically->Option.getOr(false)
-        ? 0.->Animated.Value.Timing.fromRawValue
-        : 1.->Animated.Value.Timing.fromRawValue
-
-    if expandViewVertically->Option.getOr(false) {
-      setIsContentHidden(_ => true)
-      Animated.timing(
-        customViewFlex,
-        Animated.Value.Timing.config(
-          ~toValue,
-          ~isInteraction=true,
-          ~useNativeDriver=false,
-          ~delay=0.,
-          ~duration=300.,
-          ~easing=Easing.linear,
-          (),
-        ),
-      )->Animated.start()
-    }
-
-    None
-  }, [expandViewVertically])
 
   <View
     style={array([
       viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
       modalPosStyle,
     ])}>
-    <Animated.View
-      style={viewStyle(~flex={customViewFlex->Animated.StyleProp.float}, ~width=100.->pct, ())}>
-      <TouchableOpacity
-        style={viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ())}
-        disabled=disableClickOutside
-        onPress={_ => {
-          if closeOnClickOutSide {
-            onDismiss()
-          }
-        }}
-      />
-    </Animated.View>
+    <TouchableOpacity
+      style={viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ())}
+      disabled=disableClickOutside
+      onPress={_ => {
+        if closeOnClickOutSide {
+          onDismiss()
+        }
+      }}
+    />
     // <TouchableWithoutFeedback
     //   onPressIn={e => setLocationY(_ => e.nativeEvent.locationY)}
     //   onPressOut={e => {
@@ -116,22 +44,21 @@ let make = (
     //       onDismiss()
     //     }
     //   }}>
-
-    <ExpandedCustomViewHoc
-      width=bottomModalWidth
-      borderRadius=15.
-      borderBottomLeftRadius=0.
-      borderBottomRightRadius=0.
-      isContentHidden
-      expandViewVertically
-      viewShownAfterExpansion>
-      <View
-        style={viewStyle(~width=bottomModalWidth, ~display={isContentHidden ? #none : #flex}, ())}>
-        <SafeAreaView />
-        {children}
-      </View>
-    </ExpandedCustomViewHoc>
-
+    <View
+      style={viewStyle(
+        ~width=bottomModalWidth,
+        ~borderRadius=15.,
+        ~borderBottomLeftRadius=0.,
+        ~borderBottomRightRadius=0.,
+        ~overflow=#hidden,
+        ~maxHeight=95.->pct,
+        ~alignItems=#center,
+        ~justifyContent=#center,
+        (),
+      )}>
+      <SafeAreaView />
+      {children}
+    </View>
     // </TouchableWithoutFeedback>
   </View>
 }
@@ -191,7 +118,7 @@ module Wrapper = {
         viewStyle(
           ~height=heightPosition->Animated.StyleProp.size,
           ~width,
-          // ~overflow=#hidden,
+          //    ~overflow=#hidden,
           ~minHeight=250.->dp,
           ~borderRadius=15.,
           ~borderBottomLeftRadius=0.,

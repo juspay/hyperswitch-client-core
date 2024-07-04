@@ -471,9 +471,9 @@ let useExternalThreeDs = () => {
 
         switch authCallDecision {
         | GenerateChallenge({challengeParams}) =>
-          setLoading(ExternalThreeDSLoading)
+          // setLoading(ExternalThreeDSLoading)
           await sendChallengeParamsAndGenerateChallenge(~challengeParams)
-          setLoading(ProcessingPayments)
+        // setLoading(ProcessingPayments)
 
         | FrictionlessFlow => ()
         }
