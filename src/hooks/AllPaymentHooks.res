@@ -296,7 +296,7 @@ let useBrowserHook = () => {
             | "cancelled"
             | "requires_merchant_action" =>
               responseCallback(
-                ~paymentStatus=LoadingContext.ProcessingPayments,
+                ~paymentStatus=LoadingContext.ProcessingPayments(None),
                 ~status={status, message: "", code: "", type_: ""},
               )
             | _ =>
@@ -424,7 +424,7 @@ let useRedirectHook = () => {
         | "requires_merchant_action" => {
             setAllApiData({...allApiData, retryEnabled: None})
             responseCallback(
-              ~paymentStatus=ProcessingPayments,
+              ~paymentStatus=ProcessingPayments(None),
               ~status={status, message: "", code: "", type_: ""},
             )
           }

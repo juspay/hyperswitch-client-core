@@ -177,16 +177,17 @@ let make = () => {
 
   React.useEffect2(() => {
     let backHandler = ReactNative.BackHandler.addEventListener(#hardwareBackPress, () => {
-      if (
-        loading !== LoadingContext.ProcessingPayments &&
-          [SdkTypes.PaymentSheet, SdkTypes.HostedCheckout]->Array.includes(nativeProp.sdkState)
-      ) {
-        handleSuccessFailure(
-          ~apiResStatus=PaymentConfirmTypes.defaultCancelError,
-          ~closeSDK=true,
-          ~reset=false,
-          (),
-        )
+      switch loading {
+      | ProcessingPayments(_) => ()
+      | _ =>
+        if [SdkTypes.PaymentSheet, SdkTypes.HostedCheckout]->Array.includes(nativeProp.sdkState) {
+          handleSuccessFailure(
+            ~apiResStatus=PaymentConfirmTypes.defaultCancelError,
+            ~closeSDK=true,
+            ~reset=false,
+            (),
+          )
+        }
       }
       true
     })->unsubscribe

@@ -43,7 +43,7 @@ let make = (
       borderRadius=buttonBorderRadius
       borderColor=payNowButtonBorderColor
       buttonState={switch loading {
-      | ProcessingPayments => LoadingButton
+      | ProcessingPayments(_) => LoadingButton
       | PaymentSuccess => Completed
       | _ => isAllValuesValid ? Normal : Disabled
       }}

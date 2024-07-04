@@ -1,4 +1,9 @@
-type sdkPaymentState = FillingDetails | ProcessingPayments | PaymentSuccess | PaymentCancelled
+type processingPayments = {showOverlay: bool}
+type sdkPaymentState =
+  | FillingDetails
+  | ProcessingPayments(option<processingPayments>)
+  | PaymentSuccess
+  | PaymentCancelled
 let defaultSetter = (_: sdkPaymentState) => ()
 let loadingContext = React.createContext((FillingDetails, defaultSetter))
 

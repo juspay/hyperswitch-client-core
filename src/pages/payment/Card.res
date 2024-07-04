@@ -131,7 +131,7 @@ let make = (
     )
   }
   let handlePress = _ => {
-    setLoading(ProcessingPayments)
+    setLoading(ProcessingPayments(None))
     processRequest(cardVal)
   }
 

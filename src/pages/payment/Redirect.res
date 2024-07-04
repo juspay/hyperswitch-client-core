@@ -550,7 +550,7 @@ let make = (
     //   (),
     // )
 
-    setLoading(ProcessingPayments)
+    setLoading(ProcessingPayments(None))
     logger(
       ~logType=INFO,
       ~value=walletType.payment_method_type,
@@ -661,7 +661,7 @@ let make = (
   }
 
   let handlePress = _ => {
-    setLoading(ProcessingPayments)
+    setLoading(ProcessingPayments(None))
     switch redirectProp {
     | PAY_LATER(prop) =>
       fields.name == "klarna" && isKlarna
