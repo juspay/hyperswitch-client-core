@@ -39,6 +39,9 @@ let useInitNetcetera = () => {
     ->ignore
   }
 }
+
+type aReqResponseDecison = RetrieveAgain | Make3DsCall(ExternalThreeDsTypes.aReqParams)
+
 let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
@@ -78,6 +81,29 @@ let useExternalThreeDs = () => {
           (),
         )
 
+        let logInfo = (~statusCode, ~apiLogType, ~data) => {
+          apiLogWrapper(
+            ~logType=INFO,
+            ~eventName=POLL_STATUS_CALL,
+            ~url=uri,
+            ~statusCode,
+            ~apiLogType,
+            ~data,
+            (),
+          )
+        }
+        let logError = (~statusCode, ~apiLogType, ~data) => {
+          apiLogWrapper(
+            ~logType=ERROR,
+            ~eventName=POLL_STATUS_CALL,
+            ~url=uri,
+            ~statusCode,
+            ~apiLogType,
+            ~data,
+            (),
+          )
+        }
+
         let headers = getAuthCallHeaders(publishableKey)
         CommonHooks.fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
         ->Promise.then(data => {
@@ -99,63 +125,42 @@ let useExternalThreeDs = () => {
                 ]
                 ->Dict.fromArray
                 ->JSON.Encode.object
-              apiLogWrapper(
-                ~logType=INFO,
-                ~eventName=POLL_STATUS_CALL,
-                ~url=uri,
-                ~statusCode,
-                ~apiLogType=Response,
-                ~data=logData,
-                (),
-              )
+              logInfo(~statusCode, ~apiLogType=Response, ~data=logData)
               if pollResponse.status === "completed" {
-                onPollCompletion()
+                Promise.resolve()
               } else {
-                setTimeout(
-                  () => {
-                    shortPollExternalThreeDsAuthStatus(
-                      ~pollConfig,
-                      ~pollCount=pollCount + 1,
-                      ~onPollCompletion,
-                    )
+                Promise.make(
+                  (_resolve, _reject) => {
+                    setTimeout(
+                      () => {
+                        shortPollExternalThreeDsAuthStatus(
+                          ~pollConfig,
+                          ~pollCount=pollCount + 1,
+                          ~onPollCompletion,
+                        )
+                      },
+                      pollConfig.delayInSecs * 1000,
+                    )->ignore
                   },
-                  pollConfig.delayInSecs * 1000,
-                )->ignore
+                )
               }
-              Some(data)->Promise.resolve
             })
           } else {
             data
             ->Fetch.Response.json
-            ->Promise.then(res => {
-              apiLogWrapper(
-                ~logType=ERROR,
-                ~eventName=POLL_STATUS_CALL,
-                ~url=uri,
-                ~statusCode,
-                ~apiLogType=Err,
-                ~data=res,
-                (),
-              )
-              Some(data)->Promise.resolve
+            ->Promise.thenResolve(res => {
+              logError(~statusCode, ~apiLogType=Err, ~data=res)
             })
             ->ignore
-            onPollCompletion()
-            Some(data)->Promise.resolve
+            Promise.resolve()
           }
         })
         ->Promise.catch(err => {
-          apiLogWrapper(
-            ~logType=ERROR,
-            ~eventName=POLL_STATUS_CALL,
-            ~url=uri,
-            ~statusCode="504",
-            ~apiLogType=NoResponse,
-            ~data=err->toJson,
-            (),
-          )
+          logError(~statusCode="504", ~apiLogType=NoResponse, ~data=err->toJson)
+          Promise.resolve()
+        })
+        ->Promise.finally(_ => {
           onPollCompletion()
-          Promise.resolve(None)
         })
         ->ignore
       }
@@ -180,16 +185,19 @@ let useExternalThreeDs = () => {
         } else {
           let status = res->Utils.getDictFromJson->Utils.getString("status", "")
           let isFinalRetrieve = isFinalRetrieve->Option.getOr(true)
-          switch (status, isFinalRetrieve) {
-          | ("processing" | "succeeded", _) => onSuccess(retrievePaymentStatus.successMsg)
-          | ("failed", _) => onFailure(retrievePaymentStatus.errorMsg)
-          | (_, true) => onFailure(retrievePaymentStatus.errorMsg)
-          | (_, false) =>
-            shortPollExternalThreeDsAuthStatus(
-              ~pollConfig=threeDsData.pollConfig,
-              ~pollCount=0,
-              ~onPollCompletion=retrieveAndShowStatus,
-            )
+          switch status {
+          | "processing" | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
+          | "failed" => onFailure(retrievePaymentStatus.errorMsg)
+          | _ =>
+            if isFinalRetrieve {
+              onFailure(retrievePaymentStatus.errorMsg)
+            } else {
+              shortPollExternalThreeDsAuthStatus(
+                ~pollConfig=threeDsData.pollConfig,
+                ~pollCount=0,
+                ~onPollCompletion=retrieveAndShowStatus,
+              )
+            }
           }
         }->ignore
         Promise.resolve()
@@ -397,41 +405,49 @@ let useExternalThreeDs = () => {
     }
 
     let startNetcetera3DSFlow = () => {
-      try {
-        initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
-        ->Promise.then(promiseVal => {
-          logger(
-            ~logType=INFO,
-            ~value=promiseVal.status->JSON.stringifyAny->Option.getOr(""),
-            ~category=USER_EVENT,
-            ~eventName=NETCETERA_SDK,
-            (),
-          )
+      initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
+      ->Promise.then(statusInfo => {
+        logger(
+          ~logType=INFO,
+          ~value=statusInfo.status->JSON.stringifyAny->Option.getOr(""),
+          ~category=USER_EVENT,
+          ~eventName=NETCETERA_SDK,
+          (),
+        )
 
-          promiseVal->isStatusSuccess
-            ? Netcetera3dsModule.generateAReqParams(
-                threeDsData.messageVersion,
-                threeDsData.directoryServerId,
-                (aReqParams, status) => {
-                  logger(
-                    ~logType=INFO,
-                    ~value=status->JSON.stringifyAny->Option.getOr(""),
-                    ~category=USER_EVENT,
-                    ~eventName=NETCETERA_SDK,
-                    (),
-                  )
-                  status->isStatusSuccess
-                    ? hsThreeDsAuthCall(aReqParams)->ignore
-                    : retrieveAndShowStatus()
-                },
-              )
-            : retrieveAndShowStatus()
-          Promise.resolve(promiseVal)
-        })
-        ->ignore
-      } catch {
-      | _ => retrieveAndShowStatus()
-      }
+        if statusInfo->isStatusSuccess {
+          Promise.make((resolve, _reject) => {
+            Netcetera3dsModule.generateAReqParams(
+              threeDsData.messageVersion,
+              threeDsData.directoryServerId,
+              (aReqParams, status) => {
+                logger(
+                  ~logType=INFO,
+                  ~value=status->JSON.stringifyAny->Option.getOr(""),
+                  ~category=USER_EVENT,
+                  ~eventName=NETCETERA_SDK,
+                  (),
+                )
+                if status->isStatusSuccess {
+                  resolve(Make3DsCall(aReqParams))
+                } else {
+                  resolve(RetrieveAgain)
+                }
+              },
+            )
+          })
+        } else {
+          Promise.resolve(RetrieveAgain)
+        }
+      })
+      ->Promise.catch(_ => Promise.resolve(RetrieveAgain))
+      ->Promise.thenResolve(decision => {
+        switch decision {
+        | RetrieveAgain => retrieveAndShowStatus()
+        | Make3DsCall(aReqParams) => hsThreeDsAuthCall(aReqParams)->ignore
+        }
+      })
+      ->ignore
     }
 
     let handleNativeThreeDs = () => {
