@@ -41,6 +41,10 @@ let useInitNetcetera = () => {
 }
 
 type aReqResponseDecison = RetrieveAgain | Make3DsCall(ExternalThreeDsTypes.aReqParams)
+type threeDsAuthCallDecision =
+  | GenerateChallenge({challengeParams: ExternalThreeDsTypes.authCallResponse})
+  | MakeAuthorizeCall
+  | DoNothing
 
 let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
@@ -284,27 +288,22 @@ let useExternalThreeDs = () => {
             ~eventName=NETCETERA_SDK,
             (),
           )
-          status->isStatusSuccess
-            ? Netcetera3dsModule.generateChallenge(status => {
-                logger(
-                  ~logType=INFO,
-                  ~value=status->JSON.stringifyAny->Option.getOr(""),
-                  ~category=USER_EVENT,
-                  ~eventName=NETCETERA_SDK,
-                  (),
-                )
-                setLoading(ProcessingPayments)
-                let authorizeUrl = threeDsData.threeDsAuthorizeUrl
-                hsAuthorizeCall(~authorizeUrl)->ignore
-
-                // status->isStatusSuccess
-                //   ? {
-                //       let authorizeUrl = threeDsData.threeDsAuthorizeUrl
-                //       hsAuthorizeCall(~authorizeUrl, ~onSuccess, ~onFailure)->ignore
-                //     }
-                //   : retrieveAndShowStatus()
-              })
-            : retrieveAndShowStatus()
+          if status->isStatusSuccess {
+            Netcetera3dsModule.generateChallenge(status => {
+              logger(
+                ~logType=INFO,
+                ~value=status->JSON.stringifyAny->Option.getOr(""),
+                ~category=USER_EVENT,
+                ~eventName=NETCETERA_SDK,
+                (),
+              )
+              setLoading(ProcessingPayments)
+              let authorizeUrl = threeDsData.threeDsAuthorizeUrl
+              hsAuthorizeCall(~authorizeUrl)->ignore
+            })
+          } else {
+            retrieveAndShowStatus()
+          }
         },
       )
     }
@@ -330,7 +329,7 @@ let useExternalThreeDs = () => {
         if statusCode->String.charAt(0) === "2" {
           data
           ->Fetch.Response.json
-          ->Promise.then(res => {
+          ->Promise.thenResolve(res => {
             apiLogWrapper(
               ~logType=INFO,
               ~eventName=AUTHENTICATION_CALL,
@@ -352,11 +351,8 @@ let useExternalThreeDs = () => {
                 (),
               )
               switch challengeParams.transStatus {
-              | "C" => {
-                  setLoading(ExternalThreeDSLoading)
-                  sendChallengeParamsAndGenerateChallenge(~challengeParams)
-                }
-              | _ => hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
+              | "C" => GenerateChallenge({challengeParams: challengeParams})
+              | _ => MakeAuthorizeCall
               }
             | AUTH_ERROR(errObj) => {
                 logger(
@@ -366,16 +362,14 @@ let useExternalThreeDs = () => {
                   ~eventName=DISPLAY_THREE_DS_SDK,
                   (),
                 )
-                hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
+                MakeAuthorizeCall
               }
             }
-
-            Some(data)->Promise.resolve
           })
         } else {
           data
           ->Fetch.Response.json
-          ->Promise.then(err => {
+          ->Promise.thenResolve(err => {
             apiLogWrapper(
               ~logType=ERROR,
               ~eventName=AUTHENTICATION_CALL,
@@ -385,8 +379,7 @@ let useExternalThreeDs = () => {
               ~data=err->toJson,
               (),
             )
-            hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
-            Some(data)->Promise.resolve
+            MakeAuthorizeCall
           })
         }
       })
@@ -400,7 +393,18 @@ let useExternalThreeDs = () => {
           ~data=err->toJson,
           (),
         )
-        Promise.resolve(None)
+        Promise.resolve(DoNothing)
+      })
+      ->Promise.thenResolve(decision => {
+        switch decision {
+        | GenerateChallenge({challengeParams}) =>
+          setLoading(ExternalThreeDSLoading)
+          sendChallengeParamsAndGenerateChallenge(~challengeParams)
+
+        | MakeAuthorizeCall =>
+          hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
+        | DoNothing => ()
+        }
       })
     }
 
