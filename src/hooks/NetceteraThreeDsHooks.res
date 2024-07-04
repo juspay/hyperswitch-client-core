@@ -40,11 +40,10 @@ let useInitNetcetera = () => {
   }
 }
 
-type aReqResponseDecison = RetrieveAgain | Make3DsCall(ExternalThreeDsTypes.aReqParams)
+type postAReqParamsGenerationDecision = RetrieveAgain | Make3DsCall(ExternalThreeDsTypes.aReqParams)
 type threeDsAuthCallDecision =
   | GenerateChallenge({challengeParams: ExternalThreeDsTypes.authCallResponse})
   | MakeAuthorizeCall
-  | DoNothing
 
 let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
@@ -393,7 +392,7 @@ let useExternalThreeDs = () => {
           ~data=err->toJson,
           (),
         )
-        Promise.resolve(DoNothing)
+        Promise.resolve(MakeAuthorizeCall)
       })
       ->Promise.thenResolve(decision => {
         switch decision {
@@ -403,7 +402,6 @@ let useExternalThreeDs = () => {
 
         | MakeAuthorizeCall =>
           hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
-        | DoNothing => ()
         }
       })
     }
