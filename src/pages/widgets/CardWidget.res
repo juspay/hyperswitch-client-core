@@ -92,7 +92,7 @@ let make = () => {
   }
   let showAlert = AlertHook.useAlerts()
   let handlePress = (clientSecret, publishableKey) => {
-    setLoading(ProcessingPayments)
+    setLoading(ProcessingPayments(None))
     retrievePayment(List, clientSecret, publishableKey)
     ->Promise.then(res => {
       let paymentList =

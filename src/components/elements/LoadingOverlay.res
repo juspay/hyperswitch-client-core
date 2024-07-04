@@ -14,15 +14,14 @@ let make = () => {
 
   {
     switch loading {
-    | ProcessingPayments =>
+    | ProcessingPayments(val) =>
       <View
         style={array([
           viewStyle(
             ~width=100.->pct,
             ~height=100.->pct,
             ~position=#absolute,
-            ~backgroundColor="white",
-            ~opacity=0.,
+            ~opacity=val->Option.isSome ? 0.90 : 0.0,
             ~borderRadius,
             (),
           ),
@@ -48,6 +47,10 @@ let make = () => {
             // />
             <View style={viewStyle(~flex=1., ~justifyContent=#center, ~alignItems=#center, ())}>
               // <HyperLoaderAnimation />
+              {switch val {
+              | Some(val) => val.showOverlay ? <PaymentSheetProcessingElement /> : React.null
+              | None => React.null
+              }}
             </View>
           </>
         }}

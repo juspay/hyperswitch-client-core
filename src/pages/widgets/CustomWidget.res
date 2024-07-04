@@ -19,7 +19,7 @@ let make = (~walletType) => {
 
   React.useEffect1(() => {
     if nativeProp.publishableKey == "" {
-      setLoading(ProcessingPayments)
+      setLoading(ProcessingPayments(None))
     } else {
       setButton(_ =>
         PMListModifier.widgetModifier(

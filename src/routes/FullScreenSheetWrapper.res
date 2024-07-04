@@ -72,5 +72,6 @@ let make = (~children) => {
         <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
       </CustomView>
     </Animated.View>
+    <LoadingOverlay />
   </View>
 }

@@ -130,7 +130,6 @@ module Wrapper = {
       <ModalHeader onModalClose />
       <View onLayout=updateScrollViewHeight> {children} </View>
       <Space height={Platform.os == #ios ? 48. : 24.} />
-      <LoadingOverlay />
     </Animated.ScrollView>
   }
 }

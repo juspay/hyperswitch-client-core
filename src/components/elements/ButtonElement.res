@@ -383,7 +383,7 @@ let make = (
   }
 
   let pressHandler = () => {
-    setLoading(ProcessingPayments)
+    setLoading(ProcessingPayments(None))
     logger(
       ~logType=INFO,
       ~value=walletType.payment_method_type,

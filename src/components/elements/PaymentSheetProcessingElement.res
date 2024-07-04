@@ -28,8 +28,6 @@ let make = () => {
   <View
     style={array([
       viewStyle(
-        ~borderColor=component.borderColor,
-        ~display=#flex,
         ~alignItems=#center,
         ~backgroundColor=component.background,
         ~justifyContent=#center,
@@ -38,7 +36,7 @@ let make = () => {
         (),
       ),
     ])}>
-    <TubeSpinner />
+    <TubeSpinner size=60. />
     <Space />
     <View style={viewStyle(~display=#flex, ~flexDirection=#row, ())}>
       <TextWrapper text={"Processing Your Payment"} textType={HeadingBold} />

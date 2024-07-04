@@ -1,7 +1,6 @@
-open ErrorUtils
 let useShowErrorOrWarning = () => {
   let customAlert = AlertHook.useAlerts()
-  (inputKey: errorKey, ~dynamicStr="", ()) => {
+  (inputKey: ErrorUtils.errorKey, ~dynamicStr="", ()) => {
     let (type_, str) = switch inputKey {
     | INVALID_PK(var) => var
     | DEPRECATED_LOADSTRIPE(var) => var
@@ -13,6 +12,7 @@ let useShowErrorOrWarning = () => {
     | INVALID_FORMAT(var) => var
     | USED_CL(var) => var
     | INVALID_CL(var) => var
+    | NO_DATA(var) => var
     }
     switch (type_, str) {
     | (Error, Static(string)) => customAlert(~errorType="error", ~message=string)
@@ -36,20 +36,21 @@ let useErrorWarningValidationOnLoad = () => {
   () => {
     if !isPublishableKeyValid {
       switch nativeProp.sdkState {
-      | PaymentSheet | WidgetPaymentSheet => showErrorOrWarning(errorWarning.invalidPk, ())
-      | HostedCheckout => showErrorOrWarning(errorWarning.invalidPk, ())
+      | PaymentSheet | WidgetPaymentSheet =>
+        showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
+      | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
-      | Headless => showErrorOrWarning(errorWarning.invalidPk, ())
+      | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | NoView => ()
       }
     } else if !isClientSecretValid {
       let dynamicStr = "ClientSecret is expected to be in format pay_******_secret_*****"
       switch nativeProp.sdkState {
       | PaymentSheet | WidgetPaymentSheet =>
-        showErrorOrWarning(errorWarning.invalidFormat, ~dynamicStr, ())
-      | HostedCheckout => showErrorOrWarning(errorWarning.invalidFormat, ~dynamicStr, ())
+        showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
+      | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
-      | Headless => showErrorOrWarning(errorWarning.invalidFormat, ~dynamicStr, ())
+      | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | NoView => ()
       }
     }
