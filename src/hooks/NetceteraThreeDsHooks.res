@@ -43,7 +43,7 @@ let useInitNetcetera = () => {
 type postAReqParamsGenerationDecision = RetrieveAgain | Make3DsCall(ExternalThreeDsTypes.aReqParams)
 type threeDsAuthCallDecision =
   | GenerateChallenge({challengeParams: ExternalThreeDsTypes.authCallResponse})
-  | MakeAuthorizeCall
+  | ChallengeNotNeeded
 
 let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
@@ -224,7 +224,7 @@ let useExternalThreeDs = () => {
       )
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
       CommonHooks.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
-      ->Promise.then(data => {
+      ->Promise.then(async data => {
         setLoading(ProcessingPayments)
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
@@ -237,12 +237,10 @@ let useExternalThreeDs = () => {
             ~data=JSON.Encode.null,
             (),
           )
-          retrieveAndShowStatus(~isFinalRetrieve=false)
-          Some(data)->Promise.resolve
         } else {
-          data
+          await data
           ->Fetch.Response.json
-          ->Promise.then(error => {
+          ->Promise.thenResolve(error => {
             apiLogWrapper(
               ~logType=ERROR,
               ~eventName=AUTHORIZE_CALL,
@@ -252,10 +250,9 @@ let useExternalThreeDs = () => {
               ~data=error,
               (),
             )
-            retrieveAndShowStatus(~isFinalRetrieve=false)
-            Some(data)->Promise.resolve
           })
         }
+        false
       })
       ->Promise.catch(err => {
         apiLogWrapper(
@@ -267,44 +264,48 @@ let useExternalThreeDs = () => {
           ~data=err->toJson,
           (),
         )
-        retrieveAndShowStatus()
-        Promise.resolve(None)
+
+        Promise.resolve(true)
       })
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
-      Netcetera3dsModule.recieveChallengeParamsFromRN(
-        challengeParams.acsSignedContent,
-        challengeParams.acsRefNumber,
-        challengeParams.acsTransactionId,
-        challengeParams.threeDSRequestorURL,
-        challengeParams.threeDSServerTransId,
-        status => {
-          logger(
-            ~logType=INFO,
-            ~value=status->JSON.stringifyAny->Option.getOr(""),
-            ~category=USER_EVENT,
-            ~eventName=NETCETERA_SDK,
-            (),
-          )
-          if status->isStatusSuccess {
-            Netcetera3dsModule.generateChallenge(status => {
-              logger(
-                ~logType=INFO,
-                ~value=status->JSON.stringifyAny->Option.getOr(""),
-                ~category=USER_EVENT,
-                ~eventName=NETCETERA_SDK,
-                (),
+      Promise.make((resolve, reject) => {
+        Netcetera3dsModule.recieveChallengeParamsFromRN(
+          challengeParams.acsSignedContent,
+          challengeParams.acsRefNumber,
+          challengeParams.acsTransactionId,
+          challengeParams.threeDSRequestorURL,
+          challengeParams.threeDSServerTransId,
+          status => {
+            logger(
+              ~logType=INFO,
+              ~value=status->JSON.stringifyAny->Option.getOr(""),
+              ~category=USER_EVENT,
+              ~eventName=NETCETERA_SDK,
+              (),
+            )
+            if status->isStatusSuccess {
+              Netcetera3dsModule.generateChallenge(
+                status => {
+                  logger(
+                    ~logType=INFO,
+                    ~value=status->JSON.stringifyAny->Option.getOr(""),
+                    ~category=USER_EVENT,
+                    ~eventName=NETCETERA_SDK,
+                    (),
+                  )
+
+                  resolve()
+                },
               )
-              setLoading(ProcessingPayments)
-              let authorizeUrl = threeDsData.threeDsAuthorizeUrl
-              hsAuthorizeCall(~authorizeUrl)->ignore
-            })
-          } else {
-            retrieveAndShowStatus()
-          }
-        },
-      )
+            } else {
+              retrieveAndShowStatus()
+              reject()
+            }
+          },
+        )
+      })
     }
 
     let hsThreeDsAuthCall = (aReqParams: aReqParams) => {
@@ -351,7 +352,7 @@ let useExternalThreeDs = () => {
               )
               switch challengeParams.transStatus {
               | "C" => GenerateChallenge({challengeParams: challengeParams})
-              | _ => MakeAuthorizeCall
+              | _ => ChallengeNotNeeded
               }
             | AUTH_ERROR(errObj) => {
                 logger(
@@ -361,7 +362,7 @@ let useExternalThreeDs = () => {
                   ~eventName=DISPLAY_THREE_DS_SDK,
                   (),
                 )
-                MakeAuthorizeCall
+                ChallengeNotNeeded
               }
             }
           })
@@ -378,7 +379,7 @@ let useExternalThreeDs = () => {
               ~data=err->toJson,
               (),
             )
-            MakeAuthorizeCall
+            ChallengeNotNeeded
           })
         }
       })
@@ -392,17 +393,7 @@ let useExternalThreeDs = () => {
           ~data=err->toJson,
           (),
         )
-        Promise.resolve(MakeAuthorizeCall)
-      })
-      ->Promise.thenResolve(decision => {
-        switch decision {
-        | GenerateChallenge({challengeParams}) =>
-          setLoading(ExternalThreeDSLoading)
-          sendChallengeParamsAndGenerateChallenge(~challengeParams)
-
-        | MakeAuthorizeCall =>
-          hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)->ignore
-        }
+        Promise.resolve(ChallengeNotNeeded)
       })
     }
 
@@ -443,29 +434,55 @@ let useExternalThreeDs = () => {
         }
       })
       ->Promise.catch(_ => Promise.resolve(RetrieveAgain))
-      ->Promise.thenResolve(decision => {
-        switch decision {
-        | RetrieveAgain => retrieveAndShowStatus()
-        | Make3DsCall(aReqParams) => hsThreeDsAuthCall(aReqParams)->ignore
-        }
+      ->Promise.then(decision => {
+        Promise.make((resolve, reject) => {
+          switch decision {
+          | RetrieveAgain =>
+            retrieveAndShowStatus()
+            reject()
+          | Make3DsCall(aReqParams) => resolve(aReqParams)
+          }
+        })
       })
-      ->ignore
     }
 
-    let handleNativeThreeDs = () => {
-      if !Netcetera3dsModule.isAvailable {
-        logger(
-          ~logType=DEBUG,
-          ~value="Netcetera SDK dependency not added",
-          ~category=USER_EVENT,
-          ~eventName=NETCETERA_SDK,
-          (),
-        )
-        onFailure(externalThreeDsModuleStatus.errorMsg)
-      } else {
-        startNetcetera3DSFlow()->ignore
+    let checkSDKPresence = () => {
+      Promise.make((resolve, reject) => {
+        if !Netcetera3dsModule.isAvailable {
+          logger(
+            ~logType=DEBUG,
+            ~value="Netcetera SDK dependency not added",
+            ~category=USER_EVENT,
+            ~eventName=NETCETERA_SDK,
+            (),
+          )
+          onFailure(externalThreeDsModuleStatus.errorMsg)
+          reject()
+        } else {
+          resolve()
+        }
+      })
+    }
+    let handleNativeThreeDs = async () => {
+      try {
+        await checkSDKPresence()
+        let aReqParams = await startNetcetera3DSFlow()
+        let authCallDecision = await hsThreeDsAuthCall(aReqParams)
+
+        switch authCallDecision {
+        | GenerateChallenge({challengeParams}) =>
+          setLoading(ExternalThreeDSLoading)
+          await sendChallengeParamsAndGenerateChallenge(~challengeParams)
+          setLoading(ProcessingPayments)
+
+        | ChallengeNotNeeded => ()
+        }
+        let isFinalRetrieve = await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
+        retrieveAndShowStatus(~isFinalRetrieve)
+      } catch {
+      | err => Console.log2("unknown error", err)
       }
     }
-    handleNativeThreeDs()
+    handleNativeThreeDs()->ignore
   }
 }
