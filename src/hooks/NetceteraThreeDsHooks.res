@@ -295,8 +295,12 @@ let useExternalThreeDs = () => {
                     ~eventName=NETCETERA_SDK,
                     (),
                   )
-
-                  resolve()
+                  if status->isStatusSuccess {
+                    resolve()
+                  } else {
+                    retrieveAndShowStatus()
+                    reject()
+                  }
                 },
               )
             } else {
