@@ -91,10 +91,10 @@ let registerHeadless = headless => {
       ->JSON.Encode.object
       ->JSON.stringify
       ->confirmCall(nativeProp)
-    | "Cancel" =>
-      headlessModule.exitHeadless(
-        PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
-      )
+    | "Cancel" => ()
+    // headlessModule.exitHeadless(
+    //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
+    // )
     | err =>
       headlessModule.exitHeadless(
         {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
@@ -108,10 +108,10 @@ let registerHeadless = headless => {
     ->Option.getOr(JSON.Encode.null)
     ->JSON.Decode.string
     ->Option.getOr("") {
-    | "Cancelled" =>
-      headlessModule.exitHeadless(
-        PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
-      )
+    | "Cancelled" => ()
+    // headlessModule.exitHeadless(
+    //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
+    // )
     | "Failed" =>
       headlessModule.exitHeadless(
         {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
@@ -251,6 +251,28 @@ let registerHeadless = headless => {
           },
         )
       | APPLE_PAY =>
+        let timerId = setTimeout(() => {
+          logWrapper(
+            ~logType=DEBUG,
+            ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+            ~url="",
+            ~customLogUrl=nativeProp.customLogUrl,
+            ~env=nativeProp.env,
+            ~category=API,
+            ~statusCode="",
+            ~apiLogType=None,
+            ~data=JSON.Encode.null,
+            ~publishableKey=nativeProp.publishableKey,
+            ~paymentId="",
+            ~paymentMethod=None,
+            ~paymentExperience=None,
+            ~timestamp=0.,
+            ~latency=0.,
+            (),
+          )
+          headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
+        }, 5000)
+
         HyperModule.launchApplePay(
           [
             ("session_token_data", session.session_token_data),
@@ -270,6 +292,29 @@ let registerHeadless = headless => {
               Promise.resolve()
             })
             ->ignore
+          },
+          _ => {
+            logWrapper(
+              ~logType=DEBUG,
+              ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+              ~url="",
+              ~customLogUrl=nativeProp.customLogUrl,
+              ~env=nativeProp.env,
+              ~category=API,
+              ~statusCode="",
+              ~apiLogType=None,
+              ~data=JSON.Encode.null,
+              ~publishableKey=nativeProp.publishableKey,
+              ~paymentId="",
+              ~paymentMethod=None,
+              ~paymentExperience=None,
+              ~timestamp=0.,
+              ~latency=0.,
+              (),
+            )
+          },
+          _ => {
+            clearTimeout(timerId)
           },
         )
       | _ => ()
