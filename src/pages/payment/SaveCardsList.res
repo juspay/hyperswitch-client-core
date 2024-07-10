@@ -156,6 +156,7 @@ module PaymentMethodListView = {
     ~setIsCvcValid,
   ) => {
     //~hashedCardNumber, ~expDate, ~selectedx
+    let localeObj = GetLocale.useGetLocalObj()
     let (savedPaymentMethordContextObj, setSavedPaymentMethordContextObj) = React.useContext(
       SavedPaymentMethodContext.savedPaymentMethodContext,
     )
@@ -284,7 +285,8 @@ module PaymentMethodListView = {
         {switch pmObject {
         | SAVEDLISTCARD(obj) =>
           <TextWrapper
-            text={"expires " ++ obj.expiry_date->Option.getOr("")} textType={ModalTextLight}
+            text={localeObj.cardExpiresText ++ " " ++ obj.expiry_date->Option.getOr("")}
+            textType={ModalTextLight}
           />
         | SAVEDLISTWALLET(_) | NONE => React.null
         }}

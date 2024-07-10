@@ -48,7 +48,7 @@ let make = (
       <Space height=20. />
       <ClickableTextElement
         initialIconName="addwithcircle"
-        text="Add new payment method"
+        text={localeObj.addPaymentMethodLabel}
         isSelected=selected
         setIsSelected=isSelected
         textType={TextWrapper.LinkTextBold}
