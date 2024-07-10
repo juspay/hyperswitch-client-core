@@ -347,6 +347,18 @@ let make = (
         confirmGPay,
       )
     | APPLE_PAY =>
+      let timerId = setTimeout(() => {
+        setLoading(FillingDetails)
+        showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+        logger(
+          ~logType=DEBUG,
+          ~value="apple_pay",
+          ~category=USER_EVENT,
+          ~paymentMethod="apple_pay",
+          ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+          (),
+        )
+      }, 5000)
       HyperModule.launchApplePay(
         [
           ("session_token_data", sessionObject.session_token_data),
@@ -356,6 +368,19 @@ let make = (
         ->JSON.Encode.object
         ->JSON.stringify,
         confirmApplePay,
+        _ => {
+          logger(
+            ~logType=DEBUG,
+            ~value="apple_pay",
+            ~category=USER_EVENT,
+            ~paymentMethod="apple_pay",
+            ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+            (),
+          )
+        },
+        _ => {
+          clearTimeout(timerId)
+        },
       )
     | NONE =>
       let (body, paymentMethodType) = (

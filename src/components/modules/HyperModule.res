@@ -2,11 +2,18 @@ type strFun = string => unit
 type strFun2 = (string, string) => unit
 type intStrBoolFun = (int, string, bool) => unit
 type strFunWithCallback = (string, Dict.t<JSON.t> => unit) => unit
+type strFunWith3Callback = (
+  string,
+  Dict.t<JSON.t> => unit,
+  Dict.t<JSON.t> => unit,
+  Dict.t<JSON.t> => unit,
+) => unit
 
 external jsonToStrFun: JSON.t => strFun = "%identity"
 external jsonToStr2Fun: JSON.t => strFun2 = "%identity"
 external jsonToIntStrBoolFun: JSON.t => intStrBoolFun = "%identity"
 external jsonToStrFunWithCallback: JSON.t => strFunWithCallback = "%identity"
+external jsonToStrFunWith3Callback: JSON.t => strFunWith3Callback = "%identity"
 
 let hyperModuleDict =
   Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
@@ -15,7 +22,12 @@ let hyperModuleDict =
 
 type hyperModule = {
   sendMessageToNative: string => unit,
-  launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
+  launchApplePay: (
+    string,
+    Dict.t<JSON.t> => unit,
+    Dict.t<JSON.t> => unit,
+    Dict.t<JSON.t> => unit,
+  ) => unit,
   launchGPay: (string, Dict.t<JSON.t> => unit) => unit,
   exitPaymentsheet: (int, string, bool) => unit,
   exitWidget: (string, string) => unit,
@@ -50,9 +62,16 @@ let getStrFunWithCallbackFromKey = key => {
   }
 }
 
+let getStrFunWith3CallbackFromKey = key => {
+  switch hyperModuleDict->Dict.get(key) {
+  | Some(json) => jsonToStrFunWith3Callback(json)
+  | None => (_, _, _, _) => ()
+  }
+}
+
 let hyperModule = {
   sendMessageToNative: getStrFunFromKey("sendMessageToNative"),
-  launchApplePay: getStrFunWithCallbackFromKey("launchApplePay"),
+  launchApplePay: getStrFunWith3CallbackFromKey("launchApplePay"),
   launchGPay: getStrFunWithCallbackFromKey("launchGPay"),
   exitPaymentsheet: getIntStrBoolFunFromKey("exitPaymentsheet"),
   exitWidget: getStrFun2FromKey("exitWidget"),
@@ -148,8 +167,8 @@ let useExitWidget = () => {
   }
 }
 
-let launchApplePay = (requestObj: string, callback) => {
-  hyperModule.launchApplePay(requestObj, callback)
+let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
+  hyperModule.launchApplePay(requestObj, callback, startCallback, presentCallback)
 }
 
 let launchGPay = (requestObj: string, callback) => {

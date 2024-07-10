@@ -473,6 +473,23 @@ let make = (
               ),
               (),
             )
+
+            let timerId = setTimeout(() => {
+              setLoading(FillingDetails)
+              showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+              logger(
+                ~logType=DEBUG,
+                ~value=walletType.payment_method_type,
+                ~category=USER_EVENT,
+                ~paymentMethod=walletType.payment_method_type,
+                ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+                ~paymentExperience=?walletType.payment_experience[0]->Option.map(
+                  paymentExperience => paymentExperience.payment_experience_type_decode,
+                ),
+                (),
+              )
+            }, 5000)
+
             HyperModule.launchApplePay(
               [
                 ("session_token_data", sessionObject.session_token_data),
@@ -482,6 +499,22 @@ let make = (
               ->JSON.Encode.object
               ->JSON.stringify,
               confirmApplePay,
+              _ => {
+                logger(
+                  ~logType=DEBUG,
+                  ~value=walletType.payment_method_type,
+                  ~category=USER_EVENT,
+                  ~paymentMethod=walletType.payment_method_type,
+                  ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+                  ~paymentExperience=?walletType.payment_experience[0]->Option.map(
+                    paymentExperience => paymentExperience.payment_experience_type_decode,
+                  ),
+                  (),
+                )
+              },
+              _ => {
+                clearTimeout(timerId)
+              },
             )
           }
         | _ => {
