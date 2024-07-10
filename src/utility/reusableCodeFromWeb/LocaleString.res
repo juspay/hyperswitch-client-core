@@ -56,6 +56,8 @@ type localeStrings = {
   billingDetails: string,
   requiredText: string,
   lastNameRequiredText: string,
+  cardExpiresText: string,
+  addPaymentMethodLabel: string,
 }
 
 let defaultLocale = {
@@ -118,6 +120,8 @@ let defaultLocale = {
   billingDetails: "Billing Details",
   requiredText: "Required",
   lastNameRequiredText: "Last Name Required",
+  cardExpiresText: "expires",
+  addPaymentMethodLabel: "Add new payment method",
 }
 
 type locale = {localeStrings: array<localeStrings>}
@@ -183,6 +187,8 @@ let localeStrings = [
     billingDetails: "Billing Details",
     requiredText: "Required",
     lastNameRequiredText: "Last Name Required",
+    cardExpiresText: "expires",
+    addPaymentMethodLabel: "Add new payment method",
   },
   //  locale: "he",
   {
@@ -246,6 +252,8 @@ let localeStrings = [
     billingDetails: `פרטי תשלום`,
     requiredText: `נדרש`,
     lastNameRequiredText: `שם משפחה נדרש`,
+    cardExpiresText: `פג תוקפו`,
+    addPaymentMethodLabel: `הוסף שיטת תשלום חדשה`,
   },
   //  locale: `fr`,
   {
@@ -309,6 +317,8 @@ let localeStrings = [
     billingDetails: `Détails de la facturation`,
     requiredText: `Requis`,
     lastNameRequiredText: `Nom de famille requis`,
+    cardExpiresText: `expire`,
+    addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
   },
   //  locale: "en-GB",
   {
@@ -372,6 +382,8 @@ let localeStrings = [
     billingDetails: "Billing Details",
     requiredText: "Required",
     lastNameRequiredText: "Last Name Required",
+    cardExpiresText: `expires`,
+    addPaymentMethodLabel: `Add new payment method`,
   },
   //  locale: "ar",
   {
@@ -435,6 +447,8 @@ let localeStrings = [
     billingDetails: `تفاصيل الفاتورة`,
     requiredText: `مطلوب`,
     lastNameRequiredText: `نشاط اسم مطلوب`,
+    cardExpiresText: `تنتهي`,
+    addPaymentMethodLabel: `أضف طريقة دفع جديدة`,
   },
   //  locale: "ja",
   {
@@ -498,6 +512,8 @@ let localeStrings = [
     billingDetails: `支払明細`,
     requiredText: `必須`,
     lastNameRequiredText: `姓が必要です`,
+    cardExpiresText: `期限切れ`,
+    addPaymentMethodLabel: `新しい支払い方法を追加`,
   },
   //  locale: "de",
   {
@@ -561,6 +577,8 @@ let localeStrings = [
     billingDetails: `Rechnungsdetails`,
     requiredText: `Erforderlich`,
     lastNameRequiredText: `Nachname erforderlich`,
+    cardExpiresText: `läuft ab`,
+    addPaymentMethodLabel: `Neue Zahlungsmethode hinzufügen`,
   },
   //:"French (Belgium) (fr-BE)",
   {
@@ -624,6 +642,8 @@ let localeStrings = [
     billingDetails: `Détails de la facturation`,
     requiredText: `Requis`,
     lastNameRequiredText: `Nom de famille requis`,
+    cardExpiresText: `expire`,
+    addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
   },
   //    Spanish (es)
   {
@@ -687,6 +707,8 @@ let localeStrings = [
     billingDetails: `Detalles de facturación`,
     requiredText: `Requerido`,
     lastNameRequiredText: `Apellido Necesario`,
+    cardExpiresText: `expira`,
+    addPaymentMethodLabel: `Agregar nuevo método de pago`,
   },
   //    Catalan (ca)
   {
@@ -750,6 +772,8 @@ let localeStrings = [
     billingDetails: `Detalls de facturació`,
     requiredText: `Requerit`,
     lastNameRequiredText: `Cognom necessari`,
+    cardExpiresText: `caduca`,
+    addPaymentMethodLabel: `Afegir un nou mètode de pagament`,
   },
   //    Portuguese (pt)
   {
@@ -813,6 +837,8 @@ let localeStrings = [
     billingDetails: `Detalhes de cobrança`,
     requiredText: `obrigatório`,
     lastNameRequiredText: `Sobrenome necessário`,
+    cardExpiresText: `expira`,
+    addPaymentMethodLabel: `Adicione uma nova forma de pagamento`,
   },
   //    Italian (it)
   {
@@ -876,6 +902,8 @@ let localeStrings = [
     billingDetails: `Dettagli di fatturazione`,
     requiredText: `Obbligatorio`,
     lastNameRequiredText: `Cognome richiesto`,
+    cardExpiresText: `scade`,
+    addPaymentMethodLabel: `Aggiungi un nuovo metodo di pagamento`,
   },
   //    Polish (pl)
   {
@@ -939,6 +967,8 @@ let localeStrings = [
     billingDetails: `Szczegóły płatności`,
     requiredText: `Wymagany`,
     lastNameRequiredText: `Wymagane nazwisko`,
+    cardExpiresText: `wygasa`,
+    addPaymentMethodLabel: `Dodaj nową metodę płatności`,
   },
   //    Dutch (nl)
   {
@@ -1002,6 +1032,8 @@ let localeStrings = [
     billingDetails: `Factureringsgegevens`,
     requiredText: `Vereist`,
     lastNameRequiredText: `Achternaam vereist`,
+    cardExpiresText: `verloopt`,
+    addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
   },
   //    Dutch (Belgium) (nl-BE)
   {
@@ -1065,6 +1097,8 @@ let localeStrings = [
     billingDetails: `Factureringsgegevens`,
     requiredText: `Vereist`,
     lastNameRequiredText: `Achternaam vereist`,
+    cardExpiresText: `verloopt`,
+    addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
   },
   //    Swedish (sv)
   {
@@ -1128,6 +1162,8 @@ let localeStrings = [
     billingDetails: `Faktureringsuppgifter`,
     requiredText: `Nödvändig`,
     lastNameRequiredText: `Efternamn krävs`,
+    cardExpiresText: `går ut`,
+    addPaymentMethodLabel: `Lägg till ny betalningsmetod`,
   },
   //    Russian (ru)
   {
@@ -1191,6 +1227,8 @@ let localeStrings = [
     billingDetails: `Платежные реквизиты`,
     requiredText: `Необходимый`,
     lastNameRequiredText: `Требуется фамилия`,
+    cardExpiresText: `истекает`,
+    addPaymentMethodLabel: ` Добавить новый способ оплаты`,
   },
   //    Lithuanian (lt)
   {
@@ -1254,6 +1292,8 @@ let localeStrings = [
     billingDetails: `Atsiskaitymo informacija`,
     requiredText: `Būtinas`,
     lastNameRequiredText: `Reikalingas pavardė`,
+    cardExpiresText: `baigiasi`,
+    addPaymentMethodLabel: `Pridėti naują mokėjimo būdą`,
   },
   //    Czech (cs)
   {
@@ -1317,6 +1357,8 @@ let localeStrings = [
     billingDetails: `Fakturační údaje`,
     requiredText: `Požadované`,
     lastNameRequiredText: `Požadováno příjmení`,
+    cardExpiresText: `vyprší`,
+    addPaymentMethodLabel: `Přidat nový způsob platby`,
   },
   //    Slovak (sk)
   {
@@ -1380,6 +1422,8 @@ let localeStrings = [
     billingDetails: `fakturačné údaje`,
     requiredText: `Požadovaný`,
     lastNameRequiredText: `Vyžadované priezvisko`,
+    cardExpiresText: `vyprší`,
+    addPaymentMethodLabel: `Pridať nový spôsob platby`,
   },
   //    Icelandic (is)
   {
@@ -1443,6 +1487,8 @@ let localeStrings = [
     billingDetails: `Innheimtuupplýsingar`,
     requiredText: `Nauðsynlegt`,
     lastNameRequiredText: `Eftirnafn krafist`,
+    cardExpiresText: `rennur út`,
+    addPaymentMethodLabel: `Bæta við nýrri greiðsluaðferð`,
   },
   //    Welsh (cy)
   {
@@ -1506,6 +1552,8 @@ let localeStrings = [
     billingDetails: `Manylion Bilio`,
     requiredText: `Yn ofynnol`,
     lastNameRequiredText: `Enw olaf Angenrheidiol`,
+    cardExpiresText: `yn dod i ben`,
+    addPaymentMethodLabel: ` Ychwanegu dull talu newydd`,
   },
   //    Greek (el)
   {
@@ -1569,6 +1617,8 @@ let localeStrings = [
     billingDetails: `λεπτομέρειες χρέωσης`,
     requiredText: `Απαιτείται`,
     lastNameRequiredText: `Απαιτείται επώνυμο`,
+    cardExpiresText: `λήγει`,
+    addPaymentMethodLabel: `Προσθήκη νέας μεθόδου πληρωμής`,
   },
   //Estonian (et)
   {
@@ -1632,6 +1682,8 @@ let localeStrings = [
     billingDetails: `Arvelduse üksikasjad`,
     requiredText: `Nõutud`,
     lastNameRequiredText: `Vajalik perekonnanimi`,
+    cardExpiresText: `aegub`,
+    addPaymentMethodLabel: `Lisa uus makseviis`,
   },
   //Finnish (fi)
   {
@@ -1695,6 +1747,8 @@ let localeStrings = [
     billingDetails: `laskutustiedot`,
     requiredText: `Edellytetään`,
     lastNameRequiredText: `Sukunimi vaaditaan`,
+    cardExpiresText: `umpeutuu`,
+    addPaymentMethodLabel: `Lisää uusi maksutapa`,
   },
   //Norwegian (no)
   {
@@ -1758,6 +1812,8 @@ let localeStrings = [
     billingDetails: `Fakturadetaljer`,
     requiredText: `Påkrevd`,
     lastNameRequiredText: `Etternavn påkrevd`,
+    cardExpiresText: `utløper`,
+    addPaymentMethodLabel: `Legg til en ny betalingsmåte`,
   },
   //Bosnian (bs)
   {
@@ -1821,6 +1877,8 @@ let localeStrings = [
     billingDetails: `Detalji naplate`,
     requiredText: `Potreban`,
     lastNameRequiredText: `Potrebno je prezime`,
+    cardExpiresText: `ističe`,
+    addPaymentMethodLabel: `Dodajte novi način plaćanja`,
   },
   //Danish (da)
   {
@@ -1884,6 +1942,8 @@ let localeStrings = [
     billingDetails: `Faktureringsdetaljer`,
     requiredText: `Krævet`,
     lastNameRequiredText: `Efternavn krævet`,
+    cardExpiresText: `udløber`,
+    addPaymentMethodLabel: `Tilføj ny betalingsmetode`,
   },
   //Malay (ms)
   {
@@ -1947,6 +2007,8 @@ let localeStrings = [
     billingDetails: `maklumat Bil`,
     requiredText: `Diperlukan`,
     lastNameRequiredText: `Nama terakhir diperluka`,
+    cardExpiresText: `luput`,
+    addPaymentMethodLabel: `Tambah kaedah pembayaran baru`,
   },
   //Turkish (tr-CY)
   {
@@ -2010,5 +2072,7 @@ let localeStrings = [
     billingDetails: `Fatura Detayları`,
     requiredText: `Gerekli`,
     lastNameRequiredText: `Soyad gerekli`,
+    cardExpiresText: `süresi doluyor`,
+    addPaymentMethodLabel: `Yeni ödeme yöntemi ekle`,
   },
 ]
