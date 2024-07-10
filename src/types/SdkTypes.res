@@ -268,6 +268,7 @@ type hyperParams = {
   userAgent: option<string>,
   defaultView: bool,
   launchTime?: float,
+  sdkVersion: string,
 }
 
 type nativeProp = {
@@ -821,6 +822,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       defaultView: getBool(hyperParams, "defaultView", false),
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),
+      sdkVersion: getString(hyperParams, "sdkVersion", ""),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }
