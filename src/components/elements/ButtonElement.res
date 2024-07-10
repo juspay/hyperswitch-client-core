@@ -514,7 +514,20 @@ let make = (
           ->Dict.fromArray
           ->JSON.Encode.object
         processRequest(~payment_method_data, ())
-      | _ => ()
+      | _ =>
+        logger(
+          ~logType=DEBUG,
+          ~value=walletType.payment_method_type,
+          ~category=USER_EVENT,
+          ~paymentMethod=walletType.payment_method_type,
+          ~eventName=NO_WALLET_ERROR,
+          ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
+            paymentExperience.payment_experience_type_decode
+          ),
+          (),
+        )
+        setLoading(FillingDetails)
+        showAlert(~errorType="warning", ~message="Waiting for Sessions API")
       }
     }, 1000)->ignore
   }
