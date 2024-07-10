@@ -311,7 +311,18 @@ let make = (
     }
   }
 
-  let confirmApplePay = var => {
+  let confirmApplePay = (var: RescriptCore.Dict.t<Core__JSON.t>) => {
+    logger(
+      ~logType=DEBUG,
+      ~value=var->Js.Json.stringifyAny->Option.getOr("Option.getOr"),
+      ~category=USER_EVENT,
+      ~paymentMethod=walletType.payment_method_type,
+      ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
+      ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
+        paymentExperience.payment_experience_type_decode
+      ),
+      (),
+    )
     switch var
     ->Dict.get("status")
     ->Option.getOr(JSON.Encode.null)
@@ -451,6 +462,17 @@ let make = (
             setLoading(FillingDetails)
             showAlert(~errorType="warning", ~message="Waiting for Sessions API")
           } else {
+            logger(
+              ~logType=DEBUG,
+              ~value=walletType.payment_method_type,
+              ~category=USER_EVENT,
+              ~paymentMethod=walletType.payment_method_type,
+              ~eventName=APPLE_PAY_STARTED_FROM_JS,
+              ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
+                paymentExperience.payment_experience_type_decode
+              ),
+              (),
+            )
             HyperModule.launchApplePay(
               [
                 ("session_token_data", sessionObject.session_token_data),
@@ -462,7 +484,21 @@ let make = (
               confirmApplePay,
             )
           }
-        | _ => ()
+        | _ => {
+            logger(
+              ~logType=DEBUG,
+              ~value=walletType.payment_method_type,
+              ~category=USER_EVENT,
+              ~paymentMethod=walletType.payment_method_type,
+              ~eventName=NO_WALLET_ERROR,
+              ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
+                paymentExperience.payment_experience_type_decode
+              ),
+              (),
+            )
+            setLoading(FillingDetails)
+            showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+          }
         }
       | Some(REDIRECT_TO_URL) =>
         let redirectData = []->Dict.fromArray->JSON.Encode.object
