@@ -6,6 +6,8 @@ external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
 external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
 external toJson: 't => JSON.t = "%identity"
 
+let reRegisterCallback = ref(() => ())
+
 let registerHeadless = headless => {
   let headlessModule = initialise(headless)
 
@@ -91,7 +93,8 @@ let registerHeadless = headless => {
       ->JSON.Encode.object
       ->JSON.stringify
       ->confirmCall(nativeProp)
-    | "Cancel" => ()
+    | "Cancel" => reRegisterCallback.contents()
+
     // headlessModule.exitHeadless(
     //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
     // )
@@ -108,7 +111,8 @@ let registerHeadless = headless => {
     ->Option.getOr(JSON.Encode.null)
     ->JSON.Decode.string
     ->Option.getOr("") {
-    | "Cancelled" => ()
+    | "Cancelled" => reRegisterCallback.contents()
+
     // headlessModule.exitHeadless(
     //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
     // )
@@ -376,28 +380,33 @@ let registerHeadless = headless => {
       | x => x->toJson
       }
 
-      headlessModule.getPaymentSession(
-        defaultSpmData,
-        lastUsedSpmData,
-        spmData->toJson,
-        response => {
-          switch response->Utils.getDictFromJson->Dict.get("paymentToken") {
-          | Some(token) =>
-            switch spmData->Array.find(x =>
-              switch x {
-              | SAVEDLISTCARD(savedCard) => savedCard.payment_token == token->JSON.Decode.string
-              | SAVEDLISTWALLET(savedWallet) =>
-                savedWallet.payment_token == token->JSON.Decode.string
-              | NONE => false
+      reRegisterCallback.contents = () => {
+        headlessModule.getPaymentSession(
+          defaultSpmData,
+          lastUsedSpmData,
+          spmData->toJson,
+          response => {
+            switch response->Utils.getDictFromJson->Dict.get("paymentToken") {
+            | Some(token) =>
+              switch spmData->Array.find(x =>
+                switch x {
+                | SAVEDLISTCARD(savedCard) => savedCard.payment_token == token->JSON.Decode.string
+                | SAVEDLISTWALLET(savedWallet) =>
+                  savedWallet.payment_token == token->JSON.Decode.string
+                | NONE => false
+                }
+              ) {
+              | Some(data) => processRequest(nativeProp, data, response, sessions)
+              | None =>
+                headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
               }
-            ) {
-            | Some(data) => processRequest(nativeProp, data, response, sessions)
             | None => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
             }
-          | None => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
-          }
-        },
-      )
+          },
+        )
+      }
+
+      reRegisterCallback.contents()
     } else {
       getDefaultPaymentSession(getDefaultError)
     }
