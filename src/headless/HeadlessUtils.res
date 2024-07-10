@@ -1,5 +1,4 @@
 open SdkTypes
-open LoggerHook
 
 external toJson: 't => JSON.t = "%identity"
 
@@ -24,8 +23,8 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
 }
 
 let logWrapper = (
-  ~logType: logType,
-  ~eventName: eventName,
+  ~logType: LoggerHook.logType,
+  ~eventName: LoggerHook.eventName,
   ~url: string,
   ~statusCode: string,
   ~apiLogType,
@@ -65,19 +64,19 @@ let logWrapper = (
       [("response", data)],
     )
   }
-  let logFile = {
+  let logFile: LoggerHook.logFile = {
     logType,
     timestamp: timestamp->Float.toString,
     sessionId: "",
     version: "repoVersion",
-    codePushVersion: getCodePushVersionNoFromRef(),
+    codePushVersion: LoggerHook.getCodePushVersionNoFromRef(),
     component: MOBILE,
     value: value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
     internalMetadata: internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
     category,
     paymentId,
     merchantId: publishableKey,
-    platform: ReactNative.Platform.os->toPlatform,
+    platform: ReactNative.Platform.os->LoggerHook.toPlatform,
     userAgent: "userAgent",
     eventName,
     firstEvent: true,
