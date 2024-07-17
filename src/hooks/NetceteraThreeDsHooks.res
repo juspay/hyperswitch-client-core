@@ -29,7 +29,7 @@ let useInitNetcetera = () => {
     ->Promise.then(promiseVal => {
       logger(
         ~logType=INFO,
-        ~value=promiseVal.status->JSON.stringifyAny->Option.getOr(""),
+        ~value=promiseVal->JSON.stringifyAny->Option.getOr(""),
         ~category=USER_EVENT,
         ~eventName=NETCETERA_SDK,
         (),
@@ -402,7 +402,7 @@ let useExternalThreeDs = () => {
       ->Promise.then(statusInfo => {
         logger(
           ~logType=INFO,
-          ~value=statusInfo.status->JSON.stringifyAny->Option.getOr(""),
+          ~value=statusInfo->JSON.stringifyAny->Option.getOr(""),
           ~category=USER_EVENT,
           ~eventName=NETCETERA_SDK,
           (),
