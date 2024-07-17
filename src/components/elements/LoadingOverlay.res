@@ -21,11 +21,11 @@ let make = () => {
             ~width=100.->pct,
             ~height=100.->pct,
             ~position=#absolute,
-            ~opacity=val->Option.isSome ? 0.90 : 0.0,
+            ~opacity=val->Option.isSome ? 0.90 : 1.0,
             ~borderRadius,
             (),
           ),
-          bgColor,
+          val->Option.isSome ? bgColor : viewStyle(~backgroundColor="transparent", ()),
         ])}>
         {switch nativeProps.sdkState {
         | CardWidget | CustomWidget(_) =>
