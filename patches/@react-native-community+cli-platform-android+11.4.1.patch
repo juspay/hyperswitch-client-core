@@ -1,5 +1,5 @@
 diff --git a/node_modules/@react-native-community/cli-platform-android/native_modules.gradle b/node_modules/@react-native-community/cli-platform-android/native_modules.gradle
-index 8a218d5..0c2e297 100644
+index 8a218d5..f5e279d 100644
 --- a/node_modules/@react-native-community/cli-platform-android/native_modules.gradle
 +++ b/node_modules/@react-native-community/cli-platform-android/native_modules.gradle
 @@ -60,10 +60,31 @@ public class PackageList {
@@ -36,7 +36,7 @@ index 8a218d5..0c2e297 100644
    }
  }
  """
-@@ -207,8 +228,25 @@ class ReactNativeModules {
+@@ -207,8 +228,27 @@ class ReactNativeModules {
     */
    void generatePackagesFile(File outputDir, String generatedFileName, String generatedFileContentsTemplate) {
      ArrayList<HashMap<String, String>> packages = this.reactNativeModules
@@ -48,6 +48,8 @@ index 8a218d5..0c2e297 100644
 +        "react-native-hyperswitch-kount",
 +        "react-native-hyperswitch-paypal",
 +        "react-native-klarna-inapp-sdk",
++        "react-native-hyperswitch-scancard",
++        "react-native-hyperswitch-netcetera-3ds"
 +      ));
 +
 +    for (int i = packages.size() - 1; i >= 0; i--) {
@@ -63,7 +65,7 @@ index 8a218d5..0c2e297 100644
      String packageImports = ""
      String packageClassInstances = ""
  
-@@ -246,9 +284,16 @@ class ReactNativeModules {
+@@ -246,9 +286,16 @@ class ReactNativeModules {
        }.join(",\n      ")
      }
  
