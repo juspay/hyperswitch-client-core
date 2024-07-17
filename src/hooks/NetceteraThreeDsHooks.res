@@ -413,7 +413,7 @@ let useExternalThreeDs = () => {
             Netcetera3dsModule.generateAReqParams(
               threeDsData.messageVersion,
               threeDsData.directoryServerId,
-              (aReqParams, status) => {
+              (status, aReqParams) => {
                 logger(
                   ~logType=INFO,
                   ~value=status->JSON.stringifyAny->Option.getOr(""),
@@ -480,7 +480,7 @@ let useExternalThreeDs = () => {
         await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
       } catch {
       | err =>
-        Console.log2("unknown error", err)
+        Console.log2("unknown error", err->Exn.asJsExn)
         true
       }
 
