@@ -25,6 +25,7 @@ const compileNodeModules = [
   'react-native-svg',
   'react-native-tab-view',
   'react-content-loader/native',
+  'react-native-hyperswitch-netcetera-3ds',
 ].map(moduleName => path.resolve(appDirectory, `node_modules/${moduleName}`));
 
 const babelLoaderConfiguration = {
@@ -85,9 +86,10 @@ module.exports = {
       'react-native-hyperswitch-paypal': 'react-native-web',
       'react-native-hyperswitch-kount': 'react-native-web',
       'react-content-loader/native': 'react-content-loader',
+      'react-native-hyperswitch-netcetera-3ds': 'react-native-web'
     },
   },
-  optimization:  {
+  optimization: {
     minimize: true,
     minimizer: [new TerserPlugin()],
   },

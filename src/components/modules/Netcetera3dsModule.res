@@ -2,7 +2,7 @@ open ExternalThreeDsTypes
 
 type module_ = {
   initialiseNetceteraSDK: (string, string, statusType => unit) => unit,
-  generateAReqParams: (string, string, (aReqParams, statusType) => unit) => unit,
+  generateAReqParams: (string, string, (statusType, aReqParams) => unit) => unit,
   recieveChallengeParamsFromRN: (
     string,
     string,
@@ -12,6 +12,7 @@ type module_ = {
     statusType => unit,
   ) => unit,
   generateChallenge: (statusType => unit) => unit,
+  isAvailable: bool,
 }
 
 @val external require: string => module_ = "require"
@@ -23,7 +24,7 @@ let (
   generateChallenge,
   isAvailable,
 ) = switch try {
-  require("react-native-hyperswitch-ads")->Some
+  require("react-native-hyperswitch-netcetera-3ds")->Some
 } catch {
 | _ => None
 } {
@@ -32,7 +33,7 @@ let (
     mod.generateAReqParams,
     mod.recieveChallengeParamsFromRN,
     mod.generateChallenge,
-    true,
+    mod.isAvailable,
   )
 | None => ((_, _, _) => (), (_, _, _) => (), (_, _, _, _, _, _) => (), _ => (), false)
 }
