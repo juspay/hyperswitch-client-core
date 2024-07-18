@@ -475,7 +475,7 @@ let useExternalThreeDs = () => {
           await sendChallengeParamsAndGenerateChallenge(~challengeParams)
         // setLoading(ProcessingPayments)
 
-        | FrictionlessFlow => Netcetera3dsModule.hideProgressView()
+        | FrictionlessFlow => ()
         }
         await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
       } catch {
