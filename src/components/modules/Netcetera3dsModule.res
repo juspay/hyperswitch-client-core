@@ -12,6 +12,7 @@ type module_ = {
     statusType => unit,
   ) => unit,
   generateChallenge: (statusType => unit) => unit,
+  hideProgressView: unit => unit,
   isAvailable: bool,
 }
 
@@ -22,6 +23,7 @@ let (
   generateAReqParams,
   recieveChallengeParamsFromRN,
   generateChallenge,
+  hideProgressView,
   isAvailable,
 ) = switch try {
   require("react-native-hyperswitch-netcetera-3ds")->Some
@@ -33,7 +35,8 @@ let (
     mod.generateAReqParams,
     mod.recieveChallengeParamsFromRN,
     mod.generateChallenge,
+    mod.hideProgressView,
     mod.isAvailable,
   )
-| None => ((_, _, _) => (), (_, _, _) => (), (_, _, _, _, _, _) => (), _ => (), false)
+| None => ((_, _, _) => (), (_, _, _) => (), (_, _, _, _, _, _) => (), _ => (), _ => (), false)
 }
