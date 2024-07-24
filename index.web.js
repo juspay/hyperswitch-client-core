@@ -26,8 +26,8 @@ const runApp = async () => {
   let props = {
     local: true,
     configuration: {
-      paymentSheetHeaderLabel: 'Add a payment methord',
-      savedPaymentSheetHeaderLabel: 'Saved payment methord',
+      paymentSheetHeaderLabel: 'Add a payment method',
+      savedPaymentSheetHeaderLabel: 'Saved payment method',
       allowsDelayedPaymentMethods: true,
       merchantDisplayName: 'Example, Inc.',
       // disableSavedCardScreen: true,
