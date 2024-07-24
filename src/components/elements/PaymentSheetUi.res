@@ -133,10 +133,11 @@ let make = (
         //   offset(~width=shadowOffsetWidth, ~height=shadowOffsetHeight)
         // },
         // ~shadowColor,
+        ~width=100.->pct,
         ~borderRadius,
         (),
       )}>
-      <View>
+      <View style={viewStyle(~width=100.->pct, ())}>
         <CustomInput
           reference={None} // previously Some(cardRef->toInputRef)
           state=cardNumber
@@ -175,6 +176,7 @@ let make = (
       </View>
       <View
         style={viewStyle(
+          ~width=100.->pct,
           ~flexDirection=localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
           (),
         )}>
