@@ -63,21 +63,6 @@ let make = (
   //   ()
   // }
 
-  let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
-
-  React.useEffect1(() => {
-    if (
-      allApiData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
-        cardData.cardNumber->String.length > 0
-    ) {
-      initialiseNetcetera(
-        ~netceteraSDKApiKey=nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
-        ~sdkEnvironment=nativeProp.env,
-      )
-    }
-    None
-  }, [cardData.cardNumber])
-
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       if !closeSDK {
