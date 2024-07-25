@@ -280,7 +280,7 @@ let make = (
   ~isSaveCardsFlow=false,
   ~savedCardsData: option<SdkTypes.savedDataType>,
 ) => {
-  let localeObject = GetLocale.useGetLocalObj()
+  // let localeObject = GetLocale.useGetLocalObj()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   let clientTimeZone = Utils.dateTimeFormat().resolvedOptions().timeZone
@@ -371,8 +371,8 @@ let make = (
       {if requiredFieldsInsideBilling->Array.length > 0 {
         <>
           <Space height=24. />
-          <TextWrapper text=localeObject.billingDetails textType={ModalText} />
-          <Space height=8. />
+          // <TextWrapper text=localeObject.billingDetails textType={ModalText} />
+          // <Space height=8. />
           <Fields
             fields=requiredFieldsInsideBilling
             setFinalJson

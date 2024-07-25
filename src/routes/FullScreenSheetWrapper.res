@@ -60,6 +60,7 @@ let make = (~children) => {
       ~alignContent=#"flex-end",
       ~backgroundColor=paymentSheetOverlay,
       ~justifyContent=#"flex-end",
+      ~paddingTop=48.->dp,
       (),
     )}>
     <Animated.View

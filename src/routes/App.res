@@ -4,11 +4,9 @@ open Style
 module CustomKeyboardAvoidingView = {
   @react.component
   let make = (~children) => {
-    Platform.os === #ios
-      ? <KeyboardAvoidingView style={viewStyle(~flex=1., ())} behavior={#padding}>
-          {children}
-        </KeyboardAvoidingView>
-      : children
+    <KeyboardAvoidingView style={viewStyle(~flex=1., ())} behavior={#padding}>
+      {children}
+    </KeyboardAvoidingView>
   }
 }
 module ContextWrapper = {
