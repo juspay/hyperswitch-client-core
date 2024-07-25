@@ -72,7 +72,7 @@ let make = (
     </TouchableOpacity>
     <Modal visible={isModalVisible} transparent={true} animationType=#slide>
       <SafeAreaView />
-      <View style={array([viewStyle(~flex=1., ()), transparentBG])}>
+      <View style={array([viewStyle(~flex=1., ~paddingTop=24.->dp, ()), transparentBG])}>
         <View
           style={array([
             viewStyle(
