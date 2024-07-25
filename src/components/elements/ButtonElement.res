@@ -187,30 +187,21 @@ let make = (
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
-      setup_future_usage: "off_session",
       payment_type: ?allApiData.paymentType,
-      customer_acceptance: {
-        acceptance_type: "online",
-        accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-        online: {
-          ip_address: ?nativeProp.hyperParams.ip,
-          user_agent: ?nativeProp.hyperParams.userAgent,
-        },
-      },
-      // mandate_data: ?(
-      //   allApiData.mandateType != NORMAL
-      //     ? Some({
-      //         customer_acceptance: {
-      //           acceptance_type: "online",
-      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-      //           online: {
-      //             ip_address: ?nativeProp.hyperParams.ip,
-      //             user_agent: ?nativeProp.hyperParams.userAgent,
-      //           },
-      //         },
-      //       })
-      //     : None
-      // ),
+      customer_acceptance: ?(
+        if allApiData.mandateType->PaymentUtils.checkIfMandate {
+          Some({
+            acceptance_type: "online",
+            accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+            online: {
+              ip_address: ?nativeProp.hyperParams.ip,
+              user_agent: ?nativeProp.hyperParams.userAgent,
+            },
+          })
+        } else {
+          None
+        }
+      ),
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
       },
