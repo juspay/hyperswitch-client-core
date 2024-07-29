@@ -205,6 +205,7 @@ let getErrorMsg = (
   | AddressLine1 => localeObject.line1EmptyText
   | AddressCity => localeObject.cityEmptyText
   | AddressPincode => localeObject.postalCodeEmptyText
+  | Email => localeObject.emailEmptyText
   | _ => localeObject.requiredText
   }
 }
@@ -221,7 +222,9 @@ let checkIsValid = (
     | Email =>
       switch text->ValidationFunctions.isValidEmail {
       | Some(false) => Some(localeObject.emailInvalidText)
-      | _ => None
+      | Some(true) => None
+      | None => 
+        Some(localeObject.emailEmptyText)
       }
     | _ => None
     }
