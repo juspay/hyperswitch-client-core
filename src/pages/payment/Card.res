@@ -7,8 +7,6 @@ let make = (
   ~isScreenFocus,
   ~setConfirmButtonDataRef: React.element => unit,
 ) => {
-  //  let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
-
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -24,18 +22,13 @@ let make = (
   )
   let savedPaymentMethodsData = switch savedPaymentMethodsData {
   | Some(data) => data
-
   | _ => SavedPaymentMethodContext.dafaultsavePMObj
   }
   let isSaveCardCheckboxVisible = nativeProp.configuration.displaySavedPaymentMethodsCheckbox
 
   // Fields Hooks
   let (cardData, _) = React.useContext(CardDataContext.cardDataContext)
-  // let {cardNumber, expireDate, cvv} = cardData
-  //let (_country, setCountry) = React.useState(_ => "")
-  //let (_zip, setZip) = React.useState(_ => "")
   let (nickname, setNickname) = React.useState(_ => None)
-  //  let (cardHolderName, setCardHolderName) = React.useState(_ => None)
 
   // Validity Hooks
   let (isAllCardVlauesValid, setIsAllCardVlauesValid) = React.useState(_ => false)
@@ -51,17 +44,9 @@ let make = (
     JSON.t,
     option<string>,
   )> => [])
-  // let (isAllBillingValuesValid, setIsAllBillingValuesValid) = React.useState(_ => false)
   let (error, setError) = React.useState(_ => None)
 
   let isConfirmButtonValid = isAllCardVlauesValid && isAllDynamicFieldValid
-
-  // let updateBilllingValues = (~country, ~zip, ~isAllValid) => {
-  //   setCountry(_ => country)
-  //   setZip(_ => zip)
-  //   setIsAllBillingValuesValid(_ => isAllValid)
-  //   ()
-  // }
 
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -85,7 +70,6 @@ let make = (
       | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
-    // let (month, year) = Validation.getExpiryDates(expireDate)
 
     let payment_method_data = PaymentUtils.generatePaymentMethodData(
       ~prop,
@@ -140,27 +124,6 @@ let make = (
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
       <CardElement setIsAllValid=setIsAllCardVlauesValid reset=false />
-      // <Space height=24. />
-      // <TextWrapper text=localeObject.cardHolderName textType={SubheadingBold} />
-      // <Space height=8. />
-      // <CustomInput
-      //   state={cardHolderName->Option.getOr("")}
-      //   setState={str => setCardHolderName(_ => str == "" ? None : Some(str))}
-      //   placeholder=localeObject.cardHolderName
-      //   keyboardType=#default
-      //   isValid=true
-      //   onFocus={_ => ()}
-      //   onBlur={_ => ()}
-      //   textColor=component.color
-      //   borderBottomLeftRadius=borderRadius
-      //   borderBottomRightRadius=borderRadius
-      //   borderTopLeftRadius=borderRadius
-      //   borderTopRightRadius=borderRadius
-      //   borderTopWidth=borderWidth
-      //   borderBottomWidth=borderWidth
-      //   borderLeftWidth=borderWidth
-      //   borderRightWidth=borderWidth
-      // />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields
@@ -179,8 +142,6 @@ let make = (
         allApiData.mandateType,
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
-        // switch customer.id {
-        // | Some(_) =>
         <>
           <Space height=8. />
           <ClickableTextElement
@@ -194,8 +155,6 @@ let make = (
             disableScreenSwitch=true
           />
         </>
-      // | None => React.null
-      // }
       | _ => React.null
       }}
       {switch (
@@ -210,21 +169,6 @@ let make = (
         <NickNameElement nickname setNickname isNicknameSelected=true />
       | _ => React.null
       }}
-      // <Space />
-      // <TextWrapper text=localeObject.countryOrRegion textType=Subheading />
-      // <Space height=5. />
-      // <BillingElement updateBilllingValues={updateBilllingValues} />
-      // {cardVal.required_field->Array.length != 0
-      //   ? <DynamicFields
-      //       setIsAllDynamicFieldValid
-      //       requiredFields={cardVal.required_field->Array.filter(val => {
-      //         switch val.field_type {
-      //         | RequiredFieldsTypes.UnKnownField(_) => false
-      //         | _ => true
-      //         }
-      //       })}
-      //     />
-      //   : React.null}
     </View>
   </View>
 }
