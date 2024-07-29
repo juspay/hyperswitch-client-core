@@ -13,6 +13,7 @@ type localeStrings = {
   cvcTextLabel: string,
   emailLabel: string,
   emailInvalidText: string,
+  emailEmptyText: string,
   accountNumberText: string,
   fullNameLabel: string,
   line1Label: string,
@@ -55,6 +56,7 @@ type localeStrings = {
   lastName: string,
   billingDetails: string,
   requiredText: string,
+  cardHolderNameRequiredText: string,
   lastNameRequiredText: string,
   cardExpiresText: string,
   addPaymentMethodLabel: string,
@@ -76,6 +78,7 @@ let defaultLocale = {
   cvcTextLabel: "CVC",
   emailLabel: "Email",
   emailInvalidText: "Invalid email address",
+  emailEmptyText: "Email cannot be empty",
   line1Label: "Address line 1",
   line1Placeholder: "Street address",
   line1EmptyText: "Address line 1 cannot be empty",
@@ -119,6 +122,7 @@ let defaultLocale = {
   lastName: "Last name",
   billingDetails: "Billing Details",
   requiredText: "Required",
+  cardHolderNameRequiredText: "Card Holder's name required",
   lastNameRequiredText: "Last Name Required",
   cardExpiresText: "expires",
   addPaymentMethodLabel: "Add new payment method",
@@ -155,6 +159,7 @@ let localeStrings = [
     accountNumberText: "Account Number",
     emailLabel: "Email",
     emailInvalidText: "Invalid email address",
+    emailEmptyText: "Email cannot be empty",
     fullNameLabel: "Full name",
     fullNamePlaceholder: "First and last name",
     countryLabel: "Country",
@@ -189,8 +194,9 @@ let localeStrings = [
     lastNameRequiredText: "Last Name Required",
     cardExpiresText: "expires",
     addPaymentMethodLabel: "Add new payment method",
+    cardHolderNameRequiredText: "Card Holder's name required",
   },
-  //  locale: "he",
+  //  Hebrew (he),
   {
     locale: "he",
     cardHolderName: "שם בעל הכרטיס",
@@ -219,6 +225,7 @@ let localeStrings = [
     accountNumberText: `מספר חשבון`,
     emailLabel: `אימייל`,
     emailInvalidText: `כתובת אימייל לא חוקית`,
+    emailEmptyText: `אימייל לא יכול להיות ריק`,
     fullNameLabel: `שם מלא`,
     fullNamePlaceholder: `שם פרטי ושם משפחה`,
     countryLabel: `מדינה`,
@@ -254,8 +261,9 @@ let localeStrings = [
     lastNameRequiredText: `שם משפחה נדרש`,
     cardExpiresText: `פג תוקפו`,
     addPaymentMethodLabel: `הוסף שיטת תשלום חדשה`,
+    cardHolderNameRequiredText: `נדרש שם בעל הכרטיס`,
   },
-  //  locale: `fr`,
+  //  French (fr),
   {
     locale: `fr`,
     cardHolderName: "Nom du titulaire",
@@ -284,6 +292,7 @@ let localeStrings = [
     accountNumberText: `Numéro de compte`,
     emailLabel: `E-mail`,
     emailInvalidText: `Adresse e-mail invalide`,
+    emailEmptyText: `L'e-mail ne peut pas être vide`,
     fullNameLabel: `Nom complet`,
     fullNamePlaceholder: `Prénom et nom de famille`,
     countryLabel: `Pays`,
@@ -319,8 +328,9 @@ let localeStrings = [
     lastNameRequiredText: `Nom de famille requis`,
     cardExpiresText: `expire`,
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
+    cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
   },
-  //  locale: "en-GB",
+  //  English (British) (en-GB),
   {
     locale: "en-GB",
     cardHolderName: "Card Holder Name",
@@ -338,6 +348,7 @@ let localeStrings = [
     cvcTextLabel: "CVC",
     emailLabel: "Email",
     emailInvalidText: "Invalid email address",
+    emailEmptyText: "Email cannot be empty",
     line1Label: "Address line 1",
     line1Placeholder: "Street address",
     line1EmptyText: "Address line 1 cannot be empty",
@@ -384,8 +395,9 @@ let localeStrings = [
     lastNameRequiredText: "Last Name Required",
     cardExpiresText: `expires`,
     addPaymentMethodLabel: `Add new payment method`,
+    cardHolderNameRequiredText: `Card Holder's name required`,
   },
-  //  locale: "ar",
+  //  Arabic (ar),
   {
     locale: "ar",
     cardDetailsLabel: "تفاصيل البطاقة",
@@ -404,6 +416,7 @@ let localeStrings = [
     cvcTextLabel: `رمز الحماية`,
     emailLabel: `البريد الإلكتروني`,
     emailInvalidText: `عنوان البريد الإلكتروني غير صالح`,
+    emailEmptyText: `لا يمكن أن يكون البريد الإلكتروني فارغًا`,
     fullNameLabel: `الاسم الكامل`,
     line1Label: `العنوان سطر 1`,
     line1Placeholder: `.عنوان الشارع`,
@@ -449,8 +462,9 @@ let localeStrings = [
     lastNameRequiredText: `نشاط اسم مطلوب`,
     cardExpiresText: `تنتهي`,
     addPaymentMethodLabel: `أضف طريقة دفع جديدة`,
+    cardHolderNameRequiredText: `اسم حامل البطاقة مطلوب`,
   },
-  //  locale: "ja",
+  //  Japanese (ja),
   {
     locale: "ja",
     cardHolderName: "クレジットカード名義人氏名",
@@ -469,6 +483,7 @@ let localeStrings = [
     accountNumberText: `口座番号`,
     emailLabel: `Eメール`,
     emailInvalidText: `無効なメールアドレス`,
+    emailEmptyText: `メールアドレスは空欄にできません`,
     fullNameLabel: `フルネーム`,
     fullNamePlaceholder: `名前と苗字`,
     line1Label: `住所1`,
@@ -514,8 +529,9 @@ let localeStrings = [
     lastNameRequiredText: `姓が必要です`,
     cardExpiresText: `期限切れ`,
     addPaymentMethodLabel: `新しい支払い方法を追加`,
+    cardHolderNameRequiredText: `カード所有者の名前が必要です`,
   },
-  //  locale: "de",
+  //  German (de),
   {
     locale: "de",
     cardDetailsLabel: "Kartendetails",
@@ -544,6 +560,7 @@ let localeStrings = [
     accountNumberText: `Accountnummer`,
     emailLabel: `Email`,
     emailInvalidText: `Ungültige E-Mail-Adresse`,
+    emailEmptyText: `Die E-Mail-Adresse darf nicht leer sein`,
     fullNameLabel: `Vollständiger Name`,
     fullNamePlaceholder: `Vor-und Nachname`,
     countryLabel: `Land`,
@@ -579,8 +596,9 @@ let localeStrings = [
     lastNameRequiredText: `Nachname erforderlich`,
     cardExpiresText: `läuft ab`,
     addPaymentMethodLabel: `Neue Zahlungsmethode hinzufügen`,
+    cardHolderNameRequiredText: `Name des Karteninhabers erforderlich`,
   },
-  //:"French (Belgium) (fr-BE)",
+  //    French (Belgium) (fr-BE),
   {
     locale: "fr-BE",
     localeDirection: "ltr",
@@ -607,6 +625,7 @@ let localeStrings = [
     accountNumberText: "Numéro dAccount Number",
     emailLabel: "E-mail",
     emailInvalidText: `Adresse e-mail invalide`,
+    emailEmptyText: `L'adresse e-mail ne peut pas être vide`,
     fullNameLabel: "Nom cFull name",
     fullNamePlaceholder: "Nom et prénom",
     countryLabel: "Pays",
@@ -644,6 +663,7 @@ let localeStrings = [
     lastNameRequiredText: `Nom de famille requis`,
     cardExpiresText: `expire`,
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
+    cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
   },
   //    Spanish (es)
   {
@@ -672,6 +692,7 @@ let localeStrings = [
     accountNumberText: "Número de cuenta",
     emailLabel: "Correo electrónico",
     emailInvalidText: `Dirección de correo electrónico no válida`,
+    emailEmptyText: `El correo electrónico no puede estar vacío`,
     fullNameLabel: "Nombre completo",
     fullNamePlaceholder: "Nombre y apellidos",
     countryLabel: "País",
@@ -709,6 +730,7 @@ let localeStrings = [
     lastNameRequiredText: `Apellido Necesario`,
     cardExpiresText: `expira`,
     addPaymentMethodLabel: `Agregar nuevo método de pago`,
+    cardHolderNameRequiredText: `Se requiere el nombre del titular de la tarjeta`,
   },
   //    Catalan (ca)
   {
@@ -737,6 +759,7 @@ let localeStrings = [
     accountNumberText: "Número de compte",
     emailLabel: "Adreça electrònica",
     emailInvalidText: `adressa de correu invàlida`,
+    emailEmptyText: `El correu electrònic no pot estar buit`,
     fullNameLabel: "Nom complet",
     fullNamePlaceholder: "Nom i cognoms",
     countryLabel: "País",
@@ -774,6 +797,7 @@ let localeStrings = [
     lastNameRequiredText: `Cognom necessari`,
     cardExpiresText: `caduca`,
     addPaymentMethodLabel: `Afegir un nou mètode de pagament`,
+    cardHolderNameRequiredText: `Cal el nom del titular de la targeta`,
   },
   //    Portuguese (pt)
   {
@@ -802,6 +826,7 @@ let localeStrings = [
     accountNumberText: "Número de conta",
     emailLabel: "E-mail",
     emailInvalidText: `Endereço de email invalido`,
+    emailEmptyText: `O e-mail não pode ficar vazio`,
     fullNameLabel: "Nome completo",
     fullNamePlaceholder: "Nome e apelido",
     countryLabel: "País",
@@ -839,6 +864,7 @@ let localeStrings = [
     lastNameRequiredText: `Sobrenome necessário`,
     cardExpiresText: `expira`,
     addPaymentMethodLabel: `Adicione uma nova forma de pagamento`,
+    cardHolderNameRequiredText: `Nome do titular do cartão obrigatório`,
   },
   //    Italian (it)
   {
@@ -867,6 +893,7 @@ let localeStrings = [
     accountNumberText: "Numero del conto",
     emailLabel: "E-mail",
     emailInvalidText: `indirizzo email non valido`,
+    emailEmptyText: `L'email non può essere vuota`,
     fullNameLabel: "Nome e cognome",
     fullNamePlaceholder: "Nome e cognome",
     countryLabel: "Paese",
@@ -904,6 +931,7 @@ let localeStrings = [
     lastNameRequiredText: `Cognome richiesto`,
     cardExpiresText: `scade`,
     addPaymentMethodLabel: `Aggiungi un nuovo metodo di pagamento`,
+    cardHolderNameRequiredText: `È obbligatorio il nome del titolare della carta`,
   },
   //    Polish (pl)
   {
@@ -932,6 +960,7 @@ let localeStrings = [
     accountNumberText: "Numer rachunku",
     emailLabel: "E-mail",
     emailInvalidText: `Niepoprawny adres email`,
+    emailEmptyText: `Adres e-mail nie może być pusty`,
     fullNameLabel: "Imię i nazwisko",
     fullNamePlaceholder: "Imię i nazwisko",
     countryLabel: "Państwo",
@@ -969,6 +998,7 @@ let localeStrings = [
     lastNameRequiredText: `Wymagane nazwisko`,
     cardExpiresText: `wygasa`,
     addPaymentMethodLabel: `Dodaj nową metodę płatności`,
+    cardHolderNameRequiredText: `Wymagane jest podanie imienia i nazwiska posiadacza karty`,
   },
   //    Dutch (nl)
   {
@@ -997,6 +1027,7 @@ let localeStrings = [
     accountNumberText: "Kontonummer",
     emailLabel: "E-mail",
     emailInvalidText: `Ongeldig e-mailadres`,
+    emailEmptyText: `E-mailadres mag niet leeg zijn`,
     fullNameLabel: "Fulde navn",
     fullNamePlaceholder: "For- og efternavn",
     countryLabel: "Land",
@@ -1034,6 +1065,7 @@ let localeStrings = [
     lastNameRequiredText: `Achternaam vereist`,
     cardExpiresText: `verloopt`,
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
+    cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
   },
   //    Dutch (Belgium) (nl-BE)
   {
@@ -1062,6 +1094,7 @@ let localeStrings = [
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
     emailInvalidText: `Ongeldig e-mailadres`,
+    emailEmptyText: `Het e-mailadres mag niet leeg zijn`,
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -1099,6 +1132,7 @@ let localeStrings = [
     lastNameRequiredText: `Achternaam vereist`,
     cardExpiresText: `verloopt`,
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
+    cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
   },
   //    Swedish (sv)
   {
@@ -1127,6 +1161,7 @@ let localeStrings = [
     accountNumberText: "Kontonummer",
     emailLabel: "E-postadress",
     emailInvalidText: `Ogiltig e-postadress`,
+    emailEmptyText: `E-post får inte vara tom`,
     fullNameLabel: "Fullständigt namn",
     fullNamePlaceholder: "För- och efternamn",
     countryLabel: "Land",
@@ -1164,6 +1199,7 @@ let localeStrings = [
     lastNameRequiredText: `Efternamn krävs`,
     cardExpiresText: `går ut`,
     addPaymentMethodLabel: `Lägg till ny betalningsmetod`,
+    cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
   },
   //    Russian (ru)
   {
@@ -1192,6 +1228,7 @@ let localeStrings = [
     accountNumberText: "Номер счета",
     emailLabel: "Электронная почта",
     emailInvalidText: `Неверный адрес электронной почты`,
+    emailEmptyText: `Электронная почта не может быть пустой`,
     fullNameLabel: "Ф.И.О.",
     fullNamePlaceholder: "Имя и фамилия",
     countryLabel: "Страна",
@@ -1229,6 +1266,7 @@ let localeStrings = [
     lastNameRequiredText: `Требуется фамилия`,
     cardExpiresText: `истекает`,
     addPaymentMethodLabel: ` Добавить новый способ оплаты`,
+    cardHolderNameRequiredText: `Требуется имя держателя карты`,
   },
   //    Lithuanian (lt)
   {
@@ -1257,6 +1295,7 @@ let localeStrings = [
     accountNumberText: "Sąskaitos nr.",
     emailLabel: "El. paštas",
     emailInvalidText: `Neteisingas el. pašto adresas`,
+    emailEmptyText: `El. pašto adresas negali būti tuščias`,
     fullNameLabel: "Vardas ir pavardė",
     fullNamePlaceholder: "Vardas ir pavardė",
     countryLabel: "Šalis",
@@ -1294,6 +1333,7 @@ let localeStrings = [
     lastNameRequiredText: `Reikalingas pavardė`,
     cardExpiresText: `baigiasi`,
     addPaymentMethodLabel: `Pridėti naują mokėjimo būdą`,
+    cardHolderNameRequiredText: `Būtinas kortelės turėtojo vardas`,
   },
   //    Czech (cs)
   {
@@ -1322,6 +1362,7 @@ let localeStrings = [
     accountNumberText: "Číslo účtu",
     emailLabel: "E-mail",
     emailInvalidText: `neplatná emailová adresa`,
+    emailEmptyText: `E-mail nesmí být prázdný`,
     fullNameLabel: "Celé jméno",
     fullNamePlaceholder: "Jméno a příjmení",
     countryLabel: "Země",
@@ -1359,6 +1400,7 @@ let localeStrings = [
     lastNameRequiredText: `Požadováno příjmení`,
     cardExpiresText: `vyprší`,
     addPaymentMethodLabel: `Přidat nový způsob platby`,
+    cardHolderNameRequiredText: `Je vyžadováno jméno držitele karty`,
   },
   //    Slovak (sk)
   {
@@ -1387,6 +1429,7 @@ let localeStrings = [
     accountNumberText: "Číslo účtu",
     emailLabel: "E-mail",
     emailInvalidText: `neplatná emailová adresa`,
+    emailEmptyText: `E-mail nemôže byť prázdny`,
     fullNameLabel: "Celé meno",
     fullNamePlaceholder: "Meno a priezvisko",
     countryLabel: "Krajina",
@@ -1424,6 +1467,7 @@ let localeStrings = [
     lastNameRequiredText: `Vyžadované priezvisko`,
     cardExpiresText: `vyprší`,
     addPaymentMethodLabel: `Pridať nový spôsob platby`,
+    cardHolderNameRequiredText: `Vyžaduje sa meno držiteľa karty`,
   },
   //    Icelandic (is)
   {
@@ -1452,6 +1496,7 @@ let localeStrings = [
     accountNumberText: "Númer reiknings",
     emailLabel: "Netfang",
     emailInvalidText: `ógilt netfang`,
+    emailEmptyText: `Tölvupóstur má ekki vera tómur`,
     fullNameLabel: "Fullt nafn",
     fullNamePlaceholder: "Fullt nafn",
     countryLabel: "Land",
@@ -1489,6 +1534,7 @@ let localeStrings = [
     lastNameRequiredText: `Eftirnafn krafist`,
     cardExpiresText: `rennur út`,
     addPaymentMethodLabel: `Bæta við nýrri greiðsluaðferð`,
+    cardHolderNameRequiredText: `Nafn korthafa krafist`,
   },
   //    Welsh (cy)
   {
@@ -1517,6 +1563,7 @@ let localeStrings = [
     accountNumberText: "Rhif y Cyfrif",
     emailLabel: "E-bost",
     emailInvalidText: `Cyfeiriad e -bost annilys`,
+    emailEmptyText: `Ni all e-bost fod yn wag`,
     fullNameLabel: "Enw llawn",
     fullNamePlaceholder: "Enw cyntaf ac olaf",
     countryLabel: "Gwlad",
@@ -1554,6 +1601,7 @@ let localeStrings = [
     lastNameRequiredText: `Enw olaf Angenrheidiol`,
     cardExpiresText: `yn dod i ben`,
     addPaymentMethodLabel: ` Ychwanegu dull talu newydd`,
+    cardHolderNameRequiredText: `Angen enw Deiliad y Cerdyn`,
   },
   //    Greek (el)
   {
@@ -1582,6 +1630,7 @@ let localeStrings = [
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
     emailInvalidText: `Μη έγκυρη διεύθυνση e-mail`,
+    emailEmptyText: `Το email δεν μπορεί να είναι κενό`,
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -1619,8 +1668,9 @@ let localeStrings = [
     lastNameRequiredText: `Απαιτείται επώνυμο`,
     cardExpiresText: `λήγει`,
     addPaymentMethodLabel: `Προσθήκη νέας μεθόδου πληρωμής`,
+    cardHolderNameRequiredText: `Απαιτείται το όνομα του κατόχου της κάρτας`,
   },
-  //Estonian (et)
+  //    Estonian (et)
   {
     locale: "et",
     localeDirection: "v-p",
@@ -1647,6 +1697,7 @@ let localeStrings = [
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
     emailInvalidText: `vale emaili aadress`,
+    emailEmptyText: `E-posti aadress ei tohi olla tühi`,
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -1684,8 +1735,9 @@ let localeStrings = [
     lastNameRequiredText: `Vajalik perekonnanimi`,
     cardExpiresText: `aegub`,
     addPaymentMethodLabel: `Lisa uus makseviis`,
+    cardHolderNameRequiredText: `Vajalik on kaardi omaniku nimi`,
   },
-  //Finnish (fi)
+  //    Finnish (fi)
   {
     locale: "fi",
     localeDirection: "v-p",
@@ -1712,6 +1764,7 @@ let localeStrings = [
     accountNumberText: "Kontonumber",
     emailLabel: "E-post",
     emailInvalidText: `Virheellinen sähköpostiosoite`,
+    emailEmptyText: "Sähköposti ei voi olla tyhjä",
     fullNameLabel: "Täisnimi",
     fullNamePlaceholder: "Ees- ja perekonnanimi",
     countryLabel: "Riik",
@@ -1749,8 +1802,9 @@ let localeStrings = [
     lastNameRequiredText: `Sukunimi vaaditaan`,
     cardExpiresText: `umpeutuu`,
     addPaymentMethodLabel: `Lisää uusi maksutapa`,
+    cardHolderNameRequiredText: `Kortinhaltijan nimi vaaditaan`,
   },
-  //Norwegian (no)
+  //    Norwegian (no)
   {
     locale: "no",
     localeDirection: "ltr",
@@ -1777,6 +1831,7 @@ let localeStrings = [
     accountNumberText: "Kontonummer",
     emailLabel: "E-postadresse",
     emailInvalidText: `Ugyldig epostadresse`,
+    emailEmptyText: `E-post kan ikke være tom`,
     fullNameLabel: "Fullt navn",
     fullNamePlaceholder: "For- og etternavn",
     countryLabel: "Land",
@@ -1814,8 +1869,9 @@ let localeStrings = [
     lastNameRequiredText: `Etternavn påkrevd`,
     cardExpiresText: `utløper`,
     addPaymentMethodLabel: `Legg til en ny betalingsmåte`,
+    cardHolderNameRequiredText: `Kortholders navn kreves`,
   },
-  //Bosnian (bs)
+  //    Bosnian (bs)
   {
     locale: "bs",
     localeDirection: "ltr",
@@ -1842,6 +1898,7 @@ let localeStrings = [
     accountNumberText: "Broj računa",
     emailLabel: "E-mail",
     emailInvalidText: `pogrešna email adresa`,
+    emailEmptyText: `Email ne može biti prazan`,
     fullNameLabel: "Ime i prezime",
     fullNamePlaceholder: "Ime i prezime",
     countryLabel: "Država",
@@ -1879,8 +1936,9 @@ let localeStrings = [
     lastNameRequiredText: `Potrebno je prezime`,
     cardExpiresText: `ističe`,
     addPaymentMethodLabel: `Dodajte novi način plaćanja`,
+    cardHolderNameRequiredText: `Potrebno je ime vlasnika kartice`,
   },
-  //Danish (da)
+  //    Danish (da)
   {
     locale: "da",
     localeDirection: "ltr",
@@ -1907,6 +1965,7 @@ let localeStrings = [
     accountNumberText: "Kontonummer",
     emailLabel: "E-mail",
     emailInvalidText: `ugyldig emailadresse`,
+    emailEmptyText: `E-mail må ikke være tom`,
     fullNameLabel: "Fulde navn",
     fullNamePlaceholder: "For- og efternavn",
     countryLabel: "Land",
@@ -1944,8 +2003,9 @@ let localeStrings = [
     lastNameRequiredText: `Efternavn krævet`,
     cardExpiresText: `udløber`,
     addPaymentMethodLabel: `Tilføj ny betalingsmetode`,
+    cardHolderNameRequiredText: `Kortholders navn påkrævet`,
   },
-  //Malay (ms)
+  //    Malay (ms)
   {
     locale: "ms",
     localeDirection: "ltr",
@@ -1972,6 +2032,7 @@ let localeStrings = [
     accountNumberText: "Nombor Akaun",
     emailLabel: "E-mel",
     emailInvalidText: `alamat email tidak sah`,
+    emailEmptyText: `E-mel tidak boleh kosong`,
     fullNameLabel: "Nama penuh",
     fullNamePlaceholder: "Nama pertama dan akhir",
     countryLabel: "Negara",
@@ -2009,8 +2070,9 @@ let localeStrings = [
     lastNameRequiredText: `Nama terakhir diperluka`,
     cardExpiresText: `luput`,
     addPaymentMethodLabel: `Tambah kaedah pembayaran baru`,
+    cardHolderNameRequiredText: `Nama Pemegang Kad diperlukan`,
   },
-  //Turkish (tr-CY)
+  //    Turkish (tr-CY)
   {
     locale: "tr-CY",
     localeDirection: "soldan sağa",
@@ -2037,6 +2099,7 @@ let localeStrings = [
     accountNumberText: "Hesap Numarası",
     emailLabel: "E-posta",
     emailInvalidText: `Geçersiz e-posta adresi`,
+    emailEmptyText: `E-posta boş olamaz`,
     fullNameLabel: "İsim ve soyisim",
     fullNamePlaceholder: "Ad ve soyadı",
     countryLabel: "Ülke",
@@ -2074,5 +2137,6 @@ let localeStrings = [
     lastNameRequiredText: `Soyad gerekli`,
     cardExpiresText: `süresi doluyor`,
     addPaymentMethodLabel: `Yeni ödeme yöntemi ekle`,
+    cardHolderNameRequiredText: `Kart Sahibinin adı gereklidir`,
   },
 ]
