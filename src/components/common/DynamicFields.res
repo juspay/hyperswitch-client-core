@@ -108,7 +108,7 @@ module RenderField = {
 
             let (firstNameVal, firstNameErrorMessage) =
               firstNameVal === ""
-                ? (JSON.Encode.null, Some(localeObject.requiredText))
+                ? (JSON.Encode.null, Some(localeObject.cardHolderNameRequiredText))
                 : (JSON.Encode.string(firstNameVal), None)
             let (lastNameVal, lastNameErrorMessage) =
               lastNameVal === ""
