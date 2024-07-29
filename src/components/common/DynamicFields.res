@@ -220,6 +220,7 @@ module RenderField = {
           isValid=isValidForFocus
           onFocus={_ => {
             setisFocus(_ => true)
+            val->Option.isNone ? setVal(_ => Some("")) : ()
           }}
           onBlur={_ => {
             setisFocus(_ => false)
