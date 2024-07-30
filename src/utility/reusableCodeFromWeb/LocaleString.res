@@ -60,6 +60,7 @@ type localeStrings = {
   lastNameRequiredText: string,
   cardExpiresText: string,
   addPaymentMethodLabel: string,
+  walletDisclaimer: string,
 }
 
 let defaultLocale = {
@@ -126,11 +127,12 @@ let defaultLocale = {
   lastNameRequiredText: "Last Name Required",
   cardExpiresText: "expires",
   addPaymentMethodLabel: "Add new payment method",
+  walletDisclaimer: "Wallet details will be saved upon selection",
 }
 
 type locale = {localeStrings: array<localeStrings>}
 let localeStrings = [
-  //  locale: "en",
+  //    locale: "en",
   {
     locale: "en",
     localeDirection: "ltr",
@@ -195,8 +197,9 @@ let localeStrings = [
     cardExpiresText: "expires",
     addPaymentMethodLabel: "Add new payment method",
     cardHolderNameRequiredText: "Card Holder's name required",
+    walletDisclaimer: "Wallet details will be saved upon selection",
   },
-  //  Hebrew (he),
+  //    Hebrew (he),
   {
     locale: "he",
     cardHolderName: "שם בעל הכרטיס",
@@ -262,8 +265,9 @@ let localeStrings = [
     cardExpiresText: `פג תוקפו`,
     addPaymentMethodLabel: `הוסף שיטת תשלום חדשה`,
     cardHolderNameRequiredText: `נדרש שם בעל הכרטיס`,
+    walletDisclaimer: `פרטי הארנק יישמרו עם הבחירה`,
   },
-  //  French (fr),
+  //    French (fr),
   {
     locale: `fr`,
     cardHolderName: "Nom du titulaire",
@@ -329,8 +333,9 @@ let localeStrings = [
     cardExpiresText: `expire`,
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
     cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
+    walletDisclaimer: `Les détails du portefeuille seront enregistrés lors de la sélection`,
   },
-  //  English (British) (en-GB),
+  //    English (British) (en-GB),
   {
     locale: "en-GB",
     cardHolderName: "Card Holder Name",
@@ -396,8 +401,9 @@ let localeStrings = [
     cardExpiresText: `expires`,
     addPaymentMethodLabel: `Add new payment method`,
     cardHolderNameRequiredText: `Card Holder's name required`,
+    walletDisclaimer: `Wallet details will be saved upon selection`,
   },
-  //  Arabic (ar),
+  //    Arabic (ar),
   {
     locale: "ar",
     cardDetailsLabel: "تفاصيل البطاقة",
@@ -463,8 +469,9 @@ let localeStrings = [
     cardExpiresText: `تنتهي`,
     addPaymentMethodLabel: `أضف طريقة دفع جديدة`,
     cardHolderNameRequiredText: `اسم حامل البطاقة مطلوب`,
+    walletDisclaimer: `سيتم حفظ تفاصيل المحفظة عند الاختيار`,
   },
-  //  Japanese (ja),
+  //    Japanese (ja),
   {
     locale: "ja",
     cardHolderName: "クレジットカード名義人氏名",
@@ -530,8 +537,9 @@ let localeStrings = [
     cardExpiresText: `期限切れ`,
     addPaymentMethodLabel: `新しい支払い方法を追加`,
     cardHolderNameRequiredText: `カード所有者の名前が必要です`,
+    walletDisclaimer: `ウォレットの詳細は選択時に保存されます`,
   },
-  //  German (de),
+  //    German (de),
   {
     locale: "de",
     cardDetailsLabel: "Kartendetails",
@@ -597,6 +605,7 @@ let localeStrings = [
     cardExpiresText: `läuft ab`,
     addPaymentMethodLabel: `Neue Zahlungsmethode hinzufügen`,
     cardHolderNameRequiredText: `Name des Karteninhabers erforderlich`,
+    walletDisclaimer: `Wallet-Details werden bei Auswahl gespeichert`,
   },
   //    French (Belgium) (fr-BE),
   {
@@ -664,6 +673,7 @@ let localeStrings = [
     cardExpiresText: `expire`,
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
     cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
+    walletDisclaimer: `Les détails du portefeuille seront enregistrés lors de la sélection`,
   },
   //    Spanish (es)
   {
@@ -731,6 +741,7 @@ let localeStrings = [
     cardExpiresText: `expira`,
     addPaymentMethodLabel: `Agregar nuevo método de pago`,
     cardHolderNameRequiredText: `Se requiere el nombre del titular de la tarjeta`,
+    walletDisclaimer: `Los detalles de la billetera se guardarán al realizar la selección.`,
   },
   //    Catalan (ca)
   {
@@ -798,6 +809,7 @@ let localeStrings = [
     cardExpiresText: `caduca`,
     addPaymentMethodLabel: `Afegir un nou mètode de pagament`,
     cardHolderNameRequiredText: `Cal el nom del titular de la targeta`,
+    walletDisclaimer: `Els detalls de la cartera es desaran en seleccionar-lo`,
   },
   //    Portuguese (pt)
   {
@@ -865,6 +877,7 @@ let localeStrings = [
     cardExpiresText: `expira`,
     addPaymentMethodLabel: `Adicione uma nova forma de pagamento`,
     cardHolderNameRequiredText: `Nome do titular do cartão obrigatório`,
+    walletDisclaimer: `Os detalhes da carteira serão salvos após a seleção`,
   },
   //    Italian (it)
   {
@@ -932,6 +945,7 @@ let localeStrings = [
     cardExpiresText: `scade`,
     addPaymentMethodLabel: `Aggiungi un nuovo metodo di pagamento`,
     cardHolderNameRequiredText: `È obbligatorio il nome del titolare della carta`,
+    walletDisclaimer: `I dettagli del portafoglio verranno salvati al momento della selezione`,
   },
   //    Polish (pl)
   {
@@ -999,6 +1013,7 @@ let localeStrings = [
     cardExpiresText: `wygasa`,
     addPaymentMethodLabel: `Dodaj nową metodę płatności`,
     cardHolderNameRequiredText: `Wymagane jest podanie imienia i nazwiska posiadacza karty`,
+    walletDisclaimer: `Szczegóły portfela zostaną zapisane po dokonaniu wyboru`,
   },
   //    Dutch (nl)
   {
@@ -1066,6 +1081,7 @@ let localeStrings = [
     cardExpiresText: `verloopt`,
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
+    walletDisclaimer: `Portemonneegegevens worden opgeslagen bij selectie`,
   },
   //    Dutch (Belgium) (nl-BE)
   {
@@ -1133,6 +1149,7 @@ let localeStrings = [
     cardExpiresText: `verloopt`,
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
+    walletDisclaimer: `Portemonneegegevens worden opgeslagen bij selectie`,
   },
   //    Swedish (sv)
   {
@@ -1200,6 +1217,7 @@ let localeStrings = [
     cardExpiresText: `går ut`,
     addPaymentMethodLabel: `Lägg till ny betalningsmetod`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
+    walletDisclaimer: `Information om plånboken sparas vid val`,
   },
   //    Russian (ru)
   {
@@ -1267,6 +1285,7 @@ let localeStrings = [
     cardExpiresText: `истекает`,
     addPaymentMethodLabel: ` Добавить новый способ оплаты`,
     cardHolderNameRequiredText: `Требуется имя держателя карты`,
+    walletDisclaimer: `Данные кошелька будут сохранены после выбора`,
   },
   //    Lithuanian (lt)
   {
@@ -1334,6 +1353,7 @@ let localeStrings = [
     cardExpiresText: `baigiasi`,
     addPaymentMethodLabel: `Pridėti naują mokėjimo būdą`,
     cardHolderNameRequiredText: `Būtinas kortelės turėtojo vardas`,
+    walletDisclaimer: `Išsami piniginės informacija bus išsaugota pasirinkus`,
   },
   //    Czech (cs)
   {
@@ -1401,6 +1421,7 @@ let localeStrings = [
     cardExpiresText: `vyprší`,
     addPaymentMethodLabel: `Přidat nový způsob platby`,
     cardHolderNameRequiredText: `Je vyžadováno jméno držitele karty`,
+    walletDisclaimer: `Podrobnosti o peněžence se po výběru uloží`,
   },
   //    Slovak (sk)
   {
@@ -1468,6 +1489,7 @@ let localeStrings = [
     cardExpiresText: `vyprší`,
     addPaymentMethodLabel: `Pridať nový spôsob platby`,
     cardHolderNameRequiredText: `Vyžaduje sa meno držiteľa karty`,
+    walletDisclaimer: `Podrobnosti o peňaženke sa po výbere uložia`,
   },
   //    Icelandic (is)
   {
@@ -1535,6 +1557,7 @@ let localeStrings = [
     cardExpiresText: `rennur út`,
     addPaymentMethodLabel: `Bæta við nýrri greiðsluaðferð`,
     cardHolderNameRequiredText: `Nafn korthafa krafist`,
+    walletDisclaimer: `Upplýsingar um veski verða vistaðar við val`,
   },
   //    Welsh (cy)
   {
@@ -1602,6 +1625,7 @@ let localeStrings = [
     cardExpiresText: `yn dod i ben`,
     addPaymentMethodLabel: ` Ychwanegu dull talu newydd`,
     cardHolderNameRequiredText: `Angen enw Deiliad y Cerdyn`,
+    walletDisclaimer: `Bydd manylion waled yn cael eu cadw wrth ddewis`,
   },
   //    Greek (el)
   {
@@ -1669,6 +1693,7 @@ let localeStrings = [
     cardExpiresText: `λήγει`,
     addPaymentMethodLabel: `Προσθήκη νέας μεθόδου πληρωμής`,
     cardHolderNameRequiredText: `Απαιτείται το όνομα του κατόχου της κάρτας`,
+    walletDisclaimer: `Τα στοιχεία του πορτοφολιού θα αποθηκευτούν κατά την επιλογή`,
   },
   //    Estonian (et)
   {
@@ -1736,6 +1761,7 @@ let localeStrings = [
     cardExpiresText: `aegub`,
     addPaymentMethodLabel: `Lisa uus makseviis`,
     cardHolderNameRequiredText: `Vajalik on kaardi omaniku nimi`,
+    walletDisclaimer: `Rahakoti andmed salvestatakse valimisel`,
   },
   //    Finnish (fi)
   {
@@ -1803,6 +1829,7 @@ let localeStrings = [
     cardExpiresText: `umpeutuu`,
     addPaymentMethodLabel: `Lisää uusi maksutapa`,
     cardHolderNameRequiredText: `Kortinhaltijan nimi vaaditaan`,
+    walletDisclaimer: `Lompakon tiedot tallennetaan valinnan yhteydessä`,
   },
   //    Norwegian (no)
   {
@@ -1870,6 +1897,7 @@ let localeStrings = [
     cardExpiresText: `utløper`,
     addPaymentMethodLabel: `Legg til en ny betalingsmåte`,
     cardHolderNameRequiredText: `Kortholders navn kreves`,
+    walletDisclaimer: `Lommebokdetaljer vil bli lagret ved valg`,
   },
   //    Bosnian (bs)
   {
@@ -1937,6 +1965,7 @@ let localeStrings = [
     cardExpiresText: `ističe`,
     addPaymentMethodLabel: `Dodajte novi način plaćanja`,
     cardHolderNameRequiredText: `Potrebno je ime vlasnika kartice`,
+    walletDisclaimer: `Detalji novčanika će biti sačuvani nakon odabira`,
   },
   //    Danish (da)
   {
@@ -2004,6 +2033,7 @@ let localeStrings = [
     cardExpiresText: `udløber`,
     addPaymentMethodLabel: `Tilføj ny betalingsmetode`,
     cardHolderNameRequiredText: `Kortholders navn påkrævet`,
+    walletDisclaimer: `Tegnebogsoplysninger gemmes ved valg`,
   },
   //    Malay (ms)
   {
@@ -2071,6 +2101,7 @@ let localeStrings = [
     cardExpiresText: `luput`,
     addPaymentMethodLabel: `Tambah kaedah pembayaran baru`,
     cardHolderNameRequiredText: `Nama Pemegang Kad diperlukan`,
+    walletDisclaimer: `Butiran dompet akan disimpan semasa pemilihan`,
   },
   //    Turkish (tr-CY)
   {
@@ -2138,5 +2169,6 @@ let localeStrings = [
     cardExpiresText: `süresi doluyor`,
     addPaymentMethodLabel: `Yeni ödeme yöntemi ekle`,
     cardHolderNameRequiredText: `Kart Sahibinin adı gereklidir`,
+    walletDisclaimer: `Cüzdan bilgileri seçim sırasında kaydedilecektir`,
   },
 ]

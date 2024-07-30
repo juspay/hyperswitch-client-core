@@ -4,6 +4,7 @@ open Style
 module WalletDisclaimer = {
   @react.component
   let make = () => {
+    let localeObject = GetLocale.useGetLocalObj()
     <>
       <Space height=10. />
       <View
@@ -16,7 +17,7 @@ module WalletDisclaimer = {
           (),
         )}>
         <Icon name="lock" fill="#767676" style={viewStyle(~marginEnd=5.->dp, ())} />
-        <TextWrapper text="Wallet details will be saved upon selection" textType={ModalText} />
+        <TextWrapper text={localeObject.walletDisclaimer} textType={ModalText} />
       </View>
     </>
   }
