@@ -56,6 +56,12 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "blik",
+      text: "Blik",
+      header: "",
+      fields: ["blik_code"],
+    },
+    {
       name: "crypto",
       text: "Crypto",
       header: "",
