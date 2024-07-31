@@ -48,28 +48,6 @@ let make = (
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
 
-  // let updateBilllingValues = (~country, ~zip, ~isAllValid) => {
-  //   setCountry(_ => country)
-  //   setZip(_ => zip)
-  //   setIsAllBillingValuesValid(_ => isAllValid)
-  //   ()
-  // }
-
-  let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
-
-  React.useEffect1(() => {
-    if (
-      allApiData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
-        cardData.cardNumber->String.length > 0
-    ) {
-      initialiseNetcetera(
-        ~netceteraSDKApiKey=nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
-        ~sdkEnvironment=nativeProp.env,
-      )
-    }
-    None
-  }, [cardData.cardNumber])
-
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       if !closeSDK {
@@ -146,27 +124,6 @@ let make = (
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
       <CardElement setIsAllValid=setIsAllCardValuesValid reset=false />
-      // <Space height=24. />
-      // <TextWrapper text=localeObject.cardHolderName textType={SubheadingBold} />
-      // <Space height=8. />
-      // <CustomInput
-      //   state={cardHolderName->Option.getOr("")}
-      //   setState={str => setCardHolderName(_ => str == "" ? None : Some(str))}
-      //   placeholder=localeObject.cardHolderName
-      //   keyboardType=#default
-      //   isValid=true
-      //   onFocus={_ => ()}
-      //   onBlur={_ => ()}
-      //   textColor=component.color
-      //   borderBottomLeftRadius=borderRadius
-      //   borderBottomRightRadius=borderRadius
-      //   borderTopLeftRadius=borderRadius
-      //   borderTopRightRadius=borderRadius
-      //   borderTopWidth=borderWidth
-      //   borderBottomWidth=borderWidth
-      //   borderLeftWidth=borderWidth
-      //   borderRightWidth=borderWidth
-      // />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields
