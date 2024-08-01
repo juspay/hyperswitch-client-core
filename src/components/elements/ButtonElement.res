@@ -51,9 +51,9 @@ let make = (
 
   let {linearGradientColorTuple, name, iconName} = switch (
     walletType.payment_method_type_wallet,
-    walletType.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    ),
+    walletType.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
   ) {
   | (payment_method_type_wallet, Some(INVOKE_SDK_CLIENT)) =>
     switch payment_method_type_wallet {
@@ -103,9 +103,9 @@ let make = (
         ~category=USER_EVENT,
         ~eventName=PAYMENT_FAILED,
         ~paymentMethod={walletType.payment_method_type},
-        ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.payment_experience_type_decode
-        ),
+        ~paymentExperience=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
         (),
       )
       if !closeSDK {
@@ -120,9 +120,9 @@ let make = (
         ~category=USER_EVENT,
         ~eventName=PAYMENT_DATA_FILLED,
         ~paymentMethod={walletType.payment_method_type},
-        ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.payment_experience_type_decode
-        ),
+        ~paymentExperience=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
         (),
       )
       logger(
@@ -131,9 +131,9 @@ let make = (
         ~category=USER_EVENT,
         ~eventName=PAYMENT_ATTEMPT,
         ~paymentMethod=walletType.payment_method_type,
-        ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.payment_experience_type_decode
-        ),
+        ~paymentExperience=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
         (),
       )
       switch paymentStatus {
@@ -144,9 +144,9 @@ let make = (
             ~category=USER_EVENT,
             ~eventName=PAYMENT_SUCCESS,
             ~paymentMethod={walletType.payment_method_type},
-            ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-              paymentExperience.payment_experience_type_decode
-            ),
+            ~paymentExperience=?walletType.payment_experience
+            ->Array.get(0)
+            ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
             (),
           )
           setLoading(PaymentSuccess)
@@ -178,11 +178,15 @@ let make = (
       // },
       payment_method: walletType.payment_method,
       payment_method_type: walletType.payment_method_type,
-      payment_experience: ?walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.payment_experience_type
+      payment_experience: ?(
+        walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type)
       ),
-      connector: ?walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.eligible_connectors
+      connector: ?(
+        walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.eligible_connectors)
       ),
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
@@ -214,9 +218,9 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=walletType.payment_method_type,
-      ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.payment_experience_type_decode
-      ),
+      ~paymentExperience=?walletType.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
       (),
     )
   }
@@ -309,9 +313,9 @@ let make = (
       ~category=USER_EVENT,
       ~paymentMethod=walletType.payment_method_type,
       ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
-      ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.payment_experience_type_decode
-      ),
+      ~paymentExperience=?walletType.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
       (),
     )
     switch var
@@ -392,16 +396,17 @@ let make = (
       ~category=USER_EVENT,
       ~paymentMethod=walletType.payment_method_type,
       ~eventName=PAYMENT_METHOD_CHANGED,
-      ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.payment_experience_type_decode
-      ),
+      ~paymentExperience=?walletType.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
       (),
     )
     setTimeout(_ => {
-      switch walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.payment_experience_type_decode
+      if (
+        walletType.payment_experience
+        ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
+        ->Option.isSome
       ) {
-      | Some(INVOKE_SDK_CLIENT) =>
         switch walletType.payment_method_type_wallet {
         | GOOGLE_PAY =>
           HyperModule.launchGPay(
@@ -413,9 +418,17 @@ let make = (
             confirmGPay,
           )
         | PAYPAL =>
-          if sessionObject.session_token !== "" && ReactNative.Platform.os == #android {
+          if (
+            sessionObject.session_token !== "" &&
+            ReactNative.Platform.os == #android &&
+            PaypalModule.payPalModule->Option.isSome
+          ) {
             PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
-          } else {
+          } else if (
+            walletType.payment_experience
+            ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+            ->Option.isSome
+          ) {
             let redirectData = []->Dict.fromArray->JSON.Encode.object
             let payment_method_data =
               [
@@ -459,9 +472,9 @@ let make = (
               ~category=USER_EVENT,
               ~paymentMethod=walletType.payment_method_type,
               ~eventName=APPLE_PAY_STARTED_FROM_JS,
-              ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-                paymentExperience.payment_experience_type_decode
-              ),
+              ~paymentExperience=?walletType.payment_experience
+              ->Array.get(0)
+              ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
               (),
             )
 
@@ -474,9 +487,9 @@ let make = (
                 ~category=USER_EVENT,
                 ~paymentMethod=walletType.payment_method_type,
                 ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-                ~paymentExperience=?walletType.payment_experience[0]->Option.map(
-                  paymentExperience => paymentExperience.payment_experience_type_decode,
-                ),
+                ~paymentExperience=?walletType.payment_experience
+                ->Array.get(0)
+                ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
                 (),
               )
             }, 5000)
@@ -497,8 +510,10 @@ let make = (
                   ~category=USER_EVENT,
                   ~paymentMethod=walletType.payment_method_type,
                   ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                  ~paymentExperience=?walletType.payment_experience[0]->Option.map(
-                    paymentExperience => paymentExperience.payment_experience_type_decode,
+                  ~paymentExperience=?walletType.payment_experience
+                  ->Array.get(0)
+                  ->Option.map(paymentExperience =>
+                    paymentExperience.payment_experience_type_decode
                   ),
                   (),
                 )
@@ -515,16 +530,20 @@ let make = (
               ~category=USER_EVENT,
               ~paymentMethod=walletType.payment_method_type,
               ~eventName=NO_WALLET_ERROR,
-              ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-                paymentExperience.payment_experience_type_decode
-              ),
+              ~paymentExperience=?walletType.payment_experience
+              ->Array.get(0)
+              ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
               (),
             )
             setLoading(FillingDetails)
             showAlert(~errorType="warning", ~message="Waiting for Sessions API")
           }
         }
-      | Some(REDIRECT_TO_URL) =>
+      } else if (
+        walletType.payment_experience
+        ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+        ->Option.isSome
+      ) {
         let redirectData = []->Dict.fromArray->JSON.Encode.object
         let payment_method_data =
           [
@@ -538,20 +557,20 @@ let make = (
           ->Dict.fromArray
           ->JSON.Encode.object
         processRequest(~payment_method_data, ())
-      | _ =>
+      } else {
         logger(
           ~logType=DEBUG,
           ~value=walletType.payment_method_type,
           ~category=USER_EVENT,
           ~paymentMethod=walletType.payment_method_type,
           ~eventName=NO_WALLET_ERROR,
-          ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-            paymentExperience.payment_experience_type_decode
-          ),
+          ~paymentExperience=?walletType.payment_experience
+          ->Array.get(0)
+          ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
           (),
         )
         setLoading(FillingDetails)
-        showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+        showAlert(~errorType="warning", ~message="Payment Method Unavailable")
       }
     }, 1000)->ignore
   }

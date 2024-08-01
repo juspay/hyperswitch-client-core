@@ -41,6 +41,9 @@ let make = (
 
   let (country, setCountry) = React.useState(_ => Some(nativeProp.hyperParams.country))
 
+  let (blikCode, setBlikCode) = React.useState(_ => None)
+  let showAlert = AlertHook.useAlerts()
+
   let bankName = switch redirectProp {
   | BANK_REDIRECT(prop) => prop.bank_names
   | _ => []
@@ -68,20 +71,20 @@ let make = (
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
   | WALLET(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    )
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
 
   | PAY_LATER(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    )
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
 
   | BANK_REDIRECT(_) => None
   | CRYPTO(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    )
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   }
   let paymentMethodType = switch redirectProp {
   | BANK_REDIRECT(prop) => prop.payment_method_type
@@ -112,7 +115,7 @@ let make = (
 
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(
     switch bankItems->Array.get(0) {
-    | Some(x) => x.displayName
+    | Some(x) => x.hyperSwitch
     | _ => ""
     },
   ))
@@ -134,6 +137,21 @@ let make = (
 
   let onChangeBank = val => {
     setSelectedBank(val)
+  }
+
+  let onChangeBlikCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    let firstPart = onlyNumerics->String.slice(~start=0, ~end=3)
+    let secondPart = onlyNumerics->String.slice(~start=3, ~end=6)
+
+    let finalVal = if onlyNumerics->String.length <= 3 {
+      firstPart
+    } else if onlyNumerics->String.length > 3 && onlyNumerics->String.length <= 6 {
+      `${firstPart}-${secondPart}`
+    } else {
+      onlyNumerics
+    }
+    setBlikCode(_ => Some(finalVal))
   }
 
   let (error, setError) = React.useState(_ => None)
@@ -244,6 +262,14 @@ let make = (
       ),
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
+        // accept_header: "",
+        // language: "",
+        // color_depth: 0,
+        // java_enabled: true,
+        // java_script_enabled: true,
+        // screen_height: 932,
+        // screen_width: 430,
+        // time_zone: -330,
       },
     }
 
@@ -299,8 +325,21 @@ let make = (
         ~payment_experience_type=exp.payment_experience_type,
         (),
       )
-    | None => ()
-    }->ignore
+    | None =>
+      logger(
+        ~logType=DEBUG,
+        ~value=walletType.payment_method_type,
+        ~category=USER_EVENT,
+        ~paymentMethod=walletType.payment_method_type,
+        ~eventName=NO_WALLET_ERROR,
+        ~paymentExperience=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        (),
+      )
+      setLoading(FillingDetails)
+      showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+    }
   }
 
   let processRequestBankRedirect = (prop: payment_method_types_bank_redirect) => {
@@ -312,9 +351,18 @@ let make = (
             (
               prop.payment_method_type,
               [
-                ("country", country->Option.getOr("")->JSON.Encode.string),
+                (
+                  "country",
+                  switch country {
+                  | Some(country) => country != "" ? country->JSON.Encode.string : JSON.Encode.null
+                  | _ => JSON.Encode.null
+                  },
+                ),
                 ("bank_name", selectedBank->Option.getOr("")->JSON.Encode.string),
-                ("blik_code", "777987"->JSON.Encode.string),
+                (
+                  "blik_code",
+                  blikCode->Option.getOr("")->String.replace("-", "")->JSON.Encode.string,
+                ),
                 ("preferred_language", "en"->JSON.Encode.string),
                 (
                   "billing_details",
@@ -351,9 +399,9 @@ let make = (
       ~payment_method_data,
       ~payment_method=prop.payment_method,
       ~payment_method_type=prop.payment_method_type,
-      ~eligible_connectors=?prop.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.eligible_connectors
-      ),
+      ~eligible_connectors=?prop.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.eligible_connectors),
       (),
     )
   }
@@ -379,12 +427,12 @@ let make = (
         ~payment_method=walletType.payment_method,
         ~payment_method_data,
         ~payment_method_type=paymentMethod,
-        ~payment_experience_type=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.payment_experience_type
-        ),
-        ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.eligible_connectors
-        ),
+        ~payment_experience_type=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type),
+        ~eligible_connectors=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.eligible_connectors),
         (),
       )
     | "User has canceled" =>
@@ -433,12 +481,12 @@ let make = (
         ~payment_method=walletType.payment_method,
         ~payment_method_data,
         ~payment_method_type=paymentMethod,
-        ~payment_experience_type=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.payment_experience_type
-        ),
-        ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.eligible_connectors
-        ),
+        ~payment_experience_type=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type),
+        ~eligible_connectors=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.eligible_connectors),
         (),
       )
     | "Cancel" =>
@@ -500,12 +548,12 @@ let make = (
           ~payment_method=walletType.payment_method,
           ~payment_method_data,
           ~payment_method_type=paymentMethod,
-          ~payment_experience_type=?walletType.payment_experience[0]->Option.map(
-            paymentExperience => paymentExperience.payment_experience_type,
-          ),
-          ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-            paymentExperience.eligible_connectors
-          ),
+          ~payment_experience_type=?walletType.payment_experience
+          ->Array.get(0)
+          ->Option.map(paymentExperience => paymentExperience.payment_experience_type),
+          ~eligible_connectors=?walletType.payment_experience
+          ->Array.get(0)
+          ->Option.map(paymentExperience => paymentExperience.eligible_connectors),
           (),
         )
       }
@@ -545,7 +593,7 @@ let make = (
     //   ~payment_method_data,
     //   ~payment_method=prop.payment_method,
     //   ~payment_method_type=prop.payment_method_type,
-    //   // connector: prop.bank_names[0].eligible_connectors,
+    //   // connector: prop.bank_namesArray.get(0).eligible_connectors,
     //   // setup_future_usage:"off_session",
     //   (),
     // )
@@ -557,15 +605,16 @@ let make = (
       ~category=USER_EVENT,
       ~paymentMethod=walletType.payment_method_type,
       ~eventName=PAYMENT_METHOD_CHANGED,
-      ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.payment_experience_type_decode
-      ),
+      ~paymentExperience=?walletType.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
       (),
     )
-    switch walletType.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
+    if (
+      walletType.payment_experience
+      ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
+      ->Option.isSome
     ) {
-    | Some(INVOKE_SDK_CLIENT) =>
       switch walletType.payment_method_type_wallet {
       | GOOGLE_PAY =>
         HyperModule.launchGPay(
@@ -573,9 +622,17 @@ let make = (
           confirmGPay,
         )
       | PAYPAL =>
-        if sessionObject.session_token !== "" && ReactNative.Platform.os == #android {
+        if (
+          sessionObject.session_token !== "" &&
+          ReactNative.Platform.os == #android &&
+          PaypalModule.payPalModule->Option.isSome
+        ) {
           PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
-        } else {
+        } else if (
+          walletType.payment_experience
+          ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+          ->Option.isSome
+        ) {
           let redirectData = []->Dict.fromArray->JSON.Encode.object
           let payment_method_data =
             [
@@ -607,12 +664,12 @@ let make = (
             ~payment_method=walletType.payment_method,
             ~payment_method_data,
             ~payment_method_type=paymentMethod,
-            ~payment_experience_type=?walletTypeAlt.payment_experience[0]->Option.map(
-              paymentExperience => paymentExperience.payment_experience_type,
-            ),
-            ~eligible_connectors=?walletTypeAlt.payment_experience[0]->Option.map(
-              paymentExperience => paymentExperience.eligible_connectors,
-            ),
+            ~payment_experience_type=?walletTypeAlt.payment_experience
+            ->Array.get(0)
+            ->Option.map(paymentExperience => paymentExperience.payment_experience_type),
+            ~eligible_connectors=?walletTypeAlt.payment_experience
+            ->Array.get(0)
+            ->Option.map(paymentExperience => paymentExperience.eligible_connectors),
             (),
           )
         }
@@ -660,9 +717,13 @@ let make = (
             },
           )
         }
-      | _ => ()
+      | _ => setLoading(FillingDetails)
       }
-    | Some(REDIRECT_TO_URL) =>
+    } else if (
+      walletType.payment_experience
+      ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+      ->Option.isSome
+    ) {
       let redirectData = []->Dict.fromArray->JSON.Encode.object
       let payment_method_data =
         [
@@ -681,7 +742,20 @@ let make = (
         ~payment_method_type=paymentMethod,
         (),
       )
-    | _ => ()
+    } else {
+      logger(
+        ~logType=DEBUG,
+        ~value=walletType.payment_method_type,
+        ~category=USER_EVENT,
+        ~paymentMethod=walletType.payment_method_type,
+        ~eventName=NO_WALLET_ERROR,
+        ~paymentExperience=?walletType.payment_experience
+        ->Array.get(0)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        (),
+      )
+      setLoading(FillingDetails)
+      showAlert(~errorType="warning", ~message="Payment Method Unavailable")
     }
   }
 
@@ -727,22 +801,36 @@ let make = (
     )) || (fields.name == "klarna" && isKlarna)
   }, (isEmailValid, isNameValid, sessionData))
 
-  React.useEffect6(() => {
-    if isScreenFocus {
-      setConfirmButtonDataRef(
-        <ConfirmButton
-          loading=false
-          isAllValuesValid
-          handlePress
-          hasSomeFields
-          paymentMethod
-          ?paymentExperience
-          errorText=error
-        />,
-      )
-    }
-    None
-  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus, error))
+  React.useEffect(
+    () => {
+      if isScreenFocus {
+        setConfirmButtonDataRef(
+          <ConfirmButton
+            loading=false
+            isAllValuesValid
+            handlePress
+            hasSomeFields
+            paymentMethod
+            ?paymentExperience
+            errorText=error
+          />,
+        )
+      }
+      None
+    },
+    (
+      isAllValuesValid,
+      hasSomeFields,
+      paymentMethod,
+      paymentExperience,
+      isScreenFocus,
+      error, 
+      blikCode, 
+      name,
+      email,
+      country
+    ),
+  )
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
@@ -835,6 +923,17 @@ let make = (
                     borderBottomWidth=borderWidth
                     items=bankData
                     placeholderText=localeObject.bankLabel
+                  />
+                | "blik_code" =>
+                  <CustomInput
+                    state={blikCode->Option.getOr("")}
+                    setState={onChangeBlikCode}
+                    borderBottomLeftRadius=borderRadius
+                    borderBottomRightRadius=borderRadius
+                    borderBottomWidth=borderWidth
+                    placeholder="000-000"
+                    keyboardType=#numeric
+                    maxLength=Some(7)
                   />
                 | _ => React.null
                 }}

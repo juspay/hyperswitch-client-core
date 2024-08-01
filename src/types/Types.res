@@ -56,10 +56,28 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "blik",
+      text: "Blik",
+      header: "",
+      fields: ["blik_code"],
+    },
+    {
+      name: "ideal",
+      text: "iDEAL",
+      header: "",
+      fields: [],
+    },
+    {
       name: "crypto",
       text: "Crypto",
       header: "",
       fields: ["name"],
+    },
+    {
+      name: "sofort",
+      text: "Sofort",
+      header: "",
+      fields: [],
     },
     // {
     //   name: "google_pay",
