@@ -56,6 +56,12 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "ideal",
+      text: "iDEAL",
+      header: "",
+      fields: [],
+    },
+    {
       name: "crypto",
       text: "Crypto",
       header: "",
