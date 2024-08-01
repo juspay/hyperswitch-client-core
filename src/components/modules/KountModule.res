@@ -13,7 +13,7 @@ let launchKountMod = switch try {
 
 let launchKountIfAvailable = (requestObj: string, callback) => {
   try {
-    let str = (requestObj->String.split("_secret_"))[0]->Option.getOr("")
+    let str = requestObj->String.split("_secret_")->Array.get(0)->Option.getOr("")
     launchKountMod(`{"merchantId":"merchantID","sessionId":"${str}"}`, callback)
   } catch {
   | _ => ()
