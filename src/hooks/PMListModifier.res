@@ -41,13 +41,26 @@ let useListModifier = () => {
             ->Array.find(l => l.name == payLaterVal.payment_method_type)
             ->Option.getOr(Types.defaultRedirectType)
 
-          Some({
-            name: fields.text,
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-              <Redirect
-                isScreenFocus redirectProp=PAY_LATER(payLaterVal) fields setConfirmButtonDataRef
-              />,
-          })
+          let klarnaSDKCheck = if (
+            payLaterVal.payment_method_type == "klarna" &&
+              payLaterVal.payment_experience
+              ->Array.find(x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT)
+              ->Option.isSome
+          ) {
+            KlarnaModule.klarnaReactPaymentView->Option.isSome
+          } else {
+            true
+          }
+
+          klarnaSDKCheck
+            ? Some({
+                name: fields.text,
+                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                  <Redirect
+                    isScreenFocus redirectProp=PAY_LATER(payLaterVal) fields setConfirmButtonDataRef
+                  />,
+              })
+            : None
         | BANK_REDIRECT(bankRedirectVal) =>
           let fields =
             redirectionList
@@ -102,7 +115,9 @@ let useListModifier = () => {
                 //exp
               : None
           | PAYPAL =>
-            exp->Option.isNone && allApiData.mandateType != NORMAL
+            exp->Option.isNone &&
+            allApiData.mandateType != NORMAL &&
+            PaypalModule.payPalModule->Option.isSome
               ? Some({
                   name: fields.text,
                   componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
@@ -114,13 +129,17 @@ let useListModifier = () => {
                       sessionObject
                     />,
                 })
-              : Some({
-                  name: fields.text,
-                  componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-                    <Redirect
-                      isScreenFocus redirectProp=WALLET(walletVal) fields setConfirmButtonDataRef
-                    />,
-                })
+              : walletVal.payment_experience
+              ->Array.find(x => x.payment_experience_type_decode === REDIRECT_TO_URL)
+              ->Option.isSome
+              ? Some({
+                name: fields.text,
+                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                  <Redirect
+                    isScreenFocus redirectProp=WALLET(walletVal) fields setConfirmButtonDataRef
+                  />,
+              })
+              : None
           // walletVal.payment_experience->Array.find(
           //     x => x.payment_experience_type_decode === REDIRECT_TO_URL,
           //   )
@@ -201,11 +220,11 @@ let useListModifier = () => {
           | GOOGLE_PAY =>
             ReactNative.Platform.os !== #ios && sessionObject.wallet_name !== NONE ? exp : None
           | PAYPAL =>
-            exp->Option.isNone
-              ? walletVal.payment_experience->Array.find(
+            exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
+              ? exp
+              : walletVal.payment_experience->Array.find(
                   x => x.payment_experience_type_decode === REDIRECT_TO_URL,
                 )
-              : exp
           | APPLE_PAY =>
             ReactNative.Platform.os !== #android && sessionObject.wallet_name !== NONE ? exp : None
           | _ => None
@@ -310,6 +329,6 @@ let widgetModifier = (
 
   switch modifiedList->Array.length {
   | 0 => Some(React.null)
-  | _ => modifiedList[0]
+  | _ => modifiedList->Array.get(0)
   }
 }

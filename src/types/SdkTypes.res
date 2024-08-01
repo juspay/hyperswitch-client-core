@@ -684,7 +684,9 @@ let parseConfigurationDict = (configObj, from) => {
         ? None
         : Some({
             address: Some({
-              first_name: ?(shippingName[0] == Some("default") ? None : shippingName[0]),
+              first_name: ?(
+                shippingName->Array.get(0) == Some("default") ? None : shippingName->Array.get(0)
+              ),
               last_name: ?(shippingName->Array.length > 1 ? shippingName[1] : None),
               city: ?getOptionString(addressObj, "city"),
               country: ?getOptionString(addressObj, "country"),
@@ -719,7 +721,9 @@ let parseConfigurationDict = (configObj, from) => {
       ? None
       : Some({
           address: Some({
-            first_name: ?(billingName[0] === Some("default") ? None : billingName[0]),
+            first_name: ?(
+              billingName->Array.get(0) === Some("default") ? None : billingName->Array.get(0)
+            ),
             last_name: ?(billingName->Array.length > 1 ? billingName[1] : None),
             city: ?getOptionString(addressDict, "city"),
             country: ?getOptionString(addressDict, "country"),

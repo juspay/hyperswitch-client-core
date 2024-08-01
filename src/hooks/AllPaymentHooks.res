@@ -94,7 +94,8 @@ let useSessionToken = () => {
         [
           (
             "payment_id",
-            String.split(nativeProp.clientSecret, "_secret_")[0]
+            String.split(nativeProp.clientSecret, "_secret_")
+            ->Array.get(0)
             ->Option.getOr("")
             ->JSON.Encode.string,
           ),
@@ -184,9 +185,9 @@ let useRetrieveHook = () => {
         initEventName: LoggerHook.eventName,
       ) = switch type_ {
       | Payment => (
-          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")[0]->Option.getOr(
-              "",
-            )}?force_sync=false&client_secret=${clientSecret}`,
+          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
+            ->Array.get(0)
+            ->Option.getOr("")}?force_sync=false&client_secret=${clientSecret}`,
           RETRIEVE_CALL,
           RETRIEVE_CALL_INIT,
         )
@@ -369,7 +370,7 @@ let useRedirectHook = () => {
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     (),
   ) => {
-    let uriPram = String.split(clientSecret, "_secret_")[0]->Option.getOr("")
+    let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 

@@ -372,7 +372,7 @@ let useLoggerHook = () => {
       value,
       internalMetadata: internalMetadata->Option.getOr(""),
       category,
-      paymentId: String.split(nativeProp.clientSecret, "_secret_")[0]->Option.getOr(""),
+      paymentId: String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
       merchantId: nativeProp.publishableKey,
       appId: ?nativeProp.hyperParams.appId,
       platform: ReactNative.Platform.os->toPlatform,
@@ -390,7 +390,7 @@ let useLoggerHook = () => {
     updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)
     setEvents(updatedEvents)
     snooze(
-      ~paymentId=String.split(nativeProp.clientSecret, "_secret_")[0]->Option.getOr(""),
+      ~paymentId=String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~appId=nativeProp.hyperParams.appId,
       ~platform=ReactNative.Platform.os->toPlatform,
