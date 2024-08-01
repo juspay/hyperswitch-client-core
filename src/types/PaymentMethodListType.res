@@ -74,6 +74,14 @@ type payment_method =
 type online = {
   ip_address?: string,
   user_agent?: string,
+  accept_header?: string,
+  language?: string,
+  color_depth?: int,
+  java_enabled?: bool,
+  java_script_enabled?: bool,
+  screen_height?: int,
+  screen_width?: int,
+  time_zone?: int,
 }
 type customer_acceptance = {
   acceptance_type: string,

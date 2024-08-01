@@ -31,7 +31,7 @@ let make = (
   let (nickname, setNickname) = React.useState(_ => None)
 
   // Validity Hooks
-  let (isAllCardVlauesValid, setIsAllCardVlauesValid) = React.useState(_ => false)
+  let (isAllCardValuesValid, setIsAllCardValuesValid) = React.useState(_ => false)
   let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
   let requiredFields = cardVal.required_field->Array.filter(val => {
     switch val.field_type {
@@ -46,7 +46,7 @@ let make = (
   )> => [])
   let (error, setError) = React.useState(_ => None)
 
-  let isConfirmButtonValid = isAllCardVlauesValid && isAllDynamicFieldValid
+  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
 
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -123,7 +123,7 @@ let make = (
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
-      <CardElement setIsAllValid=setIsAllCardVlauesValid reset=false />
+      <CardElement setIsAllValid=setIsAllCardValuesValid reset=false />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields

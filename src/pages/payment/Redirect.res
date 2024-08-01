@@ -40,6 +40,8 @@ let make = (
   let (nameIsFocus, setNameIsFocus) = React.useState(_ => false)
 
   let (country, setCountry) = React.useState(_ => Some(nativeProp.hyperParams.country))
+
+  let (blikCode, setBlikCode) = React.useState(_ => None)
   let showAlert = AlertHook.useAlerts()
 
   let bankName = switch redirectProp {
@@ -135,6 +137,21 @@ let make = (
 
   let onChangeBank = val => {
     setSelectedBank(val)
+  }
+
+  let onChangeBlikCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    let firstPart = onlyNumerics->String.slice(~start=0, ~end=3)
+    let secondPart = onlyNumerics->String.slice(~start=3, ~end=6)
+
+    let finalVal = if onlyNumerics->String.length <= 3 {
+      firstPart
+    } else if onlyNumerics->String.length > 3 && onlyNumerics->String.length <= 6 {
+      `${firstPart}-${secondPart}`
+    } else {
+      onlyNumerics
+    }
+    setBlikCode(_ => Some(finalVal))
   }
 
   let (error, setError) = React.useState(_ => None)
@@ -245,6 +262,14 @@ let make = (
       ),
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
+        // accept_header: "",
+        // language: "",
+        // color_depth: 0,
+        // java_enabled: true,
+        // java_script_enabled: true,
+        // screen_height: 932,
+        // screen_width: 430,
+        // time_zone: -330,
       },
     }
 
@@ -334,7 +359,10 @@ let make = (
                   },
                 ),
                 ("bank_name", selectedBank->Option.getOr("")->JSON.Encode.string),
-                ("blik_code", "777987"->JSON.Encode.string),
+                (
+                  "blik_code",
+                  blikCode->Option.getOr("")->String.replace("-", "")->JSON.Encode.string,
+                ),
                 ("preferred_language", "en"->JSON.Encode.string),
                 (
                   "billing_details",
@@ -773,22 +801,36 @@ let make = (
     )) || (fields.name == "klarna" && isKlarna)
   }, (isEmailValid, isNameValid, sessionData))
 
-  React.useEffect6(() => {
-    if isScreenFocus {
-      setConfirmButtonDataRef(
-        <ConfirmButton
-          loading=false
-          isAllValuesValid
-          handlePress
-          hasSomeFields
-          paymentMethod
-          ?paymentExperience
-          errorText=error
-        />,
-      )
-    }
-    None
-  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus, error))
+  React.useEffect(
+    () => {
+      if isScreenFocus {
+        setConfirmButtonDataRef(
+          <ConfirmButton
+            loading=false
+            isAllValuesValid
+            handlePress
+            hasSomeFields
+            paymentMethod
+            ?paymentExperience
+            errorText=error
+          />,
+        )
+      }
+      None
+    },
+    (
+      isAllValuesValid,
+      hasSomeFields,
+      paymentMethod,
+      paymentExperience,
+      isScreenFocus,
+      error, 
+      blikCode, 
+      name,
+      email,
+      country
+    ),
+  )
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
@@ -881,6 +923,17 @@ let make = (
                     borderBottomWidth=borderWidth
                     items=bankData
                     placeholderText=localeObject.bankLabel
+                  />
+                | "blik_code" =>
+                  <CustomInput
+                    state={blikCode->Option.getOr("")}
+                    setState={onChangeBlikCode}
+                    borderBottomLeftRadius=borderRadius
+                    borderBottomRightRadius=borderRadius
+                    borderBottomWidth=borderWidth
+                    placeholder="000-000"
+                    keyboardType=#numeric
+                    maxLength=Some(7)
                   />
                 | _ => React.null
                 }}
