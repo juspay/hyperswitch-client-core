@@ -49,7 +49,7 @@ let make = (
   let isConfirmButtonValid = isAllCardVlauesValid && isAllDynamicFieldValid
 
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
-    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ~doHandleSuccessFailure=false, ()) => {
       if !closeSDK {
         setLoading(FillingDetails)
         switch errorMessage.message {
@@ -57,7 +57,9 @@ let make = (
         | None => ()
         }
       }
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      if doHandleSuccessFailure {
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      }
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       switch paymentStatus {

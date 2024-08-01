@@ -87,7 +87,7 @@ let make = (
     ~email=?,
     (),
   ) => {
-    let errorCallback = (~errorMessage, ~closeSDK, ()) => {
+    let errorCallback = (~errorMessage, ~closeSDK, ~doHandleSuccessFailure=false, ()) => {
       logger(
         ~logType=INFO,
         ~value="",
@@ -99,7 +99,9 @@ let make = (
       if !closeSDK {
         setLoading(FillingDetails)
       }
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      if doHandleSuccessFailure {
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      }
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       logger(
@@ -183,7 +185,12 @@ let make = (
   }
 
   let processSavedPMRequest = () => {
-    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+    let errorCallback = (
+      ~errorMessage: PaymentConfirmTypes.error,
+      ~closeSDK,
+      ~doHandleSuccessFailure=false,
+      (),
+    ) => {
       if !closeSDK {
         setLoading(FillingDetails)
         switch errorMessage.message {
@@ -191,7 +198,9 @@ let make = (
         | None => ()
         }
       }
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      if doHandleSuccessFailure {
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      }
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       switch paymentStatus {

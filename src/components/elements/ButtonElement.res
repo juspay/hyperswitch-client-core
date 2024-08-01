@@ -96,7 +96,7 @@ let make = (
     | None => walletType
     }
 
-    let errorCallback = (~errorMessage, ~closeSDK, ()) => {
+    let errorCallback = (~errorMessage, ~closeSDK, ~doHandleSuccessFailure=false, ()) => {
       logger(
         ~logType=INFO,
         ~value="",
@@ -111,7 +111,9 @@ let make = (
       if !closeSDK {
         setLoading(FillingDetails)
       }
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      if doHandleSuccessFailure {
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      }
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       logger(

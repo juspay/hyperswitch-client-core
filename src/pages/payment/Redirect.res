@@ -16,6 +16,27 @@ let make = (
   ~setConfirmButtonDataRef: React.element => unit,
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
 ) => {
+  let (sessionData, _) = React.useContext(SessionContext.sessionContext)
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
+  let logger = LoggerHook.useLoggerHook()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let localeObject = GetLocale.useGetLocalObj()
+  let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
+
+  let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
+  let (email, setEmail) = React.useState(_ => None)
+  let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
+  let (emailIsFocus, setEmailIsFocus) = React.useState(_ => false)
+  let (name, setName) = React.useState(_ => None)
+  let (isNameValid, setIsNameValid) = React.useState(_ => None)
+  let (nameIsFocus, setNameIsFocus) = React.useState(_ => false)
+  let (country, setCountry) = React.useState(_ => Some(nativeProp.hyperParams.country))
+  let (error, setError) = React.useState(_ => None)
+  let (statesJson, setStatesJson) = React.useState(_ => None)
+
   let walletType: PaymentMethodListType.payment_method_types_wallet = switch redirectProp {
   | WALLET(walletVal) => walletVal
   | _ => {
@@ -26,20 +47,6 @@ let make = (
       required_field: [],
     }
   }
-
-  let (sessionData, _) = React.useContext(SessionContext.sessionContext)
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
-  let (email, setEmail) = React.useState(_ => None)
-  let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
-  let (emailIsFocus, setEmailIsFocus) = React.useState(_ => false)
-
-  let (name, setName) = React.useState(_ => None)
-  let (isNameValid, setIsNameValid) = React.useState(_ => None)
-  let (nameIsFocus, setNameIsFocus) = React.useState(_ => false)
-
-  let (country, setCountry) = React.useState(_ => Some(nativeProp.hyperParams.country))
 
   let bankName = switch redirectProp {
   | BANK_REDIRECT(prop) => prop.bank_names
@@ -58,6 +65,7 @@ let make = (
       x->JSON.parseExn->JSON.Decode.string->Option.getOr("")
     })
   }
+
   let paymentMethod = switch redirectProp {
   | CARD(prop) => prop.payment_method_type
   | WALLET(prop) => prop.payment_method_type
@@ -65,6 +73,7 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
   }
+
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
   | WALLET(prop) =>
@@ -83,11 +92,8 @@ let make = (
       paymentExperience.payment_experience_type_decode
     )
   }
-  let paymentMethodType = switch redirectProp {
-  | BANK_REDIRECT(prop) => prop.payment_method_type
-  | _ => ""
-  }
-  let bankList = switch paymentMethodType {
+
+  let bankList = switch paymentMethod {
   | "ideal" => getBankNames(bankName)->Js.Array.sortInPlace
   | "eps" => getBankNames(bankName)->Js.Array.sortInPlace
   | _ => []
@@ -117,8 +123,6 @@ let make = (
     },
   ))
 
-  let logger = LoggerHook.useLoggerHook()
-
   let onChangeCountry = val => {
     setCountry(val)
     logger(
@@ -136,15 +140,6 @@ let make = (
     setSelectedBank(val)
   }
 
-  let (error, setError) = React.useState(_ => None)
-
-  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
-  let localeObject = GetLocale.useGetLocalObj()
-  let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
-
-  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-
   let {isKlarna, session_token} = React.useMemo1(() => {
     switch sessionData {
     | Some(sessionData) =>
@@ -156,7 +151,12 @@ let make = (
     }
   }, [sessionData])
 
-  let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+  let errorCallback = (
+    ~errorMessage: PaymentConfirmTypes.error,
+    ~closeSDK,
+    ~doHandleSuccessFailure=true,
+    (),
+  ) => {
     if !closeSDK {
       setLoading(FillingDetails)
       switch errorMessage.message {
@@ -164,8 +164,11 @@ let make = (
       | None => ()
       }
     }
-    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    if doHandleSuccessFailure {
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    }
   }
+
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
     switch paymentStatus {
     | PaymentSuccess => {
@@ -189,175 +192,6 @@ let make = (
     ) */
   }
 
-  let processRequest = (
-    ~payment_method_data,
-    ~payment_method,
-    ~payment_method_type,
-    ~payment_experience_type="redirect_to_url",
-    ~eligible_connectors=?,
-    (),
-  ) => {
-    let body: redirectType = {
-      client_secret: nativeProp.clientSecret,
-      return_url: ?switch nativeProp.hyperParams.appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | None => None
-      },
-      // customer_id: ?switch nativeProp.configuration.customer {
-      // | Some(customer) => customer.id
-      // | None => None
-      // },
-      payment_method,
-      payment_method_type,
-      payment_experience: payment_experience_type,
-      connector: ?eligible_connectors,
-      payment_method_data,
-      billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
-      setup_future_usage: ?(allApiData.mandateType != NORMAL ? Some("off_session") : None),
-      payment_type: ?allApiData.paymentType,
-      // mandate_data: ?(
-      //   allApiData.mandateType != NORMAL
-      //     ? Some({
-      //         customer_acceptance: {
-      //           acceptance_type: "online",
-      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-      //           online: {
-      //             ip_address: ?nativeProp.hyperParams.ip,
-      //             user_agent: ?nativeProp.hyperParams.userAgent,
-      //           },
-      //         },
-      //       })
-      //     : None
-      // ),
-      customer_acceptance: ?(
-        allApiData.mandateType != NORMAL
-          ? Some({
-              acceptance_type: "online",
-              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-              online: {
-                ip_address: ?nativeProp.hyperParams.ip,
-                user_agent: ?nativeProp.hyperParams.userAgent,
-              },
-            })
-          : None
-      ),
-      browser_info: {
-        user_agent: ?nativeProp.hyperParams.userAgent,
-      },
-    }
-
-    fetchAndRedirect(
-      ~body=body->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
-      ~errorCallback,
-      ~responseCallback,
-      ~paymentMethod,
-      ~paymentExperience?,
-      (),
-    )
-  }
-
-  let processRequestPayLater = (prop: payment_method_types_pay_later, authToken) => {
-    let payment_experience_type_decode =
-      authToken == "redirect" ? REDIRECT_TO_URL : INVOKE_SDK_CLIENT
-    switch prop.payment_experience->Array.find(exp =>
-      exp.payment_experience_type_decode === payment_experience_type_decode
-    ) {
-    | Some(exp) =>
-      let redirectData =
-        [
-          ("billing_email", email->Option.getOr("")->JSON.Encode.string),
-          ("billing_name", name->Option.getOr("")->JSON.Encode.string),
-          ("billing_country", country->Option.getOr("")->JSON.Encode.string),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-      let sdkData = [("token", authToken->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object
-      let payment_method_data =
-        [
-          (
-            prop.payment_method,
-            [
-              (
-                prop.payment_method_type ++ (authToken == "redirect" ? "_redirect" : "_sdk"),
-                authToken == "redirect" ? redirectData : sdkData,
-              ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-
-      processRequest(
-        ~payment_method_data,
-        ~payment_method=prop.payment_method,
-        ~payment_method_type=prop.payment_method_type,
-        ~payment_experience_type=exp.payment_experience_type,
-        (),
-      )
-    | None => ()
-    }->ignore
-  }
-
-  let processRequestBankRedirect = (prop: payment_method_types_bank_redirect) => {
-    let payment_method_data =
-      [
-        (
-          prop.payment_method,
-          [
-            (
-              prop.payment_method_type,
-              [
-                ("country", country->Option.getOr("")->JSON.Encode.string),
-                ("bank_name", selectedBank->Option.getOr("")->JSON.Encode.string),
-                ("blik_code", "777987"->JSON.Encode.string),
-                ("preferred_language", "en"->JSON.Encode.string),
-                (
-                  "billing_details",
-                  [("billing_name", name->Option.getOr("")->JSON.Encode.string)]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object,
-                ),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object,
-        ),
-      ]
-      ->Dict.fromArray
-      ->JSON.Encode.object
-
-    processRequest(
-      ~payment_method_data,
-      ~payment_method=prop.payment_method,
-      ~payment_method_type=prop.payment_method_type,
-      (),
-    )
-  }
-
-  let processRequestCrypto = (prop: payment_method_types_pay_later) => {
-    let payment_method_data =
-      [(prop.payment_method, []->Dict.fromArray->JSON.Encode.object)]
-      ->Dict.fromArray
-      ->JSON.Encode.object
-    processRequest(
-      ~payment_method_data,
-      ~payment_method=prop.payment_method,
-      ~payment_method_type=prop.payment_method_type,
-      ~eligible_connectors=?prop.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.eligible_connectors
-      ),
-      (),
-    )
-  }
-
   let confirmPayPal = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
@@ -375,7 +209,7 @@ let make = (
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
-      processRequest(
+      ProcessPaymentRequest.processRequest(
         ~payment_method=walletType.payment_method,
         ~payment_method_data,
         ~payment_method_type=paymentMethod,
@@ -385,32 +219,24 @@ let make = (
         ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
           paymentExperience.eligible_connectors
         ),
+        ~errorCallback,
+        ~responseCallback,
+        ~paymentMethod,
+        ~paymentExperience,
+        ~nativeProp,
+        ~allApiData,
+        ~fetchAndRedirect,
         (),
       )
-    | "User has canceled" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Payment was Cancelled"))
+    | "User has canceled" => {
+        let error: PaymentConfirmTypes.error = {
+          message: "Payment was Cancelled",
+        }
+        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+      }
     | err => setError(_ => Some(err))
     }
   }
-
-  let (statesJson, setStatesJson) = React.useState(_ => None)
-
-  React.useEffect0(() => {
-    // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      setStatesJson(_ => None)
-      Promise.resolve()
-    })
-    ->ignore
-
-    None
-  })
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -429,7 +255,7 @@ let make = (
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
-      processRequest(
+      ProcessPaymentRequest.processRequest(
         ~payment_method=walletType.payment_method,
         ~payment_method_data,
         ~payment_method_type=paymentMethod,
@@ -439,14 +265,28 @@ let make = (
         ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
           paymentExperience.eligible_connectors
         ),
+        ~errorCallback,
+        ~responseCallback,
+        ~paymentMethod,
+        ~paymentExperience,
+        ~nativeProp,
+        ~allApiData,
+        ~fetchAndRedirect,
         (),
       )
-    | "Cancel" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Payment was Cancelled"))
-    | err =>
-      setLoading(FillingDetails)
-      setError(_ => Some(err))
+    | "Cancel" => {
+        let error: PaymentConfirmTypes.error = {
+          message: "Payment was Cancelled",
+        }
+        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+      }
+    | err => {
+        let error: PaymentConfirmTypes.error = {
+          message: err,
+        }
+        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+        setError(_ => Some(err))
+      }
     }
   }
 
@@ -456,15 +296,27 @@ let make = (
     ->Option.getOr(JSON.Encode.null)
     ->JSON.Decode.string
     ->Option.getOr("") {
-    | "Cancelled" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Cancelled"))
-    | "Failed" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Failed"))
-    | "Error" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Error"))
+    | "Cancelled" => {
+        let error: PaymentConfirmTypes.error = {
+          message: "Cancelled",
+        }
+        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+        setError(_ => Some("Cancelled"))
+      }
+    | "Failed" => {
+        let error: PaymentConfirmTypes.error = {
+          message: "Failed",
+        }
+        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+        setError(_ => Some("Failed"))
+      }
+    | "Error" => {
+        let error: PaymentConfirmTypes.error = {
+          message: "Error",
+        }
+        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+        setError(_ => Some("Error"))
+      }
     | _ =>
       let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
 
@@ -474,7 +326,10 @@ let make = (
         var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
       if transaction_identifier->JSON.stringify == "Simulated Identifier" {
-        setLoading(FillingDetails)
+        let error: PaymentConfirmTypes.error = {
+          message: "Apple Pay is not supported in Simulated Environment",
+        }
+        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
         setError(_ => Some("Apple Pay is not supported in Simulated Environment"))
       } else {
         let paymentData =
@@ -496,7 +351,7 @@ let make = (
           ->Dict.fromArray
           ->JSON.Encode.object
 
-        processRequest(
+        ProcessPaymentRequest.processRequest(
           ~payment_method=walletType.payment_method,
           ~payment_method_data,
           ~payment_method_type=paymentMethod,
@@ -506,182 +361,16 @@ let make = (
           ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
             paymentExperience.eligible_connectors
           ),
+          ~errorCallback,
+          ~responseCallback,
+          ~paymentMethod,
+          ~paymentExperience,
+          ~nativeProp,
+          ~allApiData,
+          ~fetchAndRedirect,
           (),
         )
       }
-    }
-  }
-
-  let processRequestWallet = (walletType: payment_method_types_wallet) => {
-    // let payment_method_data =
-    //   [
-    //     (
-    //       prop.payment_method,
-    //       [
-    //         (
-    //           prop.payment_method_type ++ "_redirect",
-    //           [
-    //             //Telephone number is for MB Way
-    //             // (
-    //             //   "telephone_number",
-    //             //   phoneNumber
-    //             //   ->Option.getOr("")
-    //             //   ->String.replaceString(" ", "")
-    //             //   ->JSON.Encode.string,
-    //             // ),
-    //           ]
-    //           ->Dict.fromArray
-    //           ->JSON.Encode.object,
-    //         ),
-    //       ]
-    //       ->Dict.fromArray
-    //       ->JSON.Encode.object,
-    //     ),
-    //   ]
-    //   ->Dict.fromArray
-    //   ->JSON.Encode.object
-
-    // processRequest(
-    //   ~payment_method_data,
-    //   ~payment_method=prop.payment_method,
-    //   ~payment_method_type=prop.payment_method_type,
-    //   // connector: prop.bank_names[0].eligible_connectors,
-    //   // setup_future_usage:"off_session",
-    //   (),
-    // )
-
-    setLoading(ProcessingPayments(None))
-    logger(
-      ~logType=INFO,
-      ~value=walletType.payment_method_type,
-      ~category=USER_EVENT,
-      ~paymentMethod=walletType.payment_method_type,
-      ~eventName=PAYMENT_METHOD_CHANGED,
-      ~paymentExperience=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-        paymentExperience.payment_experience_type_decode
-      ),
-      (),
-    )
-    switch walletType.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    ) {
-    | Some(INVOKE_SDK_CLIENT) =>
-      switch walletType.payment_method_type_wallet {
-      | GOOGLE_PAY =>
-        HyperModule.launchGPay(
-          GooglePayType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env),
-          confirmGPay,
-        )
-      | PAYPAL =>
-        if sessionObject.session_token !== "" && ReactNative.Platform.os == #android {
-          PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
-        } else {
-          let redirectData = []->Dict.fromArray->JSON.Encode.object
-          let payment_method_data =
-            [
-              (
-                walletType.payment_method,
-                [(walletType.payment_method_type ++ "_redirect", redirectData)]
-                ->Dict.fromArray
-                ->JSON.Encode.object,
-              ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
-          let altPaymentExperience =
-            walletType.payment_experience->Array.find(x =>
-              x.payment_experience_type_decode === REDIRECT_TO_URL
-            )
-          let walletTypeAlt = {
-            ...walletType,
-            payment_experience: [
-              altPaymentExperience->Option.getOr({
-                payment_experience_type: "",
-                payment_experience_type_decode: NONE,
-                eligible_connectors: [],
-              }),
-            ],
-          }
-          // when session token for paypal is absent, switch to redirect flow
-          processRequest(
-            ~payment_method=walletType.payment_method,
-            ~payment_method_data,
-            ~payment_method_type=paymentMethod,
-            ~payment_experience_type=?walletTypeAlt.payment_experience[0]->Option.map(
-              paymentExperience => paymentExperience.payment_experience_type,
-            ),
-            ~eligible_connectors=?walletTypeAlt.payment_experience[0]->Option.map(
-              paymentExperience => paymentExperience.eligible_connectors,
-            ),
-            (),
-          )
-        }
-      | APPLE_PAY =>
-        if (
-          sessionObject.session_token_data == JSON.Encode.null ||
-            sessionObject.payment_request_data == JSON.Encode.null
-        ) {
-          setLoading(FillingDetails)
-          setError(_ => Some("Waiting for Sessions API"))
-        } else {
-          let timerId = setTimeout(() => {
-            setLoading(FillingDetails)
-            setError(_ => Some("Apple Pay Error, Please try again"))
-            logger(
-              ~logType=DEBUG,
-              ~value="apple_pay",
-              ~category=USER_EVENT,
-              ~paymentMethod="apple_pay",
-              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-              (),
-            )
-          }, 5000)
-          HyperModule.launchApplePay(
-            [
-              ("session_token_data", sessionObject.session_token_data),
-              ("payment_request_data", sessionObject.payment_request_data),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
-            ->JSON.stringify,
-            confirmApplePay,
-            _ => {
-              logger(
-                ~logType=DEBUG,
-                ~value="apple_pay",
-                ~category=USER_EVENT,
-                ~paymentMethod="apple_pay",
-                ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                (),
-              )
-            },
-            _ => {
-              clearTimeout(timerId)
-            },
-          )
-        }
-      | _ => ()
-      }
-    | Some(REDIRECT_TO_URL) =>
-      let redirectData = []->Dict.fromArray->JSON.Encode.object
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [(walletType.payment_method_type ++ "_redirect", redirectData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-      processRequest(
-        ~payment_method=walletType.payment_method,
-        ~payment_method_data,
-        ~payment_method_type=paymentMethod,
-        (),
-      )
-    | _ => ()
     }
   }
 
@@ -691,10 +380,63 @@ let make = (
     | PAY_LATER(prop) =>
       fields.name == "klarna" && isKlarna
         ? setLaunchKlarna(_ => Some(prop))
-        : processRequestPayLater(prop, "redirect")
-    | BANK_REDIRECT(prop) => processRequestBankRedirect(prop)
-    | CRYPTO(prop) => processRequestCrypto(prop)
-    | WALLET(prop) => processRequestWallet(prop)
+        : ProcessPaymentRequest.processRequestPayLater(
+            ~prop,
+            ~authToken="redirect",
+            ~name,
+            ~email,
+            ~country,
+            ~paymentMethod,
+            ~paymentExperience,
+            ~errorCallback,
+            ~responseCallback,
+            ~nativeProp,
+            ~allApiData,
+            ~fetchAndRedirect,
+          )
+    | BANK_REDIRECT(prop) =>
+      ProcessPaymentRequest.processRequestBankRedirect(
+        ~prop,
+        ~country,
+        ~selectedBank,
+        ~name,
+        ~paymentMethod,
+        ~paymentExperience,
+        ~responseCallback,
+        ~errorCallback,
+        ~nativeProp,
+        ~allApiData,
+        ~fetchAndRedirect,
+      )
+    | CRYPTO(prop) =>
+      ProcessPaymentRequest.processRequestCrypto(
+        prop,
+        paymentMethod,
+        paymentExperience,
+        responseCallback,
+        errorCallback,
+        ~nativeProp,
+        ~allApiData,
+        ~fetchAndRedirect,
+      )
+    | WALLET(prop) =>
+      ProcessPaymentRequest.processRequestWallet(
+        ~env=nativeProp.env,
+        ~wallet=prop,
+        ~setError,
+        ~sessionObject,
+        ~confirmGPay,
+        ~confirmPayPal,
+        ~confirmApplePay,
+        ~errorCallback,
+        ~responseCallback,
+        ~paymentMethod,
+        ~paymentExperience,
+        ~nativeProp,
+        ~allApiData,
+        ~fetchAndRedirect,
+        ~logger,
+      )
     | _ => ()
     }
   }
@@ -718,16 +460,30 @@ let make = (
   let isNameValidForFocus = {
     nameIsFocus ? true : isNameValid->Option.getOr(true)
   }
-
   let hasSomeFields = fields.fields->Array.length > 0
-
   let isAllValuesValid = React.useMemo3(() => {
     ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
       fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
     )) || (fields.name == "klarna" && isKlarna)
   }, (isEmailValid, isNameValid, sessionData))
 
-  React.useEffect6(() => {
+  React.useEffect0(() => {
+    // Dynamically import/download Postal codes and states JSON
+    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    ->Promise.then(res => {
+      setStatesJson(_ => Some(res.states))
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      setStatesJson(_ => None)
+      Promise.resolve()
+    })
+    ->ignore
+
+    None
+  })
+
+  React.useEffect(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
@@ -742,7 +498,17 @@ let make = (
       )
     }
     None
-  }, (isAllValuesValid, hasSomeFields, paymentMethod, paymentExperience, isScreenFocus, error))
+  }, (
+    isAllValuesValid,
+    hasSomeFields,
+    paymentMethod,
+    paymentExperience,
+    isScreenFocus,
+    error,
+    name,
+    country,
+    email,
+  ))
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
@@ -755,12 +521,23 @@ let make = (
             <Space />
             <Klarna
               launchKlarna
-              processRequest=processRequestPayLater
+              userData={
+                ?name,
+                ?email,
+                ?country,
+              }
+              paymentMethod
+              paymentExperience
+              errorCallback
+              responseCallback
               return_url={switch nativeProp.hyperParams.appId {
               | Some(id) => Some(id ++ ".hyperswitch://")
               | None => None
               }}
               klarnaSessionTokens=session_token
+              nativeProp
+              allApiData
+              fetchAndRedirect
             />
             <ErrorText text=error />
           </>

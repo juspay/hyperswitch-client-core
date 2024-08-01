@@ -19,11 +19,13 @@ let make = () => {
     clientSecret,
     publishableKey,
   ) => {
-    let errorCallback = (~errorMessage, ~closeSDK, ()) => {
+    let errorCallback = (~errorMessage, ~closeSDK, ~doHandleSuccessFailure=false, ()) => {
       if !closeSDK {
         setLoading(FillingDetails)
       }
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      if doHandleSuccessFailure {
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      }
     }
     let responseCallback = (
       ~paymentStatus: LoadingContext.sdkPaymentState,

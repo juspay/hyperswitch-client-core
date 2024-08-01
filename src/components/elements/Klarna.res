@@ -4,12 +4,26 @@ external toViewRef: React.ref<Nullable.t<'a>> => Ref.t<KlarnaModule.element> = "
 @send external focus: Dom.element => unit = "focus"
 @send external blur: Dom.element => unit = "blur"
 
+// TOD: get a better name for this
+type userDataProp = {
+  name?: string,
+  email?: string,
+  country?: string,
+}
+
 @react.component
 let make = (
   ~launchKlarna: option<PaymentMethodListType.payment_method_types_pay_later>,
   ~return_url,
   ~klarnaSessionTokens: string,
-  ~processRequest: (PaymentMethodListType.payment_method_types_pay_later, string) => unit,
+  ~userData: userDataProp,
+  ~paymentMethod: string,
+  ~paymentExperience: option<PaymentMethodListType.payment_experience_type>,
+  ~errorCallback,
+  ~responseCallback,
+  ~nativeProp,
+  ~allApiData,
+  ~fetchAndRedirect,
 ) => {
   let (_paymentViewLoaded, setpaymentViewLoaded) = React.useState(_ => false)
   let (_token, _) = React.useState(_ => None)
@@ -61,7 +75,21 @@ let make = (
     let params = event.nativeEvent
     if (Platform.os == #ios || params.approved) && params.authToken !== None {
       switch launchKlarna {
-      | Some(prop) => processRequest(prop, params.authToken->Option.getOr(""))
+      | Some(prop) =>
+        ProcessPaymentRequest.processRequestPayLater(
+          ~prop,
+          ~authToken=params.authToken->Option.getOr(""),
+          ~name=userData.name,
+          ~email=userData.email,
+          ~country=userData.country,
+          ~paymentMethod,
+          ~paymentExperience,
+          ~errorCallback,
+          ~responseCallback,
+          ~nativeProp,
+          ~allApiData,
+          ~fetchAndRedirect,
+        )
       | _ =>
         handleSuccessFailure(
           ~apiResStatus={status: "failed", message: "", code: "", type_: ""},

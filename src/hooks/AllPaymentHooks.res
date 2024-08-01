@@ -266,7 +266,7 @@ let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
+  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback: (~errorMessage: error, ~closeSDK: bool, ~doHandleSuccessFailure: bool=?, unit) => unit, ~processor) => {
     BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId)
     ->Promise.then(res => {
       if res.error === Success {
@@ -352,7 +352,7 @@ let useBrowserHook = () => {
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
-  let redirectioBrowserHook = useBrowserHook()
+  let redirectionBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
@@ -363,7 +363,7 @@ let useRedirectHook = () => {
     ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
-    ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
+    ~errorCallback: (~errorMessage: error, ~closeSDK: bool, ~doHandleSuccessFailure: bool=?, unit) => unit,
     ~paymentMethod,
     ~paymentExperience: option<PaymentMethodListType.payment_experience_type>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
@@ -439,7 +439,7 @@ let useRedirectHook = () => {
               ~paymentMethod,
               (),
             )
-            redirectioBrowserHook(
+            redirectionBrowserHook(
               ~clientSecret,
               ~publishableKey,
               ~openUrl=reUri,
