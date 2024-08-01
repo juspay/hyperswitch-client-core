@@ -73,6 +73,12 @@ let defaultConfig = {
       header: "",
       fields: ["name"],
     },
+    {
+      name: "sofort",
+      text: "Sofort",
+      header: "",
+      fields: [],
+    },
     // {
     //   name: "google_pay",
     //   text: "Google Pay",
