@@ -17,6 +17,7 @@ let make = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
   let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
+  let (keyToTrigerButtonClickError, setKeyToTrigerButtonClickError) = React.useState(_ => 0)
   let (savedPaymentMethodsData, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
   )
@@ -99,20 +100,21 @@ let make = (
       (),
     )
   }
+
   let handlePress = _ => {
-    setLoading(ProcessingPayments(None))
-    processRequest(cardVal)
+    isConfirmButtonValid
+      ? {
+          setLoading(ProcessingPayments(None))
+          processRequest(cardVal)
+        }
+      : setKeyToTrigerButtonClickError(prev => prev + 1)
   }
 
   React.useEffect6(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false
-          isAllValuesValid=isConfirmButtonValid
-          handlePress
-          paymentMethod="CARD"
-          errorText=error
+          loading=false isAllValuesValid=true handlePress paymentMethod="CARD" errorText=error
         />,
       )
     }
@@ -123,7 +125,7 @@ let make = (
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
-      <CardElement setIsAllValid=setIsAllCardValuesValid reset=false />
+      <CardElement setIsAllValid=setIsAllCardValuesValid reset=false keyToTrigerButtonClickError />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields
@@ -132,6 +134,7 @@ let make = (
               requiredFields
               isSaveCardsFlow={false}
               savedCardsData=None
+              keyToTrigerButtonClickError
             />
             <Space height=8. />
           </>

@@ -23,6 +23,7 @@ module RenderField = {
     ~statesJson: option<JSON.t>,
     ~country,
     ~finalJson: array<(string, JSON.t, option<string>)>,
+    ~keyToTrigerButtonClickError,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
     let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -146,8 +147,17 @@ module RenderField = {
       setVal(val)
     }
     let onChange = text => {
-      setVal(_ => Some(text))
+      setVal(_ => text)
     }
+    React.useEffect1(() => {
+      keyToTrigerButtonClickError != 0
+        ? {
+            setVal(prev => prev->Option.isNone ? Some("") : prev)
+          }
+        : ()
+      None
+    }, [keyToTrigerButtonClickError])
+
     let isValid = errorMessage->Option.isNone
     let isValidForFocus = isFocus || isValid
 
@@ -183,6 +193,8 @@ module RenderField = {
       ~required_field=required_fields_type.required_field,
     )
     <>
+      // <TextWrapper text={placeholder()} textType=SubheadingBold />
+      // <Space height=5. />
       {switch required_fields_type.field_type {
       | AddressCountry(countryArr) =>
         <CustomPicker
@@ -193,6 +205,7 @@ module RenderField = {
           borderBottomWidth=borderWidth
           items={countryArr->getCountryData}
           placeholderText={placeholder()}
+          isValid
         />
       | AddressState =>
         switch statesJson {
@@ -205,13 +218,14 @@ module RenderField = {
             borderBottomWidth=borderWidth
             items={options->getStateData}
             placeholderText={placeholder()}
+            isValid
           />
         | None => React.null
         }
       | _ =>
         <CustomInput
           state={val->Option.getOr("")}
-          setState={text => onChange(text)}
+          setState={text => onChange(Some(text))}
           placeholder={placeholder()}
           keyboardType={RequiredFieldsTypes.getKeyboardType(
             ~field_type=required_fields_type.field_type,
@@ -253,6 +267,7 @@ module Fields = {
     ~statesJson,
     ~country,
     ~finalJson,
+    ~keyToTrigerButtonClickError,
   ) => {
     fields
     ->Array.mapWithIndex((item, index) =>
@@ -266,6 +281,7 @@ module Fields = {
           statesJson
           country
           finalJson
+          keyToTrigerButtonClickError
         />
       </React.Fragment>
     )
@@ -280,6 +296,7 @@ let make = (
   ~setDynamicFieldsJson,
   ~isSaveCardsFlow=false,
   ~savedCardsData: option<SdkTypes.savedDataType>,
+  ~keyToTrigerButtonClickError,
 ) => {
   // let localeObject = GetLocale.useGetLocalObj()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -368,6 +385,7 @@ let make = (
         statesJson
         country
         finalJson
+        keyToTrigerButtonClickError
       />
       {if requiredFieldsInsideBilling->Array.length > 0 {
         <>
@@ -381,6 +399,7 @@ let make = (
             statesJson
             country
             finalJson
+            keyToTrigerButtonClickError
           />
         </>
       } else {

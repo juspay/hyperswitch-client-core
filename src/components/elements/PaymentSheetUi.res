@@ -19,6 +19,7 @@ let make = (
   ~isExpireDataValid,
   ~isCvvValid,
   ~onScanCard,
+  ~keyToTrigerButtonClickError,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let isCardNumberValid = isCardNumberValid->Option.getOr(true)
@@ -80,6 +81,17 @@ let make = (
     | _ => showAlert(~errorType="warning", ~message="Failed to scan card")
     }
   }
+  React.useEffect1(() => {
+    keyToTrigerButtonClickError != 0
+      ? {
+          onChangeCardNumber(cardNumber, nullRef)
+          onChangeCardExpire(expireDate, nullRef)
+          onChangeCvv(cvv, nullRef)
+        }
+      : ()
+    None
+  }, [keyToTrigerButtonClickError])
+
   let getScanCardComponent = (isScanCardAvailable, cardBrand, cardNumber) => {
     CustomInput.CustomIcon(
       <View style={array([viewStyle(~flexDirection=#row, ~alignItems=#center, ())])}>
