@@ -154,7 +154,7 @@ let make = (
             text=localeObject.saveCardDetails
             isSelected=isNicknameSelected
             setIsSelected=setIsNicknameSelected
-            textType={TextWrapper.ModalTextBold}
+            textType={TextWrapper.ModalText}
             disableScreenSwitch=true
           />
         </>
