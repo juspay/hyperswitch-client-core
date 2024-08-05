@@ -8,6 +8,25 @@ type klarnaSessionCheck = {
   session_token: string,
 }
 
+/**
+`getIndexZeroAndApplyTransform(array, fn)` applies `Option.map` using transformer function `fn` on element at `index 0` of `array`.
+
+### Implementation
+```rescript
+(arr, fn) => arr->Array.get(0)->Option.map(fn)
+```
+*/
+let getIndexZeroAndApplyTransform = (arr, fn) => arr->Array.get(0)->Option.map(fn)
+
+/**
+ This component redirects to payment methods other than Card type.
+ 
+ Payment methods:
+ - WALLET
+ - PAY_LATER
+ - BANK_REDIRECT
+ - CRYPTO
+ */
 @react.component
 let make = (
   ~redirectProp: payment_method,
@@ -34,6 +53,7 @@ let make = (
   let (isNameValid, setIsNameValid) = React.useState(_ => None)
   let (nameIsFocus, setNameIsFocus) = React.useState(_ => false)
   let (country, setCountry) = React.useState(_ => Some(nativeProp.hyperParams.country))
+  let (blikCode, setBlikCode) = React.useState(_ => None)
   let (error, setError) = React.useState(_ => None)
   let (statesJson, setStatesJson) = React.useState(_ => None)
 
@@ -55,15 +75,9 @@ let make = (
 
   let getBankNames = bankNames => {
     bankNames
-    ->Array.map(x => {
-      x.bank_name
-    })
-    ->Array.reduce([], (acc, item) => {
-      acc->Array.concat(item)
-    })
-    ->Array.map(x => {
-      x->JSON.parseExn->JSON.Decode.string->Option.getOr("")
-    })
+    ->Array.map(x => x.bank_name)
+    ->Array.reduce([], (acc, item) => acc->Array.concat(item))
+    ->Array.map(x => x->JSON.parseExn->JSON.Decode.string->Option.getOr(""))
   }
 
   let paymentMethod = switch redirectProp {
@@ -77,18 +91,16 @@ let make = (
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
   | WALLET(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
+    prop.payment_experience->getIndexZeroAndApplyTransform(paymentExperience =>
       paymentExperience.payment_experience_type_decode
     )
-
   | PAY_LATER(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
+    prop.payment_experience->getIndexZeroAndApplyTransform(paymentExperience =>
       paymentExperience.payment_experience_type_decode
     )
-
   | BANK_REDIRECT(_) => None
   | CRYPTO(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
+    prop.payment_experience->getIndexZeroAndApplyTransform(paymentExperience =>
       paymentExperience.payment_experience_type_decode
     )
   }
@@ -101,27 +113,22 @@ let make = (
 
   let bankItems = Bank.bankNameConverter(bankList)
 
-  let bankData: array<customPickerType> = bankItems->Array.map(item => {
-    {
-      name: item.displayName,
-      value: item.hyperSwitch,
-    }
+  let bankData = bankItems->Array.map(item => {
+    name: item.displayName,
+    value: item.hyperSwitch,
   })
 
-  let countryData: array<customPickerType> = Country.country->Array.map(item => {
-    {
-      name: item.countryName,
-      value: item.isoAlpha2,
-      icon: Utils.getCountryFlags(item.isoAlpha2),
-    }
+  let countryData = Country.country->Array.map(item => {
+    name: item.countryName,
+    value: item.isoAlpha2,
+    icon: Utils.getCountryFlags(item.isoAlpha2),
   })
 
-  let (selectedBank, setSelectedBank) = React.useState(_ => Some(
-    switch bankItems->Array.get(0) {
-    | Some(x) => x.displayName
-    | _ => ""
-    },
-  ))
+  let bankDefault = switch bankItems->Array.get(0) {
+  | Some(x) => x.displayName
+  | _ => ""
+  }
+  let (selectedBank, setSelectedBank) = React.useState(_ => Some(bankDefault))
 
   let onChangeCountry = val => {
     setCountry(val)
@@ -136,8 +143,21 @@ let make = (
     )
   }
 
-  let onChangeBank = val => {
-    setSelectedBank(val)
+  let onChangeBank = val => setSelectedBank(val)
+
+  let onChangeBlikCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    let firstPart = onlyNumerics->String.slice(~start=0, ~end=3)
+    let secondPart = onlyNumerics->String.slice(~start=3, ~end=6)
+
+    let finalVal = if onlyNumerics->String.length <= 3 {
+      firstPart
+    } else if onlyNumerics->String.length > 3 && onlyNumerics->String.length <= 6 {
+      `${firstPart}-${secondPart}`
+    } else {
+      onlyNumerics
+    }
+    setBlikCode(_ => Some(finalVal))
   }
 
   let {isKlarna, session_token} = React.useMemo1(() => {
@@ -173,23 +193,10 @@ let make = (
     switch paymentStatus {
     | PaymentSuccess => {
         setLoading(PaymentSuccess)
-        setTimeout(() => {
-          handleSuccessFailure(~apiResStatus=status, ())
-        }, 300)->ignore
+        setTimeout(() => handleSuccessFailure(~apiResStatus=status, ()), 300)->ignore
       }
     | _ => handleSuccessFailure(~apiResStatus=status, ())
     }
-    /* setLoading(PaymentSuccess)
-    animateFlex(
-      ~flexval=buttomFlex,
-      ~value=0.01,
-      ~endCallback=() => {
-        setTimeout(() => {
-          handleSuccessFailure(~apiResStatus=status, ())
-        }, 300)->ignore
-      },
-      (),
-    ) */
   }
 
   let confirmPayPal = var => {
@@ -197,27 +204,23 @@ let make = (
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.Encode.string
-      let paymentData = [("token", json)]->Dict.fromArray->JSON.Encode.object
+      let paymentData = [("token", json)]->Utils.getDictFromArray
       let payment_method_data =
         [
           (
             walletType.payment_method,
-            [(walletType.payment_method_type ++ "_sdk", paymentData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
+            [(walletType.payment_method_type ++ "_sdk", paymentData)]->Utils.getDictFromArray,
           ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ]->Utils.getDictFromArray
       ProcessPaymentRequest.processRequest(
         ~payment_method=walletType.payment_method,
         ~payment_method_data,
         ~payment_method_type=paymentMethod,
-        ~payment_experience_type=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.payment_experience_type
+        ~payment_experience_type=?walletType.payment_experience->getIndexZeroAndApplyTransform(
+          paymentExperience => paymentExperience.payment_experience_type,
         ),
-        ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.eligible_connectors
+        ~eligible_connectors=?walletType.payment_experience->getIndexZeroAndApplyTransform(
+          paymentExperience => paymentExperience.eligible_connectors,
         ),
         ~errorCallback,
         ~responseCallback,
@@ -248,22 +251,20 @@ let make = (
         [
           (
             walletType.payment_method,
-            [(walletType.payment_method_type, obj.paymentMethodData->ButtonElement.parser)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
+            [
+              (walletType.payment_method_type, obj.paymentMethodData->ButtonElement.parser),
+            ]->Utils.getDictFromArray,
           ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ]->Utils.getDictFromArray
       ProcessPaymentRequest.processRequest(
         ~payment_method=walletType.payment_method,
         ~payment_method_data,
         ~payment_method_type=paymentMethod,
-        ~payment_experience_type=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.payment_experience_type
+        ~payment_experience_type=?walletType.payment_experience->getIndexZeroAndApplyTransform(
+          paymentExperience => paymentExperience.payment_experience_type,
         ),
-        ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-          paymentExperience.eligible_connectors
+        ~eligible_connectors=?walletType.payment_experience->getIndexZeroAndApplyTransform(
+          paymentExperience => paymentExperience.eligible_connectors,
         ),
         ~errorCallback,
         ~responseCallback,
@@ -291,11 +292,7 @@ let make = (
   }
 
   let confirmApplePay = var => {
-    switch var
-    ->Dict.get("status")
-    ->Option.getOr(JSON.Encode.null)
-    ->JSON.Decode.string
-    ->Option.getOr("") {
+    switch var->Utils.getString("status", "") {
     | "Cancelled" => {
         let error: PaymentConfirmTypes.error = {
           message: "Cancelled",
@@ -337,29 +334,25 @@ let make = (
             ("payment_data", payment_data),
             ("payment_method", payment_method),
             ("transaction_identifier", transaction_identifier),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
 
         let payment_method_data =
           [
             (
               walletType.payment_method,
-              [(walletType.payment_method_type, paymentData)]->Dict.fromArray->JSON.Encode.object,
+              [(walletType.payment_method_type, paymentData)]->Utils.getDictFromArray,
             ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
 
         ProcessPaymentRequest.processRequest(
           ~payment_method=walletType.payment_method,
           ~payment_method_data,
           ~payment_method_type=paymentMethod,
-          ~payment_experience_type=?walletType.payment_experience[0]->Option.map(
+          ~payment_experience_type=?walletType.payment_experience->getIndexZeroAndApplyTransform(
             paymentExperience => paymentExperience.payment_experience_type,
           ),
-          ~eligible_connectors=?walletType.payment_experience[0]->Option.map(paymentExperience =>
-            paymentExperience.eligible_connectors
+          ~eligible_connectors=?walletType.payment_experience->getIndexZeroAndApplyTransform(
+            paymentExperience => paymentExperience.eligible_connectors,
           ),
           ~errorCallback,
           ~responseCallback,
@@ -400,6 +393,7 @@ let make = (
         ~country,
         ~selectedBank,
         ~name,
+        ~blikCode,
         ~paymentMethod,
         ~paymentExperience,
         ~responseCallback,
@@ -462,8 +456,8 @@ let make = (
   }
   let hasSomeFields = fields.fields->Array.length > 0
   let isAllValuesValid = React.useMemo3(() => {
-    ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
-      fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
+    ((fields.fields->Array.includes(Email) ? isEmailValid->Option.getOr(false) : true) && (
+      fields.fields->Array.includes(Name) ? isNameValid->Option.getOr(false) : true
     )) || (fields.name == "klarna" && isKlarna)
   }, (isEmailValid, isNameValid, sessionData))
 
@@ -479,7 +473,6 @@ let make = (
       Promise.resolve()
     })
     ->ignore
-
     None
   })
 
@@ -505,6 +498,7 @@ let make = (
     paymentExperience,
     isScreenFocus,
     error,
+    blikCode,
     name,
     country,
     email,
@@ -547,7 +541,7 @@ let make = (
               <View key={`field-${fields.text}${index->Int.toString}`}>
                 <Space />
                 {switch field {
-                | "email" =>
+                | Email =>
                   <CustomInput
                     state={email->Option.getOr("")}
                     setState={handlePressEmail}
@@ -562,27 +556,19 @@ let make = (
                     borderLeftWidth=borderWidth
                     borderRightWidth=borderWidth
                     isValid=isEmailValidForFocus
-                    onFocus={_ => {
-                      setEmailIsFocus(_ => true)
-                    }}
-                    onBlur={_ => {
-                      setEmailIsFocus(_ => false)
-                    }}
+                    onFocus={_ => setEmailIsFocus(_ => true)}
+                    onBlur={_ => setEmailIsFocus(_ => false)}
                     textColor=component.color
                   />
-                | "name" =>
+                | Name =>
                   <CustomInput
                     state={name->Option.getOr("")}
                     setState={handlePressName}
                     placeholder=localeObject.fullNameLabel
                     keyboardType=#default
                     isValid=isNameValidForFocus
-                    onFocus={_ => {
-                      setNameIsFocus(_ => true)
-                    }}
-                    onBlur={_ => {
-                      setNameIsFocus(_ => false)
-                    }}
+                    onFocus={_ => setNameIsFocus(_ => true)}
+                    onBlur={_ => setNameIsFocus(_ => false)}
                     textColor=component.color
                     borderBottomLeftRadius=borderRadius
                     borderBottomRightRadius=borderRadius
@@ -593,7 +579,7 @@ let make = (
                     borderLeftWidth=borderWidth
                     borderRightWidth=borderWidth
                   />
-                | "country" =>
+                | Country =>
                   <CustomPicker
                     value=country
                     setValue=onChangeCountry
@@ -603,7 +589,7 @@ let make = (
                     items=countryData
                     placeholderText=localeObject.countryLabel
                   />
-                | "bank" =>
+                | Bank =>
                   <CustomPicker
                     value=selectedBank
                     setValue=onChangeBank
@@ -613,7 +599,17 @@ let make = (
                     items=bankData
                     placeholderText=localeObject.bankLabel
                   />
-                | _ => React.null
+                | BlikCode =>
+                  <CustomInput
+                    state={blikCode->Option.getOr("")}
+                    setState={onChangeBlikCode}
+                    borderBottomLeftRadius=borderRadius
+                    borderBottomRightRadius=borderRadius
+                    borderBottomWidth=borderWidth
+                    placeholder="000-000"
+                    keyboardType=#numeric
+                    maxLength=Some(7)
+                  />
                 }}
               </View>
             )

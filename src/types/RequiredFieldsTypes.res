@@ -223,8 +223,7 @@ let checkIsValid = (
       switch text->ValidationFunctions.isValidEmail {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
-      | None => 
-        Some(localeObject.emailEmptyText)
+      | None => Some(localeObject.emailEmptyText)
       }
     | _ => None
     }
@@ -399,7 +398,7 @@ let mergeTwoFlattenedJsonDicts = (dict1, dict2) => {
       //to remove undefined values
       val->JSON.stringifyAny->Option.isSome && val->JSON.Classify.classify != Null
     })
-  dict1Entries->Array.concat(dict2Entries)->Dict.fromArray->JSON.Encode.object->unflattenObject
+  dict1Entries->Array.concat(dict2Entries)->Utils.getDictFromArray->unflattenObject
 }
 
 let getIsBillingField = requiredFieldType => {

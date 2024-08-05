@@ -44,8 +44,8 @@ let useApiLogWrapper = () => {
     }
     logger(
       ~logType,
-      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-      ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~value=value->Utils.getDictFromArray->JSON.stringify,
+      ~internalMetadata=internalMetadata->Utils.getDictFromArray->JSON.stringify,
       ~category=API,
       ~eventName,
       ~paymentMethod?,
@@ -101,8 +101,7 @@ let useSessionToken = () => {
           ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
           ("wallets", wallet->JSON.Encode.array),
         ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ->Utils.getDictFromArray
         ->JSON.stringify
       apiLogWrapper(
         ~logType=INFO,
@@ -136,9 +135,7 @@ let useSessionToken = () => {
                 ("url", url->JSON.Encode.string),
                 ("statusCode", statusCode->JSON.Encode.string),
                 ("response", error),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
+              ]->Utils.getDictFromArray
             apiLogWrapper(
               ~logType=ERROR,
               ~eventName=SESSIONS_CALL,
@@ -229,9 +226,7 @@ let useRetrieveHook = () => {
                 ("url", uri->JSON.Encode.string),
                 ("statusCode", statusCode->JSON.Encode.string),
                 ("response", error),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
+              ]->Utils.getDictFromArray
 
             apiLogWrapper(
               ~logType=ERROR,
@@ -266,7 +261,19 @@ let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback: (~errorMessage: error, ~closeSDK: bool, ~doHandleSuccessFailure: bool=?, unit) => unit, ~processor) => {
+  (
+    ~clientSecret,
+    ~publishableKey,
+    ~openUrl,
+    ~responseCallback,
+    ~errorCallback: (
+      ~errorMessage: error,
+      ~closeSDK: bool,
+      ~doHandleSuccessFailure: bool=?,
+      unit,
+    ) => unit,
+    ~processor,
+  ) => {
     BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId)
     ->Promise.then(res => {
       if res.error === Success {
@@ -363,7 +370,12 @@ let useRedirectHook = () => {
     ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
-    ~errorCallback: (~errorMessage: error, ~closeSDK: bool, ~doHandleSuccessFailure: bool=?, unit) => unit,
+    ~errorCallback: (
+      ~errorMessage: error,
+      ~closeSDK: bool,
+      ~doHandleSuccessFailure: bool=?,
+      unit,
+    ) => unit,
     ~paymentMethod,
     ~paymentExperience: option<PaymentMethodListType.payment_experience_type>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
@@ -525,9 +537,7 @@ let useRedirectHook = () => {
                       ("url", uri->JSON.Encode.string),
                       ("statusCode", statusCode->JSON.Encode.string),
                       ("response", error),
-                    ]
-                    ->Dict.fromArray
-                    ->JSON.Encode.object
+                    ]->Utils.getDictFromArray
 
                   apiLogWrapper(
                     ~logType=ERROR,
@@ -599,9 +609,7 @@ let useRedirectHook = () => {
                   ("url", uri->JSON.Encode.string),
                   ("statusCode", statusCode->JSON.Encode.string),
                   ("response", error),
-                ]
-                ->Dict.fromArray
-                ->JSON.Encode.object
+                ]->Utils.getDictFromArray
 
               apiLogWrapper(
                 ~logType=ERROR,
@@ -693,9 +701,7 @@ let useGetSavedPMHook = () => {
               ("url", uri->JSON.Encode.string),
               ("statusCode", statusCode->JSON.Encode.string),
               ("response", error),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
+            ]->Utils.getDictFromArray
 
           apiLogWrapper(
             ~logType=ERROR,

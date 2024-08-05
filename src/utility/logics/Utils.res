@@ -52,6 +52,23 @@ let getArrayFromDict = (dict, key, default) => {
   dict->getOptionalArrayFromDict(key)->Option.getOr(default)
 }
 
+/**
+Get an object from array
+
+## Example
+```rescript
+let arr = [
+  ("a", "b"->JSON.Encode.string),
+  ("c", "d"->JSON.Encode.string),
+]
+
+let dict = arr->getDictFromArray // {"a":"b","c":"d"}
+```
+*/
+let getDictFromArray = array => {
+  array->Dict.fromArray->JSON.Encode.object
+}
+
 let getDictFromJson = (json: JSON.t) => {
   json->JSON.Decode.object->Option.getOr(Dict.make())
 }

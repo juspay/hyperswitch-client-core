@@ -71,8 +71,8 @@ let logWrapper = (
     version: "repoVersion",
     codePushVersion: LoggerHook.getCodePushVersionNoFromRef(),
     component: MOBILE,
-    value: value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-    internalMetadata: internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+    value: value->Utils.getDictFromArray->JSON.stringify,
+    internalMetadata: internalMetadata->Utils.getDictFromArray->JSON.stringify,
     category,
     paymentId,
     merchantId: publishableKey,
@@ -169,9 +169,7 @@ let savedPaymentMethodAPICall = nativeProp => {
             ("url", uri->JSON.Encode.string),
             ("statusCode", statusCode->JSON.Encode.string),
             ("response", error),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
 
         logWrapper(
           ~logType=ERROR,
@@ -233,8 +231,7 @@ let sessionAPICall = nativeProp => {
       ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
       ("wallets", []->JSON.Encode.array),
     ]
-    ->Dict.fromArray
-    ->JSON.Encode.object
+    ->Utils.getDictFromArray
     ->JSON.stringify
 
   let initTimestamp = Date.now()
@@ -290,9 +287,7 @@ let sessionAPICall = nativeProp => {
             ("url", uri->JSON.Encode.string),
             ("statusCode", statusCode->JSON.Encode.string),
             ("response", error),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
         logWrapper(
           ~logType=ERROR,
           ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
@@ -399,9 +394,7 @@ let confirmAPICall = (nativeProp, body) => {
             ("url", uri->JSON.Encode.string),
             ("statusCode", statusCode->JSON.Encode.string),
             ("response", error),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
 
         logWrapper(
           ~logType=ERROR,
