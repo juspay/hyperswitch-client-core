@@ -262,14 +262,14 @@ let make = (
       ),
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
-        accept_header: "",
-        language: "",
-        color_depth: 0,
-        java_enabled: true,
-        java_script_enabled: true,
-        screen_height: 932,
-        screen_width: 430,
-        time_zone: -330,
+        // accept_header: "",
+        // language: "",
+        // color_depth: 0,
+        // java_enabled: true,
+        // java_script_enabled: true,
+        // screen_height: 932,
+        // screen_width: 430,
+        // time_zone: -330,
       },
     }
 
