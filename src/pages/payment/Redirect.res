@@ -262,8 +262,9 @@ let make = (
       ),
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
+        language: ?nativeProp.configuration.appearance.locale,
+        // TODO: Remove these hardcoded values and get actual values from web-view (iOS and android)
         // accept_header: "",
-        // language: "",
         // color_depth: 0,
         // java_enabled: true,
         // java_script_enabled: true,
@@ -828,7 +829,8 @@ let make = (
       blikCode, 
       name,
       email,
-      country
+      country,
+      selectedBank,
     ),
   )
 
