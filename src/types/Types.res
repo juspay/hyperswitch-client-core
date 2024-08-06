@@ -73,6 +73,12 @@ let defaultConfig = {
       header: "",
       fields: ["name"],
     },
+    {
+      name: "trustly",
+      text: "Trustly",
+      header: "",
+      fields: ["country"],
+    },
     // {
     //   name: "google_pay",
     //   text: "Google Pay",
