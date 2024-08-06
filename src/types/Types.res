@@ -80,6 +80,12 @@ let defaultConfig = {
       fields: ["name"],
     },
     {
+      name: "trustly",
+      text: "Trustly",
+      header: "",
+      fields: ["country"],
+    },
+    {
       name: "sofort",
       text: "Sofort",
       header: "",
