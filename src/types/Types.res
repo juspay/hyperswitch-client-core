@@ -50,6 +50,12 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "eps",
+      text: "EPS",
+      header: "",
+      fields: ["bank"],
+    },
+    {
       name: "we_chat_pay",
       text: "WeChat Pay",
       header: "",
