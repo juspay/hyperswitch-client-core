@@ -378,7 +378,7 @@ let make = (
           ->JSON.Encode.object
         processRequest(
           ~payment_method_data,
-          ~email=?switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+          ~email=?switch var->GooglePayTypeNew.getBillingContact("shipping_contact", statesJson) {
           | Some(billing) => billing.email
           | None => None
           },
