@@ -73,7 +73,7 @@ module ErrorBoundary = {
   }
 }
 
-let initiateSentry = (~dsn) => {
+let initiateSentry = (~dsn: option<string>) => {
   try {
     let integrations =
       ReactNative.Platform.os === #web
@@ -86,11 +86,15 @@ let initiateSentry = (~dsn) => {
             newSentryReplay(),
           ]
         : []
-    sentryReactNative.init({
-      dsn,
-      integrations,
-      tracesSampleRate: 1.0,
-    })
+    switch dsn {
+    | Some(dsn) =>
+      sentryReactNative.init({
+        dsn,
+        integrations,
+        tracesSampleRate: 1.0,
+      })
+    | None => ()
+    }
   } catch {
   | _ => ()
   }
