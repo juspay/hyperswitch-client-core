@@ -49,6 +49,25 @@ let make = (
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
 
+  let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
+  let (isInitialised, setIsInitialised) = React.useState(_ => false)
+
+  React.useEffect1(() => {
+    if (
+      Platform.os == #android &&
+      isInitialised &&
+      allApiData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
+      cardData.cardNumber->String.length > 0
+    ) {
+      setIsInitialised(_ => true)
+      initialiseNetcetera(
+        ~netceteraSDKApiKey=nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
+        ~sdkEnvironment=nativeProp.env,
+      )
+    }
+    None
+  }, [cardData.cardNumber])
+
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       if !closeSDK {
@@ -154,7 +173,7 @@ let make = (
             text=localeObject.saveCardDetails
             isSelected=isNicknameSelected
             setIsSelected=setIsNicknameSelected
-            textType={TextWrapper.ModalText}
+            textType={ModalText}
             disableScreenSwitch=true
           />
         </>
