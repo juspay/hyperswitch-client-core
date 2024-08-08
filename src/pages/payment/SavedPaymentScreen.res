@@ -137,7 +137,7 @@ let make = (
             ~endCallback=() => {
               setTimeout(() => {
                 handleSuccessFailure(~apiResStatus=status, ())
-              }, 1500)->ignore
+              }, 600)->ignore
             },
             (),
           )

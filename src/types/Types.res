@@ -50,8 +50,26 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "eps",
+      text: "EPS",
+      header: "",
+      fields: ["bank"],
+    },
+    {
       name: "we_chat_pay",
       text: "WeChat Pay",
+      header: "",
+      fields: [],
+    },
+    {
+      name: "blik",
+      text: "Blik",
+      header: "",
+      fields: ["blik_code"],
+    },
+    {
+      name: "ideal",
+      text: "iDEAL",
       header: "",
       fields: [],
     },
@@ -60,6 +78,18 @@ let defaultConfig = {
       text: "Crypto",
       header: "",
       fields: ["name"],
+    },
+    {
+      name: "trustly",
+      text: "Trustly",
+      header: "",
+      fields: ["country"],
+    },
+    {
+      name: "sofort",
+      text: "Sofort",
+      header: "",
+      fields: [],
     },
     // {
     //   name: "google_pay",

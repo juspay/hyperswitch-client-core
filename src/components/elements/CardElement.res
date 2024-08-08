@@ -7,7 +7,12 @@ external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 @react.component
-let make = (~setIsAllValid, ~viewType=PaymentSheet, ~reset: bool) => {
+let make = (
+  ~setIsAllValid,
+  ~viewType=PaymentSheet,
+  ~reset: bool,
+  ~keyToTrigerButtonClickError=0,
+) => {
   let isZipAvailable = switch viewType {
   | CardForm(cardFormType) => cardFormType.isZipAvailable
   | _ => false
@@ -151,6 +156,7 @@ let make = (~setIsAllValid, ~viewType=PaymentSheet, ~reset: bool) => {
         isCardNumberValid=cardData.isCardNumberValid
         isExpireDataValid=cardData.isExpireDataValid
         isCvvValid=cardData.isCvvValid
+        keyToTrigerButtonClickError
       />
     | CardForm(_) =>
       <CardFormUi

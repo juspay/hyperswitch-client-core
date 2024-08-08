@@ -74,9 +74,9 @@ let make = () => {
       // },
       payment_method: prop.payment_method,
       payment_method_type: prop.payment_method_type,
-      connector: prop.card_networks[0]->Option.mapOr([], card_network =>
-        card_network.eligible_connectors
-      ),
+      connector: prop.card_networks
+      ->Array.get(0)
+      ->Option.mapOr([], card_network => card_network.eligible_connectors),
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,

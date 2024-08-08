@@ -121,7 +121,7 @@ let make = (~text=?, ~textType: textType, ~children: option<React.element>=?) =>
       textStyle(
         ~color=payNowButtonTextColor,
         ~fontSize=17. +. buttonTextSizeAdjust,
-        ~fontWeight=FontWeight._500,
+        ~fontWeight=FontWeight._600,
         (),
       ),
     ])

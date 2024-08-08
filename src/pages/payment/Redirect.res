@@ -77,20 +77,20 @@ let make = (
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
   | WALLET(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    )
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
 
   | PAY_LATER(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    )
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
 
   | BANK_REDIRECT(_) => None
   | CRYPTO(prop) =>
-    prop.payment_experience[0]->Option.map(paymentExperience =>
-      paymentExperience.payment_experience_type_decode
-    )
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   }
 
   let bankList = switch paymentMethod {
@@ -118,7 +118,7 @@ let make = (
 
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(
     switch bankItems->Array.get(0) {
-    | Some(x) => x.displayName
+    | Some(x) => x.hyperSwitch
     | _ => ""
     },
   ))
@@ -274,19 +274,12 @@ let make = (
         ~fetchAndRedirect,
         (),
       )
-    | "Cancel" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Payment was Cancelled",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-      }
-    | err => {
-        let error: PaymentConfirmTypes.error = {
-          message: err,
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some(err))
-      }
+    | "Cancel" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Payment was Cancelled"))
+    | err =>
+      setLoading(FillingDetails)
+      setError(_ => Some(err))
     }
   }
 

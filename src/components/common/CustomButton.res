@@ -145,7 +145,7 @@ let make = (
         ~borderRadius,
         ~borderWidth,
         ~borderColor,
-        // ~overflow=#hidden,
+        ~overflow=#hidden,
         ~backgroundColor=bgColor1,
         (),
       ),
