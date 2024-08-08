@@ -1,3 +1,5 @@
+open PaymentMethodListType
+
 let processRequest = (
   ~payment_method_data,
   ~payment_method,
@@ -13,7 +15,7 @@ let processRequest = (
   ~fetchAndRedirect,
   (),
 ) => {
-  let body: PaymentMethodListType.redirectType = {
+  let body: redirectType = {
     client_secret: nativeProp.clientSecret,
     return_url: ?switch nativeProp.hyperParams.appId {
     | Some(id) => Some(id ++ ".hyperswitch://")
@@ -42,6 +44,15 @@ let processRequest = (
     ),
     browser_info: {
       user_agent: ?nativeProp.hyperParams.userAgent,
+      language: ?nativeProp.configuration.appearance.locale,
+      // TODO: Remove these hardcoded values and get actual values from web-view (iOS and android)
+      // accept_header: "",
+      // color_depth: 0,
+      // java_enabled: true,
+      // java_script_enabled: true,
+      // screen_height: 932,
+      // screen_width: 430,
+      // time_zone: -330,
     },
   }
 
@@ -58,7 +69,7 @@ let processRequest = (
 }
 
 let processRequestPayLater = (
-  ~prop: PaymentMethodListType.payment_method_types_pay_later,
+  ~prop: payment_method_types_pay_later,
   ~authToken,
   ~name,
   ~email,
@@ -67,14 +78,12 @@ let processRequestPayLater = (
   ~paymentExperience,
   ~errorCallback,
   ~responseCallback,
+  ~setLoading,
   ~nativeProp: SdkTypes.nativeProp,
   ~allApiData: AllApiDataContext.allApiData,
   ~fetchAndRedirect,
 ) => {
-  let payment_experience_type_decode =
-    authToken == "redirect"
-      ? PaymentMethodListType.REDIRECT_TO_URL
-      : PaymentMethodListType.INVOKE_SDK_CLIENT
+  let payment_experience_type_decode = authToken == "redirect" ? REDIRECT_TO_URL : INVOKE_SDK_CLIENT
   switch prop.payment_experience->Array.find(exp =>
     exp.payment_experience_type_decode === payment_experience_type_decode
   ) {
@@ -119,12 +128,25 @@ let processRequestPayLater = (
       ~fetchAndRedirect,
       (),
     )
-  | None => ()
-  }->ignore
+  | None => setLoading(LoadingContext.FillingDetails)
+  // TODO: setup this logger
+  // logger(
+  //   ~logType=DEBUG,
+  //   ~value=walletType.payment_method_type,
+  //   ~category=USER_EVENT,
+  //   ~paymentMethod=walletType.payment_method_type,
+  //   ~eventName=NO_WALLET_ERROR,
+  //   ~paymentExperience=?walletType.payment_experience
+  //   ->Array.get(0)
+  //   ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+  //   (),
+  // )
+  // showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+  }
 }
 
 let processRequestBankRedirect = (
-  ~prop: PaymentMethodListType.payment_method_types_bank_redirect,
+  ~prop: payment_method_types_bank_redirect,
   ~country,
   ~selectedBank,
   ~name,
@@ -182,11 +204,11 @@ let processRequestBankRedirect = (
 }
 
 let processRequestCrypto = (
-  prop: PaymentMethodListType.payment_method_types_pay_later,
-  paymentMethod,
-  paymentExperience,
-  responseCallback,
-  errorCallback,
+  ~prop: payment_method_types_pay_later,
+  ~paymentMethod,
+  ~paymentExperience,
+  ~responseCallback,
+  ~errorCallback,
   ~nativeProp: SdkTypes.nativeProp,
   ~allApiData: AllApiDataContext.allApiData,
   ~fetchAndRedirect,
@@ -215,18 +237,14 @@ let processRequestCrypto = (
 
 let processRequestWallet = (
   ~env: GlobalVars.envType,
-  ~wallet: PaymentMethodListType.payment_method_types_wallet,
+  ~wallet: payment_method_types_wallet,
+  ~setLoading,
   ~setError,
   ~sessionObject: SessionsType.sessions,
   ~confirmGPay,
   ~confirmPayPal,
   ~confirmApplePay,
-  ~errorCallback: (
-    ~errorMessage: PaymentConfirmTypes.error,
-    ~closeSDK: bool,
-    ~doHandleSuccessFailure: bool=?,
-    unit,
-  ) => unit,
+  ~errorCallback,
   ~responseCallback,
   ~paymentMethod,
   ~paymentExperience,
@@ -246,7 +264,11 @@ let processRequestWallet = (
         confirmGPay,
       )
     | PAYPAL =>
-      if sessionObject.session_token !== "" && ReactNative.Platform.os == #android {
+      if (
+        sessionObject.session_token !== "" &&
+        ReactNative.Platform.os == #android &&
+        PaypalModule.payPalModule->Option.isSome
+      ) {
         PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
       } else {
         let redirectData = []->Dict.fromArray->JSON.Encode.object
@@ -301,26 +323,20 @@ let processRequestWallet = (
         sessionObject.session_token_data == JSON.Encode.null ||
           sessionObject.payment_request_data == JSON.Encode.null
       ) {
-        let error: PaymentConfirmTypes.error = {
-          message: "Waiting for Sessions API",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+        setLoading(LoadingContext.FillingDetails)
         setError(_ => Some("Waiting for Sessions API"))
       } else {
         let timerId = setTimeout(() => {
-          let error: PaymentConfirmTypes.error = {
-            message: "Apple Pay Error, Please try again",
-          }
-          errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-          setError(_ => Some("Apple Pay Error, Please try again"))
-          logger(
-            ~logType=LoggerHook.DEBUG,
-            ~value="apple_pay",
-            ~category=LoggerHook.USER_EVENT,
-            ~paymentMethod="apple_pay",
-            ~eventName=LoggerHook.APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-            (),
-          )
+            setLoading(FillingDetails)
+            setError(_ => Some("Apple Pay Error, Please try again"))
+            logger(
+              ~logType=DEBUG,
+              ~value="apple_pay",
+              ~category=USER_EVENT,
+              ~paymentMethod="apple_pay",
+              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+              (),
+            )
         }, 5000)
         HyperModule.launchApplePay(
           [
@@ -340,9 +356,7 @@ let processRequestWallet = (
               ~eventName=LoggerHook.APPLE_PAY_BRIDGE_SUCCESS,
               (),
             ),
-          _ => {
-            clearTimeout(timerId)
-          },
+          _ => clearTimeout(timerId),
         )
       }
     | _ => ()
@@ -374,5 +388,18 @@ let processRequestWallet = (
       (),
     )
   | _ => ()
+      //   logger(
+      //   ~logType=DEBUG,
+      //   ~value=walletType.payment_method_type,
+      //   ~category=USER_EVENT,
+      //   ~paymentMethod=walletType.payment_method_type,
+      //   ~eventName=NO_WALLET_ERROR,
+      //   ~paymentExperience=?walletType.payment_experience
+      //   ->Array.get(0)
+      //   ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      //   (),
+      // )
+      // setLoading(FillingDetails)
+      // showAlert(~errorType="warning", ~message="Payment Method Unavailable")
   }
 }

@@ -25,12 +25,12 @@ let make = (
   ~allApiData,
   ~fetchAndRedirect,
 ) => {
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+
   let (_paymentViewLoaded, setpaymentViewLoaded) = React.useState(_ => false)
   let (_token, _) = React.useState(_ => None)
-  let paymentMethods = ["pay_later"] //["pay_now", "pay_later", "pay_over_time", "pay_in_parts"]
-
   let refs = React.useRef(Nullable.null)
-  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
   React.useEffect1(() => {
     switch refs.current->Nullable.toOption {
@@ -44,6 +44,8 @@ let make = (
     }
     None
   }, [refs])
+
+  let paymentMethods = ["pay_later"] //["pay_now", "pay_later", "pay_over_time", "pay_in_parts"]
 
   let onInitialized = () => {
     switch refs.current->Nullable.toOption {
@@ -86,6 +88,7 @@ let make = (
           ~paymentExperience,
           ~errorCallback,
           ~responseCallback,
+          ~setLoading,
           ~nativeProp,
           ~allApiData,
           ~fetchAndRedirect,

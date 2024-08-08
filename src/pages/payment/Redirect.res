@@ -151,12 +151,7 @@ let make = (
     }
   }, [sessionData])
 
-  let errorCallback = (
-    ~errorMessage: PaymentConfirmTypes.error,
-    ~closeSDK,
-    ~doHandleSuccessFailure=true,
-    (),
-  ) => {
+  let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
     if !closeSDK {
       setLoading(FillingDetails)
       switch errorMessage.message {
@@ -164,9 +159,7 @@ let make = (
       | None => ()
       }
     }
-    if doHandleSuccessFailure {
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-    }
+    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
   }
 
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
@@ -228,12 +221,9 @@ let make = (
         ~fetchAndRedirect,
         (),
       )
-    | "User has canceled" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Payment was Cancelled",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-      }
+    | "User has canceled" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Payment was Cancelled"))
     | err => setError(_ => Some(err))
     }
   }
@@ -289,27 +279,15 @@ let make = (
     ->Option.getOr(JSON.Encode.null)
     ->JSON.Decode.string
     ->Option.getOr("") {
-    | "Cancelled" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Cancelled",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some("Cancelled"))
-      }
-    | "Failed" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Failed",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some("Failed"))
-      }
-    | "Error" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Error",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some("Error"))
-      }
+    | "Cancelled" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Cancelled"))
+    | "Failed" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Failed"))
+    | "Error" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Error"))
     | _ =>
       let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
 
@@ -319,10 +297,7 @@ let make = (
         var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
       if transaction_identifier->JSON.stringify == "Simulated Identifier" {
-        let error: PaymentConfirmTypes.error = {
-          message: "Apple Pay is not supported in Simulated Environment",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+        setLoading(FillingDetails)
         setError(_ => Some("Apple Pay is not supported in Simulated Environment"))
       } else {
         let paymentData =
@@ -383,6 +358,7 @@ let make = (
             ~paymentExperience,
             ~errorCallback,
             ~responseCallback,
+            ~setLoading,
             ~nativeProp,
             ~allApiData,
             ~fetchAndRedirect,
@@ -403,11 +379,11 @@ let make = (
       )
     | CRYPTO(prop) =>
       ProcessPaymentRequest.processRequestCrypto(
-        prop,
-        paymentMethod,
-        paymentExperience,
-        responseCallback,
-        errorCallback,
+        ~prop,
+        ~paymentMethod,
+        ~paymentExperience,
+        ~responseCallback,
+        ~errorCallback,
         ~nativeProp,
         ~allApiData,
         ~fetchAndRedirect,
@@ -416,6 +392,7 @@ let make = (
       ProcessPaymentRequest.processRequestWallet(
         ~env=nativeProp.env,
         ~wallet=prop,
+        ~setLoading,
         ~setError,
         ~sessionObject,
         ~confirmGPay,

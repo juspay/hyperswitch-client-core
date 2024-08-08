@@ -69,7 +69,7 @@ let make = (
   }, [cardData.cardNumber])
 
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
-    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ~doHandleSuccessFailure=false, ()) => {
+    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       if !closeSDK {
         setLoading(FillingDetails)
         switch errorMessage.message {
@@ -77,9 +77,7 @@ let make = (
         | None => ()
         }
       }
-      if doHandleSuccessFailure {
-        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-      }
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       switch paymentStatus {
