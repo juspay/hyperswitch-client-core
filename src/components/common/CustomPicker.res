@@ -17,6 +17,7 @@ let make = (
   ~disabled=false,
   ~placeholderText,
   ~items: array<customPickerType>,
+  ~isValid=true,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -48,6 +49,7 @@ let make = (
         borderBottomLeftRadius
         borderBottomRightRadius
         borderBottomWidth
+        isValid
         borderTopWidth=borderWidth
         borderLeftWidth=borderWidth
         borderRightWidth=borderWidth

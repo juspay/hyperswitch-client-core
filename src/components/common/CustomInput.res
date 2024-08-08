@@ -152,7 +152,7 @@ let make = (
         onChangeText={text => {
           logger(
             ~logType=INFO,
-            ~value=placeholder,
+            ~value=text,
             ~category=USER_EVENT,
             ~eventName=INPUT_FIELD_CHANGED,
             (),

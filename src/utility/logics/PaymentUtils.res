@@ -78,7 +78,9 @@ let generateCardConfirmBody = (
     // },
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
-    connector: ?prop.card_networks[0]->Option.map(cardNetwork => cardNetwork.eligible_connectors),
+    connector: ?(
+      prop.card_networks->Array.get(0)->Option.map(cardNetwork => cardNetwork.eligible_connectors)
+    ),
     ?payment_method_data,
     ?payment_token,
     billing: ?nativeProp.configuration.defaultBillingDetails,

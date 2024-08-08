@@ -17,6 +17,7 @@ let make = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
   let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
+  let (keyToTrigerButtonClickError, setKeyToTrigerButtonClickError) = React.useState(_ => 0)
   let (savedPaymentMethodsData, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
   )
@@ -31,7 +32,7 @@ let make = (
   let (nickname, setNickname) = React.useState(_ => None)
 
   // Validity Hooks
-  let (isAllCardVlauesValid, setIsAllCardVlauesValid) = React.useState(_ => false)
+  let (isAllCardValuesValid, setIsAllCardValuesValid) = React.useState(_ => false)
   let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
   let requiredFields = cardVal.required_field->Array.filter(val => {
     switch val.field_type {
@@ -46,10 +47,29 @@ let make = (
   )> => [])
   let (error, setError) = React.useState(_ => None)
 
-  let isConfirmButtonValid = isAllCardVlauesValid && isAllDynamicFieldValid
+  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
+
+  let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
+  let (isInitialised, setIsInitialised) = React.useState(_ => false)
+
+  React.useEffect1(() => {
+    if (
+      Platform.os == #android &&
+      isInitialised &&
+      allApiData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
+      cardData.cardNumber->String.length > 0
+    ) {
+      setIsInitialised(_ => true)
+      initialiseNetcetera(
+        ~netceteraSDKApiKey=nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
+        ~sdkEnvironment=nativeProp.env,
+      )
+    }
+    None
+  }, [cardData.cardNumber])
 
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
-    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ~doHandleSuccessFailure=false, ()) => {
+    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       if !closeSDK {
         setLoading(FillingDetails)
         switch errorMessage.message {
@@ -57,9 +77,7 @@ let make = (
         | None => ()
         }
       }
-      if doHandleSuccessFailure {
-        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-      }
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       switch paymentStatus {
@@ -101,20 +119,21 @@ let make = (
       (),
     )
   }
+
   let handlePress = _ => {
-    setLoading(ProcessingPayments(None))
-    processRequest(cardVal)
+    isConfirmButtonValid
+      ? {
+          setLoading(ProcessingPayments(None))
+          processRequest(cardVal)
+        }
+      : setKeyToTrigerButtonClickError(prev => prev + 1)
   }
 
   React.useEffect6(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false
-          isAllValuesValid=isConfirmButtonValid
-          handlePress
-          paymentMethod="CARD"
-          errorText=error
+          loading=false isAllValuesValid=true handlePress paymentMethod="CARD" errorText=error
         />,
       )
     }
@@ -125,7 +144,7 @@ let make = (
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
-      <CardElement setIsAllValid=setIsAllCardVlauesValid reset=false />
+      <CardElement setIsAllValid=setIsAllCardValuesValid reset=false keyToTrigerButtonClickError />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields
@@ -134,6 +153,7 @@ let make = (
               requiredFields
               isSaveCardsFlow={false}
               savedCardsData=None
+              keyToTrigerButtonClickError
             />
             <Space height=8. />
           </>
@@ -153,7 +173,7 @@ let make = (
             text=localeObject.saveCardDetails
             isSelected=isNicknameSelected
             setIsSelected=setIsNicknameSelected
-            textType={TextWrapper.ModalTextBold}
+            textType={ModalText}
             disableScreenSwitch=true
           />
         </>

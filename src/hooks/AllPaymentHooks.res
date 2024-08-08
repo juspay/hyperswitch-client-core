@@ -94,7 +94,8 @@ let useSessionToken = () => {
         [
           (
             "payment_id",
-            String.split(nativeProp.clientSecret, "_secret_")[0]
+            String.split(nativeProp.clientSecret, "_secret_")
+            ->Array.get(0)
             ->Option.getOr("")
             ->JSON.Encode.string,
           ),
@@ -181,9 +182,9 @@ let useRetrieveHook = () => {
         initEventName: LoggerHook.eventName,
       ) = switch type_ {
       | Payment => (
-          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")[0]->Option.getOr(
-              "",
-            )}?force_sync=false&client_secret=${clientSecret}`,
+          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
+            ->Array.get(0)
+            ->Option.getOr("")}?force_sync=false&client_secret=${clientSecret}`,
           RETRIEVE_CALL,
           RETRIEVE_CALL_INIT,
         )
@@ -261,19 +262,7 @@ let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  (
-    ~clientSecret,
-    ~publishableKey,
-    ~openUrl,
-    ~responseCallback,
-    ~errorCallback: (
-      ~errorMessage: error,
-      ~closeSDK: bool,
-      ~doHandleSuccessFailure: bool=?,
-      unit,
-    ) => unit,
-    ~processor,
-  ) => {
+  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit, ~processor) => {
     BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId)
     ->Promise.then(res => {
       if res.error === Success {
@@ -370,18 +359,13 @@ let useRedirectHook = () => {
     ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
-    ~errorCallback: (
-      ~errorMessage: error,
-      ~closeSDK: bool,
-      ~doHandleSuccessFailure: bool=?,
-      unit,
-    ) => unit,
+    ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
     ~paymentExperience: option<PaymentMethodListType.payment_experience_type>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     (),
   ) => {
-    let uriPram = String.split(clientSecret, "_secret_")[0]->Option.getOr("")
+    let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
