@@ -19,13 +19,11 @@ let make = () => {
     clientSecret,
     publishableKey,
   ) => {
-    let errorCallback = (~errorMessage, ~closeSDK, ~doHandleSuccessFailure=false, ()) => {
+    let errorCallback = (~errorMessage, ~closeSDK, ()) => {
       if !closeSDK {
         setLoading(FillingDetails)
       }
-      if doHandleSuccessFailure {
-        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-      }
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (
       ~paymentStatus: LoadingContext.sdkPaymentState,
@@ -74,9 +72,9 @@ let make = () => {
       // },
       payment_method: prop.payment_method,
       payment_method_type: prop.payment_method_type,
-      connector: prop.card_networks[0]->Option.mapOr([], card_network =>
-        card_network.eligible_connectors
-      ),
+      connector: prop.card_networks
+      ->Array.get(0)
+      ->Option.mapOr([], card_network => card_network.eligible_connectors),
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,

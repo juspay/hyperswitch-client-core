@@ -165,7 +165,7 @@ let getRequiredFieldsFromDict = dict => {
       requiredField.field_type === FullName && requiredField.display_name === "card_holder_name"
     })
 
-    switch (fullCardHolderNameFields[0], fullCardHolderNameFields[1]) {
+    switch (fullCardHolderNameFields->Array.get(0), fullCardHolderNameFields[1]) {
     | (Some(firstNameField), Some(lastNameField)) =>
       let value = switch (firstNameField.value, lastNameField.value) {
       | (firstNameValue, "") => firstNameValue
@@ -337,7 +337,7 @@ let rec flattenObject = (obj, addIndicatorForObject) => {
 }
 
 let rec setNested = (dict, keys, value) => {
-  switch keys[0] {
+  switch keys->Array.get(0) {
   | Some(currKey) =>
     if keys->Array.length === 1 {
       Dict.set(dict, currKey, value)

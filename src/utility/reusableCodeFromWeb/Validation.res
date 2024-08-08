@@ -61,7 +61,7 @@ let getCurrentMonthAndYear = (dateTimeIsoString: string) => {
   let tempTimeDateString = dateTimeIsoString->String.replace("Z", "")
   let tempTimeDate = tempTimeDateString->String.split("T")
 
-  let date = tempTimeDate[0]->Option.getOr("")
+  let date = tempTimeDate->Array.get(0)->Option.getOr("")
   let dateComponents = date->String.split("-")
 
   let currentMonth = dateComponents->Array.get(1)->Option.getOr("")
@@ -212,7 +212,7 @@ let calculateLuhn = value => {
       if double > 9 {
         let str = double->Int.toString
         let arr = str->String.split("")
-        (arr[0]->Option.getOr("")->toInt + arr[1]->Option.getOr("")->toInt)->Int.toString
+        (arr->Array.get(0)->Option.getOr("")->toInt + arr[1]->Option.getOr("")->toInt)->Int.toString
       } else {
         double->Int.toString
       }

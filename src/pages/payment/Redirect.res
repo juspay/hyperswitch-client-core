@@ -113,7 +113,7 @@ let make = (
   })
 
   let bankDefault = switch bankItems->Array.get(0) {
-  | Some(x) => x.displayName
+  | Some(x) => x.hyperSwitch
   | _ => ""
   }
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(bankDefault))
@@ -159,12 +159,7 @@ let make = (
     }
   }, [sessionData])
 
-  let errorCallback = (
-    ~errorMessage: PaymentConfirmTypes.error,
-    ~closeSDK,
-    ~doHandleSuccessFailure=true,
-    (),
-  ) => {
+  let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
     if !closeSDK {
       setLoading(FillingDetails)
       switch errorMessage.message {
@@ -172,9 +167,7 @@ let make = (
       | None => ()
       }
     }
-    if doHandleSuccessFailure {
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-    }
+    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
   }
 
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
@@ -203,6 +196,7 @@ let make = (
             ~paymentExperience,
             ~errorCallback,
             ~responseCallback,
+            ~setLoading,
             ~nativeProp,
             ~allApiData,
             ~fetchAndRedirect,
@@ -224,11 +218,11 @@ let make = (
       )
     | CRYPTO(prop) =>
       ProcessPaymentRequest.processRequestCrypto(
-        prop,
-        paymentMethod,
-        paymentExperience,
-        responseCallback,
-        errorCallback,
+        ~prop,
+        ~paymentMethod,
+        ~paymentExperience,
+        ~responseCallback,
+        ~errorCallback,
         ~nativeProp,
         ~allApiData,
         ~fetchAndRedirect,
@@ -237,6 +231,7 @@ let make = (
       ProcessPaymentRequest.processRequestWallet(
         ~env=nativeProp.env,
         ~wallet=prop,
+        ~setLoading,
         ~setError,
         ~sessionObject,
         ~errorCallback,
