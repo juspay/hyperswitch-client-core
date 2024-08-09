@@ -94,8 +94,8 @@ module PMWithNickNameComponent = {
         val != ""
           ? <View style={viewStyle(~display=#flex, ~flexDirection=#row, ~alignItems=#center, ())}>
               <TextWrapper
-                text={val->String.length > 12
-                  ? val->String.slice(~start=0, ~end=15)->String.concat("...")
+                text={val->String.length > 16
+                  ? val->String.slice(~start=0, ~end=13)->String.concat("...")
                   : val}
                 textType={CardTextBold}
               />
