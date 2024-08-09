@@ -230,18 +230,14 @@ let make = (
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.Encode.string
-      let paymentData = [("token", json)]->Dict.fromArray->JSON.Encode.object
+      let paymentData = [("token", json)]->Utils.getDictFromArray
       let payment_method_data =
         [
           (
             walletType.payment_method,
-            [(walletType.payment_method_type ++ "_sdk", paymentData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
+            [(walletType.payment_method_type ++ "_sdk", paymentData)]->Utils.getDictFromArray,
           ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ]->Utils.getDictFromArray
       processRequest(~payment_method_data, ())
     | "User has canceled" =>
       setLoading(FillingDetails)
@@ -274,28 +270,23 @@ let make = (
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
       let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [(walletType.payment_method_type, obj.paymentMethodData->parser)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-          (
-            "billing",
-            switch obj.paymentMethodData.info {
-            | Some(info) =>
-              switch info.billing_address {
-              | Some(address) => address->parser2
-              | None => JSON.Encode.null
-              }
+      let payment_method_data = [
+        (
+          walletType.payment_method,
+          [(walletType.payment_method_type, obj.paymentMethodData->parser)]->Utils.getDictFromArray,
+        ),
+        (
+          "billing",
+          switch obj.paymentMethodData.info {
+          | Some(info) =>
+            switch info.billing_address {
+            | Some(address) => address->parser2
             | None => JSON.Encode.null
-            },
-          ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+            }
+          | None => JSON.Encode.null
+          },
+        ),
+      ]->Utils.getDictFromArray
       processRequest(~payment_method_data, ~email=?obj.email, ())
     | "Cancel" =>
       setLoading(FillingDetails)
@@ -354,28 +345,22 @@ let make = (
             ("payment_data", payment_data),
             ("payment_method", payment_method),
             ("transaction_identifier", transaction_identifier),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
 
-        let payment_method_data =
-          [
-            (
-              walletType.payment_method,
-              [(walletType.payment_method_type, paymentData)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-            (
-              "billing",
-              switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
-              | Some(billing) => billing->parser2
-              | None => JSON.Encode.null
-              },
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+        let payment_method_data = [
+          (
+            walletType.payment_method,
+            [(walletType.payment_method_type, paymentData)]->Utils.getDictFromArray,
+          ),
+          (
+            "billing",
+            switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+            | Some(billing) => billing->parser2
+            | None => JSON.Encode.null
+            },
+          ),
+        ]->Utils.getDictFromArray
+
         processRequest(
           ~payment_method_data,
           ~email=?switch var->GooglePayTypeNew.getBillingContact("shipping_contact", statesJson) {
@@ -434,13 +419,11 @@ let make = (
               [
                 (
                   walletType.payment_method,
-                  [(walletType.payment_method_type ++ "_redirect", redirectData)]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object,
+                  [
+                    (walletType.payment_method_type ++ "_redirect", redirectData),
+                  ]->Utils.getDictFromArray,
                 ),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
+              ]->Utils.getDictFromArray
             let altPaymentExperience =
               walletType.payment_experience->Array.find(x =>
                 x.payment_experience_type_decode === REDIRECT_TO_URL
@@ -499,8 +482,7 @@ let make = (
                 ("session_token_data", sessionObject.session_token_data),
                 ("payment_request_data", sessionObject.payment_request_data),
               ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
+              ->Utils.getDictFromArray
               ->JSON.stringify,
               confirmApplePay,
               _ => {
@@ -549,13 +531,11 @@ let make = (
           [
             (
               walletType.payment_method,
-              [(walletType.payment_method_type ++ "_redirect", redirectData)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
+              [
+                (walletType.payment_method_type ++ "_redirect", redirectData),
+              ]->Utils.getDictFromArray,
             ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
         processRequest(~payment_method_data, ())
       } else {
         logger(

@@ -92,7 +92,6 @@ type mandate_data = {customer_acceptance: customer_acceptance}
 type redirectType = {
   client_secret: string,
   return_url?: string,
-  customer_id?: string,
   email?: string,
   payment_method?: string,
   payment_method_type?: string,
@@ -104,7 +103,6 @@ type redirectType = {
   payment_token?: string,
   setup_future_usage?: string,
   payment_type?: string,
-  mandate_data?: mandate_data,
   browser_info?: online,
   customer_acceptance?: customer_acceptance,
   card_cvc?: string,
@@ -329,8 +327,7 @@ let getPaymentBody = (body, dynamicFieldsJson) => {
   flattenedBodyDict
   ->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
   ->RequiredFieldsTypes.getArrayOfTupleFromDict
-  ->Dict.fromArray
-  ->JSON.Encode.object
+  ->Utils.getDictFromArray
 }
 
 let jsonToSavedPMObj = data => {
