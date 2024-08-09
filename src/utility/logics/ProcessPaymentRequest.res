@@ -74,14 +74,17 @@ let processRequestPayLater = (
   ~name,
   ~email,
   ~country,
+  ~walletType: PaymentMethodListType.payment_method_types_wallet,
   ~paymentMethod,
   ~paymentExperience,
   ~errorCallback,
   ~responseCallback,
   ~setLoading,
+  ~showAlert,
   ~nativeProp: SdkTypes.nativeProp,
   ~allApiData: AllApiDataContext.allApiData,
   ~fetchAndRedirect,
+  ~logger: LoggerHook.logger,
 ) => {
   let payment_experience_type_decode = authToken == "redirect" ? REDIRECT_TO_URL : INVOKE_SDK_CLIENT
   switch prop.payment_experience->Array.find(exp =>
@@ -128,20 +131,20 @@ let processRequestPayLater = (
       ~fetchAndRedirect,
       (),
     )
-  | None => setLoading(LoadingContext.FillingDetails)
-  // TODO: setup this logger
-  // logger(
-  //   ~logType=DEBUG,
-  //   ~value=walletType.payment_method_type,
-  //   ~category=USER_EVENT,
-  //   ~paymentMethod=walletType.payment_method_type,
-  //   ~eventName=NO_WALLET_ERROR,
-  //   ~paymentExperience=?walletType.payment_experience
-  //   ->Array.get(0)
-  //   ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
-  //   (),
-  // )
-  // showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+  | None =>
+    logger(
+      ~logType=LoggerHook.DEBUG,
+      ~value=walletType.payment_method_type,
+      ~category=LoggerHook.USER_EVENT,
+      ~paymentMethod=walletType.payment_method_type,
+      ~eventName=LoggerHook.NO_WALLET_ERROR,
+      ~paymentExperience=?walletType.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      (),
+    )
+    setLoading(LoadingContext.FillingDetails)
+    showAlert(~errorType="warning", ~message="Payment Method Unavailable")
   }
 }
 
@@ -240,6 +243,7 @@ let processRequestWallet = (
   ~wallet: payment_method_types_wallet,
   ~setLoading,
   ~setError,
+  ~showAlert,
   ~sessionObject: SessionsType.sessions,
   ~confirmGPay,
   ~confirmPayPal,
@@ -327,16 +331,16 @@ let processRequestWallet = (
         setError(_ => Some("Waiting for Sessions API"))
       } else {
         let timerId = setTimeout(() => {
-            setLoading(FillingDetails)
-            setError(_ => Some("Apple Pay Error, Please try again"))
-            logger(
-              ~logType=DEBUG,
-              ~value="apple_pay",
-              ~category=USER_EVENT,
-              ~paymentMethod="apple_pay",
-              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-              (),
-            )
+          setLoading(FillingDetails)
+          setError(_ => Some("Apple Pay Error, Please try again"))
+          logger(
+            ~logType=LoggerHook.DEBUG,
+            ~value="apple_pay",
+            ~category=LoggerHook.USER_EVENT,
+            ~paymentMethod="apple_pay",
+            ~eventName=LoggerHook.APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+            (),
+          )
         }, 5000)
         HyperModule.launchApplePay(
           [
@@ -359,7 +363,7 @@ let processRequestWallet = (
           _ => clearTimeout(timerId),
         )
       }
-    | _ => ()
+    | _ => setLoading(FillingDetails)
     }
   | Some(REDIRECT_TO_URL) =>
     let redirectData = []->Dict.fromArray->JSON.Encode.object
@@ -387,19 +391,19 @@ let processRequestWallet = (
       ~fetchAndRedirect,
       (),
     )
-  | _ => ()
-      //   logger(
-      //   ~logType=DEBUG,
-      //   ~value=walletType.payment_method_type,
-      //   ~category=USER_EVENT,
-      //   ~paymentMethod=walletType.payment_method_type,
-      //   ~eventName=NO_WALLET_ERROR,
-      //   ~paymentExperience=?walletType.payment_experience
-      //   ->Array.get(0)
-      //   ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
-      //   (),
-      // )
-      // setLoading(FillingDetails)
-      // showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+  | _ =>
+    logger(
+      ~logType=LoggerHook.DEBUG,
+      ~value=wallet.payment_method_type,
+      ~category=LoggerHook.USER_EVENT,
+      ~paymentMethod=wallet.payment_method_type,
+      ~eventName=LoggerHook.NO_WALLET_ERROR,
+      ~paymentExperience=?wallet.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      (),
+    )
+    setLoading(FillingDetails)
+    showAlert(~errorType="warning", ~message="Payment Method Unavailable")
   }
 }
