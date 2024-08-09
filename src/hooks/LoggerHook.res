@@ -335,6 +335,18 @@ let snooze = (
     )
 }
 let cancel = () => Nullable.forEach(timeOut.contents, intervalId => clearTimeout(intervalId))
+
+type logger = (
+  ~logType: logType,
+  ~value: string,
+  ~category: logCategory,
+  ~paymentMethod: string=?,
+  ~paymentExperience: PaymentMethodListType.payment_experience_type=?,
+  ~internalMetadata: string=?,
+  ~eventName: eventName,
+  ~latency: float=?,
+  unit,
+) => unit
 let useLoggerHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (events, setEvents) = React.useContext(LoggerContext.loggingContext)
