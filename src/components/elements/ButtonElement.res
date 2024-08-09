@@ -601,6 +601,7 @@ let make = (
             onPaymentResultCallback={_ => pressHandler()}
           />,
         )
+      | GOOGLE_PAY => Some(<GooglePayButtonView onPaymentResultCallback={_ => pressHandler()} />)
       | _ => None
       }}
     </CustomButton>
