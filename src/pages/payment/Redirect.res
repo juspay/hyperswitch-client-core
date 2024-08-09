@@ -183,6 +183,7 @@ let make = (
     handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
   }
 
+
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
     switch paymentStatus {
     | PaymentSuccess => {
