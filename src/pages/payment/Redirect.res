@@ -44,6 +44,7 @@ let make = (
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let localeObject = GetLocale.useGetLocalObj()
   let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
+  let showAlert = AlertHook.useAlerts()
 
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
   let (email, setEmail) = React.useState(_ => None)
@@ -55,6 +56,17 @@ let make = (
   let (country, setCountry) = React.useState(_ => Some(nativeProp.hyperParams.country))
   let (blikCode, setBlikCode) = React.useState(_ => None)
   let (error, setError) = React.useState(_ => None)
+
+  let walletType: PaymentMethodListType.payment_method_types_wallet = switch redirectProp {
+  | WALLET(walletVal) => walletVal
+  | _ => {
+      payment_method: "",
+      payment_method_type: "",
+      payment_method_type_wallet: NONE,
+      payment_experience: [],
+      required_field: [],
+    }
+  }
 
   let bankName = switch redirectProp {
   | BANK_REDIRECT(prop) => prop.bank_names
@@ -175,6 +187,7 @@ let make = (
     | PaymentSuccess => {
         setLoading(PaymentSuccess)
         setTimeout(() => handleSuccessFailure(~apiResStatus=status, ()), 300)->ignore
+        setTimeout(() => handleSuccessFailure(~apiResStatus=status, ()), 300)->ignore
       }
     | _ => handleSuccessFailure(~apiResStatus=status, ())
     }
@@ -192,14 +205,17 @@ let make = (
             ~name,
             ~email,
             ~country,
+            ~walletType,
             ~paymentMethod,
             ~paymentExperience,
             ~errorCallback,
             ~responseCallback,
             ~setLoading,
+            ~showAlert,
             ~nativeProp,
             ~allApiData,
             ~fetchAndRedirect,
+            ~logger,
           )
     | BANK_REDIRECT(prop) =>
       ProcessPaymentRequest.processRequestBankRedirect(
@@ -233,6 +249,7 @@ let make = (
         ~wallet=prop,
         ~setLoading,
         ~setError,
+        ~showAlert,
         ~sessionObject,
         ~errorCallback,
         ~responseCallback,
@@ -252,11 +269,7 @@ let make = (
     setEmail(_ => Some(text))
   }
   let handlePressName = text => {
-    let y = if text->String.length >= 3 {
-      Some(true)
-    } else {
-      None
-    }
+    let y = text->String.length >= 3 ? Some(true) : None
     setIsNameValid(_ => y)
     setName(_ => Some(text))
   }
@@ -318,6 +331,7 @@ let make = (
                 ?email,
                 ?country,
               }
+              walletType
               paymentMethod
               paymentExperience
               errorCallback

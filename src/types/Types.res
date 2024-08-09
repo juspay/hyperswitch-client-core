@@ -55,7 +55,7 @@ let defaultConfig = {
       name: "eps",
       text: "EPS",
       header: "",
-      fields: ["bank"],
+      fields: [Bank],
     },
     {
       name: "we_chat_pay",
@@ -67,7 +67,7 @@ let defaultConfig = {
       name: "blik",
       text: "Blik",
       header: "",
-      fields: ["blik_code"],
+      fields: [BlikCode],
     },
     {
       name: "ideal",
@@ -85,7 +85,7 @@ let defaultConfig = {
       name: "trustly",
       text: "Trustly",
       header: "",
-      fields: ["country"],
+      fields: [Country],
     },
     {
       name: "sofort",

@@ -74,14 +74,17 @@ let processRequestPayLater = (
   ~name,
   ~email,
   ~country,
+  ~walletType: PaymentMethodListType.payment_method_types_wallet,
   ~paymentMethod,
   ~paymentExperience,
   ~errorCallback,
   ~responseCallback,
   ~setLoading,
+  ~showAlert,
   ~nativeProp: SdkTypes.nativeProp,
   ~allApiData: AllApiDataContext.allApiData,
   ~fetchAndRedirect,
+  ~logger: LoggerHook.logger,
 ) => {
   let payment_experience_type_decode = authToken == "redirect" ? REDIRECT_TO_URL : INVOKE_SDK_CLIENT
   switch prop.payment_experience->Array.find(exp =>
@@ -122,20 +125,20 @@ let processRequestPayLater = (
       ~fetchAndRedirect,
       (),
     )
-  | None => setLoading(LoadingContext.FillingDetails)
-  // TODO: setup this logger
-  // logger(
-  //   ~logType=DEBUG,
-  //   ~value=walletType.payment_method_type,
-  //   ~category=USER_EVENT,
-  //   ~paymentMethod=walletType.payment_method_type,
-  //   ~eventName=NO_WALLET_ERROR,
-  //   ~paymentExperience=?walletType.payment_experience
-  //   ->Array.get(0)
-  //   ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
-  //   (),
-  // )
-  // showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+  | None =>
+    logger(
+      ~logType=LoggerHook.DEBUG,
+      ~value=walletType.payment_method_type,
+      ~category=LoggerHook.USER_EVENT,
+      ~paymentMethod=walletType.payment_method_type,
+      ~eventName=LoggerHook.NO_WALLET_ERROR,
+      ~paymentExperience=?walletType.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      (),
+    )
+    setLoading(LoadingContext.FillingDetails)
+    showAlert(~errorType="warning", ~message="Payment Method Unavailable")
   }
 }
 
@@ -153,32 +156,34 @@ let processRequestBankRedirect = (
   ~allApiData: AllApiDataContext.allApiData,
   ~fetchAndRedirect,
 ) => {
-  let payment_method_data =
-    [
-      (
-        prop.payment_method,
-        [
-          (
-            prop.payment_method_type,
-            [
-              ("country", country->Option.getOr("")->JSON.Encode.string),
-              ("bank_name", selectedBank->Option.getOr("")->JSON.Encode.string),
-              (
-                "blik_code",
-                blikCode->Option.getOr("")->String.replace("-", "")->JSON.Encode.string,
-              ),
-              ("preferred_language", "en"->JSON.Encode.string),
-              (
-                "billing_details",
-                [
-                  ("billing_name", name->Option.getOr("")->JSON.Encode.string),
-                ]->Utils.getDictFromArray,
-              ),
-            ]->Utils.getDictFromArray,
-          ),
-        ]->Utils.getDictFromArray,
-      ),
-    ]->Utils.getDictFromArray
+  let payment_method_data = [
+    (
+      prop.payment_method,
+      [
+        (
+          prop.payment_method_type,
+          [
+            (
+              "country",
+              switch country {
+              | Some(country) => country != "" ? country->JSON.Encode.string : JSON.Encode.null
+              | _ => JSON.Encode.null
+              },
+            ),
+            ("bank_name", selectedBank->Option.getOr("")->JSON.Encode.string),
+            ("blik_code", blikCode->Option.getOr("")->String.replace("-", "")->JSON.Encode.string),
+            ("preferred_language", "en"->JSON.Encode.string),
+            (
+              "billing_details",
+              [
+                ("billing_name", name->Option.getOr("")->JSON.Encode.string),
+              ]->Utils.getDictFromArray,
+            ),
+          ]->Utils.getDictFromArray,
+        ),
+      ]->Utils.getDictFromArray,
+    ),
+  ]->Utils.getDictFromArray
 
   processRequest(
     ~payment_method_data,
@@ -207,7 +212,6 @@ let processRequestCrypto = (
 ) => {
   let payment_method_data =
     [(prop.payment_method, []->Utils.getDictFromArray)]->Utils.getDictFromArray
-
   processRequest(
     ~payment_method_data,
     ~payment_method=prop.payment_method,
@@ -231,6 +235,7 @@ let processRequestWallet = (
   ~wallet: payment_method_types_wallet,
   ~setLoading,
   ~setError,
+  ~showAlert,
   ~sessionObject: SessionsType.sessions,
   ~errorCallback,
   ~responseCallback,
@@ -274,10 +279,8 @@ let processRequestWallet = (
         (),
       )
     | "User has canceled" =>
-      let error: PaymentConfirmTypes.error = {
-        message: "Payment was Cancelled",
-      }
-      errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+      setLoading(LoadingContext.FillingDetails)
+      setError(_ => Some("Payment was Cancelled"))
     | err => setError(_ => Some(err))
     }
   }
@@ -316,45 +319,26 @@ let processRequestWallet = (
         ~fetchAndRedirect,
         (),
       )
-    | "Cancel" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Payment was Cancelled",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-      }
-    | err => {
-        let error: PaymentConfirmTypes.error = {
-          message: err,
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some(err))
-      }
+    | "Cancel" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Payment was Cancelled"))
+    | err =>
+      setLoading(FillingDetails)
+      setError(_ => Some(err))
     }
   }
 
   let confirmApplePay = var => {
     switch var->Utils.getString("status", "") {
-    | "Cancelled" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Cancelled",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some("Cancelled"))
-      }
-    | "Failed" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Failed",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some("Failed"))
-      }
-    | "Error" => {
-        let error: PaymentConfirmTypes.error = {
-          message: "Error",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
-        setError(_ => Some("Error"))
-      }
+    | "Cancelled" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Cancelled"))
+    | "Failed" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Failed"))
+    | "Error" =>
+      setLoading(FillingDetails)
+      setError(_ => Some("Error"))
     | _ =>
       let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
       let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
@@ -362,10 +346,7 @@ let processRequestWallet = (
         var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
       if transaction_identifier->JSON.stringify == "Simulated Identifier" {
-        let error: PaymentConfirmTypes.error = {
-          message: "Apple Pay is not supported in Simulated Environment",
-        }
-        errorCallback(~errorMessage=error, ~closeSDK=false, ~doHandleSuccessFailure=false, ())
+        setLoading(FillingDetails)
         setError(_ => Some("Apple Pay is not supported in Simulated Environment"))
       } else {
         let paymentData =
@@ -406,19 +387,28 @@ let processRequestWallet = (
     }
   }
 
-  let paymentMethodTypeDecode =
-    wallet.payment_experience
+  setLoading(ProcessingPayments(None))
+  logger(
+    ~logType=INFO,
+    ~value=wallet.payment_method_type,
+    ~category=USER_EVENT,
+    ~paymentMethod=wallet.payment_method_type,
+    ~eventName=PAYMENT_METHOD_CHANGED,
+    ~paymentExperience=?wallet.payment_experience
     ->Array.get(0)
-    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+    (),
+  )
 
-  switch paymentMethodTypeDecode {
+  switch wallet.payment_experience[0]->Option.map(paymentExperience =>
+    paymentExperience.payment_experience_type_decode
+  ) {
   | Some(INVOKE_SDK_CLIENT) =>
     switch wallet.payment_method_type_wallet {
     | GOOGLE_PAY =>
       HyperModule.launchGPay(GooglePayType.getGpayToken(~obj=sessionObject, ~appEnv=env), var =>
         RequiredFieldsTypes.importStates("../reusableCodeFromWeb/States.json") // Dynamically import/download Postal codes and states JSON
         ->Promise.then(res => {
-          Console.log2("-- imported the states", res.states)
           confirmGPay(var, Some(res.states))
           Promise.resolve()
         })
@@ -435,7 +425,11 @@ let processRequestWallet = (
         PaypalModule.payPalModule->Option.isSome
       ) {
         PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
-      } else {
+      } else if (
+          wallet.payment_experience
+          ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+          ->Option.isSome
+        ) {
         let redirectData = []->Utils.getDictFromArray
         let payment_method_data =
           [
@@ -488,16 +482,16 @@ let processRequestWallet = (
         setError(_ => Some("Waiting for Sessions API"))
       } else {
         let timerId = setTimeout(() => {
-            setLoading(FillingDetails)
-            setError(_ => Some("Apple Pay Error, Please try again"))
-            logger(
-              ~logType=DEBUG,
-              ~value="apple_pay",
-              ~category=USER_EVENT,
-              ~paymentMethod="apple_pay",
-              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-              (),
-            )
+          setLoading(FillingDetails)
+          setError(_ => Some("Apple Pay Error, Please try again"))
+          logger(
+            ~logType=LoggerHook.DEBUG,
+            ~value="apple_pay",
+            ~category=LoggerHook.USER_EVENT,
+            ~paymentMethod="apple_pay",
+            ~eventName=LoggerHook.APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+            (),
+          )
         }, 5000)
         HyperModule.launchApplePay(
           [
@@ -519,7 +513,7 @@ let processRequestWallet = (
           _ => clearTimeout(timerId),
         )
       }
-    | _ => ()
+    | _ => setLoading(FillingDetails)
     }
   | Some(REDIRECT_TO_URL) =>
     let redirectData = []->Utils.getDictFromArray
@@ -543,19 +537,19 @@ let processRequestWallet = (
       ~fetchAndRedirect,
       (),
     )
-  | _ => ()
-      //   logger(
-      //   ~logType=DEBUG,
-      //   ~value=walletType.payment_method_type,
-      //   ~category=USER_EVENT,
-      //   ~paymentMethod=walletType.payment_method_type,
-      //   ~eventName=NO_WALLET_ERROR,
-      //   ~paymentExperience=?walletType.payment_experience
-      //   ->Array.get(0)
-      //   ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
-      //   (),
-      // )
-      // setLoading(FillingDetails)
-      // showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+  | _ =>
+    logger(
+      ~logType=LoggerHook.DEBUG,
+      ~value=wallet.payment_method_type,
+      ~category=LoggerHook.USER_EVENT,
+      ~paymentMethod=wallet.payment_method_type,
+      ~eventName=LoggerHook.NO_WALLET_ERROR,
+      ~paymentExperience=?wallet.payment_experience
+      ->Array.get(0)
+      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      (),
+    )
+    setLoading(FillingDetails)
+    showAlert(~errorType="warning", ~message="Payment Method Unavailable")
   }
 }
