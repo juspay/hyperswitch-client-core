@@ -44,6 +44,7 @@ let make = (
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let localeObject = GetLocale.useGetLocalObj()
   let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
+  let showAlert = AlertHook.useAlerts()
 
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
   let (email, setEmail) = React.useState(_ => None)
@@ -351,14 +352,17 @@ let make = (
             ~name,
             ~email,
             ~country,
+            ~walletType,
             ~paymentMethod,
             ~paymentExperience,
             ~errorCallback,
             ~responseCallback,
             ~setLoading,
+            ~showAlert,
             ~nativeProp,
             ~allApiData,
             ~fetchAndRedirect,
+            ~logger,
           )
     | BANK_REDIRECT(prop) =>
       ProcessPaymentRequest.processRequestBankRedirect(
@@ -392,6 +396,7 @@ let make = (
         ~wallet=prop,
         ~setLoading,
         ~setError,
+        ~showAlert,
         ~sessionObject,
         ~confirmGPay,
         ~confirmPayPal,
@@ -494,6 +499,7 @@ let make = (
                 ?email,
                 ?country,
               }
+              walletType
               paymentMethod
               paymentExperience
               errorCallback

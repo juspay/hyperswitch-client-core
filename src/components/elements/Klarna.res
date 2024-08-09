@@ -4,7 +4,6 @@ external toViewRef: React.ref<Nullable.t<'a>> => Ref.t<KlarnaModule.element> = "
 @send external focus: Dom.element => unit = "focus"
 @send external blur: Dom.element => unit = "blur"
 
-// TOD: get a better name for this
 type userDataProp = {
   name?: string,
   email?: string,
@@ -17,6 +16,7 @@ let make = (
   ~return_url,
   ~klarnaSessionTokens: string,
   ~userData: userDataProp,
+  ~walletType,
   ~paymentMethod: string,
   ~paymentExperience: option<PaymentMethodListType.payment_experience_type>,
   ~errorCallback,
@@ -27,6 +27,8 @@ let make = (
 ) => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let showAlert = AlertHook.useAlerts()
+  let logger = LoggerHook.useLoggerHook()
 
   let (_paymentViewLoaded, setpaymentViewLoaded) = React.useState(_ => false)
   let (_token, _) = React.useState(_ => None)
@@ -84,14 +86,17 @@ let make = (
           ~name=userData.name,
           ~email=userData.email,
           ~country=userData.country,
+          ~walletType,
           ~paymentMethod,
           ~paymentExperience,
           ~errorCallback,
           ~responseCallback,
           ~setLoading,
+          ~showAlert,
           ~nativeProp,
           ~allApiData,
           ~fetchAndRedirect,
+          ~logger,
         )
       | _ =>
         handleSuccessFailure(

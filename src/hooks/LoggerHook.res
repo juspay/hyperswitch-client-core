@@ -345,7 +345,7 @@ type logger = (
   ~latency: float=?,
   unit,
 ) => unit
-let useLoggerHook = (): logger => {
+let useLoggerHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (events, setEvents) = React.useContext(LoggerContext.loggingContext)
   let calculateLatency = useCalculateLatency()
