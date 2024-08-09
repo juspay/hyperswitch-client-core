@@ -63,14 +63,6 @@ type payment_method =
   | BANK_REDIRECT(payment_method_types_bank_redirect)
   | CRYPTO(payment_method_types_pay_later)
 
-// type payment_method =
-//   | CARD(array<payment_method_types_card>)
-//   | WALLET(array<payment_method_types_wallet>)
-//   | PAY_LATER(array<payment_method_types_pay_later>)
-//   | BANK_REDIRECT(array<payment_method_types_bank_redirect>)
-//   | CRYPTO(array<payment_method_types_pay_later>)
-//   | NONE
-
 type online = {
   ip_address?: string,
   user_agent?: string,

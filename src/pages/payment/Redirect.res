@@ -56,7 +56,6 @@ let make = (
   let (country, setCountry) = React.useState(_ => Some(nativeProp.hyperParams.country))
   let (blikCode, setBlikCode) = React.useState(_ => None)
   let (error, setError) = React.useState(_ => None)
-  let (statesJson, setStatesJson) = React.useState(_ => None)
 
   let walletType: PaymentMethodListType.payment_method_types_wallet = switch redirectProp {
   | WALLET(walletVal) => walletVal
@@ -183,161 +182,14 @@ let make = (
     handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
   }
 
-
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
     switch paymentStatus {
     | PaymentSuccess => {
         setLoading(PaymentSuccess)
         setTimeout(() => handleSuccessFailure(~apiResStatus=status, ()), 300)->ignore
+        setTimeout(() => handleSuccessFailure(~apiResStatus=status, ()), 300)->ignore
       }
     | _ => handleSuccessFailure(~apiResStatus=status, ())
-    }
-  }
-
-  let confirmPayPal = var => {
-    let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
-    switch paymentData.error {
-    | "" =>
-      let json = paymentData.paymentMethodData->JSON.Encode.string
-      let paymentData = [("token", json)]->Utils.getDictFromArray
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [(walletType.payment_method_type ++ "_sdk", paymentData)]->Utils.getDictFromArray,
-          ),
-        ]->Utils.getDictFromArray
-      ProcessPaymentRequest.processRequest(
-        ~payment_method=walletType.payment_method,
-        ~payment_method_data,
-        ~payment_method_type=paymentMethod,
-        ~payment_experience_type=?walletType.payment_experience->getIndexZeroAndApplyTransform(
-          paymentExperience => paymentExperience.payment_experience_type,
-        ),
-        ~eligible_connectors=?walletType.payment_experience->getIndexZeroAndApplyTransform(
-          paymentExperience => paymentExperience.eligible_connectors,
-        ),
-        ~errorCallback,
-        ~responseCallback,
-        ~paymentMethod,
-        ~paymentExperience,
-        ~nativeProp,
-        ~allApiData,
-        ~fetchAndRedirect,
-        (),
-      )
-    | "User has canceled" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Payment was Cancelled"))
-    | err => setError(_ => Some(err))
-    }
-  }
-
-  let confirmGPay = var => {
-    let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
-    switch paymentData.error {
-    | "" =>
-      let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [
-              (walletType.payment_method_type, obj.paymentMethodData->ButtonElement.parser),
-            ]->Utils.getDictFromArray,
-          ),
-        ]->Utils.getDictFromArray
-      ProcessPaymentRequest.processRequest(
-        ~payment_method=walletType.payment_method,
-        ~payment_method_data,
-        ~payment_method_type=paymentMethod,
-        ~payment_experience_type=?walletType.payment_experience->getIndexZeroAndApplyTransform(
-          paymentExperience => paymentExperience.payment_experience_type,
-        ),
-        ~eligible_connectors=?walletType.payment_experience->getIndexZeroAndApplyTransform(
-          paymentExperience => paymentExperience.eligible_connectors,
-        ),
-        ~errorCallback,
-        ~responseCallback,
-        ~paymentMethod,
-        ~paymentExperience,
-        ~nativeProp,
-        ~allApiData,
-        ~fetchAndRedirect,
-        (),
-      )
-    | "Cancel" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Payment was Cancelled"))
-    | err =>
-      setLoading(FillingDetails)
-      setError(_ => Some(err))
-    }
-  }
-
-  let confirmApplePay = var => {
-    switch var
-    ->Dict.get("status")
-    ->Option.getOr(JSON.Encode.null)
-    ->JSON.Decode.string
-    ->Option.getOr("") {
-    | "Cancelled" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Cancelled"))
-    | "Failed" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Failed"))
-    | "Error" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Error"))
-    | _ =>
-      let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
-
-      let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
-
-      let transaction_identifier =
-        var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
-
-      if transaction_identifier->JSON.stringify == "Simulated Identifier" {
-        setLoading(FillingDetails)
-        setError(_ => Some("Apple Pay is not supported in Simulated Environment"))
-      } else {
-        let paymentData =
-          [
-            ("payment_data", payment_data),
-            ("payment_method", payment_method),
-            ("transaction_identifier", transaction_identifier),
-          ]->Utils.getDictFromArray
-
-        let payment_method_data =
-          [
-            (
-              walletType.payment_method,
-              [(walletType.payment_method_type, paymentData)]->Utils.getDictFromArray,
-            ),
-          ]->Utils.getDictFromArray
-
-        ProcessPaymentRequest.processRequest(
-          ~payment_method=walletType.payment_method,
-          ~payment_method_data,
-          ~payment_method_type=paymentMethod,
-          ~payment_experience_type=?walletType.payment_experience->getIndexZeroAndApplyTransform(
-            paymentExperience => paymentExperience.payment_experience_type,
-          ),
-          ~eligible_connectors=?walletType.payment_experience->getIndexZeroAndApplyTransform(
-            paymentExperience => paymentExperience.eligible_connectors,
-          ),
-          ~errorCallback,
-          ~responseCallback,
-          ~paymentMethod,
-          ~paymentExperience,
-          ~nativeProp,
-          ~allApiData,
-          ~fetchAndRedirect,
-          (),
-        )
-      }
     }
   }
 
@@ -399,9 +251,6 @@ let make = (
         ~setError,
         ~showAlert,
         ~sessionObject,
-        ~confirmGPay,
-        ~confirmPayPal,
-        ~confirmApplePay,
         ~errorCallback,
         ~responseCallback,
         ~paymentMethod,
@@ -420,11 +269,7 @@ let make = (
     setEmail(_ => Some(text))
   }
   let handlePressName = text => {
-    let y = if text->String.length >= 3 {
-      Some(true)
-    } else {
-      None
-    }
+    let y = text->String.length >= 3 ? Some(true) : None
     setIsNameValid(_ => y)
     setName(_ => Some(text))
   }
@@ -440,21 +285,6 @@ let make = (
       fields.fields->Array.includes(Name) ? isNameValid->Option.getOr(false) : true
     )) || (fields.name == "klarna" && isKlarna)
   }, (isEmailValid, isNameValid, sessionData))
-
-  React.useEffect0(() => {
-    // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      setStatesJson(_ => None)
-      Promise.resolve()
-    })
-    ->ignore
-    None
-  })
 
   React.useEffect(() => {
     if isScreenFocus {
@@ -482,6 +312,7 @@ let make = (
     name,
     country,
     email,
+    selectedBank,
   ))
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>

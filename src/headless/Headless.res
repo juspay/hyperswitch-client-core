@@ -80,17 +80,12 @@ let registerHeadless = headless => {
                   "user_agent",
                   nativeProp.hyperParams.userAgent->Option.getOr("")->JSON.Encode.string,
                 ),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
+              ]->Utils.getDictFromArray,
             ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object,
+          ]->Utils.getDictFromArray,
         ),
       ]
-      ->Dict.fromArray
-      ->JSON.Encode.object
+      ->Utils.getDictFromArray
       ->JSON.stringify
       ->confirmCall(nativeProp)
     | "Cancel" => reRegisterCallback.contents()
@@ -185,17 +180,11 @@ let registerHeadless = headless => {
                     "user_agent",
                     nativeProp.hyperParams.userAgent->Option.getOr("")->JSON.Encode.string,
                   ),
-                ]
-                ->Dict.fromArray
-                ->JSON.Encode.object,
+                ]->Utils.getDictFromArray,
               ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
+            ]->Utils.getDictFromArray,
           ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ]->Utils.getDictFromArray
         ->JSON.stringify
         ->confirmCall(nativeProp)
       }
@@ -222,9 +211,7 @@ let registerHeadless = headless => {
             | None => JSON.Encode.null
             },
           ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ]->Utils.getDictFromArray
       confirmCall(body->JSON.stringify, nativeProp)
 
     | SAVEDLISTWALLET(data) =>
@@ -240,7 +227,7 @@ let registerHeadless = headless => {
       switch data.walletType->Option.getOr("")->walletNameToTypeMapper {
       | GOOGLE_PAY =>
         HyperModule.launchGPay(
-          GooglePayTypeNew.getGpayToken(~obj=session, ~appEnv=nativeProp.env, ~requiredFields=[]), //walletType.required_field,
+          GooglePayTypeNew.getGpayToken(~obj=session, ~appEnv=nativeProp.env, ~requiredFields=[]),
           var => {
             RequiredFieldsTypes.importStates("./../utility/reusableCodeFromWeb/States.json")
             ->Promise.then(res => {
@@ -282,8 +269,7 @@ let registerHeadless = headless => {
             ("session_token_data", session.session_token_data),
             ("payment_request_data", session.payment_request_data),
           ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ->Utils.getDictFromArray
           ->JSON.stringify,
           var => {
             RequiredFieldsTypes.importStates("./../utility/reusableCodeFromWeb/States.json")
