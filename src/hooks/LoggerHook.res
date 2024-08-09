@@ -181,9 +181,7 @@ let logFileToObj = logFile => {
     ),
     ("latency", logFile.latency->Option.getOr("")->JSON.Encode.string),
     ("source", logFile.source->JSON.Encode.string),
-  ]
-  ->Dict.fromArray
-  ->JSON.Encode.object
+  ]->Utils.getDictFromArray
 }
 
 let useCalculateLatency = () => {
@@ -452,8 +450,8 @@ let useApiLogWrapper = () => {
     }
     logger(
       ~logType,
-      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-      ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~value=value->Utils.getDictFromArray->JSON.stringify,
+      ~internalMetadata=internalMetadata->Utils.getDictFromArray->JSON.stringify,
       ~category=API,
       ~eventName,
       ~paymentMethod?,

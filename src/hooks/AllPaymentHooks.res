@@ -44,8 +44,8 @@ let useApiLogWrapper = () => {
     }
     logger(
       ~logType,
-      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-      ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~value=value->Utils.getDictFromArray->JSON.stringify,
+      ~internalMetadata=internalMetadata->Utils.getDictFromArray->JSON.stringify,
       ~category=API,
       ~eventName,
       ~paymentMethod?,
@@ -102,8 +102,7 @@ let useSessionToken = () => {
           ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
           ("wallets", wallet->JSON.Encode.array),
         ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ->Utils.getDictFromArray
         ->JSON.stringify
       apiLogWrapper(
         ~logType=INFO,
@@ -137,9 +136,7 @@ let useSessionToken = () => {
                 ("url", url->JSON.Encode.string),
                 ("statusCode", statusCode->JSON.Encode.string),
                 ("response", error),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
+              ]->Utils.getDictFromArray
             apiLogWrapper(
               ~logType=ERROR,
               ~eventName=SESSIONS_CALL,
@@ -230,9 +227,7 @@ let useRetrieveHook = () => {
                 ("url", uri->JSON.Encode.string),
                 ("statusCode", statusCode->JSON.Encode.string),
                 ("response", error),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
+              ]->Utils.getDictFromArray
 
             apiLogWrapper(
               ~logType=ERROR,
@@ -526,9 +521,7 @@ let useRedirectHook = () => {
                       ("url", uri->JSON.Encode.string),
                       ("statusCode", statusCode->JSON.Encode.string),
                       ("response", error),
-                    ]
-                    ->Dict.fromArray
-                    ->JSON.Encode.object
+                    ]->Utils.getDictFromArray
 
                   apiLogWrapper(
                     ~logType=ERROR,
@@ -600,9 +593,7 @@ let useRedirectHook = () => {
                   ("url", uri->JSON.Encode.string),
                   ("statusCode", statusCode->JSON.Encode.string),
                   ("response", error),
-                ]
-                ->Dict.fromArray
-                ->JSON.Encode.object
+                ]->Utils.getDictFromArray
 
               apiLogWrapper(
                 ~logType=ERROR,
@@ -694,9 +685,7 @@ let useGetSavedPMHook = () => {
               ("url", uri->JSON.Encode.string),
               ("statusCode", statusCode->JSON.Encode.string),
               ("response", error),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
+            ]->Utils.getDictFromArray
 
           apiLogWrapper(
             ~logType=ERROR,

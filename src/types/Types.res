@@ -1,8 +1,10 @@
+type fieldType = Email | Country | Name | Bank | BlikCode
+
 type redirectTypeJson = {
   name: string,
   text: string,
   header: string,
-  fields: array<string>,
+  fields: array<fieldType>,
 }
 type retrieve = Payment | List
 
@@ -29,19 +31,19 @@ let defaultConfig = {
       name: "klarna",
       text: "Klarna",
       header: "",
-      fields: ["email", "country"],
+      fields: [Email, Country],
     },
     {
       name: "afterpay_clearpay",
       text: "AfterPay",
       header: "",
-      fields: ["email", "name"],
+      fields: [Email, Name],
     },
     {
       name: "affirm",
       text: "Affirm",
       header: "",
-      fields: ["email"],
+      fields: [Email],
     },
     {
       name: "ali_pay",
@@ -53,7 +55,7 @@ let defaultConfig = {
       name: "eps",
       text: "EPS",
       header: "",
-      fields: ["bank"],
+      fields: [Bank],
     },
     {
       name: "we_chat_pay",
@@ -65,7 +67,7 @@ let defaultConfig = {
       name: "blik",
       text: "Blik",
       header: "",
-      fields: ["blik_code"],
+      fields: [BlikCode],
     },
     {
       name: "ideal",
@@ -77,13 +79,13 @@ let defaultConfig = {
       name: "crypto",
       text: "Crypto",
       header: "",
-      fields: ["name"],
+      fields: [Name],
     },
     {
       name: "trustly",
       text: "Trustly",
       header: "",
-      fields: ["country"],
+      fields: [Country],
     },
     {
       name: "sofort",

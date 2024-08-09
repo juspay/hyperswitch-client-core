@@ -224,33 +224,28 @@ let make = (
       | "" =>
         let json = paymentData.paymentMethodData->JSON.parseExn
         let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
-        let payment_method_data =
-          [
-            (
-              "wallet",
-              [
-                (
-                  selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-                  obj.paymentMethodData->parser,
-                ),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-            (
-              "billing",
-              switch obj.paymentMethodData.info {
-              | Some(info) =>
-                switch info.billing_address {
-                | Some(address) => address->parser2
-                | None => JSON.Encode.null
-                }
+        let payment_method_data = [
+          (
+            "wallet",
+            [
+              (
+                selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+                obj.paymentMethodData->parser,
+              ),
+            ]->Utils.getDictFromArray,
+          ),
+          (
+            "billing",
+            switch obj.paymentMethodData.info {
+            | Some(info) =>
+              switch info.billing_address {
+              | Some(address) => address->parser2
               | None => JSON.Encode.null
-              },
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+              }
+            | None => JSON.Encode.null
+            },
+          ),
+        ]->Utils.getDictFromArray
         processRequest(
           ~payment_method="wallet",
           ~payment_method_data,
@@ -304,28 +299,23 @@ let make = (
               ("payment_data", payment_data),
               ("payment_method", payment_method),
               ("transaction_identifier", transaction_identifier),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
+            ]->Utils.getDictFromArray
 
-          let payment_method_data =
-            [
-              (
-                "wallet",
-                [(selectedObj.walletName->SdkTypes.walletTypeToStrMapper, paymentData)]
-                ->Dict.fromArray
-                ->JSON.Encode.object,
-              ),
-              (
-                "billing",
-                switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
-                | Some(billing) => billing->parser2
-                | None => JSON.Encode.null
-                },
-              ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
+          let payment_method_data = [
+            (
+              "wallet",
+              [
+                (selectedObj.walletName->SdkTypes.walletTypeToStrMapper, paymentData),
+              ]->Utils.getDictFromArray,
+            ),
+            (
+              "billing",
+              switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+              | Some(billing) => billing->parser2
+              | None => JSON.Encode.null
+              },
+            ),
+          ]->Utils.getDictFromArray
           processRequest(
             ~payment_method="wallet",
             ~payment_method_data,
@@ -364,8 +354,7 @@ let make = (
           ("session_token_data", sessionObject.session_token_data),
           ("payment_request_data", sessionObject.payment_request_data),
         ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
+        ->Utils.getDictFromArray
         ->JSON.stringify,
         confirmApplePay,
         _ => {

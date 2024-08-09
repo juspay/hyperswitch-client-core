@@ -96,10 +96,8 @@ let processRequestPayLater = (
         ("billing_email", email->Option.getOr("")->JSON.Encode.string),
         ("billing_name", name->Option.getOr("")->JSON.Encode.string),
         ("billing_country", country->Option.getOr("")->JSON.Encode.string),
-      ]
-      ->Dict.fromArray
-      ->JSON.Encode.object
-    let sdkData = [("token", authToken->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object
+      ]->Utils.getDictFromArray
+    let sdkData = [("token", authToken->JSON.Encode.string)]->Utils.getDictFromArray
     let payment_method_data =
       [
         (
@@ -109,13 +107,9 @@ let processRequestPayLater = (
               prop.payment_method_type ++ (authToken == "redirect" ? "_redirect" : "_sdk"),
               authToken == "redirect" ? redirectData : sdkData,
             ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object,
+          ]->Utils.getDictFromArray,
         ),
-      ]
-      ->Dict.fromArray
-      ->JSON.Encode.object
+      ]->Utils.getDictFromArray
 
     processRequest(
       ~payment_method_data,
@@ -153,6 +147,7 @@ let processRequestBankRedirect = (
   ~country,
   ~selectedBank,
   ~name,
+  ~blikCode,
   ~paymentMethod,
   ~paymentExperience,
   ~responseCallback,
@@ -171,25 +166,20 @@ let processRequestBankRedirect = (
             [
               ("country", country->Option.getOr("")->JSON.Encode.string),
               ("bank_name", selectedBank->Option.getOr("")->JSON.Encode.string),
-              ("blik_code", "777987"->JSON.Encode.string),
+              (
+                "blik_code",
+                blikCode->Option.getOr("")->String.replace("-", "")->JSON.Encode.string,
+              ),
               ("preferred_language", "en"->JSON.Encode.string),
               (
                 "billing_details",
-                [("billing_name", name->Option.getOr("")->JSON.Encode.string)]
-                ->Dict.fromArray
-                ->JSON.Encode.object,
+                [("billing_name", name->Option.getOr("")->JSON.Encode.string)]->Utils.getDictFromArray,
               ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
+            ]->Utils.getDictFromArray,
           ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object,
+        ]->Utils.getDictFromArray,
       ),
-    ]
-    ->Dict.fromArray
-    ->JSON.Encode.object
+    ]->Utils.getDictFromArray
 
   processRequest(
     ~payment_method_data,
@@ -217,9 +207,7 @@ let processRequestCrypto = (
   ~fetchAndRedirect,
 ) => {
   let payment_method_data =
-    [(prop.payment_method, []->Dict.fromArray->JSON.Encode.object)]
-    ->Dict.fromArray
-    ->JSON.Encode.object
+    [(prop.payment_method, []->Utils.getDictFromArray)]->Utils.getDictFromArray
   processRequest(
     ~payment_method_data,
     ~payment_method=prop.payment_method,
@@ -275,18 +263,14 @@ let processRequestWallet = (
       ) {
         PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
       } else {
-        let redirectData = []->Dict.fromArray->JSON.Encode.object
+        let redirectData = []->Utils.getDictFromArray
         let payment_method_data =
           [
             (
               wallet.payment_method,
-              [(wallet.payment_method_type ++ "_redirect", redirectData)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
+              [(wallet.payment_method_type ++ "_redirect", redirectData)]->Utils.getDictFromArray,
             ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
         let altPaymentExperience =
           wallet.payment_experience->Array.find(x =>
             x.payment_experience_type_decode === REDIRECT_TO_URL
@@ -346,9 +330,7 @@ let processRequestWallet = (
           [
             ("session_token_data", sessionObject.session_token_data),
             ("payment_request_data", sessionObject.payment_request_data),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+          ]->Utils.getDictFromArray
           ->JSON.stringify,
           confirmApplePay,
           _ =>
@@ -366,18 +348,14 @@ let processRequestWallet = (
     | _ => setLoading(FillingDetails)
     }
   | Some(REDIRECT_TO_URL) =>
-    let redirectData = []->Dict.fromArray->JSON.Encode.object
+    let redirectData = []->Utils.getDictFromArray
     let payment_method_data =
       [
         (
           wallet.payment_method,
-          [(wallet.payment_method_type ++ "_redirect", redirectData)]
-          ->Dict.fromArray
-          ->JSON.Encode.object,
+          [(wallet.payment_method_type ++ "_redirect", redirectData)]->Utils.getDictFromArray,
         ),
-      ]
-      ->Dict.fromArray
-      ->JSON.Encode.object
+      ]->Utils.getDictFromArray
     processRequest(
       ~payment_method=wallet.payment_method,
       ~payment_method_data,
