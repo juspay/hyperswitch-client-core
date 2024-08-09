@@ -583,28 +583,27 @@ let make = (
   }, [confirm])
 
   <>
-    <CustomButton
-      borderRadius=buttonBorderRadius
-      borderWidth=0.
-      linearGradientColorTuple
-      leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
-      onPress={_ => pressHandler()}
-      name
-      ?buttonSize>
-      {switch walletType.payment_method_type_wallet {
-      | APPLE_PAY =>
-        Some(
-          <ApplePayButtonView
-            style={viewStyle(~height=100.->pct, ~width=100.->pct, ())}
-            // cornerRadius=22.
-            // TODO: Appearance configs.
-            onPaymentResultCallback={_ => pressHandler()}
-          />,
-        )
-      | GOOGLE_PAY => Some(<GooglePayButtonView onPaymentResultCallback={_ => pressHandler()} />)
-      | _ => None
-      }}
-    </CustomButton>
+    {switch walletType.payment_method_type_wallet {
+    | APPLE_PAY =>
+      <ApplePayButtonView
+        //TODO: remove hardcoded height, fix color of applepay for darktheme
+        style={viewStyle(~height=45.->dp, ~width=100.->pct, ())}
+        cornerRadius=buttonBorderRadius
+        buttonStyle={#black}
+        onPaymentResultCallback={_ => pressHandler()}
+      />
+    | GOOGLE_PAY => <GooglePayButtonView onPaymentResultCallback={_ => pressHandler()} />
+    | _ =>
+      <CustomButton
+        borderRadius=buttonBorderRadius
+        borderWidth=0.
+        linearGradientColorTuple
+        leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
+        onPress={_ => pressHandler()}
+        name
+        ?buttonSize
+      />
+    }}
     <Space height=8. />
   </>
 }

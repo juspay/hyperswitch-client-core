@@ -94,8 +94,8 @@ module PMWithNickNameComponent = {
         val != ""
           ? <View style={viewStyle(~display=#flex, ~flexDirection=#row, ~alignItems=#center, ())}>
               <TextWrapper
-                text={val->String.length > 16
-                  ? val->String.slice(~start=0, ~end=13)->String.concat("...")
+                text={val->String.length > 15
+                  ? val->String.slice(~start=0, ~end=12)->String.concat("..")
                   : val}
                 textType={CardTextBold}
               />
@@ -132,16 +132,6 @@ module PMWithNickNameComponent = {
           }}
         />
       </View>
-    </View>
-  }
-}
-
-module CardDetailsComponent = {
-  @react.component
-  let make = (~pmDetails: SdkTypes.savedDataType) => {
-    <View
-      style={viewStyle(~display=#flex, ~flexDirection=#row, ~justifyContent=#"space-between", ())}>
-      <PMWithNickNameComponent pmDetails />
     </View>
   }
 }
@@ -270,7 +260,7 @@ module PaymentMethodListView = {
           ~justifyContent=#"space-between",
           (),
         )}>
-        <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
+        <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ~maxWidth=60.->pct, ())}>
           <CustomRadioButton
             size=20.5
             selected=isPaymentMethodSelected
@@ -280,7 +270,7 @@ module PaymentMethodListView = {
             //   : false}
           />
           <Space />
-          <CardDetailsComponent pmDetails=pmObject />
+          <PMWithNickNameComponent pmDetails=pmObject />
         </View>
         {switch pmObject {
         | SAVEDLISTCARD(obj) =>
