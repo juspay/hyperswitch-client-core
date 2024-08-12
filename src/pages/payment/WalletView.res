@@ -33,7 +33,7 @@ let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
         ? <>
             <Space />
             <CustomLoader />
-            <Space height=20. />
+            <Space height=15. />
             <TextWithLine text=localeObject.orPayUsing />
           </>
         : React.null
@@ -42,7 +42,7 @@ let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
         <Space />
         {elementArr->React.array}
         {showDisclaimer ? <WalletDisclaimer /> : React.null}
-        <Space height=20. />
+        <Space height=15. />
         <TextWithLine text=localeObject.orPayUsing />
       </>
     }}

@@ -98,7 +98,7 @@ let make = (
               ~justifyContent=#"space-between",
               (),
             )}>
-            <TextWrapper text=placeholderText textType=ModalTextBold />
+            <TextWrapper text=placeholderText textType={HeadingBold} />
             <TouchableOpacity
               onPress={_ => setIsModalVisible(prev => !prev)}
               style={viewStyle(~padding=14.->dp, ())}>
@@ -142,7 +142,7 @@ let make = (
                   setValue(_ => Some(item.value))
                   setIsModalVisible(_ => false)
                 }}>
-                <TextWrapper text={item.icon->Option.getOr("") ++ item.name} textType=CardText />
+                <TextWrapper text={item.icon->Option.getOr("") ++ item.name} textType=ModalText />
               </TouchableOpacity>}
           />
         </View>

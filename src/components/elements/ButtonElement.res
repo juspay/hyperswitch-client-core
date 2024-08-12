@@ -581,36 +581,54 @@ let make = (
     }
     None
   }, [confirm])
-
   <>
-    {switch walletType.payment_method_type_wallet {
-    | APPLE_PAY =>
-      <ApplePayButtonView
-        //TODO: remove hardcoded height, fix color of applepay for darktheme
-        style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
-        borderRadius=buttonBorderRadius
-        buttonStyle={#black}
-        onPaymentResultCallback={_ => pressHandler()}
-      />
-    | GOOGLE_PAY =>
-      <GooglePayButtonView
-        allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
-          ~obj=sessionObject,
-          ~requiredFields=walletType.required_field,
-        )}
-        borderRadius={buttonBorderRadius}
-        style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
-      />
-    | _ =>
-      <CustomButton
-        borderRadius=buttonBorderRadius
-        borderWidth=0.
-        linearGradientColorTuple
-        leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
-        onPress={_ => pressHandler()}
-        name
-      />
-    }}
-    <Space height=8. />
+    <CustomButton
+      borderRadius=buttonBorderRadius
+      linearGradientColorTuple
+      leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
+      onPress={_ => pressHandler()}
+      name>
+      {switch walletType.payment_method_type_wallet {
+      | APPLE_PAY =>
+        Some(
+          <ApplePayButtonView
+            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+            cornerRadius=buttonBorderRadius
+            buttonType={switch nativeProp.configuration.appearance.applePay {
+            | Some(apay) => apay.buttonType
+            | _ => #plain
+            }}
+            buttonStyle={switch nativeProp.configuration.appearance.applePay {
+            | Some(apay) => apay.buttonStyle
+            | _ => #black
+            }}
+            // onPaymentResultCallback={_ => pressHandler()}
+          />,
+        )
+
+      | GOOGLE_PAY =>
+        Some(
+          <GooglePayButtonView
+            allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
+              ~obj=sessionObject,
+              ~requiredFields=walletType.required_field,
+            )}
+            borderRadius={buttonBorderRadius}
+            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+            buttonType={switch nativeProp.configuration.appearance.googlePay {
+            | Some(gpay) => gpay.buttonType
+            | _ => PLAIN
+            }}
+            buttonStyle={switch nativeProp.configuration.appearance.googlePay {
+            | Some(gpay) => gpay.buttonStyle
+            | _ => #dark
+            }}
+          />,
+        )
+
+      | _ => None
+      }}
+    </CustomButton>
+    <Space height=12. />
   </>
 }

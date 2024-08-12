@@ -14,25 +14,16 @@ let make = (
 ) => {
   let {borderRadius, component, shadowColor, shadowIntensity} = ThemebasedStyle.useThemeBasedStyle()
   let (selected, isSelected) = React.useState(_ => true)
-  let shadowOffsetHeight = shadowIntensity
-  let elevation = shadowIntensity
-  let shadowRadius = shadowIntensity
-  let shadowOpacity = 0.2
-  let shadowOffsetWidth = 0.
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+
   let localeObj = GetLocale.useGetLocalObj()
 
   <View style={viewStyle(~marginHorizontal=5.->pct, ~marginVertical=3.->pct, ())}>
     <View>
       <View
         style={array([
+          getShadowStyle,
           viewStyle(
-            ~elevation,
-            ~shadowRadius,
-            ~shadowOpacity,
-            ~shadowOffset={
-              offset(~width=shadowOffsetWidth, ~height=shadowOffsetHeight /. 2.)
-            },
-            ~shadowColor,
             ~paddingHorizontal=24.->dp,
             ~paddingVertical=5.->dp,
             ~borderRadius,

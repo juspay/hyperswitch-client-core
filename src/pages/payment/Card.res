@@ -55,7 +55,7 @@ let make = (
   React.useEffect1(() => {
     if (
       Platform.os == #android &&
-      isInitialised &&
+      !isInitialised &&
       allApiData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
       cardData.cardNumber->String.length > 0
     ) {
