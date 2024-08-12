@@ -150,9 +150,14 @@ type primaryButton = {
 
 type googlePayButtonType = BUY | BOOK | CHECKOUT | DONATE | ORDER | PAY | SUBSCRIBE | PLAIN
 
+type googlePayThemeBaseStyle = {
+  light: ReactNative.Appearance.t,
+  dark: ReactNative.Appearance.t,
+}
+
 type googlePayConfiguration = {
   buttonType: googlePayButtonType,
-  buttonStyle: ReactNative.Appearance.t,
+  buttonStyle: option<googlePayThemeBaseStyle>,
 }
 
 type applePayButtonType = [
@@ -167,9 +172,14 @@ type applePayButtonType = [
 ]
 type applePayButtonStyle = [#white | #whiteOutline | #black]
 
+type applePayThemeBaseStyle = {
+  light: applePayButtonStyle,
+  dark: applePayButtonStyle,
+}
+
 type applePayConfiguration = {
   buttonType: applePayButtonType,
-  buttonStyle: applePayButtonStyle,
+  buttonStyle: option<applePayThemeBaseStyle>,
 }
 
 type appearance = {
@@ -178,8 +188,8 @@ type appearance = {
   shapes: option<shapes>,
   font: option<font>,
   primaryButton: option<primaryButton>,
-  googlePay: option<googlePayConfiguration>,
-  applePay: option<applePayConfiguration>,
+  googlePay: googlePayConfiguration,
+  applePay: applePayConfiguration,
 }
 
 type address = {
@@ -380,8 +390,14 @@ let defaultAppearance: appearance = {
     | _ => None
     },
   }),
-  googlePay: None,
-  applePay: None,
+  googlePay: {
+    buttonType: PLAIN,
+    buttonStyle: None,
+  },
+  applePay: {
+    buttonType: #plain,
+    buttonStyle: None,
+  },
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
@@ -425,7 +441,10 @@ let getAppearanceObj = (
   }
 
   let googlePayDict = getObj(appearanceDict, "googlePay", Dict.make())
+  let googlePayButtonStyle = getOptionalObj(googlePayDict, "buttonStyle")
+
   let applePayDict = getObj(appearanceDict, "applePay", Dict.make())
+  let applePayButtonStyle = getOptionalObj(applePayDict, "buttonStyle")
 
   {
     locale: switch retOptionalStr(getProp(keys.locale, appearanceDict)) {
@@ -644,7 +663,7 @@ let getAppearanceObj = (
             )
           },
     }),
-    googlePay: Some({
+    googlePay: {
       buttonType: switch getString(googlePayDict, "buttonType", "") {
       | "BUY" => BUY
       | "BOOK" => BOOK
@@ -655,12 +674,24 @@ let getAppearanceObj = (
       | "SUBSCRIBE" => SUBSCRIBE
       | _ => PLAIN
       },
-      buttonStyle: switch getString(googlePayDict, "buttonStyle", "") {
-      | "light" => #light
-      | _ => #dark
+      buttonStyle: switch googlePayButtonStyle {
+      | Some(googlePayButtonStyle) =>
+        Some({
+          light: switch getString(googlePayButtonStyle, "light", "") {
+          | "light" => #light
+          | "dark" => #dark
+          | _ => #dark
+          },
+          dark: switch getString(googlePayButtonStyle, "dark", "") {
+          | "light" => #light
+          | "dark" => #dark
+          | _ => #light
+          },
+        })
+      | None => None
       },
-    }),
-    applePay: Some({
+    },
+    applePay: {
       buttonType: switch getString(applePayDict, "buttonType", "") {
       | "buy" => #buy
       | "setUp" => #setUp
@@ -671,12 +702,25 @@ let getAppearanceObj = (
       | "subscribe" => #subscribe
       | _ => #plain
       },
-      buttonStyle: switch getString(applePayDict, "buttonStyle", "") {
-      | "white" => #white
-      | "whiteOutline" => #whiteOutline
-      | _ => #black
+      buttonStyle: switch applePayButtonStyle {
+      | Some(applePayButtonStyle) =>
+        Some({
+          light: switch getString(applePayButtonStyle, "light", "") {
+          | "white" => #white
+          | "whiteOutline" => #whiteOutline
+          | "black" => #black
+          | _ => #black
+          },
+          dark: switch getString(applePayButtonStyle, "dark", "") {
+          | "white" => #white
+          | "whiteOutline" => #whiteOutline
+          | "black" => #black
+          | _ => #white
+          },
+        })
+      | None => None
       },
-    }),
+    },
   }
 }
 

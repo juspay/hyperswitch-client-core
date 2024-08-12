@@ -45,6 +45,12 @@ let getObj = (dict, key, default) => {
   ->Option.getOr(default)
 }
 
+let getOptionalObj = (dict, key) => {
+  dict
+  ->Dict.get(key)
+  ->Option.flatMap(JSON.Decode.object)
+}
+
 let getOptionalArrayFromDict = (dict, key) => {
   dict->Dict.get(key)->Option.flatMap(JSON.Decode.array)
 }
