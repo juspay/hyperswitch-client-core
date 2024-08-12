@@ -148,12 +148,38 @@ type primaryButton = {
   primaryButtonColor: option<primaryButtonColorType>,
 }
 
+type googlePayButtonType = BUY | BOOK | CHECKOUT | DONATE | ORDER | PAY | SUBSCRIBE | PLAIN
+
+type googlePayConfiguration = {
+  buttonType: googlePayButtonType,
+  buttonStyle: ReactNative.Appearance.t,
+}
+
+type applePayButtonType = [
+  | #buy
+  | #setUp
+  | #inStore
+  | #donate
+  | #checkout
+  | #book
+  | #subscribe
+  | #plain
+]
+type applePayButtonStyle = [#white | #whiteOutline | #black]
+
+type applePayConfiguration = {
+  buttonType: applePayButtonType,
+  buttonStyle: applePayButtonStyle,
+}
+
 type appearance = {
   locale: option<localeTypes>,
   colors: option<colorType>,
   shapes: option<shapes>,
   font: option<font>,
   primaryButton: option<primaryButton>,
+  googlePay: option<googlePayConfiguration>,
+  applePay: option<applePayConfiguration>,
 }
 
 type address = {
@@ -183,16 +209,6 @@ type customerConfiguration = {
   ephemeralKeySecret: option<string>,
 }
 
-type googlePayButtonType = BUY | BOOK | CHECKOUT | DONATE | ORDER | PAY | SUBSCRIBE | PLAIN
-
-type googlePayConfiguration = {
-  environment: string,
-  countryCode: string,
-  currencyCode: option<string>,
-  buttonType: googlePayButtonType,
-  theme: ReactNative.Appearance.t,
-}
-
 type placeholder = {
   cardNumber: string,
   expiryDate: string,
@@ -206,7 +222,6 @@ type configurationType = {
   primaryButtonLabel: option<string>,
   paymentSheetHeaderText: option<string>,
   savedPaymentScreenHeaderText: option<string>,
-  // customer: option<customerConfiguration>,
   merchantDisplayName: string,
   defaultBillingDetails: option<addressDetails>,
   primaryButtonColor: option<string>,
@@ -215,13 +230,7 @@ type configurationType = {
   displaySavedPaymentMethods: bool,
   placeholder: placeholder,
   netceteraSDKApiKey: option<string>,
-  // themes: string,
-
-  // Android Specific
-  googlePay: option<googlePayConfiguration>,
   displayDefaultSavedPaymentIcon: bool,
-
-  // IOS specific
 }
 
 type sdkState =
@@ -371,6 +380,8 @@ let defaultAppearance: appearance = {
     | _ => None
     },
   }),
+  googlePay: None,
+  applePay: None,
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
@@ -412,6 +423,9 @@ let getAppearanceObj = (
   | "" => primaryButtonDict
   | _ => getObj(primaryButtonDict, keys.primaryButton_shapes, Dict.make())
   }
+
+  let googlePayDict = getObj(appearanceDict, "googlePay", Dict.make())
+  let applePayDict = getObj(appearanceDict, "applePay", Dict.make())
 
   {
     locale: switch retOptionalStr(getProp(keys.locale, appearanceDict)) {
@@ -630,6 +644,39 @@ let getAppearanceObj = (
             )
           },
     }),
+    googlePay: Some({
+      buttonType: switch getString(googlePayDict, "buttonType", "") {
+      | "BUY" => BUY
+      | "BOOK" => BOOK
+      | "CHECKOUT" => CHECKOUT
+      | "DONATE" => DONATE
+      | "ORDER" => ORDER
+      | "PAY" => PAY
+      | "SUBSCRIBE" => SUBSCRIBE
+      | _ => PLAIN
+      },
+      buttonStyle: switch getString(googlePayDict, "buttonStyle", "") {
+      | "light" => #light
+      | _ => #dark
+      },
+    }),
+    applePay: Some({
+      buttonType: switch getString(applePayDict, "buttonType", "") {
+      | "buy" => #buy
+      | "setUp" => #setUp
+      | "inStore" => #inStore
+      | "donate" => #donate
+      | "checkout" => #checkout
+      | "book" => #book
+      | "subscribe" => #subscribe
+      | _ => #plain
+      },
+      buttonStyle: switch getString(applePayDict, "buttonStyle", "") {
+      | "white" => #white
+      | "whiteOutline" => #whiteOutline
+      | _ => #black
+      },
+    }),
   }
 }
 
@@ -639,7 +686,6 @@ let parseConfigurationDict = (configObj, from) => {
   let billingDetailsDict = getObj(configObj, "defaultBillingDetails", Dict.make())
 
   let _customerDict = configObj->Dict.get("customer")->Option.flatMap(JSON.Decode.object)
-  let googlePayDict = configObj->Dict.get("googlePay")->Option.flatMap(JSON.Decode.object)
   let addressDict = getObj(billingDetailsDict, "address", Dict.make())
   let billingName =
     getOptionString(billingDetailsDict, "name")
@@ -755,52 +801,6 @@ let parseConfigurationDict = (configObj, from) => {
       true,
     ),
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
-    // themes: ,
-    googlePay: switch googlePayDict {
-    | Some(obj) =>
-      if from === "rn" || from == "flutter" {
-        Some({
-          environment: getBool(obj, "testEnv", false) ? "TEST" : "PRODUCTION", // test or production string value will be all capital for gpay
-          countryCode: getString(obj, "merchantCountryCode", ""),
-          currencyCode: getOptionString(obj, "currencyCode"),
-          buttonType: switch getString(obj, "buttonType", "") {
-          | "BUY" => BUY
-          | "BOOK" => BOOK
-          | "CHECKOUT" => CHECKOUT
-          | "DONATE" => DONATE
-          | "ORDER" => ORDER
-          | "PAY" => PAY
-          | "SUBSCRIBE" => SUBSCRIBE
-          | _ => PLAIN
-          },
-          theme: switch getString(obj, "theme", "") {
-          | "light" => #light
-          | _ => #dark
-          },
-        })
-      } else {
-        Some({
-          environment: getString(obj, "environment", "TEST")->String.toUpperCase, // test or production string value will be all capital for gpay
-          countryCode: getString(obj, "countryCode", ""),
-          currencyCode: getOptionString(obj, "currencyCode"),
-          buttonType: switch getString(obj, "buttonType", "") {
-          | "BUY" => BUY
-          | "BOOK" => BOOK
-          | "CHECKOUT" => CHECKOUT
-          | "DONATE" => DONATE
-          | "ORDER" => ORDER
-          | "PAY" => PAY
-          | "SUBSCRIBE" => SUBSCRIBE
-          | _ => PLAIN
-          },
-          theme: switch getString(obj, "theme", "") {
-          | "light" => #light
-          | _ => #dark
-          },
-        })
-      }
-    | _ => None
-    },
     netceteraSDKApiKey: getOptionString(configObj, "netceteraSDKApiKey"),
     placeholder: {
       cardNumber: getString(placeholderDict, "cardNumber", "1234 1234 1234 1234"),

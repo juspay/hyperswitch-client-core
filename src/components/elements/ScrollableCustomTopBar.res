@@ -23,12 +23,7 @@ module BottomTabList = {
       shadowColor,
       shadowIntensity,
     } = ThemebasedStyle.useThemeBasedStyle()
-
-    let shadowOffsetHeight = shadowIntensity
-    let elevation = shadowIntensity
-    let shadowRadius = shadowIntensity
-    let shadowOpacity = 0.2
-    let shadowOffsetWidth = 0.
+    let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
 
     <View
       style={viewStyle(
@@ -47,6 +42,7 @@ module BottomTabList = {
         activeOpacity=1.
         style={array([
           bgColor,
+          getShadowStyle,
           viewStyle(
             // ~backgroundColor={isFocused ? component.background : "transparent"},
             ~backgroundColor={component.background},
@@ -55,21 +51,6 @@ module BottomTabList = {
             ~minWidth=115.->dp,
             ~padding=10.->dp,
             ~borderRadius,
-            // ~elevation=isFocused ? shadow : 0.,
-            //~shadowRadius={shadow /. 4.},
-            // ~shadowOffset={
-            //   shadow != 0. && isFocused
-            //     ? offset(~width=-1. *. shadow, ~height=1. *. shadow)
-            //     : offset(~width=-0., ~height=0.)
-            // },
-            // ~shadowOpacity=isFocused ? 0.15 : 0.,
-            ~elevation,
-            ~shadowRadius,
-            ~shadowOpacity,
-            ~shadowOffset={
-              offset(~width=shadowOffsetWidth, ~height=shadowOffsetHeight /. 2.)
-            },
-            ~shadowColor,
             (),
           ),
           // bgColor,

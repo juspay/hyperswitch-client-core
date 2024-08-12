@@ -136,19 +136,7 @@ let make = (
   }
 
   <ErrorBoundary level=FallBackScreen.Screen rootTag=nativeProp.rootTag>
-    <View
-      style={viewStyle(
-        // ~elevation,
-        // ~shadowRadius,
-        // ~shadowOpacity,
-        // ~shadowOffset={
-        //   offset(~width=shadowOffsetWidth, ~height=shadowOffsetHeight)
-        // },
-        // ~shadowColor,
-        ~width=100.->pct,
-        ~borderRadius,
-        (),
-      )}>
+    <View style={viewStyle(~width=100.->pct, ~borderRadius, ())}>
       <View style={viewStyle(~width=100.->pct, ())}>
         <CustomInput
           reference={None} // previously Some(cardRef->toInputRef)

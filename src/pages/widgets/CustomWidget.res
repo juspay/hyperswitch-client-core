@@ -53,13 +53,13 @@ let make = (~walletType) => {
           },
           configuration: {
             ...nativeProp.configuration,
-            googlePay: Some({
-              environment: "TEST",
-              countryCode: "US",
-              currencyCode: Some("USD"),
-              buttonType: PLAIN,
-              theme: #dark,
-            }),
+            appearance: {
+              ...nativeProp.configuration.appearance,
+              googlePay: Some({
+                buttonType: PLAIN,
+                buttonStyle: #dark,
+              }),
+            },
           },
         })
       }

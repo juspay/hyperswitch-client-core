@@ -23,7 +23,6 @@ let make = (
   ~leftIcon: iconType=NoIcon,
   ~rightIcon: iconType=NoIcon,
   ~onPress=?,
-  ~fullLength=true,
   ~linearGradientColorTuple=None,
   ~borderWidth=0.,
   ~borderRadius=0.,
@@ -38,25 +37,11 @@ let make = (
     component,
     primaryButtonHeight,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let shadowOffsetHeight = payNowButtonShadowIntensity
-  let elevation = payNowButtonShadowIntensity
-  let shadowRadius = payNowButtonShadowIntensity
-  let shadowOpacity = 0.2
-  let shadowOffsetWidth = 0.
-  let styles = {
-    StyleSheet.create({
-      "lengthStyle": fullLength ? viewStyle(~width=100.->pct, ()) : viewStyle(~width=300.->dp, ()),
-      "buttonSizeClass": {
-        viewStyle(~height=primaryButtonHeight->dp, ())
-      },
-      "textColor": textStyle(~color=payNowButtonTextColor, ()),
-      "buttonTextClass": textStyle(~fontSize=17., ~paddingHorizontal=8.->dp, ()),
-    })
-  }
-  // let iconSize = switch buttonSize {
-  // | Small => 14.
-  // | Medium => 16.
-  // }
+  let getShadowStyle = ShadowHook.useGetShadowStyle(
+    ~shadowIntensity=payNowButtonShadowIntensity,
+    ~shadowColor=payNowButtonShadowColor,
+    (),
+  )
 
   let backColor = switch linearGradientColorTuple {
   | Some(tuple) => tuple
@@ -69,21 +54,10 @@ let make = (
     }
   }
 
-  // let iconColor = switch buttonState {
-  // | Normal => "white"
-  // | Loading => "#bbbbbb"
-  // | Disabled => "#bbbbbb"
-  // | Transparent => "#bbbbbb"
-  // }
-
   let disabled = switch buttonState {
   | Normal => false
   | _ => true
   }
-  // let isdisabledColor = switch buttonState {
-  // | Disabled => true
-  // | _ => false
-  // }
 
   let loaderIconColor = switch buttonType {
   | Primary => Some(payNowButtonTextColor)
@@ -123,82 +97,74 @@ let make = (
 
   <View
     style={array([
+      getShadowStyle,
       viewStyle(
+        ~height=primaryButtonHeight->dp,
+        ~width=100.->pct,
         ~justifyContent=#center,
         ~alignItems=#center,
-        ~elevation,
-        ~shadowRadius,
-        ~shadowOpacity,
-        ~shadowOffset={
-          offset(~width=shadowOffsetWidth, ~height=shadowOffsetHeight /. 2.)
-        },
-        ~shadowColor=payNowButtonShadowColor,
-        //  ~shadowRadius=3.,
-        ~margin=1.->dp,
         ~borderRadius,
         ~borderWidth,
         ~borderColor,
-        ~overflow=#hidden,
         ~backgroundColor=bgColor1,
         (),
       ),
-      styles["lengthStyle"],
-      styles["buttonSizeClass"],
     ])}>
-    {switch children {
-    | Some(child) => child
-    | _ =>
-      <TouchableOpacity
-        disabled
-        style={array([
-          viewStyle(
-            ~width=100.->pct,
-            ~height=100.->pct,
-            ~flex=1.,
-            ~flexDirection=#row,
-            ~justifyContent=#center,
-            ~alignItems=#center,
-            ~borderRadius,
-            ~overflow=#hidden,
-            ~opacity=1., //{isdisabledColor ? 0.6 : 1.},
-            (),
-          ),
-        ])}
-        ?onPress>
-        {switch leftIcon {
-        | CustomIcon(element) => element
-        | NoIcon => React.null
-        }}
-        {if buttonState == LoadingButton {
-          fillButton()
-          <Animated.View style={array([fillStyle, widthStyle])} />
-        } else {
-          React.null
-        }}
-        {switch text {
-        | Some(textStr) if textStr !== "" =>
-          <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
-            <TextWrapper
-              text={switch buttonState {
-              | LoadingButton => loadingText
-              | Completed => "Complete"
-              | _ => textStr
-              }}
-              // textType=CardText
-              textType={ButtonTextBold}
-            />
-          </View>
-        | _ => React.null
-        }}
-        {if buttonState == LoadingButton || buttonState == Completed {
-          <Loadericon iconColor=?loaderIconColor />
-        } else {
-          switch rightIcon {
+    <TouchableOpacity
+      disabled
+      style={array([
+        viewStyle(
+          ~height=primaryButtonHeight->dp,
+          ~width=100.->pct,
+          ~borderRadius,
+          ~borderWidth,
+          ~flex=1.,
+          ~flexDirection=#row,
+          ~justifyContent=#center,
+          ~alignItems=#center,
+          (),
+        ),
+      ])}
+      ?onPress>
+      {switch children {
+      | Some(child) => child
+      | _ =>
+        <>
+          {switch leftIcon {
           | CustomIcon(element) => element
           | NoIcon => React.null
-          }
-        }}
-      </TouchableOpacity>
-    }}
+          }}
+          {if buttonState == LoadingButton {
+            fillButton()
+            <Animated.View style={array([fillStyle, widthStyle])} />
+          } else {
+            React.null
+          }}
+          {switch text {
+          | Some(textStr) if textStr !== "" =>
+            <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
+              <TextWrapper
+                text={switch buttonState {
+                | LoadingButton => loadingText
+                | Completed => "Complete"
+                | _ => textStr
+                }}
+                // textType=CardText
+                textType={ButtonTextBold}
+              />
+            </View>
+          | _ => React.null
+          }}
+          {if buttonState == LoadingButton || buttonState == Completed {
+            <Loadericon iconColor=?loaderIconColor />
+          } else {
+            switch rightIcon {
+            | CustomIcon(element) => element
+            | NoIcon => React.null
+            }
+          }}
+        </>
+      }}
+    </TouchableOpacity>
   </View>
 }

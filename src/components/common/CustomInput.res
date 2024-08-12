@@ -57,11 +57,8 @@ let make = (
     shadowIntensity,
     placeholderTextSizeAdjust,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let shadowOffsetHeight = shadowIntensity
-  let elevation = shadowIntensity
-  let shadowRadius = shadowIntensity
-  let shadowOpacity = 0.2
-  let shadowOffsetWidth = 0.
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+
   let (showPass, setShowPass) = React.useState(_ => secureTextEntry)
   let (isFocused, setIsFocused) = React.useState(_ => false)
   let logger = LoggerHook.useLoggerHook()
@@ -71,18 +68,7 @@ let make = (
   // let errorTextInputColor = "rgba(218, 14, 15, 1)"
   // let normalTextInputBoderColor = "rgba(204, 210, 226, 0.75)"
   // let _ = state != "" && secureTextEntry == false && enableCrossIcon
-  let shadowStyle = enableShadow
-    ? viewStyle(
-        ~elevation,
-        ~shadowRadius,
-        ~shadowOpacity,
-        ~shadowOffset={
-          offset(~width=shadowOffsetWidth, ~height=shadowOffsetHeight)
-        },
-        ~shadowColor,
-        (),
-      )
-    : viewStyle()
+  let shadowStyle = enableShadow ? getShadowStyle : viewStyle()
   <View style={viewStyle(~width=100.->pct, ())}>
     {heading != ""
       ? <TextWrapper textType={PlaceholderText}>
