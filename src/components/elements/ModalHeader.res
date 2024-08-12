@@ -58,7 +58,11 @@ let make = (~onModalClose) => {
                     ~borderRadius=5.,
                     (),
                   )}>
-                  <TextWrapper textType={ModalTextBold} text="Test Mode" />
+                  <TextWrapper
+                    textType={ModalTextBold}
+                    text="Test Mode"
+                    overrideStyle=Some(textStyle(~color="black", ()))
+                  />
                 </View>}
             <TouchableOpacity onPress={_ => onModalClose()}>
               <Icon name="close" width=16. height=16. fill=iconColor />

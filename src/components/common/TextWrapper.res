@@ -21,7 +21,12 @@ type textType =
   | CardText
 
 @react.component
-let make = (~text=?, ~textType: textType, ~children: option<React.element>=?) => {
+let make = (
+  ~text=?,
+  ~textType: textType,
+  ~children: option<React.element>=?,
+  ~overrideStyle=None,
+) => {
   let {
     textPrimary,
     textSecondary,
@@ -160,7 +165,11 @@ let make = (~text=?, ~textType: textType, ~children: option<React.element>=?) =>
   // | CardText => "CardText"
   // | TextActive => "TextActive"
   // }
-  <Text style={array([textStyle(~fontFamily, ()), renderStyle])}>
+  let overrideStyle = switch overrideStyle {
+  | Some(val) => val
+  | None => viewStyle()
+  }
+  <Text style={array([textStyle(~fontFamily, ()), renderStyle, overrideStyle])}>
     {switch text {
     | Some(text) => React.string(text)
     | None => React.null

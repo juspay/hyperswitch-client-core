@@ -114,10 +114,9 @@ let make = (
       disabled
       style={array([
         viewStyle(
-          ~height=primaryButtonHeight->dp,
+          ~height=100.->pct,
           ~width=100.->pct,
           ~borderRadius,
-          ~borderWidth,
           ~flex=1.,
           ~flexDirection=#row,
           ~justifyContent=#center,
