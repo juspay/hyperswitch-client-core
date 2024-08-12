@@ -21,6 +21,7 @@ let make = (
   ~onScanCard,
   ~keyToTrigerButtonClickError,
 ) => {
+  let getScanCardComponent = ScanCard.useScanCardComponent()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let isCardNumberValid = isCardNumberValid->Option.getOr(true)
   let isExpireDateValid = isExpireDataValid->Option.getOr(true)
@@ -41,7 +42,6 @@ let make = (
   }
 
   let {
-    primaryColor,
     component,
     dangerColor,
     borderRadius,
@@ -92,49 +92,6 @@ let make = (
     None
   }, [keyToTrigerButtonClickError])
 
-  let getScanCardComponent = (isScanCardAvailable, cardBrand, cardNumber) => {
-    CustomInput.CustomIcon(
-      <View style={array([viewStyle(~flexDirection=#row, ~alignItems=#center, ())])}>
-        <Icon name={cardBrand === "" ? "waitcard" : cardBrand} height=30. width=30. fill="black" />
-        <UIUtils.RenderIf condition={isScanCardAvailable && cardNumber === ""}>
-          {<>
-            <View
-              style={viewStyle(
-                ~backgroundColor=component.borderColor,
-                ~marginLeft=10.->dp,
-                ~marginRight=10.->dp,
-                ~height=80.->pct,
-                ~width=1.->dp,
-                (),
-              )}
-            />
-            <TouchableOpacity
-              style={viewStyle(
-                ~height=100.->pct,
-                ~width=27.5->dp,
-                ~display=#flex,
-                ~alignItems=#"flex-start",
-                ~justifyContent=#center,
-                (),
-              )}
-              onPress={_pressEvent => {
-                ScanCardModule.launchScanCard(scanCardCallback)
-                logger(
-                  ~logType=INFO,
-                  ~value="Launch",
-                  ~category=USER_EVENT,
-                  ~eventName=SCAN_CARD,
-                  (),
-                )
-              }}>
-              <Icon name={"CAMERA"} height=25. width=25. fill=primaryColor />
-            </TouchableOpacity>
-          </>}
-        </UIUtils.RenderIf>
-      </View>,
-    )
-  }
-
   <ErrorBoundary level=FallBackScreen.Screen rootTag=nativeProp.rootTag>
     <View
       style={viewStyle(
@@ -168,7 +125,12 @@ let make = (
           borderBottomRightRadius=0.
           textColor={isCardNumberValid ? component.color : dangerColor}
           enableCrossIcon=false
-          iconRight={getScanCardComponent(ScanCardModule.isAvailable, cardBrand, cardNumber)}
+          iconRight={getScanCardComponent(
+            ~isScanCardAvailable=ScanCardModule.isAvailable,
+            ~cardBrand,
+            ~cardNumber,
+            ~onScanCard=scanCardCallback,
+          )}
           onFocus={() => {
             setCardNumberIsFocus(_ => true)
             onChangeCardNumber(cardNumber, nullRef)

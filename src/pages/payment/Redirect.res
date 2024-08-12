@@ -1,11 +1,22 @@
 open ReactNative
-open PaymentMethodListType
 open CustomPicker
 open Style
+open PaymentMethodListType
+open Validation
+@send external focus: Dom.element => unit = "focus"
+@send external blur: Dom.element => unit = "blur"
+external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
 
 type klarnaSessionCheck = {
   isKlarna: bool,
   session_token: string,
+}
+
+type bancontactCard = {
+  cardNumber: string,
+  expireDate: string,
+  isCardNumberValid: bool,
+  isExpireDateValid: bool,
 }
 
 @react.component
@@ -34,6 +45,19 @@ let make = (
   let (email, setEmail) = React.useState(_ => None)
   let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
   let (emailIsFocus, setEmailIsFocus) = React.useState(_ => false)
+
+  let defaultBancontactCardData = {
+    cardNumber: "",
+    expireDate: "",
+    isCardNumberValid: true,
+    isExpireDateValid: true,
+  }
+  let (bancontactCard, setBancontactCard) = React.useState(_ => defaultBancontactCardData)
+  let (cardNumberIsFocus, setCardNumberIsFocus) = React.useState(_ => false)
+  let (expireDateIsFocus, setExpireDateIsFocus) = React.useState(_ => false)
+  let cardRef = React.useRef(Nullable.null)
+  let expireRef = React.useRef(Nullable.null)
+  let nullRef = React.useRef(Nullable.null)
 
   let (name, setName) = React.useState(_ => None)
   let (isNameValid, setIsNameValid) = React.useState(_ => None)
@@ -159,7 +183,7 @@ let make = (
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let localeObject = GetLocale.useGetLocalObj()
-  let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
+  let {component, borderWidth, borderRadius, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
@@ -364,6 +388,22 @@ let make = (
                   "blik_code",
                   blikCode->Option.getOr("")->String.replace("-", "")->JSON.Encode.string,
                 ),
+                ("card_number", bancontactCard.cardNumber->clearSpaces->JSON.Encode.string),
+                (
+                  "card_exp_month",
+                  bancontactCard.expireDate
+                  ->clearSpaces
+                  ->String.slice(~start=0, ~end=2)
+                  ->JSON.Encode.string,
+                ),
+                (
+                  "card_exp_year",
+                  "20"
+                  ->String.concat(
+                    bancontactCard.expireDate->clearSpaces->String.sliceToEnd(~start=-2),
+                  )
+                  ->JSON.Encode.string,
+                ),
                 ("preferred_language", "en"->JSON.Encode.string),
                 (
                   "billing_details",
@@ -562,43 +602,6 @@ let make = (
   }
 
   let processRequestWallet = (walletType: payment_method_types_wallet) => {
-    // let payment_method_data =
-    //   [
-    //     (
-    //       prop.payment_method,
-    //       [
-    //         (
-    //           prop.payment_method_type ++ "_redirect",
-    //           [
-    //             //Telephone number is for MB Way
-    //             // (
-    //             //   "telephone_number",
-    //             //   phoneNumber
-    //             //   ->Option.getOr("")
-    //             //   ->String.replaceString(" ", "")
-    //             //   ->JSON.Encode.string,
-    //             // ),
-    //           ]
-    //           ->Dict.fromArray
-    //           ->JSON.Encode.object,
-    //         ),
-    //       ]
-    //       ->Dict.fromArray
-    //       ->JSON.Encode.object,
-    //     ),
-    //   ]
-    //   ->Dict.fromArray
-    //   ->JSON.Encode.object
-
-    // processRequest(
-    //   ~payment_method_data,
-    //   ~payment_method=prop.payment_method,
-    //   ~payment_method_type=prop.payment_method_type,
-    //   // connector: prop.bank_namesArray.get(0).eligible_connectors,
-    //   // setup_future_usage:"off_session",
-    //   (),
-    // )
-
     setLoading(ProcessingPayments(None))
     logger(
       ~logType=INFO,
@@ -796,43 +799,138 @@ let make = (
 
   let hasSomeFields = fields.fields->Array.length > 0
 
-  let isAllValuesValid = React.useMemo3(() => {
-    ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
-      fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
-    )) || (fields.name == "klarna" && isKlarna)
-  }, (isEmailValid, isNameValid, sessionData))
+  let isAllValuesValid = React.useMemo(() => {
+    ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) &&
+    (fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true) &&
+    (bancontactCard.isCardNumberValid &&
+    bancontactCard.isExpireDateValid)) || (fields.name == "klarna" && isKlarna)
+  }, (
+    isEmailValid,
+    isNameValid,
+    sessionData,
+    bancontactCard.isCardNumberValid,
+    bancontactCard.isExpireDateValid,
+  ))
 
-  React.useEffect(
-    () => {
-      if isScreenFocus {
-        setConfirmButtonDataRef(
-          <ConfirmButton
-            loading=false
-            isAllValuesValid
-            handlePress
-            hasSomeFields
-            paymentMethod
-            ?paymentExperience
-            errorText=error
-          />,
-        )
+  React.useEffect(() => {
+    if isScreenFocus {
+      setConfirmButtonDataRef(
+        <ConfirmButton
+          loading=false
+          isAllValuesValid
+          handlePress
+          hasSomeFields
+          paymentMethod
+          ?paymentExperience
+          errorText=error
+        />,
+      )
+    }
+    None
+  }, (
+    isAllValuesValid,
+    hasSomeFields,
+    paymentMethod,
+    paymentExperience,
+    isScreenFocus,
+    error,
+    blikCode,
+    name,
+    email,
+    country,
+    selectedBank,
+    bancontactCard,
+  ))
+
+  let getScanCardComponent = ScanCard.useScanCardComponent()
+  let cardBrand = Validation.getCardBrand(bancontactCard.cardNumber)
+
+  let isMaxCardLength =
+    bancontactCard.cardNumber->clearSpaces->String.length ==
+      maxCardLength(getCardBrand(bancontactCard.cardNumber))
+  let isCardNumberValid = {
+    cardNumberIsFocus
+      ? bancontactCard.isCardNumberValid || !isMaxCardLength
+      : bancontactCard.isCardNumberValid
+  }
+  let isExpireDateValid = {
+    expireDateIsFocus
+      ? bancontactCard.isExpireDateValid || bancontactCard.expireDate->String.length < 7
+      : bancontactCard.isExpireDateValid
+  }
+
+  let onChangeCardNumber = (text, expireRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+    let cardBrand = Validation.getCardBrand(text)
+    let num = Validation.formatCardNumber(text, Validation.cardType(cardBrand))
+    let isthisValid = Validation.cardValid(num, cardBrand)
+    setBancontactCard(prev => {...prev, cardNumber: num, isCardNumberValid: isthisValid})
+
+    if isthisValid {
+      switch expireRef.current->Nullable.toOption {
+      | None => ()
+      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
       }
-      None
-    },
-    (
-      isAllValuesValid,
-      hasSomeFields,
-      paymentMethod,
-      paymentExperience,
-      isScreenFocus,
-      error, 
-      blikCode, 
-      name,
-      email,
-      country,
-      selectedBank,
-    ),
-  )
+    }
+  }
+
+  let onChangeCardExpire = (text, cvvRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+    let dateExpire = formatCardExpiryNumber(text)
+    let isthisValid = checkCardExpiry(dateExpire)
+    if isthisValid {
+      switch cvvRef.current->Nullable.toOption {
+      | None => ()
+      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      }
+    }
+
+    setBancontactCard(prev => {...prev, expireDate: dateExpire, isExpireDateValid: isthisValid})
+  }
+
+  let onScanCard = (
+    cardNumber,
+    expiry,
+    expireRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>,
+  ) => {
+    let cardBrand = getCardBrand(cardNumber)
+    let cardNumber = formatCardNumber(cardNumber, cardType(cardBrand))
+    let isCardNumberValid = cardValid(cardNumber, cardBrand)
+
+    let expireDate = formatCardExpiryNumber(expiry)
+    let isExpiryValid = checkCardExpiry(expireDate)
+    let isExpireDateValid = expireDate->Js.String2.length > 0 ? isExpiryValid : true
+
+    setBancontactCard(prev => {
+      cardNumber,
+      isCardNumberValid,
+      expireDate,
+      isExpireDateValid,
+    })
+
+    switch (isCardNumberValid, isExpiryValid) {
+    | (true, false) =>
+      switch expireRef.current->Nullable.toOption {
+      | None => ()
+      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      }
+    | _ => ()
+    }
+  }
+
+  let scanCardCallback = (scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
+    switch scanCardReturnType {
+    | Succeeded(data) => {
+        onScanCard(data.pan, `${data.expiryMonth} / ${data.expiryYear}`, expireRef)
+        logger(~logType=INFO, ~value="Succeeded", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+      }
+    | Cancelled =>
+      logger(~logType=WARNING, ~value="Cancelled", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+    | Failed => {
+        showAlert(~errorType="warning", ~message="Failed to scan card at bancontact redirect")
+        logger(~logType=ERROR, ~value="Failed", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+      }
+    | _ => showAlert(~errorType="warning", ~message="Failed to scan card")
+    }
+  }
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />
@@ -858,85 +956,183 @@ let make = (
             {fields.fields
             ->Array.mapWithIndex((field, index) =>
               <View key={`field-${fields.text}${index->Int.toString}`}>
-                <Space />
                 {switch field {
+                | "bancontact_card" =>
+                  <>
+                    <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
+                    <Space height=8. />
+                    <View style={viewStyle(~width=100.->pct, ~borderRadius, ())}>
+                      <View style={viewStyle(~width=100.->pct, ())}>
+                        <CustomInput
+                          reference={Some(cardRef->toInputRef)}
+                          state={bancontactCard.cardNumber}
+                          setState={text => onChangeCardNumber(text, expireRef)}
+                          placeholder=Placeholders.bancontactCardNumber
+                          keyboardType=#"number-pad"
+                          isValid=isCardNumberValid
+                          maxLength=Some(23)
+                          borderTopLeftRadius=borderRadius
+                          borderTopRightRadius=borderRadius
+                          borderBottomWidth={borderWidth /. 2.0}
+                          borderLeftWidth=borderWidth
+                          borderRightWidth=borderWidth
+                          borderTopWidth=borderWidth
+                          borderBottomLeftRadius=0.
+                          borderBottomRightRadius=0.
+                          textColor={isCardNumberValid ? component.color : dangerColor}
+                          enableCrossIcon=false
+                          iconRight={getScanCardComponent(
+                            ~isScanCardAvailable=ScanCardModule.isAvailable,
+                            ~cardBrand,
+                            ~cardNumber=bancontactCard.cardNumber,
+                            ~onScanCard={scanCardCallback},
+                          )}
+                          onFocus={() => {
+                            setCardNumberIsFocus(_ => true)
+                            onChangeCardNumber(bancontactCard.cardNumber, nullRef)
+                          }}
+                          onBlur={() => {
+                            setCardNumberIsFocus(_ => false)
+                          }}
+                        />
+                      </View>
+                      <View
+                        style={viewStyle(
+                          ~width=100.->pct,
+                          ~flexDirection=localeObject.localeDirection === "rtl"
+                            ? #"row-reverse"
+                            : #row,
+                          (),
+                        )}>
+                        <CustomInput
+                          reference={Some(expireRef->toInputRef)}
+                          state={bancontactCard.expireDate}
+                          setState={text => onChangeCardExpire(text, expireRef)}
+                          placeholder=Placeholders.bancontactCardExpiry
+                          keyboardType=#"number-pad"
+                          enableCrossIcon=false
+                          isValid=isExpireDateValid
+                          borderTopWidth={borderWidth /. 2.0}
+                          borderRightWidth=borderWidth
+                          borderTopLeftRadius=0.
+                          borderTopRightRadius=0.
+                          borderBottomRightRadius=borderRadius
+                          borderBottomLeftRadius=borderRadius
+                          borderBottomWidth=borderWidth
+                          borderLeftWidth=borderWidth
+                          textColor={isExpireDateValid ? component.color : dangerColor}
+                          onFocus={() => {
+                            setExpireDateIsFocus(_ => true)
+                            onChangeCardExpire(bancontactCard.expireDate, nullRef)
+                          }}
+                          onBlur={() => {
+                            setExpireDateIsFocus(_ => false)
+                          }}
+                          onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
+                            if ev.nativeEvent.key == "Backspace" && bancontactCard.expireDate == "" {
+                              switch cardRef.current->Nullable.toOption {
+                              | None => ()
+                              | Some(ref) =>
+                                ref->Nullable.toOption->Option.forEach(input => input->focus)
+                              }
+                            }
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </>
                 | "email" =>
-                  <CustomInput
-                    state={email->Option.getOr("")}
-                    setState={handlePressEmail}
-                    placeholder=localeObject.emailLabel
-                    keyboardType=#"email-address"
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderTopLeftRadius=borderRadius
-                    borderTopRightRadius=borderRadius
-                    borderTopWidth=borderWidth
-                    borderBottomWidth=borderWidth
-                    borderLeftWidth=borderWidth
-                    borderRightWidth=borderWidth
-                    isValid=isEmailValidForFocus
-                    onFocus={_ => {
-                      setEmailIsFocus(_ => true)
-                    }}
-                    onBlur={_ => {
-                      setEmailIsFocus(_ => false)
-                    }}
-                    textColor=component.color
-                  />
+                  <>
+                    <Space />
+                    <CustomInput
+                      state={email->Option.getOr("")}
+                      setState={handlePressEmail}
+                      placeholder=localeObject.emailLabel
+                      keyboardType=#"email-address"
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                      isValid=isEmailValidForFocus
+                      onFocus={_ => {
+                        setEmailIsFocus(_ => true)
+                      }}
+                      onBlur={_ => {
+                        setEmailIsFocus(_ => false)
+                      }}
+                      textColor=component.color
+                    />
+                  </>
                 | "name" =>
-                  <CustomInput
-                    state={name->Option.getOr("")}
-                    setState={handlePressName}
-                    placeholder=localeObject.fullNameLabel
-                    keyboardType=#default
-                    isValid=isNameValidForFocus
-                    onFocus={_ => {
-                      setNameIsFocus(_ => true)
-                    }}
-                    onBlur={_ => {
-                      setNameIsFocus(_ => false)
-                    }}
-                    textColor=component.color
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderTopLeftRadius=borderRadius
-                    borderTopRightRadius=borderRadius
-                    borderTopWidth=borderWidth
-                    borderBottomWidth=borderWidth
-                    borderLeftWidth=borderWidth
-                    borderRightWidth=borderWidth
-                  />
+                  <>
+                    <Space />
+                    <CustomInput
+                      state={name->Option.getOr("")}
+                      setState={handlePressName}
+                      placeholder=localeObject.fullNameLabel
+                      keyboardType=#default
+                      isValid=isNameValidForFocus
+                      onFocus={_ => {
+                        setNameIsFocus(_ => true)
+                      }}
+                      onBlur={_ => {
+                        setNameIsFocus(_ => false)
+                      }}
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  </>
                 | "country" =>
-                  <CustomPicker
-                    value=country
-                    setValue=onChangeCountry
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderBottomWidth=borderWidth
-                    items=countryData
-                    placeholderText=localeObject.countryLabel
-                  />
+                  <>
+                    <Space />
+                    <CustomPicker
+                      value=country
+                      setValue=onChangeCountry
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      items=countryData
+                      placeholderText=localeObject.countryLabel
+                    />
+                  </>
                 | "bank" =>
-                  <CustomPicker
-                    value=selectedBank
-                    setValue=onChangeBank
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderBottomWidth=borderWidth
-                    items=bankData
-                    placeholderText=localeObject.bankLabel
-                  />
+                  <>
+                    <Space />
+                    <CustomPicker
+                      value=selectedBank
+                      setValue=onChangeBank
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      items=bankData
+                      placeholderText=localeObject.bankLabel
+                    />
+                  </>
                 | "blik_code" =>
-                  <CustomInput
-                    state={blikCode->Option.getOr("")}
-                    setState={onChangeBlikCode}
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderBottomWidth=borderWidth
-                    placeholder="000-000"
-                    keyboardType=#numeric
-                    maxLength=Some(7)
-                  />
+                  <>
+                    <Space />
+                    <CustomInput
+                      state={blikCode->Option.getOr("")}
+                      setState={onChangeBlikCode}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="000-000"
+                      keyboardType=#numeric
+                      maxLength=Some(7)
+                    />
+                  </>
                 | _ => React.null
                 }}
               </View>
