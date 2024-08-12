@@ -159,8 +159,8 @@ type themeBasedStyleObj = {
   modalTextSizeAdjust: float,
   cardTextSizeAdjust: float,
   paypalButonColor: buttonColorConfig,
-  applePayButtonColor: buttonColorConfig,
-  googlePayButtonColor: buttonColorConfig,
+  applePayButtonColor: SdkTypes.applePayButtonStyle,
+  googlePayButtonColor: Appearance.t,
   payNowButtonColor: buttonColorConfig,
   payNowButtonTextColor: string,
   payNowButtonBorderColor: string,
@@ -238,8 +238,8 @@ let darkRecord = {
   cardTextSizeAdjust: 0.,
   paypalButonColor: ("#ffffff", "#ffffff"),
   payNowButtonTextColor: "#FFFFFF",
-  applePayButtonColor: ("#00000000", "#00000000"),
-  googlePayButtonColor: ("#00000000", "#00000000"),
+  applePayButtonColor: #white,
+  googlePayButtonColor: #light,
   payNowButtonColor: ("#0057c7", "#0057c7"),
   payNowButtonBorderColor: "#e6e6e650",
   payNowButtonShadowColor: "black",
@@ -313,8 +313,8 @@ let lightRecord = {
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
   paypalButonColor: ("#F6C657", "#F6C657"),
-  applePayButtonColor: ("#00000000", "#00000000"),
-  googlePayButtonColor: ("#00000000", "#00000000"),
+  applePayButtonColor: #black,
+  googlePayButtonColor: #dark,
   payNowButtonColor: ("#006DF9", "#006DF9"),
   payNowButtonTextColor: "#FFFFFF",
   payNowButtonBorderColor: "#ffffff",
@@ -390,8 +390,8 @@ let minimal = {
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
   paypalButonColor: ("#ffc439", "#ffd500"),
-  applePayButtonColor: ("#00000000", "#00000000"),
-  googlePayButtonColor: ("#00000000", "#00000000"),
+  applePayButtonColor: #black,
+  googlePayButtonColor: #dark,
   payNowButtonColor: ("#0570de", "#0080FE"),
   payNowButtonTextColor: "#FFFFFF",
   payNowButtonBorderColor: "#ffffff",
@@ -467,8 +467,8 @@ let flatMinimal = {
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
   paypalButonColor: ("#ffc439", "#ffd500"),
-  applePayButtonColor: ("#00000000", "#00000000"),
-  googlePayButtonColor: ("#00000000", "#00000000"),
+  applePayButtonColor: #black,
+  googlePayButtonColor: #dark,
   payNowButtonColor: ("#0570de", "#0080FE"),
   payNowButtonTextColor: "#000000",
   payNowButtonBorderColor: "#000000",
@@ -516,6 +516,15 @@ let itemToObj = (
   | None => None
   }
 
+  let gpayOverrideStyle = switch appearance.googlePay.buttonStyle {
+  | Some(val) => isDarkMode ? val.dark : val.light
+  | None => themeObj.googlePayButtonColor
+  }
+
+  let applePayOverrideStyle = switch appearance.applePay.buttonStyle {
+  | Some(val) => isDarkMode ? val.dark : val.light
+  | None => themeObj.applePayButtonColor
+  }
   {
     primaryButtonHeight: themeObj.primaryButtonHeight,
     platform: themeObj.platform,
@@ -742,8 +751,8 @@ let itemToObj = (
     | None => themeObj.cardTextSizeAdjust
     },
     paypalButonColor: themeObj.paypalButonColor,
-    applePayButtonColor: themeObj.applePayButtonColor,
-    googlePayButtonColor: themeObj.googlePayButtonColor,
+    applePayButtonColor: applePayOverrideStyle,
+    googlePayButtonColor: gpayOverrideStyle,
     payNowButtonColor: getStrProp(
       ~overRideProp=switch btnColor {
       | Some(obj) =>

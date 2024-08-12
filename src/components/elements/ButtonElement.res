@@ -63,12 +63,12 @@ let make = (
         iconName: "paypal",
       }
     | GOOGLE_PAY => {
-        linearGradientColorTuple: Some(googlePayButtonColor),
+        linearGradientColorTuple: Some("#00000000", "#00000000"),
         name: "Google Pay",
         iconName: "googlePayWalletBtn",
       }
     | APPLE_PAY => {
-        linearGradientColorTuple: Some(applePayButtonColor),
+        linearGradientColorTuple: Some("#00000000", "#00000000"),
         name: "Apple Pay",
         iconName: "applePayWalletBtn",
       }
@@ -594,14 +594,8 @@ let make = (
           <ApplePayButtonView
             style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
             cornerRadius=buttonBorderRadius
-            buttonType={switch nativeProp.configuration.appearance.applePay {
-            | Some(apay) => apay.buttonType
-            | _ => #plain
-            }}
-            buttonStyle={switch nativeProp.configuration.appearance.applePay {
-            | Some(apay) => apay.buttonStyle
-            | _ => #black
-            }}
+            buttonType=nativeProp.configuration.appearance.applePay.buttonType
+            buttonStyle=applePayButtonColor
             // onPaymentResultCallback={_ => pressHandler()}
           />,
         )
@@ -615,14 +609,8 @@ let make = (
             )}
             borderRadius={buttonBorderRadius}
             style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
-            buttonType={switch nativeProp.configuration.appearance.googlePay {
-            | Some(gpay) => gpay.buttonType
-            | _ => PLAIN
-            }}
-            buttonStyle={switch nativeProp.configuration.appearance.googlePay {
-            | Some(gpay) => gpay.buttonStyle
-            | _ => #dark
-            }}
+            buttonType=nativeProp.configuration.appearance.googlePay.buttonType
+            buttonStyle=googlePayButtonColor
           />,
         )
 

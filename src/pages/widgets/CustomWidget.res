@@ -55,10 +55,10 @@ let make = (~walletType) => {
             ...nativeProp.configuration,
             appearance: {
               ...nativeProp.configuration.appearance,
-              googlePay: Some({
+              googlePay: {
                 buttonType: PLAIN,
-                buttonStyle: #dark,
-              }),
+                buttonStyle: None,
+              },
             },
           },
         })
