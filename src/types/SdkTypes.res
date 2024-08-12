@@ -182,10 +182,15 @@ type customerConfiguration = {
   id: option<string>,
   ephemeralKeySecret: option<string>,
 }
+
+type googlePayButtonType = BUY | BOOK | CHECKOUT | DONATE | ORDER | PAY | SUBSCRIBE | PLAIN
+
 type googlePayConfiguration = {
   environment: string,
   countryCode: string,
   currencyCode: option<string>,
+  buttonType: googlePayButtonType,
+  theme: ReactNative.Appearance.t,
 }
 
 type placeholder = {
@@ -758,12 +763,40 @@ let parseConfigurationDict = (configObj, from) => {
           environment: getBool(obj, "testEnv", false) ? "TEST" : "PRODUCTION", // test or production string value will be all capital for gpay
           countryCode: getString(obj, "merchantCountryCode", ""),
           currencyCode: getOptionString(obj, "currencyCode"),
+          buttonType: switch getString(obj, "buttonType", "") {
+          | "BUY" => BUY
+          | "BOOK" => BOOK
+          | "CHECKOUT" => CHECKOUT
+          | "DONATE" => DONATE
+          | "ORDER" => ORDER
+          | "PAY" => PAY
+          | "SUBSCRIBE" => SUBSCRIBE
+          | _ => PLAIN
+          },
+          theme: switch getString(obj, "theme", "") {
+          | "light" => #light
+          | _ => #dark
+          },
         })
       } else {
         Some({
           environment: getString(obj, "environment", "TEST")->String.toUpperCase, // test or production string value will be all capital for gpay
           countryCode: getString(obj, "countryCode", ""),
           currencyCode: getOptionString(obj, "currencyCode"),
+          buttonType: switch getString(obj, "buttonType", "") {
+          | "BUY" => BUY
+          | "BOOK" => BOOK
+          | "CHECKOUT" => CHECKOUT
+          | "DONATE" => DONATE
+          | "ORDER" => ORDER
+          | "PAY" => PAY
+          | "SUBSCRIBE" => SUBSCRIBE
+          | _ => PLAIN
+          },
+          theme: switch getString(obj, "theme", "") {
+          | "light" => #light
+          | _ => #dark
+          },
         })
       }
     | _ => None

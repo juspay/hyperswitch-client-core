@@ -8,10 +8,10 @@ type buttonStyle = [#white | #whiteOutline | #black]
 type props = {
   buttonType?: buttonType,
   buttonStyle?: buttonStyle,
-  cornerRadius?: float,
+  borderRadius?: float,
   style: Style.t,
-  onPaymentResultCallback: nativeSyntheticEvent<Dict.t<JSON.t>> => unit,
+  onPaymentResultCallback?: nativeSyntheticEvent<Dict.t<JSON.t>> => unit,
 }
 
 let make: React.component<props> =
-  Platform.os == #ios ? NativeModules.requireNativeComponent("ApplePayView") : _ => React.null
+  Platform.os == #ios ? NativeModules.requireNativeComponent("ApplePayButton") : _ => React.null
