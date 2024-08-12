@@ -57,6 +57,8 @@ let make = (~walletType) => {
               environment: "TEST",
               countryCode: "US",
               currencyCode: Some("USD"),
+              buttonType: PLAIN,
+              theme: #dark,
             }),
           },
         })

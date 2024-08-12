@@ -1,9 +1,6 @@
 open SdkTypes
 open Utils
 
-type googlePayStyleType = Default | Buy | Donate | Checkout | Subscribe | Book | Pay | Order
-
-external parser2: 'a => JSON.t = "%identity"
 external toJson: 'a => JSON.t = "%identity"
 
 type merchantInfo = {
@@ -229,7 +226,7 @@ let getGpayToken = (
   ~obj: SessionsType.sessions,
   ~appEnv: GlobalVars.envType,
   ~requiredFields: option<RequiredFieldsTypes.required_fields>=?,
-) => {
+) =>
   {
     environment: appEnv == PROD ? "PRODUCTION"->JSON.Encode.string : "Test"->JSON.Encode.string,
     paymentDataRequest: obj->itemToObject(
@@ -244,6 +241,25 @@ let getGpayToken = (
       },
     ),
   }
-  ->parser2
+  ->toJson
   ->JSON.stringify
-}
+
+let getAllowedPaymentMethods = (
+  ~obj: SessionsType.sessions,
+  ~requiredFields: option<RequiredFieldsTypes.required_fields>=?,
+) =>
+  {
+    obj->itemToObject(
+      switch requiredFields {
+      | Some(fields) =>
+        fields
+        ->Array.find(v => {
+          v.display_name == "email"
+        })
+        ->Option.isSome
+      | None => true
+      },
+    )
+  }.allowedPaymentMethods
+  ->toJson
+  ->JSON.stringify

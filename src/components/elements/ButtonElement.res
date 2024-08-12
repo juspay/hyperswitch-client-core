@@ -16,7 +16,6 @@ let make = (
   ~walletType: PaymentMethodListType.payment_method_types_wallet,
   ~sessionObject,
   ~confirm=false,
-  ~buttonSize=?,
 ) => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
@@ -32,6 +31,7 @@ let make = (
     googlePayButtonColor,
     applePayButtonColor,
     buttonBorderRadius,
+    primaryButtonHeight,
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
@@ -587,12 +587,20 @@ let make = (
     | APPLE_PAY =>
       <ApplePayButtonView
         //TODO: remove hardcoded height, fix color of applepay for darktheme
-        style={viewStyle(~height=45.->dp, ~width=100.->pct, ())}
-        cornerRadius=buttonBorderRadius
+        style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+        borderRadius=buttonBorderRadius
         buttonStyle={#black}
         onPaymentResultCallback={_ => pressHandler()}
       />
-    | GOOGLE_PAY => <GooglePayButtonView onPaymentResultCallback={_ => pressHandler()} />
+    | GOOGLE_PAY =>
+      <GooglePayButtonView
+        allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
+          ~obj=sessionObject,
+          ~requiredFields=walletType.required_field,
+        )}
+        borderRadius={buttonBorderRadius}
+        style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+      />
     | _ =>
       <CustomButton
         borderRadius=buttonBorderRadius
@@ -601,7 +609,6 @@ let make = (
         leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
         onPress={_ => pressHandler()}
         name
-        ?buttonSize
       />
     }}
     <Space height=8. />
