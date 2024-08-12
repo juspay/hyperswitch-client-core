@@ -3,7 +3,6 @@ open Style
 
 type buttonState = Normal | LoadingButton | Completed | Disabled
 type buttonType = Primary
-type buttonSize = Medium | Small
 
 type iconType = CustomIcon(React.element) | NoIcon
 
@@ -21,7 +20,6 @@ let make = (
   ~text=?,
   ~name as _=?,
   ~buttonType: buttonType=Primary,
-  ~buttonSize: buttonSize=Medium,
   ~leftIcon: iconType=NoIcon,
   ~rightIcon: iconType=NoIcon,
   ~onPress=?,
@@ -38,6 +36,7 @@ let make = (
     payNowButtonShadowColor,
     payNowButtonShadowIntensity,
     component,
+    primaryButtonHeight,
   } = ThemebasedStyle.useThemeBasedStyle()
   let shadowOffsetHeight = payNowButtonShadowIntensity
   let elevation = payNowButtonShadowIntensity
@@ -48,16 +47,10 @@ let make = (
     StyleSheet.create({
       "lengthStyle": fullLength ? viewStyle(~width=100.->pct, ()) : viewStyle(~width=300.->dp, ()),
       "buttonSizeClass": {
-        switch buttonSize {
-        | Small => viewStyle(~height=40.->dp, ())
-        | Medium => viewStyle(~height=45.->dp, ())
-        }
+        viewStyle(~height=primaryButtonHeight->dp, ())
       },
       "textColor": textStyle(~color=payNowButtonTextColor, ()),
-      "buttonTextClass": switch buttonSize {
-      | Small => textStyle(~fontSize=14., ~paddingHorizontal=6.->dp, ())
-      | Medium => textStyle(~fontSize=17., ~paddingHorizontal=8.->dp, ())
-      },
+      "buttonTextClass": textStyle(~fontSize=17., ~paddingHorizontal=8.->dp, ()),
     })
   }
   // let iconSize = switch buttonSize {

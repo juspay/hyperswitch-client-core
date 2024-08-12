@@ -171,9 +171,11 @@ type themeBasedStyleObj = {
   normalTextInputBoderColor: string,
   shadowColor: string,
   shadowIntensity: float,
+  primaryButtonHeight: float,
 }
 
 let darkRecord = {
+  primaryButtonHeight: 45.,
   platform: "android",
   paymentSheetOverlay: "#00000025",
   bgColor: styles["dark_bgColor"],
@@ -249,6 +251,7 @@ let darkRecord = {
   shadowIntensity: 2.,
 }
 let lightRecord = {
+  primaryButtonHeight: 45.,
   platform: "android",
   paymentSheetOverlay: "#00000070",
   bgColor: styles["light_bgColor"],
@@ -325,6 +328,7 @@ let lightRecord = {
 }
 
 let minimal = {
+  primaryButtonHeight: 45.,
   platform: "android",
   paymentSheetOverlay: "#00000025",
   bgColor: styles["light_bgColor"],
@@ -401,6 +405,7 @@ let minimal = {
 }
 
 let flatMinimal = {
+  primaryButtonHeight: 45.,
   platform: "android",
   paymentSheetOverlay: "#00000025",
   bgColor: styles["flatMinimal_bgColor"],
@@ -512,6 +517,7 @@ let itemToObj = (
   }
 
   {
+    primaryButtonHeight: themeObj.primaryButtonHeight,
     platform: themeObj.platform,
     bgColor: getStyleProp(
       ~override=switch appearanceColor {

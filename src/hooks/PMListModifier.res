@@ -314,7 +314,6 @@ let widgetModifier = (
                   }
                   sessionObject
                   confirm
-                  buttonSize={CustomButton.Small}
                 />,
               )
               ->ignore
