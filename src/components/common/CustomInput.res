@@ -155,6 +155,8 @@ let make = (
           logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
         }}
         onBlur={_ => {
+          // TODO: remove invalid input (string with only space) eg: "      "
+          state->String.trim == "" ? setState("") : ()
           onBlur()
           setIsFocused(_ => false)
           logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
