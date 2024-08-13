@@ -249,7 +249,7 @@ let make = (
       //     : None
       // ),
       customer_acceptance: ?(
-        allApiData.mandateType != NORMAL
+        allApiData.mandateType->PaymentUtils.checkIfMandate
           ? Some({
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
@@ -802,37 +802,34 @@ let make = (
     )) || (fields.name == "klarna" && isKlarna)
   }, (isEmailValid, isNameValid, sessionData))
 
-  React.useEffect(
-    () => {
-      if isScreenFocus {
-        setConfirmButtonDataRef(
-          <ConfirmButton
-            loading=false
-            isAllValuesValid
-            handlePress
-            hasSomeFields
-            paymentMethod
-            ?paymentExperience
-            errorText=error
-          />,
-        )
-      }
-      None
-    },
-    (
-      isAllValuesValid,
-      hasSomeFields,
-      paymentMethod,
-      paymentExperience,
-      isScreenFocus,
-      error, 
-      blikCode, 
-      name,
-      email,
-      country,
-      selectedBank,
-    ),
-  )
+  React.useEffect(() => {
+    if isScreenFocus {
+      setConfirmButtonDataRef(
+        <ConfirmButton
+          loading=false
+          isAllValuesValid
+          handlePress
+          hasSomeFields
+          paymentMethod
+          ?paymentExperience
+          errorText=error
+        />,
+      )
+    }
+    None
+  }, (
+    isAllValuesValid,
+    hasSomeFields,
+    paymentMethod,
+    paymentExperience,
+    isScreenFocus,
+    error,
+    blikCode,
+    name,
+    email,
+    country,
+    selectedBank,
+  ))
 
   <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
     <Space />

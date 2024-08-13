@@ -105,6 +105,7 @@ let make = (
       ~allApiData,
       ~isNicknameSelected,
       ~isSaveCardCheckboxVisible,
+      ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
       (),
     )
 
