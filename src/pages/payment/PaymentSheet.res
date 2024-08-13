@@ -22,7 +22,7 @@ let make = (~setConfirmButtonDataRef) => {
     <WalletView
       loading={nativeProp.sdkState !== CardWidget && sessionData == Loading}
       elementArr
-      showDisclaimer={allApiData.mandateType->PaymentUtils.showWalletDisclaimerMessage}
+      showDisclaimer={allApiData.mandateType->PaymentUtils.checkIfMandate}
     />
     <CustomTabView
       hocComponentArr=tabArr loading={sessionData == Loading} setConfirmButtonDataRef

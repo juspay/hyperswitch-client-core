@@ -49,6 +49,14 @@ let make = (
 
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
 
+  let (savedPaymentMethodsData, _) = React.useContext(
+    SavedPaymentMethodContext.savedPaymentMethodContext,
+  )
+  let savedPaymentMethodsData = switch savedPaymentMethodsData {
+  | Some(data) => data
+  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  }
+
   let animateFlex = (~flexval, ~value, ~endCallback=() => (), ()) => {
     Animated.timing(
       flexval,
@@ -156,16 +164,24 @@ let make = (
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
-      setup_future_usage: "off_session",
       payment_type: ?allApiData.paymentType,
-      customer_acceptance: {
-        acceptance_type: "online",
-        accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-        online: {
-          ip_address: ?nativeProp.hyperParams.ip,
-          user_agent: ?nativeProp.hyperParams.userAgent,
-        },
-      },
+      customer_acceptance: ?(
+        if (
+          allApiData.mandateType->PaymentUtils.checkIfMandate &&
+            !savedPaymentMethodsData.isGuestCustomer
+        ) {
+          Some({
+            acceptance_type: "online",
+            accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+            online: {
+              ip_address: ?nativeProp.hyperParams.ip,
+              user_agent: ?nativeProp.hyperParams.userAgent,
+            },
+          })
+        } else {
+          None
+        }
+      ),
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
       },
@@ -387,8 +403,6 @@ let make = (
         PaymentUtils.generateSavedCardConfirmBody(
           ~nativeProp,
           ~payment_token=selectedObj.token->Option.getOr(""),
-          ~allApiData,
-          ~isSaveCardCheckboxSelected,
           ~savedCardCvv,
         ),
         "card",

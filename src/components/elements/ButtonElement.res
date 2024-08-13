@@ -25,6 +25,14 @@ let make = (
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
+  let (savedPaymentMethodsData, _) = React.useContext(
+    SavedPaymentMethodContext.savedPaymentMethodContext,
+  )
+  let savedPaymentMethodsData = switch savedPaymentMethodsData {
+  | Some(data) => data
+  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  }
+
   let logger = LoggerHook.useLoggerHook()
   let {
     paypalButonColor,
@@ -193,7 +201,10 @@ let make = (
       shipping: ?nativeProp.configuration.shippingDetails,
       payment_type: ?allApiData.paymentType,
       customer_acceptance: ?(
-        if allApiData.mandateType->PaymentUtils.checkIfMandate {
+        if (
+          allApiData.mandateType->PaymentUtils.checkIfMandate &&
+            !savedPaymentMethodsData.isGuestCustomer
+        ) {
           Some({
             acceptance_type: "online",
             accepted_at: Date.now()->Date.fromTime->Date.toISOString,

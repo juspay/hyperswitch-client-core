@@ -1,8 +1,4 @@
 let checkIfMandate = (paymentType: PaymentMethodListType.mandateType) => {
-  paymentType == NEW_MANDATE
-}
-
-let showWalletDisclaimerMessage = (paymentType: PaymentMethodListType.mandateType) => {
   paymentType == NEW_MANDATE || paymentType == SETUP_MANDATE
 }
 
@@ -66,6 +62,7 @@ let generateCardConfirmBody = (
   ~isNicknameSelected=false,
   ~payment_token=?,
   ~isSaveCardCheckboxVisible=?,
+  ~isGuestCustomer,
   (),
 ): PaymentMethodListType.redirectType => {
   let isMandate = allApiData.mandateType->checkIfMandate
@@ -120,10 +117,11 @@ let generateCardConfirmBody = (
     // moved customer_acceptance outside mandate_data
     customer_acceptance: ?(
       payment_token->Option.isNone &&
-        ((isNicknameSelected && isMandate) ||
-        isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-        allApiData.mandateType == NORMAL && isNicknameSelected ||
-        allApiData.mandateType == SETUP_MANDATE)
+      ((isNicknameSelected && isMandate) ||
+      isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
+      allApiData.mandateType == NORMAL && isNicknameSelected ||
+      allApiData.mandateType == SETUP_MANDATE) &&
+      !isGuestCustomer
         ? Some({
             {
               acceptance_type: "online",
@@ -151,27 +149,11 @@ let checkIsCVCRequired = (pmObject: SdkTypes.savedDataType) =>
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
-  ~allApiData: AllApiDataContext.allApiData,
-  ~isSaveCardCheckboxSelected,
   ~savedCardCvv,
 ): PaymentMethodListType.redirectType => {
   client_secret: nativeProp.clientSecret,
   payment_method: "card",
   payment_token,
-  customer_acceptance: ?(
-    allApiData.mandateType == NEW_MANDATE && isSaveCardCheckboxSelected
-      ? Some({
-          {
-            acceptance_type: "online",
-            accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-            online: {
-              ip_address: ?nativeProp.hyperParams.ip,
-              user_agent: ?nativeProp.hyperParams.userAgent,
-            },
-          }
-        })
-      : None
-  ),
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
 }
 let generateWalletConfirmBody = (
