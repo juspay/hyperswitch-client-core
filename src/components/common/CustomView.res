@@ -84,7 +84,7 @@ module Wrapper = {
       switch vheight {
       | Some(height) => {
           let height = height->JSON.Decode.float->Option.getOr(0.)
-          setViewHeight(_ => height +. 90.)
+          setViewHeight(_ => height +. 45.)
         }
       | None => ()
       }
@@ -127,8 +127,10 @@ module Wrapper = {
         ),
         bgColor,
       ])}>
-      <ModalHeader onModalClose />
-      <View onLayout=updateScrollViewHeight> {children} </View>
+      <View onLayout=updateScrollViewHeight>
+        <ModalHeader onModalClose />
+        {children}
+      </View>
       <Space height={Platform.os == #ios ? 48. : 24.} />
     </Animated.ScrollView>
   }
