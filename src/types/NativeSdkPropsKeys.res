@@ -54,6 +54,8 @@ type keys = {
   primaryButton_background: string,
   primaryButton_text: string,
   primaryButton_border: string,
+  loadingBgColor: string,
+  loadingFgColor: string,
 }
 
 let iosKeys: keys = {
@@ -112,6 +114,8 @@ let iosKeys: keys = {
   primaryButton_background: "backgroundColor",
   primaryButton_text: "textColor",
   primaryButton_border: "borderColor",
+  loadingBgColor: "loaderBackgound",
+  loadingFgColor: "loaderForeground",
 }
 let androidKeys = {
   locale: "locale",
@@ -169,6 +173,8 @@ let androidKeys = {
   primaryButton_background: "background",
   primaryButton_text: "onBackground",
   primaryButton_border: "border",
+  loadingBgColor: "loaderBackgound",
+  loadingFgColor: "loaderForeground",
 }
 
 let rnKeys = {
@@ -227,4 +233,6 @@ let rnKeys = {
   primaryButton_background: "background",
   primaryButton_text: "text",
   primaryButton_border: "border",
+  loadingBgColor: "loaderBackgound",
+  loadingFgColor: "loaderForeground",
 }
