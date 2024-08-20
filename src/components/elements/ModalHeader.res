@@ -25,17 +25,20 @@ let make = (~onModalClose) => {
       ~marginBottom=0.->pct,
       (),
     )}>
-    {switch switch paymentScreenType {
-    | PaymentScreenContext.PAYMENTSHEET =>
-      isLoadingScreenActive ? None : nativeProp.configuration.paymentSheetHeaderText
-    | PaymentScreenContext.SAVEDCARDSCREEN =>
-      isLoadingScreenActive ? None : nativeProp.configuration.savedPaymentScreenHeaderText
-    } {
-    | Some(var) =>
-      <View style={viewStyle(~maxWidth=60.->pct, ())}>
-        <TextWrapper text={var} textType={HeadingBold} />
-      </View>
-    | None => <View />
+    {if savedPaymentMethodContextObj == Loading {
+      React.null
+    } else {
+      switch switch paymentScreenType {
+      | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
+      | PaymentScreenContext.SAVEDCARDSCREEN =>
+        nativeProp.configuration.savedPaymentScreenHeaderText
+      } {
+      | Some(var) =>
+        <View style={viewStyle(~maxWidth=60.->pct, ())}>
+          <TextWrapper text={var} textType={HeadingBold} />
+        </View>
+      | _ => React.null
+      }
     }}
     <View
       style={viewStyle(

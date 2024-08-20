@@ -95,6 +95,8 @@ type colors = {
   placeholderText: option<string>,
   icon: option<string>,
   error: option<string>,
+  loaderBackgound: option<string>,
+  loaderForeground: option<string>,
 }
 
 type defaultColors = {light: option<colors>, dark: option<colors>}
@@ -334,6 +336,8 @@ let defaultAppearance: appearance = {
         placeholderText: None,
         icon: None,
         error: None,
+        loaderBackgound: None,
+        loaderForeground: None,
       }),
     )
   | _ => None
@@ -401,21 +405,19 @@ let defaultAppearance: appearance = {
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
-  let x = {
-    primary: retOptionalStr(getProp(keys.primary, colorDict)),
-    background: retOptionalStr(getProp(keys.background, colorDict)),
-    componentBackground: retOptionalStr(getProp(keys.componentBackground, colorDict)),
-    componentBorder: retOptionalStr(getProp(keys.componentBorder, colorDict)),
-    componentDivider: retOptionalStr(getProp(keys.componentDivider, colorDict)),
-    componentText: retOptionalStr(getProp(keys.componentText, colorDict)),
-    primaryText: retOptionalStr(getProp(keys.primaryText, colorDict)),
-    secondaryText: retOptionalStr(getProp(keys.secondaryText, colorDict)),
-    placeholderText: retOptionalStr(getProp(keys.placeholderText, colorDict)),
-    icon: retOptionalStr(getProp(keys.icon, colorDict)),
-    error: retOptionalStr(getProp(keys.error, colorDict)),
-  }
-
-  x
+  primary: retOptionalStr(getProp(keys.primary, colorDict)),
+  background: retOptionalStr(getProp(keys.background, colorDict)),
+  componentBackground: retOptionalStr(getProp(keys.componentBackground, colorDict)),
+  componentBorder: retOptionalStr(getProp(keys.componentBorder, colorDict)),
+  componentDivider: retOptionalStr(getProp(keys.componentDivider, colorDict)),
+  componentText: retOptionalStr(getProp(keys.componentText, colorDict)),
+  primaryText: retOptionalStr(getProp(keys.primaryText, colorDict)),
+  secondaryText: retOptionalStr(getProp(keys.secondaryText, colorDict)),
+  placeholderText: retOptionalStr(getProp(keys.placeholderText, colorDict)),
+  icon: retOptionalStr(getProp(keys.icon, colorDict)),
+  error: retOptionalStr(getProp(keys.error, colorDict)),
+  loaderBackgound: retOptionalStr(getProp(keys.loadingBgColor, colorDict)),
+  loaderForeground: retOptionalStr(getProp(keys.loadingFgColor, colorDict)),
 }
 
 let getPrimaryButtonColorFromDict = (primaryButtonColorDict, keys: NativeSdkPropsKeys.keys) => {
