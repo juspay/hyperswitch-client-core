@@ -17,30 +17,13 @@ module SdkLoadingScreen = {
 
 @react.component
 let make = () => {
-  let (paymentScreenType, setPaymentScreenType) = React.useContext(
-    PaymentScreenContext.paymentScreenTypeContext,
-  )
+  let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (savedPaymentMethodContextObj, _) = React.useContext(
     SavedPaymentMethodContext.savedPaymentMethodContext,
   )
 
-  React.useEffect2(() => {
-    if !nativeProp.configuration.displaySavedPaymentMethods {
-      setPaymentScreenType(PAYMENTSHEET)
-    }
-
-    switch savedPaymentMethodContextObj {
-    | Some(data) =>
-      if data.pmList->Option.getOr([])->Array.length == 0 {
-        setPaymentScreenType(PAYMENTSHEET)
-      }
-    | _ => ()
-    }
-
-    None
-  }, (nativeProp.configuration.displaySavedPaymentMethods, savedPaymentMethodContextObj))
   let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)

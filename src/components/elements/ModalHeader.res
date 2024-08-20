@@ -14,12 +14,7 @@ let make = (~onModalClose) => {
   | Loading => true
   | _ => false
   }
-  let heading = switch paymentScreenType {
-  | PaymentScreenContext.PAYMENTSHEET =>
-    isLoadingScreenActive ? None : nativeProp.configuration.paymentSheetHeaderText
-  | PaymentScreenContext.SAVEDCARDSCREEN =>
-    isLoadingScreenActive ? None : nativeProp.configuration.savedPaymentScreenHeaderText
-  }
+
   <View
     style={viewStyle(
       ~display=#flex,
@@ -30,7 +25,12 @@ let make = (~onModalClose) => {
       ~marginBottom=0.->pct,
       (),
     )}>
-    {switch heading {
+    {switch switch paymentScreenType {
+    | PaymentScreenContext.PAYMENTSHEET =>
+      isLoadingScreenActive ? None : nativeProp.configuration.paymentSheetHeaderText
+    | PaymentScreenContext.SAVEDCARDSCREEN =>
+      isLoadingScreenActive ? None : nativeProp.configuration.savedPaymentScreenHeaderText
+    } {
     | Some(var) =>
       <View style={viewStyle(~maxWidth=60.->pct, ())}>
         <TextWrapper text={var} textType={HeadingBold} />

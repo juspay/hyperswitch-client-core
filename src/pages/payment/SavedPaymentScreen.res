@@ -8,6 +8,7 @@ let make = (
   ~setConfirmButtonDataRef,
   ~savedPaymentMethordContextObj: SavedPaymentMethodContext.savedPaymentMethodDataObj,
 ) => {
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (sessionData, _) = React.useContext(SessionContext.sessionContext)
@@ -73,6 +74,7 @@ let make = (
   let (statesJson, setStatesJson) = React.useState(_ => None)
 
   React.useEffect0(() => {
+    setPaymentScreenType(SAVEDCARDSCREEN)
     // Dynamically import/download Postal codes and states JSON
     RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
     ->Promise.then(res => {
