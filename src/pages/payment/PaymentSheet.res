@@ -4,6 +4,8 @@ open Style
 let make = (~setConfirmButtonDataRef) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (sessionData, _) = React.useContext(SessionContext.sessionContext)
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+
   //getting payment list data here
   let {tabArr, elementArr} = PMListModifier.useListModifier()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -17,6 +19,10 @@ let make = (~setConfirmButtonDataRef) => {
   | _ => SavedPaymentMethodContext.dafaultsavePMObj
   }
   let localeObject = GetLocale.useGetLocalObj()
+  React.useEffect0(() => {
+    setPaymentScreenType(PAYMENTSHEET)
+    None
+  })
 
   <>
     <WalletView
