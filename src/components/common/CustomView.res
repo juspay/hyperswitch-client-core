@@ -69,6 +69,8 @@ module Wrapper = {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
 
     let (viewHeight, setViewHeight) = React.useState(_ => 0.)
+    let (modalViewHeight, setModalViewHeight) = React.useState(_ => 0.)
+
     let updateScrollViewHeight = (event: Event.layoutEvent) => {
       let nativeEvent = Event.LayoutEvent.nativeEvent(event)
       let vheight =
@@ -84,7 +86,28 @@ module Wrapper = {
       switch vheight {
       | Some(height) => {
           let height = height->JSON.Decode.float->Option.getOr(0.)
-          setViewHeight(_ => height +. 45.)
+          setViewHeight(_ => height)
+        }
+      | None => ()
+      }
+    }
+
+    let updateModalViewHeight = (event: Event.layoutEvent) => {
+      let nativeEvent = Event.LayoutEvent.nativeEvent(event)
+      let vheight =
+        nativeEvent
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+        ->Dict.get("layout")
+        ->Option.getOr(JSON.Encode.null)
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+        ->Dict.get("height")
+
+      switch vheight {
+      | Some(height) => {
+          let height = height->JSON.Decode.float->Option.getOr(0.)
+          setModalViewHeight(_ => height)
         }
       | None => ()
       }
@@ -96,7 +119,7 @@ module Wrapper = {
         heightPosition,
         Animated.Value.Timing.config(
           ~toValue={
-            viewHeight->Animated.Value.Timing.fromRawValue
+            (viewHeight +. modalViewHeight)->Animated.Value.Timing.fromRawValue
           },
           ~isInteraction=true,
           ~useNativeDriver=false,
@@ -108,10 +131,10 @@ module Wrapper = {
       )->Animated.start()
     }
 
-    React.useEffect(() => {
+    React.useEffect2(() => {
       setAnimation()
       None
-    }, [viewHeight])
+    }, (viewHeight, modalViewHeight))
 
     <Animated.ScrollView
       style={array([
@@ -127,11 +150,8 @@ module Wrapper = {
         ),
         bgColor,
       ])}>
-      <View onLayout=updateScrollViewHeight>
-        <ModalHeader onModalClose />
-        {children}
-      </View>
-      <Space height={Platform.os == #ios ? 48. : 24.} />
+      <ModalHeader onModalClose updateModalViewHeight />
+      <View onLayout=updateScrollViewHeight> {children} </View>
     </Animated.ScrollView>
   }
 }

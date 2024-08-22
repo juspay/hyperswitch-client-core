@@ -114,7 +114,7 @@ let iosKeys: keys = {
   primaryButton_background: "backgroundColor",
   primaryButton_text: "textColor",
   primaryButton_border: "borderColor",
-  loadingBgColor: "loaderBackgound",
+  loadingBgColor: "loaderBackground",
   loadingFgColor: "loaderForeground",
 }
 let androidKeys = {
@@ -173,7 +173,7 @@ let androidKeys = {
   primaryButton_background: "background",
   primaryButton_text: "onBackground",
   primaryButton_border: "border",
-  loadingBgColor: "loaderBackgound",
+  loadingBgColor: "loaderBackground",
   loadingFgColor: "loaderForeground",
 }
 
@@ -233,6 +233,6 @@ let rnKeys = {
   primaryButton_background: "background",
   primaryButton_text: "text",
   primaryButton_border: "border",
-  loadingBgColor: "loaderBackgound",
+  loadingBgColor: "loaderBackground",
   loadingFgColor: "loaderForeground",
 }

@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~onModalClose) => {
+let make = (~onModalClose, ~updateModalViewHeight) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
@@ -16,6 +16,7 @@ let make = (~onModalClose) => {
   }
 
   <View
+    onLayout=updateModalViewHeight
     style={viewStyle(
       ~display=#flex,
       ~flexDirection=#row,
