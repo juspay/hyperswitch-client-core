@@ -34,7 +34,7 @@
   "dependencies": {
     "@sentry/react-native": "^5.9.1",
     "react-native-code-push": "8.2.2",
-    "react-native-hyperswitch-netcetera-3ds": "^0.1.0",
+    "react-native-hyperswitch-netcetera-3ds": "^0.1.1",
     "react-native-hyperswitch-scancard": "^0.3.0",
     "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-klarna-inapp-sdk": "2.1.13",
