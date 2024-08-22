@@ -172,6 +172,7 @@ let make = (
               }
             }
           }}
+          animate=false
         />
       </View>
       <View

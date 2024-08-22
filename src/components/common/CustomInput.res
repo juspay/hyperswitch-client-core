@@ -1,6 +1,10 @@
 open ReactNative
 open Style
 
+external toSize: Animated.Interpolation.t => size = "%identity"
+external toFloat: Animated.Interpolation.t => float = "%identity"
+external toColor: Animated.Interpolation.t => Color.t = "%identity"
+
 type iconType =
   | NoIcon
   | CustomIcon(React.element)
@@ -45,6 +49,7 @@ let make = (
   ~pointerEvents=#auto,
   ~fontSize=16.,
   ~enableShadow=true,
+  ~animate=true,
 ) => {
   let {
     placeholderColor,
@@ -69,6 +74,26 @@ let make = (
   // let normalTextInputBoderColor = "rgba(204, 210, 226, 0.75)"
   // let _ = state != "" && secureTextEntry == false && enableCrossIcon
   let shadowStyle = enableShadow ? getShadowStyle : viewStyle()
+
+  let animatedValue = React.useRef(Animated.Value.create(state != "" ? 1. : 0.)).current
+
+  React.useEffect2(() => {
+    Animated.timing(
+      animatedValue,
+      {
+        toValue: if (isFocused || state != "") && animate {
+          1.->Animated.Value.Timing.fromRawValue
+        } else {
+          0.->Animated.Value.Timing.fromRawValue
+        },
+        duration: 200.,
+        useNativeDriver: false,
+      },
+    )->Animated.start()
+
+    None
+  }, (isFocused, state))
+
   <View style={viewStyle(~width=100.->pct, ())}>
     {heading != ""
       ? <TextWrapper textType={PlaceholderText}>
@@ -91,7 +116,7 @@ let make = (
           ~borderTopRightRadius,
           ~borderBottomLeftRadius,
           ~borderBottomRightRadius,
-          ~height=height->dp,
+          ~height=(height +. 10.)->dp,
           ~flexDirection=#row,
           ~borderColor=isValid
             ? isFocused ? primaryColor : normalTextInputBoderColor
@@ -109,61 +134,102 @@ let make = (
       | CustomIcon(element) => <View style={viewStyle(~paddingRight=10.->dp, ())}> element </View>
       | NoIcon => React.null
       }}
-      <TextInput
-        ref=?reference
-        style={array([
-          textStyle(
-            ~flex=1.,
-            ~fontStyle=#normal,
-            ~color=textColor,
-            ~fontFamily,
-            //    ~fontFamily=FontFamily.getFontFamily(IBMPlexSans_Medium),
-            ~fontSize={fontSize +. placeholderTextSizeAdjust},
-            //  ~lineHeight=1.5,
-            ~textAlign?,
-            (),
-          ),
-          viewStyle(~height=100.->pct, ~width=100.->pct, ()),
-        ])}
-        secureTextEntry=showPass
-        autoCapitalize=#none
-        multiline
-        autoCorrect={false}
-        clearTextOnFocus
-        ?maxLength
-        placeholder
-        placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
-        value={state}
-        ?onKeyPress
-        onChangeText={text => {
-          logger(
-            ~logType=INFO,
-            ~value=text,
-            ~category=USER_EVENT,
-            ~eventName=INPUT_FIELD_CHANGED,
-            (),
-          )
-          setState(text)
-        }}
-        keyboardType
-        autoFocus
-        autoComplete={#off}
-        textContentType={#oneTimeCode}
-        onFocus={_ => {
-          setIsFocused(_ => true)
-          onFocus()
-          logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
-        }}
-        onBlur={_ => {
-          // TODO: remove invalid input (string with only space) eg: "      "
-          state->String.trim == "" ? setState("") : ()
-          onBlur()
-          setIsFocused(_ => false)
-          logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
-        }}
-        editable
-        pointerEvents
-      />
+      <View style={viewStyle(~flex=1., ~paddingTop=(animate ? 12. : 0.)->dp, ())}>
+        {animate
+          ? <Animated.Text
+              style={textStyle(
+                ~flex=1.,
+                ~fontStyle=#normal,
+                ~fontFamily,
+                ~textAlign?,
+                ~position=#absolute,
+                ~left=0.0->dp,
+                ~paddingHorizontal=2.->dp,
+                ~top=animatedValue
+                ->Animated.Interpolation.interpolate({
+                  inputRange: [0., 1.],
+                  outputRange: [14., 2.]->Animated.Interpolation.fromFloatArray,
+                })
+                ->toSize,
+                ~fontSize=animatedValue
+                ->Animated.Interpolation.interpolate({
+                  inputRange: [0., 1.],
+                  outputRange: [
+                    fontSize +. placeholderTextSizeAdjust,
+                    12.,
+                  ]->Animated.Interpolation.fromFloatArray,
+                })
+                ->toFloat,
+                ~color=animatedValue
+                ->Animated.Interpolation.interpolate({
+                  inputRange: [0., 1.],
+                  outputRange: [
+                    placeholderTextColor->Option.getOr(placeholderColor),
+                    textColor,
+                  ]->Animated.Interpolation.fromStringArray,
+                })
+                ->toColor,
+                (),
+              )}>
+              {React.string(placeholder)}
+            </Animated.Text>
+          : React.null}
+        <TextInput
+          ref=?reference
+          style={array([
+            textStyle(
+              ~flex=1.,
+              ~fontStyle=#normal,
+              ~color=textColor,
+              ~fontFamily,
+              //    ~fontFamily=FontFamily.getFontFamily(IBMPlexSans_Medium),
+              ~fontSize={fontSize +. placeholderTextSizeAdjust},
+              //  ~lineHeight=1.5,
+              ~textAlign?,
+              (),
+            ),
+            viewStyle(~height=100.->pct, ~width=100.->pct, ()),
+          ])}
+          secureTextEntry=showPass
+          autoCapitalize=#none
+          multiline
+          autoCorrect={false}
+          clearTextOnFocus
+          ?maxLength
+          placeholder=?{animate ? None : Some(placeholder)}
+          placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
+          value={state}
+          ?onKeyPress
+          onChangeText={text => {
+            logger(
+              ~logType=INFO,
+              ~value=text,
+              ~category=USER_EVENT,
+              ~eventName=INPUT_FIELD_CHANGED,
+              (),
+            )
+            setState(text)
+          }}
+          keyboardType
+          autoFocus
+          autoComplete={#off}
+          textContentType={#oneTimeCode}
+          onFocus={_ => {
+            setIsFocused(_ => true)
+            onFocus()
+            logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
+          }}
+          onBlur={_ => {
+            // TODO: remove invalid input (string with only space) eg: "      "
+            state->String.trim == "" ? setState("") : ()
+            onBlur()
+            setIsFocused(_ => false)
+            logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
+          }}
+          editable
+          pointerEvents
+        />
+      </View>
       <TouchableOpacity activeOpacity=1. onPress=?onPressIconRight>
         {switch iconRight {
         | NoIcon => React.null
