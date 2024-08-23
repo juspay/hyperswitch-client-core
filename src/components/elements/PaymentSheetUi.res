@@ -172,7 +172,7 @@ let make = (
               }
             }
           }}
-          animate=false
+          animateLabel=localeObject.cardNumberLabel
         />
       </View>
       <View
@@ -214,6 +214,7 @@ let make = (
                 }
               }
             }}
+            animateLabel=localeObject.validThruText
           />
         </View>
         <View style={viewStyle(~width=50.->pct, ())}>
@@ -255,6 +256,7 @@ let make = (
                 }
               }
             }}
+            animateLabel=localeObject.cvcTextLabel
           />
         </View>
       </View>

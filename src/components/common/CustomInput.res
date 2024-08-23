@@ -3,7 +3,7 @@ open Style
 
 external toSize: Animated.Interpolation.t => size = "%identity"
 external toFloat: Animated.Interpolation.t => float = "%identity"
-external toColor: Animated.Interpolation.t => Color.t = "%identity"
+external toString: Animated.Interpolation.t => string = "%identity"
 
 type iconType =
   | NoIcon
@@ -16,7 +16,7 @@ let make = (
   ~placeholder="Enter the text here",
   ~placeholderTextColor=None,
   ~width=100.->pct,
-  ~height: float=44.,
+  ~height: float=46.,
   ~secureTextEntry=false,
   ~keyboardType=#default,
   ~iconLeft: iconType=NoIcon,
@@ -50,6 +50,7 @@ let make = (
   ~fontSize=16.,
   ~enableShadow=true,
   ~animate=true,
+  ~animateLabel=?,
 ) => {
   let {
     placeholderColor,
@@ -116,7 +117,7 @@ let make = (
           ~borderTopRightRadius,
           ~borderBottomLeftRadius,
           ~borderBottomRightRadius,
-          ~height=(height +. 10.)->dp,
+          ~height=height->dp,
           ~flexDirection=#row,
           ~borderColor=isValid
             ? isFocused ? primaryColor : normalTextInputBoderColor
@@ -134,61 +135,70 @@ let make = (
       | CustomIcon(element) => <View style={viewStyle(~paddingRight=10.->dp, ())}> element </View>
       | NoIcon => React.null
       }}
-      <View style={viewStyle(~flex=1., ~paddingTop=(animate ? 12. : 0.)->dp, ())}>
+      <View
+        style={viewStyle(
+          ~flex=1.,
+          ~position=#relative,
+          ~height=100.->pct,
+          ~justifyContent={
+            animate ? #"flex-end" : #center
+          },
+          (),
+        )}>
         {animate
           ? <Animated.Text
-              style={textStyle(
-                ~flex=1.,
-                ~fontStyle=#normal,
-                ~fontFamily,
-                ~textAlign?,
-                ~position=#absolute,
-                ~left=0.0->dp,
-                ~paddingHorizontal=2.->dp,
-                ~top=animatedValue
-                ->Animated.Interpolation.interpolate({
-                  inputRange: [0., 1.],
-                  outputRange: [14., 2.]->Animated.Interpolation.fromFloatArray,
-                })
-                ->toSize,
-                ~fontSize=animatedValue
-                ->Animated.Interpolation.interpolate({
-                  inputRange: [0., 1.],
-                  outputRange: [
-                    fontSize +. placeholderTextSizeAdjust,
-                    12.,
-                  ]->Animated.Interpolation.fromFloatArray,
-                })
-                ->toFloat,
-                ~color=animatedValue
-                ->Animated.Interpolation.interpolate({
-                  inputRange: [0., 1.],
-                  outputRange: [
-                    placeholderTextColor->Option.getOr(placeholderColor),
-                    textColor,
-                  ]->Animated.Interpolation.fromStringArray,
-                })
-                ->toColor,
-                (),
-              )}>
-              {React.string(placeholder)}
+              style={array([
+                viewStyle(~top=0.->dp, ()),
+                textStyle(
+                  ~height=animatedValue
+                  ->Animated.Interpolation.interpolate({
+                    inputRange: [0., 1.],
+                    outputRange: ["100%", "40%"]->Animated.Interpolation.fromStringArray,
+                  })
+                  ->toSize,
+                  ~fontFamily,
+                  ~fontWeight=if isFocused || state != "" {
+                    FontWeight._500
+                  } else {
+                    FontWeight.normal
+                  },
+                  ~position=#absolute,
+                  ~textAlign=#center,
+                  ~textAlignVertical=#center,
+                  ~fontSize=animatedValue
+                  ->Animated.Interpolation.interpolate({
+                    inputRange: [0., 1.],
+                    outputRange: [
+                      fontSize +. placeholderTextSizeAdjust,
+                      fontSize -. 5.,
+                    ]->Animated.Interpolation.fromFloatArray,
+                  })
+                  ->toFloat,
+                  ~color=placeholderTextColor->Option.getOr(placeholderColor),
+                  (),
+                ),
+              ])}>
+              {React.string({
+                if isFocused || state != "" {
+                  animateLabel->Option.getOr(placeholder)
+                } else {
+                  placeholder
+                }
+              })}
             </Animated.Text>
           : React.null}
         <TextInput
           ref=?reference
           style={array([
             textStyle(
-              ~flex=1.,
               ~fontStyle=#normal,
               ~color=textColor,
               ~fontFamily,
-              //    ~fontFamily=FontFamily.getFontFamily(IBMPlexSans_Medium),
               ~fontSize={fontSize +. placeholderTextSizeAdjust},
-              //  ~lineHeight=1.5,
               ~textAlign?,
               (),
             ),
-            viewStyle(~height=100.->pct, ~width=100.->pct, ()),
+            viewStyle(~paddingVertical=0.->dp, ~height=(height -. 10.)->dp, ~width=100.->pct, ()),
           ])}
           secureTextEntry=showPass
           autoCapitalize=#none
