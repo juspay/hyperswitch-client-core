@@ -25,6 +25,7 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected) => {
           borderBottomWidth=borderWidth
           borderLeftWidth=borderWidth
           borderRightWidth=borderWidth
+          animateLabel=localeObject.cardNickname
         />
         <Space height=5. />
       </>

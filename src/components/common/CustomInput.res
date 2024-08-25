@@ -146,46 +146,50 @@ let make = (
           (),
         )}>
         {animate
-          ? <Animated.Text
-              style={array([
-                viewStyle(~top=0.->dp, ()),
-                textStyle(
-                  ~height=animatedValue
-                  ->Animated.Interpolation.interpolate({
-                    inputRange: [0., 1.],
-                    outputRange: ["100%", "40%"]->Animated.Interpolation.fromStringArray,
-                  })
-                  ->toSize,
-                  ~fontFamily,
-                  ~fontWeight=if isFocused || state != "" {
-                    FontWeight._500
+          ? <Animated.View
+              style={viewStyle(
+                ~top=0.->dp,
+                ~position=#absolute,
+                ~height=animatedValue
+                ->Animated.Interpolation.interpolate({
+                  inputRange: [0., 1.],
+                  outputRange: ["100%", "40%"]->Animated.Interpolation.fromStringArray,
+                })
+                ->toSize,
+                ~justifyContent=#center,
+                (),
+              )}>
+              <Animated.Text
+                style={array([
+                  textStyle(
+                    ~fontFamily,
+                    ~fontWeight=if isFocused || state != "" {
+                      FontWeight._500
+                    } else {
+                      FontWeight.normal
+                    },
+                    ~fontSize=animatedValue
+                    ->Animated.Interpolation.interpolate({
+                      inputRange: [0., 1.],
+                      outputRange: [
+                        fontSize +. placeholderTextSizeAdjust,
+                        fontSize +. placeholderTextSizeAdjust -. 5.,
+                      ]->Animated.Interpolation.fromFloatArray,
+                    })
+                    ->toFloat,
+                    ~color=placeholderTextColor->Option.getOr(placeholderColor),
+                    (),
+                  ),
+                ])}>
+                {React.string({
+                  if isFocused || state != "" {
+                    animateLabel->Option.getOr(placeholder) ++ (mandatory ? "*" : "")
                   } else {
-                    FontWeight.normal
-                  },
-                  ~position=#absolute,
-                  ~textAlign=#center,
-                  ~textAlignVertical=#center,
-                  ~fontSize=animatedValue
-                  ->Animated.Interpolation.interpolate({
-                    inputRange: [0., 1.],
-                    outputRange: [
-                      fontSize +. placeholderTextSizeAdjust,
-                      fontSize -. 5.,
-                    ]->Animated.Interpolation.fromFloatArray,
-                  })
-                  ->toFloat,
-                  ~color=placeholderTextColor->Option.getOr(placeholderColor),
-                  (),
-                ),
-              ])}>
-              {React.string({
-                if isFocused || state != "" {
-                  animateLabel->Option.getOr(placeholder)
-                } else {
-                  placeholder
-                }
-              })}
-            </Animated.Text>
+                    placeholder
+                  }
+                })}
+              </Animated.Text>
+            </Animated.View>
           : React.null}
         <TextInput
           ref=?reference
