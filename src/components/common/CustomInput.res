@@ -147,6 +147,7 @@ let make = (
         )}>
         {animate
           ? <Animated.View
+              pointerEvents=#none
               style={viewStyle(
                 ~top=0.->dp,
                 ~position=#absolute,
