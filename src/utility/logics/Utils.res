@@ -228,3 +228,7 @@ let splitName = (str: option<string>) => {
     }
   }
 }
+
+let getStringFromJson = (json, default) => {
+  json->JSON.Decode.string->Option.getOr(default)
+}

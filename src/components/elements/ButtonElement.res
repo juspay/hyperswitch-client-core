@@ -601,29 +601,33 @@ let make = (
       name>
       {switch walletType.payment_method_type_wallet {
       | APPLE_PAY =>
-        Some(
-          <ApplePayButtonView
-            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
-            cornerRadius=buttonBorderRadius
-            buttonType=nativeProp.configuration.appearance.applePay.buttonType
-            buttonStyle=applePayButtonColor
-            // onPaymentResultCallback={_ => pressHandler()}
-          />,
-        )
+        ReactNative.Platform.os == #ios
+          ? Some(
+              <ApplePayButtonView
+                style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+                cornerRadius=buttonBorderRadius
+                buttonType=nativeProp.configuration.appearance.applePay.buttonType
+                buttonStyle=applePayButtonColor
+                // onPaymentResultCallback={_ => pressHandler()}
+              />,
+            )
+          : Some(<ApplePayButtonViewWeb primaryButtonHeight buttonBorderRadius />)
 
       | GOOGLE_PAY =>
-        Some(
-          <GooglePayButtonView
-            allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
-              ~obj=sessionObject,
-              ~requiredFields=walletType.required_field,
-            )}
-            borderRadius={buttonBorderRadius}
-            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
-            buttonType=nativeProp.configuration.appearance.googlePay.buttonType
-            buttonStyle=googlePayButtonColor
-          />,
-        )
+        ReactNative.Platform.os == #android
+          ? Some(
+              <GooglePayButtonView
+                allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
+                  ~obj=sessionObject,
+                  ~requiredFields=walletType.required_field,
+                )}
+                borderRadius={buttonBorderRadius}
+                style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+                buttonType=nativeProp.configuration.appearance.googlePay.buttonType
+                buttonStyle=googlePayButtonColor
+              />,
+            )
+          : Some(<GooglePayButtonViewWeb primaryButtonHeight buttonBorderRadius />)
 
       | _ => None
       }}

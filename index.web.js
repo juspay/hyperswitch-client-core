@@ -43,19 +43,20 @@ const runApp = async () => {
 
       displaySavedPaymentMethodsCheckbox: false,
       // displaySavedPaymentMethods: false,
-      // appearance:{
-      // componentBackground:"black",
-      // colors:{
-      //   background:"#F5F8F9",
-      //   primary:"#8DBD00"
+      appearance: {
+        theme: 'Light',
+        // componentBackground:"black",
+        // colors:{
+        //   background:"#F5F8F9",
+        //   primary:"#8DBD00"
 
-      // },
-      // primaryButton:{
-      // shapes:{
-      //   borderRadius:20.0
-      // }}
-      // locale: "en"
-      // }
+        // },
+        // primaryButton:{
+        // shapes:{
+        //   borderRadius:20.0
+        // }}
+        // locale: "en"
+      },
     },
     hyperParams: {
       ip: '13.232.74.226',
