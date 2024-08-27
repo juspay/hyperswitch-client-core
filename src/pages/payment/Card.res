@@ -1,6 +1,6 @@
 open ReactNative
 open PaymentMethodListType
-open Style
+
 @react.component
 let make = (
   ~cardVal: PaymentMethodListType.payment_method_types_card,
@@ -140,7 +140,7 @@ let make = (
     }
     None
   }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson))
-  <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
+  <>
     <Space />
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
@@ -193,5 +193,5 @@ let make = (
       | _ => React.null
       }}
     </View>
-  </View>
+  </>
 }

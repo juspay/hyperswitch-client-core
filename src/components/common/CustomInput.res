@@ -202,7 +202,7 @@ let make = (
               ~textAlign?,
               (),
             ),
-            viewStyle(~paddingVertical=0.->dp, ~height=(height -. 10.)->dp, ~width=100.->pct, ()),
+            viewStyle(~padding=0.->dp, ~height=(height -. 10.)->dp, ~width=100.->pct, ()),
           ])}
           secureTextEntry=showPass
           autoCapitalize=#none

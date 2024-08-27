@@ -146,6 +146,7 @@ module Wrapper = {
           ~borderRadius=15.,
           ~borderBottomLeftRadius=0.,
           ~borderBottomRightRadius=0.,
+          ~padding=20.->dp,
           (),
         ),
         bgColor,

@@ -22,8 +22,6 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
       ~flexDirection=#row,
       ~alignItems=#center,
       ~justifyContent=#"space-between",
-      ~margin=5.->pct,
-      ~marginBottom=0.->pct,
       (),
     )}>
     {if savedPaymentMethodContextObj == Loading {

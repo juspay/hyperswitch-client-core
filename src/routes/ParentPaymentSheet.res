@@ -1,17 +1,14 @@
-open ReactNative
-open Style
-
 module SdkLoadingScreen = {
   @react.component
   let make = () => {
-    <View style={viewStyle(~paddingHorizontal=15.->dp, ())}>
+    <>
       <Space height=20. />
-      <CustomLoader height="33" />
-      <Space height=5. />
-      <CustomLoader height="33" />
+      <CustomLoader height="38" />
+      <Space height=8. />
+      <CustomLoader height="38" />
       <Space height=50. />
-      <CustomLoader height="33" />
-    </View>
+      <CustomLoader height="38" />
+    </>
   }
 }
 

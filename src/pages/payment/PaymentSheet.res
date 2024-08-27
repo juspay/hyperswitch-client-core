@@ -1,5 +1,3 @@
-open ReactNative
-open Style
 @react.component
 let make = (~setConfirmButtonDataRef) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -33,26 +31,24 @@ let make = (~setConfirmButtonDataRef) => {
     <CustomTabView
       hocComponentArr=tabArr loading={sessionData == Loading} setConfirmButtonDataRef
     />
-    <View style={viewStyle(~paddingHorizontal=20.->dp, ())}>
-      {PaymentUtils.showUseExisitingSavedCardsBtn(
-        ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
-        ~pmList=savedPaymentMethodsData.pmList,
-        ~mandateType=allApiData.mandateType,
-        ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
-      )
-        ? <>
-            <Space height=16. />
-            <ClickableTextElement
-              initialIconName="cardv1"
-              text=localeObject.useExisitingSavedCards
-              isSelected=true
-              setIsSelected={_ => ()}
-              textType={TextWrapper.LinkTextBold}
-              fillIcon=true
-            />
-            <Space height=12. />
-          </>
-        : React.null}
-    </View>
+    {PaymentUtils.showUseExisitingSavedCardsBtn(
+      ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
+      ~pmList=savedPaymentMethodsData.pmList,
+      ~mandateType=allApiData.mandateType,
+      ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
+    )
+      ? <>
+          <Space height=16. />
+          <ClickableTextElement
+            initialIconName="cardv1"
+            text=localeObject.useExisitingSavedCards
+            isSelected=true
+            setIsSelected={_ => ()}
+            textType={TextWrapper.LinkTextBold}
+            fillIcon=true
+          />
+          <Space height=12. />
+        </>
+      : React.null}
   </>
 }
