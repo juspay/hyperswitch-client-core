@@ -1,5 +1,7 @@
 open ReactNative
 
+@val external alert: string => unit = "alert"
+
 let useAlerts = () => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   (
@@ -24,7 +26,7 @@ let useAlerts = () => {
     | ("warning", #android) => ToastAndroid.show(message, ToastAndroid.long)
     | ("warning", #ios) => Alert.alert(~title="Warning", ~message, ())
     | ("error", _) => Exn.raiseError(message)
-    | _ => Console.error(message)
+    | _ => alert(message) //Console.error(message)
     }
   }
 }
