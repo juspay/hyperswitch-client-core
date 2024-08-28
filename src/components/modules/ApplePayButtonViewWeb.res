@@ -98,38 +98,42 @@ let make = (~primaryButtonHeight, ~buttonBorderRadius, ~sessionObject) => {
           appleWalletButton.setAttribute("locale", "el-GR")
 
           appleWalletButton.onclick = () => {
-            let paymentRequest = getPaymentRequestFromSession(sessionObject)
+            try {
+              let paymentRequest = getPaymentRequestFromSession(sessionObject)
 
-            let session = applePaySession(3, paymentRequest)
+              let session = applePaySession(3, paymentRequest)
 
-            session.onvalidatemerchant = event => {
-              Console.log2("onvalidatemerchant", event)
-            }
+              session.onvalidatemerchant = event => {
+                Console.log2("onvalidatemerchant", event)
+              }
 
-            session.onpaymentauthorized = event => {
-              // let payment = event.payment
-              // Process the payment (send to your server)
-              Console.log2("onpaymentauthorized", event)
-              // fetch(
-              //   "/process-payment",
-              //   {
-              //     method: POST,
-              //     body: JSON.stringify(payment),
-              //   },
-              // ).then(response => response.json()).then(data => {
-              //   if data.success {
-              //     session.completePayment(ApplePaySession.STATUS_SUCCESS)
-              //   } else {
-              //     session.completePayment(ApplePaySession.STATUS_FAILURE)
-              //   }
-              // }).catch(error => {
-              //   console.error("Payment processing failed:", error)
-              //   session.completePayment(ApplePaySession.STATUS_FAILURE)
-              // })
-            }
+              session.onpaymentauthorized = event => {
+                // let payment = event.payment
+                // Process the payment (send to your server)
+                Console.log2("onpaymentauthorized", event)
+                // fetch(
+                //   "/process-payment",
+                //   {
+                //     method: POST,
+                //     body: JSON.stringify(payment),
+                //   },
+                // ).then(response => response.json()).then(data => {
+                //   if data.success {
+                //     session.completePayment(ApplePaySession.STATUS_SUCCESS)
+                //   } else {
+                //     session.completePayment(ApplePaySession.STATUS_FAILURE)
+                //   }
+                // }).catch(error => {
+                //   console.error("Payment processing failed:", error)
+                //   session.completePayment(ApplePaySession.STATUS_FAILURE)
+                // })
+              }
 
-            session.oncancel = event => {
-              Console.log2("Payment cancelled by the user:", event)
+              session.oncancel = event => {
+                Console.log2("Payment cancelled by the user:", event)
+              }
+            } catch {
+            | ex => HyperModule.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr(""))
             }
           }
 

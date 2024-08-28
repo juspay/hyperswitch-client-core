@@ -1,7 +1,6 @@
 open ReactNative
 open PaymentMethodListType
 open CustomPicker
-open Style
 
 type klarnaSessionCheck = {
   isKlarna: bool,
