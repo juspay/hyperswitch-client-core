@@ -122,7 +122,7 @@ let make = (
 
   <>
     <Space height=15. />
-    <View style={viewStyle(~height, ~marginHorizontal=18.->dp, ())}>
+    <View style={viewStyle(~height, ())}>
       <FlatList
         ref={flatlistRef->ReactNative.Ref.value}
         data=hocComponentArr

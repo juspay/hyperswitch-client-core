@@ -831,7 +831,7 @@ let make = (
     selectedBank,
   ))
 
-  <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
+  <>
     <Space />
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
@@ -944,5 +944,5 @@ let make = (
           </>}
     </ErrorBoundary>
     <Space height=5. />
-  </View>
+  </>
 }
