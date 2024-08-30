@@ -611,7 +611,11 @@ let make = (
                 // onPaymentResultCallback={_ => pressHandler()}
               />,
             )
-          : Some(<ApplePayButtonViewWeb primaryButtonHeight buttonBorderRadius sessionObject />)
+          : Some(
+              <ApplePayButtonViewWeb
+                primaryButtonHeight buttonBorderRadius sessionObject confirmApplePay
+              />,
+            )
 
       | GOOGLE_PAY =>
         ReactNative.Platform.os == #android

@@ -17,16 +17,12 @@ let useAlerts = () => {
     }
 
     switch (errorType, Platform.os) {
-    | ("error", #android) =>
-      // ToastAndroid.show(message, ToastAndroid.long)
-      handleSuccessFailure(~apiResStatus, ())
-    | ("error", #ios) =>
-      // Alert.alert(~title="Error", ~message, ())
-      handleSuccessFailure(~apiResStatus, ())
+    | ("error", _) => handleSuccessFailure(~apiResStatus, ())
+
     | ("warning", #android) => ToastAndroid.show(message, ToastAndroid.long)
     | ("warning", #ios) => Alert.alert(~title="Warning", ~message, ())
-    | ("error", _) => Exn.raiseError(message)
-    | _ => alert(message) //Console.error(message)
+    | ("warning", #web) => alert(message)
+    | _ => Console.error(message)
     }
   }
 }

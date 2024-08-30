@@ -33,7 +33,6 @@ let make = (
 
     paymentClient.loadPaymentData(paymentRequest)
     ->Promise.then(paymentData => {
-      Console.log2("paymentData", paymentData->JSON.stringify->JSON.Encode.string)
       let data = [
         ("error", ""->JSON.Encode.string),
         (

@@ -24,7 +24,7 @@ AppRegistry.registerComponent(appName, () => app);
 
 const runApp = async () => {
   let props = {
-    local: true,
+    local: false,
     configuration: {
       paymentSheetHeaderLabel: 'Add a payment method',
       savedPaymentSheetHeaderLabel: 'Saved payment method',
@@ -76,23 +76,23 @@ const runApp = async () => {
   if (searchParams.size === 2) {
     props.publishableKey = searchParams.get('pk');
     props.clientSecret = searchParams.get('cs');
-  } else if (window.location.href == 'http://localhost:8080/') {
+    props.local = true;
+  } else if (
+    window.location.href == 'http://localhost:8080/' ||
+    (window.location.href == 'https://rnweb.netlify.app/' &&
+      window.webkit != undefined)
+  ) {
     let response = await fetch('http://localhost:5252/create-payment-intent');
     const data = await response.json();
     props.publishableKey = data.publishableKey;
     props.clientSecret = data.clientSecret;
+    props.local = true;
   }
 
   AppRegistry.runApplication(appName, {
     initialProps: {props},
     rootTag: document.getElementById('app-root'),
   });
-  window.parent.postMessage(
-    JSON.stringify({
-      sdkLoaded: true,
-    }),
-    '*',
-  );
 };
 
 runApp();

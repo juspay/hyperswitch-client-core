@@ -1,6 +1,7 @@
 open Utils
 
 type token = {paymentData: JSON.t}
+external anyTypeToJson: 'a => JSON.t = "%identity"
 type billingContact = {
   addressLines: array<string>,
   administrativeArea: string,
@@ -44,10 +45,13 @@ type window = {\"ApplePaySession": applePaySession}
 @val external window: window = "window"
 
 @scope("window") @val external sessionForApplePay: Nullable.t<session> = "ApplePaySession"
+@val external btoa: 'a => string = "btoa"
 
 @new external applePaySession: (int, JSON.t) => session = "ApplePaySession"
 
 external toJson: 'a => option<JSON.t> = "%identity"
+
+external toSomeType: 'a => Dict.t<JSON.t> = "%identity"
 
 let getPaymentRequestFromSession = sessionObj => {
   let paymentRequest =
@@ -82,9 +86,15 @@ let getPaymentRequestFromSession = sessionObj => {
 }
 
 @react.component
-let make = (~primaryButtonHeight, ~buttonBorderRadius, ~sessionObject) => {
+let make = (
+  ~primaryButtonHeight,
+  ~buttonBorderRadius,
+  ~sessionObject: SessionsType.sessions,
+  ~confirmApplePay,
+) => {
   let status = CommonHooksWeb.useScript(
-    "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
+    // "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
+    "https://applepay.cdn-apple.com/jsapi/v1.2.0-beta/apple-pay-sdk.js",
   )
   Console.log(status)
 
@@ -103,37 +113,121 @@ let make = (~primaryButtonHeight, ~buttonBorderRadius, ~sessionObject) => {
 
               let session = applePaySession(3, paymentRequest)
 
-              session.onvalidatemerchant = event => {
-                Console.log2("onvalidatemerchant", event)
+              Console.log2(
+                ">>>>>>>>",
+                switch sessionForApplePay->Nullable.toOption {
+                | Some(session) => session.canMakePayments()
+                | None => false
+                },
+              )
+
+              // session.onvalidatemerchant = event => {
+              //   Console.log2("onvalidatemerchant", event)
+              // }
+
+              // session.onpaymentauthorized = event => {
+              //   Console.log2("onpaymentauthorized", event)
+              // }
+
+              // session.oncancel = event => {
+              //   Console.log2("Payment cancelled by the user:", event)
+              // }
+
+              session.onvalidatemerchant = _event => {
+                let merchantSession = sessionObject.session_token_data
+                // ->anyTypeToJson
+                ->transformKeys(CamelCase)
+
+                Console.log2(">>>>>>>>", merchantSession)
+                session.completeMerchantValidation(merchantSession)
               }
 
               session.onpaymentauthorized = event => {
-                // let payment = event.payment
-                // Process the payment (send to your server)
-                Console.log2("onpaymentauthorized", event)
-                // fetch(
-                //   "/process-payment",
-                //   {
-                //     method: POST,
-                //     body: JSON.stringify(payment),
-                //   },
-                // ).then(response => response.json()).then(data => {
-                //   if data.success {
-                //     session.completePayment(ApplePaySession.STATUS_SUCCESS)
-                //   } else {
-                //     session.completePayment(ApplePaySession.STATUS_FAILURE)
+                Console.log2(">>>>>>>>", event)
+
+                session.completePayment({"status": session.\"STATUS_SUCCESS"}->anyTypeToJson)
+                // applePaySessionRef := Nullable.null
+                // let value = "Payment Data Filled: New Payment Method"
+                // logger.setLogInfo(
+                //   ~value,
+                //   ~eventName=PAYMENT_DATA_FILLED,
+                //   ~paymentMethod="APPLE_PAY",
+                // )
+
+                let payment = event.payment
+
+                Console.log3(">>>>", event, payment)
+
+                let token = event.payment.token
+
+                let tokenDict = Utils.getDictFromJson(token)
+
+                let dataString = tokenDict->Dict.get("paymentData")->JSON.stringifyAny->btoa
+
+                let paymentMethod =
+                  tokenDict
+                  ->Dict.get("paymentMethod")
+                  ->Option.getOr(JSON.Encode.null)
+                  ->Utils.transformKeys(SnakeCase)
+
+                let transactionIdentifier = tokenDict->Dict.get("transactionIdentifier")
+
+                Js.log2("===> transactionIdentifier", transactionIdentifier)
+                Js.log2("===> tokenDict", tokenDict)
+
+                let data = {
+                  "status": "Success",
+                  "payment_data": dataString,
+                  "payment_method": paymentMethod,
+                  "transaction_identifier": transactionIdentifier,
+                  "billing_contact": {
+                    "name": event.payment.billingContact,
+                    "postalAddress": event.payment.billingContact,
+                  },
+                  "shipping_contact": {
+                    "name": event.payment.shippingContact,
+                    "postalAddress": event.payment.shippingContact,
+                  },
+                }->toSomeType
+
+                confirmApplePay(data)
+
+                // payment->callBackFunc
+              }
+              session.oncancel = ev => {
+                // applePaySessionRef := Nullable.null
+                // logInfo(Console.log("Apple Pay Payment Cancelled"))
+                // logger.setLogInfo(
+                //   ~value="Apple Pay Payment Cancelled",
+                //   ~eventName=APPLE_PAY_FLOW,
+                //   ~paymentMethod="APPLE_PAY",
+                // )
+                // switch (applePayEvent, resolvePromise) {
+                // | (Some(applePayEvent), _) => {
+                //     let msg = [("showApplePayButton", true->JSON.Encode.bool)]->Dict.fromArray
+                //     applePayEvent.source->Window.sendPostMessage(msg)
                 //   }
-                // }).catch(error => {
-                //   console.error("Payment processing failed:", error)
-                //   session.completePayment(ApplePaySession.STATUS_FAILURE)
-                // })
+                // | (_, Some(resolvePromise)) =>
+                //   handleFailureResponse(
+                //     ~message="ApplePay Session Cancelled",
+                //     ~errorType="apple_pay",
+                //   )->resolvePromise
+                // | _ => ()
+                // }
+                Js.log2("===> Cancel Called", ev)
+
+                let data = {
+                  "status": "Cancelled",
+                }->toSomeType
+
+                confirmApplePay(data)
               }
 
-              session.oncancel = event => {
-                Console.log2("Payment cancelled by the user:", event)
-              }
+              session.begin()
             } catch {
-            | ex => HyperModule.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr(""))
+            | ex =>
+              Console.log2("<<<<<<<<<<<", ex)
+              HyperModule.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr("failed"))
             }
           }
 
@@ -172,7 +266,7 @@ let make = (~primaryButtonHeight, ~buttonBorderRadius, ~sessionObject) => {
             apple-pay-button {
                 --apple-pay-button-width: 100%;
                 --apple-pay-button-height: ${primaryButtonHeight->Float.toString}px;
-                // --apple-pay-button-border-radius: ${buttonBorderRadius->Float.toString}px;
+                --apple-pay-button-border-radius: ${buttonBorderRadius->Float.toString}px;
             }
        `,
       )}

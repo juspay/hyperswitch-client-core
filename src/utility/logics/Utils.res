@@ -144,6 +144,8 @@ let getHeader = (apiKey, appId) => {
     ("api-key", apiKey),
     ("x-app-id", Js.String.replace(".hyperswitch://", "", appId->Option.getOr(""))),
     // ("x-feature", "router-custom-be"),
+    ("x-merchant-domain", "rnweb.netlify.app"),
+    ("x-browser-name", "Safari"),
   ]->Dict.fromArray
 }
 

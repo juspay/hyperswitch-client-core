@@ -97,6 +97,7 @@ let useExitPaymentsheet = () => {
   let logger = LoggerHook.useLoggerHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
     logger(
@@ -118,7 +119,7 @@ let useExitPaymentsheet = () => {
         //         "failed",
         //       )}&payment_intent_client_secret=${nativeProp.clientSecret}&amount=6541`,
         //   )
-        alert(apiResStatus->stringifiedResStatus)
+        exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState == WidgetPaymentSheet
       ? hyperModule.exitWidgetPaymentsheet(
         nativeProp.rootTag,
@@ -136,7 +137,7 @@ let useExitPaymentsheet = () => {
         //         "",
         //       )}?status=${"failed"}&payment_intent_client_secret=clientSecret&amount=6541`,
         //   )
-        alert(apiResStatus->stringifiedResStatus)
+        exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState == WidgetPaymentSheet
       ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)

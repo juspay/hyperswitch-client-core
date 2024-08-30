@@ -240,7 +240,11 @@ let useListModifier = () => {
               )
             switch switch walletVal.payment_method_type_wallet {
             | GOOGLE_PAY =>
-              ReactNative.Platform.os !== #ios && sessionObject.wallet_name !== NONE ? exp : None
+              ReactNative.Platform.os !== #ios &&
+              sessionObject.wallet_name !== NONE &&
+              sessionObject.connector !== "trustpay"
+                ? exp
+                : None
             | PAYPAL =>
               exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
                 ? exp
