@@ -216,14 +216,7 @@ let make = (
   ) => {
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?switch nativeProp.hyperParams.appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | None => None
-      },
-      // customer_id: ?switch nativeProp.configuration.customer {
-      // | Some(customer) => customer.id
-      // | None => None
-      // },
+      return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
       payment_method,
       payment_method_type,
       payment_experience: payment_experience_type,
@@ -842,10 +835,7 @@ let make = (
             <Klarna
               launchKlarna
               processRequest=processRequestPayLater
-              return_url={switch nativeProp.hyperParams.appId {
-              | Some(id) => Some(id ++ ".hyperswitch://")
-              | None => None
-              }}
+              return_url={Utils.getReturnUrl(nativeProp.hyperParams.appId)}
               klarnaSessionTokens=session_token
             />
             <ErrorText text=error />

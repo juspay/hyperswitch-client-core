@@ -11,6 +11,12 @@ type element2 = {
   removeAttribute: string => unit,
 }
 
+type style = {mutable display: string}
+
+type parent = {style: style}
+
+type parentElement = {parentElement: parent}
+
 type element = {
   mutable getAttribute: string => string,
   mutable src: string,
@@ -23,6 +29,7 @@ type element = {
   mutable appendChild: element2 => unit,
   mutable removeChild: element2 => unit,
   setAttribute: (string, string) => unit,
+  parentElement: parentElement,
 }
 
 @val @scope("document") external querySelector: string => Nullable.t<element> = "querySelector"

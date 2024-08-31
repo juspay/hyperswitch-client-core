@@ -43,6 +43,6 @@ let make = () => {
     | (None, _) => <PaymentSheet setConfirmButtonDataRef />
     }}
     <GlobalConfirmButton confirmButtonDataRef />
-    <Space height={ReactNative.Platform.os == #web ? 120. : 60.} />
+    <Space height=60. />
   </FullScreenSheetWrapper>
 }

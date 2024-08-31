@@ -6,6 +6,7 @@ module.exports = {
     ],
   ],
   plugins: [
+    ['react-native-web'],
     ['@babel/plugin-transform-flow-strip-types'],
     ['module:react-native-dotenv'],
     ['@babel/plugin-transform-react-jsx', {runtime: 'automatic'}],

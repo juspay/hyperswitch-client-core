@@ -68,14 +68,7 @@ let generateCardConfirmBody = (
   let isMandate = allApiData.mandateType->checkIfMandate
   {
     client_secret: nativeProp.clientSecret,
-    return_url: ?switch nativeProp.hyperParams.appId {
-    | Some(id) => Some(id ++ ".hyperswitch://")
-    | None => None
-    },
-    // customer_id: ?switch nativeProp.configuration.customer {
-    // | Some(customer) => customer.id
-    // | None => None
-    // },
+    return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
     connector: ?(

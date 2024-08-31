@@ -175,10 +175,7 @@ let make = (
 
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?switch nativeProp.hyperParams.appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | None => None
-      },
+      return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
       ?email,
       // customer_id: ?switch nativeProp.configuration.customer {
       // | Some(customer) => customer.id
@@ -421,7 +418,7 @@ let make = (
         switch walletType.payment_method_type_wallet {
         | GOOGLE_PAY =>
           HyperModule.launchGPay(
-            GooglePayTypeNew.getGpayToken(
+            GooglePayTypeNew.getGpayTokenStringified(
               ~obj=sessionObject,
               ~appEnv=nativeProp.env,
               ~requiredFields=walletType.required_field,
@@ -601,41 +598,35 @@ let make = (
       name>
       {switch walletType.payment_method_type_wallet {
       | APPLE_PAY =>
-        ReactNative.Platform.os == #ios
-          ? Some(
-              <ApplePayButtonView
-                style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
-                cornerRadius=buttonBorderRadius
-                buttonType=nativeProp.configuration.appearance.applePay.buttonType
-                buttonStyle=applePayButtonColor
-                // onPaymentResultCallback={_ => pressHandler()}
-              />,
-            )
-          : Some(
-              <ApplePayButtonViewWeb
-                primaryButtonHeight buttonBorderRadius sessionObject confirmApplePay
-              />,
-            )
-
+        Some(
+          <ApplePayButtonView
+            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+            cornerRadius=buttonBorderRadius
+            buttonType=nativeProp.configuration.appearance.applePay.buttonType
+            buttonStyle=applePayButtonColor
+            confirmApplePay
+            sessionObject
+          />,
+        )
       | GOOGLE_PAY =>
-        ReactNative.Platform.os == #android
-          ? Some(
-              <GooglePayButtonView
-                allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
-                  ~obj=sessionObject,
-                  ~requiredFields=walletType.required_field,
-                )}
-                borderRadius={buttonBorderRadius}
-                style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
-                buttonType=nativeProp.configuration.appearance.googlePay.buttonType
-                buttonStyle=googlePayButtonColor
-              />,
-            )
-          : Some(
-              <GooglePayButtonViewWeb
-                primaryButtonHeight buttonBorderRadius sessionObject confirmGPay
-              />,
-            )
+        Some(
+          <GooglePayButtonView
+            allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
+              ~obj=sessionObject,
+              ~requiredFields=walletType.required_field,
+            )}
+            token={GooglePayTypeNew.getGpayToken(
+              ~obj=sessionObject,
+              ~appEnv=nativeProp.env,
+              ~requiredFields=walletType.required_field,
+            )}
+            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+            buttonType=nativeProp.configuration.appearance.googlePay.buttonType
+            buttonStyle=googlePayButtonColor
+            borderRadius={buttonBorderRadius}
+            confirmGPay
+          />,
+        )
 
       | _ => None
       }}

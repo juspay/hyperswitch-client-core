@@ -8,8 +8,6 @@ external jsonToStr2Fun: JSON.t => strFun2 = "%identity"
 external jsonToIntStrBoolFun: JSON.t => intStrBoolFun = "%identity"
 external jsonToStrFunWithCallback: JSON.t => strFunWithCallback = "%identity"
 
-@val external alert: string => unit = "alert"
-
 let hyperModuleDict =
   Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
   ->Option.flatMap(JSON.Decode.object)

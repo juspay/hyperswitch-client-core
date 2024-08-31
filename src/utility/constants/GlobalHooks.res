@@ -20,8 +20,9 @@ let useGetLoggingUrl = () => {
     | Some(url) => url
     | None =>
       switch nativeProp.env {
-      | PROD => "https://api.hyperswitch.io/logs/sdk"
-      | _ => "https://sandbox.hyperswitch.io/logs/sdk"
+      // | PROD => "https://api.hyperswitch.io/logs/sdk"
+      // | _ => "https://sandbox.hyperswitch.io/logs/sdk"
+      | _ => ""
       }
     }
   }
