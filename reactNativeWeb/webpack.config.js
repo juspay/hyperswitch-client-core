@@ -26,6 +26,7 @@ const compileNodeModules = [
   'react-native-tab-view',
   'react-content-loader/native',
   'react-native-hyperswitch-netcetera-3ds',
+  'react-native-scan-card',
 ].map(moduleName =>
   path.resolve(appDirectory, `../node_modules/${moduleName}`),
 );
