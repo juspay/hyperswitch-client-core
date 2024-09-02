@@ -355,10 +355,16 @@ let useRedirectHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let redirectioBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
+  let handleSuccessFailure = useHandleSuccessFailure()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+
+  let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
+    let actionType = nextActionObj->Option.getOr({type_: "", redirectToUrl: ""})
+    actionType.type_
+  }
 
   (
     ~body: string,
@@ -375,7 +381,7 @@ let useRedirectHook = () => {
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
-      switch nextAction->ThreeDsUtils.getActionType {
+      switch nextAction->getActionType {
       | "three_ds_invoke" => {
           let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
 
@@ -401,6 +407,45 @@ let useRedirectHook = () => {
               )
             },
           )
+        }
+      | "third_party_sdk_session_token" => {
+        // TODO: add event loggers for analytics
+          let defaultSessionToken = {
+            wallet_name: "",
+            open_banking_session_token: "",
+          }
+
+          let session_token = switch nextAction {
+          | Some(nextAction) => nextAction.session_token
+          | None => Some(defaultSessionToken)
+          }
+
+          switch session_token {
+            | Some(token) => Plaid.create({token: token.open_banking_session_token})
+            | None => ()
+          }
+
+          let openProps = {
+            PlaidTypes.onSuccess: (success) => {
+              responseCallback(
+                ~paymentStatus=PaymentSuccess,
+                ~status={status: "succeeded", message: success.metadata.metadataJson->Option.getOr("success message"), code: "", type_: ""},
+              )
+            },
+            PlaidTypes.onExit: (linkExit) => {
+              Console.log2("Exit: ", linkExit);
+              Plaid.dismissLink()
+              let error: error = {
+                message: switch linkExit.error {
+                  | Some(err) => err.errorMessage
+                  | None => "unknown error"
+                }
+              }
+              handleSuccessFailure(~apiResStatus={error}, ~closeSDK=true, ())
+            }
+          }
+
+          Plaid.open_(openProps)->ignore
         }
       | _ =>
         switch status {

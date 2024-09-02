@@ -21,7 +21,7 @@ let useListModifier = () => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
-  React.useMemo2(() => {
+  React.useMemo(() => {
     if pmList->Array.length == 0 {
       handleSuccessFailure(
         ~apiResStatus={
@@ -206,6 +206,25 @@ let useListModifier = () => {
                   isScreenFocus redirectProp=CRYPTO(cryptoVal) fields setConfirmButtonDataRef
                 />,
             })
+
+          | OPEN_BANKING(openBankingVal) =>
+            let fields =
+              redirectionList
+              ->Array.find(l => l.name == openBankingVal.payment_method_type)
+              ->Option.getOr(Types.defaultRedirectType)
+
+            Plaid.isAvailable
+              ? Some({
+                  name: fields.text,
+                  componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                    <Redirect
+                      isScreenFocus
+                      redirectProp=OPEN_BANKING(openBankingVal)
+                      fields
+                      setConfirmButtonDataRef
+                    />,
+                })
+              : None
           } {
           | Some(tab) =>
             let isInvalidScreen =
@@ -286,7 +305,7 @@ let useListModifier = () => {
         },
       )
     }
-  }, (pmList, sessionData))
+  }, (pmList, sessionData, Plaid.isAvailable))
 }
 
 let widgetModifier = (
