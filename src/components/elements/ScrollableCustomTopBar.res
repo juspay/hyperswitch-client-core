@@ -88,12 +88,11 @@ let make = (
   let scrollToItem = () => {
     switch flatlistRef.current->Nullable.toOption {
     | Some(ref) => {
-        let flatlistParam = FlatList.scrollToIndexParams(
-          ~animated=true,
-          ~viewPosition=0.5,
-          ~index={indexInFocus},
-          (),
-        )
+        let flatlistParam: FlatList.scrollToIndexParams = {
+          animated: true,
+          viewPosition: 0.5,
+          index: {indexInFocus},
+        }
         ref->FlatList.scrollToIndex(flatlistParam)
         switch hocComponentArr[indexInFocus] {
         | Some(focusedComponent) =>
