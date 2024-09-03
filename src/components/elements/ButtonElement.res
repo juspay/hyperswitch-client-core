@@ -604,8 +604,6 @@ let make = (
             cornerRadius=buttonBorderRadius
             buttonType=nativeProp.configuration.appearance.applePay.buttonType
             buttonStyle=applePayButtonColor
-            confirmApplePay
-            sessionObject
           />,
         )
       | GOOGLE_PAY =>
@@ -613,11 +611,6 @@ let make = (
           <GooglePayButtonView
             allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
               ~obj=sessionObject,
-              ~requiredFields=walletType.required_field,
-            )}
-            token={GooglePayTypeNew.getGpayToken(
-              ~obj=sessionObject,
-              ~appEnv=nativeProp.env,
               ~requiredFields=walletType.required_field,
             )}
             style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}

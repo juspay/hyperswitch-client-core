@@ -5,7 +5,6 @@ type props = {
   style?: ReactNative.Style.t,
   allowedPaymentMethods?: string,
   confirmGPay: RescriptCore.Dict.t<Core__JSON.t> => unit,
-  token: GooglePayTypeNew.requestType,
 }
 
 @module("../modules/GooglePayButtonViewImpl")
