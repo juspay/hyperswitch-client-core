@@ -117,17 +117,16 @@ module Wrapper = {
     let setAnimation = _ => {
       Animated.timing(
         heightPosition,
-        Animated.Value.Timing.config(
-          ~toValue={
+        {
+          toValue: {
             (viewHeight +. modalViewHeight)->Animated.Value.Timing.fromRawValue
           },
-          ~isInteraction=true,
-          ~useNativeDriver=false,
-          ~delay=0.,
-          ~duration=150.,
-          ~easing=Easing.linear,
-          (),
-        ),
+          isInteraction: true,
+          useNativeDriver: false,
+          delay: 0.,
+          duration: 150.,
+          easing: Easing.linear,
+        },
       )->Animated.start()
     }
 

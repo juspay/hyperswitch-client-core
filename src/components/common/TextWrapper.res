@@ -54,29 +54,21 @@ let make = (
   | HeadingBold =>
     array([
       textSecondaryBold,
-      textStyle(
-        ~fontSize=17. +. headingTextSizeAdjust,
-        ~fontWeight=FontWeight._600,
-        ~letterSpacing=0.3,
-        (),
-      ),
+      textStyle(~fontSize=17. +. headingTextSizeAdjust, ~fontWeight=#600, ~letterSpacing=0.3, ()),
     ])
   | Subheading =>
     array([textSecondaryBold, textStyle(~fontSize=15. +. subHeadingTextSizeAdjust, ())])
   | SubheadingBold =>
     array([
       textSecondary,
-      textStyle(~fontSize=15. +. subHeadingTextSizeAdjust, ~fontWeight=FontWeight._500, ()),
+      textStyle(~fontSize=15. +. subHeadingTextSizeAdjust, ~fontWeight=#500, ()),
     ])
   | ModalTextLight =>
-    array([
-      textStyle(~fontSize=14. +. modalTextSizeAdjust, ~fontWeight=FontWeight._500, ()),
-      textSecondary,
-    ])
+    array([textStyle(~fontSize=14. +. modalTextSizeAdjust, ~fontWeight=#500, ()), textSecondary])
   | ModalText => array([textStyle(~fontSize=14. +. modalTextSizeAdjust, ()), textSecondaryBold])
   | ModalTextBold =>
     array([
-      textStyle(~fontSize=14. +. modalTextSizeAdjust, ~fontWeight=FontWeight._500, ()),
+      textStyle(~fontSize=14. +. modalTextSizeAdjust, ~fontWeight=#500, ()),
       textSecondaryBold,
     ])
   | PlaceholderText =>
@@ -94,7 +86,7 @@ let make = (
       textStyle(
         ~fontStyle=#normal,
         ~fontSize=12. +. placeholderTextSizeAdjust,
-        ~fontWeight=FontWeight._500,
+        ~fontWeight=#500,
         ~marginBottom=2.5->pct,
         (),
       ),
@@ -115,7 +107,7 @@ let make = (
         ~color={errorTextInputColor},
         ~fontFamily,
         ~fontSize=12. +. errorTextSizeAdjust,
-        ~fontWeight=FontWeight._500,
+        ~fontWeight=#500,
         (),
       ),
     ])
@@ -126,33 +118,20 @@ let make = (
       textStyle(
         ~color=payNowButtonTextColor,
         ~fontSize=17. +. buttonTextSizeAdjust,
-        ~fontWeight=FontWeight._600,
+        ~fontWeight=#600,
         (),
       ),
     ])
   | LinkText => array([textStyle(~fontSize=14. +. linkTextSizeAdjust, ()), textPrimary])
   | LinkTextBold =>
-    array([
-      textStyle(~fontSize=14. +. linkTextSizeAdjust, ~fontWeight=FontWeight._500, ()),
-      textPrimary,
-    ])
+    array([textStyle(~fontSize=14. +. linkTextSizeAdjust, ~fontWeight=#500, ()), textPrimary])
   | CardTextBold =>
     array([
-      textStyle(
-        ~fontSize=14. +. cardTextSizeAdjust,
-        ~fontWeight=FontWeight._600,
-        ~color=component.color,
-        (),
-      ),
+      textStyle(~fontSize=14. +. cardTextSizeAdjust, ~fontWeight=#600, ~color=component.color, ()),
     ])
   | CardText =>
     array([
-      textStyle(
-        ~fontSize=12. +. cardTextSizeAdjust,
-        ~fontWeight=FontWeight._400,
-        ~color=component.color,
-        (),
-      ),
+      textStyle(~fontSize=12. +. cardTextSizeAdjust, ~fontWeight=#400, ~color=component.color, ()),
     ])
   }
   // let textTypeString = switch textType {
