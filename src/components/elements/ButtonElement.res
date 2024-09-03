@@ -260,22 +260,6 @@ let make = (
 
   let (statesJson, setStatesJson) = React.useState(_ => None)
 
-  React.useEffect0(() => {
-    // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      setStatesJson(_ => None)
-      Promise.resolve()
-    })
-    ->ignore
-
-    None
-  })
-
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
@@ -395,6 +379,24 @@ let make = (
       }
     }
   }
+
+  React.useEffect0(() => {
+    // Dynamically import/download Postal codes and states JSON
+    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    ->Promise.then(res => {
+      setStatesJson(_ => Some(res.states))
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      setStatesJson(_ => None)
+      Promise.resolve()
+    })
+    ->ignore
+
+    Window.registerEventListener("applePayData", confirmApplePay)
+
+    None
+  })
 
   let pressHandler = () => {
     setLoading(ProcessingPayments(None))

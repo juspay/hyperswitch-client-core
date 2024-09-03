@@ -256,7 +256,14 @@ let useListModifier = () => {
             ReactNative.Platform.os !== #android && sessionObject.wallet_name !== NONE
               ? {
                   if ReactNative.Platform.os === #web {
-                    addApplePay(~sessionObject)
+                    Promise.make((resolve, _) => {
+                      addApplePay(~sessionObject, ~resolve)
+                    })
+                    ->Promise.then(isApplePaySupported => {
+                      // isApplePaySupported ? exp : None
+                      Promise.resolve()
+                    })
+                    ->ignore
                   }
                   exp
                 }

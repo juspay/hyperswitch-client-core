@@ -50,14 +50,10 @@ module InAppBrowser = {
   external isAvailable: unit => promise<bool> = "isAvailable"
 }
 
-type location
-@val @scope("window") external location: location = "location"
-@set external href: (location, string) => unit = "href"
-
 let openUrl = (url, returnUrl) => {
   ReactNative.Platform.os === #web
     ? Promise.make((resolve, _reject) => {
-        href(location, url)
+        Window.setHref(url)
         let browserRes = {
           paymentID: "",
           amount: "",

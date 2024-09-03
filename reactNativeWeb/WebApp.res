@@ -1,33 +1,15 @@
 @get external data: ReactEvent.Form.t => string = "data"
 
-module Window = {
-  type listener<'ev> = 'ev => unit
-
-  @val @scope(("window", "parent")) @val
-  external postMessage: (string, string) => unit = "postMessage"
-
-  @val @scope("window")
-  external addEventListener: (string, listener<'ev>) => unit = "addEventListener"
-}
-
 @react.component
 let app = (~props) => {
   let (propFromEvent, setPropFromEvent) = React.useState(() => None)
   let {sdkInitialised} = WebKit.useWebKit()
+  Window.useEventListener()
+
   React.useEffect0(() => {
-    let handleMessage = ev => {
-      let eventStr = ev->data
-
+    let handleMessage = optionalJson => {
       try {
-        let optionalJson =
-          eventStr
-          ->JSON.parseExn
-          ->JSON.Decode.object
-          ->Option.flatMap(Dict.get(_, "initialProps"))
-          ->Option.flatMap(JSON.Decode.object)
-          ->Option.flatMap(Dict.get(_, "props"))
-
-        switch optionalJson {
+        switch optionalJson->Dict.get("props") {
         | Some(json) => setPropFromEvent(_ => Some(json))
         | None => ()
         }
@@ -35,8 +17,7 @@ let app = (~props) => {
       | _ => ()
       }
     }
-
-    Window.addEventListener("message", handleMessage)
+    Window.registerEventListener("initialProps", handleMessage)
 
     let sdkInitialisedProp = JSON.stringifyAny({
       "sdkLoaded": true,

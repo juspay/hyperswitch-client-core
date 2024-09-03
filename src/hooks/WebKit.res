@@ -1,25 +1,11 @@
-// window.webkit.messageHandlers.exitPaymentSheet.postMessage("Hello from JavaScript!");
-
-type postMessage = {postMessage: string => unit}
-
-type messageHandlers = {
-  exitPaymentSheet?: postMessage,
-  sdkInitialised?: postMessage,
-  launchApplePay?: postMessage,
-}
-
-type webKit = {messageHandlers?: messageHandlers}
-
 type useWebKit = {
   exitPaymentSheet: string => unit,
   sdkInitialised: string => unit,
   launchApplePay: string => unit,
 }
 
-@scope("window") external webKit: option<webKit> = "webkit"
-
 let useWebKit = () => {
-  let messageHandlers = switch webKit {
+  let messageHandlers = switch Window.webKit {
   | Some(webKit) => webKit.messageHandlers
   | None => None
   }

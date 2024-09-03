@@ -331,13 +331,9 @@ let getArrofJsonString = (arr: array<string>) => {
   arr->Array.map(item => item->JSON.Encode.string)
 }
 
-type location
-@val @scope("window") external location: location = "location"
-@get external href: location => string = "href"
-
 let getReturnUrl = appId => {
   ReactNative.Platform.os == #web
-    ? Some(href(location))
+    ? Some(Window.getHref)
     : switch appId {
       | Some(id) => Some(id ++ ".hyperswitch://")
       | None => None
