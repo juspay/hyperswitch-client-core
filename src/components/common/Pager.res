@@ -73,15 +73,14 @@ let make = (
         [
           timing(
             panX,
-            Animated.Value.Spring.config(
-              ~toValue=offset->Animated.Value.Spring.fromRawValue,
-              ~stiffness,
-              ~damping,
-              ~mass,
-              ~overshootClamping,
-              ~useNativeDriver=false,
-              (),
-            ),
+            {
+              toValue: offset->Animated.Value.Spring.fromRawValue,
+              stiffness,
+              damping,
+              mass,
+              overshootClamping,
+              useNativeDriver: false,
+            },
           ),
         ],
         {stopTogether: false},
@@ -251,19 +250,15 @@ let make = (
     jumpToIndex(index, false)
   }, [jumpToIndex])
 
-  let panHandlers =
-    PanResponder.create(
-      PanResponder.config(
-        ~onMoveShouldSetPanResponder=canMoveScreen,
-        ~onMoveShouldSetPanResponderCapture=canMoveScreen,
-        ~onPanResponderGrant=startGesture,
-        ~onPanResponderMove=respondToGesture,
-        ~onPanResponderTerminate=finishGesture,
-        ~onPanResponderRelease=finishGesture,
-        ~onPanResponderTerminationRequest=(_, _) => true,
-        (),
-      ),
-    )->PanResponder.panHandlers
+  let panHandlers = PanResponder.create({
+    onMoveShouldSetPanResponder: canMoveScreen,
+    onMoveShouldSetPanResponderCapture: canMoveScreen,
+    onPanResponderGrant: startGesture,
+    onPanResponderMove: respondToGesture,
+    onPanResponderTerminate: finishGesture,
+    onPanResponderRelease: finishGesture,
+    onPanResponderTerminationRequest: (_, _) => true,
+  })->PanResponder.panHandlers
 
   let maxTranslate = layout.width *. -(routes->Array.length - 1)->Int.toFloat
   let translateX = Animated.Value.multiply(

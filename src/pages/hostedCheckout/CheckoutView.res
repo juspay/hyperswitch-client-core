@@ -50,9 +50,7 @@ module CheckoutHeader = {
             ~borderRadius=3.,
             (),
           )}>
-          <TextWrapper textType={ModalTextBold}>
-            {"TEST MODE"->React.string}
-          </TextWrapper>
+          <TextWrapper textType={ModalTextBold}> {"TEST MODE"->React.string} </TextWrapper>
         </View>
       </View>
       {useMediaView == Mobile
@@ -141,12 +139,11 @@ let make = () => {
     if modalKey {
       Animated.timing(
         slideAnimation["y"],
-        Animated.Value.Timing.config(
-          ~toValue=-200.->Animated.Value.Timing.fromRawValue,
-          ~duration=300.,
-          ~useNativeDriver=false,
-          (),
-        ),
+        {
+          toValue: -200.->Animated.Value.Timing.fromRawValue,
+          duration: 300.,
+          useNativeDriver: false,
+        },
       )
       ->Animated.start(~endCallback=_ => setModalKey(_ => false), ())
       ->ignore
@@ -154,12 +151,11 @@ let make = () => {
       setModalKey(_ => true)
       Animated.timing(
         slideAnimation["y"],
-        Animated.Value.Timing.config(
-          ~toValue=1.->Animated.Value.Timing.fromRawValue,
-          ~duration=300.,
-          ~useNativeDriver=false,
-          (),
-        ),
+        {
+          toValue: 1.->Animated.Value.Timing.fromRawValue,
+          duration: 300.,
+          useNativeDriver: false,
+        },
       )
       ->Animated.start()
       ->ignore

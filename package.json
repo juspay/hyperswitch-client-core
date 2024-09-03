@@ -91,7 +91,7 @@
     "react-native-web": "^0.18.12",
     "react-test-renderer": "18.2.0",
     "rescript": "11",
-    "rescript-react-native": "https://github.com/seekshiva/rescript-react-native/tarball/rescript-v11-upgrade-for-0.70.0",
+    "rescript-react-native": "^0.73.1",
     "semantic-release": "^22.0.7",
     "swc-loader": "^0.2.3",
     "terser-webpack-plugin": "^5.3.9",
