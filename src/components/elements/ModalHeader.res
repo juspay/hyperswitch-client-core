@@ -6,11 +6,9 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
-  let (savedPaymentMethodContextObj, _) = React.useContext(
-    SavedPaymentMethodContext.savedPaymentMethodContext,
-  )
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
-  let isLoadingScreenActive = switch savedPaymentMethodContextObj {
+  let isLoadingScreenActive = switch allApiData.savedPaymentMethods {
   | Loading => true
   | _ => false
   }
@@ -24,7 +22,7 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
       ~justifyContent=#"space-between",
       (),
     )}>
-    {if savedPaymentMethodContextObj == Loading {
+    {if isLoadingScreenActive {
       React.null
     } else {
       switch switch paymentScreenType {

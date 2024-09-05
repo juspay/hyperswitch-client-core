@@ -26,7 +26,6 @@ let make = (
     }
   }
 
-  let (sessionData, _) = React.useContext(SessionContext.sessionContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
@@ -163,7 +162,7 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let {isKlarna, session_token} = React.useMemo1(() => {
-    switch sessionData {
+    switch allApiData.sessions {
     | Some(sessionData) =>
       switch sessionData->Array.find(item => item.wallet_name == KLARNA) {
       | Some(tok) => {isKlarna: tok.wallet_name === KLARNA, session_token: tok.session_token}
@@ -171,7 +170,7 @@ let make = (
       }
     | _ => {isKlarna: false, session_token: ""}
     }
-  }, [sessionData])
+  }, [allApiData.sessions])
 
   let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
     if !closeSDK {
@@ -224,8 +223,10 @@ let make = (
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
-      setup_future_usage: ?(allApiData.mandateType != NORMAL ? Some("off_session") : None),
-      payment_type: ?allApiData.paymentType,
+      setup_future_usage: ?(
+        allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
+      ),
+      payment_type: ?allApiData.additionalPMLData.paymentType,
       // mandate_data: ?(
       //   allApiData.mandateType != NORMAL
       //     ? Some({
@@ -241,7 +242,7 @@ let make = (
       //     : None
       // ),
       customer_acceptance: ?(
-        allApiData.mandateType->PaymentUtils.checkIfMandate
+        allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate
           ? Some({
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
@@ -792,7 +793,7 @@ let make = (
     ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
       fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
     )) || (fields.name == "klarna" && isKlarna)
-  }, (isEmailValid, isNameValid, sessionData))
+  }, (isEmailValid, isNameValid, allApiData.sessions))
 
   React.useEffect(() => {
     if isScreenFocus {

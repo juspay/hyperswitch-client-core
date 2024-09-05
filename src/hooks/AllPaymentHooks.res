@@ -275,7 +275,10 @@ let useBrowserHook = () => {
         retrievePayment(Payment, clientSecret, publishableKey)
         ->Promise.then(s => {
           if s == JSON.Encode.null {
-            setAllApiData({...allApiData, retryEnabled: None})
+            setAllApiData({
+              ...allApiData,
+              additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+            })
             errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=true, ())
           } else {
             let status =
@@ -287,7 +290,10 @@ let useBrowserHook = () => {
 
             switch status {
             | "succeeded" =>
-              setAllApiData({...allApiData, retryEnabled: None})
+              setAllApiData({
+                ...allApiData,
+                additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+              })
               responseCallback(
                 ~paymentStatus=LoadingContext.PaymentSuccess,
                 ~status={status, message: "", code: "", type_: ""},
@@ -302,7 +308,10 @@ let useBrowserHook = () => {
                 ~status={status, message: "", code: "", type_: ""},
               )
             | _ =>
-              setAllApiData({...allApiData, retryEnabled: None})
+              setAllApiData({
+                ...allApiData,
+                additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+              })
               errorCallback(
                 ~errorMessage={status, message: "", type_: "", code: ""},
                 ~closeSDK={true},
@@ -316,10 +325,13 @@ let useBrowserHook = () => {
       } else if res.error == Cancel {
         setAllApiData({
           ...allApiData,
-          retryEnabled: Some({
-            processor,
-            redirectUrl: openUrl,
-          }),
+          additionalPMLData: {
+            ...allApiData.additionalPMLData,
+            retryEnabled: Some({
+              processor,
+              redirectUrl: openUrl,
+            }),
+          },
         })
         errorCallback(
           ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
@@ -327,7 +339,10 @@ let useBrowserHook = () => {
           (),
         )
       } else if res.error === Failed {
-        setAllApiData({...allApiData, retryEnabled: None})
+        setAllApiData({
+          ...allApiData,
+          additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+        })
         errorCallback(
           ~errorMessage={status: "failed", message: "", type_: "", code: ""},
           ~closeSDK={true},
@@ -415,7 +430,10 @@ let useRedirectHook = () => {
             ~paymentExperience?,
             (),
           )
-          setAllApiData({...allApiData, retryEnabled: None})
+          setAllApiData({
+            ...allApiData,
+            additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+          })
           responseCallback(
             ~paymentStatus=PaymentSuccess,
             ~status={status, message: "", code: "", type_: ""},
@@ -424,14 +442,20 @@ let useRedirectHook = () => {
         | "processing"
         | "requires_confirmation"
         | "requires_merchant_action" => {
-            setAllApiData({...allApiData, retryEnabled: None})
+            setAllApiData({
+              ...allApiData,
+              additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+            })
             responseCallback(
               ~paymentStatus=ProcessingPayments(None),
               ~status={status, message: "", code: "", type_: ""},
             )
           }
         | "requires_customer_action" => {
-            setAllApiData({...allApiData, retryEnabled: None})
+            setAllApiData({
+              ...allApiData,
+              additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+            })
             logger(
               ~logType=INFO,
               ~category=USER_EVENT,
@@ -460,7 +484,10 @@ let useRedirectHook = () => {
             ~paymentExperience?,
             (),
           )
-          setAllApiData({...allApiData, retryEnabled: None})
+          setAllApiData({
+            ...allApiData,
+            additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+          })
           errorCallback(
             ~errorMessage=error,
             //~closeSDK={error.code == "IR_16" || error.code == "HE_00"},
@@ -471,7 +498,7 @@ let useRedirectHook = () => {
       }
     }
 
-    switch allApiData.retryEnabled {
+    switch allApiData.additionalPMLData.retryEnabled {
     | Some({redirectUrl, processor}) =>
       processor == body
         ? retrievePayment(Payment, clientSecret, publishableKey)

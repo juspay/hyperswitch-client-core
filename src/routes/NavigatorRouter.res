@@ -1,6 +1,3 @@
-type remove = {remove: unit => unit}
-external unsubscribe: ReactNative.BackHandler.remove => remove = "%identity"
-
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -9,9 +6,6 @@ let make = () => {
   let savedPaymentMethods = AllPaymentHooks.useGetSavedPMHook()
 
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (_, setPaymentList) = React.useContext(PaymentListContext.paymentListContext)
-  let (_, setSessionData) = React.useContext(SessionContext.sessionContext)
-  let (_, setSavedPMData) = React.useContext(SavedPaymentMethodContext.savedPaymentMethodContext)
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
@@ -20,6 +14,10 @@ let make = () => {
   let logger = LoggerHook.useLoggerHook()
 
   let handlePMLResponse = retrieve => {
+    PaymentMethodListType.jsonTopaymentMethodListType(retrieve)
+  }
+
+  let handlePMLAdditionalResponse = retrieve => {
     let {
       mandateType,
       paymentType,
@@ -28,20 +26,18 @@ let make = () => {
     } = PaymentMethodListType.jsonToMandateData(retrieve)
     let redirect_url = PaymentMethodListType.jsonToRedirectUrlType(retrieve)
 
-    setAllApiData({
-      ...allApiData,
+    {
+      ...allApiData.additionalPMLData,
       redirect_url,
       mandateType,
       paymentType,
       merchantName,
       requestExternalThreeDsAuthentication,
-    })
-
-    PaymentMethodListType.jsonTopaymentMethodListType(retrieve)->setPaymentList
+    }
   }
 
   let handleSessionResponse = session => {
-    let sessionList: SessionContext.sessions = if session->ErrorUtils.isError {
+    let sessionList: AllApiDataContext.sessions = if session->ErrorUtils.isError {
       if session->ErrorUtils.getErrorCode == "\"IR_16\"" {
         errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
       } else if session->ErrorUtils.getErrorCode == "\"IR_09\"" {
@@ -56,11 +52,10 @@ let make = () => {
     } else {
       None
     }
-    setSessionData(sessionList)
     sessionList
   }
 
-  let handleCustomerPMLResponse = (customerSavedPMData, sessions: SessionContext.sessions) => {
+  let handleCustomerPMLResponse = (customerSavedPMData, sessions: AllApiDataContext.sessions) => {
     switch customerSavedPMData {
     | Some(obj) => {
         let spmData = obj->PaymentMethodListType.jsonToSavedPMObj
@@ -119,15 +114,14 @@ let make = () => {
           ->Option.flatMap(JSON.Decode.bool)
           ->Option.getOr(false)
 
-        setSavedPMData(
-          Some({
-            pmList: Some(filteredSpmData),
-            isGuestCustomer: isGuestFromPMList,
-            selectedPaymentMethod: None,
-          }),
-        )
+        let savedPaymentMethods: AllApiDataContext.savedPaymentMethods = Some({
+          pmList: Some(filteredSpmData),
+          isGuestCustomer: isGuestFromPMList,
+          selectedPaymentMethod: None,
+        })
+        savedPaymentMethods
       }
-    | None => ()
+    | None => None
     }
   }
 
@@ -155,8 +149,17 @@ let make = () => {
         } else if paymentMethodListData == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          handlePMLResponse(paymentMethodListData)
-          handleCustomerPMLResponse(customerSavedPMData, handleSessionResponse(sessionTokenData))
+          let paymentList = handlePMLResponse(paymentMethodListData)
+          let additionalPMLData = handlePMLAdditionalResponse(paymentMethodListData)
+          let sessions = handleSessionResponse(sessionTokenData)
+          let savedPaymentMethods = handleCustomerPMLResponse(customerSavedPMData, sessions)
+
+          setAllApiData({
+            paymentList,
+            additionalPMLData,
+            sessions,
+            savedPaymentMethods,
+          })
 
           let latency = Date.now() -. launchTime
           logger(
@@ -190,9 +193,9 @@ let make = () => {
         }
       }
       true
-    })->unsubscribe
+    })
 
-    Some(() => backHandler.remove())
+    Some(() => backHandler["remove"]())
   }, (loading, nativeProp.sdkState))
 
   {

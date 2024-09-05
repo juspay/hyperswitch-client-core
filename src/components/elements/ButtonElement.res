@@ -25,12 +25,9 @@ let make = (
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  let (savedPaymentMethodsData, _) = React.useContext(
-    SavedPaymentMethodContext.savedPaymentMethodContext,
-  )
-  let savedPaymentMethodsData = switch savedPaymentMethodsData {
+  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
-  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  | _ => AllApiDataContext.dafaultsavePMObj
   }
 
   let logger = LoggerHook.useLoggerHook()
@@ -196,10 +193,10 @@ let make = (
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
-      payment_type: ?allApiData.paymentType,
+      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
-          allApiData.mandateType->PaymentUtils.checkIfMandate &&
+          allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
             !savedPaymentMethodsData.isGuestCustomer
         ) {
           Some({

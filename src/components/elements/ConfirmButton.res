@@ -28,7 +28,10 @@ let make = (
           ?paymentExperience
           displayText={switch nativeProp.configuration.primaryButtonLabel {
           | Some(str) => str
-          | None => allApiData.mandateType != NORMAL ? "Pay Now" : localeObject.payNowButton
+          | None =>
+            allApiData.additionalPMLData.mandateType != NORMAL
+              ? "Pay Now"
+              : localeObject.payNowButton
           }}
         />}
   </>

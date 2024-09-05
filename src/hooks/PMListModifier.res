@@ -16,14 +16,12 @@ type paymentList = {
   elementArr: array<React.element>,
 }
 let useListModifier = () => {
-  let (pmList, _) = React.useContext(PaymentListContext.paymentListContext)
-  let (sessionData, _) = React.useContext(SessionContext.sessionContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (addApplePay, addGooglePay) = WebButtonHook.usePayButton()
 
   // React.useMemo2(() => {
-  if pmList->Array.length == 0 {
+  if allApiData.paymentList->Array.length == 0 {
     handleSuccessFailure(
       ~apiResStatus={
         {
@@ -42,7 +40,7 @@ let useListModifier = () => {
     }
   } else {
     let redirectionList = Types.defaultConfig.redirectionList
-    pmList->Array.reduce(
+    allApiData.paymentList->Array.reduce(
       {
         tabArr: [],
         elementArr: [],
@@ -103,7 +101,7 @@ let useListModifier = () => {
             ->Array.find(l => l.name == walletVal.payment_method_type)
             ->Option.getOr(Types.defaultRedirectType)
 
-          let sessionObject = switch sessionData {
+          let sessionObject = switch allApiData.sessions {
           | Some(sessionData) =>
             sessionData
             ->Array.find(item => item.wallet_name == walletVal.payment_method_type_wallet)
@@ -120,7 +118,7 @@ let useListModifier = () => {
           | GOOGLE_PAY =>
             ReactNative.Platform.os !== #ios &&
             sessionObject.wallet_name !== NONE &&
-            allApiData.mandateType != NORMAL
+            allApiData.additionalPMLData.mandateType != NORMAL
               ? Some({
                   name: fields.text,
                   componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
@@ -136,7 +134,7 @@ let useListModifier = () => {
               : None
           | PAYPAL =>
             exp->Option.isNone &&
-            allApiData.mandateType != NORMAL &&
+            allApiData.additionalPMLData.mandateType != NORMAL &&
             PaypalModule.payPalModule->Option.isSome
               ? Some({
                   name: fields.text,
@@ -167,7 +165,7 @@ let useListModifier = () => {
           | APPLE_PAY =>
             ReactNative.Platform.os !== #android &&
             sessionObject.wallet_name !== NONE &&
-            allApiData.mandateType != NORMAL
+            allApiData.additionalPMLData.mandateType != NORMAL
               ? Some({
                   name: fields.text,
                   componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
@@ -222,7 +220,7 @@ let useListModifier = () => {
         // if !allApiData.isMandate {
         switch switch payment_method {
         | WALLET(walletVal) =>
-          let sessionObject = switch sessionData {
+          let sessionObject = switch allApiData.sessions {
           | Some(sessionData) =>
             sessionData
             ->Array.find(item => item.wallet_name == walletVal.payment_method_type_wallet)
@@ -308,7 +306,7 @@ let useListModifier = () => {
 
 let widgetModifier = (
   pmList: array<PaymentMethodListType.payment_method>,
-  sessionData: SessionContext.sessions,
+  sessionData: AllApiDataContext.sessions,
   widgetType,
   confirm,
 ) => {
