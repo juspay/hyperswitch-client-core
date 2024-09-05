@@ -24,7 +24,7 @@ const compileNodeModules = [
   'react-native-screens',
   'react-native-svg',
   'react-native-tab-view',
-  'react-content-loader/native',
+  'react-content-loader',
   'react-native-hyperswitch-netcetera-3ds',
   'react-native-scan-card',
 ].map(moduleName =>
@@ -97,7 +97,6 @@ module.exports = {
       '@sentry/react-native': '@sentry/react',
       'react-native-hyperswitch-paypal': 'react-native-web',
       'react-native-hyperswitch-kount': 'react-native-web',
-      'react-content-loader/native': 'react-content-loader',
       'react-native-hyperswitch-netcetera-3ds': 'react-native-web',
     },
   },

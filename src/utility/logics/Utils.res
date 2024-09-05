@@ -333,7 +333,7 @@ let getArrofJsonString = (arr: array<string>) => {
 
 let getReturnUrl = appId => {
   ReactNative.Platform.os == #web
-    ? Some(Window.getHref)
+    ? Some(Window.location.href)
     : switch appId {
       | Some(id) => Some(id ++ ".hyperswitch://")
       | None => None

@@ -1,7 +1,10 @@
 type listener<'ev> = 'ev => unit
 
-@val @scope(("window", "parent")) @val
+@val @scope("window") @val
 external postMessage: (string, string) => unit = "postMessage"
+
+@val @scope(("window", "parent")) @val
+external postMessageToParent: (string, string) => unit = "postMessage"
 
 @val @scope("window")
 external addEventListener: (string, listener<'ev>) => unit = "addEventListener"
@@ -9,15 +12,95 @@ external addEventListener: (string, listener<'ev>) => unit = "addEventListener"
 @val @scope("window")
 external removeEventListener: (string, listener<'ev>) => unit = "removeEventListener"
 
-type location
+type location = {href: string}
 @val @scope("window") external location: location = "location"
 @get external getHref: location => string = "href"
 @set external setHref: (location, string) => unit = "href"
 
-let getHref = getHref(location)
-
 let setHref = url => {
   setHref(location, url)
+}
+
+type tab = {location: location, close: unit => unit}
+
+@val @scope("window") external open_: string => Nullable.t<tab> = "open"
+
+type status = [#loading | #idle | #ready | #error | #load]
+
+type style = {mutable display: string}
+
+type parent = {style: style}
+
+type parentElement = {parentElement: parent}
+
+type rec element = {
+  mutable getAttribute: string => status,
+  mutable src: string,
+  mutable async: bool,
+  mutable rel: string,
+  mutable href: string,
+  mutable \"as": string,
+  mutable crossorigin: string,
+  mutable onclick: unit => unit,
+  mutable appendChild: element => unit,
+  mutable removeChild: element => unit,
+  setAttribute: (string, string) => unit,
+  removeAttribute: string => unit,
+  parentElement: parentElement,
+}
+
+@val @scope("document") external querySelector: string => Nullable.t<element> = "querySelector"
+
+type event = {\"type": string}
+@val @scope("document") external createElement: string => element = "createElement"
+
+@val @scope(("document", "head")) external appendChildToHead: element => unit = "appendChild"
+@val @scope(("document", "body")) external appendChildToBody: element => unit = "appendChild"
+
+@send
+external addEventListenerToElement: (element, status, event => unit) => unit = "addEventListener"
+
+@send
+external removeEventListenerFromElement: (element, status, event => unit) => unit =
+  "removeEventListener"
+
+external anyTypeToString: 'a => string = "%identity"
+
+let useScript = (src: string) => {
+  let (status, setStatus) = React.useState(_ => src != "" ? #loading : #idle)
+  React.useEffect(() => {
+    if src == "" {
+      setStatus(_ => #idle)
+    }
+    let script = querySelector(`script[src="${src}"]`)
+    switch script->Nullable.toOption {
+    | Some(dom) =>
+      setStatus(_ => dom.getAttribute("data-status"))
+      None
+    | None =>
+      let script = createElement("script")
+      script.src = src
+      script.async = true
+      script.setAttribute("data-status", #loading->anyTypeToString)
+      appendChildToHead(script)
+      let setAttributeFromEvent = (event: event) => {
+        setStatus(_ => event.\"type" === "load" ? #ready : #error)
+        script.setAttribute(
+          "data-status",
+          (event.\"type" === "load" ? #ready : #error)->anyTypeToString,
+        )
+      }
+      script->addEventListenerToElement(#load, setAttributeFromEvent)
+      script->addEventListenerToElement(#error, setAttributeFromEvent)
+      Some(
+        () => {
+          script->removeEventListenerFromElement(#load, setAttributeFromEvent)
+          script->removeEventListenerFromElement(#error, setAttributeFromEvent)
+        },
+      )
+    }
+  }, [src])
+  status
 }
 
 type postMessage = {postMessage: string => unit}
@@ -55,16 +138,16 @@ type shippingContact = {
 }
 
 type paymentResult = {token: JSON.t, billingContact: JSON.t, shippingContact: JSON.t}
-type event = {validationURL: string, payment: paymentResult}
+type applePayEvent = {validationURL: string, payment: paymentResult}
 type innerSession
 type session = {
   begin: unit => unit,
   abort: unit => unit,
   mutable oncancel: unit => unit,
   canMakePayments: unit => bool,
-  mutable onvalidatemerchant: event => unit,
+  mutable onvalidatemerchant: applePayEvent => unit,
   completeMerchantValidation: JSON.t => unit,
-  mutable onpaymentauthorized: event => unit,
+  mutable onpaymentauthorized: applePayEvent => unit,
   completePayment: JSON.t => unit,
   \"STATUS_SUCCESS": string,
   \"STATUS_FAILURE": string,
@@ -83,7 +166,7 @@ type window = {\"ApplePaySession": applePaySession}
 
 type client = {
   isReadyToPay: JSON.t => Promise.t<JSON.t>,
-  createButton: JSON.t => CommonHooksWeb.element,
+  createButton: JSON.t => element,
   loadPaymentData: JSON.t => Promise.t<JSON.t>,
 }
 @new external google: JSON.t => client = "google.payments.api.PaymentsClient"

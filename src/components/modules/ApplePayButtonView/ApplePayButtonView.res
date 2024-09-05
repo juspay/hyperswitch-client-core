@@ -7,5 +7,5 @@ type props = {
   style?: Style.t,
 }
 
-@module("../modules/ApplePayButtonViewImpl")
+@module("./ApplePayButtonViewImpl")
 external make: props => React.element = "make"

@@ -255,7 +255,7 @@ let lightRecord = {
   platform: "android",
   paymentSheetOverlay: "#00000070",
   bgColor: styles["light_bgColor"],
-  loadingBgColor: "rgb(244,244,244)",
+  loadingBgColor: "rgb(220,220,220)",
   loadingFgColor: "rgb(250,250,250)",
   bgTransparentColor: styles["light_bgTransparentColor"],
   textPrimary: styles["light_textPrimary"],

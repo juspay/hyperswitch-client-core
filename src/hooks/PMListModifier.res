@@ -20,7 +20,7 @@ let useListModifier = () => {
   let (sessionData, _) = React.useContext(SessionContext.sessionContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let (addApplePay, addGooglePay) = CommonPayButtonHook.usePayButton()
+  let (addApplePay, addGooglePay) = WebButtonHook.usePayButton()
 
   // React.useMemo2(() => {
   if pmList->Array.length == 0 {
@@ -259,10 +259,10 @@ let useListModifier = () => {
                     Promise.make((resolve, _) => {
                       addApplePay(~sessionObject, ~resolve)
                     })
-                    ->Promise.then(isApplePaySupported => {
-                      // isApplePaySupported ? exp : None
-                      Promise.resolve()
-                    })
+                    // ->Promise.then(isApplePaySupported => {
+                    //   isApplePaySupported ? exp : None
+                    //   Promise.resolve()
+                    // })
                     ->ignore
                   }
                   exp

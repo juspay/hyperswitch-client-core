@@ -15,8 +15,8 @@ let usePayButton = () => {
   } = ThemebasedStyle.useThemeBasedStyle()
   let {launchApplePay} = WebKit.useWebKit()
 
-  let addApplePay = (~sessionObject: SessionsType.sessions, ~resolve) => {
-    let status = CommonHooksWeb.useScript(
+  let addApplePay = (~sessionObject: SessionsType.sessions, ~resolve as _) => {
+    let status = Window.useScript(
       // "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
       "https://applepay.cdn-apple.com/jsapi/v1.2.0-beta/apple-pay-sdk.js",
     )
@@ -24,73 +24,59 @@ let usePayButton = () => {
     React.useEffect1(() => {
       status == #ready
         ? {
-            let container = CommonHooksWeb.querySelector("#apple-wallet-button-container")
+            // let isApplePaySupported = switch Window.sessionForApplePay->Nullable.toOption {
+            // | Some(session) =>
+            //   try {
+            //     session.canMakePayments()
+            //   } catch {
+            //   | _ => false
+            //   }
+            // | None => false
+            // }
 
-            let isApplePaySupported = switch Window.sessionForApplePay->Nullable.toOption {
-            | Some(session) =>
-              try {
-                session.canMakePayments()
-              } catch {
-              | _ => false
+            // resolve(isApplePaySupported)
+
+            let appleWalletButton = Window.querySelector("apple-pay-button")
+
+            switch appleWalletButton->Nullable.toOption {
+            | Some(appleWalletButton) =>
+              appleWalletButton.removeAttribute("hidden")
+              appleWalletButton.removeAttribute("aria-hidden")
+              appleWalletButton.removeAttribute("disabled")
+
+              appleWalletButton.setAttribute("buttonstyle", applePayButtonColor->anyTypeToString)
+              appleWalletButton.setAttribute(
+                "type",
+                nativeProp.configuration.appearance.applePay.buttonType->anyTypeToString,
+              )
+              appleWalletButton.setAttribute("locale", "en-US")
+
+              appleWalletButton.onclick = () => {
+                try {
+                  launchApplePay(
+                    [
+                      ("session_token_data", sessionObject.session_token_data),
+                      ("payment_request_data", sessionObject.payment_request_data),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+                    ->JSON.stringify,
+                  )
+                } catch {
+                | ex => AlertHook.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr("failed"))
+                }
               }
-            | None => false
+            | _ => ()
             }
 
-            resolve(isApplePaySupported)
-
-            isApplePaySupported
-              ? {
-                  let appleWalletButton = CommonHooksWeb.createElement("apple-pay-button")
-
-                  appleWalletButton.setAttribute(
-                    "buttonstyle",
-                    applePayButtonColor->anyTypeToString,
-                  )
-                  appleWalletButton.setAttribute(
-                    "type",
-                    nativeProp.configuration.appearance.applePay.buttonType->anyTypeToString,
-                  )
-                  appleWalletButton.setAttribute("locale", "en-US")
-
-                  appleWalletButton.onclick = () => {
-                    try {
-                      launchApplePay(
-                        [
-                          ("session_token_data", sessionObject.session_token_data),
-                          ("payment_request_data", sessionObject.payment_request_data),
-                        ]
-                        ->Dict.fromArray
-                        ->JSON.Encode.object
-                        ->JSON.stringify,
-                      )
-                    } catch {
-                    | ex =>
-                      AlertHook.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr("failed"))
-                    }
-                  }
-
-                  switch container->Nullable.toOption {
-                  | Some(container1) => container1.appendChild(appleWalletButton)
-                  | _ => ()
-                  }
-
-                  Some(
-                    () => {
-                      switch container->Nullable.toOption {
-                      | Some(containers) => containers.removeChild(appleWalletButton)
-                      | _ => ()
-                      }
-                    },
-                  )
-                }
-              : None
+            None
           }
         : None
     }, [status])
   }
 
   let addGooglePay = (~sessionObject, ~requiredFields) => {
-    let status = CommonHooksWeb.useScript("https://pay.google.com/gp/p/js/pay.js")
+    let status = Window.useScript("https://pay.google.com/gp/p/js/pay.js")
 
     let token = GooglePayTypeNew.getGpayToken(
       ~obj=sessionObject,
@@ -116,7 +102,15 @@ let usePayButton = () => {
         })
         ->Promise.catch((err: exn) => {
           let errorMessage = switch err->Exn.asJsExn {
-          | Some(error) => error->Exn.message->Option.getOr("failed")
+          | Some(error) =>
+            let statusCode = switch error
+            ->anyTypeToJson
+            ->Utils.getDictFromJson
+            ->Dict.get("statusCode") {
+            | Some(json) => json->JSON.Decode.string->Option.getOr("failed")
+            | None => "failed"
+            }
+            error->Exn.message->Option.getOr(statusCode)
           | None => "failed"
           }
 
@@ -125,15 +119,18 @@ let usePayButton = () => {
               (
                 "error",
                 (
-                  errorMessage == "User closed the Payment Request UI." ? "Cancel" : errorMessage
+                  errorMessage == "User closed the Payment Request UI." ||
+                    errorMessage == "CANCELED"
+                    ? "Cancel"
+                    : errorMessage
                 )->JSON.Encode.string,
               ),
               ("paymentMethodData", JSON.Encode.null),
             ]->Dict.fromArray
           Promise.resolve(data)
         })
-        ->Promise.then(_data => {
-          //   confirmGPay(data)
+        ->Promise.then(data => {
+          Window.postMessage({"googlePayData": data}->JSON.stringifyAny->Option.getOr(""), "*")
           Promise.resolve()
         })
         ->ignore
@@ -154,14 +151,17 @@ let usePayButton = () => {
                 ->anyTypeToString
                 ->String.toLowerCase,
                 "buttonSizeMode": "fill",
-                "buttonColor": googlePayButtonColor->anyTypeToString,
+                "buttonColor": switch googlePayButtonColor {
+                | #light => "white"
+                | #dark => "black"
+                },
                 "buttonRadius": buttonBorderRadius,
               }
               obj->anyTypeToJson
             }
             let googleWalletButton = paymentClient.createButton(buttonStyle)
 
-            let container = CommonHooksWeb.querySelector("#google-wallet-button-container")
+            let container = Window.querySelector("#google-wallet-button-container")
 
             switch container->Nullable.toOption {
             | Some(container1) => container1.appendChild(googleWalletButton)

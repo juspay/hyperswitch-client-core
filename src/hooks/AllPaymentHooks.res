@@ -267,8 +267,9 @@ let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let intervalId = React.useRef(Nullable.null)
   (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
-    BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId)
+    BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId, intervalId)
     ->Promise.then(res => {
       if res.error === Success {
         retrievePayment(Payment, clientSecret, publishableKey)

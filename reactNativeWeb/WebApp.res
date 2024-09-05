@@ -23,7 +23,7 @@ let app = (~props) => {
       "sdkLoaded": true,
     })->Option.getOr("")
 
-    Window.postMessage(sdkInitialisedProp, "*")
+    Window.postMessageToParent(sdkInitialisedProp, "*")
     sdkInitialised(sdkInitialisedProp)
 
     None
