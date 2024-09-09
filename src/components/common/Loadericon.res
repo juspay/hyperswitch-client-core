@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+
 @react.component
 let make = (~iconColor=?, ~size=ActivityIndicator.Small) => {
   let {component} = ThemebasedStyle.useThemeBasedStyle()
