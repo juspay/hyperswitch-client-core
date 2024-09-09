@@ -25,12 +25,9 @@ let make = (
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  let (savedPaymentMethodsData, _) = React.useContext(
-    SavedPaymentMethodContext.savedPaymentMethodContext,
-  )
-  let savedPaymentMethodsData = switch savedPaymentMethodsData {
+  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
-  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  | _ => AllApiDataContext.dafaultsavePMObj
   }
 
   let logger = LoggerHook.useLoggerHook()
@@ -47,13 +44,12 @@ let make = (
   let animateFlex = (~flexval, ~value, ~endCallback=() => (), ()) => {
     Animated.timing(
       flexval,
-      Animated.Value.Timing.config(
-        ~toValue={value->Animated.Value.Timing.fromRawValue},
-        ~isInteraction=true,
-        ~useNativeDriver=false,
-        ~delay=0.,
-        (),
-      ),
+      {
+        toValue: {value->Animated.Value.Timing.fromRawValue},
+        isInteraction: true,
+        useNativeDriver: false,
+        delay: 0.,
+      },
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
   }
 
@@ -175,10 +171,7 @@ let make = (
 
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?switch nativeProp.hyperParams.appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | None => None
-      },
+      return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
       ?email,
       // customer_id: ?switch nativeProp.configuration.customer {
       // | Some(customer) => customer.id
@@ -199,10 +192,10 @@ let make = (
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
-      payment_type: ?allApiData.paymentType,
+      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
-          allApiData.mandateType->PaymentUtils.checkIfMandate &&
+          allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
             !savedPaymentMethodsData.isGuestCustomer
         ) {
           Some({
@@ -399,6 +392,16 @@ let make = (
     }
   }
 
+  React.useEffect1(() => {
+    switch walletType.payment_method_type_wallet {
+    | APPLE_PAY => Window.registerEventListener("applePayData", confirmApplePay)
+    | GOOGLE_PAY => Window.registerEventListener("googlePayData", confirmGPay)
+    | _ => ()
+    }
+
+    None
+  }, [walletType.payment_method_type_wallet])
+
   let pressHandler = () => {
     setLoading(ProcessingPayments(None))
     logger(
@@ -421,7 +424,7 @@ let make = (
         switch walletType.payment_method_type_wallet {
         | GOOGLE_PAY =>
           HyperModule.launchGPay(
-            GooglePayTypeNew.getGpayToken(
+            GooglePayTypeNew.getGpayTokenStringified(
               ~obj=sessionObject,
               ~appEnv=nativeProp.env,
               ~requiredFields=walletType.required_field,
@@ -607,10 +610,8 @@ let make = (
             cornerRadius=buttonBorderRadius
             buttonType=nativeProp.configuration.appearance.applePay.buttonType
             buttonStyle=applePayButtonColor
-            // onPaymentResultCallback={_ => pressHandler()}
           />,
         )
-
       | GOOGLE_PAY =>
         Some(
           <GooglePayButtonView
@@ -618,10 +619,10 @@ let make = (
               ~obj=sessionObject,
               ~requiredFields=walletType.required_field,
             )}
-            borderRadius={buttonBorderRadius}
             style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
             buttonType=nativeProp.configuration.appearance.googlePay.buttonType
             buttonStyle=googlePayButtonColor
+            borderRadius={buttonBorderRadius}
           />,
         )
 

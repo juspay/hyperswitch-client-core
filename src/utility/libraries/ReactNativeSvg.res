@@ -94,7 +94,7 @@ module AnimateTransform = {
 }
 
 module SvgUri = {
-  @module("react-native-svg/src") @react.component
+  @module("react-native-svg/css") @react.component
   external make: (
     ~uri: string,
     ~width: float,
@@ -106,7 +106,7 @@ module SvgUri = {
 }
 
 module SvgCss = {
-  @module("react-native-svg/src") @react.component
+  @module("react-native-svg/css") @react.component
   external make: (
     ~xml: string,
     ~width: float,

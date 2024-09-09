@@ -6,7 +6,7 @@ let make = (~children) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let onModalClose = () => {
+  let onModalClose = React.useCallback0(() => {
     setLoading(PaymentCancelled)
     setTimeout(() => {
       handleSuccessFailure(
@@ -16,19 +16,18 @@ let make = (~children) => {
         (),
       )
     }, 300)->ignore
-  }
+  })
   let {paymentSheetOverlay} = ThemebasedStyle.useThemeBasedStyle()
 
   let (sheetFlex, _) = React.useState(_ => Animated.Value.create(0.))
   React.useEffect0(() => {
     Animated.timing(
       sheetFlex,
-      Animated.Value.Timing.config(
-        ~toValue={1.->Animated.Value.Timing.fromRawValue},
-        ~isInteraction=true,
-        ~useNativeDriver=false,
-        (),
-      ),
+      {
+        toValue: {1.->Animated.Value.Timing.fromRawValue},
+        isInteraction: true,
+        useNativeDriver: false,
+      },
     )->Animated.start()
     None
   })
@@ -38,17 +37,16 @@ let make = (~children) => {
     if loading == LoadingContext.PaymentCancelled || loading == LoadingContext.PaymentSuccess {
       Animated.timing(
         heightPosition,
-        Animated.Value.Timing.config(
-          ~toValue={
+        {
+          toValue: {
             1000.->Animated.Value.Timing.fromRawValue
           },
-          ~isInteraction=true,
-          ~useNativeDriver=false,
-          ~delay=0.,
-          ~duration=300.,
-          ~easing=Easing.linear,
-          (),
-        ),
+          isInteraction: true,
+          useNativeDriver: false,
+          delay: 0.,
+          duration: 300.,
+          easing: Easing.linear,
+        },
       )->Animated.start()
     }
     None
@@ -69,7 +67,7 @@ let make = (~children) => {
         ~flex={sheetFlex->Animated.StyleProp.float},
         (),
       )}>
-      <CustomView closeOnClickOutSide=true onDismiss=onModalClose modalPosition=#bottom>
+      <CustomView onDismiss=onModalClose>
         <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
       </CustomView>
     </Animated.View>

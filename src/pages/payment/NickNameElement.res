@@ -6,8 +6,8 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected) => {
   isNicknameSelected
     ? <>
         <Space />
-        <TextWrapper text={localeObject.cardNickname} textType=SubheadingBold />
-        <Space height=5. />
+        // <TextWrapper text={localeObject.cardNickname} textType=SubheadingBold />
+        // <Space height=5. />
         <CustomInput
           state={nickname->Option.getOr("")}
           setState={str => setNickname(_ => Some(str))}
@@ -25,6 +25,7 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected) => {
           borderBottomWidth=borderWidth
           borderLeftWidth=borderWidth
           borderRightWidth=borderWidth
+          animateLabel=localeObject.cardNickname
         />
         <Space height=5. />
       </>

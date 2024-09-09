@@ -95,7 +95,7 @@ type colors = {
   placeholderText: option<string>,
   icon: option<string>,
   error: option<string>,
-  loaderBackgound: option<string>,
+  loaderBackground: option<string>,
   loaderForeground: option<string>,
 }
 
@@ -184,6 +184,8 @@ type applePayConfiguration = {
   buttonStyle: option<applePayThemeBaseStyle>,
 }
 
+type themeType = Default | Light | Dark | Minimal | FlatMinimal
+
 type appearance = {
   locale: option<localeTypes>,
   colors: option<colorType>,
@@ -192,6 +194,7 @@ type appearance = {
   primaryButton: option<primaryButton>,
   googlePay: googlePayConfiguration,
   applePay: applePayConfiguration,
+  theme: themeType,
 }
 
 type address = {
@@ -305,7 +308,6 @@ type nativeProp = {
   sessionId: string,
   from: string,
   configuration: configurationType,
-  themes: string,
   env: GlobalVars.envType,
   sdkState: sdkState,
   rootTag: int,
@@ -336,7 +338,7 @@ let defaultAppearance: appearance = {
         placeholderText: None,
         icon: None,
         error: None,
-        loaderBackgound: None,
+        loaderBackground: None,
         loaderForeground: None,
       }),
     )
@@ -402,6 +404,7 @@ let defaultAppearance: appearance = {
     buttonType: #plain,
     buttonStyle: None,
   },
+  theme: Default,
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
@@ -416,7 +419,7 @@ let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
   placeholderText: retOptionalStr(getProp(keys.placeholderText, colorDict)),
   icon: retOptionalStr(getProp(keys.icon, colorDict)),
   error: retOptionalStr(getProp(keys.error, colorDict)),
-  loaderBackgound: retOptionalStr(getProp(keys.loadingBgColor, colorDict)),
+  loaderBackground: retOptionalStr(getProp(keys.loadingBgColor, colorDict)),
   loaderForeground: retOptionalStr(getProp(keys.loadingFgColor, colorDict)),
 }
 
@@ -723,6 +726,13 @@ let getAppearanceObj = (
       | None => None
       },
     },
+    theme: switch getString(appearanceDict, "theme", "") {
+    | "Light" => Light
+    | "Dark" => Dark
+    | "Minimal" => Minimal
+    | "FlatMinimal" => FlatMinimal
+    | _ => Default
+    },
   }
 }
 
@@ -851,7 +861,7 @@ let parseConfigurationDict = (configObj, from) => {
     placeholder: {
       cardNumber: getString(placeholderDict, "cardNumber", "1234 1234 1234 1234"),
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
-      cvv: getString(placeholderDict, "cvv", "CVV"),
+      cvv: getString(placeholderDict, "cvv", "CVC"),
     },
   }
   configuration
@@ -895,7 +905,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | _ => NoView
     },
     configuration: parseConfigurationDict(configurationDict, from),
-    themes: getString(dictfromNative, "themes", ""),
     hyperParams: {
       appId: ?getOptionString(hyperParams, "appId"),
       country: getString(hyperParams, "country", ""),

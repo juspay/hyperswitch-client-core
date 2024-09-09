@@ -7,6 +7,7 @@ module ContentLoaderNative = {
     ~viewBox: string=?,
     ~backgroundColor: string=?,
     ~foregroundColor: string=?,
+    ~style: ReactNative.Style.t=?,
     ~children: React.element,
   ) => React.element = "default"
 }
@@ -20,9 +21,10 @@ module ContentLoader = {
     ~viewBox=?,
     ~backgroundColor="red",
     ~foregroundColor="black",
+    ~style=?,
     ~children=React.null,
   ) => {
-    <ContentLoaderNative speed width height ?viewBox backgroundColor foregroundColor>
+    <ContentLoaderNative speed width height ?viewBox backgroundColor foregroundColor ?style>
       {children}
     </ContentLoaderNative>
   }
@@ -41,7 +43,7 @@ module Rect = {
 }
 
 @react.component
-let make = (~height="45", ~width="100%", ~speed=1.3, ~radius=None) => {
+let make = (~height="45", ~width="100%", ~speed=1.3, ~radius=None, ~style) => {
   let {borderRadius, loadingBgColor, loadingFgColor} = ThemebasedStyle.useThemeBasedStyle()
   let br = switch radius {
   | Some(var) => var
@@ -52,6 +54,7 @@ let make = (~height="45", ~width="100%", ~speed=1.3, ~radius=None) => {
     height
     speed
     // viewBox
+    ?style
     backgroundColor=loadingBgColor
     foregroundColor=loadingFgColor>
     <Rect x="0" y="0" rx={br->Float.toString} ry={br->Float.toString} width height />

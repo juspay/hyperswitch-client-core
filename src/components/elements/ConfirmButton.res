@@ -1,6 +1,3 @@
-open ReactNative
-open Style
-
 @react.component
 let make = (
   ~loading: bool,
@@ -15,7 +12,7 @@ let make = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
-  <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
+  <>
     {errorText->Belt.Option.isSome ? <ErrorText text={errorText} /> : React.null}
     {loading
       ? <>
@@ -31,8 +28,11 @@ let make = (
           ?paymentExperience
           displayText={switch nativeProp.configuration.primaryButtonLabel {
           | Some(str) => str
-          | None => allApiData.mandateType != NORMAL ? "Pay Now" : localeObject.payNowButton
+          | None =>
+            allApiData.additionalPMLData.mandateType != NORMAL
+              ? "Pay Now"
+              : localeObject.payNowButton
           }}
         />}
-  </View>
+  </>
 }

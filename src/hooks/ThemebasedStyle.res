@@ -255,7 +255,7 @@ let lightRecord = {
   platform: "android",
   paymentSheetOverlay: "#00000070",
   bgColor: styles["light_bgColor"],
-  loadingBgColor: "rgb(244,244,244)",
+  loadingBgColor: "rgb(220,220,220)",
   loadingFgColor: "rgb(250,250,250)",
   bgTransparentColor: styles["light_bgTransparentColor"],
   textPrimary: styles["light_textPrimary"],
@@ -536,8 +536,20 @@ let itemToObj = (
       ~fn=val => viewStyle(~backgroundColor=val, ()),
       ~default=themeObj.bgColor,
     ),
-    loadingBgColor: themeObj.loadingBgColor,
-    loadingFgColor: themeObj.loadingFgColor,
+    loadingBgColor: getStrProp(
+      ~overRideProp=switch appearanceColor {
+      | Some(obj) => obj.loaderBackground
+      | _ => None
+      },
+      ~defaultProp=themeObj.loadingBgColor,
+    ),
+    loadingFgColor: getStrProp(
+      ~overRideProp=switch appearanceColor {
+      | Some(obj) => obj.loaderBackground
+      | _ => None
+      },
+      ~defaultProp=themeObj.loadingFgColor,
+    ),
     bgTransparentColor: styles["light_bgTransparentColor"],
     textPrimary: getStyleProp(
       ~override=switch appearanceColor {
@@ -859,11 +871,11 @@ let itemToObj = (
 let useThemeBasedStyle = () => {
   let (themeType, _) = React.useContext(ThemeContext.themeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let themerecord = switch nativeProp.themes {
-  | "FlatMinimal" => Some(flatMinimal)
-  | "Minimal" => Some(minimal)
-  | "Light" => Some(lightRecord)
-  | "Dark" => Some(darkRecord)
+  let themerecord = switch nativeProp.configuration.appearance.theme {
+  | FlatMinimal => Some(flatMinimal)
+  | Minimal => Some(minimal)
+  | Light => Some(lightRecord)
+  | Dark => Some(darkRecord)
   | _ => None
   }
   let themerecordOverridedWithAppObj = switch themeType {

@@ -13,8 +13,7 @@ module WidgetError = {
 let make = (~walletType) => {
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (paymentList, _) = React.useContext(PaymentListContext.paymentListContext)
-  let (sessionData, _) = React.useContext(SessionContext.sessionContext)
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (button, setButton) = React.useState(_ => None)
 
   React.useEffect1(() => {
@@ -23,8 +22,8 @@ let make = (~walletType) => {
     } else {
       setButton(_ =>
         PMListModifier.widgetModifier(
-          paymentList,
-          sessionData,
+          allApiData.paymentList,
+          allApiData.sessions,
           walletType,
           nativeProp.hyperParams.confirm,
         )
@@ -74,7 +73,7 @@ let make = (~walletType) => {
         event->EventSubscription.remove
       },
     )
-  }, [sessionData])
+  }, [allApiData.sessions])
 
   <ErrorBoundary level={FallBackScreen.Widget} rootTag=nativeProp.rootTag>
     <View

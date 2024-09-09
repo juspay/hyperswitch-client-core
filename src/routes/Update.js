@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import CodePush from 'react-native-code-push';
-import App from './App';
+import App from './AppExports.js';
 import {Platform} from 'react-native';
 import {
   sentryReactNative,

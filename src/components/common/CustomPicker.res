@@ -39,7 +39,7 @@ let make = (
     None
   }, [isModalVisible])
   <View>
-    <TouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+    <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
         state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
         | Some(y) => y.name
@@ -59,7 +59,7 @@ let make = (
         editable=false
         textColor=component.color
         iconRight=CustomIcon(
-          <TouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+          <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
             <Icon
               style={viewStyle(~transform=[rotate(~rotate=270.->deg)], ())}
               name="back"
@@ -67,11 +67,11 @@ let make = (
               width=13.
               fill=iconColor
             />
-          </TouchableOpacity>,
+          </CustomTouchableOpacity>,
         )
         pointerEvents={#none}
       />
-    </TouchableOpacity>
+    </CustomTouchableOpacity>
     <Modal visible={isModalVisible} transparent={true} animationType=#slide>
       <SafeAreaView />
       <View style={array([viewStyle(~flex=1., ~paddingTop=24.->dp, ()), transparentBG])}>
@@ -99,11 +99,11 @@ let make = (
               (),
             )}>
             <TextWrapper text=placeholderText textType={HeadingBold} />
-            <TouchableOpacity
+            <CustomTouchableOpacity
               onPress={_ => setIsModalVisible(prev => !prev)}
               style={viewStyle(~padding=14.->dp, ())}>
               <Icon name="close" width=20. height=20. fill=iconColor />
-            </TouchableOpacity>
+            </CustomTouchableOpacity>
           </View>
           <CustomInput
             placeholder={"Search " ++ placeholderText} // MARK: add Search to locale
@@ -135,7 +135,7 @@ let make = (
             keyExtractor={(_, i) => i->Int.toString}
             horizontal=false
             renderItem={({item, index}) =>
-              <TouchableOpacity
+              <CustomTouchableOpacity
                 key={index->Int.toString}
                 style={viewStyle(~height=32.->dp, ~margin=1.->dp, ~justifyContent=#center, ())}
                 onPress={_ => {
@@ -143,7 +143,7 @@ let make = (
                   setIsModalVisible(_ => false)
                 }}>
                 <TextWrapper text={item.icon->Option.getOr("") ++ item.name} textType=ModalText />
-              </TouchableOpacity>}
+              </CustomTouchableOpacity>}
           />
         </View>
       </View>

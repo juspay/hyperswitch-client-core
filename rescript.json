@@ -11,6 +11,10 @@
     {
       "dir": "src",
       "subdirs": true
+    },
+    {
+      "dir": "reactNativeWeb",
+      "subdirs": true
     }
   ],
   "bs-dependencies": [
