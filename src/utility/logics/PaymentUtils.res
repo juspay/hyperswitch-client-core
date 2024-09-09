@@ -166,3 +166,8 @@ let generateWalletConfirmBody = (
   payment_method: "wallet",
   payment_method_type,
 }
+
+let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
+  let actionType = nextActionObj->Option.getOr({type_: "", redirectToUrl: ""})
+  actionType.type_
+}
