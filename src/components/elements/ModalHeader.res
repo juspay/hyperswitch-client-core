@@ -6,11 +6,9 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
-  let (savedPaymentMethodContextObj, _) = React.useContext(
-    SavedPaymentMethodContext.savedPaymentMethodContext,
-  )
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
-  let isLoadingScreenActive = switch savedPaymentMethodContextObj {
+  let isLoadingScreenActive = switch allApiData.savedPaymentMethods {
   | Loading => true
   | _ => false
   }
@@ -22,11 +20,9 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
       ~flexDirection=#row,
       ~alignItems=#center,
       ~justifyContent=#"space-between",
-      ~margin=5.->pct,
-      ~marginBottom=0.->pct,
       (),
     )}>
-    {if savedPaymentMethodContextObj == Loading {
+    {if isLoadingScreenActive {
       React.null
     } else {
       switch switch paymentScreenType {
@@ -68,9 +64,9 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
                     overrideStyle=Some(textStyle(~color="black", ()))
                   />
                 </View>}
-            <TouchableOpacity onPress={_ => onModalClose()}>
+            <CustomTouchableOpacity onPress={_ => onModalClose()}>
               <Icon name="close" width=16. height=16. fill=iconColor />
-            </TouchableOpacity>
+            </CustomTouchableOpacity>
           </>}
     </View>
   </View>

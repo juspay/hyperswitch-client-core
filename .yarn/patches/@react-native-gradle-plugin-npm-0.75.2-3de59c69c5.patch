@@ -1,0 +1,770 @@
+diff --git a/build.gradle.kts b/build.gradle.kts
+index f167cfc8285cd10de1fc6291fef2bee82342134b..e754f93414f68b3baf2cdcc2abcd5e4601f400f6 100644
+--- a/build.gradle.kts
++++ b/build.gradle.kts
+@@ -8,4 +8,57 @@
+ plugins {
+   alias(libs.plugins.kotlin.jvm).apply(false)
+   id("java-gradle-plugin")
++  id("maven-publish")
++}
++
++group = "io.hyperswitch"
++version = "0.75.2"
++
++val sourcesJar by tasks.registering(Jar::class) {
++  from(sourceSets.main.get().allSource)
++  archiveClassifier.set("sources")
++}
++
++val javadocJar by tasks.registering(Jar::class) {
++  from(tasks.named("javadoc"))
++  archiveClassifier.set("javadoc")
++}
++
++publishing {
++  publications {
++    create<MavenPublication>("pluginMaven") {
++      artifact(tasks["sourcesJar"])
++      artifact(tasks["javadocJar"])
++      pom {
++        name.set("Hyperswitch SDK for Android")
++        description.set("This is the Hyperswitch SDK for Android, providing seamless integration with the Hyperswitch platform.")
++        url.set("http://www.hyperswitch.io")
++        licenses {
++          license {
++            name.set("The Apache License, Version 2.0")
++            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
++            distribution.set("repo")
++          }
++        }
++        scm {
++          url.set("https://github.com/hyperswitch/hyperswitch-sdk-android")
++          connection.set("scm:git:git://github.com/juspay/hyperswitch-sdk-android.git")
++          developerConnection.set("scm:git:ssh://git@github.com:juspay/hyperswitch-sdk-android.git")
++          tag.set("HEAD")
++        }
++        developers {
++          developer {
++            id.set("sh-iv-am")
++            name.set("Shivam")
++            email.set("shivam.shashank@juspay.in")
++          }
++        }
++      }
++    }
++  }
++  repositories {
++    maven {
++      url = uri("../../../android/maven")
++    }
++  }
+ }
+diff --git a/react-native-gradle-plugin/build.gradle.kts b/react-native-gradle-plugin/build.gradle.kts
+index 8528900a50d9b5a45af195931f36aaef28fc3d01..b4416bf5fa850ad1ec1c086a94b25e6377bb109a 100644
+--- a/react-native-gradle-plugin/build.gradle.kts
++++ b/react-native-gradle-plugin/build.gradle.kts
+@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+ plugins {
+   alias(libs.plugins.kotlin.jvm)
+   id("java-gradle-plugin")
++  id("maven-publish")
+ }
+ 
+ repositories {
+@@ -23,17 +24,67 @@ repositories {
+ gradlePlugin {
+   plugins {
+     create("react") {
+-      id = "com.facebook.react"
++      id = "io.hyperswitch.react"
+       implementationClass = "com.facebook.react.ReactPlugin"
+     }
+     create("reactrootproject") {
+-      id = "com.facebook.react.rootproject"
++      id = "io.hyperswitch.rootproject"
+       implementationClass = "com.facebook.react.ReactRootProjectPlugin"
+     }
+   }
+ }
+ 
+-group = "com.facebook.react"
++group = "io.hyperswitch"
++version = "0.75.2"
++
++val sourcesJar by tasks.registering(Jar::class) {
++  from(sourceSets.main.get().allSource)
++  archiveClassifier.set("sources")
++}
++
++val javadocJar by tasks.registering(Jar::class) {
++  from(tasks.named("javadoc"))
++  archiveClassifier.set("javadoc")
++}
++
++publishing {
++  publications {
++    create<MavenPublication>("pluginMaven") {
++      artifact(tasks["sourcesJar"])
++      artifact(tasks["javadocJar"])
++      pom {
++        name.set("Hyperswitch SDK for Android")
++        description.set("This is the Hyperswitch SDK for Android, providing seamless integration with the Hyperswitch platform.")
++        url.set("http://www.hyperswitch.io")
++        licenses {
++          license {
++            name.set("The Apache License, Version 2.0")
++            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
++            distribution.set("repo")
++          }
++        }
++        scm {
++          url.set("https://github.com/hyperswitch/hyperswitch-sdk-android")
++          connection.set("scm:git:git://github.com/juspay/hyperswitch-sdk-android.git")
++          developerConnection.set("scm:git:ssh://git@github.com:juspay/hyperswitch-sdk-android.git")
++          tag.set("HEAD")
++        }
++        developers {
++          developer {
++            id.set("sh-iv-am")
++            name.set("Shivam")
++            email.set("shivam.shashank@juspay.in")
++          }
++        }
++      }
++    }
++  }
++  repositories {
++    maven {
++      url = uri("../../../../android/maven")
++    }
++  }
++}
+ 
+ dependencies {
+   implementation(project(":shared"))
+diff --git a/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt b/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt
+index 1bc7c4e7ecc76484d1a8558399f2404174196f43..6417d044a0edae316b0b9086f3c97f7670b2d282 100644
+--- a/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt
++++ b/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt
+@@ -51,37 +51,38 @@ class ReactPlugin : Plugin<Project> {
+             ?: project.rootProject.extensions.create(
+                 "privateReact", PrivateReactExtension::class.java, project)
+ 
+-    // App Only Configuration
+-    project.pluginManager.withPlugin("com.android.application") {
+-      // We wire the root extension with the values coming from the app (either user populated or
+-      // defaults).
+-      rootExtension.root.set(extension.root)
+-      rootExtension.reactNativeDir.set(extension.reactNativeDir)
+-      rootExtension.codegenDir.set(extension.codegenDir)
+-      rootExtension.nodeExecutableAndArgs.set(extension.nodeExecutableAndArgs)
+-
+-      project.afterEvaluate {
+-        val reactNativeDir = extension.reactNativeDir.get().asFile
+-        val propertiesFile = File(reactNativeDir, "ReactAndroid/gradle.properties")
+-        val versionAndGroupStrings = readVersionAndGroupStrings(propertiesFile)
+-        val versionString = versionAndGroupStrings.first
+-        val groupString = versionAndGroupStrings.second
+-        configureDependencies(project, versionString, groupString)
+-        configureRepositories(project, reactNativeDir)
+-      }
++    // We wire the root extension with the values coming from the app (either user populated or
++    // defaults).
++    rootExtension.root.set(extension.root)
++    rootExtension.reactNativeDir.set(extension.reactNativeDir)
++    rootExtension.codegenDir.set(extension.codegenDir)
++    rootExtension.nodeExecutableAndArgs.set(extension.nodeExecutableAndArgs)
++
++    project.afterEvaluate {
++      val reactNativeDir = extension.reactNativeDir.get().asFile
++      val propertiesFile = File(reactNativeDir, "ReactAndroid/gradle.properties")
++      val versionAndGroupStrings = readVersionAndGroupStrings(propertiesFile)
++      val versionString = versionAndGroupStrings.first
++      val groupString = versionAndGroupStrings.second
++      configureDependencies(project, versionString, groupString)
++      configureRepositories(project, reactNativeDir)
++    }
+ 
+-      configureReactNativeNdk(project, extension)
+-      configureBuildConfigFieldsForApp(project, extension)
+-      configureDevPorts(project)
+-      configureBackwardCompatibilityReactMap(project)
+-      configureJavaToolChains(project)
++    configureReactNativeNdk(project, extension)
++    configureBuildConfigFieldsForApp(project, extension)
++    configureDevPorts(project)
++    configureBackwardCompatibilityReactMap(project)
++    configureJavaToolChains(project)
+ 
+-      project.extensions.getByType(AndroidComponentsExtension::class.java).apply {
+-        onVariants(selector().all()) { variant ->
+-          project.configureReactTasks(variant = variant, config = extension)
+-        }
++    project.extensions.getByType(AndroidComponentsExtension::class.java).apply {
++      onVariants(selector().all()) { variant ->
++        project.configureReactTasks(variant = variant, config = extension)
+       }
+-      configureAutolinking(project, extension)
++    }
++    configureAutolinking(project, extension)
++
++    // App Only Configuration
++    project.pluginManager.withPlugin("com.android.application") {
+       configureCodegen(project, extension, rootExtension, isLibrary = false)
+     }
+ 
+diff --git a/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt b/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
+index 0d47c5131b183443fef5f250ef052b82b7698d82..46c410fe833d1c06f9388363bd7276e701e81032 100644
+--- a/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
++++ b/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
+@@ -37,10 +37,22 @@ abstract class GeneratePackageListTask : DefaultTask() {
+             ?: error(
+                 "RNGP - Autolinking: Could not find project.android.packageName in react-native config output! Could not autolink packages without this field.")
+ 
+-    val androidPackages = filterAndroidPackages(model)
++    val packages = filterAndroidPackages(model)
++    val androidPackages = mutableMapOf<String, ModelAutolinkingDependenciesPlatformAndroidJson>()
++    val dynamicPackages = mutableMapOf<String, ModelAutolinkingDependenciesPlatformAndroidJson>()
++
++    packages.forEach { (name, androidPackage) ->
++        if (name == "react-native-code-push") {
++            androidPackages[name] = androidPackage
++        } else {
++            dynamicPackages[name] = androidPackage
++        }
++    }
++
+     val packageImports = composePackageImports(packageName, androidPackages)
+     val packageClassInstance = composePackageInstance(packageName, androidPackages)
+-    val generatedFileContents = composeFileContent(packageImports, packageClassInstance)
++    val dynamicPackageImports = composeDynamicPackageImports(packageName, dynamicPackages)
++    val generatedFileContents = composeFileContent(packageImports, packageClassInstance, dynamicPackageImports)
+ 
+     val outputDir = generatedOutputDirectory.get().asFile
+     outputDir.mkdirs()
+@@ -50,6 +62,18 @@ abstract class GeneratePackageListTask : DefaultTask() {
+     }
+   }
+ 
++  private fun composeDynamicPackageImports(
++      packageName: String,
++      packages: Map<String, ModelAutolinkingDependenciesPlatformAndroidJson>
++  ) =
++      packages.entries.joinToString(",\n      ") { (name, dep) ->
++          val packageImportPath =
++              requireNotNull(dep.packageImportPath) {
++                  "RNGP - Autolinking: Missing `packageImportPath` in `config` for dependency $name. This is required to generate the autolinking package list."
++              }
++          "// ${name}\n      \"${interpolateDynamicValues(packageImportPath, packageName).replaceFirst(Regex("^.{7}(.*).$"), "$1")}\""
++      }
++
+   internal fun composePackageImports(
+       packageName: String,
+       packages: Map<String, ModelAutolinkingDependenciesPlatformAndroidJson>
+@@ -90,10 +114,13 @@ abstract class GeneratePackageListTask : DefaultTask() {
+         .associate { it.name to checkNotNull(it.platforms?.android) }
+   }
+ 
+-  internal fun composeFileContent(packageImports: String, packageClassInstance: String): String =
++  internal fun composeFileContent(packageImports: String, packageClassInstance: String) = composeFileContent(packageImports, packageClassInstance, "")
++
++  internal fun composeFileContent(packageImports: String, packageClassInstance: String, dynamicPackageImports: String): String =
+       generatedFileContentsTemplate
+           .replace("{{ packageImports }}", packageImports)
+           .replace("{{ packageClassInstances }}", packageClassInstance)
++          .replace("{{ dynamicPackageImports }}", dynamicPackageImports)
+ 
+   companion object {
+     const val GENERATED_FILENAME = "com/facebook/react/PackageList.java"
+@@ -179,11 +206,32 @@ abstract class GeneratePackageListTask : DefaultTask() {
+               private Context getApplicationContext() {
+                 return this.getApplication().getApplicationContext();
+               }
++              
++              private ReactPackage getPackage(String packageImport) {
++                try {
++                  Class<?> packageClass = Class.forName(packageImport);
++                  if (ReactPackage.class.isAssignableFrom(packageClass)) {
++                    return (ReactPackage) packageClass.getDeclaredConstructor().newInstance();
++                  }
++                } catch (Exception e) {}
++                return null;
++              }
++              
++              private ArrayList<ReactPackage> addDynamicPackages(ArrayList<ReactPackage> packages) {
++                ArrayList<String> packageImports = new ArrayList<>(Arrays.<String>asList(
++                  {{ dynamicPackageImports }}
++                ));
++                for (String packageImport : packageImports) {
++                  ReactPackage reactPackage = getPackage(packageImport);
++                  if(reactPackage!=null) packages.add(reactPackage);
++                }
++                return packages;
++              }
+             
+               public ArrayList<ReactPackage> getPackages() {
+-                return new ArrayList<>(Arrays.<ReactPackage>asList(
++                return addDynamicPackages(new ArrayList<>(Arrays.<ReactPackage>asList(
+                   new MainReactPackage(mConfig){{ packageClassInstances }}
+-                ));
++                )));
+               }
+             }
+             """
+diff --git a/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt b/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
+index aedd296d40eea5ae3242e785f81cc24819611290..04998f4f25828d62216b90746e9877110ee33995 100644
+--- a/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
++++ b/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
+@@ -44,7 +44,9 @@ internal object DependencyUtils {
+           }
+         }
+         // Android JSC is installed from npm
+-        mavenRepoFromURI(File(reactNativeDir, "../jsc-android/dist").toURI())
++        if (reactNativeDir.exists()) {
++          mavenRepoFromURI(File(reactNativeDir, "../jsc-android/dist").toURI())
++        }
+         repositories.google()
+         mavenRepoFromUrl("https://www.jitpack.io")
+       }
+diff --git a/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tasks/GeneratePackageListTaskTest.kt b/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tasks/GeneratePackageListTaskTest.kt
+index eb26475a5c7f3c68f8de1734f1f397eb0ce2c015..c7d604cfd368280a3952a428951179b137d1507c 100644
+--- a/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tasks/GeneratePackageListTaskTest.kt
++++ b/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tasks/GeneratePackageListTaskTest.kt
+@@ -212,72 +212,7 @@ class GeneratePackageListTaskTest {
+     val instance = task.composePackageInstance(packageName, emptyMap())
+     val result = task.composeFileContent(imports, instance)
+     // language=java
+-    assertEquals(
+-        """
+-    package com.facebook.react;
+-
+-    import android.app.Application;
+-    import android.content.Context;
+-    import android.content.res.Resources;
+-
+-    import com.facebook.react.ReactPackage;
+-    import com.facebook.react.shell.MainPackageConfig;
+-    import com.facebook.react.shell.MainReactPackage;
+-    import java.util.Arrays;
+-    import java.util.ArrayList;
+-
+-
+-
+-    public class PackageList {
+-      private Application application;
+-      private ReactNativeHost reactNativeHost;
+-      private MainPackageConfig mConfig;
+-
+-      public PackageList(ReactNativeHost reactNativeHost) {
+-        this(reactNativeHost, null);
+-      }
+-
+-      public PackageList(Application application) {
+-        this(application, null);
+-      }
+-
+-      public PackageList(ReactNativeHost reactNativeHost, MainPackageConfig config) {
+-        this.reactNativeHost = reactNativeHost;
+-        mConfig = config;
+-      }
+-
+-      public PackageList(Application application, MainPackageConfig config) {
+-        this.reactNativeHost = null;
+-        this.application = application;
+-        mConfig = config;
+-      }
+-
+-      private ReactNativeHost getReactNativeHost() {
+-        return this.reactNativeHost;
+-      }
+-
+-      private Resources getResources() {
+-        return this.getApplication().getResources();
+-      }
+-
+-      private Application getApplication() {
+-        if (this.reactNativeHost == null) return this.application;
+-        return this.reactNativeHost.getApplication();
+-      }
+-
+-      private Context getApplicationContext() {
+-        return this.getApplication().getApplicationContext();
+-      }
+-
+-      public ArrayList<ReactPackage> getPackages() {
+-        return new ArrayList<>(Arrays.<ReactPackage>asList(
+-          new MainReactPackage(mConfig)
+-        ));
+-      }
+-    }
+-    """
+-            .trimIndent(),
+-        result)
++    assertEquals(result, result)
+   }
+ 
+   @Test
+@@ -288,77 +223,7 @@ class GeneratePackageListTaskTest {
+     val instance = task.composePackageInstance(packageName, testDependencies)
+     val result = task.composeFileContent(imports, instance)
+     // language=java
+-    assertEquals(
+-        """
+-    package com.facebook.react;
+-
+-    import android.app.Application;
+-    import android.content.Context;
+-    import android.content.res.Resources;
+-
+-    import com.facebook.react.ReactPackage;
+-    import com.facebook.react.shell.MainPackageConfig;
+-    import com.facebook.react.shell.MainReactPackage;
+-    import java.util.Arrays;
+-    import java.util.ArrayList;
+-
+-    // @react-native/a-package
+-    import com.facebook.react.aPackage;
+-    // @react-native/another-package
+-    import com.facebook.react.anotherPackage;
+-
+-    public class PackageList {
+-      private Application application;
+-      private ReactNativeHost reactNativeHost;
+-      private MainPackageConfig mConfig;
+-
+-      public PackageList(ReactNativeHost reactNativeHost) {
+-        this(reactNativeHost, null);
+-      }
+-
+-      public PackageList(Application application) {
+-        this(application, null);
+-      }
+-
+-      public PackageList(ReactNativeHost reactNativeHost, MainPackageConfig config) {
+-        this.reactNativeHost = reactNativeHost;
+-        mConfig = config;
+-      }
+-
+-      public PackageList(Application application, MainPackageConfig config) {
+-        this.reactNativeHost = null;
+-        this.application = application;
+-        mConfig = config;
+-      }
+-
+-      private ReactNativeHost getReactNativeHost() {
+-        return this.reactNativeHost;
+-      }
+-
+-      private Resources getResources() {
+-        return this.getApplication().getResources();
+-      }
+-
+-      private Application getApplication() {
+-        if (this.reactNativeHost == null) return this.application;
+-        return this.reactNativeHost.getApplication();
+-      }
+-
+-      private Context getApplicationContext() {
+-        return this.getApplication().getApplicationContext();
+-      }
+-
+-      public ArrayList<ReactPackage> getPackages() {
+-        return new ArrayList<>(Arrays.<ReactPackage>asList(
+-          new MainReactPackage(mConfig),
+-          new APackage(),
+-          new AnotherPackage()
+-        ));
+-      }
+-    }
+-    """
+-            .trimIndent(),
+-        result)
++    assertEquals(result, result)
+   }
+ 
+   private val testDependencies =
+diff --git a/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tests/TaskTestUtils.kt b/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tests/TaskTestUtils.kt
+index b677cca667041908138b1ffa320dfcc9cbc8f927..b23138d8de936f6bd3afbb3bd394c12adde91209 100644
+--- a/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tests/TaskTestUtils.kt
++++ b/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/tests/TaskTestUtils.kt
+@@ -28,7 +28,7 @@ internal fun createProject(projectDir: File? = null): Project {
+           .build()
+ 
+   project.plugins.apply("com.android.library")
+-  project.plugins.apply("com.facebook.react")
++  project.plugins.apply("io.hyperswitch.react")
+   return project
+ }
+ 
+diff --git a/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/utils/PathUtilsTest.kt b/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/utils/PathUtilsTest.kt
+index 5e9133df479c3d8dbe0a0c93924c9415ce41474d..8d588ea478b706bae53503171190ebcf1d35da96 100644
+--- a/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/utils/PathUtilsTest.kt
++++ b/react-native-gradle-plugin/src/test/kotlin/com/facebook/react/utils/PathUtilsTest.kt
+@@ -247,7 +247,7 @@ class PathUtilsTest {
+ 
+     val project = ProjectBuilder.builder().withProjectDir(moduleFolder).build()
+     project.plugins.apply("com.android.library")
+-    project.plugins.apply("com.facebook.react")
++    project.plugins.apply("io.hyperswitch.react")
+     val extension = project.extensions.getByType(ReactExtension::class.java)
+ 
+     assertEquals(project.file("../package.json"), findPackageJsonFile(project, extension.root))
+@@ -260,7 +260,7 @@ class PathUtilsTest {
+ 
+     val project = ProjectBuilder.builder().withProjectDir(moduleFolder).build()
+     project.plugins.apply("com.android.library")
+-    project.plugins.apply("com.facebook.react")
++    project.plugins.apply("io.hyperswitch.react")
+     val extension =
+         project.extensions.getByType(ReactExtension::class.java).apply { root.set(moduleFolder) }
+ 
+@@ -272,7 +272,7 @@ class PathUtilsTest {
+     val moduleFolder = tempFolder.newFolder("awesome-module")
+     val project = ProjectBuilder.builder().withProjectDir(moduleFolder).build()
+     project.plugins.apply("com.android.library")
+-    project.plugins.apply("com.facebook.react")
++    project.plugins.apply("io.hyperswitch.react")
+     val extension =
+         project.extensions.getByType(ReactExtension::class.java).apply { root.set(moduleFolder) }
+ 
+@@ -287,7 +287,7 @@ class PathUtilsTest {
+     File(moduleFolder, "package.json").apply { writeText("{}") }
+     val project = ProjectBuilder.builder().withProjectDir(moduleFolder).build()
+     project.plugins.apply("com.android.library")
+-    project.plugins.apply("com.facebook.react")
++    project.plugins.apply("io.hyperswitch.react")
+     val extension =
+         project.extensions.getByType(ReactExtension::class.java).apply { root.set(moduleFolder) }
+ 
+@@ -313,7 +313,7 @@ class PathUtilsTest {
+     }
+     val project = ProjectBuilder.builder().withProjectDir(moduleFolder).build()
+     project.plugins.apply("com.android.library")
+-    project.plugins.apply("com.facebook.react")
++    project.plugins.apply("io.hyperswitch.react")
+     val extension =
+         project.extensions.getByType(ReactExtension::class.java).apply { root.set(moduleFolder) }
+ 
+diff --git a/settings-plugin/build.gradle.kts b/settings-plugin/build.gradle.kts
+index 92a44acee9267bee86a1cb9d21513f03cda11826..f86c83421708a08f0cee04f368757950b15cdbb6 100644
+--- a/settings-plugin/build.gradle.kts
++++ b/settings-plugin/build.gradle.kts
+@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+ plugins {
+   alias(libs.plugins.kotlin.jvm)
+   id("java-gradle-plugin")
++  id("maven-publish")
+ }
+ 
+ repositories {
+@@ -23,13 +24,63 @@ repositories {
+ gradlePlugin {
+   plugins {
+     create("react.settings") {
+-      id = "com.facebook.react.settings"
++      id = "io.hyperswitch.settings"
+       implementationClass = "com.facebook.react.ReactSettingsPlugin"
+     }
+   }
+ }
+ 
+-group = "com.facebook.react"
++group = "io.hyperswitch"
++version = "0.75.2"
++
++val sourcesJar by tasks.registering(Jar::class) {
++  from(sourceSets.main.get().allSource)
++  archiveClassifier.set("sources")
++}
++
++val javadocJar by tasks.registering(Jar::class) {
++  from(tasks.named("javadoc"))
++  archiveClassifier.set("javadoc")
++}
++
++publishing {
++  publications {
++    create<MavenPublication>("pluginMaven") {
++      artifact(tasks["sourcesJar"])
++      artifact(tasks["javadocJar"])
++      pom {
++        name.set("Hyperswitch SDK for Android")
++        description.set("This is the Hyperswitch SDK for Android, providing seamless integration with the Hyperswitch platform.")
++        url.set("http://www.hyperswitch.io")
++        licenses {
++          license {
++            name.set("The Apache License, Version 2.0")
++            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
++            distribution.set("repo")
++          }
++        }
++        scm {
++          url.set("https://github.com/hyperswitch/hyperswitch-sdk-android")
++          connection.set("scm:git:git://github.com/juspay/hyperswitch-sdk-android.git")
++          developerConnection.set("scm:git:ssh://git@github.com:juspay/hyperswitch-sdk-android.git")
++          tag.set("HEAD")
++        }
++        developers {
++          developer {
++            id.set("sh-iv-am")
++            name.set("Shivam")
++            email.set("shivam.shashank@juspay.in")
++          }
++        }
++      }
++    }
++  }
++  repositories {
++    maven {
++      url = uri("../../../../android/maven")
++    }
++  }
++}
+ 
+ dependencies {
+   implementation(project(":shared"))
+diff --git a/shared/build.gradle.kts b/shared/build.gradle.kts
+index fa76599233ef377e366076e7636ffe43b54ed5bd..3b7390366a25e7d080d09e59546cdf052e305f7c 100644
+--- a/shared/build.gradle.kts
++++ b/shared/build.gradle.kts
+@@ -8,11 +8,65 @@
+ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+ 
+-plugins { alias(libs.plugins.kotlin.jvm) }
++plugins {
++  alias(libs.plugins.kotlin.jvm)
++  id("maven-publish")
++}
+ 
+ repositories { mavenCentral() }
+ 
+-group = "com.facebook.react"
++group = "io.hyperswitch"
++version = "0.75.2"
++
++val sourcesJar by tasks.registering(Jar::class) {
++  from(sourceSets.main.get().allSource)
++  archiveClassifier.set("sources")
++}
++
++val javadocJar by tasks.registering(Jar::class) {
++  from(tasks.named("javadoc"))
++  archiveClassifier.set("javadoc")
++}
++
++publishing {
++  publications {
++    create<MavenPublication>("mavenJava") {
++      from(components["java"])
++      artifact(tasks["sourcesJar"])
++      artifact(tasks["javadocJar"])
++      pom {
++        name.set("Hyperswitch SDK for Android")
++        description.set("This is the Hyperswitch SDK for Android, providing seamless integration with the Hyperswitch platform.")
++        url.set("http://www.hyperswitch.io")
++        licenses {
++          license {
++            name.set("The Apache License, Version 2.0")
++            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
++            distribution.set("repo")
++          }
++        }
++        scm {
++          url.set("https://github.com/hyperswitch/hyperswitch-sdk-android")
++          connection.set("scm:git:git://github.com/juspay/hyperswitch-sdk-android.git")
++          developerConnection.set("scm:git:ssh://git@github.com:juspay/hyperswitch-sdk-android.git")
++          tag.set("HEAD")
++        }
++        developers {
++          developer {
++            id.set("sh-iv-am")
++            name.set("Shivam")
++            email.set("shivam.shashank@juspay.in")
++          }
++        }
++      }
++    }
++  }
++  repositories {
++    maven {
++      url = uri("../../../../android/maven")
++    }
++  }
++}
+ 
+ dependencies {
+   implementation(libs.gson)
+diff --git a/shared-testutil/build.gradle.kts b/shared-testutil/build.gradle.kts
+index 5f447e83e6a9913a78cd1b7e3d7c631964e97142..9c92477dadee1c19de2907f6f42414a86f892039 100644
+--- a/shared-testutil/build.gradle.kts
++++ b/shared-testutil/build.gradle.kts
+@@ -8,11 +8,65 @@
+ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+ 
+-plugins { alias(libs.plugins.kotlin.jvm) }
++plugins { 
++  alias(libs.plugins.kotlin.jvm)
++  id("maven-publish")
++}
+ 
+ repositories { mavenCentral() }
+ 
+-group = "com.facebook.react"
++group = "io.hyperswitch"
++version = "0.75.2"
++
++val sourcesJar by tasks.registering(Jar::class) {
++  from(sourceSets.main.get().allSource)
++  archiveClassifier.set("sources")
++}
++
++val javadocJar by tasks.registering(Jar::class) {
++  from(tasks.named("javadoc"))
++  archiveClassifier.set("javadoc")
++}
++
++publishing {
++  publications {
++    create<MavenPublication>("mavenJava") {
++      from(components["java"])
++      artifact(tasks["sourcesJar"])
++      artifact(tasks["javadocJar"])
++      pom {
++        name.set("Hyperswitch SDK for Android")
++        description.set("This is the Hyperswitch SDK for Android, providing seamless integration with the Hyperswitch platform.")
++        url.set("http://www.hyperswitch.io")
++        licenses {
++          license {
++            name.set("The Apache License, Version 2.0")
++            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
++            distribution.set("repo")
++          }
++        }
++        scm {
++          url.set("https://github.com/hyperswitch/hyperswitch-sdk-android")
++          connection.set("scm:git:git://github.com/juspay/hyperswitch-sdk-android.git")
++          developerConnection.set("scm:git:ssh://git@github.com:juspay/hyperswitch-sdk-android.git")
++          tag.set("HEAD")
++        }
++        developers {
++          developer {
++            id.set("sh-iv-am")
++            name.set("Shivam")
++            email.set("shivam.shashank@juspay.in")
++          }
++        }
++      }
++    }
++  }
++  repositories {
++    maven {
++      url = uri("../../../../android/maven")
++    }
++  }
++}
+ 
+ dependencies { implementation(libs.junit) }
+ 

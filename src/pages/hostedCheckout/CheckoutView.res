@@ -33,9 +33,9 @@ module CheckoutHeader = {
         bgColor,
       ])}>
       <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
-        // <TouchableOpacity style={viewStyle(~padding=16.->dp, ())}>
+        // <CustomTouchableOpacity style={viewStyle(~padding=16.->dp, ())}>
         //   <Icon name="back" height=24. width=20. fill="black" />
-        // </TouchableOpacity>
+        // </CustomTouchableOpacity>
         <ReImage
           uri="https://stripe-camo.global.ssl.fastly.net/63f4ec8cbe3d41be42a10161d3a86d3a3bda2d541052dc077e4d5e164c3386e1/68747470733a2f2f66696c65732e7374726970652e636f6d2f66696c65732f4d44423859574e6a64463878534559775a317044536c4978626d7470597a4a5866475a666447567a6446394263456c304f453952576e5a7652454a555330566f4d47564d62464e34546b38303063713345486f6c71"
         />
@@ -55,7 +55,7 @@ module CheckoutHeader = {
       </View>
       {useMediaView == Mobile
         ? <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
-            <TouchableOpacity
+            <CustomTouchableOpacity
               onPress={_ => toggleModal()}
               style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
               <TextWrapper text="Details" textType={ModalText} />
@@ -67,7 +67,7 @@ module CheckoutHeader = {
                 width=15.
                 fill="hsla(0,0%, 10% , 0.5 )"
               />
-            </TouchableOpacity>
+            </CustomTouchableOpacity>
           </View>
         : React.null}
     </View>
@@ -176,7 +176,9 @@ let make = () => {
             supportedOrientations=[#"portrait-upside-down"]>
             <View style={viewStyle(~backgroundColor="rgba(0,0,0,0.2)", ~flex=1., ())}>
               <CartView slideAnimation />
-              <TouchableOpacity style={viewStyle(~flex=1., ())} onPress={_ => toggleModal()} />
+              <CustomTouchableOpacity
+                style={viewStyle(~flex=1., ())} onPress={_ => toggleModal()}
+              />
             </View>
           </Modal>
         : <CartView slideAnimation />}

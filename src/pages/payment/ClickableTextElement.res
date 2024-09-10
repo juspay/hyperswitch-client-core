@@ -16,7 +16,7 @@ let make = (
   let (isSavedCardScreen, setSaveCardScreen) = React.useContext(
     PaymentScreenContext.paymentScreenTypeContext,
   )
-  <TouchableOpacity
+  <CustomTouchableOpacity
     disabled
     activeOpacity=1.
     style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}
@@ -34,5 +34,5 @@ let make = (
     <CustomSelectBox initialIconName updateIconName isSelected fillIcon />
     <Space width=6. height=0. />
     <TextWrapper text textType />
-  </TouchableOpacity>
+  </CustomTouchableOpacity>
 }

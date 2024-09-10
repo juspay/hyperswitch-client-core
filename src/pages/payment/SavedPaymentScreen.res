@@ -6,12 +6,11 @@ external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
 @react.component
 let make = (
   ~setConfirmButtonDataRef,
-  ~savedPaymentMethordContextObj: SavedPaymentMethodContext.savedPaymentMethodDataObj,
+  ~savedPaymentMethordContextObj: AllApiDataContext.savedPaymentMethodDataObj,
 ) => {
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (sessionData, _) = React.useContext(SessionContext.sessionContext)
 
   let (error, setError) = React.useState(_ => None)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -39,7 +38,7 @@ let make = (
 
   let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
   let (showSavePMCheckbox, setShowSavePMCheckbox) = React.useState(_ =>
-    allApiData.mandateType == NEW_MANDATE &&
+    allApiData.additionalPMLData.mandateType == NEW_MANDATE &&
     nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
     isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
   )
@@ -50,12 +49,9 @@ let make = (
 
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
 
-  let (savedPaymentMethodsData, _) = React.useContext(
-    SavedPaymentMethodContext.savedPaymentMethodContext,
-  )
-  let savedPaymentMethodsData = switch savedPaymentMethodsData {
+  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
-  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  | _ => AllApiDataContext.dafaultsavePMObj
   }
 
   let animateFlex = (~flexval, ~value, ~endCallback=() => (), ()) => {
@@ -155,20 +151,17 @@ let make = (
 
     let body: PaymentMethodListType.redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?switch nativeProp.hyperParams.appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | None => None
-      },
+      return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
       ?email,
       payment_method,
       payment_method_type,
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
-      payment_type: ?allApiData.paymentType,
+      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
-          allApiData.mandateType->PaymentUtils.checkIfMandate &&
+          allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
             !savedPaymentMethodsData.isGuestCustomer
         ) {
           Some({
@@ -227,7 +220,7 @@ let make = (
       token: Some(""),
     })
 
-    let sessionObject = switch sessionData {
+    let sessionObject = switch allApiData.sessions {
     | Some(sessionData) =>
       sessionData
       ->Array.find(item => item.wallet_name == selectedObj.walletName)
@@ -360,7 +353,7 @@ let make = (
     switch selectedObj.walletName {
     | GOOGLE_PAY =>
       HyperModule.launchGPay(
-        GooglePayTypeNew.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env),
+        GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
         confirmGPay,
       )
     | APPLE_PAY =>
@@ -460,7 +453,7 @@ let make = (
 
   React.useEffect5(() => {
     setShowSavePMCheckbox(_ =>
-      allApiData.mandateType == NEW_MANDATE &&
+      allApiData.additionalPMLData.mandateType == NEW_MANDATE &&
       nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
       isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
     )
@@ -478,7 +471,7 @@ let make = (
       <ConfirmButton
         loading=false
         isAllValuesValid={savedPaymentMethordContextObj.selectedPaymentMethod->Option.isSome &&
-        allApiData.paymentType->Option.isSome &&
+        allApiData.additionalPMLData.paymentType->Option.isSome &&
         isCvcValid}
         handlePress
         hasSomeFields=false
@@ -501,7 +494,7 @@ let make = (
     setSaveCardChecboxSelected
     showSavePMCheckbox
     merchantName={nativeProp.configuration.merchantDisplayName == ""
-      ? allApiData.merchantName->Option.getOr("")
+      ? allApiData.additionalPMLData.merchantName->Option.getOr("")
       : nativeProp.configuration.merchantDisplayName}
     savedCardCvv
     setSavedCardCvv

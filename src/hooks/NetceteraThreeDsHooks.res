@@ -479,9 +479,7 @@ let useExternalThreeDs = () => {
         }
         await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
       } catch {
-      | err =>
-        Console.log2("unknown error", err->Exn.asJsExn)
-        true
+      | _ => true
       }
 
       retrieveAndShowStatus(~isFinalRetrieve)

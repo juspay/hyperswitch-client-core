@@ -33,7 +33,7 @@ module BottomTabList = {
         ~marginRight=13.->dp,
         (),
       )}>
-      <TouchableOpacity
+      <CustomTouchableOpacity
         onPress={_ => setIndexToScrollParentFlatList(index)}
         accessibilityRole=#button
         accessibilityState={Accessibility.state(~selected=isFocused, ())}
@@ -70,7 +70,7 @@ module BottomTabList = {
               | _ => CardText
               }}
             />}
-      </TouchableOpacity>
+      </CustomTouchableOpacity>
     </View>
   }
 }
@@ -121,7 +121,7 @@ let make = (
 
   <>
     <Space height=15. />
-    <View style={viewStyle(~height, ~marginHorizontal=18.->dp, ())}>
+    <View style={viewStyle(~height, ())}>
       <FlatList
         ref={flatlistRef->ReactNative.Ref.value}
         data=hocComponentArr

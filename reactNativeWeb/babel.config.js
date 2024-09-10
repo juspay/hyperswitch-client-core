@@ -1,11 +1,12 @@
 module.exports = {
   presets: [
     [
-      'module:metro-react-native-babel-preset',
+      'module:@react-native/babel-preset',
       {useTransformReactJSXExperimental: true},
     ],
   ],
   plugins: [
+    ['react-native-web'],
     ['@babel/plugin-transform-flow-strip-types'],
     ['module:react-native-dotenv'],
     ['@babel/plugin-transform-react-jsx', {runtime: 'automatic'}],

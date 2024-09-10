@@ -55,12 +55,10 @@ let make = (
   ~setIsCvcValid,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (savedPaymentMethodContext, setSavedPaymentMethodContext) = React.useContext(
-    SavedPaymentMethodContext.savedPaymentMethodContext,
-  )
-  let savedPaymentMethodContextObj = switch savedPaymentMethodContext {
+  let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
+  let savedPaymentMethodContextObj = switch allApiData.savedPaymentMethods {
   | Some(data) => data
-  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  | _ => AllApiDataContext.dafaultsavePMObj
   }
 
   let listArr = nativeProp.configuration.displayDefaultSavedPaymentIcon
@@ -72,26 +70,28 @@ let make = (
     | Some(obj) =>
       switch obj {
       | SdkTypes.SAVEDLISTCARD(obj) =>
-        setSavedPaymentMethodContext(
-          Some({
+        setAllApiData({
+          ...allApiData,
+          savedPaymentMethods: Some({
             ...savedPaymentMethodContextObj,
             selectedPaymentMethod: Some({
               walletName: NONE,
               token: obj.payment_token,
             }),
           }),
-        )
+        })
       | SAVEDLISTWALLET(obj) =>
         let walletType = obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-        setSavedPaymentMethodContext(
-          Some({
+        setAllApiData({
+          ...allApiData,
+          savedPaymentMethods: Some({
             ...savedPaymentMethodContextObj,
             selectedPaymentMethod: Some({
               walletName: walletType,
               token: obj.payment_token,
             }),
           }),
-        )
+        })
       | _ => ()
       }
     | None => ()
@@ -99,7 +99,7 @@ let make = (
     None
   })
 
-  savedPaymentMethodContext == Loading
+  allApiData.savedPaymentMethods == Loading
     ? <LoadingPmList />
     : <ScrollView>
         {listArr

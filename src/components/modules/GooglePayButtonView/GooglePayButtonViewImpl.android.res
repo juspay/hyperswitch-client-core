@@ -6,7 +6,6 @@ type props = {
   allowedPaymentMethods?: string,
 }
 
-let make: React.component<props> =
-  ReactNative.Platform.os == #android
-    ? ReactNative.NativeModules.requireNativeComponent("GooglePayButton")
-    : _ => React.null
+let make: React.component<props> = ReactNative.NativeModules.requireNativeComponent(
+  "GooglePayButton",
+)

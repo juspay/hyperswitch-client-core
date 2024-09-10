@@ -18,48 +18,47 @@ let make = (
 
   let localeObj = GetLocale.useGetLocalObj()
 
-  <View style={viewStyle(~marginHorizontal=5.->pct, ~marginVertical=3.->pct, ())}>
-    <View>
-      <View
-        style={array([
-          getShadowStyle,
-          viewStyle(
-            ~paddingHorizontal=24.->dp,
-            ~paddingVertical=5.->dp,
-            ~borderRadius,
-            ~borderColor=component.borderColor,
-            ~backgroundColor=component.background,
-            (),
-          ),
-        ])}>
-        <SavedPMListWithLoader
-          listArr={savedPaymentMethodsData} savedCardCvv setSavedCardCvv setIsCvcValid
-        />
-      </View>
-      <Space height=20. />
-      <ClickableTextElement
-        initialIconName="addwithcircle"
-        text={localeObj.addPaymentMethodLabel}
-        isSelected=selected
-        setIsSelected=isSelected
-        textType={TextWrapper.LinkTextBold}
-        fillIcon=false
+  <>
+    <Space />
+    <View
+      style={array([
+        getShadowStyle,
+        viewStyle(
+          ~paddingHorizontal=24.->dp,
+          ~paddingVertical=5.->dp,
+          ~borderRadius,
+          ~borderColor=component.borderColor,
+          ~backgroundColor=component.background,
+          (),
+        ),
+      ])}>
+      <SavedPMListWithLoader
+        listArr={savedPaymentMethodsData} savedCardCvv setSavedCardCvv setIsCvcValid
       />
-      {showSavePMCheckbox
-        ? <>
-            <Space />
-            <ClickableTextElement
-              disabled={false}
-              initialIconName="checkboxClicked"
-              updateIconName=Some("checkboxNotClicked")
-              text={localeObj.cardTerms(merchantName)}
-              isSelected={isSaveCardCheckboxSelected}
-              setIsSelected={setSaveCardChecboxSelected}
-              textType={TextWrapper.ModalText}
-              disableScreenSwitch=true
-            />
-          </>
-        : React.null}
     </View>
-  </View>
+    <Space height=20. />
+    <ClickableTextElement
+      initialIconName="addwithcircle"
+      text={localeObj.addPaymentMethodLabel}
+      isSelected=selected
+      setIsSelected=isSelected
+      textType={TextWrapper.LinkTextBold}
+      fillIcon=false
+    />
+    {showSavePMCheckbox
+      ? <>
+          <Space />
+          <ClickableTextElement
+            disabled={false}
+            initialIconName="checkboxClicked"
+            updateIconName=Some("checkboxNotClicked")
+            text={localeObj.cardTerms(merchantName)}
+            isSelected={isSaveCardCheckboxSelected}
+            setIsSelected={setSaveCardChecboxSelected}
+            textType={TextWrapper.ModalText}
+            disableScreenSwitch=true
+          />
+        </>
+      : React.null}
+  </>
 }

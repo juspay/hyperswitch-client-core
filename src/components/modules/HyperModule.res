@@ -94,7 +94,8 @@ let useExitPaymentsheet = () => {
   // let (ref, _) = React.useContext(ReactNativeWrapperContext.reactNativeWrapperContext)
   let logger = LoggerHook.useLoggerHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
     logger(
@@ -110,12 +111,13 @@ let useExitPaymentsheet = () => {
     // | Some(fun) => fun(JSON.Encode.null)
     // }
     ReactNative.Platform.os == #web
-      ? BrowserHook.href(
-          BrowserHook.location,
-          `${allApiData.redirect_url->Option.getOr("")}?status=${apiResStatus.status->Option.getOr(
-              "failed",
-            )}&payment_intent_client_secret=${nativeProp.clientSecret}&amount=6541`,
-        )
+      ? // BrowserHook.href(
+        //     BrowserHook.location,
+        //     `${allApiData.redirect_url->Option.getOr("")}?status=${apiResStatus.status->Option.getOr(
+        //         "failed",
+        //       )}&payment_intent_client_secret=${nativeProp.clientSecret}&amount=6541`,
+        //   )
+        exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState == WidgetPaymentSheet
       ? hyperModule.exitWidgetPaymentsheet(
         nativeProp.rootTag,
@@ -127,12 +129,13 @@ let useExitPaymentsheet = () => {
 
   let simplyExit = (apiResStatus, rootTag, reset) => {
     ReactNative.Platform.os == #web
-      ? BrowserHook.href(
-          BrowserHook.location,
-          `${allApiData.redirect_url->Option.getOr(
-              "",
-            )}?status=${"failed"}&payment_intent_client_secret=clientSecret&amount=6541`,
-        )
+      ? // BrowserHook.href(
+        //     BrowserHook.location,
+        //     `${allApiData.redirect_url->Option.getOr(
+        //         "",
+        //       )}?status=${"failed"}&payment_intent_client_secret=clientSecret&amount=6541`,
+        //   )
+        exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState == WidgetPaymentSheet
       ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)

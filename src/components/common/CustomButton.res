@@ -8,11 +8,6 @@ type iconType = CustomIcon(React.element) | NoIcon
 
 external toSize: ReactNative.Animated.Interpolation.t => size = "%identity"
 
-module Window = {
-  @scope("window") @val
-  external alert: string => unit = "alert"
-}
-
 @react.component
 let make = (
   ~loadingText="Loading..",
@@ -110,7 +105,7 @@ let make = (
         (),
       ),
     ])}>
-    <TouchableOpacity
+    <CustomTouchableOpacity
       disabled
       style={array([
         viewStyle(
@@ -164,6 +159,6 @@ let make = (
           }}
         </>
       }}
-    </TouchableOpacity>
+    </CustomTouchableOpacity>
   </View>
 }
