@@ -405,14 +405,7 @@ let useRedirectHook = () => {
         }
       | "third_party_sdk_session_token" => {
           // TODO: add event loggers for analytics
-
           let session_token = Option.getOr(nextAction, defaultNextAction).session_token
-
-          switch session_token {
-          | Some(token) => Plaid.create({token: token.open_banking_session_token})
-          | None => ()
-          }
-
           let openProps = {
             PlaidTypes.onSuccess: success => {
               responseCallback(
@@ -437,8 +430,12 @@ let useRedirectHook = () => {
               handleSuccessFailure(~apiResStatus={error}, ~closeSDK=true, ())
             },
           }
-
-          Plaid.open_(openProps)->ignore
+          switch session_token {
+          | Some(token) =>
+            Plaid.create({token: token.open_banking_session_token})
+            Plaid.open_(openProps)->ignore
+          | None => ()
+          }
         }
       | _ =>
         switch status {
