@@ -213,16 +213,18 @@ let useListModifier = () => {
               ->Array.find(l => l.name == openBankingVal.payment_method_type)
               ->Option.getOr(Types.defaultRedirectType)
 
-            Some({
-              name: fields.text,
-              componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-                <Redirect
-                  isScreenFocus
-                  redirectProp=OPEN_BANKING(openBankingVal)
-                  fields
-                  setConfirmButtonDataRef
-                />,
-            })
+            Plaid.isAvailable
+              ? Some({
+                  name: fields.text,
+                  componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                    <Redirect
+                      isScreenFocus
+                      redirectProp=OPEN_BANKING(openBankingVal)
+                      fields
+                      setConfirmButtonDataRef
+                    />,
+                })
+              : None
           } {
           | Some(tab) =>
             let isInvalidScreen =

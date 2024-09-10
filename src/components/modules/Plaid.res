@@ -23,3 +23,15 @@ let (create, open_, dismissLink) = switch try {
 | Some(mod) => (mod.create, mod.open_, mod.dismissLink)
 | None => (_ => (), _ => Promise.resolve(), _ => ())
 }
+
+/**
+Checks if native modules for sdk have been imported as optional dependency
+*/
+let isAvailable =
+  ReactNative.Platform.os == #android
+    ? Dict.get(ReactNative.NativeModules.nativeModules, "PlaidAndroid")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.isSome
+    : Dict.get(ReactNative.NativeModules.nativeModules, "RNLinksdk")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.isSome
