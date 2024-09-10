@@ -140,11 +140,7 @@ module Wrapper = {
         viewStyle(
           ~height=heightPosition->Animated.StyleProp.size,
           ~width,
-          //    ~overflow=#hidden,
           ~minHeight=250.->dp,
-          ~borderRadius=15.,
-          ~borderBottomLeftRadius=0.,
-          ~borderBottomRightRadius=0.,
           ~padding=20.->dp,
           (),
         ),
