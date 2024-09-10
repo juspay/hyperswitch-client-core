@@ -181,8 +181,8 @@ let useRetrieveHook = () => {
       let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
       let (
         uri,
-        eventName: LoggerHook.eventName,
-        initEventName: LoggerHook.eventName,
+        eventName: LoggerTypes.eventName,
+        initEventName: LoggerTypes.eventName,
       ) = switch type_ {
       | Payment => (
           `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
