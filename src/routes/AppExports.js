@@ -1,4 +1,4 @@
-export { make as default } from './App.bs.js';
+export {make as default} from './App.bs.js';
 
 // import {ActivityIndicator, View} from 'react-native';
 

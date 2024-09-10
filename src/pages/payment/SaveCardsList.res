@@ -1,6 +1,6 @@
 open ReactNative
 open Style
-// @send external focus: ReactNative.TouchableOpacity.ref => unit = "focus"
+// @send external focus: ReactNative.CustomTouchableOpacity.ref => unit = "focus"
 
 module CVVComponent = {
   @react.component
@@ -147,46 +147,47 @@ module PaymentMethodListView = {
   ) => {
     //~hashedCardNumber, ~expDate, ~selectedx
     let localeObj = GetLocale.useGetLocalObj()
-    let (savedPaymentMethordContextObj, setSavedPaymentMethordContextObj) = React.useContext(
-      SavedPaymentMethodContext.savedPaymentMethodContext,
-    )
-    let savedPaymentMethordContextObj = switch savedPaymentMethordContextObj {
+    let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
+    let savedPaymentMethordContextObj = switch allApiData.savedPaymentMethods {
     | Some(data) => data
-    | _ => SavedPaymentMethodContext.dafaultsavePMObj
+    | _ => AllApiDataContext.dafaultsavePMObj
     }
 
     let checkAndProcessIfWallet = (~newToken) => {
       switch newToken {
       | None =>
-        setSavedPaymentMethordContextObj(
-          Some({
+        setAllApiData({
+          ...allApiData,
+          savedPaymentMethods: Some({
             ...savedPaymentMethordContextObj,
             selectedPaymentMethod: None,
           }),
-        )
+        })
       | Some(_) =>
         switch pmObject {
         | SdkTypes.SAVEDLISTCARD(_) =>
-          setSavedPaymentMethordContextObj(
-            Some({
+          setAllApiData({
+            ...allApiData,
+            savedPaymentMethods: Some({
               ...savedPaymentMethordContextObj,
               selectedPaymentMethod: Some({
                 walletName: NONE,
                 token: newToken,
               }),
             }),
-          )
+          })
         | SdkTypes.SAVEDLISTWALLET(obj) => {
             let walletType = obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-            setSavedPaymentMethordContextObj(
-              Some({
+            setAllApiData({
+              ...allApiData,
+              savedPaymentMethods: Some({
                 ...savedPaymentMethordContextObj,
                 selectedPaymentMethod: Some({
                   walletName: walletType,
                   token: newToken,
                 }),
               }),
-            )
+            })
           }
         | _ => ()
         }
@@ -239,7 +240,7 @@ module PaymentMethodListView = {
       None
     }, (isPaymentMethodSelected, savedCardCvv))
 
-    <TouchableOpacity
+    <CustomTouchableOpacity
       onPress={_ => {
         onPress()
       }}
@@ -284,6 +285,6 @@ module PaymentMethodListView = {
       {pmObject->PaymentUtils.checkIsCVCRequired
         ? <CVVComponent savedCardCvv setSavedCardCvv isPaymentMethodSelected cardScheme />
         : React.null}
-    </TouchableOpacity>
+    </CustomTouchableOpacity>
   }
 }

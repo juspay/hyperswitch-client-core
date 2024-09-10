@@ -46,8 +46,8 @@ let make = () => {
       <Space />
       <TextWrapper textType={PlaceholderText}> {"**** 4242"->React.string} </TextWrapper>
     </View>
-    <TouchableOpacity onPress={_ => HyperModule.launchWidgetPaymentSheet("", _ => {()})}>
+    <CustomTouchableOpacity onPress={_ => HyperModule.launchWidgetPaymentSheet("", _ => {()})}>
       <TextWrapper textType={LinkText}> {"Change"->React.string} </TextWrapper>
-    </TouchableOpacity>
+    </CustomTouchableOpacity>
   </View>
 }

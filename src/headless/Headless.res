@@ -240,7 +240,11 @@ let registerHeadless = headless => {
       switch data.walletType->Option.getOr("")->walletNameToTypeMapper {
       | GOOGLE_PAY =>
         HyperModule.launchGPay(
-          GooglePayTypeNew.getGpayToken(~obj=session, ~appEnv=nativeProp.env, ~requiredFields=[]), //walletType.required_field,
+          GooglePayTypeNew.getGpayTokenStringified(
+            ~obj=session,
+            ~appEnv=nativeProp.env,
+            ~requiredFields=[],
+          ), //walletType.required_field,
           var => {
             RequiredFieldsTypes.importStates("./../utility/reusableCodeFromWeb/States.json")
             ->Promise.then(res => {

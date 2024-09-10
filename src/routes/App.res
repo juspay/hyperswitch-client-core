@@ -12,23 +12,16 @@ module CustomKeyboardAvoidingView = {
 module ContextWrapper = {
   @react.component
   let make = (~props, ~rootTag, ~children) => {
-    let nativeProp = {SdkTypes.nativeJsonToRecord(props, rootTag)}
     <LoadingContext>
-      <NativePropContext nativeProp>
+      <NativePropContext nativeProp={SdkTypes.nativeJsonToRecord(props, rootTag)}>
         <PaymentScreenContext>
           <ThemeContext>
             <LoggerContext>
-              <SavedPaymentMethodContext>
-                <CardDataContext>
-                  <AllApiDataContext>
-                    <PaymentListContext defaultViewEnabled={nativeProp.hyperParams.defaultView}>
-                      <SessionContext>
-                        <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
-                      </SessionContext>
-                    </PaymentListContext>
-                  </AllApiDataContext>
-                </CardDataContext>
-              </SavedPaymentMethodContext>
+              <CardDataContext>
+                <AllApiDataContext>
+                  <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
+                </AllApiDataContext>
+              </CardDataContext>
             </LoggerContext>
           </ThemeContext>
         </PaymentScreenContext>

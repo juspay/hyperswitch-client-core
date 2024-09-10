@@ -26,7 +26,7 @@ module WalletDisclaimer = {
 @react.component
 let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
   let localeObject = GetLocale.useGetLocalObj()
-  <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
+  <>
     {switch elementArr->Array.length {
     | 0 =>
       loading
@@ -46,5 +46,5 @@ let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
         <TextWithLine text=localeObject.orPayUsing />
       </>
     }}
-  </View>
+  </>
 }

@@ -1,0 +1,16 @@
+diff --git a/android/codepush.gradle b/android/codepush.gradle
+index 8faa6abe8d74e897ab7de10779e0b00fc924f8de..ee5c8de865a5511db98bdd66dd1bc889be39ff04 100644
+--- a/android/codepush.gradle
++++ b/android/codepush.gradle
+@@ -61,7 +61,10 @@ android.buildTypes.each { buildType ->
+ gradle.projectsEvaluated {
+     def debuggableVariants = config.debuggableVariants ? config.debuggableVariants.get() : ['debug']
+ 
+-    android.applicationVariants.all { variant ->
++    def variants = android.hasProperty('applicationVariants') ?
++            android.applicationVariants : android.libraryVariants
++
++    variants.all { variant ->
+         // No code push for debuggable variants
+         if (debuggableVariants.contains(variant.name)) {
+             return;

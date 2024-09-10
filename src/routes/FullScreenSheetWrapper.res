@@ -6,7 +6,7 @@ let make = (~children) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let onModalClose = () => {
+  let onModalClose = React.useCallback0(() => {
     setLoading(PaymentCancelled)
     setTimeout(() => {
       handleSuccessFailure(
@@ -16,7 +16,7 @@ let make = (~children) => {
         (),
       )
     }, 300)->ignore
-  }
+  })
   let {paymentSheetOverlay} = ThemebasedStyle.useThemeBasedStyle()
 
   let (sheetFlex, _) = React.useState(_ => Animated.Value.create(0.))
@@ -67,7 +67,7 @@ let make = (~children) => {
         ~flex={sheetFlex->Animated.StyleProp.float},
         (),
       )}>
-      <CustomView closeOnClickOutSide=true onDismiss=onModalClose modalPosition=#bottom>
+      <CustomView onDismiss=onModalClose>
         <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
       </CustomView>
     </Animated.View>
