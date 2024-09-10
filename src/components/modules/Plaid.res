@@ -7,15 +7,11 @@ type module_ = {
 }
 
 @val external require: string => module_ = "require"
-// let {HyperModule.exit: exit} = HyperModule.useExitPaymentsheet()
-let error: PaymentConfirmTypes.error = {
-  message: "Payment method not configured in sdk",
-}
 
 /**
 Plaid Link React Native SDK
 */
-let (create, open_, dismissLink, isAvailable) = switch try {
+let (create, open_, dismissLink) = switch try {
   require("react-native-plaid-link-sdk")->Some
 } catch {
 | _ =>
@@ -24,6 +20,6 @@ let (create, open_, dismissLink, isAvailable) = switch try {
   )
   None
 } {
-| Some(mod) => (mod.create, mod.open_, mod.dismissLink, true)
-| None => (_ => (), _ => Promise.resolve(), _ => (), false)
+| Some(mod) => (mod.create, mod.open_, mod.dismissLink)
+| None => (_ => (), _ => Promise.resolve(), _ => ())
 }
