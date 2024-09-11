@@ -12,7 +12,7 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
     }
   }
   if Next.getNextEnv != "next" {
-    let data = logFile->LoggerHook.logFileToObj->JSON.stringify
+    let data = logFile->LoggerUtils.logFileToObj->JSON.stringify
     CommonHooks.fetchApi(~uri, ~method_=Post, ~bodyStr=data, ~headers=Dict.make(), ~mode=NoCORS, ())
     ->Promise.then(res => res->Fetch.Response.json)
     ->Promise.catch(_ => {
@@ -23,8 +23,8 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
 }
 
 let logWrapper = (
-  ~logType: LoggerHook.logType,
-  ~eventName: LoggerHook.eventName,
+  ~logType: LoggerTypes.logType,
+  ~eventName: LoggerTypes.eventName,
   ~url: string,
   ~statusCode: string,
   ~apiLogType,
@@ -64,12 +64,12 @@ let logWrapper = (
       [("response", data)],
     )
   }
-  let logFile: LoggerHook.logFile = {
+  let logFile: LoggerTypes.logFile = {
     logType,
     timestamp: timestamp->Float.toString,
     sessionId: "",
     version: "repoVersion",
-    codePushVersion: LoggerHook.getCodePushVersionNoFromRef(),
+    codePushVersion: LoggerUtils.getCodePushVersionNoFromRef(),
     component: MOBILE,
     value: value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
     internalMetadata: internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,

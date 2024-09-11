@@ -1,0 +1,84 @@
+diff --git a/native_modules.gradle b/native_modules.gradle
+index 218a860c3816731e20109ddc3ec6aeba27eed89f..a909df4fc0464b69f3925dba4b4909b849906466 100644
+--- a/native_modules.gradle
++++ b/native_modules.gradle
+@@ -61,10 +61,31 @@ public class PackageList {
+     return this.getApplication().getApplicationContext();
+   }
+ 
++  private ReactPackage getPackage(String packageImport) {
++    try {
++      Class<?> packageClass = Class.forName(packageImport);
++      if (ReactPackage.class.isAssignableFrom(packageClass)) {
++        return (ReactPackage) packageClass.getDeclaredConstructor().newInstance();
++      }
++    } catch (Exception e) {}
++    return null;
++  }
++
++  private ArrayList<ReactPackage> addDynamicPackages(ArrayList<ReactPackage> packages) {
++    ArrayList<String> packageImports = new ArrayList<>(Arrays.<String>asList(
++      {{ dynamicPackageImports }}
++    ));
++    for (String packageImport : packageImports) {
++      ReactPackage reactPackage = getPackage(packageImport);
++      if(reactPackage!=null) packages.add(reactPackage);
++    }
++    return packages;
++  }
++
+   public ArrayList<ReactPackage> getPackages() {
+-    return new ArrayList<>(Arrays.<ReactPackage>asList(
++    return addDynamicPackages(new ArrayList<>(Arrays.<ReactPackage>asList(
+       new MainReactPackage(mConfig){{ packageClassInstances }}
+-    ));
++    )));
+   }
+ }
+ """
+@@ -222,8 +243,27 @@ class ReactNativeModules {
+    */
+   void generatePackagesFile(File outputDir, String generatedFileName, String generatedFileContentsTemplate) {
+     ArrayList<HashMap<String, String>> packages = this.reactNativeModules
+-    String packageName = this.packageName
++    ArrayList<HashMap<String, String>> dynamicPackages = new ArrayList<>();
++    ArrayList<String> packageList = new ArrayList<>(
++      Arrays.<String>asList(
++        "@sentry/react-native", 
++        "react-native-hyperswitch-kount",
++        "react-native-hyperswitch-paypal",
++        "react-native-klarna-inapp-sdk",
++        "react-native-hyperswitch-scancard",
++        "react-native-hyperswitch-netcetera-3ds"
++      ));
++
++    for (int i = packages.size() - 1; i >= 0; i--) {
++      HashMap<String, String> packageModule = packages.get(i);
++      if (packageList.contains(packageModule.get("name"))) {
++        dynamicPackages.add(packageModule);
++        packages.remove(i);
++      }
++    }
+ 
++    String packageName = this.packageName
++    String dynamicPackageImports = ""
+     String packageImports = ""
+     String packageClassInstances = ""
+ 
+@@ -265,9 +305,16 @@ class ReactNativeModules {
+       }.join(",\n      ")
+     }
+ 
++    if (dynamicPackages.size() > 0) {
++      dynamicPackageImports = dynamicPackages.collect {
++        "// ${it.name}\n      \"${it.packageImportPath.replaceFirst(/^.{7}(.*).$/, '$1')}\""
++      }.join(',\n      ')
++    }
++
+     String generatedFileContents = generatedFileContentsTemplate
+       .replace("{{ packageImports }}", packageImports)
+       .replace("{{ packageClassInstances }}", packageClassInstances)
++      .replace("{{ dynamicPackageImports }}", dynamicPackageImports)
+ 
+     outputDir.mkdirs()
+     final FileTreeBuilder treeBuilder = new FileTreeBuilder(outputDir)

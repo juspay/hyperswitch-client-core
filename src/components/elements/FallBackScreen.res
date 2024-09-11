@@ -19,10 +19,10 @@ let make = (~error: Sentry.fallbackArg, ~level, ~rootTag) => {
           (),
         )}>
         <View style={viewStyle(~alignItems=#"flex-end", ~width=100.->pct, ())}>
-          <TouchableOpacity
+          <CustomTouchableOpacity
             onPress={_ => simplyExit(PaymentConfirmTypes.defaultCancelError, rootTag, false)}>
             <Icon name="close" fill="black" height=20. width=20. />
-          </TouchableOpacity>
+          </CustomTouchableOpacity>
         </View>
         <View style={viewStyle(~flexDirection=#row, ~padding=20.->dp, ())}>
           <Icon name="errorIcon" fill="black" height=60. width=60. />
@@ -36,9 +36,9 @@ let make = (~error: Sentry.fallbackArg, ~level, ~rootTag) => {
           </View>
         </View>
         <Space />
-        <TouchableOpacity onPress={_ => error.resetError()}>
+        <CustomTouchableOpacity onPress={_ => error.resetError()}>
           <Icon name="refresh" fill="black" height=32. width=32. />
-        </TouchableOpacity>
+        </CustomTouchableOpacity>
         <Space />
       </View>
     </SafeAreaView>

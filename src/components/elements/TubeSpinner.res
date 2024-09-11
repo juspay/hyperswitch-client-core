@@ -30,15 +30,14 @@ let make = (~loaderColor=?, ~size=?) => {
     Animated.loop(
       Animated.timing(
         rotateSpin,
-        Animated.Value.Timing.config(
-          ~toValue=-1.->Animated.Value.Timing.fromRawValue,
-          ~isInteraction=true,
-          ~useNativeDriver=false,
-          ~delay=0.,
-          ~duration=800.,
-          ~easing=Easing.linear,
-          (),
-        ),
+        {
+          toValue: -1.->Animated.Value.Timing.fromRawValue,
+          isInteraction: true,
+          useNativeDriver: false,
+          delay: 0.,
+          duration: 800.,
+          easing: Easing.linear,
+        },
       ),
     )->Animated.start()
     None

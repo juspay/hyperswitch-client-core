@@ -1,6 +1,6 @@
 open ReactNative
 open PaymentMethodListType
-open Style
+
 @react.component
 let make = (
   ~cardVal: PaymentMethodListType.payment_method_types_card,
@@ -18,12 +18,10 @@ let make = (
 
   let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
   let (keyToTrigerButtonClickError, setKeyToTrigerButtonClickError) = React.useState(_ => 0)
-  let (savedPaymentMethodsData, _) = React.useContext(
-    SavedPaymentMethodContext.savedPaymentMethodContext,
-  )
-  let savedPaymentMethodsData = switch savedPaymentMethodsData {
+
+  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
-  | _ => SavedPaymentMethodContext.dafaultsavePMObj
+  | _ => AllApiDataContext.dafaultsavePMObj
   }
   let isSaveCardCheckboxVisible = nativeProp.configuration.displaySavedPaymentMethodsCheckbox
 
@@ -56,7 +54,7 @@ let make = (
     if (
       Platform.os == #android &&
       !isInitialised &&
-      allApiData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
+      allApiData.additionalPMLData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
       cardData.cardNumber->String.length > 0
     ) {
       setIsInitialised(_ => true)
@@ -140,7 +138,7 @@ let make = (
     }
     None
   }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson))
-  <View style={viewStyle(~marginHorizontal=18.->dp, ())}>
+  <>
     <Space />
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
@@ -162,7 +160,7 @@ let make = (
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
         savedPaymentMethodsData.isGuestCustomer,
-        allApiData.mandateType,
+        allApiData.additionalPMLData.mandateType,
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
         <>
@@ -184,7 +182,7 @@ let make = (
         savedPaymentMethodsData.isGuestCustomer,
         isNicknameSelected,
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-        allApiData.mandateType,
+        allApiData.additionalPMLData.mandateType,
       ) {
       | (false, _, true, NEW_MANDATE | NORMAL) =>
         <NickNameElement nickname setNickname isNicknameSelected />
@@ -193,5 +191,5 @@ let make = (
       | _ => React.null
       }}
     </View>
-  </View>
+  </>
 }

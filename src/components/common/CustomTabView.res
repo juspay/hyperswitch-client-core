@@ -5,7 +5,6 @@ open TabViewType
 module TopTabScreenWraper = {
   @react.component
   let make = (~children, ~setDynamicHeight, ~isScrollBarOnlyCards, ~isScreenFocus) => {
-    let dimensions = Dimensions.useWindowDimensions()
     let (viewHeight, setViewHeight) = React.useState(_ => 0.)
     let updateTabHeight = (event: Event.layoutEvent) => {
       let nativeEvent = Event.LayoutEvent.nativeEvent(event)
@@ -35,9 +34,7 @@ module TopTabScreenWraper = {
       isScreenFocus ? setDynamicHeight(viewHeight +. {isScrollBarOnlyCards ? 0. : 90.}) : ()
       None
     }, (viewHeight, setDynamicHeight, isScreenFocus))
-    <View onLayout=updateTabHeight style={viewStyle(~width=dimensions.width->dp, ())}>
-      children
-    </View>
+    <View onLayout=updateTabHeight style={viewStyle(~width=100.->pct, ())}> children </View>
   }
 }
 
@@ -63,13 +60,12 @@ let make = (
       ->Array.pushMany([
         {
           name: "loading",
-          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) =>
-            <View style={viewStyle(~paddingHorizontal=15.->dp, ())}>
-              <Space height=20. />
-              <CustomLoader height="33" />
-              <Space height=5. />
-              <CustomLoader height="33" />
-            </View>,
+          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) => <>
+            <Space height=20. />
+            <CustomLoader height="33" />
+            <Space height=5. />
+            <CustomLoader height="33" />
+          </>,
         },
         {
           name: "loading",

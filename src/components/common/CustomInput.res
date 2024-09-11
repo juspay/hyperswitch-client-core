@@ -1,6 +1,10 @@
 open ReactNative
 open Style
 
+external toSize: Animated.Interpolation.t => size = "%identity"
+external toFloat: Animated.Interpolation.t => float = "%identity"
+external toString: Animated.Interpolation.t => string = "%identity"
+
 type iconType =
   | NoIcon
   | CustomIcon(React.element)
@@ -12,7 +16,7 @@ let make = (
   ~placeholder="Enter the text here",
   ~placeholderTextColor=None,
   ~width=100.->pct,
-  ~height: float=44.,
+  ~height: float=46.,
   ~secureTextEntry=false,
   ~keyboardType=#default,
   ~iconLeft: iconType=NoIcon,
@@ -45,6 +49,8 @@ let make = (
   ~pointerEvents=#auto,
   ~fontSize=16.,
   ~enableShadow=true,
+  ~animate=true,
+  ~animateLabel=?,
 ) => {
   let {
     placeholderColor,
@@ -69,6 +75,26 @@ let make = (
   // let normalTextInputBoderColor = "rgba(204, 210, 226, 0.75)"
   // let _ = state != "" && secureTextEntry == false && enableCrossIcon
   let shadowStyle = enableShadow ? getShadowStyle : viewStyle()
+
+  let animatedValue = React.useRef(Animated.Value.create(state != "" ? 1. : 0.)).current
+
+  React.useEffect2(() => {
+    Animated.timing(
+      animatedValue,
+      {
+        toValue: if (isFocused || state != "") && animate {
+          1.->Animated.Value.Timing.fromRawValue
+        } else {
+          0.->Animated.Value.Timing.fromRawValue
+        },
+        duration: 200.,
+        useNativeDriver: false,
+      },
+    )->Animated.start()
+
+    None
+  }, (isFocused, state))
+
   <View style={viewStyle(~width=100.->pct, ())}>
     {heading != ""
       ? <TextWrapper textType={PlaceholderText}>
@@ -109,62 +135,117 @@ let make = (
       | CustomIcon(element) => <View style={viewStyle(~paddingRight=10.->dp, ())}> element </View>
       | NoIcon => React.null
       }}
-      <TextInput
-        ref=?reference
-        style={array([
-          textStyle(
-            ~flex=1.,
-            ~fontStyle=#normal,
-            ~color=textColor,
-            ~fontFamily,
-            //    ~fontFamily=FontFamily.getFontFamily(IBMPlexSans_Medium),
-            ~fontSize={fontSize +. placeholderTextSizeAdjust},
-            //  ~lineHeight=1.5,
-            ~textAlign?,
-            (),
-          ),
-          viewStyle(~height=100.->pct, ~width=100.->pct, ()),
-        ])}
-        secureTextEntry=showPass
-        autoCapitalize=#none
-        multiline
-        autoCorrect={false}
-        clearTextOnFocus
-        ?maxLength
-        placeholder
-        placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
-        value={state}
-        ?onKeyPress
-        onChangeText={text => {
-          logger(
-            ~logType=INFO,
-            ~value=text,
-            ~category=USER_EVENT,
-            ~eventName=INPUT_FIELD_CHANGED,
-            (),
-          )
-          setState(text)
-        }}
-        keyboardType
-        autoFocus
-        autoComplete={#off}
-        textContentType={#oneTimeCode}
-        onFocus={_ => {
-          setIsFocused(_ => true)
-          onFocus()
-          logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
-        }}
-        onBlur={_ => {
-          // TODO: remove invalid input (string with only space) eg: "      "
-          state->String.trim == "" ? setState("") : ()
-          onBlur()
-          setIsFocused(_ => false)
-          logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
-        }}
-        editable
-        pointerEvents
-      />
-      <TouchableOpacity activeOpacity=1. onPress=?onPressIconRight>
+      <View
+        style={viewStyle(
+          ~flex=1.,
+          ~position=#relative,
+          ~height=100.->pct,
+          ~justifyContent={
+            animate ? #"flex-end" : #center
+          },
+          (),
+        )}>
+        {animate
+          ? <Animated.View
+              pointerEvents=#none
+              style={viewStyle(
+                ~top=0.->dp,
+                ~position=#absolute,
+                ~height=animatedValue
+                ->Animated.Interpolation.interpolate({
+                  inputRange: [0., 1.],
+                  outputRange: ["100%", "40%"]->Animated.Interpolation.fromStringArray,
+                })
+                ->toSize,
+                ~justifyContent=#center,
+                (),
+              )}>
+              <Animated.Text
+                style={array([
+                  textStyle(
+                    ~fontFamily,
+                    ~fontWeight=if isFocused || state != "" {
+                      #500
+                    } else {
+                      #normal
+                    },
+                    ~fontSize=animatedValue
+                    ->Animated.Interpolation.interpolate({
+                      inputRange: [0., 1.],
+                      outputRange: [
+                        fontSize +. placeholderTextSizeAdjust,
+                        fontSize +. placeholderTextSizeAdjust -. 5.,
+                      ]->Animated.Interpolation.fromFloatArray,
+                    })
+                    ->toFloat,
+                    ~color=placeholderTextColor->Option.getOr(placeholderColor),
+                    (),
+                  ),
+                ])}>
+                {React.string({
+                  if isFocused || state != "" {
+                    animateLabel->Option.getOr(placeholder) ++ (mandatory ? "*" : "")
+                  } else {
+                    placeholder
+                  }
+                })}
+              </Animated.Text>
+            </Animated.View>
+          : React.null}
+        <TextInput
+          ref=?reference
+          style={array([
+            textStyle(
+              ~fontStyle=#normal,
+              ~color=textColor,
+              ~fontFamily,
+              ~fontSize={fontSize +. placeholderTextSizeAdjust},
+              ~textAlign?,
+              (),
+            ),
+            viewStyle(~padding=0.->dp, ~height=(height -. 10.)->dp, ~width=100.->pct, ()),
+          ])}
+          secureTextEntry=showPass
+          autoCapitalize=#none
+          multiline
+          autoCorrect={false}
+          clearTextOnFocus
+          ?maxLength
+          placeholder=?{animate ? None : Some(placeholder)}
+          placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
+          value={state}
+          ?onKeyPress
+          onChangeText={text => {
+            logger(
+              ~logType=INFO,
+              ~value=text,
+              ~category=USER_EVENT,
+              ~eventName=INPUT_FIELD_CHANGED,
+              (),
+            )
+            setState(text)
+          }}
+          keyboardType
+          autoFocus
+          autoComplete={#off}
+          textContentType={#oneTimeCode}
+          onFocus={_ => {
+            setIsFocused(_ => true)
+            onFocus()
+            logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
+          }}
+          onBlur={_ => {
+            // TODO: remove invalid input (string with only space) eg: "      "
+            state->String.trim == "" ? setState("") : ()
+            onBlur()
+            setIsFocused(_ => false)
+            logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
+          }}
+          editable
+          pointerEvents
+        />
+      </View>
+      <CustomTouchableOpacity activeOpacity=1. onPress=?onPressIconRight>
         {switch iconRight {
         | NoIcon => React.null
         | CustomIcon(element) =>
@@ -172,14 +253,14 @@ let make = (
             element
           </View>
         }}
-      </TouchableOpacity>
+      </CustomTouchableOpacity>
       {secureTextEntry && showEyeIconaftersecureTextEntry
         ? {
-            <TouchableOpacity
+            <CustomTouchableOpacity
               style={viewStyle(~height=100.->pct, ~justifyContent=#center, ~paddingLeft=5.->dp, ())}
               onPress={_ => {setShowPass(prev => !prev)}}>
               <TextWrapper textType={PlaceholderText}> {"eye"->React.string} </TextWrapper>
-            </TouchableOpacity>
+            </CustomTouchableOpacity>
           }
         : React.null}
     </View>

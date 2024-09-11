@@ -861,7 +861,7 @@ let parseConfigurationDict = (configObj, from) => {
     placeholder: {
       cardNumber: getString(placeholderDict, "cardNumber", "1234 1234 1234 1234"),
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
-      cvv: getString(placeholderDict, "cvv", "CVV"),
+      cvv: getString(placeholderDict, "cvv", "CVC"),
     },
   }
   configuration

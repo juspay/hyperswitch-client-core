@@ -144,6 +144,8 @@ let getHeader = (apiKey, appId) => {
     ("api-key", apiKey),
     ("x-app-id", Js.String.replace(".hyperswitch://", "", appId->Option.getOr(""))),
     // ("x-feature", "router-custom-be"),
+    ("x-merchant-domain", "rnweb.netlify.app"),
+    ("x-browser-name", "Safari"),
   ]->Dict.fromArray
 }
 
@@ -227,4 +229,113 @@ let splitName = (str: option<string>) => {
       }
     }
   }
+}
+
+let getStringFromJson = (json, default) => {
+  json->JSON.Decode.string->Option.getOr(default)
+}
+
+let toCamelCase = str => {
+  if str->String.includes(":") {
+    str
+  } else {
+    str
+    ->String.toLowerCase
+    ->Js.String2.unsafeReplaceBy0(%re(`/([-_][a-z])/g`), (letter, _, _) => {
+      letter->String.toUpperCase
+    })
+    ->String.replaceRegExp(%re(`/[^a-zA-Z]/g`), "")
+  }
+}
+let toSnakeCase = str => {
+  str->Js.String2.unsafeReplaceBy0(%re("/[A-Z]/g"), (letter, _, _) =>
+    `_${letter->String.toLowerCase}`
+  )
+}
+
+let toKebabCase = str => {
+  str
+  ->String.split("")
+  ->Array.mapWithIndex((item, i) => {
+    if item->String.toUpperCase === item {
+      `${i != 0 ? "-" : ""}${item->String.toLowerCase}`
+    } else {
+      item
+    }
+  })
+  ->Array.join("")
+}
+
+type case = CamelCase | SnakeCase | KebabCase
+let rec transformKeys = (json: JSON.t, to: case) => {
+  let toCase = switch to {
+  | CamelCase => toCamelCase
+  | SnakeCase => toSnakeCase
+  | KebabCase => toKebabCase
+  }
+  let dict = json->getDictFromJson
+  dict
+  ->Dict.toArray
+  ->Array.map(((key, value)) => {
+    let x = switch JSON.Classify.classify(value) {
+    | Object(obj) => (key->toCase, obj->JSON.Encode.object->transformKeys(to))
+    | Array(arr) => (
+        key->toCase,
+        {
+          arr
+          ->Array.map(item =>
+            if item->JSON.Decode.object->Option.isSome {
+              item->transformKeys(to)
+            } else {
+              item
+            }
+          )
+          ->JSON.Encode.array
+        },
+      )
+    | String(str) => {
+        let val = if str == "Final" {
+          "FINAL"
+        } else if str == "example" || str == "Adyen" {
+          "adyen"
+        } else {
+          str
+        }
+        (key->toCase, val->JSON.Encode.string)
+      }
+    // | Number(val) => (key->toCase, val->Float.toString->JSON.Encode.string)
+    | Number(val) => (key->toCase, val->Float.toInt->JSON.Encode.int)
+    | _ => (key->toCase, value)
+    }
+    x
+  })
+  ->Dict.fromArray
+  ->JSON.Encode.object
+}
+
+let getStrArray = (dict, key) => {
+  dict
+  ->getOptionalArrayFromDict(key)
+  ->Option.getOr([])
+  ->Array.map(json => json->getStringFromJson(""))
+}
+let getOptionalStrArray: (Dict.t<JSON.t>, string) => option<array<string>> = (dict, key) => {
+  switch dict->getOptionalArrayFromDict(key) {
+  | Some(val) =>
+    val->Array.length === 0 ? None : Some(val->Array.map(json => json->getStringFromJson("")))
+  | None => None
+  }
+}
+
+let getArrofJsonString = (arr: array<string>) => {
+  arr->Array.map(item => item->JSON.Encode.string)
+}
+
+let getReturnUrl = appId => {
+  ReactNative.Platform.os == #web
+    ? Some(Window.location.href)
+    : switch appId {
+      | Some(id) => Some(id ++ ".hyperswitch://")
+      | None => None
+      }
 }

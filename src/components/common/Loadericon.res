@@ -1,8 +1,9 @@
 open ReactNative
 open Style
+
 @react.component
-let make = (~iconColor=?, ~size=ActivityIndicator_Size.small) => {
-  let { component } = ThemebasedStyle.useThemeBasedStyle()
+let make = (~iconColor=?, ~size=ActivityIndicator.Small) => {
+  let {component} = ThemebasedStyle.useThemeBasedStyle()
   let loderColor = switch iconColor {
   | Some(color) => color
   | None => component.color

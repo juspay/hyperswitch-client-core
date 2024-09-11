@@ -5,16 +5,20 @@ type modalPosition = [#center | #top | #bottom]
 let make = (
   ~onDismiss=() => (),
   ~children,
-  ~closeOnClickOutSide=false,
-  ~modalPosition: modalPosition=#center,
+  ~closeOnClickOutSide=true,
+  ~modalPosition: modalPosition=#bottom,
   ~bottomModalWidth=100.->pct,
   (),
 ) => {
-  let modalPosStyle = switch modalPosition {
-  | #center => viewStyle(~alignItems=#center, ~justifyContent=#center, ())
-  | #top => viewStyle(~alignItems=#center, ~justifyContent=#"flex-start", ())
-  | #bottom => viewStyle(~alignItems=#center, ~justifyContent=#"flex-end", ())
-  }
+  let modalPosStyle = array([
+    viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
+    switch modalPosition {
+    | #center => viewStyle(~alignItems=#center, ~justifyContent=#center, ())
+    | #top => viewStyle(~alignItems=#center, ~justifyContent=#"flex-start", ())
+    | #bottom => viewStyle(~alignItems=#center, ~justifyContent=#"flex-end", ())
+    },
+  ])
+
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
   let disableClickOutside = switch loading {
   | FillingDetails => !closeOnClickOutSide
@@ -23,12 +27,8 @@ let make = (
 
   //  let (locationY, setLocationY) = React.useState(_ => 0.)
 
-  <View
-    style={array([
-      viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
-      modalPosStyle,
-    ])}>
-    <TouchableOpacity
+  <View style=modalPosStyle>
+    <CustomTouchableOpacity
       style={viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ())}
       disabled=disableClickOutside
       onPress={_ => {
@@ -117,17 +117,16 @@ module Wrapper = {
     let setAnimation = _ => {
       Animated.timing(
         heightPosition,
-        Animated.Value.Timing.config(
-          ~toValue={
+        {
+          toValue: {
             (viewHeight +. modalViewHeight)->Animated.Value.Timing.fromRawValue
           },
-          ~isInteraction=true,
-          ~useNativeDriver=false,
-          ~delay=0.,
-          ~duration=150.,
-          ~easing=Easing.linear,
-          (),
-        ),
+          isInteraction: true,
+          useNativeDriver: false,
+          delay: 0.,
+          duration: 150.,
+          easing: Easing.linear,
+        },
       )->Animated.start()
     }
 
@@ -141,11 +140,8 @@ module Wrapper = {
         viewStyle(
           ~height=heightPosition->Animated.StyleProp.size,
           ~width,
-          //    ~overflow=#hidden,
           ~minHeight=250.->dp,
-          ~borderRadius=15.,
-          ~borderBottomLeftRadius=0.,
-          ~borderBottomRightRadius=0.,
+          ~padding=20.->dp,
           (),
         ),
         bgColor,
