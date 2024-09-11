@@ -174,7 +174,7 @@ let useRetrieveHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
-  (type_, clientSecret, publishableKey) => {
+  (type_, clientSecret, publishableKey, ~isForceSync=false) => {
     switch (Next.getNextEnv, type_) {
     | ("next", Types.List) => Promise.resolve(Next.listRes)
     | (_, type_) =>
@@ -185,9 +185,10 @@ let useRetrieveHook = () => {
         initEventName: LoggerTypes.eventName,
       ) = switch type_ {
       | Payment => (
-          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
-            ->Array.get(0)
-            ->Option.getOr("")}?force_sync=false&client_secret=${clientSecret}`,
+          `${baseUrl}/payments/
+           ${String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")}
+            ?force_sync=${isForceSync ? "true" : "false"}
+            &client_secret=${clientSecret}`,
           RETRIEVE_CALL,
           RETRIEVE_CALL_INIT,
         )
@@ -424,15 +425,67 @@ let useRedirectHook = () => {
           let session_token = Option.getOr(nextAction, defaultNextAction).session_token
           let openProps = {
             PlaidTypes.onSuccess: success => {
-              responseCallback(
-                ~paymentStatus=PaymentSuccess,
-                ~status={
-                  status: "succeeded",
-                  message: success.metadata.metadataJson->Option.getOr("success message"),
-                  code: "",
-                  type_: "",
-                },
-              )
+              retrievePayment(Payment, clientSecret, publishableKey, ~isForceSync=true)
+              ->Promise.then(s => {
+                if s == JSON.Encode.null {
+                  setAllApiData({
+                    ...allApiData,
+                    additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+                  })
+                  errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=true, ())
+                } else {
+                  let status =
+                    s
+                    ->Utils.getDictFromJson
+                    ->Dict.get("status")
+                    ->Option.flatMap(JSON.Decode.string)
+                    ->Option.getOr("")
+
+                  switch status {
+                  | "succeeded"
+                  | "requires_customer_action"
+                  | "processing" =>
+                    setAllApiData({
+                      ...allApiData,
+                      additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+                    })
+                    responseCallback(
+                      ~paymentStatus=PaymentSuccess,
+                      ~status={
+                        status,
+                        message: success.metadata.metadataJson->Option.getOr("success message"),
+                        code: "",
+                        type_: "",
+                      },
+                    )
+                  | "requires_capture"
+                  | "requires_confirmation"
+                  | "cancelled"
+                  | "requires_merchant_action" =>
+                    responseCallback(
+                      ~paymentStatus=ProcessingPayments(None),
+                      ~status={status, message: "", code: "", type_: ""},
+                    )
+                  | _ =>
+                    setAllApiData({
+                      ...allApiData,
+                      additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+                    })
+                    errorCallback(
+                      ~errorMessage={
+                        status,
+                        message: "Payment is processing. Try again later!",
+                        type_: "sync_payment_failed",
+                        code: "",
+                      },
+                      ~closeSDK={true},
+                      (),
+                    )
+                  }
+                }
+                Promise.resolve()
+              })
+              ->ignore
             },
             PlaidTypes.onExit: linkExit => {
               Console.log2("Exit: ", linkExit)
