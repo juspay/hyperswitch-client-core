@@ -185,10 +185,11 @@ let useRetrieveHook = () => {
         initEventName: LoggerTypes.eventName,
       ) = switch type_ {
       | Payment => (
-          `${baseUrl}/payments/
-           ${String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")}
-            ?force_sync=${isForceSync ? "true" : "false"}
-            &client_secret=${clientSecret}`,
+          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
+            ->Array.get(0)
+            ->Option.getOr("")}?force_sync=${isForceSync
+              ? "true"
+              : "false"}&client_secret=${clientSecret}`,
           RETRIEVE_CALL,
           RETRIEVE_CALL_INIT,
         )
