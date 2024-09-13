@@ -182,7 +182,7 @@ let make = () => {
 
   {
     switch nativeProp.sdkState {
-    | SdkTypes.PaymentSheet => <PaymentMethodsManagement />
+    | SdkTypes.PaymentSheet => <ParentPaymentSheet />
     | SdkTypes.HostedCheckout => <HostedCheckout />
     | SdkTypes.CardWidget => <CardWidget />
     | SdkTypes.CustomWidget(walletType) => <CustomWidget walletType />
