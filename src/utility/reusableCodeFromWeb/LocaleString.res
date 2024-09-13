@@ -61,6 +61,7 @@ type localeStrings = {
   cardExpiresText: string,
   addPaymentMethodLabel: string,
   walletDisclaimer: string,
+  deletePaymentMethod?: string,
 }
 
 let defaultLocale = {
@@ -128,6 +129,7 @@ let defaultLocale = {
   cardExpiresText: "expires",
   addPaymentMethodLabel: "Add new payment method",
   walletDisclaimer: "Wallet details will be saved upon selection",
+  deletePaymentMethod: "Delete",
 }
 
 type locale = {localeStrings: array<localeStrings>}
@@ -198,6 +200,7 @@ let localeStrings = [
     addPaymentMethodLabel: "Add new payment method",
     cardHolderNameRequiredText: "Card Holder's name required",
     walletDisclaimer: "Wallet details will be saved upon selection",
+    deletePaymentMethod: "Delete",
   },
   //    Hebrew (he),
   {
@@ -266,6 +269,7 @@ let localeStrings = [
     addPaymentMethodLabel: `הוסף שיטת תשלום חדשה`,
     cardHolderNameRequiredText: `נדרש שם בעל הכרטיס`,
     walletDisclaimer: `פרטי הארנק יישמרו עם הבחירה`,
+    deletePaymentMethod: `למחוק`,
   },
   //    French (fr),
   {

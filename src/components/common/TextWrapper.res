@@ -26,6 +26,9 @@ let make = (
   ~textType: textType,
   ~children: option<React.element>=?,
   ~overrideStyle=None,
+  ~ellipsizeMode: ReactNative.Text.ellipsizeMode = #tail,
+  ~numberOfLines: int = 0,
+  ~onPress: ReactNative.Event.pressEvent => unit = _=>()
 ) => {
   let {
     textPrimary,
@@ -148,7 +151,7 @@ let make = (
   | Some(val) => val
   | None => viewStyle()
   }
-  <Text style={array([textStyle(~fontFamily, ()), renderStyle, overrideStyle])}>
+  <Text style={array([textStyle(~fontFamily, ()), renderStyle, overrideStyle])} ellipsizeMode numberOfLines onPress>
     {switch text {
     | Some(text) => React.string(text)
     | None => React.null

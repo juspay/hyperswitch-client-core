@@ -572,9 +572,7 @@ let useRedirectHook = () => {
               }
             })
             ->Promise.then(jsonResponse => {
-              let {nextAction, status, error} = itemToObjMapper(
-                jsonResponse->JSON.Decode.object->Option.getOr(Dict.make()),
-              )
+              let {nextAction, status, error} = itemToObjMapper(jsonResponse->Utils.getDictFromJson)
 
               handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error)
               Promise.resolve()
@@ -646,7 +644,7 @@ let useRedirectHook = () => {
           }
         })
         ->Promise.then(jsonResponse => {
-          let confirmResponse = jsonResponse->JSON.Decode.object->Option.getOr(Dict.make())
+          let confirmResponse = jsonResponse->Utils.getDictFromJson
           let {nextAction, status, error} = itemToObjMapper(confirmResponse)
 
           handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
@@ -678,8 +676,6 @@ let useGetSavedPMHook = () => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   () => {
-    // switch customer.id {
-    // | Some(_id) =>
     let uri = `${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
     apiLogWrapper(
       ~logType=INFO,
@@ -750,6 +746,79 @@ let useGetSavedPMHook = () => {
         (),
       )
       None->Promise.resolve
+    })
+  }
+}
+
+let useDeleteSavedPaymentMethod = () => {
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+
+  (~ephemeralKey: string, ~paymentMethodId: string) => {
+    let uri = `${baseUrl}/payment_methods/${paymentMethodId}`
+    apiLogWrapper(
+      ~logType=INFO,
+      ~eventName=DELETE_PAYMENT_METHODS_CALL_INIT,
+      ~url=uri,
+      ~statusCode="",
+      ~apiLogType=Request,
+      ~data=JSON.Encode.null,
+      (),
+    )
+
+    CommonHooks.fetchApi(
+      ~uri,
+      ~method_=Delete,
+      ~headers=Utils.getHeader(ephemeralKey, nativeProp.hyperParams.appId),
+      (),
+    )
+    ->Promise.then(resp => {
+      let statusCode = resp->Fetch.Response.status->string_of_int
+      if statusCode->String.charAt(0) !== "2" {
+        resp
+        ->Fetch.Response.json
+        ->Promise.then(data => {
+          apiLogWrapper(
+            ~url=uri,
+            ~data,
+            ~statusCode,
+            ~apiLogType=Err,
+            ~eventName=DELETE_PAYMENT_METHODS_CALL,
+            ~logType=ERROR,
+            (),
+          )
+          JSON.Encode.null->Promise.resolve
+        })
+      } else {
+        Console.log2("statuscode === 200", statusCode)
+        resp
+        ->Fetch.Response.json
+        ->Promise.then(data => {
+          apiLogWrapper(
+            ~url=uri,
+            ~data,
+            ~statusCode,
+            ~apiLogType=Response,
+            ~eventName=DELETE_PAYMENT_METHODS_CALL,
+            ~logType=INFO,
+            (),
+          )
+          data->Promise.resolve
+        })
+      }
+    })
+    ->Promise.catch(err => {
+      apiLogWrapper(
+        ~logType=ERROR,
+        ~eventName=DELETE_PAYMENT_METHODS_CALL,
+        ~url=uri,
+        ~statusCode="504",
+        ~apiLogType=NoResponse,
+        ~data=err->toJson,
+        (),
+      )
+      JSON.Encode.null->Promise.resolve
     })
   }
 }
