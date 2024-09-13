@@ -182,11 +182,12 @@ let make = () => {
 
   {
     switch nativeProp.sdkState {
-    | SdkTypes.PaymentSheet => <ParentPaymentSheet />
+    | SdkTypes.PaymentSheet => <PaymentMethodsManagement />
     | SdkTypes.HostedCheckout => <HostedCheckout />
     | SdkTypes.CardWidget => <CardWidget />
     | SdkTypes.CustomWidget(walletType) => <CustomWidget walletType />
     | SdkTypes.ExpressCheckoutWidget => <ExpressCheckoutWidget />
+    | SdkTypes.PaymentMethodsManagement => <PaymentMethodsManagement />
     | SdkTypes.WidgetPaymentSheet => <ParentPaymentSheet />
     | SdkTypes.Headless
     | SdkTypes.NoView => React.null

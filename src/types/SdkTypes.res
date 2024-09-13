@@ -61,6 +61,7 @@ type savedCard = {
   cardNumber?: string,
   expiry_date?: string,
   payment_token?: string,
+  paymentMethodId?: string,
   mandate_id?: string,
   nick_name?: string,
   isDefaultPaymentMethod?: bool,
@@ -73,6 +74,7 @@ type savedWallet = {
   payment_method_type?: string,
   walletType?: string,
   payment_token?: string,
+  paymentMethodId?: string,
   isDefaultPaymentMethod?: bool,
   created?: string,
   lastUsedAt?: string,
@@ -245,6 +247,7 @@ type configurationType = {
   displaySavedPaymentMethods: bool,
   placeholder: placeholder,
   netceteraSDKApiKey: option<string>,
+  ephemeralKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
 }
 
@@ -254,6 +257,7 @@ type sdkState =
   | CardWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
+  | PaymentMethodsManagement
   | WidgetPaymentSheet
   | Headless
   | NoView
@@ -283,6 +287,7 @@ let sdkStateToStrMapper = sdkState => {
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
   | WidgetPaymentSheet => "WIDGET_PAYMENT"
+  | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
   }
@@ -777,7 +782,7 @@ let parseConfigurationDict = (configObj, from) => {
     ->Option.flatMap(JSON.Decode.object)
     ->Option.getOr(Dict.make())
 
-  let configuration = {
+  let configuration: configurationType = {
     allowsDelayedPaymentMethods: getBool(configObj, "allowsDelayedPaymentMethods", false),
     appearance,
     shippingDetails: switch shippingDetailsDict {
@@ -858,6 +863,7 @@ let parseConfigurationDict = (configObj, from) => {
     ),
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
     netceteraSDKApiKey: getOptionString(configObj, "netceteraSDKApiKey"),
+    ephemeralKey: getOptionString(configObj, "ephemeralKey"),
     placeholder: {
       cardNumber: getString(placeholderDict, "cardNumber", "1234 1234 1234 1234"),
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
@@ -868,7 +874,7 @@ let parseConfigurationDict = (configObj, from) => {
 }
 
 let nativeJsonToRecord = (jsonFromNative, rootTag) => {
-  let dictfromNative = jsonFromNative->JSON.Decode.object->Option.getOr(Dict.make())
+  let dictfromNative = jsonFromNative->Utils.getDictFromJson
   let configurationDict = getObj(dictfromNative, "configuration", Dict.make())
   let from = getOptionString(dictfromNative, "from")->Option.getOr("native")
 

@@ -150,7 +150,7 @@ let getRequiredFieldsFromDict = dict => {
       val
       ->Dict.valuesToArray
       ->Array.map(item => {
-        let itemToObj = item->JSON.Decode.object->Option.getOr(Dict.make())
+        let itemToObj = item->Utils.getDictFromJson
         {
           required_field: Utils.getString(itemToObj, "required_field", "")->StringField,
           display_name: Utils.getString(itemToObj, "display_name", ""),
