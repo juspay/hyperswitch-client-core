@@ -41,29 +41,14 @@ module PMWithNickNameComponent = {
   }
 }
 
-let removeSavedMethod = (savedMethods: array<SdkTypes.savedDataType>, paymentMethodId) => {
-  savedMethods->Array.filter(pm => {
-    let savedPaymentMethodId = switch pm {
-    | SdkTypes.SAVEDLISTCARD(cardData) => cardData.paymentMethodId->Option.getOr("")
-    | SdkTypes.SAVEDLISTWALLET(walletData) => walletData.paymentMethodId->Option.getOr("")
-    | NONE => ""
-    }
-    savedPaymentMethodId !== paymentMethodId
-  })
-}
-
-module PaymentMethodListView = {
+module PaymentMethodListItem = {
   @react.component
-  let make = (
-    ~pmDetails: SdkTypes.savedDataType,
-    ~isLastElement=true,
-    ~ephemeralKey,
-    ~setSavedMethods,
-  ) => {
+  let make = (~pmDetails: SdkTypes.savedDataType, ~isLastElement=true, ~handleSavedMethods) => {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
     let localeObject = GetLocale.useGetLocalObj()
     let deletePaymentMethod = AllPaymentHooks.useDeleteSavedPaymentMethod()
     let logger = LoggerHook.useLoggerHook()
+    let showAlert = AlertHook.useAlerts()
 
     let handleDelete = pmDetails => {
       let paymentMethodId = switch pmDetails {
@@ -72,12 +57,9 @@ module PaymentMethodListView = {
       | NONE => None
       }
 
-      switch (ephemeralKey, paymentMethodId) {
-      | (Some(ephemeralKey), Some(paymentMethodId)) =>
-        deletePaymentMethod(~ephemeralKey, ~paymentMethodId)
-      | (_, None)
-      | (None, _) =>
-        JSON.Encode.null->Promise.resolve
+      switch paymentMethodId {
+      | Some(paymentMethodId) => deletePaymentMethod(~paymentMethodId)
+      | None => JSON.Encode.null->Promise.resolve
       }
       ->Promise.then(res => {
         let dict = res->Utils.getDictFromJson
@@ -91,7 +73,7 @@ module PaymentMethodListView = {
             ~eventName=DELETE_SAVED_PAYMENT_METHOD,
             (),
           )
-          setSavedMethods(paymentMethodId)
+          handleSavedMethods(paymentMethodId)
         } else {
           logger(
             ~logType=ERROR,
@@ -100,6 +82,7 @@ module PaymentMethodListView = {
             ~eventName=DELETE_SAVED_PAYMENT_METHOD,
             (),
           )
+          showAlert(~errorType="warning", ~message="Unable to delete payment method")
         }
         Promise.resolve()
       })
@@ -164,7 +147,6 @@ module PaymentMethodListView = {
 
 @react.component
 let make = () => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (isLoading, setIsLoading) = React.useState(_ => true)
   let (savedMethods, setSavedMethods) = React.useState(_ => [])
@@ -180,7 +162,18 @@ let make = () => {
     None
   }, ())
 
-  let handleSPMs = paymentMethodId => {
+  let filterPaymentMethod = (savedMethods: array<SdkTypes.savedDataType>, paymentMethodId) => {
+    savedMethods->Array.filter(pm => {
+      let savedPaymentMethodId = switch pm {
+      | SdkTypes.SAVEDLISTCARD(cardData) => cardData.paymentMethodId->Option.getOr("")
+      | SdkTypes.SAVEDLISTWALLET(walletData) => walletData.paymentMethodId->Option.getOr("")
+      | NONE => ""
+      }
+      savedPaymentMethodId !== paymentMethodId
+    })
+  }
+
+  let handleSavedPMs = paymentMethodId => {
     let savedPaymentMethodContextObj = switch allApiData.savedPaymentMethods {
     | Some(data) => data
     | _ => AllApiDataContext.dafaultsavePMObj
@@ -190,11 +183,11 @@ let make = () => {
       ...allApiData,
       savedPaymentMethods: Some({
         ...savedPaymentMethodContextObj,
-        pmList: Some(savedMethods->removeSavedMethod(paymentMethodId)),
+        pmList: Some(savedMethods->filterPaymentMethod(paymentMethodId)),
       }),
     })
 
-    setSavedMethods(prev => prev->removeSavedMethod(paymentMethodId))
+    setSavedMethods(prev => prev->filterPaymentMethod(paymentMethodId))
   }
 
   isLoading
@@ -222,14 +215,13 @@ let make = () => {
         <ScrollView>
           {savedMethods
           ->Array.mapWithIndex((item, i) => {
-            <PaymentMethodListView
+            <PaymentMethodListItem
               key={i->Int.toString}
               pmDetails={item}
               isLastElement={Some(savedMethods)->Option.getOr([])->Array.length - 1 === i
                 ? false
                 : true}
-              ephemeralKey={nativeProp.configuration.ephemeralKey}
-              setSavedMethods=handleSPMs
+              handleSavedMethods=handleSavedPMs
             />
           })
           ->React.array}

@@ -755,7 +755,7 @@ let useDeleteSavedPaymentMethod = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  (~ephemeralKey: string, ~paymentMethodId: string) => {
+  (~paymentMethodId: string) => {
     let uri = `${baseUrl}/payment_methods/${paymentMethodId}`
     apiLogWrapper(
       ~logType=INFO,
@@ -767,58 +767,73 @@ let useDeleteSavedPaymentMethod = () => {
       (),
     )
 
-    CommonHooks.fetchApi(
-      ~uri,
-      ~method_=Delete,
-      ~headers=Utils.getHeader(ephemeralKey, nativeProp.hyperParams.appId),
-      (),
-    )
-    ->Promise.then(resp => {
-      let statusCode = resp->Fetch.Response.status->string_of_int
-      if statusCode->String.charAt(0) !== "2" {
-        resp
-        ->Fetch.Response.json
-        ->Promise.then(data => {
-          apiLogWrapper(
-            ~url=uri,
-            ~data,
-            ~statusCode,
-            ~apiLogType=Err,
-            ~eventName=DELETE_PAYMENT_METHODS_CALL,
-            ~logType=ERROR,
-            (),
-          )
-          JSON.Encode.null->Promise.resolve
-        })
-      } else {
-        Console.log2("statuscode === 200", statusCode)
-        resp
-        ->Fetch.Response.json
-        ->Promise.then(data => {
-          apiLogWrapper(
-            ~url=uri,
-            ~data,
-            ~statusCode,
-            ~apiLogType=Response,
-            ~eventName=DELETE_PAYMENT_METHODS_CALL,
-            ~logType=INFO,
-            (),
-          )
-          data->Promise.resolve
-        })
-      }
-    })
-    ->Promise.catch(err => {
-      apiLogWrapper(
-        ~logType=ERROR,
-        ~eventName=DELETE_PAYMENT_METHODS_CALL,
-        ~url=uri,
-        ~statusCode="504",
-        ~apiLogType=NoResponse,
-        ~data=err->toJson,
+    if nativeProp.configuration.ephemeralKey->Option.isSome {
+      CommonHooks.fetchApi(
+        ~uri,
+        ~method_=Delete,
+        ~headers=Utils.getHeader(
+          nativeProp.configuration.ephemeralKey->Option.getOr(""),
+          nativeProp.hyperParams.appId,
+        ),
         (),
       )
+      ->Promise.then(resp => {
+        let statusCode = resp->Fetch.Response.status->string_of_int
+        if statusCode->String.charAt(0) !== "2" {
+          resp
+          ->Fetch.Response.json
+          ->Promise.then(data => {
+            apiLogWrapper(
+              ~url=uri,
+              ~data,
+              ~statusCode,
+              ~apiLogType=Err,
+              ~eventName=DELETE_PAYMENT_METHODS_CALL,
+              ~logType=ERROR,
+              (),
+            )
+            JSON.Encode.null->Promise.resolve
+          })
+        } else {
+          resp
+          ->Fetch.Response.json
+          ->Promise.then(data => {
+            apiLogWrapper(
+              ~url=uri,
+              ~data,
+              ~statusCode,
+              ~apiLogType=Response,
+              ~eventName=DELETE_PAYMENT_METHODS_CALL,
+              ~logType=INFO,
+              (),
+            )
+            data->Promise.resolve
+          })
+        }
+      })
+      ->Promise.catch(err => {
+        apiLogWrapper(
+          ~logType=ERROR,
+          ~eventName=DELETE_PAYMENT_METHODS_CALL,
+          ~url=uri,
+          ~statusCode="504",
+          ~apiLogType=NoResponse,
+          ~data=err->toJson,
+          (),
+        )
+        JSON.Encode.null->Promise.resolve
+      })
+    } else {
+      apiLogWrapper(
+          ~logType=ERROR,
+          ~eventName=DELETE_PAYMENT_METHODS_CALL,
+          ~url=uri,
+          ~statusCode="504",
+          ~apiLogType=NoResponse,
+          ~data="Ephemeral not configured."->toJson,
+          (),
+        )
       JSON.Encode.null->Promise.resolve
-    })
+    }
   }
 }
