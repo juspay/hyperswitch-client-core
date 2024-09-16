@@ -907,6 +907,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "card" => CardWidget
     | "widgetPayment" => WidgetPaymentSheet
     | "expressCheckout" => ExpressCheckoutWidget
+    | "paymentMethodsManagement" => PaymentMethodsManagement
     | "headless" => Headless
     | _ => NoView
     },
