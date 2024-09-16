@@ -134,13 +134,23 @@ let make = () => {
 
     //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => /* Console.log(x) */ ())
 
-    if nativeProp.clientSecret != "" && nativeProp.publishableKey != "" {
+    if ((nativeProp.clientSecret != "" && nativeProp.publishableKey != "") || nativeProp.configuration.ephemeralKey->Option.isSome) {
       Promise.all3((
         retrievePayment(List, nativeProp.clientSecret, nativeProp.publishableKey),
         savedPaymentMethods(),
         getSessionToken(),
       ))
       ->Promise.then(((paymentMethodListData, customerSavedPMData, sessionTokenData)) => {
+        if(nativeProp.configuration.ephemeralKey->Option.getOr("") != "") {
+          let sessions = handleSessionResponse(sessionTokenData)
+          let savedPaymentMethods = handleCustomerPMLResponse(customerSavedPMData, sessions)
+
+          setAllApiData({
+            ...allApiData,
+            savedPaymentMethods,
+          })
+        }
+
         if ErrorUtils.isError(paymentMethodListData) {
           errorOnApiCalls(
             INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(paymentMethodListData)))),
