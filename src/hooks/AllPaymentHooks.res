@@ -675,8 +675,16 @@ let useGetSavedPMHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
+  let uri = switch nativeProp.sdkState {
+  | PaymentMethodsManagement => `${baseUrl}/customers/payment_methods`
+  | _ => `${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
+  }
+  let apiKey = switch nativeProp.sdkState {
+  | PaymentMethodsManagement => nativeProp.configuration.ephemeralKey->Option.getOr("")
+  | _ => nativeProp.publishableKey
+  }
+
   () => {
-    let uri = `${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
     apiLogWrapper(
       ~logType=INFO,
       ~eventName=CUSTOMER_PAYMENT_METHODS_CALL_INIT,
@@ -689,7 +697,7 @@ let useGetSavedPMHook = () => {
     CommonHooks.fetchApi(
       ~uri,
       ~method_=Get,
-      ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+      ~headers=Utils.getHeader(apiKey, nativeProp.hyperParams.appId),
       (),
     )
     ->Promise.then(data => {
