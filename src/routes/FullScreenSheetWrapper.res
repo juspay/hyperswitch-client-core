@@ -6,6 +6,8 @@ let make = (~children) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (screenType, _) = DimensionHook.useDimension()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (screenType, _) = DimensionHook.useDimension()
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let onModalClose = React.useCallback0(() => {
@@ -23,13 +25,8 @@ let make = (~children) => {
 
   let (sheetFlex, _) = React.useState(_ => Animated.Value.create(0.))
   let (sheetOpacity, _) = React.useState(_ => Animated.Value.create(0.))
-  let (sheetDisplay, setSheetDisplay) = React.useState(_ => true)
-  let sheetDisplay = sheetDisplay ? #flex : #none
-  let sheetJustifyContent = screenType === Small ? #"flex-end" : #center
-  let modalPaddingTop = nativeProp.configuration.fullScreenModalView ? 0.->dp : 48.->dp
-
   React.useEffect1(() => {
-    switch (screenType, nativeProp.configuration.fullScreenModalView) {
+    switch (screenType, nativeProp.configuration.fullWidth) {
     | (Small, false) =>
       Animated.timing(
         sheetFlex,
@@ -41,6 +38,7 @@ let make = (~children) => {
       )->Animated.start()
     | (_, _) => sheetFlex->Animated.Value.setValue(1.0)
     }
+
     Animated.timing(
       sheetOpacity,
       {
@@ -53,6 +51,7 @@ let make = (~children) => {
       },
     )->Animated.start()
     None
+  }, [screenType])
   }, [screenType])
 
   let (heightPosition, _) = React.useState(_ => Animated.Value.create(0.))
@@ -114,6 +113,8 @@ let make = (~children) => {
       ~backgroundColor=paymentSheetOverlay,
       ~justifyContent=sheetJustifyContent,
       ~paddingTop=modalPaddingTop,
+      ~justifyContent=#"flex-end",
+      // ~paddingTop=48.->dp,
       (),
     )}>
     <Animated.View
@@ -122,6 +123,8 @@ let make = (~children) => {
         ~flex={sheetFlex->Animated.StyleProp.float},
         ~opacity={sheetOpacity->Animated.StyleProp.float},
         ~display=sheetDisplay,
+        ~flex={sheetFlex->Animated.StyleProp.float},
+        ~opacity={sheetOpacity->Animated.StyleProp.float},
         (),
       )}>
       <CustomView onDismiss=onModalClose>
