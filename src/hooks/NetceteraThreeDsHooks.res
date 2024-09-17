@@ -60,9 +60,9 @@ let useExternalThreeDs = () => {
     ~retrievePayment: (
       Types.retrieve,
       string,
-      Js.String.t,
+      string,
       ~isForceSync: bool=?,
-    ) => RescriptCore.Promise.t<RescriptCore.JSON.t>,
+    ) => promise<Js.Json.t>,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {

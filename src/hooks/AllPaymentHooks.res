@@ -373,11 +373,11 @@ let useRedirectHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let redirectioBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
-  let handleSuccessFailure = useHandleSuccessFailure()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let getOpenProps = PlaidHelperHook.usePlaidProps()
 
   (
     ~body: string,
@@ -424,82 +424,7 @@ let useRedirectHook = () => {
       | "third_party_sdk_session_token" => {
           // TODO: add event loggers for analytics
           let session_token = Option.getOr(nextAction, defaultNextAction).session_token
-          let openProps = {
-            PlaidTypes.onSuccess: success => {
-              retrievePayment(Payment, clientSecret, publishableKey, ~isForceSync=true)
-              ->Promise.then(s => {
-                if s == JSON.Encode.null {
-                  setAllApiData({
-                    ...allApiData,
-                    additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
-                  })
-                  errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=true, ())
-                } else {
-                  let status =
-                    s
-                    ->Utils.getDictFromJson
-                    ->Dict.get("status")
-                    ->Option.flatMap(JSON.Decode.string)
-                    ->Option.getOr("")
-
-                  switch status {
-                  | "succeeded"
-                  | "requires_customer_action"
-                  | "processing" =>
-                    setAllApiData({
-                      ...allApiData,
-                      additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
-                    })
-                    responseCallback(
-                      ~paymentStatus=PaymentSuccess,
-                      ~status={
-                        status,
-                        message: success.metadata.metadataJson->Option.getOr("success message"),
-                        code: "",
-                        type_: "",
-                      },
-                    )
-                  | "requires_capture"
-                  | "requires_confirmation"
-                  | "cancelled"
-                  | "requires_merchant_action" =>
-                    responseCallback(
-                      ~paymentStatus=ProcessingPayments(None),
-                      ~status={status, message: "", code: "", type_: ""},
-                    )
-                  | _ =>
-                    setAllApiData({
-                      ...allApiData,
-                      additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
-                    })
-                    errorCallback(
-                      ~errorMessage={
-                        status,
-                        message: "Payment is processing. Try again later!",
-                        type_: "sync_payment_failed",
-                        code: "",
-                      },
-                      ~closeSDK={true},
-                      (),
-                    )
-                  }
-                }
-                Promise.resolve()
-              })
-              ->ignore
-            },
-            PlaidTypes.onExit: linkExit => {
-              Console.log2("Exit: ", linkExit)
-              Plaid.dismissLink()
-              let error: error = {
-                message: switch linkExit.error {
-                | Some(err) => err.errorMessage
-                | None => "unknown error"
-                },
-              }
-              handleSuccessFailure(~apiResStatus={error}, ~closeSDK=true, ())
-            },
-          }
+          let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
           switch session_token {
           | Some(token) =>
             Plaid.create({token: token.open_banking_session_token})
