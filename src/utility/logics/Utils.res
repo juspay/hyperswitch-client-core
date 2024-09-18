@@ -138,14 +138,12 @@ let rec transformKeysSnakeToCamel = (json: JSON.t) => {
   ->JSON.Encode.object
 }
 
-let getHeader = (apiKey, appId) => {
+let getHeader = (apiKey, appId, ~redirectUri=?) => {
   [
-    ("Content-Type", "application/json"),
     ("api-key", apiKey),
     ("x-app-id", Js.String.replace(".hyperswitch://", "", appId->Option.getOr(""))),
+    ("x-redirect-uri", redirectUri->Option.getOr("")),
     // ("x-feature", "router-custom-be"),
-    ("x-merchant-domain", "rnweb.netlify.app"),
-    ("x-browser-name", "Safari"),
   ]->Dict.fromArray
 }
 
