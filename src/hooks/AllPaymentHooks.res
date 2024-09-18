@@ -572,9 +572,7 @@ let useRedirectHook = () => {
               }
             })
             ->Promise.then(jsonResponse => {
-              let {nextAction, status, error} = itemToObjMapper(
-                jsonResponse->JSON.Decode.object->Option.getOr(Dict.make()),
-              )
+              let {nextAction, status, error} = itemToObjMapper(jsonResponse->Utils.getDictFromJson)
 
               handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error)
               Promise.resolve()
@@ -646,7 +644,7 @@ let useRedirectHook = () => {
           }
         })
         ->Promise.then(jsonResponse => {
-          let confirmResponse = jsonResponse->JSON.Decode.object->Option.getOr(Dict.make())
+          let confirmResponse = jsonResponse->Utils.getDictFromJson
           let {nextAction, status, error} = itemToObjMapper(confirmResponse)
 
           handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
@@ -677,10 +675,16 @@ let useGetSavedPMHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
+  let uri = switch nativeProp.sdkState {
+  | PaymentMethodsManagement => `${baseUrl}/customers/payment_methods`
+  | _ => `${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
+  }
+  let apiKey = switch nativeProp.sdkState {
+  | PaymentMethodsManagement => nativeProp.ephemeralKey->Option.getOr("")
+  | _ => nativeProp.publishableKey
+  }
+
   () => {
-    // switch customer.id {
-    // | Some(_id) =>
-    let uri = `${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
     apiLogWrapper(
       ~logType=INFO,
       ~eventName=CUSTOMER_PAYMENT_METHODS_CALL_INIT,
@@ -693,7 +697,7 @@ let useGetSavedPMHook = () => {
     CommonHooks.fetchApi(
       ~uri,
       ~method_=Get,
-      ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+      ~headers=Utils.getHeader(apiKey, nativeProp.hyperParams.appId),
       (),
     )
     ->Promise.then(data => {
