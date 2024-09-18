@@ -254,6 +254,7 @@ type sdkState =
   | CardWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
+  | PaymentMethodsManagement
   | WidgetPaymentSheet
   | Headless
   | NoView
@@ -282,6 +283,7 @@ let sdkStateToStrMapper = sdkState => {
   | CardWidget => "CARD_FORM"
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
+  | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | WidgetPaymentSheet => "WIDGET_PAYMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
@@ -303,6 +305,7 @@ type hyperParams = {
 type nativeProp = {
   publishableKey: string,
   clientSecret: string,
+  ephemeralKey: option<string>,
   customBackendUrl: option<string>,
   customLogUrl: option<string>,
   sessionId: string,
@@ -424,13 +427,11 @@ let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
 }
 
 let getPrimaryButtonColorFromDict = (primaryButtonColorDict, keys: NativeSdkPropsKeys.keys) => {
-  let x = {
+  {
     background: retOptionalStr(getProp(keys.primaryButton_background, primaryButtonColorDict)),
     text: retOptionalStr(getProp(keys.primaryButton_text, primaryButtonColorDict)),
     border: retOptionalStr(getProp(keys.primaryButton_border, primaryButtonColorDict)),
   }
-
-  x
 }
 
 let getAppearanceObj = (
@@ -890,6 +891,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     rootTag,
     publishableKey,
     clientSecret: getString(dictfromNative, "clientSecret", ""),
+    ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
     customBackendUrl,
     customLogUrl,
     sessionId: "",
@@ -900,6 +902,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "paypal" => CustomWidget(PAYPAL)
     | "card" => CardWidget
     | "widgetPayment" => WidgetPaymentSheet
+    | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
     | "headless" => Headless
     | _ => NoView
