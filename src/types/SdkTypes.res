@@ -246,7 +246,7 @@ type configurationType = {
   placeholder: placeholder,
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
-  fullWidth: bool,
+  fullScreenModalView: bool,
 }
 
 type sdkState =
@@ -864,7 +864,7 @@ let parseConfigurationDict = (configObj, from) => {
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
       cvv: getString(placeholderDict, "cvv", "CVC"),
     },
-    fullWidth: getBool(configObj, "fullWidth", false),
+    fullScreenModalView: getBool(configObj, "fullScreenModalView", false),
   }
   configuration
 }

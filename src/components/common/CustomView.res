@@ -41,7 +41,7 @@ let make = (
       ~justifyContent=#center,
       (),
     ),
-    switch (screenType, nativeProp.configuration.fullWidth) {
+    switch (screenType, nativeProp.configuration.fullScreenModalView) {
     | (Small, false) => viewStyle(~borderBottomLeftRadius=0., ~borderBottomRightRadius=0., ())
     | (_, false) =>
       viewStyle(

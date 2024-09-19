@@ -23,8 +23,13 @@ let make = (~children) => {
 
   let (sheetFlex, _) = React.useState(_ => Animated.Value.create(0.))
   let (sheetOpacity, _) = React.useState(_ => Animated.Value.create(0.))
+  let (sheetDisplay, setSheetDisplay) = React.useState(_ => true)
+  let sheetDisplay = sheetDisplay ? #flex : #none
+  let sheetJustifyContent = screenType === Small ? #"flex-end" : #center
+  let modalPaddingTop = nativeProp.configuration.fullScreenModalView ? 0.->dp : 48.->dp
+
   React.useEffect1(() => {
-    switch (screenType, nativeProp.configuration.fullWidth) {
+    switch (screenType, nativeProp.configuration.fullScreenModalView) {
     | (Small, false) =>
       Animated.timing(
         sheetFlex,
@@ -36,7 +41,6 @@ let make = (~children) => {
       )->Animated.start()
     | (_, _) => sheetFlex->Animated.Value.setValue(1.0)
     }
-
     Animated.timing(
       sheetOpacity,
       {
@@ -52,32 +56,64 @@ let make = (~children) => {
   }, [screenType])
 
   let (heightPosition, _) = React.useState(_ => Animated.Value.create(0.))
-  React.useEffect1(() => {
+  React.useEffect2(() => {
     if loading == LoadingContext.PaymentCancelled || loading == LoadingContext.PaymentSuccess {
-      Animated.timing(
-        heightPosition,
-        {
-          toValue: {
-            1000.->Animated.Value.Timing.fromRawValue
+      switch (screenType, nativeProp.configuration.fullScreenModalView) {
+      | (Small, false) =>
+        Animated.timing(
+          heightPosition,
+          {
+            toValue: 1000.->Animated.Value.Timing.fromRawValue,
+            isInteraction: true,
+            useNativeDriver: false,
+            duration: 300.,
+            easing: Easing.linear,
           },
-          isInteraction: true,
-          useNativeDriver: false,
-          delay: 0.,
-          duration: 300.,
-          easing: Easing.linear,
-        },
-      )->Animated.start()
+        )->Animated.start(~endCallback=({finished}) => {
+          if finished {
+            sheetFlex->Animated.Value.setValue(0.)
+            setSheetDisplay(_ => false)
+            sheetOpacity->Animated.Value.setValue(0.)
+            heightPosition->Animated.Value.setValue(0.0)
+          }
+        }, ())
+      | (_, _) =>
+        Animated.parallel(
+          [
+            Animated.timing(
+              sheetFlex,
+              {
+                toValue: 0.->Animated.Value.Timing.fromRawValue,
+                isInteraction: true,
+                useNativeDriver: false,
+                duration: 300.,
+              },
+            ),
+            Animated.timing(
+              sheetOpacity,
+              {
+                toValue: 0.->Animated.Value.Timing.fromRawValue,
+                isInteraction: true,
+                useNativeDriver: false,
+                duration: 300.,
+              },
+            ),
+          ],
+          {
+            stopTogether: true,
+          },
+        )->Animated.start()
+      }
     }
     None
-  }, [loading])
-
+  }, (loading, screenType))
   <View
     style={viewStyle(
       ~flex=1.,
       ~alignContent=#"flex-end",
       ~backgroundColor=paymentSheetOverlay,
-      ~justifyContent=#"flex-end",
-      // ~paddingTop=48.->dp,
+      ~justifyContent=sheetJustifyContent,
+      ~paddingTop=modalPaddingTop,
       (),
     )}>
     <Animated.View
@@ -85,6 +121,7 @@ let make = (~children) => {
         ~transform=[translateY(~translateY=heightPosition->Animated.StyleProp.float)],
         ~flex={sheetFlex->Animated.StyleProp.float},
         ~opacity={sheetOpacity->Animated.StyleProp.float},
+        ~display=sheetDisplay,
         (),
       )}>
       <CustomView onDismiss=onModalClose>
