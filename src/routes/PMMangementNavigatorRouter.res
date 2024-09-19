@@ -6,30 +6,6 @@ let make = () => {
   let savedPaymentMethods = AllPaymentHooks.useGetSavedPMHook()
   let logger = LoggerHook.useLoggerHook()
 
-  let handleCustomerPMLResponse = customerSavedPMData => {
-    switch customerSavedPMData {
-    | Some(data) => {
-        let spmData = data->PaymentMethodListType.jsonToSavedPMObj
-
-        let isGuestFromPMList =
-          data
-          ->Utils.getDictFromJson
-          ->Dict.get("is_guest_customer")
-          ->Option.flatMap(JSON.Decode.bool)
-          ->Option.getOr(false)
-
-        let savedPaymentMethods: AllApiDataContext.savedPaymentMethods = Some({
-          pmList: Some(spmData),
-          isGuestCustomer: isGuestFromPMList,
-          selectedPaymentMethod: None,
-        })
-
-        savedPaymentMethods
-      }
-    | None => None
-    }
-  }
-
   React.useEffect(() => {
     let launchTime = nativeProp.hyperParams.launchTime->Option.getOr(Date.now())
     let latency = Date.now() -. launchTime
@@ -39,8 +15,8 @@ let make = () => {
 
     if nativeProp.ephemeralKey->Option.getOr("") != "" {
       savedPaymentMethods()
-      ->Promise.then( customerSavedPMData => {
-        let savedPaymentMethods = handleCustomerPMLResponse(customerSavedPMData)
+      ->Promise.then(customerSavedPMData => {
+        let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(~customerSavedPMData, ~sessions=None, ~isPaymentMethodManagement=true)
 
         setAllApiData({
           ...allApiData,
