@@ -7,7 +7,6 @@ let handleCustomerPMLResponse = (
   | Some(obj) => {
       let spmData = obj->PaymentMethodListType.jsonToSavedPMObj
 
-      // seperating out google_pay and apple_pay, according to platform
       let sessionSpmData = spmData->Array.filter(data => {
         switch data {
         | SAVEDLISTWALLET(val) =>
@@ -20,7 +19,6 @@ let handleCustomerPMLResponse = (
         }
       })
 
-      // seperating out all wallets except google_pay and apple_pay
       let walletSpmData = spmData->Array.filter(data => {
         switch data {
         | SAVEDLISTWALLET(val) =>
@@ -33,7 +31,6 @@ let handleCustomerPMLResponse = (
         }
       })
 
-      // seperating out all cards
       let cardSpmData = spmData->Array.filter(data => {
         switch data {
         | SAVEDLISTCARD(_) => true
@@ -41,7 +38,6 @@ let handleCustomerPMLResponse = (
         }
       })
 
-      // filtering out google_pay and apple_pay if session is not available
       let filteredSpmData = switch sessions {
       | Some(sessions) =>
         let walletNameArray = sessions->Array.map(wallet => wallet.wallet_name)
