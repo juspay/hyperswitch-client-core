@@ -3,7 +3,7 @@ let make = () => {
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
     switch nativeProp.sdkState {
-        | PaymentMethodsManagement => React.null
+        | PaymentMethodsManagement => <PMMangementNavigatorRouter />
         | _ => <NavigatorRouter />
     }
 }
