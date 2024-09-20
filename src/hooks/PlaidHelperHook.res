@@ -3,7 +3,6 @@ open LoadingContext
 
 let usePlaidProps = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
 
   let getOpenProps = (
     retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
@@ -20,10 +19,6 @@ let usePlaidProps = () => {
         )
         ->Promise.then(res => {
           if res == JSON.Encode.null {
-            setAllApiData({
-              ...allApiData,
-              additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
-            })
             errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=true, ())
           } else {
             let status =
@@ -37,10 +32,6 @@ let usePlaidProps = () => {
             | "succeeded"
             | "requires_customer_action"
             | "processing" =>
-              setAllApiData({
-                ...allApiData,
-                additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
-              })
               responseCallback(
                 ~paymentStatus=PaymentSuccess,
                 ~status={
@@ -60,10 +51,6 @@ let usePlaidProps = () => {
                 ~status={status, message: "", code: "", type_: ""},
               )
             | _ =>
-              setAllApiData({
-                ...allApiData,
-                additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
-              })
               errorCallback(
                 ~errorMessage={
                   status,
