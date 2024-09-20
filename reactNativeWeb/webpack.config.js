@@ -7,6 +7,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const appDirectory = path.resolve(__dirname);
 const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
 const isDevelopment = process.env.NODE_ENV !== 'production';
+console.log("dev mode --- >", isDevelopment)
 const compileNodeModules = [
   // Add every react-native package that needs compiling
   // 'react-native-gesture-handler',
@@ -107,8 +108,8 @@ module.exports = {
     },
   },
   optimization: {
-    minimize: true,
-    minimizer: [new TerserPlugin()],
+    minimize: !isDevelopment,
+    minimizer: [isDevelopment && new TerserPlugin()].filter(Boolean),
   },
   module: {
     rules: [
