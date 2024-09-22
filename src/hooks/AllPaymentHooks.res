@@ -757,3 +757,91 @@ let useGetSavedPMHook = () => {
     })
   }
 }
+
+let useDeleteSavedPaymentMethod = () => {
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+
+  (~paymentMethodId: string) => {
+    let uri = `${baseUrl}/payment_methods/${paymentMethodId}`
+    apiLogWrapper(
+      ~logType=INFO,
+      ~eventName=DELETE_PAYMENT_METHODS_CALL_INIT,
+      ~url=uri,
+      ~statusCode="",
+      ~apiLogType=Request,
+      ~data=JSON.Encode.null,
+      (),
+    )
+
+    if nativeProp.ephemeralKey->Option.isSome {
+      CommonHooks.fetchApi(
+        ~uri,
+        ~method_=Delete,
+        ~headers=Utils.getHeader(
+          nativeProp.ephemeralKey->Option.getOr(""),
+          nativeProp.hyperParams.appId,
+        ),
+        (),
+      )
+      ->Promise.then(resp => {
+        let statusCode = resp->Fetch.Response.status->string_of_int
+        if statusCode->String.charAt(0) !== "2" {
+          resp
+          ->Fetch.Response.json
+          ->Promise.then(data => {
+            apiLogWrapper(
+              ~url=uri,
+              ~data,
+              ~statusCode,
+              ~apiLogType=Err,
+              ~eventName=DELETE_PAYMENT_METHODS_CALL,
+              ~logType=ERROR,
+              (),
+            )
+            None->Promise.resolve
+          })
+        } else {
+          resp
+          ->Fetch.Response.json
+          ->Promise.then(data => {
+            apiLogWrapper(
+              ~url=uri,
+              ~data,
+              ~statusCode,
+              ~apiLogType=Response,
+              ~eventName=DELETE_PAYMENT_METHODS_CALL,
+              ~logType=INFO,
+              (),
+            )
+            Some(data)->Promise.resolve
+          })
+        }
+      })
+      ->Promise.catch(err => {
+        apiLogWrapper(
+          ~logType=ERROR,
+          ~eventName=DELETE_PAYMENT_METHODS_CALL,
+          ~url=uri,
+          ~statusCode="504",
+          ~apiLogType=NoResponse,
+          ~data=err->toJson,
+          (),
+        )
+        None->Promise.resolve
+      })
+    } else {
+      apiLogWrapper(
+        ~logType=ERROR,
+        ~eventName=DELETE_PAYMENT_METHODS_CALL,
+        ~url=uri,
+        ~statusCode="",
+        ~apiLogType=NoResponse,
+        ~data="Ephemeral key not found."->toJson,
+        (),
+      )
+      None->Promise.resolve
+    }
+  }
+}
