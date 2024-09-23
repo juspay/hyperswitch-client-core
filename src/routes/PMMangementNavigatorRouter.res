@@ -31,8 +31,7 @@ let make = () => {
   }, [nativeProp])
 
   switch nativeProp.ephemeralKey {
-  // TODO: return PaymentMethodManagement view here
-  | Some(_) => React.null
+  | Some(_) => <PaymentMethodsManagement />
   | None =>
     showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
     React.null
