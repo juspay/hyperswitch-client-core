@@ -28,10 +28,6 @@ let (create, open_, dismissLink) = switch try {
 Checks if native modules for sdk have been imported as optional dependency
 */
 let isAvailable =
-  ReactNative.Platform.os == #android
-    ? Dict.get(ReactNative.NativeModules.nativeModules, "PlaidAndroid")
-      ->Option.flatMap(JSON.Decode.object)
-      ->Option.isSome
-    : Dict.get(ReactNative.NativeModules.nativeModules, "RNLinksdk")
-      ->Option.flatMap(JSON.Decode.object)
-      ->Option.isSome
+  Dict.get(ReactNative.NativeModules.nativeModules, "PlaidAndroid")
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.isSome
