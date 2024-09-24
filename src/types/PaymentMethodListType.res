@@ -334,9 +334,9 @@ let getPaymentBody = (body, dynamicFieldsJson) => {
 }
 
 let jsonToSavedPMObj = data => {
-  let cards = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
+  let customerSavedPMs = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
 
-  cards->Array.reduce([], (acc, obj) => {
+  customerSavedPMs->Array.reduce([], (acc, obj) => {
     let savedPMData = obj->Utils.getDictFromJson
     let cardData = savedPMData->Dict.get("card")->Option.flatMap(JSON.Decode.object)
 
@@ -361,6 +361,7 @@ let jsonToSavedPMObj = data => {
             "/" ++
             card->Utils.getString("expiry_year", "")->String.sliceToEnd(~start=-2),
             payment_token: savedPMData->Utils.getString("payment_token", ""),
+            paymentMethodId: savedPMData->Utils.getString("payment_method_id", ""),
             nick_name: card->Utils.getString("nick_name", ""),
             isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
             requiresCVV: savedPMData->Utils.getBool("requires_cvv", false),
@@ -378,11 +379,13 @@ let jsonToSavedPMObj = data => {
           ->Utils.getString("payment_method_type", "")
           ->SdkTypes.walletNameMapper,
           payment_token: savedPMData->Utils.getString("payment_token", ""),
+          paymentMethodId: savedPMData->Utils.getString("payment_method_id", ""),
           isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
           created: savedPMData->Utils.getString("created", ""),
           lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
         }),
       )
+    // | TODO: add suport for "bank_debit"
     | _ => ()
     }
 
