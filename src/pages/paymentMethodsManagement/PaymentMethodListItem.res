@@ -40,11 +40,18 @@ module PaymentMethodTitle = {
 }
 
 @react.component
-let make = (~pmDetails: SdkTypes.savedDataType, ~isLastElement=true) => {
+let make = (~pmDetails: SdkTypes.savedDataType, ~isLastElement=true, ~handleDelete) => {
   let {component} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
 
+  let paymentMethodId = switch pmDetails {
+  | SAVEDLISTCARD(cardData) => cardData.paymentMethodId
+  | SAVEDLISTWALLET(walletData) => walletData.paymentMethodId
+  | NONE => None
+  }
+
   <CustomTouchableOpacity
+    onPress={_ => handleDelete(paymentMethodId->Option.getOr(""))}
     style={viewStyle(
       ~padding=16.->dp,
       ~borderBottomWidth={isLastElement ? 0.8 : 0.},
