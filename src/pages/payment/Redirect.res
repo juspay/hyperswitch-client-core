@@ -179,8 +179,12 @@ let make = (
       | Some(message) => setError(_ => Some(message))
       | None => ()
       }
+    } else {
+      setLoading(PaymentCancelled)
     }
-    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    setTimeout(() => {
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    }, 300)->ignore
   }
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
     switch paymentStatus {

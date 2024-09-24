@@ -105,6 +105,7 @@ let useExitPaymentsheet = () => {
       ~eventName=SDK_CLOSED,
       (),
     )
+
     //setSdkState(SdkTypes.NoView)
     // switch ref {
     // | None => ()

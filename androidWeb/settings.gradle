@@ -1,0 +1,3 @@
+rootProject.name = 'io.hyperswitch'
+
+include ':app'

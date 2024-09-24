@@ -1,43 +1,45 @@
-type useWebKit = {
+@scope("window") @val
+external androidInterface: Nullable.t<WebKitAndroid.useWebKit> = "AndroidInterface"
+
+type returnType = {
   exitPaymentSheet: string => unit,
   sdkInitialised: string => unit,
   launchApplePay: string => unit,
+  launchGPay: string => unit,
 }
 
+type androidMethods = WebKitAndroid.useWebKit
+type iosMethods = WebKitIos.useWebKit
+
+type message = string => unit
+
 let useWebKit = () => {
-  let messageHandlers = switch Window.webKit {
-  | Some(webKit) => webKit.messageHandlers
-  | None => None
-  }
-  let exitPaymentSheet = str => {
-    switch messageHandlers {
-    | Some(messageHandlers) =>
-      switch messageHandlers.exitPaymentSheet {
-      | Some(exitPaymentSheet) => exitPaymentSheet.postMessage(str)
-      | None => ()
+  let isIos = () => Option.isSome(Window.webKit)
+
+  if isIos() {
+    let iosMethods = WebKitIos.useWebKit()
+    {
+      exitPaymentSheet: iosMethods.exitPaymentSheet,
+      sdkInitialised: iosMethods.sdkInitialised,
+      launchApplePay: iosMethods.launchApplePay,
+      launchGPay: _ => (),
+    }
+  } else {
+    switch androidInterface->Nullable.toOption {
+    | Some(interface) =>
+      let androidMethods = WebKitAndroid.useWebKit()
+      {
+        exitPaymentSheet: androidMethods.exitPaymentSheet,
+        sdkInitialised: androidMethods.sdkInitialised,
+        launchGPay: androidMethods.launchGPay,
+        launchApplePay: _ => (),
       }
-    | None => ()
+    | None => {
+        exitPaymentSheet: _ => (),
+        sdkInitialised: _ => (),
+        launchGPay: _ => (),
+        launchApplePay: _ => (),
+      }
     }
   }
-  let sdkInitialised = str => {
-    switch messageHandlers {
-    | Some(messageHandlers) =>
-      switch messageHandlers.sdkInitialised {
-      | Some(sdkInitialised) => sdkInitialised.postMessage(str)
-      | None => ()
-      }
-    | None => ()
-    }
-  }
-  let launchApplePay = str => {
-    switch messageHandlers {
-    | Some(messageHandlers) =>
-      switch messageHandlers.launchApplePay {
-      | Some(launchApplePay) => launchApplePay.postMessage(str)
-      | None => ()
-      }
-    | None => ()
-    }
-  }
-  {exitPaymentSheet, sdkInitialised, launchApplePay}
 }

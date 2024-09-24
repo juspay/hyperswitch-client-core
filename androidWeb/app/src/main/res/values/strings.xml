@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">HyperSwitch</string>
+    <string name="CodePushDeploymentKey" moduleConfig="true">ZAmo7uOXuDhPzU1NKlOOwGHasre9bTOKqrLLu</string>
+</resources>
