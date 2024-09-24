@@ -174,7 +174,7 @@ let useRetrieveHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
-  (type_, clientSecret, publishableKey) => {
+  (type_, clientSecret, publishableKey, ~isForceSync=false) => {
     switch (Next.getNextEnv, type_) {
     | ("next", Types.List) => Promise.resolve(Next.listRes)
     | (_, type_) =>
@@ -187,7 +187,9 @@ let useRetrieveHook = () => {
       | Payment => (
           `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
             ->Array.get(0)
-            ->Option.getOr("")}?force_sync=false&client_secret=${clientSecret}`,
+            ->Option.getOr("")}?force_sync=${isForceSync
+              ? "true"
+              : "false"}&client_secret=${clientSecret}`,
           RETRIEVE_CALL,
           RETRIEVE_CALL_INIT,
         )
@@ -375,6 +377,7 @@ let useRedirectHook = () => {
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let getOpenProps = PlaidHelperHook.usePlaidProps()
 
   (
     ~body: string,
@@ -391,7 +394,7 @@ let useRedirectHook = () => {
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
-      switch nextAction->ThreeDsUtils.getActionType {
+      switch nextAction->PaymentUtils.getActionType {
       | "three_ds_invoke" => {
           let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
 
@@ -417,6 +420,17 @@ let useRedirectHook = () => {
               )
             },
           )
+        }
+      | "third_party_sdk_session_token" => {
+          // TODO: add event loggers for analytics
+          let session_token = Option.getOr(nextAction, defaultNextAction).session_token
+          let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
+          switch session_token {
+          | Some(token) =>
+            Plaid.create({token: token.open_banking_session_token})
+            Plaid.open_(openProps)->ignore
+          | None => ()
+          }
         }
       | _ =>
         switch status {

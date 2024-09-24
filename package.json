@@ -37,6 +37,7 @@
     "react-native-hyperswitch-scancard": "^0.3.1",
     "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-klarna-inapp-sdk": "^2.1.13",
+    "react-native-plaid-link-sdk": "^11.12.1",
     "react-native-svg": "^15.6.0"
   },
   "devDependencies": {
