@@ -188,7 +188,24 @@ let useListModifier = () => {
                 />,
             })
           }
+        | OPEN_BANKING(openBankingVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == openBankingVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
 
+          Plaid.isAvailable
+            ? Some({
+                name: fields.text,
+                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                  <Redirect
+                    isScreenFocus
+                    redirectProp=OPEN_BANKING(openBankingVal)
+                    fields
+                    setConfirmButtonDataRef
+                  />,
+              })
+            : None
         | CRYPTO(cryptoVal) =>
           let fields =
             redirectionList
