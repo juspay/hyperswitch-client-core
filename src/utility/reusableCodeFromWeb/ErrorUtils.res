@@ -72,7 +72,7 @@ let errorWarning = {
     ),
   ),
   invalidEphemeralKey: INVALID_EK(
-    Error,
+    Warning,
     Static(
       "INTEGRATION ERROR: Ephemeral key not available.",
     ),
