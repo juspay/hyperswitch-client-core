@@ -34,7 +34,7 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
         <View style={viewStyle(~maxWidth=60.->pct, ())}>
           <TextWrapper text={var} textType={HeadingBold} />
         </View>
-      | _ => React.null
+      | _ => <View />
       }
     }}
     <View
