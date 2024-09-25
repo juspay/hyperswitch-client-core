@@ -50,6 +50,7 @@
     "@commitlint/cli": "^17.0.3",
     "@commitlint/config-conventional": "^17.0.3",
     "@juspay-tech/hyperswitch-node": "^1.0.3",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@react-native/babel-preset": "0.75.2",
     "@react-native/eslint-config": "0.75.2",
     "@react-native/metro-config": "0.75.2",
@@ -182,9 +183,9 @@
   },
   "packageManager": "yarn@4.4.1",
   "resolutions": {
-    "@react-native-community/cli-platform-android@npm:14.0.0": "patch:@react-native-community/cli-platform-android@npm%3A14.0.0#~/.yarn/patches/@react-native-community-cli-platform-android-npm-14.0.0-56241f53c3.patch",
-    "@react-native/assets-registry@npm:0.75.2": "patch:@react-native/assets-registry@npm%3A0.75.2#~/.yarn/patches/@react-native-assets-registry-npm-0.75.2-553af80bf2.patch",
-    "react-native-code-push@npm:^8.3.1": "patch:react-native-code-push@npm%3A8.3.1#~/.yarn/patches/react-native-code-push-npm-8.3.1-9608679893.patch",
-    "@react-native/gradle-plugin@npm:0.75.2": "patch:@react-native/gradle-plugin@npm%3A0.75.2#~/.yarn/patches/@react-native-gradle-plugin-npm-0.75.2-3de59c69c5.patch"
+    "@react-native-community/cli-platform-android": "patch:@react-native-community/cli-platform-android@npm%3A14.0.0#~/.yarn/patches/@react-native-community-cli-platform-android-npm-14.0.0-56241f53c3.patch",
+    "@react-native/assets-registry": "patch:@react-native/assets-registry@npm%3A0.75.2#~/.yarn/patches/@react-native-assets-registry-npm-0.75.2-553af80bf2.patch",
+    "react-native-code-push": "patch:react-native-code-push@npm%3A8.3.1#~/.yarn/patches/react-native-code-push-npm-8.3.1-9608679893.patch",
+    "@react-native/gradle-plugin": "patch:@react-native/gradle-plugin@npm%3A0.75.2#~/.yarn/patches/@react-native-gradle-plugin-npm-0.75.2-3de59c69c5.patch"
   }
 }
