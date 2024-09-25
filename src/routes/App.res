@@ -37,7 +37,7 @@ module App = {
       {ReactNative.Platform.os == #android
         ? <StatusBar translucent=true backgroundColor="transparent" />
         : React.null}
-      <NavigatorRouter />
+      <NavigatorRouterParent />
     </View>
   }
 }

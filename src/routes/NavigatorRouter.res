@@ -182,14 +182,14 @@ let make = () => {
 
   {
     switch nativeProp.sdkState {
-    | SdkTypes.PaymentSheet => <ParentPaymentSheet />
-    | SdkTypes.HostedCheckout => <HostedCheckout />
-    | SdkTypes.CardWidget => <CardWidget />
-    | SdkTypes.CustomWidget(walletType) => <CustomWidget walletType />
-    | SdkTypes.ExpressCheckoutWidget => <ExpressCheckoutWidget />
-    | SdkTypes.WidgetPaymentSheet => <ParentPaymentSheet />
-    | SdkTypes.Headless
-    | SdkTypes.NoView => React.null
+    | PaymentSheet => <ParentPaymentSheet />
+    | HostedCheckout => <HostedCheckout />
+    | CardWidget => <CardWidget />
+    | CustomWidget(walletType) => <CustomWidget walletType />
+    | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+    | WidgetPaymentSheet => <ParentPaymentSheet />
+    | Headless
+    | NoView | PaymentMethodsManagement => React.null
     }
   }
 }
