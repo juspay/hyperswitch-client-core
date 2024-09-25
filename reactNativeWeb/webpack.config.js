@@ -109,7 +109,7 @@ module.exports = {
   },
   optimization: {
     minimize: !isDevelopment,
-    minimizer: [isDevelopment && new TerserPlugin()].filter(Boolean),
+    minimizer: [!isDevelopment && new TerserPlugin()].filter(Boolean),
   },
   module: {
     rules: [
