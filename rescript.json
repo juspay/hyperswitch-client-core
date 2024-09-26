@@ -15,6 +15,10 @@
     {
       "dir": "reactNativeWeb",
       "subdirs": true
+    },
+    {
+      "dir": "../shared-code",
+      "subdirs": true
     }
   ],
   "bs-dependencies": [
