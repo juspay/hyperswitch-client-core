@@ -233,18 +233,18 @@ let getStringFromJson = (json, default) => {
   json->JSON.Decode.string->Option.getOr(default)
 }
 
-let toCamelCase = str => {
-  if str->String.includes(":") {
-    str
-  } else {
-    str
-    ->String.toLowerCase
-    ->Js.String2.unsafeReplaceBy0(%re(`/([-_][a-z])/g`), (letter, _, _) => {
-      letter->String.toUpperCase
-    })
-    ->String.replaceRegExp(%re(`/[^a-zA-Z]/g`), "")
-  }
-}
+// let toCamelCase = str => {
+//   if str->String.includes(":") {
+//     str
+//   } else {
+//     str
+//     ->String.toLowerCase
+//     ->Js.String2.unsafeReplaceBy0(%re(`/([-_][a-z])/g`), (letter, _, _) => {
+//       letter->String.toUpperCase
+//     })
+//     ->String.replaceRegExp(%re(`/[^a-zA-Z]/g`), "")
+//   }
+// }
 let toSnakeCase = str => {
   str->Js.String2.unsafeReplaceBy0(%re("/[A-Z]/g"), (letter, _, _) =>
     `_${letter->String.toLowerCase}`
