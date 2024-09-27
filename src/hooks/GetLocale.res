@@ -3,17 +3,17 @@ let useGetLocalObj = () => {
 
   switch nativeProp.configuration.appearance.locale->Option.getOr(En) {
   | En => EnglishLocale.localeStrings
-  | He => HebrewLocale.localeStrings
-  | Fr => FrenchLocale.localeStrings
+  | He  => HebrewLocale.localeStrings
+  | Fr  => FrenchLocale.localeStrings
   | En_GB => EnglishGBLocale.localeStrings
-  | Ar => ArabicLocale.localeStrings
+  | Ar  => ArabicLocale.localeStrings
   | Ja => JapaneseLocale.localeStrings
-  | De => DeutschLocale.localeStrings
+  | De  => DeutschLocale.localeStrings
   | Fr_BE => FrenchBelgiumLocale.localeStrings
-  | Es => EstonianLocale.localeStrings
-  | Ca => CatalanLocale.localeStrings
-  | Pt => PortugueseLocale.localeStrings
-  | It => ItalianLocale.localeStrings
+  | Es  => EstonianLocale.localeStrings
+  | Ca   => CatalanLocale.localeStrings
+  | Pt  => PortugueseLocale.localeStrings
+  | It  => ItalianLocale.localeStrings
   | Pl => PolishLocale.localeStrings
   | Nl => DutchLocale.localeStrings
   | NI_BE => DutchBelgiumLocale.localeStrings
