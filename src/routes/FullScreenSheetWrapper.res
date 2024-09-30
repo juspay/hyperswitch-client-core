@@ -64,7 +64,7 @@ let make = (~children) => {
     <Animated.View
       style={viewStyle(
         ~transform=[translateY(~translateY=heightPosition->Animated.StyleProp.float)],
-        ~flex={sheetFlex->Animated.StyleProp.float},
+        ~flexGrow={sheetFlex->Animated.StyleProp.float},
         (),
       )}>
       <CustomView onDismiss=onModalClose>

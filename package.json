@@ -50,6 +50,7 @@
     "@commitlint/cli": "^17.0.3",
     "@commitlint/config-conventional": "^17.0.3",
     "@juspay-tech/hyperswitch-node": "^1.0.3",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@react-native/babel-preset": "0.75.2",
     "@react-native/eslint-config": "0.75.2",
     "@react-native/metro-config": "0.75.2",
