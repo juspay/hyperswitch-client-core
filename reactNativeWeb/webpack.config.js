@@ -7,7 +7,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const appDirectory = path.resolve(__dirname);
 const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
 const isDevelopment = process.env.NODE_ENV !== 'production';
-console.log("dev mode --- >", isDevelopment)
+console.log('dev mode --- >', isDevelopment);
 const compileNodeModules = [
   // Add every react-native package that needs compiling
   // 'react-native-gesture-handler',
@@ -105,6 +105,7 @@ module.exports = {
       'react-native-hyperswitch-paypal': 'react-native-web',
       'react-native-hyperswitch-kount': 'react-native-web',
       'react-native-hyperswitch-netcetera-3ds': 'react-native-web',
+      'react-native-plaid-link-sdk': 'react-native-web',
     },
   },
   optimization: {

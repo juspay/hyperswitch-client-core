@@ -27,11 +27,11 @@ let make = (
   ~onSwipeEnd: unit => unit=_ => (),
   ~renderLazyPlaceholder: (~route: TabViewType.route) => React.element=(~route as _) => React.null,
   ~renderTabBar,
-  ~sceneContainerStyle=viewStyle(~flex=1., ()),
-  ~pagerStyle: ReactNative.Style.t=viewStyle(),
-  ~style: ReactNative.Style.t=viewStyle(),
+  ~sceneContainerStyle: option<ReactNative.Style.t>=?,
+  ~pagerStyle: option<ReactNative.Style.t>=?,
+  ~style: option<ReactNative.Style.t>=?,
   ~direction: TabViewType.localeDirection=i18nManager.getConstants().isRTL ? #rtl : #ltr,
-  ~swipeEnabled: bool=true,
+  ~swipeEnabled: bool=false,
   ~tabBarPosition=#top,
   ~animationEnabled=true,
 ) => {
@@ -61,7 +61,12 @@ let make = (
     )
   }
 
-  <View onLayout={handleLayout} style={array([viewStyle(~flex=1., ~overflow=#hidden, ()), style])}>
+  <View
+    onLayout={handleLayout}
+    style={switch style {
+    | Some(style) => array([viewStyle(~flex=1., ~overflow=#hidden, ()), style])
+    | None => viewStyle(~flex=1., ~overflow=#hidden, ())
+    }}>
     <Pager
       layout
       indexInFocus
@@ -72,7 +77,7 @@ let make = (
       onSwipeEnd
       onIndexChange=jumpToIndex
       animationEnabled
-      style=pagerStyle
+      style=?pagerStyle
       layoutDirection=direction>
       {(~addEnterListener, ~jumpTo, ~position, ~render, ~indexInFocus, ~routes) => {
         <React.Fragment>
@@ -94,7 +99,7 @@ let make = (
               | None => lazy_
               }}
               lazyPreloadDistance
-              style=sceneContainerStyle>
+              style=?sceneContainerStyle>
               {(~loading) =>
                 loading
                   ? renderLazyPlaceholder(~route)
