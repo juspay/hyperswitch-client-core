@@ -1006,7 +1006,7 @@ let localeStrings = [
     card: "Karta",
     billingNameLabel: "Nazwisko do faktury",
     cardHolderName: "Imię i nazwisko posiadacza karty",
-    cardNickname: "Przezwisko karty",
+    cardNickname: "Nazwa karty",
     billingNamePlaceholder: "Imię i nazwisko",
     firstName: `Imię`,
     lastName: `Nazwisko`,
