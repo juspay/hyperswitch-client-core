@@ -62,7 +62,7 @@ let useHandleSuccessFailure = () => {
   let exitWidget = HyperModule.useExitWidget()
   (~apiResStatus: error, ~closeSDK=true, ~reset=true, ()) => {
     switch nativeProp.sdkState {
-    | PaymentSheet | HostedCheckout =>
+    | PaymentSheet | HostedCheckout | PaymentMethodsManagement =>
       if closeSDK {
         exit(apiResStatus, reset)
       }

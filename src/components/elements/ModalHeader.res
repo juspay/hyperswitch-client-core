@@ -17,26 +17,11 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
     onLayout=updateModalViewHeight
     style={viewStyle(
       ~display=#flex,
-      ~flexDirection=#row,
+      ~flexDirection=#"row-reverse",
       ~alignItems=#center,
       ~justifyContent=#"space-between",
       (),
     )}>
-    {if isLoadingScreenActive {
-      React.null
-    } else {
-      switch switch paymentScreenType {
-      | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
-      | PaymentScreenContext.SAVEDCARDSCREEN =>
-        nativeProp.configuration.savedPaymentScreenHeaderText
-      } {
-      | Some(var) =>
-        <View style={viewStyle(~maxWidth=60.->pct, ())}>
-          <TextWrapper text={var} textType={HeadingBold} />
-        </View>
-      | _ => React.null
-      }
-    }}
     <View
       style={viewStyle(
         ~flexDirection=#row,
@@ -69,5 +54,20 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
             </CustomTouchableOpacity>
           </>}
     </View>
+    {if isLoadingScreenActive {
+      React.null
+    } else {
+      switch switch paymentScreenType {
+      | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
+      | PaymentScreenContext.SAVEDCARDSCREEN =>
+        nativeProp.configuration.savedPaymentScreenHeaderText
+      } {
+      | Some(var) =>
+        <View style={viewStyle(~maxWidth=60.->pct, ())}>
+          <TextWrapper text={var} textType={HeadingBold} />
+        </View>
+      | _ => React.null
+      }
+    }}
   </View>
 }

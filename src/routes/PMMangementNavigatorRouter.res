@@ -16,7 +16,11 @@ let make = () => {
     if nativeProp.ephemeralKey->Option.getOr("") != "" {
       savedPaymentMethods()
       ->Promise.then(customerSavedPMData => {
-        let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(~customerSavedPMData, ~sessions=None, ~isPaymentMethodManagement=true)
+        let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(
+          ~customerSavedPMData,
+          ~sessions=None,
+          ~isPaymentMethodManagement=true,
+        )
 
         setAllApiData({
           ...allApiData,
@@ -31,7 +35,15 @@ let make = () => {
   }, [nativeProp])
 
   switch nativeProp.ephemeralKey {
-  | Some(_) => <PaymentMethodsManagement />
+  | Some(ephemeralKey) =>
+    ephemeralKey != ""
+      ? <FullScreenSheetWrapper>
+          <PaymentMethodsManagement />
+        </FullScreenSheetWrapper>
+      : {
+          showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
+          React.null
+        }
   | None =>
     showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
     React.null

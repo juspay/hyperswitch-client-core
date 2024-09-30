@@ -49,20 +49,21 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~isLastElement=true, ~handleDele
   | SAVEDLISTWALLET(walletData) => walletData.paymentMethodId
   | NONE => None
   }
-
   <CustomTouchableOpacity
     onPress={_ => handleDelete(paymentMethodId->Option.getOr(""))}
-    style={viewStyle(
-      ~padding=16.->dp,
-      ~borderBottomWidth={isLastElement ? 0.8 : 0.},
-      ~borderBottomColor=component.borderColor,
-      ~flexDirection=#row,
-      ~flexWrap=#nowrap,
-      ~alignItems=#center,
-      ~justifyContent=#"space-between",
-      ~flex=1.,
-      (),
-    )}>
+    style={
+      viewStyle(
+        ~padding=16.->dp,
+        ~borderBottomWidth={isLastElement ? 0.8 : 0.},
+        ~borderBottomColor=component.borderColor,
+        ~flexDirection=#row,
+        ~flexWrap=#nowrap,
+        ~alignItems=#center,
+        ~justifyContent=#"space-between",
+        ~flex=1.,
+        (),
+      )
+    }>
     <View
       style={viewStyle(~flexDirection=#row, ~flexWrap=#nowrap, ~alignItems=#center, ~flex=4., ())}>
       <Icon
