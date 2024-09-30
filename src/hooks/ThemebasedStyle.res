@@ -148,7 +148,7 @@ type themeBasedStyleObj = {
   buttonBorderRadius: float,
   buttonBorderWidth: float,
   component: componentConfig,
-  locale: SdkTypes.localeTypes,
+  locale: LocaleStringTypes.localeTypes,
   fontFamily: SdkTypes.fontFamilyTypes,
   headingTextSizeAdjust: float,
   subHeadingTextSizeAdjust: float,
