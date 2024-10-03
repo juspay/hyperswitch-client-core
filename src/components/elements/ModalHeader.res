@@ -69,20 +69,5 @@ let make = (~onModalClose) => {
             </CustomTouchableOpacity>
           </>}
     </View>
-    {if isLoadingScreenActive {
-      React.null
-    } else {
-      switch switch paymentScreenType {
-      | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
-      | PaymentScreenContext.SAVEDCARDSCREEN =>
-        nativeProp.configuration.savedPaymentScreenHeaderText
-      } {
-      | Some(var) =>
-        <View style={viewStyle(~maxWidth=60.->pct, ())}>
-          <TextWrapper text={var} textType={HeadingBold} />
-        </View>
-      | _ => React.null
-      }
-    }}
   </View>
 }
