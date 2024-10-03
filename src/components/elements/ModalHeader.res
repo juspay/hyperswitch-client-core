@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~onModalClose, ~updateModalViewHeight) => {
+let make = (~onModalClose) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
@@ -14,16 +14,16 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
   }
 
   <View
-    onLayout=updateModalViewHeight
     style={viewStyle(
       ~display=#flex,
+      ~flexGrow=?{Platform.os !== #web ? Some(1.) : None},
       ~flexDirection=#row,
       ~alignItems=#center,
       ~justifyContent=#"space-between",
       (),
     )}>
     {if isLoadingScreenActive {
-      React.null
+      <View />
     } else {
       switch switch paymentScreenType {
       | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
@@ -34,7 +34,7 @@ let make = (~onModalClose, ~updateModalViewHeight) => {
         <View style={viewStyle(~maxWidth=60.->pct, ())}>
           <TextWrapper text={var} textType={HeadingBold} />
         </View>
-      | _ => React.null
+      | _ => <View />
       }
     }}
     <View

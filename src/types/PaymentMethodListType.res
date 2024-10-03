@@ -56,20 +56,20 @@ type payment_method_types_pay_later = {
   required_field: RequiredFieldsTypes.required_fields,
 }
 
+type payment_method_types_open_banking = {
+  payment_method: string,
+  payment_method_type: string,
+  payment_experience: array<payment_experience>,
+  required_field: RequiredFieldsTypes.required_fields,
+}
+
 type payment_method =
   | CARD(payment_method_types_card)
   | WALLET(payment_method_types_wallet)
   | PAY_LATER(payment_method_types_pay_later)
   | BANK_REDIRECT(payment_method_types_bank_redirect)
   | CRYPTO(payment_method_types_pay_later)
-
-// type payment_method =
-//   | CARD(array<payment_method_types_card>)
-//   | WALLET(array<payment_method_types_wallet>)
-//   | PAY_LATER(array<payment_method_types_pay_later>)
-//   | BANK_REDIRECT(array<payment_method_types_bank_redirect>)
-//   | CRYPTO(array<payment_method_types_pay_later>)
-//   | NONE
+  | OPEN_BANKING(payment_method_types_open_banking)
 
 type online = {
   ip_address?: string,
@@ -186,7 +186,6 @@ let flattenPaymentListArray = (plist, item) => {
         required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
       })->Js.Array.push(plist)
     })
-
   | "bank_redirect" =>
     payment_method_types_array->Array.map(item2 => {
       let dict2 = item2->getDictFromJson
@@ -229,6 +228,28 @@ let flattenPaymentListArray = (plist, item) => {
         required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
       })->Js.Array.push(plist)
     })
+  | "open_banking" => 
+    payment_method_types_array->Array.map(item2 => {
+      let dict2 = item2->getDictFromJson
+      OPEN_BANKING({
+        payment_method: "open_banking",
+        payment_method_type: dict2->getString("payment_method_type", ""),
+        payment_experience: dict2
+        ->getArray("payment_experience")
+        ->Array.map(item3 => {
+          let dict3 = item3->getDictFromJson
+          {
+            payment_experience_type: dict3->getString("payment_experience_type", ""),
+            payment_experience_type_decode: switch dict3->getString("payment_experience_type", "") {
+            | "redirect_to_url" => REDIRECT_TO_URL
+            | _ => NONE
+            },
+            eligible_connectors: dict3->getArray("eligible_connectors"),
+          }
+        }),
+        required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
+      })->Js.Array.push(plist)
+    })
   | _ => []
   }->ignore
 
@@ -242,6 +263,7 @@ let getPaymentMethodType = pm => {
   | PAY_LATER(payment_method_type) => payment_method_type.payment_method_type
   | BANK_REDIRECT(payment_method_type) => payment_method_type.payment_method_type
   | CRYPTO(payment_method_type) => payment_method_type.payment_method_type
+  | OPEN_BANKING(payment_method_type) => payment_method_type.payment_method_type
   }
 }
 
@@ -335,9 +357,9 @@ let getPaymentBody = (body, dynamicFieldsJson) => {
 }
 
 let jsonToSavedPMObj = data => {
-  let cards = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
+  let customerSavedPMs = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
 
-  cards->Array.reduce([], (acc, obj) => {
+  customerSavedPMs->Array.reduce([], (acc, obj) => {
     let savedPMData = obj->Utils.getDictFromJson
     let cardData = savedPMData->Dict.get("card")->Option.flatMap(JSON.Decode.object)
 
@@ -362,6 +384,7 @@ let jsonToSavedPMObj = data => {
             "/" ++
             card->Utils.getString("expiry_year", "")->String.sliceToEnd(~start=-2),
             payment_token: savedPMData->Utils.getString("payment_token", ""),
+            paymentMethodId: savedPMData->Utils.getString("payment_method_id", ""),
             nick_name: card->Utils.getString("nick_name", ""),
             isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
             requiresCVV: savedPMData->Utils.getBool("requires_cvv", false),
@@ -379,11 +402,13 @@ let jsonToSavedPMObj = data => {
           ->Utils.getString("payment_method_type", "")
           ->SdkTypes.walletNameMapper,
           payment_token: savedPMData->Utils.getString("payment_token", ""),
+          paymentMethodId: savedPMData->Utils.getString("payment_method_id", ""),
           isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
           created: savedPMData->Utils.getString("created", ""),
           lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
         }),
       )
+    // | TODO: add suport for "bank_debit"
     | _ => ()
     }
 

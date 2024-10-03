@@ -1,14 +1,6 @@
 open ReactNative
 open Style
 
-module CustomKeyboardAvoidingView = {
-  @react.component
-  let make = (~children) => {
-    <KeyboardAvoidingView style={viewStyle(~flex=1., ())} behavior={#padding}>
-      {children}
-    </KeyboardAvoidingView>
-  }
-}
 module ContextWrapper = {
   @react.component
   let make = (~props, ~rootTag, ~children) => {
@@ -34,10 +26,10 @@ module App = {
   @react.component
   let make = () => {
     <View style={viewStyle(~flex=1., ())}>
-      {ReactNative.Platform.os == #android
+      {Platform.os == #android
         ? <StatusBar translucent=true backgroundColor="transparent" />
         : React.null}
-      <NavigatorRouter />
+      <NavigatorRouterParent />
     </View>
   }
 }

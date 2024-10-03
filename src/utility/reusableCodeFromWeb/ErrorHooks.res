@@ -3,6 +3,7 @@ let useShowErrorOrWarning = () => {
   (inputKey: ErrorUtils.errorKey, ~dynamicStr="", ()) => {
     let (type_, str) = switch inputKey {
     | INVALID_PK(var) => var
+    | INVALID_EK(var) => var
     | DEPRECATED_LOADSTRIPE(var) => var
     | REQUIRED_PARAMETER(var) => var
     | UNKNOWN_KEY(var) => var
@@ -41,7 +42,7 @@ let useErrorWarningValidationOnLoad = () => {
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
       | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
-      | NoView => ()
+      | NoView | PaymentMethodsManagement => ()
       }
     } else if !isClientSecretValid {
       let dynamicStr = "ClientSecret is expected to be in format pay_******_secret_*****"
@@ -51,7 +52,7 @@ let useErrorWarningValidationOnLoad = () => {
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
       | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
-      | NoView => ()
+      | NoView | PaymentMethodsManagement => ()
       }
     }
     // else if nativeProp.configuration.merchantDisplayName === "" {
