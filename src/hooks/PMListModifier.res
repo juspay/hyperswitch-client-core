@@ -261,6 +261,13 @@ let useListModifier = () => {
                   exp
                 }
               : None
+          | SAMSUNG_PAY =>
+            exp->Option.isSome &&
+            SamsungPayModule.isAvailable &&
+            SamsungPay.val.contents == SamsungPay.Valid
+              ? exp
+              : None
+
           | PAYPAL =>
             exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
               ? exp
@@ -345,6 +352,8 @@ let widgetModifier = (
               )
             switch switch walletVal.payment_method_type_wallet {
             | GOOGLE_PAY =>
+              ReactNative.Platform.os !== #ios && sessionObject.wallet_name !== NONE ? exp : None
+            | SAMSUNG_PAY =>
               ReactNative.Platform.os !== #ios && sessionObject.wallet_name !== NONE ? exp : None
             | PAYPAL =>
               exp->Option.isNone
