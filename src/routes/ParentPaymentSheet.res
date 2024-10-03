@@ -39,6 +39,6 @@ let make = () => {
     | (None, _) => <PaymentSheet setConfirmButtonDataRef />
     }}
     <GlobalConfirmButton confirmButtonDataRef />
-    <Space height=20. />
+    <Space height=42. />
   </FullScreenSheetWrapper>
 }
