@@ -3,6 +3,7 @@ open Style
 open PaymentMethodListType
 
 external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
+external samsungPayParser: SamsungPayType.paymentMethodData => JSON.t = "%identity"
 external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
 
 type item = {
@@ -37,6 +38,7 @@ let make = (
     applePayButtonColor,
     buttonBorderRadius,
     primaryButtonHeight,
+    samsungPayButtonColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
@@ -65,6 +67,11 @@ let make = (
         linearGradientColorTuple: Some(paypalButonColor),
         name: "PayPal",
         iconName: "paypal",
+      }
+    | SAMSUNG_PAY => {
+        linearGradientColorTuple: Some(samsungPayButtonColor),
+        name: "Samsung Pay",
+        iconName: "samsung pay",
       }
     | GOOGLE_PAY => {
         linearGradientColorTuple: Some("#00000000", "#00000000"),
@@ -310,6 +317,31 @@ let make = (
     }
   }
 
+  let confirmSamsungPay = (status, response) => {
+    if status->ThreeDsUtils.isStatusSuccess {
+      let obj = response->SamsungPayType.itemToObjMapper
+
+      let payment_method_data =
+        [
+          (
+            walletType.payment_method,
+            [(walletType.payment_method_type, obj->samsungPayParser)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+      processRequest(~payment_method_data, ())
+    } else {
+      setLoading(FillingDetails)
+      showAlert(
+        ~errorType="warning",
+        ~message=`Samsung Pay Error, Please try again ${status.message}`,
+      )
+    }
+  }
+
   let confirmApplePay = (var: RescriptCore.Dict.t<Core__JSON.t>) => {
     logger(
       ~logType=DEBUG,
@@ -537,6 +569,7 @@ let make = (
               },
             )
           }
+        | SAMSUNG_PAY => SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
         | _ => {
             logger(
               ~logType=DEBUG,

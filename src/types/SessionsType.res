@@ -1,5 +1,16 @@
 open SdkTypes
 
+type samsungPaySession = {
+  wallet_name: string,
+  version: string,
+  service_id: string,
+  order_number: string,
+  merchant: JSON.t,
+  amount: JSON.t,
+  protocol: string,
+  allowed_brands: array<JSON.t>,
+}
+
 type sessions = {
   wallet_name: payment_method_type_wallet,
   session_token: string,
@@ -19,6 +30,12 @@ type sessions = {
   connector_reference_id: JSON.t,
   connector_sdk_public_key: JSON.t,
   connector_merchant_id: JSON.t,
+  merchant: JSON.t,
+  order_number: string,
+  service_id: string,
+  amount: JSON.t,
+  protocol: string,
+  allowed_brands: array<JSON.t>,
 }
 let defaultToken = {
   wallet_name: NONE,
@@ -39,13 +56,21 @@ let defaultToken = {
   connector_reference_id: JSON.Encode.null,
   connector_sdk_public_key: JSON.Encode.null,
   connector_merchant_id: JSON.Encode.null,
+  merchant: JSON.Encode.null,
+  order_number: "",
+  service_id: "",
+  amount: JSON.Encode.null,
+  protocol: "",
+  allowed_brands: [],
 }
+
 let getWallet = str => {
   switch str {
   | "apple_pay" => APPLE_PAY
   | "paypal" => PAYPAL
   | "klarna" => KLARNA
   | "google_pay" => GOOGLE_PAY
+  | "samsung_pay" => SAMSUNG_PAY
   | _ => NONE
   }
 }
@@ -77,6 +102,12 @@ let itemToObjMapper = dict => {
         connector_reference_id: getJsonObjectFromDict(dict, "connector_reference_id"),
         connector_sdk_public_key: getJsonObjectFromDict(dict, "connector_sdk_public_key"),
         connector_merchant_id: getJsonObjectFromDict(dict, "connector_merchant_id"),
+        merchant: getJsonObjectFromDict(dict, "merchant"),
+        order_number: getString(dict, "order_number", ""),
+        service_id: getString(dict, "service_id", ""),
+        amount: getJsonObjectFromDict(dict, "amount"),
+        protocol: getString(dict, "protocol", ""),
+        allowed_brands: getArray(dict, "allowed_brands"),
       }
     })
   })

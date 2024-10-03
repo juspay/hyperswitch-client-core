@@ -21,22 +21,29 @@ let make = () => {
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
+  let samsungPayValidity = SamsungPay.useSamsungPayValidityHook()
 
   <FullScreenSheetWrapper>
-    {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType) {
-    | (_, None)
-    | (Loading, _) =>
-      nativeProp.hyperParams.defaultView
+    {switch (
+      allApiData.savedPaymentMethods,
+      allApiData.additionalPMLData.paymentType,
+      samsungPayValidity,
+    ) {
+    | (_, _, SamsungPay.Checking) => <SdkLoadingScreen />
+    | (_, _, SamsungPay.Not_Started) => <SdkLoadingScreen />
+    | (_, None, _)
+    | (Loading, _, _) =>
+      nativeProp.hyperParams.defaultView && samsungPayValidity->SamsungPay.isSamsungPayValid
         ? <PaymentSheet setConfirmButtonDataRef />
         : <SdkLoadingScreen />
-    | (Some(data), _) =>
+    | (Some(data), _, _) =>
       paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
       data.pmList->Option.getOr([])->Array.length > 0 &&
       allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
         ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
         : <PaymentSheet setConfirmButtonDataRef />
 
-    | (None, _) => <PaymentSheet setConfirmButtonDataRef />
+    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
     }}
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=60. />
