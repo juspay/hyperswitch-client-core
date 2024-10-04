@@ -313,7 +313,7 @@ let make = (
   let confirmApplePay = (var: RescriptCore.Dict.t<Core__JSON.t>) => {
     logger(
       ~logType=DEBUG,
-      ~value=var->Js.Json.stringifyAny->Option.getOr("Option.getOr"),
+      ~value=walletType.payment_method_type,
       ~category=USER_EVENT,
       ~paymentMethod=walletType.payment_method_type,
       ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
