@@ -19,7 +19,7 @@ let useApiLogWrapper = () => {
     ~paymentExperience=?,
     (),
   ) => {
-    let (value, internalMetadata) = switch apiLogType {
+    let (_value, internalMetadata) = switch apiLogType {
     | Request => ([("url", url->JSON.Encode.string)], [])
     | Response => (
         [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
@@ -44,7 +44,7 @@ let useApiLogWrapper = () => {
     }
     logger(
       ~logType,
-      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~value=apiLogType->JSON.stringifyAny->Option.getOr(""),
       ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
       ~category=API,
       ~eventName,
