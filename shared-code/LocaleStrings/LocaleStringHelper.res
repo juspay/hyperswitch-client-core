@@ -76,4 +76,3 @@ let getLocale = locale => {
   | _ => EnglishLocale.localeStrings
   }
 }
-

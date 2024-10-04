@@ -130,7 +130,7 @@ let savedPaymentMethodAPICall = nativeProp => {
   CommonHooks.fetchApi(
     ~uri,
     ~method_=Get,
-    ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+    ~headers=SharedUtils.getHeader(~apiKey=nativeProp.publishableKey,~appId= nativeProp.hyperParams.appId)->Dict.fromArray,
     (),
   )
   ->Promise.then(data => {
@@ -225,7 +225,10 @@ let savedPaymentMethodAPICall = nativeProp => {
 let sessionAPICall = nativeProp => {
   let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
 
-  let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
+  let headers = SharedUtils.getHeader(
+    ~apiKey=nativeProp.publishableKey,
+    ~appId=nativeProp.hyperParams.appId,
+  )->Dict.fromArray
   let uri = `${getBaseUrl(nativeProp)}/payments/session_tokens`
   let body =
     [
@@ -345,7 +348,7 @@ let sessionAPICall = nativeProp => {
 let confirmAPICall = (nativeProp, body) => {
   let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
   let uri = `${getBaseUrl(nativeProp)}/payments/${paymentId}/confirm`
-  let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
+  let headers = SharedUtils.getHeader(~apiKey=nativeProp.publishableKey,~appId= nativeProp.hyperParams.appId)->Dict.fromArray
   let initTimestamp = Date.now()
   logWrapper(
     ~logType=INFO,

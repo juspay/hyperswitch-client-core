@@ -1,4 +1,5 @@
 open PaymentConfirmTypes
+open SharedUtils
 
 external parse: Fetch.response => JSON.t = "%identity"
 external toJson: 't => JSON.t = "%identity"
@@ -66,15 +67,19 @@ let useSessionToken = () => {
     switch Next.getNextEnv {
     | "next" => Promise.resolve(Next.sessionsRes)
     | _ =>
-      let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
       let url = `${baseUrl}/payments/session_tokens`
+      let headers =
+        getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+        )->Dict.fromArray
+
       let body =
         [
           (
             "payment_id",
-            String.split(nativeProp.clientSecret, "_secret_")
-            ->Array.get(0)
-            ->Option.getOr("")
+            nativeProp.clientSecret
+            ->getPaymentId
             ->JSON.Encode.string,
           ),
           ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
@@ -156,16 +161,18 @@ let useRetrieveHook = () => {
     switch (Next.getNextEnv, type_) {
     | ("next", Types.List) => Promise.resolve(Next.listRes)
     | (_, type_) =>
-      let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
+      let headers =
+        SharedUtils.getHeader(
+          ~apiKey=publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+        )->Dict.fromArray
       let (
         uri,
         eventName: LoggerTypes.eventName,
         initEventName: LoggerTypes.eventName,
       ) = switch type_ {
       | Payment => (
-          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
-            ->Array.get(0)
-            ->Option.getOr("")}?force_sync=${isForceSync
+          `${baseUrl}/payments/${clientSecret->getPaymentId}?force_sync=${isForceSync
               ? "true"
               : "false"}&client_secret=${clientSecret}`,
           RETRIEVE_CALL,
@@ -367,9 +374,13 @@ let useRedirectHook = () => {
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     (),
   ) => {
-    let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+    let uriPram = clientSecret->getPaymentId
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
-    let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
+    let headers =
+      SharedUtils.getHeader(
+        ~apiKey=publishableKey,
+        ~appId=nativeProp.hyperParams.appId,
+      )->Dict.fromArray
 
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       switch nextAction->PaymentUtils.getActionType {
@@ -689,7 +700,7 @@ let useGetSavedPMHook = () => {
     CommonHooks.fetchApi(
       ~uri,
       ~method_=Get,
-      ~headers=Utils.getHeader(apiKey, nativeProp.hyperParams.appId),
+      ~headers=SharedUtils.getHeader(~apiKey, ~appId=nativeProp.hyperParams.appId)->Dict.fromArray,
       (),
     )
     ->Promise.then(data => {
@@ -771,10 +782,10 @@ let useDeleteSavedPaymentMethod = () => {
       CommonHooks.fetchApi(
         ~uri,
         ~method_=Delete,
-        ~headers=Utils.getHeader(
-          nativeProp.ephemeralKey->Option.getOr(""),
-          nativeProp.hyperParams.appId,
-        ),
+        ~headers=SharedUtils.getHeader(
+          ~apiKey=nativeProp.ephemeralKey->Option.getOr(""),
+          ~appId=nativeProp.hyperParams.appId,
+        )->Dict.fromArray,
         (),
       )
       ->Promise.then(resp => {

@@ -81,7 +81,7 @@ let sendLogs = (logFile, uri, publishableKey, appId) => {
       ~uri,
       ~method_=Post,
       ~bodyStr=data,
-      ~headers=Utils.getHeader(publishableKey, appId),
+      ~headers=SharedUtils.getHeader(~apiKey=publishableKey, ~appId=appId)->Dict.fromArray,
       ~mode=NoCORS,
       (),
     )
