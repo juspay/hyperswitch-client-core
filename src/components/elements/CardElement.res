@@ -1,5 +1,9 @@
 open ReactNative
 open Validation
+open CardCvcValidation
+open CardExpiryValidation
+open CardValidationClientCore
+
 external toPlatform: ReactNative.Platform.os => string = "%identity"
 external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
 @send external focus: Dom.element => unit = "focus"
@@ -98,7 +102,7 @@ let make = (
     setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isthisValid)})
   }
   let onChangeZip = (text, zipRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
-    let isthisValid = ValidationFunctions.isValidZip(~zipCode=text, ~country="United States")
+    let isthisValid = ZipValidation.isValidZip(~zipCode=text, ~country="United States")
     if isthisValid {
       switch zipRef.current->Nullable.toOption {
       | None => ()

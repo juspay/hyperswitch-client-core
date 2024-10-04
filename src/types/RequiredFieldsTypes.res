@@ -199,7 +199,7 @@ let getRequiredFieldsFromDict = dict => {
 
 let getErrorMsg = (
   ~field_type: paymentMethodsFields,
-  ~localeObject: LocaleString.localeStrings,
+  ~localeObject: LocaleStringTypes.localeStrings,
 ) => {
   switch field_type {
   | AddressLine1 => localeObject.line1EmptyText
@@ -213,14 +213,14 @@ let getErrorMsg = (
 let checkIsValid = (
   ~text: string,
   ~field_type: paymentMethodsFields,
-  ~localeObject: LocaleString.localeStrings,
+  ~localeObject: LocaleStringTypes.localeStrings,
 ) => {
   if text == "" {
     getErrorMsg(~field_type, ~localeObject)->Some
   } else {
     switch field_type {
     | Email =>
-      switch text->ValidationFunctions.isValidEmail {
+      switch text->EmailValidation.isEmailValid {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
       | None => 

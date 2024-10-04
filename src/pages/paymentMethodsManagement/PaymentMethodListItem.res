@@ -88,7 +88,11 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~isLastElement=true, ~handleDele
         (),
       )}>
       <TextWrapper
-        text={localeObject.deletePaymentMethod->Option.getOr("Delete")} textType=LinkText
+        text={switch localeObject.deletePaymentMethod {
+        | "" => None
+        | value => Some(value)
+        }->Option.getOr("Delete")}
+        textType=LinkText
       />
     </View>
   </CustomTouchableOpacity>

@@ -1,6 +1,8 @@
 open ReactNative
 open Style
 open Validation
+open CardCvcValidation
+
 external toPlatform: ReactNative.Platform.os => string = "%identity"
 external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
 @send external focus: Dom.element => unit = "focus"
@@ -29,7 +31,7 @@ let make = (
   let isCvvValid = isCvvValid->Option.getOr(true)
   let isZipValid = isZipValid->Option.getOr(true)
   let isMaxCardLength =
-    cardNumber->clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
+    cardNumber->clearSpaces->String.length == ValidationUtils.maxCardLength(getCardBrand(cardNumber))
   let (cardNumberIsFocus, setCardNumberIsFocus) = React.useState(_ => false)
   let isCardNumberValid = {
     cardNumberIsFocus ? isCardNumberValid || !isMaxCardLength : isCardNumberValid

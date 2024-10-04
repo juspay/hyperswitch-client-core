@@ -75,7 +75,7 @@ type online = {
   ip_address?: string,
   user_agent?: string,
   accept_header?: string,
-  language?: SdkTypes.localeTypes,
+  language?: LocaleStringTypes.localeTypes,
   color_depth?: int,
   java_enabled?: bool,
   java_script_enabled?: bool,

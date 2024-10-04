@@ -1,36 +1,5 @@
 open Utils
 
-type localeTypes =
-  | En
-  | He
-  | Fr
-  | En_GB
-  | Ar
-  | Ja
-  | De
-  | Fr_BE
-  | Es
-  | Ca
-  | Pt
-  | It
-  | Pl
-  | Nl
-  | NI_BE
-  | Sv
-  | Ru
-  | Lt
-  | Cs
-  | Sk
-  | Ls
-  | Cy
-  | El
-  | Et
-  | Fi
-  | Nb
-  | Bs
-  | Da
-  | Ms
-  | Tr_CY
 
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
@@ -189,7 +158,7 @@ type applePayConfiguration = {
 type themeType = Default | Light | Dark | Minimal | FlatMinimal
 
 type appearance = {
-  locale: option<localeTypes>,
+  locale: option<LocaleStringTypes.localeTypes>,
   colors: option<colorType>,
   shapes: option<shapes>,
   font: option<font>,
@@ -471,7 +440,7 @@ let getAppearanceObj = (
       | "it" => Some(It)
       | "pl" => Some(Pl)
       | "nl" => Some(Nl)
-      | "nI-BE" => Some(NI_BE)
+      | "nI-BE" => Some(Ni_BE)
       | "sv" => Some(Sv)
       | "ru" => Some(Ru)
       | "lt" => Some(Lt)
@@ -486,7 +455,7 @@ let getAppearanceObj = (
       | "bs" => Some(Bs)
       | "da" => Some(Da)
       | "ms" => Some(Ms)
-      | "tr-CY" => Some(Tr_CY)
+      | "tr-CY" => Some(Tr_C)
       | _ => Some(En)
       }
     | _ => Some(En)
