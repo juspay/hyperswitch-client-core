@@ -135,16 +135,7 @@ let make = (
         placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
         value={state}
         ?onKeyPress
-        onChangeText={text => {
-          logger(
-            ~logType=INFO,
-            ~value=text,
-            ~category=USER_EVENT,
-            ~eventName=INPUT_FIELD_CHANGED,
-            (),
-          )
-          setState(text)
-        }}
+        onChangeText={text => setState(text)}
         keyboardType
         autoFocus
         autoComplete={#off}
