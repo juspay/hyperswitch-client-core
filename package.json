@@ -9,7 +9,7 @@
     "re:format": "rescript format -all",
     "web": "webpack serve --mode=development --config reactNativeWeb/webpack.config.js",
     "ios": "cd ios && rm -rf build && pod install && cd .. && react-native run-ios",
-    "android": "react-native run-android --appId io.hyperswitch.demo_app --main-activity io.hyperswitch.demo_app.MainActivity && yarn run adb",
+    "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
     "web:next": "next",
     "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
     "bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
