@@ -64,6 +64,35 @@ app.get('/create-ephemeral-key', async (req, res) => {
   }
 });
 
+app.get('/payment_methods', async (req, res) => {
+  try {
+    const response = await fetch(
+      `https://sandbox.hyperswitch.io/payment_methods`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': process.env.HYPERSWITCH_SECRET_KEY,
+        },
+        body: JSON.stringify({customer_id: 'hyperswitch_sdk_demo_id'}),
+      },
+    );
+    const json = await response.json();
+
+    res.send({
+      paymentMethodId: json.payment_method_id,
+      clientSecret: json.client_secret,
+      publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
+    });
+  } catch (err) {
+    return res.status(400).send({
+      error: {
+        message: err.message,
+      },
+    });
+  }
+});
+
 app.listen(5252, () =>
   console.log(`Node server listening at http://localhost:5252`),
 );
