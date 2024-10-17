@@ -37,9 +37,7 @@ let make = () => {
   switch nativeProp.ephemeralKey {
   | Some(ephemeralKey) =>
     ephemeralKey != ""
-      ? <FullScreenSheetWrapper>
-          <PaymentMethodsManagement />
-        </FullScreenSheetWrapper>
+      ? <PaymentMethodsManagement />
       : {
           showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
           React.null
