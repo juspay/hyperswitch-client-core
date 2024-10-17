@@ -2,6 +2,9 @@
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (pmManagementScreenType, _) = React.useContext(
+    PMManagementContext.pmManagementScreenTypeContext,
+  )
   let showErrorOrWarning = ErrorHooks.useShowErrorOrWarning()
   let savedPaymentMethods = AllPaymentHooks.useGetSavedPMHook()
   let logger = LoggerHook.useLoggerHook()
@@ -32,12 +35,15 @@ let make = () => {
       ->ignore
     }
     None
-  }, [nativeProp])
+  }, (nativeProp, pmManagementScreenType))
 
   switch nativeProp.ephemeralKey {
   | Some(ephemeralKey) =>
     ephemeralKey != ""
-      ? <PaymentMethodsManagement />
+      ? switch pmManagementScreenType {
+          | LIST_SCREEN => <PaymentMethodsManagement />
+          | ADD_PM_SCREEN => <AddPaymentMethod />
+        } 
       : {
           showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
           React.null
