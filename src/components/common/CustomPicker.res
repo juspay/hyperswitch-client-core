@@ -125,6 +125,7 @@ let make = (
           <Space />
           <FlatList
             ref={pickerRef->ReactNative.Ref.value}
+            keyboardShouldPersistTaps={#handled}
             data={items->Array.filter(x =>
               x.name
               ->String.toLowerCase
