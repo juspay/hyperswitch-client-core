@@ -39,6 +39,7 @@ let make = () => {
 
   <View style={array([viewStyle(~flex=1., ()), bgColor])}>
     <ScrollView
+      keyboardShouldPersistTaps={#handled}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={viewStyle(~flexGrow=1., ~paddingBottom=40.->dp, ())}>
       <View style={array([parentViewStyle, viewStyle(~flex=1., ~marginHorizontal=15.->dp, ())])}>

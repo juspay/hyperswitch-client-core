@@ -100,13 +100,11 @@ let make = () => {
       </View>
     : savedMethods->Array.length > 0
     ? <View style={viewStyle(~backgroundColor=component.background, ~height=100.->pct, ())}>
-      <ScrollView>
+      <ScrollView keyboardShouldPersistTaps=#handled>
         {savedMethods
         ->Array.mapWithIndex((item, i) => {
           <PaymentMethodListItem
-            key={i->Int.toString}
-            pmDetails={item}
-            handleDelete=handleDeletePaymentMethods
+            key={i->Int.toString} pmDetails={item} handleDelete=handleDeletePaymentMethods
           />
         })
         ->React.array}
