@@ -34,8 +34,12 @@ let useSamsungPayValidityHook = () => {
                 },
               )
             } else {
-              val := Invalid
-              setState(_ => Invalid)
+              setState(
+                _ => {
+                  val := Invalid
+                  Invalid
+                },
+              )
             }
           })
         }
