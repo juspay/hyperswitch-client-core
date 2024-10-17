@@ -1,6 +1,49 @@
 open ReactNative
 open Style
 
+module AddPaymentMethodButton = {
+  @react.component
+  let make = () => {
+    let {component} = ThemebasedStyle.useThemeBasedStyle()
+    let localeObject = GetLocale.useGetLocalObj()
+
+    <CustomTouchableOpacity
+      onPress={_ => (
+        // TODO: navigate to ADD_PM_SCREEN
+      )}
+      style={viewStyle(
+        ~paddingVertical=16.->dp,
+        ~paddingHorizontal=24.->dp,
+        ~borderBottomWidth=0.8,
+        ~borderBottomColor=component.borderColor,
+        ~flexDirection=#row,
+        ~flexWrap=#nowrap,
+        ~alignItems=#center,
+        ~justifyContent=#"space-between",
+        ~flex=1.,
+        (),
+      )}>
+      <View
+        style={viewStyle(
+          ~flexDirection=#row,
+          ~flexWrap=#nowrap,
+          ~alignItems=#center,
+          ~flex=4.,
+          (),
+        )}>
+        <Icon
+          name={"addwithcircle"}
+          height=16.
+          width=16.
+          style={viewStyle(~marginEnd=20.->dp, ~marginStart=5.->dp, ~marginVertical=10.->dp, ())}
+        />
+        <Space />
+        <TextWrapper text={localeObject.addPaymentMethodLabel} textType=LinkText />
+      </View>
+    </CustomTouchableOpacity>
+  }
+}
+
 module PaymentMethodTitle = {
   @react.component
   let make = (~pmDetails: SdkTypes.savedDataType) => {
@@ -40,7 +83,7 @@ module PaymentMethodTitle = {
 }
 
 @react.component
-let make = (~pmDetails: SdkTypes.savedDataType, ~isLastElement=true, ~handleDelete) => {
+let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
   let {component} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -54,7 +97,7 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~isLastElement=true, ~handleDele
     style={
       viewStyle(
         ~padding=16.->dp,
-        ~borderBottomWidth={isLastElement ? 0.8 : 0.},
+        ~borderBottomWidth=0.8,
         ~borderBottomColor=component.borderColor,
         ~flexDirection=#row,
         ~flexWrap=#nowrap,
