@@ -101,7 +101,7 @@ let make = (
 
   allApiData.savedPaymentMethods == Loading
     ? <LoadingPmList />
-    : <ScrollView>
+    : <ScrollView keyboardShouldPersistTaps=#handled>
         {listArr
         ->Array.mapWithIndex((item, i) => {
           <SaveCardsList.PaymentMethodListView
