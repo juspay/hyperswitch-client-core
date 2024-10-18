@@ -9,7 +9,7 @@ module AddPaymentMethodButton = {
 
     <CustomTouchableOpacity
       onPress={_ => (
-        // TODO: navigate to ADD_PM_SCREEN
+        HyperModule.hyperModule.onAddPaymentMethod("")
       )}
       style={viewStyle(
         ~paddingVertical=16.->dp,
