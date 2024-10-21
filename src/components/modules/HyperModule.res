@@ -20,6 +20,7 @@ type hyperModule = {
   presentApplePay: (string, Dict.t<JSON.t> => unit) => unit,
   launchGPay: (string, Dict.t<JSON.t> => unit) => unit,
   exitPaymentsheet: (int, string, bool) => unit,
+  exitPaymentMethodManagement: (int, string, bool) => unit,
   exitWidget: (string, string) => unit,
   exitCardForm: string => unit,
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
@@ -59,6 +60,7 @@ let hyperModule = {
   presentApplePay: getStrFunWithCallbackFromKey("presentApplePay"),
   launchGPay: getStrFunWithCallbackFromKey("launchGPay"),
   exitPaymentsheet: getIntStrBoolFunFromKey("exitPaymentsheet"),
+  exitPaymentMethodManagement: getIntStrBoolFunFromKey("exitPaymentMethodManagement"),
   exitWidget: getStrFun2FromKey("exitWidget"),
   exitCardForm: getStrFunFromKey("exitCardForm"),
   launchWidgetPaymentSheet: getStrFunWithCallbackFromKey("launchWidgetPaymentSheet"),
@@ -119,13 +121,26 @@ let useExitPaymentsheet = () => {
         //       )}&payment_intent_client_secret=${nativeProp.clientSecret}&amount=6541`,
         //   )
         exitPaymentSheet(apiResStatus->stringifiedResStatus)
-      : nativeProp.sdkState == WidgetPaymentSheet
-      ? hyperModule.exitWidgetPaymentsheet(
-        nativeProp.rootTag,
-        apiResStatus->stringifiedResStatus,
-        reset,
-      )
-      : hyperModule.exitPaymentsheet(nativeProp.rootTag, apiResStatus->stringifiedResStatus, reset)
+      : switch nativeProp.sdkState {
+        | WidgetPaymentSheet =>
+          hyperModule.exitWidgetPaymentsheet(
+            nativeProp.rootTag,
+            apiResStatus->stringifiedResStatus,
+            reset,
+          )
+        | PaymentMethodsManagement =>
+          hyperModule.exitPaymentMethodManagement(
+            nativeProp.rootTag,
+            apiResStatus->stringifiedResStatus,
+            reset,
+          )
+        | _ =>
+          hyperModule.exitPaymentsheet(
+            nativeProp.rootTag,
+            apiResStatus->stringifiedResStatus,
+            reset,
+          )
+        }
   }
 
   let simplyExit = (apiResStatus, rootTag, reset) => {

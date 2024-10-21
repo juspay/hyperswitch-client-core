@@ -282,6 +282,12 @@ let make = (
     }
   }, (layout.width, panX))
 
+  let (height, setHeight) = React.useState(_ => 100.)
+
+  let setDynamicHeight = React.useCallback1(height => {
+    setHeight(_ => height)
+  }, [setHeight])
+
   children(
     ~indexInFocus,
     ~routes,
@@ -325,13 +331,15 @@ let make = (
             <View
               key={route.title ++ route.key->Int.toString}
               style=?{if layout.width != 0. {
-                Some(viewStyle(~width=layout.width->dp, ()))
+                Some(viewStyle(~width=layout.width->dp, ~height=height->dp, ()))
               } else if focused {
                 Some(StyleSheet.absoluteFill)
               } else {
                 None
               }}>
-              {focused || layout.width != 0. ? child : React.null}
+              <TopTabScreenWraper setDynamicHeight isScreenFocus={indexInFocus == route.key}>
+                {focused || layout.width != 0. ? child : React.null}
+              </TopTabScreenWraper>
             </View>
           | None => React.null
           }

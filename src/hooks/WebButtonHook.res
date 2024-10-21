@@ -14,6 +14,7 @@ let usePayButton = () => {
     buttonBorderRadius,
   } = ThemebasedStyle.useThemeBasedStyle()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
+  let {launchApplePay, launchGPay} = WebKit.useWebKit()
 
   let addApplePay = (~sessionObject: SessionsType.sessions, ~resolve as _) => {
     let status = Window.useScript(
@@ -83,67 +84,15 @@ let usePayButton = () => {
       ~appEnv=nativeProp.env,
       ~requiredFields,
     )
-    let tokenStringified = GooglePayTypeNew.getGpayTokenStringified(
-      ~obj=sessionObject,
-      ~appEnv=nativeProp.env,
-      ~requiredFields,
-    )
-    // let paymentRequest = token.paymentDataRequest->anyTypeToJson
 
-    let onGooglePayButtonClick = (paymentClient: Window.client) => {
-      launchGPay(tokenStringified)
-      // try {
-      //   let secure = window["isSecureContext"]
-      //   Console.log2("GPAYBUTTON", secure)
-      //   paymentClient.loadPaymentData(paymentRequest)
-      //   ->Promise.then(paymentData => {
-      //     let data = [
-      //       ("error", ""->JSON.Encode.string),
-      //       (
-      //         "paymentMethodData",
-      //         paymentData
-      //         ->JSON.stringify
-      //         ->JSON.Encode.string,
-      //       ),
-      //     ]->Dict.fromArray
-      //     Promise.resolve(data)
-      //   })
-      //   ->Promise.catch((err: exn) => {
-      //     let errorMessage = switch err->Exn.asJsExn {
-      //     | Some(error) =>
-      //       let statusCode = switch error
-      //       ->anyTypeToJson
-      //       ->Utils.getDictFromJson
-      //       ->Dict.get("statusCode") {
-      //       | Some(json) => json->JSON.Decode.string->Option.getOr("failed")
-      //       | None => "failed"
-      //       }
-      //       error->Exn.message->Option.getOr(statusCode)
-      //     | None => "failed"
-      //     }
-      //     let data =
-      //       [
-      //         (
-      //           "error",
-      //           (
-      //             errorMessage == "User closed the Payment Request UI." ||
-      //               errorMessage == "CANCELED"
-      //               ? "Cancel"
-      //               : errorMessage
-      //           )->JSON.Encode.string,
-      //         ),
-      //         ("paymentMethodData", JSON.Encode.null),
-      //       ]->Dict.fromArray
-      //     Promise.resolve(data)
-      //   })
-      //   ->Promise.then(data => {
-      //     Window.postMessage({"googlePayData": data}->JSON.stringifyAny->Option.getOr(""), "*")
-      //     Promise.resolve()
-      //   })
-      //   ->ignore
-      // } catch {
-      // | exn => AlertHook.alert(exn->JSON.stringifyAny->Option.getOr(""))
-      // }
+    let onGooglePayButtonClick = () => {
+      launchGPay(
+        GooglePayTypeNew.getGpayTokenStringified(
+          ~obj=sessionObject,
+          ~appEnv=nativeProp.env,
+          ~requiredFields,
+        ),
+      )
     }
 
     React.useEffect1(() => {
@@ -153,7 +102,7 @@ let usePayButton = () => {
 
             let buttonStyle = {
               let obj = {
-                "onClick": () => onGooglePayButtonClick(paymentClient),
+                "onClick": () => onGooglePayButtonClick(),
                 "buttonType": nativeProp.configuration.appearance.googlePay.buttonType
                 ->anyTypeToString
                 ->String.toLowerCase,

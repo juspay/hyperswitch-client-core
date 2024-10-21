@@ -65,6 +65,7 @@ let make = (
   | PAY_LATER(prop) => prop.payment_method_type
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
+  | OPEN_BANKING(prop) => prop.payment_method_type
   }
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
@@ -79,6 +80,10 @@ let make = (
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
 
   | BANK_REDIRECT(_) => None
+  | OPEN_BANKING(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   | CRYPTO(prop) =>
     prop.payment_experience
     ->Array.get(0)
@@ -757,6 +762,34 @@ let make = (
     }
   }
 
+  let processRequestOpenBanking = (prop: payment_method_types_open_banking) => {
+    let payment_method_data =
+      [
+        (
+          prop.payment_method,
+          [
+            (
+              prop.payment_method_type,
+              []
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+
+    processRequest(
+      ~payment_method_data,
+      ~payment_method=prop.payment_method,
+      ~payment_method_type=prop.payment_method_type,
+      (),
+    )
+  }
+
   let handlePress = _ => {
     setLoading(ProcessingPayments(None))
     switch redirectProp {
@@ -767,6 +800,7 @@ let make = (
     | BANK_REDIRECT(prop) => processRequestBankRedirect(prop)
     | CRYPTO(prop) => processRequestCrypto(prop)
     | WALLET(prop) => processRequestWallet(prop)
+    | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
     | _ => ()
     }
   }

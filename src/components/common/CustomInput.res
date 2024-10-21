@@ -1,10 +1,6 @@
 open ReactNative
 open Style
 
-external toSize: Animated.Interpolation.t => size = "%identity"
-external toFloat: Animated.Interpolation.t => float = "%identity"
-external toString: Animated.Interpolation.t => string = "%identity"
-
 type iconType =
   | NoIcon
   | CustomIcon(React.element)
@@ -156,7 +152,7 @@ let make = (
                   inputRange: [0., 1.],
                   outputRange: ["100%", "40%"]->Animated.Interpolation.fromStringArray,
                 })
-                ->toSize,
+                ->Animated.StyleProp.size,
                 ~justifyContent=#center,
                 (),
               )}>
@@ -177,7 +173,7 @@ let make = (
                         fontSize +. placeholderTextSizeAdjust -. 5.,
                       ]->Animated.Interpolation.fromFloatArray,
                     })
-                    ->toFloat,
+                    ->Animated.StyleProp.float,
                     ~color=placeholderTextColor->Option.getOr(placeholderColor),
                     (),
                   ),
@@ -215,16 +211,7 @@ let make = (
           placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
           value={state}
           ?onKeyPress
-          onChangeText={text => {
-            logger(
-              ~logType=INFO,
-              ~value=text,
-              ~category=USER_EVENT,
-              ~eventName=INPUT_FIELD_CHANGED,
-              (),
-            )
-            setState(text)
-          }}
+          onChangeText={text => setState(text)}
           keyboardType
           autoFocus
           autoComplete={#off}
