@@ -16,7 +16,7 @@ let make = (
   ~index,
   ~lazyPreloadDistance,
   ~addEnterListener: handleEnter => unit => unit,
-  ~style,
+  ~style=?,
 ) => {
   let (isLoading, setIsLoading) = React.useState(() =>
     Math.Int.abs(indexInFocus - index) > lazyPreloadDistance
@@ -64,7 +64,10 @@ let make = (
   <View
     accessibilityElementsHidden={!focused}
     importantForAccessibility={focused ? #auto : #"no-hide-descendants"}
-    style={array([viewStyle(~flex=1., ~overflow=#hidden, ~width=layout.width->dp, ()), style])}>
+    style={switch style {
+    | Some(style) => array([viewStyle(~overflow=#hidden, ~width=layout.width->dp, ()), style])
+    | None => viewStyle(~overflow=#hidden, ~width=layout.width->dp, ())
+    }}>
     {focused || layout.width != 0. ? children(~loading=false) : React.null}
   </View>
 }

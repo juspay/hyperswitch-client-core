@@ -16,15 +16,21 @@ type threeDsData = {
   pollConfig: pollConfig,
 }
 
-type nextAction = {redirectToUrl: string, type_: string, threeDsData?: threeDsData}
+type sessionToken = {
+  wallet_name: string,
+  open_banking_session_token: string,
+}
+
+type nextAction = {
+  redirectToUrl: string,
+  type_: string,
+  threeDsData?: threeDsData,
+  session_token?: sessionToken,
+}
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
 open Utils
 
-// let defaultRedirectTourl = {
-//   returnUrl: "",
-//   url: "",
-// }
 let defaultNextAction = {
   redirectToUrl: "",
   type_: "",
@@ -44,29 +50,7 @@ let defaultCancelError = {
   message: "",
 }
 
-/* let defaultIntent = {
-  nextAction: defaultNextAction,
-  status: "",
-  error: defaultError,
-}
-let getRedirectToUrl = (dict, str) => {
-  dict
-  ->Dict.get(str)
-  ->Option.flatMap(JSON.Decode.object)
-  ->Option.map(json => {
-    {
-      returnUrl: getString(json, "redirect_to_url", ""),
-      url: getString(json, "url", ""),
-    }
-  })
-  ->Option.getOr(defaultRedirectTourl)
-}*/
-
 let getNextAction = (dict, str) => {
-  // nativeEvent
-  //     ->JSON.Decode.object
-  //     ->Option.getOr(Dict.make())
-
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
@@ -81,6 +65,13 @@ let getNextAction = (dict, str) => {
     let pollConfigDict =
       threeDSDataDict
       ->Dict.get("poll_config")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.object
+      ->Option.getOr(Dict.make())
+
+    let sessionTokenDict =
+      json
+      ->Dict.get("session_token")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.object
       ->Option.getOr(Dict.make())
@@ -101,25 +92,14 @@ let getNextAction = (dict, str) => {
           frequency: getOptionFloat(pollConfigDict, "frequency")->Option.getOr(0.)->Int.fromFloat,
         },
       },
+      session_token: {
+        wallet_name: getString(sessionTokenDict, "wallet_name", ""),
+        open_banking_session_token: getString(sessionTokenDict, "open_banking_session_token", ""),
+      },
     }
   })
   ->Option.getOr(defaultNextAction)
 }
-
-/* let getError = (dict, str, status) => {
-  dict
-  ->Dict.get(str)
-  ->Option.flatMap(JSON.Decode.object)
-  ->Option.map(json => {
-    {
-      message: getString(json, "message", ""),
-      code: getString(json, "code", ""),
-      type_: getString(json, "type", ""),
-      status,
-    }
-  })
-  ->Option.getOr(defaultError)
-}*/
 
 let itemToObjMapper = dict => {
   let errorDict =
@@ -130,7 +110,6 @@ let itemToObjMapper = dict => {
   {
     nextAction: getNextAction(dict, "next_action"),
     status: getString(dict, "status", ""),
-    // error: getError(dict, "error"),
     error: {
       message: getString(
         errorDict,

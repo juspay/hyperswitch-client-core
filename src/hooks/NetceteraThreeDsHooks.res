@@ -57,7 +57,12 @@ let useExternalThreeDs = () => {
     ~publishableKey,
     ~nextAction,
     ~sdkEnvironment: GlobalVars.envType,
-    ~retrievePayment,
+    ~retrievePayment: (
+      Types.retrieve,
+      string,
+      string,
+      ~isForceSync: bool=?,
+    ) => promise<Js.Json.t>,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {

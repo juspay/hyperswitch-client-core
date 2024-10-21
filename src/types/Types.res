@@ -91,6 +91,12 @@ let defaultConfig = {
       header: "",
       fields: [],
     },
+    {
+      name: "open_banking_pis",
+      text: "Open Banking",
+      header: "",
+      fields: [],
+    },
     // {
     //   name: "google_pay",
     //   text: "Google Pay",

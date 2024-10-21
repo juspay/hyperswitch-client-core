@@ -124,6 +124,7 @@ let make = (
     <View style={viewStyle(~height, ())}>
       <FlatList
         ref={flatlistRef->ReactNative.Ref.value}
+        keyboardShouldPersistTaps={#handled}
         data=hocComponentArr
         style={viewStyle(~flex=1., ~width=100.->pct, ())}
         showsHorizontalScrollIndicator=false

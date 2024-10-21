@@ -3,6 +3,7 @@ type errorStringType = Dynamic(string => string) | Static(string)
 type errorTupple = (errorType, errorStringType)
 type errorKey =
   | INVALID_PK(errorTupple)
+  | INVALID_EK(errorTupple)
   | DEPRECATED_LOADSTRIPE(errorTupple)
   | REQUIRED_PARAMETER(errorTupple)
   | UNKNOWN_KEY(errorTupple)
@@ -16,6 +17,7 @@ type errorKey =
 
 type errorWarning = {
   invalidPk: errorKey,
+  invalidEphemeralKey: errorKey,
   deprecatedLoadStripe: errorKey,
   reguirParameter: errorKey,
   typeBoolError: errorKey,
@@ -67,6 +69,12 @@ let errorWarning = {
     Error,
     Static(
       "INTEGRATION ERROR: Invalid Publishable key, starts with pk_snd_(sandbox/test) or pk_prd_(production/live)",
+    ),
+  ),
+  invalidEphemeralKey: INVALID_EK(
+    Error,
+    Static(
+      "INTEGRATION ERROR: Ephemeral key not available.",
     ),
   ),
   deprecatedLoadStripe: DEPRECATED_LOADSTRIPE(

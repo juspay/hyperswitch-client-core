@@ -80,7 +80,9 @@ let make = (
   }
 
   <ScrollView
-    pointerEvents=#none style={Style.viewStyle(~height=220.->Style.dp, ~borderRadius=15., ())}>
+    keyboardShouldPersistTaps=#handled
+    pointerEvents=#none
+    style={Style.viewStyle(~height=220.->Style.dp, ~borderRadius=15., ())}>
     {React.array(
       Array.map(paymentMethods, paymentMethod => {
         <KlarnaModule

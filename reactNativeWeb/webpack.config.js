@@ -3,10 +3,11 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-
+const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const appDirectory = path.resolve(__dirname);
 const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
-
+const isDevelopment = process.env.NODE_ENV !== 'production';
+console.log('dev mode --- >', isDevelopment);
 const compileNodeModules = [
   // Add every react-native package that needs compiling
   // 'react-native-gesture-handler',
@@ -45,7 +46,10 @@ const babelLoaderConfiguration = {
     options: {
       cacheDirectory: true,
       presets,
-      plugins,
+      plugins: [
+        ...plugins,
+        isDevelopment && require.resolve('react-refresh/babel'),
+      ].filter(Boolean),
     },
   },
 };
@@ -79,6 +83,9 @@ module.exports = {
     filename: 'index.bundle.js',
   },
   devtool: 'source-map',
+  devServer: {
+    hot: true,
+  },
   resolve: {
     extensions: [
       '.web.tsx',
@@ -98,11 +105,12 @@ module.exports = {
       'react-native-hyperswitch-paypal': 'react-native-web',
       'react-native-hyperswitch-kount': 'react-native-web',
       'react-native-hyperswitch-netcetera-3ds': 'react-native-web',
+      'react-native-plaid-link-sdk': 'react-native-web',
     },
   },
   optimization: {
-    minimize: true,
-    minimizer: [new TerserPlugin()],
+    minimize: !isDevelopment,
+    minimizer: [!isDevelopment && new TerserPlugin()].filter(Boolean),
   },
   module: {
     rules: [
@@ -116,9 +124,10 @@ module.exports = {
       template: path.join(__dirname, 'index.html'),
     }),
     new webpack.HotModuleReplacementPlugin(),
+    isDevelopment && new ReactRefreshWebpackPlugin(),
     new webpack.DefinePlugin({
       // See: https://github.com/necolas/react-native-web/issues/349
       __DEV__: JSON.stringify(false),
     }),
-  ],
+  ].filter(Boolean),
 };
