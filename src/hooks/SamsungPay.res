@@ -20,11 +20,17 @@ let useSamsungPayValidityHook = () => {
 
   React.useEffect2(() => {
     switch (val.contents, isSamsungPayAvailable, allApiData.sessions) {
-    | (Not_Started, false, _) => val := Invalid
+    | (_, false, _) =>
+      setState(_ => {
+        val := Invalid
+        Invalid
+      })
     | (Not_Started, true, Some(_)) => {
-        val := Checking
-        setState(_ => Checking)
-        if SamsungPayModule.isAvailable {
+        setState(_ => {
+          val := Checking
+          Checking
+        })
+        if isSamsungPayAvailable {
           SamsungPayModule.checkSamsungPayValidity(stringifiedSessionToken, status => {
             if status->ThreeDsUtils.isStatusSuccess {
               setState(
