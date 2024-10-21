@@ -7,7 +7,7 @@ let params = {
   s3Bucket: process.env.BUCKET_NAME,
   distributionId: process.env.DIST_ID,
   urlPrefix: `v${version.split(".")[0]}`,
-  version: `${BASE_PATH}/${version}`,
+  version: `${BASE_PATH}/${version}/${BASE_PATH}`,
   distFolder: path.resolve(__dirname, "..", "reactNativeWeb/dist"),
   region: process.env.AWS_REGION,
 };
