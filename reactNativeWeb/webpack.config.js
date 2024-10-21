@@ -10,7 +10,7 @@ const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
 const isDevelopment = false;
 const repoVersion = require("./version.json").version;
 const majorVersion = "v" + repoVersion.split(".")[0];
-const repoPublicPath = `/mobile/${repoVersion}/${majorVersion}`;
+const repoPublicPath = `/mobile/${repoVersion}/mobile/${majorVersion}`;
 
 // console.log('dev mode --- >', isDevelopment);
 const compileNodeModules = [
