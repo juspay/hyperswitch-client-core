@@ -42,8 +42,8 @@ async function doInvalidation(distributionId, urlPrefix, region, s3Bucket) {
         Quantity: s3Bucket === process.env.S3_SANDBOX_BUCKET ? 2 : 1,
         Items:
           s3Bucket === process.env.S3_SANDBOX_BUCKET
-            ? [`${withSlash(urlPrefix)}/*`, `${withSlash("v0")}/*`]
-            : [`${withSlash(urlPrefix)}/*`],
+            ? [`/mobile${withSlash(urlPrefix)}/*`, `/mobile${withSlash("v0")}/*`]
+            : [`/mobile${withSlash(urlPrefix)}/*`],
       },
     },
   };
