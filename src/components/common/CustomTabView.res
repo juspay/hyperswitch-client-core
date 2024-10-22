@@ -39,6 +39,8 @@ let make = (
       | None => true
       }
 
+  let dList = true
+  
   switch data->Array.length {
   | 0 => React.null
   | _ =>
@@ -57,7 +59,7 @@ let make = (
         isScrollBarOnlyCards
           ? React.null
           : <ScrollableCustomTopBar
-              hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo}
+              hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo} dList={dList}
             />
       }}
       renderScene={(~route, ~position, ~layout as _, ~jumpTo) =>
@@ -74,3 +76,4 @@ let make = (
     />
   }
 }
+
