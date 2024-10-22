@@ -1,5 +1,5 @@
 const { run } = require("./prepareS3.js");
-const { version } = require("../package.json");
+const { version } = require("../reactNativeWeb/version.json");
 const path = require("path");
 const BASE_PATH = "mobile";
 

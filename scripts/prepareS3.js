@@ -42,8 +42,8 @@ async function doInvalidation(distributionId, urlPrefix, region, s3Bucket) {
         Quantity: s3Bucket === process.env.S3_SANDBOX_BUCKET ? 2 : 1,
         Items:
           s3Bucket === process.env.S3_SANDBOX_BUCKET
-            ? [`${withSlash(urlPrefix)}/*`, `${withSlash("v0")}/*`]
-            : [`${withSlash(urlPrefix)}/*`],
+            ? [`/mobile${withSlash(urlPrefix)}/*`, `/mobile${withSlash("v0")}/*`]
+            : [`/mobile${withSlash(urlPrefix)}/*`],
       },
     },
   };
@@ -143,7 +143,7 @@ async function uploadFile(s3Bucket, version, urlPrefix, distFolder, region) {
 
     const params = {
       Bucket: s3Bucket,
-      Key: `${version}${withSlash(urlPrefix)}/${fileName}`,
+      Key: `${version}/mobile${withSlash(urlPrefix)}/${fileName}`,
       Body: bufferData,
       Metadata: {
         "Cache-Control": CACHE_CONTROL,
@@ -157,7 +157,7 @@ async function uploadFile(s3Bucket, version, urlPrefix, distFolder, region) {
     if (s3Bucket === process.env.S3_SANDBOX_BUCKET) {
       const sandboxParams = {
         ...params,
-        Key: `${version}${withSlash("v0")}/${fileName}`,
+        Key: `${version}/mobile${withSlash("v0")}/${fileName}`,
       };
       await s3Client.send(new PutObjectCommand(sandboxParams));
     }

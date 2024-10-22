@@ -6,8 +6,13 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const appDirectory = path.resolve(__dirname);
 const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
-const isDevelopment = process.env.NODE_ENV !== 'production';
-console.log('dev mode --- >', isDevelopment);
+// const isDevelopment = process.env.NODE_ENV !== 'production';
+const isDevelopment = false;
+const repoVersion = require("./version.json").version;
+const majorVersion = "v" + repoVersion.split(".")[0];
+const repoPublicPath = `/mobile/${repoVersion}/mobile/${majorVersion}`;
+
+// console.log('dev mode --- >', isDevelopment);
 const compileNodeModules = [
   // Add every react-native package that needs compiling
   // 'react-native-gesture-handler',
@@ -79,8 +84,8 @@ module.exports = {
   },
   output: {
     path: path.resolve(appDirectory, 'dist'),
-    publicPath: '/',
     filename: 'index.bundle.js',
+    publicPath: `${repoPublicPath}/`,
   },
   devtool: 'source-map',
   devServer: {
