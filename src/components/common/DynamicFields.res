@@ -1,19 +1,7 @@
 open ReactNative
 open Style
-
+open RequiredFieldsTypes
 module RenderField = {
-  let getValueForKey = (finalJson, key) => {
-    finalJson
-    ->Array.filterMap(((currKey, value, _)) => {
-      if key === currKey {
-        Some(value)
-      } else {
-        None
-      }
-    })
-    ->Array.get(0)
-    ->Option.getOr(JSON.Encode.null)
-  }
 
   @react.component
   let make = (
@@ -30,7 +18,6 @@ module RenderField = {
 
     let value = switch required_fields_type.required_field {
     | StringField(x) => finalJson->getValueForKey(x)
-
     | FullNameField(firstName, lastName) =>
       let firstNameValue = finalJson->getValueForKey(firstName)
       let lastNameValue = finalJson->getValueForKey(lastName)
@@ -162,7 +149,7 @@ module RenderField = {
     let isValidForFocus = isFocus || isValid
 
     let {borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
-    let getStateData = states => {
+    let getStateData = React.useCallback1(states => {
       states
       ->Utils.getStateNames(country)
       ->Array.map((item): CustomPicker.customPickerType => {
@@ -171,9 +158,9 @@ module RenderField = {
           value: item,
         }
       })
-    }
+    }, [country])
 
-    let getCountryData = countryArr => {
+    let getCountryData = React.useCallback1(countryArr => {
       Country.country
       ->Array.filter(item => {
         countryArr->Array.includes(item.isoAlpha2)
@@ -185,7 +172,7 @@ module RenderField = {
           icon: Utils.getCountryFlags(item.isoAlpha2),
         }
       })
-    }
+    }, [Country.country])
 
     let placeholder = RequiredFieldsTypes.useGetPlaceholder(
       ~field_type=required_fields_type.field_type,
@@ -325,7 +312,6 @@ let make = (
       ->Option.flatMap(((_, value, _)) => Some(value))
       ->Option.flatMap(JSON.Decode.string)
       ->Option.getOr(clientCountry.isoAlpha2)
-
     setCountry(_ => countryVal)
 
     let temp = Array.reduce(finalJson, true, (accumulator, item) => {
