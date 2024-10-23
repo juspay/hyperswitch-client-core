@@ -25,6 +25,11 @@ type paymentMethodsFields =
   | AddressCountry(array<string>)
   | BlikCode
   | Currency(array<string>)
+  | CVCCode
+  | CardExpMonth
+  | CardExpYear
+  | CardNumber
+  | ZipCode
 
 type requiredField =
   | StringField(string)
@@ -60,6 +65,11 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_address_state" => AddressState
   | "user_blik_code" => BlikCode
   | "user_billing_name" => BillingName
+  | "user_card_cvc" => CVCCode
+  | "user_card_zip" => ZipCode
+  | "user_card_expiry_month" => CardExpMonth
+  | "user_card_expiry_year" => CardExpYear
+  | "user_card_number" => CardNumber
   | var => UnKnownField(var)
   }
 }
@@ -94,6 +104,7 @@ let getPaymentMethodsFieldTypeFromDict = (dict: Dict.t<JSON.t>) => {
   | _ => UnKnownField("empty_list")
   }
 }
+
 let getFieldType = dict => {
   let fieldClass =
     dict->Dict.get("field_type")->Option.getOr(JSON.Encode.null)->JSON.Classify.classify
@@ -223,8 +234,7 @@ let checkIsValid = (
       switch text->ValidationFunctions.isValidEmail {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
-      | None => 
-        Some(localeObject.emailEmptyText)
+      | None => Some(localeObject.emailEmptyText)
       }
     | _ => None
     }
@@ -297,6 +307,10 @@ let useGetPlaceholder = (
     | CountryAndPincode(_)
     | BlikCode =>
       display_name->toCamelCase
+    | CVCCode => localeObject.cvcTextLabel
+    | ZipCode => "ZIP Code"
+    | CardExpMonth | CardExpYear => localeObject.cardExpiresText
+    | CardNumber => localeObject.cardNumberLabel
     }
 }
 
@@ -424,6 +438,19 @@ let getIsAnyBillingDetailEmpty = (requiredFields: array<required_fields_type>) =
   })
 }
 
+let getValueForKey = (jsonObj, key) => {
+  jsonObj
+  ->Array.filterMap(((currKey, value, _)) => {
+    if key === currKey {
+      Some(value)
+    } else {
+      None
+    }
+  })
+  ->Array.get(0)
+  ->Option.getOr(JSON.Encode.null)
+}
+
 let filterDynamicFieldsFromRendering = (
   requiredFields: array<required_fields_type>,
   finalJson: array<(string, Core__JSON.t, option<string>)>,
@@ -501,7 +528,6 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
 
     switch requiredFieldPath {
     | StringField(fieldPath) => acc->Array.push((fieldPath, value, isValid))
-
     | FullNameField(firstName, lastName) =>
       let arr = requiredField.value->String.split(" ")
       let firstNameVal = arr->Array.get(0)->Option.getOr("")
@@ -522,4 +548,35 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
 
     acc
   })
+}
+
+// let isFieldRequired = (required_fields: required_fields, field: paymentMethodsFields) => {
+//   switch required_fields->Array.find((v: required_fields_type) => v.field_type === field) {
+//   | Some(_) => true
+//   | _ => false
+//   }
+// }
+
+let getStringFromPaymentMethodsFieldType = fieldType => {
+  switch fieldType {
+  | Email => "user_email_address"
+  | FullName => "user_full_name"
+  | Country => "user_country"
+  | Bank => "user_bank"
+  | PhoneNumber => "user_phone_number"
+  | AddressLine1 => "user_address_line1"
+  | AddressLine2 => "user_address_line2"
+  | AddressCity => "user_address_city"
+  | AddressPincode => "user_address_pincode"
+  | AddressState => "user_address_state"
+  | BlikCode => "user_blik_code"
+  | BillingName => "user_billing_name"
+  | CVCCode => "user_card_cvc"
+  | CardExpMonth => "user_card_expiry_month"
+  | CardExpYear => "user_card_expiry_year"
+  | CardNumber => "user_card_number"
+  | ZipCode => "user_card_zip"
+  | UnKnownField(var) => var
+  | _ => "unknown_field"
+  }
 }

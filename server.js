@@ -21,6 +21,8 @@ app.get('/create-payment-intent', async (req, res) => {
     var paymentIntent = await hyper.paymentIntents.create({
       amount: 2999,
       currency: 'USD',
+      customer_id: 'John',
+      profile_id : process.env.HYPERSWITCH_PROFILE_ID
     });
 
     // Send publishable key and PaymentIntent details to client

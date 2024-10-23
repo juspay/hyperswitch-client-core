@@ -129,6 +129,29 @@ let formatCardExpiryNumber = val => {
   }
 }
 
+let formatCardExpiryValues = val => {
+  let clearValue = val->clearSpaces
+  let expiryVal = clearValue->toInt
+  let formatted = if expiryVal >= 2 && expiryVal <= 9 && clearValue->String.length == 1 {
+    [`0${clearValue}`, ""]
+  } else if clearValue->String.length == 2 && expiryVal > 12 {
+    let val = clearValue->String.split("")
+    [`0${val->getStrFromIndex(0)}`, `${val->getStrFromIndex(1)}`]
+  } else {
+
+    [`${clearValue}`, ""]
+  }
+
+  if clearValue->String.length >= 3 {
+    [
+      clearValue->slice(0, 2),
+      clearValue->slice(2, 4),
+    ]
+  } else {
+    formatted
+  }
+}
+
 let getCardBrand = cardNumber => {
   try {
     let card = cardNumber->String.replaceRegExp(%re("/[^\d]/g"), "")

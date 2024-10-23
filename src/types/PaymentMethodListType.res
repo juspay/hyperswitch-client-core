@@ -227,7 +227,7 @@ let flattenPaymentListArray = (plist, item) => {
         required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
       })->Js.Array.push(plist)
     })
-  | "open_banking" => 
+  | "open_banking" =>
     payment_method_types_array->Array.map(item2 => {
       let dict2 = item2->getDictFromJson
       OPEN_BANKING({
@@ -340,23 +340,32 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
 
 external toJson: redirectType => JSON.t = "%identity"
 
-let getPaymentBody = (body, dynamicFieldsJson) => {
+let getPaymentBody = (body, dynamicFieldsJson, dynamicCardFieldJson) => {
   let flattenedBodyDict = body->toJson->RequiredFieldsTypes.flattenObject(true)
 
   let dynamicFieldsJsonDict = dynamicFieldsJson->Array.reduce(Dict.make(), (acc, (key, val, _)) => {
     acc->Dict.set(key, val)
     acc
   })
+  let dynamicCardFieldJsonDict = dynamicCardFieldJson->Array.reduce(Dict.make(), (
+    acc,
+    (key, val, _),
+  ) => {
+    acc->Dict.set(key, val)
+    acc
+  })
 
   flattenedBodyDict
   ->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
+  ->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicCardFieldJsonDict)
   ->RequiredFieldsTypes.getArrayOfTupleFromDict
   ->Dict.fromArray
   ->JSON.Encode.object
 }
 
 let jsonToSavedPMObj = data => {
-  let customerSavedPMs = data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
+  let customerSavedPMs =
+    data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
 
   customerSavedPMs->Array.reduce([], (acc, obj) => {
     let savedPMData = obj->Utils.getDictFromJson
