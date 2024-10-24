@@ -34,15 +34,37 @@ let make = (
   let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
   let requiredFields = cardVal.required_field->Array.filter(val => {
     switch val.field_type {
+    | RequiredFieldsTypes.CVCCode
+    | RequiredFieldsTypes.CardExpMonth
+    | RequiredFieldsTypes.CardExpYear
+    | RequiredFieldsTypes.CardNumber
     | RequiredFieldsTypes.UnKnownField(_) => false
     | _ => true
     }
   })
+
+  let cardRequiredFields = cardVal.required_field->Array.filter(val => {
+    switch val.field_type {
+    | RequiredFieldsTypes.CVCCode
+    | RequiredFieldsTypes.CardExpMonth
+    | RequiredFieldsTypes.CardExpYear
+    | RequiredFieldsTypes.CardNumber
+    | RequiredFieldsTypes.UnKnownField(_) => true
+    | _ => false
+    }
+  })
+
+  let (dynamicCardFieldJson, setDynamicCardFieldJson) = React.useState((_): array<(
+    RescriptCoreFuture.Dict.key,
+    JSON.t,
+    option<string>,
+  )> => [])
   let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
     RescriptCoreFuture.Dict.key,
     JSON.t,
     option<string>,
   )> => [])
+
   let (error, setError) = React.useState(_ => None)
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
@@ -88,10 +110,9 @@ let make = (
       | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
-
     let payment_method_data = PaymentUtils.generatePaymentMethodData(
       ~prop,
-      ~cardData,
+      // ~cardData,
       ~cardHolderName=None,
       ~nickname,
     )
@@ -107,7 +128,12 @@ let make = (
       (),
     )
 
-    let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(body, dynamicFieldsJson)
+    let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
+      body,
+      dynamicFieldsJson,
+      dynamicCardFieldJson,
+    )
+
     fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
@@ -143,7 +169,13 @@ let make = (
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
-      <CardElement setIsAllValid=setIsAllCardValuesValid reset=false keyToTrigerButtonClickError />
+      <CardElement2
+        requiredFields={cardRequiredFields}
+        setIsAllValid=setIsAllCardValuesValid
+        reset=false
+        keyToTrigerButtonClickError
+        setDynamicFieldsJson={setDynamicCardFieldJson}
+      />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields
