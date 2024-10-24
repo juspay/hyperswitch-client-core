@@ -26,6 +26,7 @@
     "clean:pod": "cd ios && pod deintegrate && cd ..",
     "clean:gradle:cache": "rm -rf ~/.gradle",
     "clean:pod:cache": "pod cache clean --all",
+    "deploy-to-s3": "node ./scripts/pushToS3.js",
     "lint": "eslint .",
     "test": "jest",
     "prepare": "husky"
