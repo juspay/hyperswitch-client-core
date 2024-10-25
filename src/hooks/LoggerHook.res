@@ -1,5 +1,5 @@
-open LoggerUtils
 open LoggerTypes
+open LoggerUtils
 external toPlatform: ReactNative.Platform.os => string = "%identity"
 
 let useCalculateLatency = () => {
@@ -54,6 +54,7 @@ let inactiveScreenApiCall = (
     sessionId: session_id,
     version: nativeProp.hyperParams.sdkVersion,
     codePushVersion: getCodePushVersionNoFromRef(),
+    clientCoreVersion: getClientCoreVersionNoFromRef(),
     component: MOBILE,
     value: "Inactive Screen",
     internalMetadata: "",
@@ -109,6 +110,7 @@ let useLoggerHook = () => {
   let calculateLatency = useCalculateLatency()
   let getLoggingEndpointHook = GlobalHooks.useGetLoggingUrl()
   getGetPushVersion()
+  getClientCoreVersion()
   (
     ~logType,
     ~value,
@@ -136,6 +138,7 @@ let useLoggerHook = () => {
       sessionId: nativeProp.sessionId,
       version: nativeProp.hyperParams.sdkVersion,
       codePushVersion: getCodePushVersionNoFromRef(),
+      clientCoreVersion: getClientCoreVersionNoFromRef(),
       component: MOBILE,
       value,
       internalMetadata: internalMetadata->Option.getOr(""),
