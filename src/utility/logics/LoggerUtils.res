@@ -35,6 +35,7 @@ let logFileToObj = logFile => {
     ),
     ("version", logFile.version->JSON.Encode.string), // repoversion of orca-android
     ("code_push_version", logFile.codePushVersion->JSON.Encode.string),
+    ("client_core_version", logFile.clientCoreVersion->JSON.Encode.string),
     ("value", logFile.value->JSON.Encode.string),
     ("internal_metadata", logFile.internalMetadata->JSON.Encode.string),
     ("session_id", logFile.sessionId->JSON.Encode.string),
