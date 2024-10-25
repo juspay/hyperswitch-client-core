@@ -70,6 +70,7 @@ let logWrapper = (
     sessionId: "",
     version: "repoVersion",
     codePushVersion: LoggerUtils.getCodePushVersionNoFromRef(),
+    clientCoreVersion: LoggerUtils.getClientCoreVersionNoFromRef(),
     component: MOBILE,
     value: value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
     internalMetadata: internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
