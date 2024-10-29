@@ -5,6 +5,7 @@ let eventToStrMapper = (eventName: eventName) => {
 }
 
 let codePushVersionRef = ref(CP_NOT_STARTED)
+let sdkVersionRef = ref(PACKAGE_JSON_NOT_STARTED)
 let logFileToObj = logFile => {
   [
     ("timestamp", logFile.timestamp->JSON.Encode.string),
@@ -34,6 +35,7 @@ let logFileToObj = logFile => {
     ),
     ("version", logFile.version->JSON.Encode.string), // repoversion of orca-android
     ("code_push_version", logFile.codePushVersion->JSON.Encode.string),
+    ("client_core_version", logFile.clientCoreVersion->JSON.Encode.string),
     ("value", logFile.value->JSON.Encode.string),
     ("internal_metadata", logFile.internalMetadata->JSON.Encode.string),
     ("session_id", logFile.sessionId->JSON.Encode.string),
@@ -114,6 +116,36 @@ let getGetPushVersion = () => {
 let getCodePushVersionNoFromRef = () => {
   switch codePushVersionRef.contents {
   | CP_VERSION_LOADED(version) => version
+  | _ => "loading"
+  }
+}
+
+type dataModule = {version: string}
+
+@val
+external importStates: string => promise<dataModule> = "import"
+
+let getClientCoreVersion = () => {
+  if sdkVersionRef.contents == PACKAGE_JSON_NOT_STARTED {
+    sdkVersionRef := PACKAGE_JSON_LOADING
+
+    importStates("./../../../package.json")
+    ->Promise.then(res => {
+      sdkVersionRef := PACKAGE_JSON_LOADED(res.version)
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      sdkVersionRef := PACKAGE_JSON_REFERENCE_ERROR
+      Promise.resolve()
+    })
+    ->ignore
+  }
+}
+
+let getClientCoreVersionNoFromRef = () => {
+  switch sdkVersionRef.contents {
+  | PACKAGE_JSON_LOADED(version) => version
+  | PACKAGE_JSON_REFERENCE_ERROR => "reference_error"
   | _ => "loading"
   }
 }

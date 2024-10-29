@@ -19,7 +19,7 @@ let useApiLogWrapper = () => {
     ~paymentExperience=?,
     (),
   ) => {
-    let (value, internalMetadata) = switch apiLogType {
+    let (_value, internalMetadata) = switch apiLogType {
     | Request => ([("url", url->JSON.Encode.string)], [])
     | Response => (
         [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
@@ -44,7 +44,7 @@ let useApiLogWrapper = () => {
     }
     logger(
       ~logType,
-      ~value=value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
+      ~value=apiLogType->JSON.stringifyAny->Option.getOr(""),
       ~internalMetadata=internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
       ~category=API,
       ~eventName,
@@ -857,5 +857,103 @@ let useDeleteSavedPaymentMethod = () => {
       )
       None->Promise.resolve
     }
+  }
+}
+
+let useSavePaymentMethod = () => {
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (cardData, _) = React.useContext(CardDataContext.cardDataContext)
+
+  let (month, year) = Validation.getExpiryDates(cardData.expireDate)
+  let payment_method_data =
+    [
+      (
+        "card",
+        [
+          ("card_number", cardData.cardNumber->Validation.clearSpaces->JSON.Encode.string),
+          ("card_exp_month", month->JSON.Encode.string),
+          ("card_exp_year", year->JSON.Encode.string),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object,
+      ),
+    ]
+    ->Dict.fromArray
+    ->JSON.Encode.object
+
+  let body: PaymentMethodListType.redirectType = {
+    payment_method: "card",
+    client_secret: nativeProp.pmClientSecret->Option.getOr(""),
+    payment_method_data,
+  }
+
+  () => {
+    let paymentMethodId = nativeProp.paymentMethodManagementId->Option.getOr("")
+    let uri = `${baseUrl}/payment_methods/${paymentMethodId}/save`
+    apiLogWrapper(
+      ~logType=INFO,
+      ~eventName=ADD_PAYMENT_METHOD_CALL_INIT,
+      ~url=uri,
+      ~statusCode="",
+      ~apiLogType=Request,
+      ~data=JSON.Encode.null,
+      (),
+    )
+
+    CommonHooks.fetchApi(
+      ~uri,
+      ~method_=Post,
+      ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+      ~bodyStr=body->JSON.stringifyAny->Option.getOr(""),
+      (),
+    )
+    ->Promise.then(resp => {
+      let statusCode = resp->Fetch.Response.status->string_of_int
+      if statusCode->String.charAt(0) !== "2" {
+        resp
+        ->Fetch.Response.json
+        ->Promise.then(error => {
+          apiLogWrapper(
+            ~url=uri,
+            ~data=error,
+            ~statusCode,
+            ~apiLogType=Err,
+            ~eventName=ADD_PAYMENT_METHOD_CALL,
+            ~logType=ERROR,
+            (),
+          )
+          error->Promise.resolve
+        })
+      } else {
+        resp
+        ->Fetch.Response.json
+        ->Promise.then(data => {
+          apiLogWrapper(
+            ~url=uri,
+            ~data,
+            ~statusCode,
+            ~apiLogType=Response,
+            ~eventName=ADD_PAYMENT_METHOD_CALL,
+            ~logType=INFO,
+            (),
+          )
+          data->Promise.resolve
+        })
+      }
+    })
+    ->Promise.catch(err => {
+      apiLogWrapper(
+        ~logType=ERROR,
+        ~eventName=ADD_PAYMENT_METHOD_CALL,
+        ~url=uri,
+        ~statusCode="504",
+        ~apiLogType=NoResponse,
+        ~data=err->toJson,
+        (),
+      )
+      err->toJson->Promise.resolve
+    })
   }
 }

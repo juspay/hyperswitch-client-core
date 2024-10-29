@@ -113,7 +113,15 @@ type messageHandlers = {
 
 type webKit = {messageHandlers?: messageHandlers}
 
-@scope("window") external webKit: option<webKit> = "webkit"
+@scope("window") external webKit: Nullable.t<webKit> = "webkit"
+
+type androidInterface = {
+  sdkInitialised: string => unit,
+  exitPaymentSheet: string => unit,
+  launchGPay: string => unit,
+}
+
+@scope("window") external androidInterface: Nullable.t<androidInterface> = "AndroidInterface"
 
 type billingContact = {
   addressLines: array<string>,

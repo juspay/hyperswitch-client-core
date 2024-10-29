@@ -337,9 +337,11 @@ let make = (
               } else {
                 None
               }}>
-              <TopTabScreenWraper setDynamicHeight isScreenFocus={indexInFocus == route.key}>
-                {focused || layout.width != 0. ? child : React.null}
-              </TopTabScreenWraper>
+              {focused || layout.width != 0.
+                ? <TopTabScreenWraper setDynamicHeight isScreenFocus={indexInFocus == route.key}>
+                    child
+                  </TopTabScreenWraper>
+                : React.null}
             </View>
           | None => React.null
           }

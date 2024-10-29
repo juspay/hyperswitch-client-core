@@ -69,6 +69,7 @@ module Wrapper = {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
 
     <Animated.ScrollView
+      keyboardShouldPersistTaps={#handled}
       style={array([
         viewStyle(~flexGrow=1., ~width, ~minHeight=250.->dp, ~padding=20.->dp, ()),
         bgColor,

@@ -252,6 +252,7 @@ let useListModifier = () => {
           switch switch walletVal.payment_method_type_wallet {
           | GOOGLE_PAY =>
             ReactNative.Platform.os !== #ios &&
+            WebKit.webType !== #iosWebView &&
             sessionObject.wallet_name !== NONE &&
             sessionObject.connector !== "trustpay"
               ? {
@@ -275,7 +276,9 @@ let useListModifier = () => {
                   x.payment_experience_type_decode === REDIRECT_TO_URL
                 )
           | APPLE_PAY =>
-            ReactNative.Platform.os !== #android && sessionObject.wallet_name !== NONE
+            ReactNative.Platform.os !== #android &&
+            WebKit.webType !== #androidWebView &&
+            sessionObject.wallet_name !== NONE
               ? {
                   if ReactNative.Platform.os === #web {
                     Promise.make((resolve, _) => {
