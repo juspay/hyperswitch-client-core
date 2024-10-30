@@ -103,6 +103,44 @@ let useScript = (src: string) => {
   status
 }
 
+let useLink = (src: string) => {
+  let (status, setStatus) = React.useState(_ => src != "" ? #loading : #idle)
+  React.useEffect(() => {
+    if src == "" {
+      setStatus(_ => #idle)
+    }
+    let link = querySelector(`link[href="${src}"]`)
+    switch link->Nullable.toOption {
+    | Some(dom) =>
+      setStatus(_ => dom.getAttribute("data-status"))
+      None
+    | None =>
+      let link = createElement("link")
+      link.href = src
+      link.rel = "stylesheet"
+      link.async = true
+      link.setAttribute("data-status", #loading->anyTypeToString)
+      appendChildToHead(link)
+      let setAttributeFromEvent = (event: event) => {
+        setStatus(_ => event.\"type" === "load" ? #ready : #error)
+        link.setAttribute(
+          "data-status",
+          (event.\"type" === "load" ? #ready : #error)->anyTypeToString,
+        )
+      }
+      link->addEventListenerToElement(#load, setAttributeFromEvent)
+      link->addEventListenerToElement(#error, setAttributeFromEvent)
+      Some(
+        () => {
+          link->removeEventListenerFromElement(#load, setAttributeFromEvent)
+          link->removeEventListenerFromElement(#error, setAttributeFromEvent)
+        },
+      )
+    }
+  }, [src])
+  status
+}
+
 type postMessage = {postMessage: string => unit}
 
 type messageHandlers = {
