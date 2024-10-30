@@ -74,7 +74,7 @@ let make = (
 
   React.useEffect1(() => {
     if (
-      Platform.os == #android &&
+      WebKit.platform === #android &&
       !isInitialised &&
       allApiData.additionalPMLData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
       cardData.cardNumber->String.length > 0

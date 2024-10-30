@@ -44,7 +44,7 @@ let logFileToObj = logFile => {
     (
       "app_id",
       logFile.appId
-      ->Option.getOr(ReactNative.Platform.os->JSON.stringifyAny->Option.getOr("defaultAppId"))
+      ->Option.getOr(WebKit.platform->JSON.stringifyAny->Option.getOr("defaultAppId"))
       ->JSON.Encode.string,
     ),
     ("platform", logFile.platform->Utils.convertToScreamingSnakeCase->JSON.Encode.string),
