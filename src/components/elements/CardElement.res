@@ -1,6 +1,5 @@
 open ReactNative
 open Validation
-external toPlatform: ReactNative.Platform.os => string = "%identity"
 external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
 @send external focus: Dom.element => unit = "focus"
 @send external blur: Dom.element => unit = "blur"
