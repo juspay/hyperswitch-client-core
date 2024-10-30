@@ -28,6 +28,9 @@ let defaultProps = {
       //   borderRadius:20.0
       // }}
       // locale: "en"
+      typography: {
+        fontResId: 'montserrat'
+      }
     },
   },
   hyperParams: {
@@ -65,7 +68,7 @@ const initReactNativeWeb = async () => {
       if (JSON.parse(event.data).sdkLoaded) {
         createProps();
       }
-    } catch (ex) {}
+    } catch (ex) { }
   };
 
   window.addEventListener('message', handleMessage);

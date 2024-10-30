@@ -77,7 +77,7 @@ let logWrapper = (
     category,
     paymentId,
     merchantId: publishableKey,
-    platform: ReactNative.Platform.os->LoggerHook.toPlatform,
+    platform: ReactNative.Platform.os->JSON.stringifyAny->Option.getOr("headless"),
     userAgent: "userAgent",
     eventName,
     firstEvent: true,
