@@ -623,7 +623,7 @@ let make = (
       | PAYPAL =>
         if (
           sessionObject.session_token !== "" &&
-          ReactNative.Platform.os == #android &&
+          WebKit.platform == #android &&
           PaypalModule.payPalModule->Option.isSome
         ) {
           PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
