@@ -59,7 +59,7 @@ let make = (
 
   let onAuthorized = (event: KlarnaModule.event) => {
     let params = event.nativeEvent
-    if (Platform.os == #ios || params.approved) && params.authToken !== None {
+    if (WebKit.platform == #ios || params.approved) && params.authToken !== None {
       switch launchKlarna {
       | Some(prop) => processRequest(prop, params.authToken->Option.getOr(""))
       | _ =>

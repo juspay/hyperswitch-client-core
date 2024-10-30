@@ -1,11 +1,15 @@
-type webType = [#iosWebView | #androidWebView | #pureWeb]
+type platformType = [#ios | #iosWebView | #android | #androidWebView | #web]
 
-let webType = if Window.webKit->Nullable.toOption->Option.isSome {
-  #iosWebView
+let (platform, platformString) = if ReactNative.Platform.os === #android {
+  (#android, "android")
+} else if ReactNative.Platform.os === #ios {
+  (#ios, "ios")
+} else if Window.webKit->Nullable.toOption->Option.isSome {
+  (#iosWebView, "iosWebView")
 } else if Window.androidInterface->Nullable.toOption->Option.isSome {
-  #androidWebView
+  (#androidWebView, "androidWebView")
 } else {
-  #pureWeb
+  (#web, "web")
 }
 
 type useWebKit = {
@@ -21,7 +25,7 @@ let useWebKit = () => {
   | None => None
   }
   let exitPaymentSheet = str => {
-    switch webType {
+    switch platform {
     | #iosWebView =>
       switch messageHandlers {
       | Some(messageHandlers) =>
@@ -36,11 +40,11 @@ let useWebKit = () => {
       | Some(interface) => interface.exitPaymentSheet(str)
       | None => ()
       }
-    | #pureWeb => ()
+    | _ => ()
     }
   }
   let sdkInitialised = str => {
-    switch webType {
+    switch platform {
     | #iosWebView =>
       switch messageHandlers {
       | Some(messageHandlers) =>
@@ -55,11 +59,11 @@ let useWebKit = () => {
       | Some(interface) => interface.sdkInitialised(str)
       | None => ()
       }
-    | #pureWeb => ()
+    | _ => ()
     }
   }
   let launchApplePay = str => {
-    switch webType {
+    switch platform {
     | #iosWebView =>
       switch messageHandlers {
       | Some(messageHandlers) =>
@@ -73,7 +77,7 @@ let useWebKit = () => {
     }
   }
   let launchGPay = str => {
-    switch webType {
+    switch platform {
     | #androidWebView =>
       switch Window.androidInterface->Nullable.toOption {
       | Some(interface) => interface.launchGPay(str)
