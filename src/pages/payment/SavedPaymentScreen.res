@@ -1,8 +1,5 @@
 open ReactNative
 
-external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
-external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
-
 @react.component
 let make = (
   ~setConfirmButtonDataRef,
@@ -212,7 +209,7 @@ let make = (
             [
               (
                 selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-                obj.paymentMethodData->parser,
+                obj.paymentMethodData->Utils.getJsonObjectFromRecord,
               ),
             ]
             ->Dict.fromArray
@@ -223,7 +220,7 @@ let make = (
             switch obj.paymentMethodData.info {
             | Some(info) =>
               switch info.billing_address {
-              | Some(address) => address->parser2
+              | Some(address) => address->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               }
             | None => JSON.Encode.null
@@ -300,7 +297,7 @@ let make = (
             (
               "billing",
               switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
-              | Some(billing) => billing->parser2
+              | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
             ),

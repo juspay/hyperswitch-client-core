@@ -226,7 +226,7 @@ let darkRecord = {
   fontFamily: switch WebKit.platform {
   | #ios | #iosWebView => DefaultIOS
   | #android | #androidWebView => DefaultAndroid
-  | #web => DefaultWeb
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
@@ -302,7 +302,7 @@ let lightRecord = {
   fontFamily: switch WebKit.platform {
   | #ios | #iosWebView => DefaultIOS
   | #android | #androidWebView => DefaultAndroid
-  | #web => DefaultWeb
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
@@ -379,7 +379,7 @@ let minimal = {
   fontFamily: switch WebKit.platform {
   | #ios | #iosWebView => DefaultIOS
   | #android | #androidWebView => DefaultAndroid
-  | #web => DefaultWeb
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
@@ -456,7 +456,7 @@ let flatMinimal = {
   fontFamily: switch WebKit.platform {
   | #ios | #iosWebView => DefaultIOS
   | #android | #androidWebView => DefaultAndroid
-  | #web => DefaultWeb
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,

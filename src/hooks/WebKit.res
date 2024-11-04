@@ -1,6 +1,8 @@
-type platformType = [#ios | #iosWebView | #android | #androidWebView | #web]
+type platformType = [#ios | #iosWebView | #android | #androidWebView | #web | #next]
 
-let (platform, platformString) = if ReactNative.Platform.os === #android {
+let (platform, platformString) = if Next.getNextEnv == "next" {
+  (#next, "next")
+} else if ReactNative.Platform.os === #android {
   (#android, "android")
 } else if ReactNative.Platform.os === #ios {
   (#ios, "ios")
@@ -40,7 +42,7 @@ let useWebKit = () => {
       | Some(interface) => interface.exitPaymentSheet(str)
       | None => ()
       }
-    | _ => ()
+    | _ => Window.postMessageToParent(str, "*")
     }
   }
   let sdkInitialised = str => {
@@ -59,7 +61,7 @@ let useWebKit = () => {
       | Some(interface) => interface.sdkInitialised(str)
       | None => ()
       }
-    | _ => ()
+    | _ => Window.postMessageToParent(str, "*")
     }
   }
   let launchApplePay = str => {
@@ -71,7 +73,7 @@ let useWebKit = () => {
         | Some(launchApplePay) => launchApplePay.postMessage(str)
         | None => ()
         }
-      | None => ()
+      | None => Window.postMessageToParent(str, "*")
       }
     | _ => ()
     }
@@ -83,7 +85,7 @@ let useWebKit = () => {
       | Some(interface) => interface.launchGPay(str)
       | None => ()
       }
-    | _ => ()
+    | _ => Window.postMessageToParent(str, "*")
     }
   }
   {exitPaymentSheet, sdkInitialised, launchApplePay, launchGPay}
