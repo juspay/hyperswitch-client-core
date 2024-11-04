@@ -1,8 +1,8 @@
-external toJsxDOMStyle: 'a => JsxDOMStyle.t = "%identity"
+open ReactNative
 
 @react.component
-let make = (~borderRadius: float, ~style: ReactNative.Style.t) => {
-  <div id="google-wallet-button-container" style={style->toJsxDOMStyle}>
+let make = (~borderRadius: float, ~style: Style.t) => {
+  <View nativeID="google-wallet-button-container" style={style}>
     <style>
       {React.string(`
           .gpay-card-info-container.black, .gpay-card-info-animation-container.black {
@@ -13,5 +13,5 @@ let make = (~borderRadius: float, ~style: ReactNative.Style.t) => {
     <CustomLoader
       style={ReactNative.Style.viewStyle(~position=#absolute, ~zIndex=-1, ~borderRadius, ())}
     />
-  </div>
+  </View>
 }

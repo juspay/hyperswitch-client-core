@@ -1,8 +1,4 @@
-open ReactNative
 open Validation
-external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
-@send external focus: Dom.element => unit = "focus"
-@send external blur: Dom.element => unit = "blur"
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 @react.component
@@ -55,7 +51,10 @@ let make = (
     }
     None
   }, [reset])
-  let onChangeCardNumber = (text, expireRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeCardNumber = (
+    text,
+    expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
+  ) => {
     let cardBrand = getCardBrand(text)
     let num = formatCardNumber(text, cardType(cardBrand))
     let isthisValid = cardValid(num, cardBrand)
@@ -66,42 +65,42 @@ let make = (
     if isthisValid {
       switch expireRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->ReactNative.TextInputElement.focus
       }
     }
   }
-  let onChangeCardExpire = (text, cvvRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeCardExpire = (text, cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let dateExpire = formatCardExpiryNumber(text)
     let isthisValid = checkCardExpiry(dateExpire)
     if isthisValid {
       switch cvvRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->ReactNative.TextInputElement.focus
       }
     }
 
     setCardData(prev => {...prev, expireDate: dateExpire, isExpireDataValid: Some(isthisValid)})
   }
-  let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let cvvData = formatCVCNumber(text, getCardBrand(cardData.cardNumber))
     let isthisValid = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
     if isthisValid {
       switch cvvOrZipRef.current->Nullable.toOption {
       | None => ()
       | Some(ref) =>
-        ref
-        ->Nullable.toOption
-        ->Option.forEach(input => isZipAvailable ? input->focus : input->blur)
+        isZipAvailable
+          ? ref->ReactNative.TextInputElement.focus
+          : ref->ReactNative.TextInputElement.blur
       }
     }
     setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isthisValid)})
   }
-  let onChangeZip = (text, zipRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeZip = (text, zipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let isthisValid = ValidationFunctions.isValidZip(~zipCode=text, ~country="United States")
     if isthisValid {
       switch zipRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->blur)
+      | Some(ref) => ref->ReactNative.TextInputElement.blur
       }
     }
     setCardData(prev => {...prev, zip: text, isZipValid: Some(isthisValid)})
@@ -110,8 +109,8 @@ let make = (
   let onScanCard = (
     pan,
     expiry,
-    expireRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>,
-    cvvRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>,
+    expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
+    cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
     let cardBrand = getCardBrand(pan)
     let cardNumber = formatCardNumber(pan, cardType(cardBrand))
@@ -130,12 +129,12 @@ let make = (
     | (true, true) =>
       switch cvvRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->ReactNative.TextInputElement.focus
       }
     | (true, false) =>
       switch expireRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->ReactNative.TextInputElement.focus
       }
     | _ => ()
     }
