@@ -1,10 +1,6 @@
 open ReactNative
 open Style
 open Validation
-external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
-@send external focus: Dom.element => unit = "focus"
-@send external blur: Dom.element => unit = "blur"
-// Module contents
 @react.component
 let make = (
   ~cardNumber,
@@ -95,7 +91,7 @@ let make = (
           <CustomInput
             fontSize=13.
             enableShadow=false
-            reference={Some(cardRef->toInputRef)}
+            reference={Some(cardRef)}
             state={cardNumberIsFocus ? cardNumber : cardNumber->String.sliceToEnd(~start=-4)}
             setState={text => onChangeCardNumber(text, expireRef)}
             placeholder={cardNumberIsFocus
@@ -129,7 +125,7 @@ let make = (
                 switch cardRef.current->Nullable.toOption {
                 | None => ()
                 | Some(ref) => {
-                    ref->Nullable.toOption->Option.forEach(input => input->blur)
+                    ref->TextInputElement.blur
                     animateFlex(~flexval=cvvInputFlex, ~value=1.0)
                     animateFlex(~flexval=expireInputFlex, ~value=1.0)
                     animateFlex(~flexval=zipInputFlex, ~value=1.0)
@@ -143,7 +139,7 @@ let make = (
           <CustomInput
             enableShadow=false
             fontSize=12.
-            reference={Some(expireRef->toInputRef)}
+            reference={Some(expireRef)}
             state=expireDate
             setState={text => onChangeCardExpire(text, cvvRef)}
             placeholder="MM / YY"
@@ -168,7 +164,7 @@ let make = (
               if ev.nativeEvent.key == "Backspace" && expireDate == "" {
                 switch cardRef.current->Nullable.toOption {
                 | None => ()
-                | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+                | Some(ref) => ref->TextInputElement.focus
                 }
               }
             }}
@@ -178,7 +174,7 @@ let make = (
           <CustomInput
             fontSize=13.
             enableShadow=false
-            reference={Some(cvvRef->toInputRef)}
+            reference={Some(cvvRef)}
             state=cvv
             setState={text =>
               isZipAvailable ? onChangeCvv(text, zipRef) : onChangeCvv(text, cvvRef)}
@@ -205,7 +201,7 @@ let make = (
               if ev.nativeEvent.key == "Backspace" && cvv == "" {
                 switch expireRef.current->Nullable.toOption {
                 | None => ()
-                | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+                | Some(ref) => ref->TextInputElement.focus
                 }
               }
             }}
@@ -216,7 +212,7 @@ let make = (
               <CustomInput
                 enableShadow=false
                 fontSize=13.
-                reference={Some(zipRef->toInputRef)}
+                reference={Some(zipRef)}
                 state=zip
                 setState={text => onChangeZip(text, zipRef)}
                 textColor={isZipValid ? component.color : dangerColor}
@@ -241,7 +237,7 @@ let make = (
                   if ev.nativeEvent.key == "Backspace" && zip == "" {
                     switch cvvRef.current->Nullable.toOption {
                     | None => ()
-                    | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+                    | Some(ref) => ref->TextInputElement.focus
                     }
                   }
                 }}

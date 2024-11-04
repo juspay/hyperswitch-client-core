@@ -1,7 +1,3 @@
-type options = {timeZone: string}
-type dateTimeFormat = {resolvedOptions: unit => options}
-@val @scope("Intl") external dateTimeFormat: unit => dateTimeFormat = "DateTimeFormat"
-
 let getProp = (str, dict) => {
   dict->Dict.get(str)
 }
@@ -336,4 +332,15 @@ let getReturnUrl = appId => {
       | Some(id) => Some(id ++ ".hyperswitch://")
       | None => None
       }
+}
+
+let getStringFromRecord = record => record->JSON.stringifyAny->Option.getOr("")
+
+let getJsonObjectFromRecord = record => record->Obj.magic
+
+let getError = (err, defaultError) => {
+  switch err->Exn.asJsExn {
+  | Some(exn) => exn->Exn.message->Option.getOr(defaultError)->JSON.Encode.string
+  | None => defaultError->JSON.Encode.string
+  }
 }
