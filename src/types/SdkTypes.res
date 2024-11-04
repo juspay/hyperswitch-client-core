@@ -556,7 +556,7 @@ let getAppearanceObj = (
         | #iosWebView => DefaultIOS
         | #android => DefaultAndroid
         | #androidWebView => DefaultAndroid
-        | #web => DefaultWeb
+        | #web | #next => DefaultWeb
         }->Some
       },
       scale: retOptionalFloat(getProp(keys.scale, fontDict)),

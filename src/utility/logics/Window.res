@@ -64,7 +64,15 @@ external addEventListenerToElement: (element, status, event => unit) => unit = "
 external removeEventListenerFromElement: (element, status, event => unit) => unit =
   "removeEventListener"
 
-external anyTypeToString: 'a => string = "%identity"
+let getStatusString = status => {
+  switch status {
+  | #loading => "loading"
+  | #idle => "idle"
+  | #ready => "ready"
+  | #error => "error"
+  | #load => "load"
+  }
+}
 
 let useScript = (src: string) => {
   let (status, setStatus) = React.useState(_ => src != "" ? #loading : #idle)
@@ -81,13 +89,13 @@ let useScript = (src: string) => {
       let script = createElement("script")
       script.src = src
       script.async = true
-      script.setAttribute("data-status", #loading->anyTypeToString)
+      script.setAttribute("data-status", #loading->getStatusString)
       appendChildToHead(script)
       let setAttributeFromEvent = (event: event) => {
         setStatus(_ => event.\"type" === "load" ? #ready : #error)
         script.setAttribute(
           "data-status",
-          (event.\"type" === "load" ? #ready : #error)->anyTypeToString,
+          (event.\"type" === "load" ? #ready : #error)->getStatusString,
         )
       }
       script->addEventListenerToElement(#load, setAttributeFromEvent)
@@ -119,13 +127,13 @@ let useLink = (src: string) => {
       link.href = src
       link.rel = "stylesheet"
       link.async = true
-      link.setAttribute("data-status", #loading->anyTypeToString)
+      link.setAttribute("data-status", #loading->getStatusString)
       appendChildToHead(link)
       let setAttributeFromEvent = (event: event) => {
         setStatus(_ => event.\"type" === "load" ? #ready : #error)
         link.setAttribute(
           "data-status",
-          (event.\"type" === "load" ? #ready : #error)->anyTypeToString,
+          (event.\"type" === "load" ? #ready : #error)->getStatusString,
         )
       }
       link->addEventListenerToElement(#load, setAttributeFromEvent)
@@ -210,9 +218,17 @@ type window = {\"ApplePaySession": applePaySession}
 
 @new external applePaySession: (int, JSON.t) => session = "ApplePaySession"
 
+type buttonProps = {
+  onClick: unit => unit,
+  buttonType: string,
+  buttonSizeMode: string,
+  buttonColor: string,
+  buttonRadius: float,
+}
+
 type client = {
   isReadyToPay: JSON.t => Promise.t<JSON.t>,
-  createButton: JSON.t => element,
+  createButton: buttonProps => element,
   loadPaymentData: JSON.t => Promise.t<JSON.t>,
 }
 @new external google: JSON.t => client = "google.payments.api.PaymentsClient"
