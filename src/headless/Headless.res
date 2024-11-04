@@ -2,19 +2,20 @@ open SdkTypes
 open HeadlessUtils
 open HeadlessNative
 
-external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
-external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
-external toJson: 't => JSON.t = "%identity"
-
 let reRegisterCallback = ref(() => ())
 
 let registerHeadless = headless => {
   let headlessModule = initialise(headless)
 
   let getDefaultPaymentSession = error => {
-    headlessModule.getPaymentSession(error->toJson, error->toJson, []->toJson, _response => {
-      headlessModule.exitHeadless(error->HyperModule.stringifiedResStatus)
-    })
+    headlessModule.getPaymentSession(
+      error->Utils.getJsonObjectFromRecord,
+      error->Utils.getJsonObjectFromRecord,
+      []->Utils.getJsonObjectFromRecord,
+      _response => {
+        headlessModule.exitHeadless(error->HyperModule.stringifiedResStatus)
+      },
+    )
   }
 
   let confirmCall = (body, nativeProp) =>
@@ -41,7 +42,12 @@ let registerHeadless = headless => {
         [
           (
             "wallet",
-            [(data.payment_method_type->Option.getOr(""), obj.paymentMethodData->parser)]
+            [
+              (
+                data.payment_method_type->Option.getOr(""),
+                obj.paymentMethodData->Utils.getJsonObjectFromRecord,
+              ),
+            ]
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
@@ -50,7 +56,7 @@ let registerHeadless = headless => {
             switch obj.paymentMethodData.info {
             | Some(info) =>
               switch info.billing_address {
-              | Some(address) => address->parser2
+              | Some(address) => address->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               }
             | None => JSON.Encode.null
@@ -157,7 +163,7 @@ let registerHeadless = headless => {
             (
               "billing",
               switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
-              | Some(billing) => billing->parser2
+              | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
             ),
@@ -342,8 +348,8 @@ let registerHeadless = headless => {
         }
       )
       ->Option.getOr(NONE) {
-      | NONE => getDefaultError->toJson
-      | x => x->toJson
+      | NONE => getDefaultError->Utils.getJsonObjectFromRecord
+      | x => x->Utils.getJsonObjectFromRecord
       }
 
       let lastUsedSpmData = switch spmData
@@ -380,15 +386,15 @@ let registerHeadless = headless => {
         }
       })
       ->Option.getOr(NONE) {
-      | NONE => getDefaultError->toJson
-      | x => x->toJson
+      | NONE => getDefaultError->Utils.getJsonObjectFromRecord
+      | x => x->Utils.getJsonObjectFromRecord
       }
 
       reRegisterCallback.contents = () => {
         headlessModule.getPaymentSession(
           defaultSpmData,
           lastUsedSpmData,
-          spmData->toJson,
+          spmData->Utils.getJsonObjectFromRecord,
           response => {
             switch response->Utils.getDictFromJson->Dict.get("paymentToken") {
             | Some(token) =>

@@ -189,7 +189,10 @@ let make = (
             </Animated.View>
           : React.null}
         <TextInput
-          ref=?reference
+          ref=?{switch reference {
+          | Some(ref) => ref->ReactNative.Ref.value->Some
+          | None => None
+          }}
           style={array([
             textStyle(
               ~fontStyle=#normal,

@@ -469,7 +469,7 @@ let make = (
         [
           (
             walletType.payment_method,
-            [(walletType.payment_method_type, obj.paymentMethodData->ButtonElement.parser)]
+            [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
@@ -617,7 +617,7 @@ let make = (
       switch walletType.payment_method_type_wallet {
       | GOOGLE_PAY =>
         HyperModule.launchGPay(
-          GooglePayType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env),
+          GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
           confirmGPay,
         )
       | PAYPAL =>

@@ -1,5 +1,3 @@
-external toJson: 't => string = "%identity"
-external dictToObj: Dict.t<'a> => {..} = "%identity"
 let fetchApi = (
   ~uri,
   ~bodyStr: string="",
@@ -23,14 +21,14 @@ let fetchApi = (
       Fetch.RequestInit.make(
         ~method_,
         ~body?,
-        ~headers=Fetch.HeadersInit.make(headers->dictToObj),
+        ~headers=Fetch.HeadersInit.makeWithDict(headers),
         ~mode?,
         (),
       ),
     )
     ->catch(err => {
       exception Error(string)
-      Promise.reject(Error(err->toJson))
+      Promise.reject(Error(err->Utils.getError(`API call failed: ${uri}`)->JSON.stringify))
     })
     ->then(resp => {
       //let status = resp->Fetch.Response.status

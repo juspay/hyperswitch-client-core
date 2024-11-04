@@ -5,10 +5,6 @@ let deadZone = 12.0
 
 @get external getValue: ReactNative.Animated.Value.t => float = "_value"
 @get external getOffset: ReactNative.Animated.Value.t => float = "_offset"
-external calcToRegular: Animated.value<Animated.calculated> => Animated.value<Animated.regular> =
-  "%identity"
-external regToFloat: Animated.value<Animated.regular> => float = "%identity"
-external calcToFloat: Animated.value<Animated.calculated> => float = "%identity"
 
 type defaultTransitionSpec = {
   timing: (Animated.value<Animated.regular>, Animated.Value.Spring.config) => Animated.Animation.t,
@@ -276,9 +272,11 @@ let make = (
 
   let position = React.useMemo2(() => {
     if layout.width != 0. {
-      Animated.Value.divide(panX, -.layout.width->Animated.Value.create)->calcToRegular->Some
+      Animated.Value.divide(panX, -.layout.width->Animated.Value.create)
+      ->Animated.StyleProp.float
+      ->Int.fromFloat
     } else {
-      None
+      indexInFocus
     }
   }, (layout.width, panX))
 
@@ -288,65 +286,56 @@ let make = (
     setHeight(_ => height)
   }, [setHeight])
 
-  children(
-    ~indexInFocus,
-    ~routes,
-    ~position=position
-    ->Option.getOr(Animated.Value.create(indexInFocus->Int.toFloat))
-    ->regToFloat
-    ->Int.fromFloat,
-    ~addEnterListener,
-    ~jumpTo,
-    ~render=children => {
-      <Animated.View
-        style={array([
-          viewStyle(
-            ~flex=1.,
-            ~flexDirection=#row,
-            ~alignItems=#stretch,
-            ~transform=[Style.translateX(~translateX=translateX->calcToFloat)],
-            ~width=?layout.width != 0.
-              ? (routes->Array.length->Int.toFloat *. layout.width)->dp->Some
-              : None,
-            (),
-          ),
-          style,
-        ])}
-        onMoveShouldSetResponder={panHandlers->PanResponder.onMoveShouldSetResponder}
-        onMoveShouldSetResponderCapture={panHandlers->PanResponder.onMoveShouldSetResponderCapture}
-        onStartShouldSetResponder={panHandlers->PanResponder.onStartShouldSetResponder}
-        onStartShouldSetResponderCapture={panHandlers->PanResponder.onStartShouldSetResponderCapture}
-        onResponderReject={panHandlers->PanResponder.onResponderReject}
-        onResponderGrant={panHandlers->PanResponder.onResponderGrant}
-        onResponderRelease={panHandlers->PanResponder.onResponderRelease}
-        onResponderMove={panHandlers->PanResponder.onResponderMove}
-        onResponderTerminate={panHandlers->PanResponder.onResponderTerminate}
-        onResponderStart={panHandlers->PanResponder.onResponderStart}
-        onResponderTerminationRequest={panHandlers->PanResponder.onResponderTerminationRequest}
-        onResponderEnd={panHandlers->PanResponder.onResponderEnd}>
-        {React.Children.mapWithIndex(children, (child, i) => {
-          switch routes[i] {
-          | Some(route) =>
-            let focused = i === indexInFocus
-            <View
-              key={route.title ++ route.key->Int.toString}
-              style=?{if layout.width != 0. {
-                Some(viewStyle(~width=layout.width->dp, ~height=height->dp, ()))
-              } else if focused {
-                Some(StyleSheet.absoluteFill)
-              } else {
-                None
-              }}>
-              {focused || layout.width != 0.
-                ? <TopTabScreenWraper setDynamicHeight isScreenFocus={indexInFocus == route.key}>
-                    child
-                  </TopTabScreenWraper>
-                : React.null}
-            </View>
-          | None => React.null
-          }
-        })}
-      </Animated.View>
-    },
-  )
+  children(~indexInFocus, ~routes, ~position, ~addEnterListener, ~jumpTo, ~render=children => {
+    <Animated.View
+      style={array([
+        viewStyle(
+          ~flex=1.,
+          ~flexDirection=#row,
+          ~alignItems=#stretch,
+          ~transform=[Style.translateX(~translateX=translateX->Animated.StyleProp.float)],
+          ~maxWidth=?WebKit.platform === #next ? 0.->dp->Some : None,
+          ~width=?layout.width != 0.
+            ? (routes->Array.length->Int.toFloat *. layout.width)->dp->Some
+            : None,
+          (),
+        ),
+        style,
+      ])}
+      onMoveShouldSetResponder={panHandlers->PanResponder.onMoveShouldSetResponder}
+      onMoveShouldSetResponderCapture={panHandlers->PanResponder.onMoveShouldSetResponderCapture}
+      onStartShouldSetResponder={panHandlers->PanResponder.onStartShouldSetResponder}
+      onStartShouldSetResponderCapture={panHandlers->PanResponder.onStartShouldSetResponderCapture}
+      onResponderReject={panHandlers->PanResponder.onResponderReject}
+      onResponderGrant={panHandlers->PanResponder.onResponderGrant}
+      onResponderRelease={panHandlers->PanResponder.onResponderRelease}
+      onResponderMove={panHandlers->PanResponder.onResponderMove}
+      onResponderTerminate={panHandlers->PanResponder.onResponderTerminate}
+      onResponderStart={panHandlers->PanResponder.onResponderStart}
+      onResponderTerminationRequest={panHandlers->PanResponder.onResponderTerminationRequest}
+      onResponderEnd={panHandlers->PanResponder.onResponderEnd}>
+      {React.Children.mapWithIndex(children, (child, i) => {
+        switch routes[i] {
+        | Some(route) =>
+          let focused = i === indexInFocus
+          <View
+            key={route.title ++ route.key->Int.toString}
+            style=?{if layout.width != 0. {
+              Some(viewStyle(~width=layout.width->dp, ~height=height->dp, ()))
+            } else if focused {
+              Some(StyleSheet.absoluteFill)
+            } else {
+              None
+            }}>
+            {focused || layout.width != 0.
+              ? <TopTabScreenWraper setDynamicHeight isScreenFocus={indexInFocus == route.key}>
+                  child
+                </TopTabScreenWraper>
+              : React.null}
+          </View>
+        | None => React.null
+        }
+      })}
+    </Animated.View>
+  })
 }
