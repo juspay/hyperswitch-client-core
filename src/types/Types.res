@@ -20,7 +20,15 @@ type config = {
 
 let defaultConfig = {
   priorityArr: {
-    let priorityArr = ["card", "klarna", "afterpay_clearpay", "crypto", "paypal", "google_pay"]
+    let priorityArr = [
+      "card",
+      "klarna",
+      "afterpay_clearpay",
+      "ach",
+      "crypto",
+      "paypal",
+      "google_pay",
+    ]
     priorityArr->Array.reverse
     priorityArr
   },
@@ -96,6 +104,23 @@ let defaultConfig = {
       text: "Open Banking",
       header: "",
       fields: [],
+    },
+    {
+      name: "ach",
+      text: "Bank Debit",
+      header: "",
+      fields: [
+        "name",
+        "routing_number",
+        "account_number",
+        "account_type",
+        "Address_Line_1",
+        "Address_Line_2",
+        "country",
+        "State",
+        "City",
+        "postal_code",
+      ],
     },
     // {
     //   name: "google_pay",

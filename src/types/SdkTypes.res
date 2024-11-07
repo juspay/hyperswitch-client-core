@@ -296,6 +296,7 @@ type hyperParams = {
   confirm: bool,
   appId?: string,
   country: string,
+  state: string,
   disableBranding: bool,
   ip: option<string>,
   userAgent: option<string>,
@@ -913,6 +914,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     hyperParams: {
       appId: ?getOptionString(hyperParams, "appId"),
       country: getString(hyperParams, "country", ""),
+      state: getString(hyperParams, "state", ""),
       disableBranding: getBool(hyperParams, "disableBranding", true),
       ip: getOptionString(hyperParams, "ip"),
       userAgent: getOptionString(hyperParams, "user-agent"),

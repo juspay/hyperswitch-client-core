@@ -206,6 +206,20 @@ let useListModifier = () => {
                   />,
               })
             : None
+        | BANK_DEBIT(achDebitVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == achDebitVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
+
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus redirectProp=BANK_DEBIT(achDebitVal) fields setConfirmButtonDataRef
+              />,
+          })
+
         | CRYPTO(cryptoVal) =>
           let fields =
             redirectionList

@@ -24,6 +24,8 @@ type paymentMethodsFields =
   | AddressState
   | AddressCountry(array<string>)
   | BlikCode
+  | AccountNumber
+  | RoutingNumber
   | Currency(array<string>)
 
 type requiredField =
@@ -223,8 +225,7 @@ let checkIsValid = (
       switch text->ValidationFunctions.isValidEmail {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
-      | None => 
-        Some(localeObject.emailEmptyText)
+      | None => Some(localeObject.emailEmptyText)
       }
     | _ => None
     }
@@ -290,6 +291,8 @@ let useGetPlaceholder = (
     | AddressCountry(_) => localeObject.countryLabel
     | Currency(_) => localeObject.currencyLabel
     | InfoElement
+    | AccountNumber
+    | RoutingNumber
     | SpecialField(_)
     | UnKnownField(_)
     | PhoneNumber
