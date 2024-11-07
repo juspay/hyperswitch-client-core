@@ -22,57 +22,14 @@ app.get('/create-payment-intent', async (req, res) => {
       {
         amount: 6540,
         currency: 'USD',
-        // confirm: false,
-        // capture_method: 'automatic',
-        // capture_on: '2022-09-10T10:11:12Z',
-        // amount_to_capture: 6540,
-        customer_id: 'StripeCustomer',
-        // email: 'guest@example.com',
-        // name: 'John Doe',
-        // phone: '999999999',
-        // profile_id: 'pro_1PEZIEJyHhhZ3WJTVIVM',
-        // phone_country_code: '+65',
-        // description: 'Its my first payment request',
-        // authentication_type: 'three_ds',
-        // return_url: 'https://duck.com',
-        profile_id: "pro_E6k4XxWE3fVzTIYDMzJa",
-        //setup_future_usage: "off_session"
-        // billing: {
-        //   address: {
-        //     line1: '1467',
-        //     line2: 'Harrison Street',
-        //     line3: 'Harrison Street',
-        //     city: 'San Fransico',
-        //     state: 'California',
-        //     zip: '94122',
-        //     country: 'US',
-        //     first_name: 'PiX',
-        //   },
-        // },
-        // shipping: {
-        //   address: {
-        //     line1: '1467',
-        //     line2: 'Harrison Street',
-        //     line3: 'Harrison Street',
-        //     city: 'San Fransico',
-        //     state: 'California',
-        //     zip: '94122',
-        //     country: 'US',
-        //     first_name: 'PiX',
-        //   },
-        // },
-        // request_external_three_ds_authentication: true,
-        // statement_descriptor_name: 'joseph',
-        // statement_descriptor_suffix: 'JS',
-        // metadata: {
-        //   udf1: 'value1',
-        //   new_customer: 'true',
-        //   login_date: '2019-09-10T10:11:12Z',
-        // }
 
+        customer_id: 'StripeCustomer',
+
+
+        profile_id: process.env.HYPERSWITCH_PROFILE_ID,
       });
 
-    // Send publishable key and PaymentIntent details to client
+
     res.send({
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: paymentIntent.client_secret,
