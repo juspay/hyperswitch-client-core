@@ -1,0 +1,5 @@
+let blikCode = "000-000"
+let cardNumber = "1234 1234 1234 1234"
+let cardExpiry = "MM / YY"
+let bancontactCardNumber = "1234 1234 1234 1234"
+let bancontactCardExpiry = "MM / YY"

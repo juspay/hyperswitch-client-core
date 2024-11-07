@@ -861,8 +861,8 @@ let parseConfigurationDict = (configObj, from) => {
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
     netceteraSDKApiKey: getOptionString(configObj, "netceteraSDKApiKey"),
     placeholder: {
-      cardNumber: getString(placeholderDict, "cardNumber", "1234 1234 1234 1234"),
-      expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
+      cardNumber: getString(placeholderDict, "cardNumber", Placeholders.cardNumber),
+      expiryDate: getString(placeholderDict, "expiryDate", Placeholders.cardExpiry),
       cvv: getString(placeholderDict, "cvv", "CVC"),
     },
   }
