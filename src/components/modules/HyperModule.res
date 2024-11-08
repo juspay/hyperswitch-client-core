@@ -1,18 +1,3 @@
-type strFun = string => unit
-type strFun2 = (string, string) => unit
-type intStrBoolFun = (int, string, bool) => unit
-type strFunWithCallback = (string, Dict.t<JSON.t> => unit) => unit
-
-external jsonToStrFun: JSON.t => strFun = "%identity"
-external jsonToStr2Fun: JSON.t => strFun2 = "%identity"
-external jsonToIntStrBoolFun: JSON.t => intStrBoolFun = "%identity"
-external jsonToStrFunWithCallback: JSON.t => strFunWithCallback = "%identity"
-
-let hyperModuleDict =
-  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
-  ->Option.flatMap(JSON.Decode.object)
-  ->Option.getOr(Dict.make())
-
 type hyperModule = {
   sendMessageToNative: string => unit,
   launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
@@ -26,45 +11,42 @@ type hyperModule = {
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
 }
-let getStrFunFromKey = key => {
-  switch hyperModuleDict->Dict.get(key) {
-  | Some(json) => jsonToStrFun(json)
-  | None => _ => ()
-  }
-}
-let getStrFun2FromKey = key => {
-  switch hyperModuleDict->Dict.get(key) {
-  | Some(json) => jsonToStr2Fun(json)
-  | None => (_, _) => ()
+
+let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
+  switch dict->Dict.get(key) {
+  | Some(fn) => Obj.magic(fn)
+  | None => default
   }
 }
 
-let getIntStrBoolFunFromKey = key => {
-  switch hyperModuleDict->Dict.get(key) {
-  | Some(json) => jsonToIntStrBoolFun(json)
-  | None => (_, _, _) => ()
-  }
-}
-
-let getStrFunWithCallbackFromKey = key => {
-  switch hyperModuleDict->Dict.get(key) {
-  | Some(json) => jsonToStrFunWithCallback(json)
-  | None => (_, _) => ()
-  }
-}
+let hyperModuleDict =
+  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.getOr(Dict.make())
 
 let hyperModule = {
-  sendMessageToNative: getStrFunFromKey("sendMessageToNative"),
-  launchApplePay: getStrFunWithCallbackFromKey("launchApplePay"),
-  startApplePay: getStrFunWithCallbackFromKey("startApplePay"),
-  presentApplePay: getStrFunWithCallbackFromKey("presentApplePay"),
-  launchGPay: getStrFunWithCallbackFromKey("launchGPay"),
-  exitPaymentsheet: getIntStrBoolFunFromKey("exitPaymentsheet"),
-  exitPaymentMethodManagement: getIntStrBoolFunFromKey("exitPaymentMethodManagement"),
-  exitWidget: getStrFun2FromKey("exitWidget"),
-  exitCardForm: getStrFunFromKey("exitCardForm"),
-  launchWidgetPaymentSheet: getStrFunWithCallbackFromKey("launchWidgetPaymentSheet"),
-  exitWidgetPaymentsheet: getIntStrBoolFunFromKey("exitWidgetPaymentsheet"),
+  sendMessageToNative: getFunctionFromModule(hyperModuleDict, "sendMessageToNative", _ => ()),
+  launchApplePay: getFunctionFromModule(hyperModuleDict, "launchApplePay", (_, _) => ()),
+  startApplePay: getFunctionFromModule(hyperModuleDict, "startApplePay", (_, _) => ()),
+  presentApplePay: getFunctionFromModule(hyperModuleDict, "presentApplePay", (_, _) => ()),
+  launchGPay: getFunctionFromModule(hyperModuleDict, "launchGPay", (_, _) => ()),
+  exitPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitPaymentsheet", (_, _, _) => ()),
+  exitPaymentMethodManagement: getFunctionFromModule(
+    hyperModuleDict,
+    "exitPaymentMethodManagement",
+    (_, _, _) => (),
+  ),
+  exitWidget: getFunctionFromModule(hyperModuleDict, "exitWidget", (_, _) => ()),
+  exitCardForm: getFunctionFromModule(hyperModuleDict, "exitCardForm", _ => ()),
+  launchWidgetPaymentSheet: getFunctionFromModule(hyperModuleDict, "launchWidgetPaymentSheet", (
+    _,
+    _,
+  ) => ()),
+  exitWidgetPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitWidgetPaymentsheet", (
+    _,
+    _,
+    _,
+  ) => ()),
 }
 
 let sendMessageToNative = str => {

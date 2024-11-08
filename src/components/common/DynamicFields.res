@@ -288,7 +288,7 @@ let make = (
   // let localeObject = GetLocale.useGetLocalObj()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  let clientTimeZone = Utils.dateTimeFormat().resolvedOptions().timeZone
+  let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
   let clientCountry = Utils.getClientCountry(clientTimeZone)
 
   let keysValArray =

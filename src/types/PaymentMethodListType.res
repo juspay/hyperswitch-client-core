@@ -338,10 +338,9 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
   }
 }
 
-external toJson: redirectType => JSON.t = "%identity"
-
 let getPaymentBody = (body, dynamicFieldsJson, dynamicCardFieldJson) => {
-  let flattenedBodyDict = body->toJson->RequiredFieldsTypes.flattenObject(true)
+  let flattenedBodyDict =
+    body->Utils.getJsonObjectFromRecord->RequiredFieldsTypes.flattenObject(true)
 
   let dynamicFieldsJsonDict = dynamicFieldsJson->Array.reduce(Dict.make(), (acc, (key, val, _)) => {
     acc->Dict.set(key, val)

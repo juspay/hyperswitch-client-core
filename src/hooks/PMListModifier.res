@@ -118,6 +118,7 @@ let useListModifier = () => {
           | GOOGLE_PAY =>
             WebKit.platform !== #ios &&
             WebKit.platform !== #iosWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
             allApiData.additionalPMLData.mandateType != NORMAL
               ? {
@@ -172,6 +173,7 @@ let useListModifier = () => {
           | APPLE_PAY =>
             WebKit.platform !== #android &&
             WebKit.platform !== #androidWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
             allApiData.additionalPMLData.mandateType != NORMAL
               ? {
@@ -273,6 +275,7 @@ let useListModifier = () => {
           | GOOGLE_PAY =>
             WebKit.platform !== #ios &&
             WebKit.platform !== #iosWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
             sessionObject.connector !== "trustpay"
               ? {
@@ -291,6 +294,7 @@ let useListModifier = () => {
           | APPLE_PAY =>
             WebKit.platform !== #android &&
             WebKit.platform !== #androidWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE
               ? {
                   if ReactNative.Platform.os === #web {

@@ -1,5 +1,3 @@
-external toNullable: JSON.t => Nullable.t<JSON.t> = "%identity"
-
 type dataModule = {states: JSON.t}
 
 @val
@@ -323,7 +321,7 @@ let rec flattenObject = (obj, addIndicatorForObject) => {
     ->Array.forEach(entry => {
       let (key, value) = entry
 
-      if value->toNullable->RescriptCoreFuture.Nullable.isNullable {
+      if value === JSON.Null {
         Dict.set(newDict, key, value)
       } else {
         switch value->JSON.Decode.object {
