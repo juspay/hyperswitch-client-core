@@ -26,7 +26,7 @@ module App = {
   @react.component
   let make = () => {
     <View style={viewStyle(~flex=1., ())}>
-      {Platform.os == #android
+      {WebKit.platform === #android
         ? <StatusBar translucent=true backgroundColor="transparent" />
         : React.null}
       <NavigatorRouterParent />

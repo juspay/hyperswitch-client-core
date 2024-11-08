@@ -11,8 +11,11 @@ let handleCustomerPMLResponse = (
         switch data {
         | SAVEDLISTWALLET(val) =>
           let walletType = val.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-          switch (walletType, ReactNative.Platform.os) {
-          | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
+          switch (walletType, WebKit.platform) {
+          | (GOOGLE_PAY, #android)
+          | (GOOGLE_PAY, #androidWebView)
+          | (APPLE_PAY, #ios)
+          | (APPLE_PAY, #iosWebView) => true
           | _ => false
           }
         | _ => false
@@ -52,10 +55,7 @@ let handleCustomerPMLResponse = (
         )
         filteredSessionSpmData->Array.concat(walletSpmData->Array.concat(cardSpmData))
 
-      | _ =>
-        isPaymentMethodManagement
-          ? spmData
-          : walletSpmData->Array.concat(cardSpmData)
+      | _ => isPaymentMethodManagement ? spmData : walletSpmData->Array.concat(cardSpmData)
       }
 
       let isGuestFromPMList =

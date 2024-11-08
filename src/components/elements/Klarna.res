@@ -1,9 +1,5 @@
 open ReactNative
 
-external toViewRef: React.ref<Nullable.t<'a>> => Ref.t<KlarnaModule.element> = "%identity"
-@send external focus: Dom.element => unit = "focus"
-@send external blur: Dom.element => unit = "blur"
-
 @react.component
 let make = (
   ~launchKlarna: option<PaymentMethodListType.payment_method_types_pay_later>,
@@ -15,18 +11,13 @@ let make = (
   let (_token, _) = React.useState(_ => None)
   let paymentMethods = ["pay_later"] //["pay_now", "pay_later", "pay_over_time", "pay_in_parts"]
 
-  let refs = React.useRef(Nullable.null)
+  let refs: React.ref<Nullable.t<KlarnaModule.element>> = React.useRef(Nullable.null)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
   React.useEffect1(() => {
     switch refs.current->Nullable.toOption {
     | None => ()
-    | Some(ref) =>
-      ref
-      ->Nullable.toOption
-      ->Option.forEach((view: KlarnaModule.element) =>
-        view.initialize(klarnaSessionTokens, return_url)
-      )
+    | Some(ref) => ref.initialize(klarnaSessionTokens, return_url)
     }
     None
   }, [refs])
@@ -34,7 +25,7 @@ let make = (
   let onInitialized = () => {
     switch refs.current->Nullable.toOption {
     | None => ()
-    | Some(ref) => ref->Nullable.toOption->Option.forEach(view => view.load())
+    | Some(ref) => ref.load()
     }
   }
 
@@ -45,7 +36,7 @@ let make = (
   let buyButtonPressed = _ => {
     switch refs.current->Nullable.toOption {
     | None => ()
-    | Some(ref) => ref->Nullable.toOption->Option.forEach(view => view.authorize())
+    | Some(ref) => ref.authorize()
     }
     ()
   }
@@ -59,7 +50,7 @@ let make = (
 
   let onAuthorized = (event: KlarnaModule.event) => {
     let params = event.nativeEvent
-    if (Platform.os == #ios || params.approved) && params.authToken !== None {
+    if (WebKit.platform == #ios || params.approved) && params.authToken !== None {
       switch launchKlarna {
       | Some(prop) => processRequest(prop, params.authToken->Option.getOr(""))
       | _ =>
@@ -85,9 +76,7 @@ let make = (
     style={Style.viewStyle(~height=220.->Style.dp, ~borderRadius=15., ())}>
     {React.array(
       Array.map(paymentMethods, paymentMethod => {
-        <KlarnaModule
-          paymentMethod reference={refs->toViewRef} onInitialized onLoaded onAuthorized
-        />
+        <KlarnaModule paymentMethod reference={refs} onInitialized onLoaded onAuthorized />
       }),
     )}
   </ScrollView>

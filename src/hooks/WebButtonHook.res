@@ -1,11 +1,3 @@
-external toJsxDOMStyle: 'a => JsxDOMStyle.t = "%identity"
-
-type token = {paymentData: JSON.t}
-external anyTypeToJson: 'a => JSON.t = "%identity"
-external anyTypeToString: 'a => string = "%identity"
-external toJson: 'a => option<JSON.t> = "%identity"
-external toSomeType: 'a => Dict.t<JSON.t> = "%identity"
-
 let usePayButton = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {
@@ -44,10 +36,13 @@ let usePayButton = () => {
               appleWalletButton.removeAttribute("aria-hidden")
               appleWalletButton.removeAttribute("disabled")
 
-              appleWalletButton.setAttribute("buttonstyle", applePayButtonColor->anyTypeToString)
+              appleWalletButton.setAttribute(
+                "buttonstyle",
+                applePayButtonColor->Utils.getStringFromRecord,
+              )
               appleWalletButton.setAttribute(
                 "type",
-                nativeProp.configuration.appearance.applePay.buttonType->anyTypeToString,
+                nativeProp.configuration.appearance.applePay.buttonType->Utils.getStringFromRecord,
               )
               appleWalletButton.setAttribute("locale", "en-US")
 
@@ -97,24 +92,21 @@ let usePayButton = () => {
     React.useEffect1(() => {
       status == #ready
         ? {
-            let paymentClient = Window.google(token.environment->anyTypeToJson)
+            let paymentClient = Window.google(token.environment)
 
-            let buttonStyle = {
-              let obj = {
-                "onClick": () => onGooglePayButtonClick(),
-                "buttonType": nativeProp.configuration.appearance.googlePay.buttonType
-                ->anyTypeToString
-                ->String.toLowerCase,
-                "buttonSizeMode": "fill",
-                "buttonColor": switch googlePayButtonColor {
-                | #light => "white"
-                | #dark => "black"
-                },
-                "buttonRadius": buttonBorderRadius,
-              }
-              obj->anyTypeToJson
+            let buttonProps: Window.buttonProps = {
+              onClick: () => onGooglePayButtonClick(),
+              buttonType: nativeProp.configuration.appearance.googlePay.buttonType
+              ->Utils.getStringFromRecord
+              ->String.toLowerCase,
+              buttonSizeMode: "fill",
+              buttonColor: switch googlePayButtonColor {
+              | #light => "white"
+              | #dark => "black"
+              },
+              buttonRadius: buttonBorderRadius,
             }
-            let googleWalletButton = paymentClient.createButton(buttonStyle)
+            let googleWalletButton = paymentClient.createButton(buttonProps)
 
             let container = Window.querySelector("#google-wallet-button-container")
 

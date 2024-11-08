@@ -1,6 +1,6 @@
 {
   "name": "hyperswitch",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "start": "react-native start --reset-cache",
@@ -10,7 +10,7 @@
     "web": "webpack serve --mode=development --config reactNativeWeb/webpack.config.js",
     "ios": "cd ios && rm -rf build && pod install && cd .. && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
-    "web:next": "next",
+    "web:next": "cd reactNativeWeb && next",
     "bundle:android": "react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
     "bundle:ios": "react-native bundle --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
     "codepush:android": "appcenter codepush release-react -b hyperswitch.bundle -a Hyperswitch/hyperswitch-android -d Production",

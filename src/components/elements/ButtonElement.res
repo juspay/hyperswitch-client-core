@@ -2,9 +2,6 @@ open ReactNative
 open Style
 open PaymentMethodListType
 
-external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
-external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
-
 type item = {
   linearGradientColorTuple: option<ThemebasedStyle.buttonColorConfig>,
   name: string,
@@ -282,7 +279,7 @@ let make = (
         [
           (
             walletType.payment_method,
-            [(walletType.payment_method_type, obj.paymentMethodData->parser)]
+            [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
@@ -291,7 +288,7 @@ let make = (
             switch obj.paymentMethodData.info {
             | Some(info) =>
               switch info.billing_address {
-              | Some(address) => address->parser2
+              | Some(address) => address->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               }
             | None => JSON.Encode.null
@@ -373,7 +370,7 @@ let make = (
             (
               "billing",
               switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
-              | Some(billing) => billing->parser2
+              | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
             ),
@@ -434,7 +431,7 @@ let make = (
         | PAYPAL =>
           if (
             sessionObject.session_token !== "" &&
-            ReactNative.Platform.os == #android &&
+            WebKit.platform == #android &&
             PaypalModule.payPalModule->Option.isSome
           ) {
             PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)

@@ -1,6 +1,5 @@
 open ReactNative
 open Style
-// @send external focus: ReactNative.CustomTouchableOpacity.ref => unit = "focus"
 
 module CVVComponent = {
   @react.component
