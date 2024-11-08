@@ -31,7 +31,7 @@ let make = (
   // let (isZipValid, setIsZipValid) = React.useState(_ => None)
 
   let (cardData, setCardData) = React.useContext(CardDataContext.cardDataContext)
-  let clientTimeZone = Utils.dateTimeFormat().resolvedOptions().timeZone
+  let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
   let clientCountry = Utils.getClientCountry(clientTimeZone)
   let keysValArray =
     requiredFields->RequiredFieldsTypes.getKeysValArray(false, clientCountry.isoAlpha2)
@@ -95,7 +95,7 @@ let make = (
     ()
   }
 
-  let onChangeCardNumber = (text, expireRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeCardNumber = (text, expireRef: React.ref<Nullable.t<TextInput.element>>) => {
     let cardBrand = getCardBrand(text)
     let num = formatCardNumber(text, cardType(cardBrand))
     let isthisValid = cardValid(num, cardBrand)
@@ -104,15 +104,14 @@ let make = (
 
     changeData(CardNumber, num->JSON.Encode.string)
 
-    // Adding support for 19 digit card hence disabling ref
     if isthisValid {
       switch expireRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->TextInput.focus
       }
     }
   }
-  let onChangeCardExpire = (text, cvvRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeCardExpire = (text, cvvRef: React.ref<Nullable.t<TextInput.element>>) => {
     let dateExpire = formatCardExpiryNumber(text)
     let expiryValues = formatCardExpiryValues(text)
     let (month, year) = switch expiryValues {
@@ -124,34 +123,31 @@ let make = (
     if isthisValid {
       switch cvvRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->TextInput.focus
       }
     }
     setCardData(prev => {...prev, expireDate: dateExpire, isExpireDataValid: Some(isthisValid)})
     changeData(CardExpMonth, month->JSON.Encode.string)
     changeData(CardExpYear, year->JSON.Encode.string)
   }
-  let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<TextInput.element>>) => {
     let cvvData = formatCVCNumber(text, getCardBrand(cardData.cardNumber))
     let isthisValid = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
     if isthisValid {
       switch cvvOrZipRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) =>
-        ref
-        ->Nullable.toOption
-        ->Option.forEach(input => isZipAvailable ? input->focus : input->blur)
+      | Some(ref) => isZipAvailable ? ref->TextInput.focus : ref->TextInput.blur
       }
     }
     setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isthisValid)})
     changeData(CVCCode, cvvData->JSON.Encode.string)
   }
-  let onChangeZip = (text, zipRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>) => {
+  let onChangeZip = (text, zipRef: React.ref<Nullable.t<TextInput.element>>) => {
     let isthisValid = ValidationFunctions.isValidZip(~zipCode=text, ~country="United States")
     if isthisValid {
       switch zipRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->blur)
+      | Some(ref) => ref->TextInput.blur
       }
     }
     setCardData(prev => {...prev, zip: text, isZipValid: Some(isthisValid)})
@@ -160,8 +156,8 @@ let make = (
   let onScanCard = (
     pan,
     expiry,
-    expireRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>,
-    cvvRef: React.ref<Nullable.t<Nullable.t<Dom.element>>>,
+    expireRef: React.ref<Nullable.t<TextInput.element>>,
+    cvvRef: React.ref<Nullable.t<TextInput.element>>,
   ) => {
     let cardBrand = getCardBrand(pan)
     let cardNumber = formatCardNumber(pan, cardType(cardBrand))
@@ -191,12 +187,12 @@ let make = (
     | (true, true) =>
       switch cvvRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->TextInput.focus
       }
     | (true, false) =>
       switch expireRef.current->Nullable.toOption {
       | None => ()
-      | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+      | Some(ref) => ref->TextInput.focus
       }
     | _ => ()
     }
