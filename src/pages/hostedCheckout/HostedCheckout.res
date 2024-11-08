@@ -20,6 +20,7 @@ let make = () => {
       ~shadowOffset=offset(~width=-7.5, ~height=0.),
       ~shadowRadius=20.,
       ~shadowColor="rgba(1,1,1,0.027)",
+      ~padding=32.->dp,
       (),
     )
   }

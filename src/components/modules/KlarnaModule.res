@@ -49,7 +49,7 @@ let make = (
       {
         key: paymentMethod,
         category: paymentMethod,
-        ref: reference,
+        ref: reference->ReactNative.Ref.value,
         onInitialized,
         onLoaded,
         onAuthorized,

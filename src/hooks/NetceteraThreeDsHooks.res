@@ -1,7 +1,6 @@
 open ExternalThreeDsTypes
 open ThreeDsUtils
 open SdkStatusMessages
-external toJson: 't => JSON.t = "%identity"
 let isInitialisedPromiseRef = ref(None)
 
 let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
@@ -57,12 +56,7 @@ let useExternalThreeDs = () => {
     ~publishableKey,
     ~nextAction,
     ~sdkEnvironment: GlobalVars.envType,
-    ~retrievePayment: (
-      Types.retrieve,
-      string,
-      string,
-      ~isForceSync: bool=?,
-    ) => promise<Js.Json.t>,
+    ~retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {
@@ -164,7 +158,11 @@ let useExternalThreeDs = () => {
           }
         })
         ->Promise.catch(err => {
-          logError(~statusCode="504", ~apiLogType=NoResponse, ~data=err->toJson)
+          logError(
+            ~statusCode="504",
+            ~apiLogType=NoResponse,
+            ~data=err->Utils.getError(`Netcetera Error`),
+          )
           Promise.resolve()
         })
         ->Promise.finally(_ => {
@@ -266,7 +264,7 @@ let useExternalThreeDs = () => {
           ~url=authorizeUrl,
           ~statusCode="504",
           ~apiLogType=NoResponse,
-          ~data=err->toJson,
+          ~data=err->Utils.getError(`Netcetera Error`),
           (),
         )
 
@@ -381,7 +379,7 @@ let useExternalThreeDs = () => {
               ~url=uri,
               ~statusCode,
               ~apiLogType=Err,
-              ~data=err->toJson,
+              ~data=err,
               (),
             )
             FrictionlessFlow
@@ -395,7 +393,7 @@ let useExternalThreeDs = () => {
           ~url=uri,
           ~statusCode="504",
           ~apiLogType=NoResponse,
-          ~data=err->toJson,
+          ~data=err->Utils.getError(`Netcetera Error`),
           (),
         )
         Promise.resolve(FrictionlessFlow)

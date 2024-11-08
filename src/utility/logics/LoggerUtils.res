@@ -77,7 +77,7 @@ let logFileToObj = logFile => {
   ->JSON.Encode.object
 }
 let sendLogs = (logFile, uri, publishableKey, appId) => {
-  if Next.getNextEnv != "next" {
+  if WebKit.platform != #next {
     let data = logFile->logFileToObj->JSON.stringify
     CommonHooks.fetchApi(
       ~uri,

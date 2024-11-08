@@ -1,10 +1,6 @@
 open ReactNative
 open Style
 open Validation
-external toInputRef: React.ref<Nullable.t<'a>> => TextInput.ref = "%identity"
-@send external focus: Dom.element => unit = "focus"
-@send external blur: Dom.element => unit = "blur"
-// Module contents
 
 @react.component
 let make = (
@@ -167,7 +163,7 @@ let make = (
             if ev.nativeEvent.key == "Backspace" && cardNumber == "" {
               switch cardRef.current->Nullable.toOption {
               | None => ()
-              | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->blur)
+              | Some(ref) => ref->TextInputElement.blur
               }
             }
           }}
@@ -182,7 +178,7 @@ let make = (
         )}>
         <View style={viewStyle(~width=50.->pct, ())}>
           <CustomInput
-            reference={Some(expireRef->toInputRef)}
+            reference={Some(expireRef)}
             state=expireDate
             setState={text => onChangeCardExpire(text, cvvRef)}
             placeholder=nativeProp.configuration.placeholder.expiryDate
@@ -209,7 +205,7 @@ let make = (
               if ev.nativeEvent.key == "Backspace" && expireDate == "" {
                 switch cardRef.current->Nullable.toOption {
                 | None => ()
-                | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+                | Some(ref) => ref->TextInputElement.focus
                 }
               }
             }}
@@ -218,7 +214,7 @@ let make = (
         </View>
         <View style={viewStyle(~width=50.->pct, ())}>
           <CustomInput
-            reference={Some(cvvRef->toInputRef)}
+            reference={Some(cvvRef)}
             borderTopWidth=0.25
             borderLeftWidth=0.5
             borderTopLeftRadius=0.
@@ -251,7 +247,7 @@ let make = (
               if ev.nativeEvent.key == "Backspace" && cvv == "" {
                 switch expireRef.current->Nullable.toOption {
                 | None => ()
-                | Some(ref) => ref->Nullable.toOption->Option.forEach(input => input->focus)
+                | Some(ref) => ref->TextInputElement.focus
                 }
               }
             }}

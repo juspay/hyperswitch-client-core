@@ -1,7 +1,5 @@
 open SdkTypes
 
-external toJson: 't => JSON.t = "%identity"
-
 let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
   let uri = switch customLogUrl {
   | Some(url) => url
@@ -11,7 +9,7 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
     | _ => "https://sandbox.hyperswitch.io/logs/sdk"
     }
   }
-  if Next.getNextEnv != "next" {
+  if WebKit.platform != #next {
     let data = logFile->LoggerUtils.logFileToObj->JSON.stringify
     CommonHooks.fetchApi(~uri, ~method_=Post, ~bodyStr=data, ~headers=Dict.make(), ~mode=NoCORS, ())
     ->Promise.then(res => res->Fetch.Response.json)
@@ -207,10 +205,7 @@ let savedPaymentMethodAPICall = nativeProp => {
       ~category=API,
       ~statusCode="504",
       ~apiLogType=Some(NoResponse),
-      ~data=switch err->Exn.asJsExn {
-      | Some(exn) => exn->toJson
-      | None => JSON.Encode.null
-      },
+      ~data=err->Utils.getError(`Headless Error API call failed: ${uri}`),
       ~publishableKey=nativeProp.publishableKey,
       ~paymentId,
       ~paymentMethod=None,
@@ -327,10 +322,7 @@ let sessionAPICall = nativeProp => {
       ~category=API,
       ~statusCode="504",
       ~apiLogType=Some(NoResponse),
-      ~data=switch err->Exn.asJsExn {
-      | Some(exn) => exn->toJson
-      | None => JSON.Encode.null
-      },
+      ~data=err->Utils.getError(`Headless Error API call failed: ${uri}`),
       ~publishableKey=nativeProp.publishableKey,
       ~paymentId,
       ~paymentMethod=None,
@@ -430,6 +422,8 @@ let confirmAPICall = (nativeProp, body) => {
     Promise.resolve(Some(jsonResponse))
   })
   ->Promise.catch(err => {
+    let data = err->Utils.getError(`Headless Error API call failed: ${uri}`)
+
     let respTimestamp = Date.now()
     logWrapper(
       ~logType=ERROR,
@@ -440,7 +434,7 @@ let confirmAPICall = (nativeProp, body) => {
       ~category=API,
       ~statusCode="504",
       ~apiLogType=Some(NoResponse),
-      ~data=err->toJson,
+      ~data,
       ~publishableKey=nativeProp.publishableKey,
       ~paymentId,
       ~paymentMethod=None,
