@@ -10,11 +10,30 @@ name: Publish to Maven Central
 on:
   push:
     branches:
-      - newPublishPipeline  
+       - newPublishPipeline
     paths:
       - 'android/**'  
+# on:
+#   repository_dispatch:
+#     types: [android_repo_push]
+#   push:
+#     branches:
+#       - newPublishPipeline
+#     paths:
+#       - 'android/**'
     
 jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Update submodules
+        run: |
+          git submodule update --init --recursive
+
   publish:
     runs-on: ubuntu-latest
     permissions:
