@@ -3,9 +3,14 @@ name: Publish to Maven Central
 # on:
 #   release:
 #     types: [created]
+
+# on:
+#   push:
+#     branches: [ androidPublishPipeline ]
 on:
   push:
-    branches: [ androidPublishPipeline ]
+    paths:
+      - 'android/**'  
     
 jobs:
   publish:
@@ -24,17 +29,68 @@ jobs:
         ref: newPublishPipeline
         path: android
 
-    - name: Check if commit message starts with "release:"
-      id: check_commit
+    # - name: Check if commit message starts with "release:"
+    #   id: check_commit
+    #   run: |
+    #     COMMIT_MSG="${{ github.event.head_commit.message }}"
+        
+    #     # Check if commit message starts with 'release:'
+    #     if [[ "$COMMIT_MSG" != release:* ]]; then
+    #       echo "Commit message does not start with 'release:'. Skipping workflow."
+    #       exit 0
+    #     fi
+
+    - name: Check android subrepo branch and commit message
+      id: check_branch_commit
+      working-directory: ./android
       run: |
-        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        # Check if we're on newPublishPipeline branch in android subrepo
+        CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+        echo "Current branch in android directory: $CURRENT_BRANCH"
+        if [[ "$CURRENT_BRANCH" != "newPublishPipeline" ]]; then
+          echo "Not on newPublishPipeline branch in android directory. Skipping workflow."
+          exit 0
+        fi
+        
+        # Get the latest commit message from android subrepo
+        COMMIT_MSG=$(git log -1 --pretty=%B)
         
         # Check if commit message starts with 'release:'
         if [[ "$COMMIT_MSG" != release:* ]]; then
           echo "Commit message does not start with 'release:'. Skipping workflow."
           exit 0
         fi
-
+        
+        # Extract libraries from format release:[lib1,lib2]
+        if [[ "$COMMIT_MSG" =~ release:\[(.*)\] ]]; then
+          LIBS="${BASH_REMATCH[1]}"
+          echo "Found libraries: $LIBS"
+          echo "libraries=$LIBS" >> $GITHUB_OUTPUT
+        else
+          echo "No libraries found in correct format. Expected format: release:[lib1,lib2]"
+          exit 1
+        fi
+        
+    # - name: Check if commit message starts with "release:" and extract libs
+    #   id: check_commit
+    #   run: |
+    #     COMMIT_MSG="${{ github.event.head_commit.message }}"
+        
+    #     # Check if commit message starts with 'release:'
+    #     if [[ "$COMMIT_MSG" != release:* ]]; then
+    #       echo "Commit message does not start with 'release:'. Skipping workflow."
+    #       exit 0
+    #     fi
+        
+    #     # Extract libraries from format release:[lib1,lib2]
+    #     if [[ "$COMMIT_MSG" =~ release:\[(.*)\] ]]; then
+    #       LIBS="${BASH_REMATCH[1]}"
+    #       echo "Found libraries: $LIBS"
+    #       echo "libraries=$LIBS" >> $GITHUB_OUTPUT
+    #     else
+    #       echo "No libraries found in correct format. Expected format: release:[lib1,lib2]"
+    #       exit 1
+    #     fi
     
     - name: Set up JDK 17
       uses: actions/setup-java@v4
@@ -49,30 +105,30 @@ jobs:
 
 
     
-    - name: Extract libraries from commit message
-      id: extract-libs
-      run: |
-          # Extract text between square brackets after [build-libs]
-          COMMIT_MSG="${{ github.event.head_commit.message }}"
-          LIBS=$(echo "$COMMIT_MSG" | grep -o '\[build-libs\]\[.*\]' | grep -o '\[.*\]$' | tr -d '[]')
-          if [ -z "$LIBS" ]; then
-            echo "No libraries specified in commit message"
-            # exit 1
-          fi
-          echo "Found libraries: $LIBS"
-          echo "libraries=$LIBS" >> $GITHUB_OUTPUT
+    # - name: Extract libraries from commit message
+    #   id: extract-libs
+    #   run: |
+    #       # Extract text between square brackets after [build-libs]
+    #       COMMIT_MSG="${{ github.event.head_commit.message }}"
+    #       LIBS=$(echo "$COMMIT_MSG" | grep -o '\[build-libs\]\[.*\]' | grep -o '\[.*\]$' | tr -d '[]')
+    #       if [ -z "$LIBS" ]; then
+    #         echo "No libraries specified in commit message"
+    #         # exit 1
+    #       fi
+    #       echo "Found libraries: $LIBS"
+    #       echo "libraries=$LIBS" >> $GITHUB_OUTPUT
       
-          # COMMIT_MSG="${{ github.event.head_commit.message }}"
+    #       # COMMIT_MSG="${{ github.event.head_commit.message }}"
           
-          # # Check if commit message contains a valid format for libraries
-          # # if [[ "$COMMIT_MSG" =~ ^release:\ \[([a-zA-Z0-9, ]+)\]\ .* ]]; then
-          #   LIBS="${BASH_REMATCH[1]}"
-          #   echo "Found libraries: $LIBS"
-          #   echo "libraries=$LIBS" >> $GITHUB_OUTPUT
-          # # else
-          #   # echo "No valid libraries found in commit message"
-          #   # exit 1
-          # # fi
+    #       # # Check if commit message contains a valid format for libraries
+    #       # # if [[ "$COMMIT_MSG" =~ ^release:\ \[([a-zA-Z0-9, ]+)\]\ .* ]]; then
+    #       #   LIBS="${BASH_REMATCH[1]}"
+    #       #   echo "Found libraries: $LIBS"
+    #       #   echo "libraries=$LIBS" >> $GITHUB_OUTPUT
+    #       # # else
+    #       #   # echo "No valid libraries found in commit message"
+    #       #   # exit 1
+    #       # # fi
     - name: Enable Corepack and Install Yarn
       run: |
         # Enable Corepack
@@ -106,8 +162,6 @@ jobs:
         SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
       run: |
         pwd
-        ls -la
-        ls -la ../
         ./build-lib.sh
 
      
