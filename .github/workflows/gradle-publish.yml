@@ -9,6 +9,8 @@ name: Publish to Maven Central
 #     branches: [ androidPublishPipeline ]
 on:
   push:
+    branches:
+      - newPublishPipeline  
     paths:
       - 'android/**'  
     
