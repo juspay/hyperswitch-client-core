@@ -7,20 +7,20 @@ name: Publish to Maven Central
 # on:
 #   push:
 #     branches: [ androidPublishPipeline ]
-on:
-  push:
-    branches:
-       - newPublishPipeline
-    paths:
-      - 'android/**'  
 # on:
-#   repository_dispatch:
-#     types: [android_repo_push]
 #   push:
 #     branches:
-#       - newPublishPipeline
+#        - newPublishPipeline
 #     paths:
-#       - 'android/**'
+#       - 'android/**'  
+on:
+  repository_dispatch:
+    types: [android_repo_push]
+  push:
+    branches:
+      - newPublishPipeline
+    paths:
+      - 'android/**'
     
 jobs:
   update:
