@@ -17,6 +17,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Checkout Android Repo
+      uses: actions/checkout@v4
+      with:
+        repository: juspay/hyperswitch-sdk-android
+        ref: newPublishPipeline
+        path: android
+
     - name: Check if commit message starts with "release:"
       id: check_commit
       run: |
@@ -79,7 +86,7 @@ jobs:
         npm i
         npm run re:start
         echo "Directory structure after setup:"
-        ls 
+        ls -L
 
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
@@ -97,7 +104,11 @@ jobs:
         # SONATYPE_TOKEN: ${{ secrets.SONATYPE_TOKEN_2 }}
         # SELECTED_LIBRARIES: "hyperswitch-gradle-plugin,plugin"
         SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
-      run: ./build-lib.sh
+      run: |
+        pwd
+        ls -la
+        ls -la ../
+        ../build-lib.sh
 
      
     # - name: Upload to Maven Central
