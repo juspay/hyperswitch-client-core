@@ -26,54 +26,6 @@ export default function Home() {
       publishableKey: 'pk_snd_dummy',
       clientSecret: 'pay_dummy_secret_dummy',
     };
-
-    // const searchParams = typeof window !== 'undefined' ? new URLSearchParams(
-    //   new URL(window.location.href).search,
-    // ) : new URLSearchParams();
-
-    // if (searchParams.size === 2) {
-    //   props.publishableKey = searchParams.get('pk') || '';
-    //   props.clientSecret = searchParams.get('cs') || '';
-    // } else /* if (window.location.href == 'http://localhost:8080/') */ {
-    //   let response = await fetch(
-    //     'https://bscq1qxggd.execute-api.us-east-1.amazonaws.com/default/create-payment-intent',
-    //     {
-    //       method: 'POST',
-    //       body: JSON.stringify({
-    //         amount: 6541,
-    //         currency: 'USD',
-    //         confirm: false,
-    //         capture_method: 'automatic',
-    //         customer_id: 'hyperswitch_sdk_demo_id',
-    //         authentication_type: 'no_three_ds',
-    //         billing: {
-    //           address: {
-    //             line1: '1467',
-    //             line2: 'Harrison Street',
-    //             line3: 'Harrison Street',
-    //             city: 'San Fransico',
-    //             state: 'California',
-    //             zip: '94122',
-    //             country: 'US',
-    //             first_name: 'joseph',
-    //             last_name: 'Doe',
-    //           },
-    //           phone: {
-    //             number: '8056594427',
-    //             country_code: '+91',
-    //           },
-    //         },
-    //         return_url: 'https://khy9x9-4242.csb.app/completion',
-    //         business_country: 'US',
-    //         business_label: 'default',
-    //       }),
-    //     },
-    //   );
-    //   const data = await response.json();
-    //   props.publishableKey = data.publishableKey;
-    //   props.clientSecret = data.clientSecret;
-    // }
-
     setProps(props)
   }
 
