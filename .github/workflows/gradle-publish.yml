@@ -108,7 +108,7 @@ jobs:
         pwd
         ls -la
         ls -la ../
-        ../build-lib.sh
+        ./build-lib.sh
 
      
     # - name: Upload to Maven Central
