@@ -115,8 +115,6 @@ module RenderField = {
               if isCountryField {
                 let stateKey = getKey(stringFieldPath, "state")
                 newData->Dict.set(stateKey, (JSON.Encode.null, tempValid))
-                Console.log2("stateKey", stateKey)
-                Console.log2("newData", newData)
               }
               newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, tempValid))
               newData
@@ -315,7 +313,7 @@ let make = (
   ~isSaveCardsFlow=false,
   ~savedCardsData: option<SdkTypes.savedDataType>,
   ~keyToTrigerButtonClickError,
-  ~renderShippingFields=true, //To render shipping fields
+  ~renderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
 ) => {
   //To render pre value fields
@@ -327,6 +325,7 @@ let make = (
   let initialKeysValArray = React.useMemo(() =>
     requiredFields
     ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
+    ->RequiredFieldsTypes.filterRequiredFieldsForShipping(renderShippingFields)
     ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2)
   , (requiredFields, isSaveCardsFlow, savedCardsData, clientCountry.isoAlpha2))
 
