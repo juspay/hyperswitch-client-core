@@ -516,6 +516,17 @@ let filterRequiredFields = (
   }
 }
 
+let filterRequiredFieldsForShipping = (
+  requiredFields: array<required_fields_type>,
+  isRenderShippingFields: bool,
+) => {
+  isRenderShippingFields
+    ? requiredFields
+    : requiredFields->Array.filter(requiredField => {
+        !(requiredField.required_field->getRequiredFieldName->String.includes("shipping"))
+      })
+}
+
 let getKey = (path, value) => {
   let arr = path->String.split(".")
   let key = arr->Array.slice(~start=0, ~end=arr->Array.length - 1)->Array.join(".") ++ "." ++ value
