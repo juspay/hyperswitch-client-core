@@ -95,8 +95,8 @@ let make = (
             state={cardNumberIsFocus ? cardNumber : cardNumber->String.sliceToEnd(~start=-4)}
             setState={text => onChangeCardNumber(text, expireRef)}
             placeholder={cardNumberIsFocus
-              ? "1234 1234 1234 1234"
-              : "1234 1234 1234 1234"->String.sliceToEnd(~start=-4) ++ "..."}
+              ? Placeholders.cardNumber
+              : Placeholders.cardNumber->String.sliceToEnd(~start=-4) ++ "..."}
             keyboardType=#"number-pad"
             enableCrossIcon=false
             textColor={isCardNumberValid ? component.color : dangerColor}
@@ -142,7 +142,7 @@ let make = (
             reference={Some(expireRef)}
             state=expireDate
             setState={text => onChangeCardExpire(text, cvvRef)}
-            placeholder="MM / YY"
+            placeholder=Placeholders.cardExpiry
             keyboardType=#"number-pad"
             enableCrossIcon=false
             borderTopWidth=0.
