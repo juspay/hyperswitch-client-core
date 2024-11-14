@@ -74,9 +74,23 @@ let useListModifier = () => {
             ? Some({
                 name: fields.text,
                 componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-                  <Redirect
-                    isScreenFocus redirectProp=PAY_LATER(payLaterVal) fields setConfirmButtonDataRef
-                  />,
+                  switch payLaterVal.payment_method_type === "klarna" {
+                  | true =>
+                    <Redirect
+                      isScreenFocus
+                      redirectProp={PAY_LATER(payLaterVal)}
+                      fields
+                      setConfirmButtonDataRef
+                    />
+                  | false =>
+                    <RedirectWithDynamicFields
+                      isScreenFocus
+                      redirectProp=PAY_LATER(payLaterVal)
+                      dynamicFields={payLaterVal.required_field}
+                      fields
+                      setConfirmButtonDataRef
+                    />
+                  },
               })
             : None
         | BANK_REDIRECT(bankRedirectVal) =>
@@ -84,7 +98,6 @@ let useListModifier = () => {
             redirectionList
             ->Array.find(l => l.name == bankRedirectVal.payment_method_type)
             ->Option.getOr(Types.defaultRedirectType)
-
           Some({
             name: fields.text,
             componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
