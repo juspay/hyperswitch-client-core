@@ -20,6 +20,7 @@ let make = () => {
       ~shadowOffset=offset(~width=-7.5, ~height=0.),
       ~shadowRadius=20.,
       ~shadowColor="rgba(1,1,1,0.027)",
+      ~padding=32.->dp,
       (),
     )
   }
@@ -39,6 +40,7 @@ let make = () => {
 
   <View style={array([viewStyle(~flex=1., ()), bgColor])}>
     <ScrollView
+      keyboardShouldPersistTaps={#handled}
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={viewStyle(~flexGrow=1., ~paddingBottom=40.->dp, ())}>
       <View style={array([parentViewStyle, viewStyle(~flex=1., ~marginHorizontal=15.->dp, ())])}>

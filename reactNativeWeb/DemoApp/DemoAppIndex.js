@@ -28,6 +28,9 @@ let defaultProps = {
       //   borderRadius:20.0
       // }}
       // locale: "en"
+      typography: {
+        fontResId: 'montserrat'
+      }
     },
   },
   hyperParams: {
@@ -61,11 +64,15 @@ const initReactNativeWeb = async () => {
 
   const handleMessage = event => {
     try {
-      console.log(JSON.parse(event.data));
-      if (JSON.parse(event.data).sdkLoaded) {
+      let data = JSON.parse(event.data)
+      if (data.sdkLoaded) {
         createProps();
       }
-    } catch (ex) {}
+      if (data.status) {
+        document.querySelector("iframe").style.display = "none"
+        document.getElementById("status").innerHTML = `Status: ${data.status} ${data.message ? "Message: " + data.message : ""}`
+      }
+    } catch (ex) { }
   };
 
   window.addEventListener('message', handleMessage);

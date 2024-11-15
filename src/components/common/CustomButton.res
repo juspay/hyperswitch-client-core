@@ -6,8 +6,6 @@ type buttonType = Primary
 
 type iconType = CustomIcon(React.element) | NoIcon
 
-external toSize: ReactNative.Animated.Interpolation.t => size = "%identity"
-
 @react.component
 let make = (
   ~loadingText="Loading..",
@@ -75,7 +73,7 @@ let make = (
         inputRange: [0.0, 1.0],
         outputRange: ["95%", "0%"]->Animated.Interpolation.fromStringArray,
       },
-    )->toSize,
+    )->Animated.StyleProp.size,
     (),
   )
 

@@ -35,11 +35,6 @@ let getThreeDsDataObj = (
   })
 }
 
-let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
-  let actionType = nextActionObj->Option.getOr({type_: "", redirectToUrl: ""})
-  actionType.type_
-}
-
 let generateAuthenticationCallBody = (clientSecret, aReqParams) => {
   let ephemeralKeyDict =
     aReqParams.sdkEphemeralKey
