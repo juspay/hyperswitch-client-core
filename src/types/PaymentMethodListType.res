@@ -338,7 +338,7 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
   }
 }
 
-let getPaymentBody = (body, dynamicFieldsJson) => {
+let getPaymentBody = (body, dynamicFieldsJson, dynamicCardFieldJson) => {
   let flattenedBodyDict =
     body->Utils.getJsonObjectFromRecord->RequiredFieldsTypes.flattenObject(true)
 
@@ -346,9 +346,17 @@ let getPaymentBody = (body, dynamicFieldsJson) => {
     acc->Dict.set(key, val)
     acc
   })
+  let dynamicCardFieldJsonDict = dynamicCardFieldJson->Array.reduce(Dict.make(), (
+    acc,
+    (key, val, _),
+  ) => {
+    acc->Dict.set(key, val)
+    acc
+  })
 
   flattenedBodyDict
   ->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
+  ->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicCardFieldJsonDict)
   ->RequiredFieldsTypes.getArrayOfTupleFromDict
   ->Dict.fromArray
   ->JSON.Encode.object

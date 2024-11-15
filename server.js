@@ -38,6 +38,8 @@ app.get('/create-payment-intent', async (req, res) => {
           last_name: 'Doe',
         }
       },
+      customer_id: 'John',
+      profile_id : process.env.HYPERSWITCH_PROFILE_ID
     });
 
     // Send publishable key and PaymentIntent details to client

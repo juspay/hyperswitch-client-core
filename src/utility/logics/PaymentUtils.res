@@ -16,19 +16,19 @@ let showUseExisitingSavedCardsBtn = (
 
 let generatePaymentMethodData = (
   ~prop: PaymentMethodListType.payment_method_types_card,
-  ~cardData: CardDataContext.cardData,
+  // ~cardData: CardDataContext.cardData,
   ~cardHolderName: option<'a>,
   ~nickname: option<'a>,
 ) => {
-  let (month, year) = Validation.getExpiryDates(cardData.expireDate)
+  // let (month, year) = Validation.getExpiryDates(cardData.expireDate)
 
   [
     (
       prop.payment_method,
       [
-        ("card_number", cardData.cardNumber->Validation.clearSpaces->JSON.Encode.string),
-        ("card_exp_month", month->JSON.Encode.string),
-        ("card_exp_year", year->JSON.Encode.string),
+        // ("card_number", cardData.cardNumber->Validation.clearSpaces->JSON.Encode.string),
+        // ("card_exp_month", month->JSON.Encode.string),
+        // ("card_exp_year", year->JSON.Encode.string),
         (
           "card_holder_name",
           switch cardHolderName {
@@ -43,7 +43,7 @@ let generatePaymentMethodData = (
           | None => JSON.Encode.null
           },
         ),
-        ("card_cvc", cardData.cvv->JSON.Encode.string),
+        // ("card_cvc", cardData.cvv->JSON.Encode.string),
       ]
       ->Dict.fromArray
       ->JSON.Encode.object,
