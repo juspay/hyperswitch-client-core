@@ -105,10 +105,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           server-id: central
-          server-username: MAVEN_USERNAME
-          server-password: MAVEN_PASSWORD
+          server-username: ${{secrets.ANDROID_CENTRAL_TOKEN_USERNAME }}
+          server-password: ${{ secrets.ANDROID_CENTRAL_TOKEN_PASSWORD }}
           gpg-private-key: ${{ secrets.ANDROID_GPG_SIGNING_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
+          gpg-passphrase: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
 
       # - name: Extract libraries from commit message
       #   id: extract-libs
@@ -134,18 +134,19 @@ jobs:
       #     #   # echo "No valid libraries found in commit message"
       #     #   # exit 1
       #     # # fi
-      - name: Enable Corepack and Install Yarn
-        run: |
-          # Enable Corepack
-          corepack enable
 
-          # corepack prepare yarn@4.4.1 --activate
+      # - name: Enable Corepack and Install Yarn
+      #   run: |
+      #     # Enable Corepack
+      #     corepack enable
+
+      #     # corepack prepare yarn@4.4.1 --activate
 
       - name: Dependency Install
         run: |
           # Install dependencies using yarn
           npm i
-          npm run re:start
+          # npm run re:start
           echo "Directory structure after setup:"
           ls -L
 
@@ -160,10 +161,7 @@ jobs:
           MAVEN_USERNAME: ${{ secrets.ANDROID_CENTRAL_TOKEN_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.ANDROID_CENTRAL_TOKEN_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
-          # GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
-          # GPG_FULL_SIGNING_KEY: ${{ secrets.GPG_FULL_SIGNING_KEY }}
           SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
-          # SELECTED_LIBRARIES: "hyperswitch-gradle-plugin,plugin"
           SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
 
         run: |
