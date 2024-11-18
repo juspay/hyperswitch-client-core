@@ -1,7 +1,30 @@
 @react.component
-let make = (~nickname, ~setNickname, ~isNicknameSelected) => {
-  let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
+let make = (~nickname, ~setNickname, ~isNicknameSelected, ~setIsNicknameValid) => {
+  let {component, borderWidth, borderRadius, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
+  let (isFocus, setisFocus) = React.useState(_ => false)
+  let (errorMessage, setErrorMesage) = React.useState(_ => None)
+
+  let onChange = text => {
+    setNickname(_ => Some(text))
+    
+    if text->String.length > 12 {
+      setErrorMesage(_ => Some(localeObject.nickNameLengthExceedError))
+    } else {
+      switch text->ValidationFunctions.containsMoreThanTwoDigits {
+      | true => setErrorMesage(_ => Some(localeObject.invalidDigitsNickNameError))
+      | false => setErrorMesage(_ => None)
+      }
+    }
+  }
+
+  React.useEffect(_ => {
+    switch errorMessage {
+    | Some(_) => setIsNicknameValid(_ => false)
+    | None => setIsNicknameValid(_ => true)
+    }
+    None
+  }, [errorMessage])
 
   isNicknameSelected
     ? <>
@@ -10,13 +33,13 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected) => {
         // <Space height=5. />
         <CustomInput
           state={nickname->Option.getOr("")}
-          setState={str => setNickname(_ => Some(str))}
+          setState={str => onChange(str)}
           placeholder={`${localeObject.cardNickname}${" (Optional)"}`}
           keyboardType=#default
           isValid=true
-          onFocus={_ => ()}
-          onBlur={_ => ()}
-          textColor=component.color
+          onFocus={_ => setisFocus(_ => true)}
+          onBlur={_ => setisFocus(_ => false)}
+          textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
           borderBottomLeftRadius=borderRadius
           borderBottomRightRadius=borderRadius
           borderTopLeftRadius=borderRadius
@@ -27,6 +50,10 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected) => {
           borderRightWidth=borderWidth
           animateLabel=localeObject.cardNickname
         />
+        {switch errorMessage {
+        | Some(text) => <ErrorText text=Some(text) />
+        | None => React.null
+        }}
         <Space height=5. />
       </>
     : React.null
