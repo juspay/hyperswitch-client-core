@@ -13,14 +13,15 @@ name: Publish to Maven Central
 #        - newPublishPipeline
 #     paths:
 #       - 'android/**'  
+# on: [repository_dispatch]
 on:
   repository_dispatch:
     types: [android_repo_push]
-  push:
-    branches:
-      - newPublishPipeline
-    paths:
-      - 'android/**'
+  # push:
+  #   branches:
+  #     - newPublishPipeline
+  #   paths:
+  #     - 'android/**'
     
 jobs:
   update:
@@ -30,9 +31,13 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Update submodules
+      - name: dispatch trigger
+        if: github.event.action == "android_repo_push"
         run: |
-          git submodule update --init --recursive
+          echo "repository_dispatch triggered"
+      # - name: Update submodules
+      #   run: |
+      #     git submodule update --init --recursive
 
   publish:
     runs-on: ubuntu-latest
