@@ -1,5 +1,19 @@
 name: Publish to Maven Central
 
+# on:
+#   release:
+#     types: [created]
+
+# on:
+#   push:
+#     branches: [ androidPublishPipeline ]
+# on:
+#   push:
+#     branches:
+#        - newPublishPipeline
+#     paths:
+#       - 'android/**'
+# on: [repository_dispatch]
 on:
   repository_dispatch:
     types: [android_repo_push]
@@ -12,6 +26,10 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
 
+      # - name: Update submodules
+      #   run: |
+      #     git submodule update --init --recursive
+
   publish:
     runs-on: ubuntu-latest
     permissions:
@@ -20,33 +38,39 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Checkout Android Repo
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-android
-          ref: main
+          ref: newPublishPipeline
           path: android
+
+      # - name: Check if commit message starts with "release:"
+      #   id: check_commit
+      #   run: |
+      #     COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+      #     # Check if commit message starts with 'release:'
+      #     if [[ "$COMMIT_MSG" != release:* ]]; then
+      #       echo "Commit message does not start with 'release:'. Skipping workflow."
+      #       exit 0
+      #     fi
 
       - name: Check android subrepo branch and commit message
         id: extract-libs
         working-directory: ./android
         run: |
           CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          if [[ "$CURRENT_BRANCH" != "main" ]]; then
-            echo "Not on main branch in android directory. Skipping workflow."
-            exit 1
+          if [[ "$CURRENT_BRANCH" != "newPublishPipeline" ]]; then
+            echo "Not on newPublishPipeline branch in android directory. Skipping workflow."
+            # exit 0
           fi
 
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          # if [[ ! "$COMMIT_MSG" =~ ^release:\[(.*)\] ]]; then
-          #   echo "$COMMIT_MSG"
-          #   echo "Invalid commit message format. Expected: release:[lib1,lib2]"
-          #   exit 0
-          # fi
-
-          if [[ ! "$COMMIT_MSG" =~ ^release:\[([-a-zA-Z0-9,_-]+)\] ]]; then
-            echo "$COMMIT_MSG"
+          if [[ ! "$COMMIT_MSG" =~ ^release:\[(.*)\] ]]; then
+            exho "$COMMIT_MSG"
             echo "Invalid commit message format. Expected: release:[lib1,lib2]"
             exit 0
           fi
@@ -55,39 +79,99 @@ jobs:
           echo "Found libraries: $LIBS"
           echo "libraries=$LIBS" >> $GITHUB_OUTPUT
 
+      # - name: Check if commit message starts with "release:" and extract libs
+      #   id: check_commit
+      #   run: |
+      #     COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+      #     # Check if commit message starts with 'release:'
+      #     if [[ "$COMMIT_MSG" != release:* ]]; then
+      #       echo "Commit message does not start with 'release:'. Skipping workflow."
+      #       exit 0
+      #     fi
+
+      #     # Extract libraries from format release:[lib1,lib2]
+      #     if [[ "$COMMIT_MSG" =~ release:\[(.*)\] ]]; then
+      #       LIBS="${BASH_REMATCH[1]}"
+      #       echo "Found libraries: $LIBS"
+      #       echo "libraries=$LIBS" >> $GITHUB_OUTPUT
+      #     else
+      #       echo "No libraries found in correct format. Expected format: release:[lib1,lib2]"
+      #       exit 1
+      #     fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
+          java-version: "17"
+          distribution: "temurin"
           server-id: central
-          server-username: ${{secrets.ANDROID_CENTRAL_TOKEN_USERNAME }}
-          server-password: ${{ secrets.ANDROID_CENTRAL_TOKEN_PASSWORD }}
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.ANDROID_GPG_SIGNING_KEY }}
-          gpg-passphrase: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      # - name: Extract libraries from commit message
+      #   id: extract-libs
+      #   run: |
+      #     # Extract text between square brackets after [build-libs]
+      #     COMMIT_MSG="${{ github.event.head_commit.message }}"
+      #     LIBS=$(echo "$COMMIT_MSG" | grep -o '\[build-libs\]\[.*\]' | grep -o '\[.*\]$' | tr -d '[]')
+      #     if [ -z "$LIBS" ]; then
+      #       echo "No libraries specified in commit message"
+      #       # exit 1
+      #     fi
+      #     echo "Found libraries: $LIBS"
+      #     echo "libraries=$LIBS" >> $GITHUB_OUTPUT
+
+      #     # COMMIT_MSG="${{ github.event.head_commit.message }}"
+
+      #     # # Check if commit message contains a valid format for libraries
+      #     # # if [[ "$COMMIT_MSG" =~ ^release:\ \[([a-zA-Z0-9, ]+)\]\ .* ]]; then
+      #     #   LIBS="${BASH_REMATCH[1]}"
+      #     #   echo "Found libraries: $LIBS"
+      #     #   echo "libraries=$LIBS" >> $GITHUB_OUTPUT
+      #     # # else
+      #     #   # echo "No valid libraries found in commit message"
+      #     #   # exit 1
+      #     # # fi
+      - name: Enable Corepack and Install Yarn
+        run: |
+          # Enable Corepack
+          corepack enable
+
+          # corepack prepare yarn@4.4.1 --activate
 
       - name: Dependency Install
         run: |
-          # Install dependencies using npm
+          # Install dependencies using yarn
           npm i
           npm run re:start
+          echo "Directory structure after setup:"
+          ls -L
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
         with:
           build-root-directory: ./android
 
-      - name: Remove demo-app from settings.gradle
-        working-directory: ./android
-        run: |
-          sed -i "s/include ':app', ':react-native-code-push', ':demo-app', ':hyperswitch-sdk-android-lite'/include ':app', ':react-native-code-push', ':hyperswitch-sdk-android-lite'/" settings.gradle
-
       - name: Build and Publish
         working-directory: ./android
         env:
-          SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
-          SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
+          MAVEN_USERNAME: ${{ secrets.ANDROID_CENTRAL_TOKEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.ANDROID_CENTRAL_TOKEN_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
+          # GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
+          # GPG_FULL_SIGNING_KEY: ${{ secrets.GPG_FULL_SIGNING_KEY }}
+          SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
+          # SELECTED_LIBRARIES: "hyperswitch-gradle-plugin,plugin"
+          SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
 
         run: |
+          pwd
           ./build-lib.sh
+
+    # - name: Upload to Maven Central
+    #   env:
+    #     SONATYPE_TOKEN: ${{ secrets.SONATYPE_TOKEN }}
+    #   run: ./upload-lib.sh
