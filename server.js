@@ -25,7 +25,22 @@ app.get('/create-payment-intent', async (req, res) => {
       customer_id: 'hyperswitch_demo_id',
       capture_method: 'automatic',
       email: 'abc@gmail.com',
+      business_country: 'US',
+      business_label: 'default',
       billing: {
+        address: {
+          line1: '1467',
+          line2: 'Harrison Street',
+          line3: 'Harrison Street',
+          city: 'San Fransico',
+          state: 'California',
+          zip: '94122',
+          country: 'PL',
+          first_name: 'joseph',
+          last_name: 'Doe',
+        }
+      },
+      shipping: {
         address: {
           line1: '1467',
           line2: 'Harrison Street',
@@ -46,6 +61,8 @@ app.get('/create-payment-intent', async (req, res) => {
       clientSecret: paymentIntent.client_secret,
     });
   } catch (err) {
+          console.log(err)
+
     return res.status(400).send({
       error: {
         message: err.message,
