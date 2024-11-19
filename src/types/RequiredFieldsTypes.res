@@ -22,6 +22,8 @@ type paymentMethodsFields =
   | AddressState
   | AddressCountry(array<string>)
   | BlikCode
+  | AccountNumber
+  | RoutingNumber
   | Currency(array<string>)
 
 type requiredField =
@@ -287,6 +289,8 @@ let useGetPlaceholder = (
     | AddressCountry(_) => localeObject.countryLabel
     | Currency(_) => localeObject.currencyLabel
     | InfoElement
+    | AccountNumber
+    | RoutingNumber
     | SpecialField(_)
     | UnKnownField(_)
     | PhoneNumber

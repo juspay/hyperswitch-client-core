@@ -33,6 +33,23 @@ let make = (
   let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
   let (emailIsFocus, setEmailIsFocus) = React.useState(_ => false)
 
+  let (accountnum, setaccountnum) = React.useState(_ => None)
+  let (isaccountnumValid, setisaccountnumValid) = React.useState(_ => None)
+  let (routingnum, setroutingnum) = React.useState(_ => None)
+  let (isroutingnumValid, setisroutingnumValid) = React.useState(_ => None)
+  let (address, setaddress) = React.useState(_ => None)
+  let (address2, setaddress2) = React.useState(_ => None)
+  let (isAddressValid, setIsAddressValid) = React.useState(_ => None)
+  let (isAddress2Valid, setIsAddress2Valid) = React.useState(_ => None)
+  let (account, setaccount) = React.useState(_ => None)
+  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
+  let (state, setState) = React.useState(_ => Some(nativeProp.hyperParams.state))
+  let (postalCode, setpostalCode) = React.useState(_ => None)
+  let (city, setcity) = React.useState(_ => None)
+  let (iscityValid, setIscityValid) = React.useState(_ => None)
+  let (statesJson, setStatesJson) = React.useState(_ => None)
+  //let (AddressIsFocus, setAddressIsFocus) = React.useState(_ => false)
+
   let (name, setName) = React.useState(_ => None)
   let (isNameValid, setIsNameValid) = React.useState(_ => None)
   let (nameIsFocus, setNameIsFocus) = React.useState(_ => false)
@@ -66,6 +83,7 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
   | OPEN_BANKING(prop) => prop.payment_method_type
+  | BANK_DEBIT(prop) => prop.payment_method_type
   }
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
@@ -88,6 +106,10 @@ let make = (
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BANK_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   }
   let paymentMethodType = switch redirectProp {
   | BANK_REDIRECT(prop) => prop.payment_method_type
@@ -107,6 +129,18 @@ let make = (
       value: item.hyperSwitch,
     }
   })
+  let accounts = ["savings", "current"] // Hard Coded The Account_Type Fields in ACHBankDebi
+
+  let accountTypesList = accounts->Js.Array.sortInPlace
+
+  let accountItems = Bank.bankNameConverter(accountTypesList)
+
+  let accountTypes: array<customPickerType> = accountItems->Array.map(item => {
+    {
+      name: item.displayName,
+      value: item.hyperSwitch,
+    }
+  })
 
   let countryData: array<customPickerType> = Country.country->Array.map(item => {
     {
@@ -115,6 +149,33 @@ let make = (
       icon: Utils.getCountryFlags(item.isoAlpha2),
     }
   })
+
+  React.useEffect0(() => {
+    // Dynamically import/download Postal codes and states JSON
+    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    ->Promise.then(res => {
+      setStatesJson(_ => Some(res.states))
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      setStatesJson(_ => None) // W1
+      Promise.resolve()
+    })
+    ->ignore
+
+    None
+  })
+
+  let getStateData = states => {
+    states
+    ->Utils.getStateNames(country->Option.getOr(""))
+    ->Array.map((item): CustomPicker.customPickerType => {
+      {
+        name: item,
+        value: item,
+      }
+    })
+  }
 
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(
     switch bankItems->Array.get(0) {
@@ -137,9 +198,24 @@ let make = (
       (),
     )
   }
+  let onChangeState = val => {
+    setState(val)
+    logger(
+      ~logType=INFO,
+      ~value=country->Option.getOr(""),
+      ~category=USER_EVENT,
+      ~eventName=STATE_CHANGED,
+      ~paymentMethod,
+      ~paymentExperience?,
+      (),
+    )
+  }
 
   let onChangeBank = val => {
     setSelectedBank(val)
+  }
+  let onChangeAccountType = val => {
+    setaccount(val)
   }
 
   let onChangeBlikCode = (val: string) => {
@@ -155,6 +231,11 @@ let make = (
       onlyNumerics
     }
     setBlikCode(_ => Some(finalVal))
+  }
+
+  let onChangePostalCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    setpostalCode(_ => Some(onlyNumerics))
   }
 
   let (error, setError) = React.useState(_ => None)
@@ -229,23 +310,35 @@ let make = (
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
       setup_future_usage: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
+        // "off_session",
+        allApiData.additionalPMLData.mandateType == NORMAL ? Some("off_session") : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
-      // mandate_data: ?(
-      //   allApiData.mandateType != NORMAL
-      //     ? Some({
-      //         customer_acceptance: {
-      //           acceptance_type: "online",
-      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-      //           online: {
-      //             ip_address: ?nativeProp.hyperParams.ip,
-      //             user_agent: ?nativeProp.hyperParams.userAgent,
-      //           },
-      //         },
-      //       })
-      //     : None
-      // ),
+      mandate_data: ?(
+        allApiData.additionalPMLData.mandateType == NORMAL
+          ? Some({
+              customer_acceptance: {
+                acceptance_type: "offline",
+                accepted_at: "1963-05-03T04:07:52.723Z",
+                online: {
+                  ip_address: "125.0.0.1",
+                  user_agent: "amet irure esse",
+                },
+              },
+              mandate_type: {
+                multi_use: {
+                  amount: 1000,
+                  currency: "USD",
+                  start_date: "2023-04-21T00:00:00Z",
+                  end_date: "2023-05-21T00:00:00Z",
+                  metadata: {
+                    frequency: "13",
+                  },
+                },
+              },
+            })
+          : None
+      ),
       customer_acceptance: ?(
         allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate
           ? Some({
@@ -786,6 +879,69 @@ let make = (
     )
   }
 
+  let processRequestBankDebit = (prop: payment_method_types_ach_bank_debit) => {
+    let payment_method_data =
+      [
+        (
+          prop.payment_method,
+          [
+            (
+              "ach_bank_debit",
+              [
+                ("account_number", accountnum->Option.getOr("")->JSON.Encode.string),
+                ("routing_number", routingnum->Option.getOr("")->JSON.Encode.string),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+        (
+          "billing",
+          [
+            (
+              "address",
+              [
+                (
+                  "first_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(0)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+                (
+                  "last_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(1)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+
+    processRequest(
+      ~payment_method_data,
+      ~payment_method=prop.payment_method,
+      ~payment_method_type=prop.payment_method_type,
+      (),
+    )
+  }
+
   let handlePress = _ => {
     setLoading(ProcessingPayments(None))
     switch redirectProp {
@@ -797,6 +953,7 @@ let make = (
     | CRYPTO(prop) => processRequestCrypto(prop)
     | WALLET(prop) => processRequestWallet(prop)
     | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
+    | BANK_DEBIT(prop) => processRequestBankDebit(prop)
     | _ => ()
     }
   }
@@ -814,20 +971,84 @@ let make = (
     setIsNameValid(_ => y)
     setName(_ => Some(text))
   }
+  let handlecity = text => {
+    let y = if text->String.length >= 3 {
+      Some(true)
+    } else {
+      None
+    }
+    setIscityValid(_ => y)
+    setcity(_ => Some(text))
+  }
+  let handleAddress1 = text => {
+    let y = if text->String.length >= 5 {
+      Some(true)
+    } else {
+      None
+    }
+    setIsAddressValid(_ => y)
+    setaddress(_ => Some(text))
+  }
+  let handleAddress2 = text => {
+    let y = if text->String.length >= 5 {
+      Some(true)
+    } else {
+      None
+    }
+    setIsAddress2Valid(_ => y)
+    setaddress2(_ => Some(text))
+  }
+  let handlePressAccNum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length === 12 {
+      Some(true)
+    } else {
+      None
+    }
+    setisaccountnumValid(_ => y)
+    setaccountnum(_ => Some(onlyNumerics))
+  }
+
+  let handlePressRouNum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length === 9 {
+      Some(true)
+    } else {
+      None
+    }
+    setisroutingnumValid(_ => y)
+    setroutingnum(_ => Some(onlyNumerics))
+  }
+
   let isEmailValidForFocus = {
     emailIsFocus ? true : isEmailValid->Option.getOr(true)
   }
   let isNameValidForFocus = {
     nameIsFocus ? true : isNameValid->Option.getOr(true)
   }
+  // let isAddressValidForFocus = {
+  //   AddressIsFocus ? true : isAddressValid->Option.getOr(true)
+  // }
 
   let hasSomeFields = fields.fields->Array.length > 0
 
-  let isAllValuesValid = React.useMemo3(() => {
-    ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
-      fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
+  // let isAllValuesValid = React.useMemo3(() => {
+  //   ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
+  //     fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
+  //   )) || (fields.name == "klarna" && isKlarna)
+  // }, (isEmailValid, isNameValid, allApiData.sessions))
+  let isAllValuesValid = React.useMemo5(() => {
+    ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) &&
+    (fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true) &&
+    (fields.fields->Array.includes("routing_number")
+      ? isroutingnumValid->Option.getOr(false)
+      : true) &&
+    (fields.fields->Array.includes("account_number")
+      ? isaccountnumValid->Option.getOr(false)
+      : true) && (
+      fields.fields->Array.includes("account_type") ? isaccountnumValid->Option.getOr(false) : true
     )) || (fields.name == "klarna" && isKlarna)
-  }, (isEmailValid, isNameValid, allApiData.sessions))
+  }, (isEmailValid, isNameValid, isaccountnumValid, isroutingnumValid, allApiData.sessions))
 
   React.useEffect(() => {
     if isScreenFocus {
@@ -858,115 +1079,252 @@ let make = (
     selectedBank,
   ))
 
-  <>
+  <React.Fragment>
     <Space />
-    <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
-      <UIUtils.RenderIf condition={fields.header->String.length > 0}>
-        <TextWrapper text={fields.header} textType=Subheading />
-      </UIUtils.RenderIf>
-      {KlarnaModule.klarnaReactPaymentView->Option.isSome && fields.name == "klarna" && isKlarna
-        ? <>
-            <Space />
-            <Klarna
-              launchKlarna
-              processRequest=processRequestPayLater
-              return_url={Utils.getReturnUrl(nativeProp.hyperParams.appId)}
-              klarnaSessionTokens=session_token
-            />
-            <ErrorText text=error />
-          </>
-        : <>
-            {fields.fields
-            ->Array.mapWithIndex((field, index) =>
-              <View key={`field-${fields.text}${index->Int.toString}`}>
-                <Space />
-                {switch field {
-                | "email" =>
-                  <CustomInput
-                    state={email->Option.getOr("")}
-                    setState={handlePressEmail}
-                    placeholder=localeObject.emailLabel
-                    keyboardType=#"email-address"
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderTopLeftRadius=borderRadius
-                    borderTopRightRadius=borderRadius
-                    borderTopWidth=borderWidth
-                    borderBottomWidth=borderWidth
-                    borderLeftWidth=borderWidth
-                    borderRightWidth=borderWidth
-                    isValid=isEmailValidForFocus
-                    onFocus={_ => {
-                      setEmailIsFocus(_ => true)
-                    }}
-                    onBlur={_ => {
-                      setEmailIsFocus(_ => false)
-                    }}
-                    textColor=component.color
-                  />
-                | "name" =>
-                  <CustomInput
-                    state={name->Option.getOr("")}
-                    setState={handlePressName}
-                    placeholder=localeObject.fullNameLabel
-                    keyboardType=#default
-                    isValid=isNameValidForFocus
-                    onFocus={_ => {
-                      setNameIsFocus(_ => true)
-                    }}
-                    onBlur={_ => {
-                      setNameIsFocus(_ => false)
-                    }}
-                    textColor=component.color
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderTopLeftRadius=borderRadius
-                    borderTopRightRadius=borderRadius
-                    borderTopWidth=borderWidth
-                    borderBottomWidth=borderWidth
-                    borderLeftWidth=borderWidth
-                    borderRightWidth=borderWidth
-                  />
-                | "country" =>
-                  <CustomPicker
-                    value=country
-                    setValue=onChangeCountry
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderBottomWidth=borderWidth
-                    items=countryData
-                    placeholderText=localeObject.countryLabel
-                  />
-                | "bank" =>
-                  <CustomPicker
-                    value=selectedBank
-                    setValue=onChangeBank
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderBottomWidth=borderWidth
-                    items=bankData
-                    placeholderText=localeObject.bankLabel
-                  />
-                | "blik_code" =>
-                  <CustomInput
-                    state={blikCode->Option.getOr("")}
-                    setState={onChangeBlikCode}
-                    borderBottomLeftRadius=borderRadius
-                    borderBottomRightRadius=borderRadius
-                    borderBottomWidth=borderWidth
-                    placeholder="000-000"
-                    keyboardType=#numeric
-                    maxLength=Some(7)
-                  />
-                | _ => React.null
-                }}
-              </View>
-            )
-            ->React.array}
-            <Space />
-            <RedirectionText />
-          </>}
-    </ErrorBoundary>
-    <Space height=5. />
-  </>
+    {switch paymentMethod {
+    | "ach" => <TextWrapper text="Bank Details" textType={SubheadingBold} />
+    | _ => React.null
+    }}
+    {<>
+      <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
+        <UIUtils.RenderIf condition={fields.header->String.length > 0}>
+          <TextWrapper text={fields.header} textType=Subheading />
+        </UIUtils.RenderIf>
+        {KlarnaModule.klarnaReactPaymentView->Option.isSome && fields.name == "klarna" && isKlarna
+          ? <>
+              <Space />
+              <Klarna
+                launchKlarna
+                processRequest=processRequestPayLater
+                return_url={Utils.getReturnUrl(nativeProp.hyperParams.appId)}
+                klarnaSessionTokens=session_token
+              />
+              <ErrorText text=error />
+            </>
+          : <>
+              {fields.fields
+              ->Array.mapWithIndex((field, index) =>
+                <View key={`field-${fields.text}${index->Int.toString}`}>
+                  <Space />
+                  {switch field {
+                  | "email" =>
+                    <CustomInput
+                      state={email->Option.getOr("")}
+                      setState={handlePressEmail}
+                      placeholder=localeObject.emailLabel
+                      keyboardType=#"email-address"
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                      isValid=isEmailValidForFocus
+                      onFocus={_ => {
+                        setEmailIsFocus(_ => true)
+                      }}
+                      onBlur={_ => {
+                        setEmailIsFocus(_ => false)
+                      }}
+                      textColor=component.color
+                    />
+                  | "name" =>
+                    <CustomInput
+                      state={name->Option.getOr("")}
+                      setState={handlePressName}
+                      placeholder=localeObject.fullNameLabel
+                      keyboardType=#default
+                      isValid=isNameValidForFocus
+                      onFocus={_ => {
+                        setNameIsFocus(_ => true)
+                      }}
+                      onBlur={_ => {
+                        setNameIsFocus(_ => false)
+                      }}
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  | "country" =>
+                    <CustomPicker
+                      value=country
+                      setValue=onChangeCountry
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      items=countryData
+                      placeholderText=localeObject.countryLabel
+                    />
+
+                  | "State" =>
+                    switch statesJson {
+                    | Some(states) =>
+                      <CustomPicker
+                        value=state
+                        setValue=onChangeState
+                        borderBottomLeftRadius=borderRadius
+                        borderBottomRightRadius=borderRadius
+                        borderBottomWidth=borderWidth
+                        items={states->getStateData}
+                        placeholderText=localeObject.stateLabel
+                      />
+                    | None => React.null
+                    }
+
+                  | "bank" =>
+                    <CustomPicker
+                      value=selectedBank
+                      setValue=onChangeBank
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      items=bankData
+                      placeholderText=localeObject.bankLabel
+                    />
+                  | "blik_code" =>
+                    <CustomInput
+                      state={blikCode->Option.getOr("")}
+                      setState={onChangeBlikCode}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="000-000"
+                      keyboardType=#numeric
+                      maxLength=Some(7)
+                    />
+                  | "Address_Line_1" =>
+                    <CustomInput
+                      state={address->Option.getOr("")}
+                      setState={handleAddress1}
+                      placeholder="Address Line 1"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+
+                  | "Address_Line_2" =>
+                    <CustomInput
+                      state={address2->Option.getOr("")}
+                      setState={handleAddress2}
+                      placeholder="Address Line 2"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  | "City" =>
+                    <CustomInput
+                      state={city->Option.getOr("")}
+                      setState={handlecity}
+                      placeholder="City"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  | "account_type" =>
+                    <>
+                      <CustomPicker
+                        value=account
+                        setValue=onChangeAccountType
+                        borderBottomLeftRadius=borderRadius
+                        borderBottomRightRadius=borderRadius
+                        borderBottomWidth=borderWidth
+                        items=accountTypes
+                        placeholderText="Account Type"
+                      />
+                      <Space />
+                      <ClickableTextElement
+                        disabled={false}
+                        initialIconName="checkboxClicked"
+                        updateIconName=Some("checkboxNotClicked")
+                        text=" Save this bank Details for faster payments"
+                        isSelected=isNicknameSelected
+                        setIsSelected=setIsNicknameSelected
+                        textType={ModalText}
+                        disableScreenSwitch=true
+                      />
+                      <Space />
+                      <Space />
+                      <TextWrapper text="Billing Address" textType=SubheadingBold />
+                      <Space />
+                    </>
+
+                  | "postal_code" =>
+                    <CustomInput
+                      state={postalCode->Option.getOr("")}
+                      setState={onChangePostalCode}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="Postal Code"
+                      keyboardType=#numeric
+                      maxLength=Some(120)
+                    />
+
+                  | "account_number" =>
+                    <CustomInput
+                      state={accountnum->Option.getOr("")}
+                      setState={handlePressAccNum}
+                      placeholder="Account Number"
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      maxLength=Some(12)
+                      keyboardType=#numeric
+                    />
+                  | "routing_number" =>
+                    <CustomInput
+                      state={routingnum->Option.getOr("")}
+                      setState={handlePressRouNum}
+                      placeholder="Routing Number"
+                      keyboardType=#numeric
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      maxLength=Some(9)
+                    />
+
+                  | _ => React.null
+                  }}
+                </View>
+              )
+              ->React.array}
+              <Space />
+              {switch paymentMethod {
+              | "ach" => React.null
+              | _ => <RedirectionText />
+              }}
+            </>}
+      </ErrorBoundary>
+      <Space height=5. />
+    </>}
+  </React.Fragment>
 }

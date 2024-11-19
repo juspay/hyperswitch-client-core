@@ -483,6 +483,10 @@ let useRedirectHook = () => {
               ~errorCallback,
               ~processor=body,
             )
+            responseCallback(
+              ~paymentStatus=LoadingContext.ProcessingPayments(None),
+              ~status={status, message: "", code: "", type_: ""},
+            )
           }
         | statusVal =>
           logger(
