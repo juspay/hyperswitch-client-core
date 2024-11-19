@@ -3,6 +3,11 @@ type logCategory = API | USER_ERROR | USER_EVENT | MERCHANT_EVENT
 type logComponent = MOBILE
 type apiLogType = Request | Response | NoResponse | Err
 type codePushVersionFetched = CP_NOT_STARTED | CP_VERSION_LOADING | CP_VERSION_LOADED(string)
+type sdkVersionFetched =
+  | PACKAGE_JSON_NOT_STARTED
+  | PACKAGE_JSON_LOADING
+  | PACKAGE_JSON_REFERENCE_ERROR
+  | PACKAGE_JSON_LOADED(string)
 type eventName =
   | APP_RENDERED
   | INACTIVE_SCREEN
@@ -48,6 +53,8 @@ type eventName =
   | DELETE_PAYMENT_METHODS_CALL_INIT
   | DELETE_PAYMENT_METHODS_CALL
   | DELETE_SAVED_PAYMENT_METHOD
+  | ADD_PAYMENT_METHOD_CALL_INIT
+  | ADD_PAYMENT_METHOD_CALL
 
 type logFile = {
   timestamp: string,
@@ -56,6 +63,7 @@ type logFile = {
   category: logCategory,
   version: string,
   codePushVersion: string,
+  clientCoreVersion: string,
   value: string,
   internalMetadata: string,
   sessionId: string,

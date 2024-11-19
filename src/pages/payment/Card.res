@@ -32,6 +32,7 @@ let make = (
   // Validity Hooks
   let (isAllCardValuesValid, setIsAllCardValuesValid) = React.useState(_ => false)
   let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
+  let (isNicknameValid, setIsNicknameValid) = React.useState(_ => true)
   let requiredFields = cardVal.required_field->Array.filter(val => {
     switch val.field_type {
     | RequiredFieldsTypes.UnKnownField(_) => false
@@ -45,14 +46,14 @@ let make = (
   )> => [])
   let (error, setError) = React.useState(_ => None)
 
-  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
+  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && (isNicknameSelected ? isNicknameValid : true)
 
   let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
   let (isInitialised, setIsInitialised) = React.useState(_ => false)
 
   React.useEffect1(() => {
     if (
-      Platform.os == #android &&
+      WebKit.platform === #android &&
       !isInitialised &&
       allApiData.additionalPMLData.requestExternalThreeDsAuthentication->Option.getOr(false) &&
       cardData.cardNumber->String.length > 0
@@ -185,9 +186,9 @@ let make = (
         allApiData.additionalPMLData.mandateType,
       ) {
       | (false, _, true, NEW_MANDATE | NORMAL) =>
-        <NickNameElement nickname setNickname isNicknameSelected />
+        <NickNameElement nickname setNickname isNicknameSelected setIsNicknameValid />
       | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
-        <NickNameElement nickname setNickname isNicknameSelected=true />
+        <NickNameElement nickname setNickname isNicknameSelected=true setIsNicknameValid />
       | _ => React.null
       }}
     </View>

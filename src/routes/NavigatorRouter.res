@@ -82,7 +82,11 @@ let make = () => {
           let paymentList = handlePMLResponse(paymentMethodListData)
           let additionalPMLData = handlePMLAdditionalResponse(paymentMethodListData)
           let sessions = handleSessionResponse(sessionTokenData)
-          let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(~customerSavedPMData, ~sessions, ~isPaymentMethodManagement=false)
+          let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(
+            ~customerSavedPMData,
+            ~sessions,
+            ~isPaymentMethodManagement=false,
+          )
 
           setAllApiData({
             paymentList,
@@ -119,7 +123,8 @@ let make = () => {
     | ExpressCheckoutWidget => <ExpressCheckoutWidget />
     | WidgetPaymentSheet => <ParentPaymentSheet />
     | Headless
-    | NoView | PaymentMethodsManagement => React.null
+    | NoView
+    | PaymentMethodsManagement => React.null
     }
   }
 }

@@ -91,8 +91,6 @@ let make = () => {
         style={viewStyle(
           ~backgroundColor=component.background,
           ~width=100.->pct,
-          ~paddingTop=25.->pct,
-          ~paddingBottom=20.->pct,
           ~flex=1.,
           ~justifyContent=#center,
           ~alignItems=#center,
@@ -101,34 +99,25 @@ let make = () => {
         <TextWrapper text={"Loading ..."} textType={CardText} />
       </View>
     : savedMethods->Array.length > 0
-    ? <View
-      style={viewStyle(
-        ~backgroundColor=component.background,
-        ~height=100.->pct,
-        ~marginTop=8.->dp,
-        ~paddingBottom=20.->pct,
-        (),
-      )}>
-      <ScrollView>
+    ? <View style={viewStyle(~backgroundColor=component.background, ~height=100.->pct, ())}>
+      <ScrollView keyboardShouldPersistTaps=#handled>
         {savedMethods
         ->Array.mapWithIndex((item, i) => {
           <PaymentMethodListItem
-            key={i->Int.toString}
-            pmDetails={item}
-            isLastElement={Some(savedMethods)->Option.getOr([])->Array.length - 1 != i}
-            handleDelete=handleDeletePaymentMethods
+            key={i->Int.toString} pmDetails={item} handleDelete=handleDeletePaymentMethods
           />
         })
         ->React.array}
+        <PaymentMethodListItem.AddPaymentMethodButton />
+        <Space height=200. />
       </ScrollView>
     </View>
     : <View
         style={viewStyle(
           ~backgroundColor=component.background,
-          ~paddingTop=20.->pct,
-          ~paddingBottom=40.->pct,
           ~flex=1.,
           ~alignItems=#center,
+          ~justifyContent=#center,
           (),
         )}>
         <TextWrapper text={"No saved payment methods available."} textType={CardText} />
