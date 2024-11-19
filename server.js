@@ -61,7 +61,7 @@ app.get('/create-payment-intent', async (req, res) => {
       clientSecret: paymentIntent.client_secret,
     });
   } catch (err) {
-          console.log(err)
+    console.log(err)
 
     return res.status(400).send({
       error: {
