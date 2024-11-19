@@ -200,8 +200,6 @@ module RenderField = {
       ~required_field=required_fields_type.required_field,
     )
     <>
-      // <TextWrapper text={placeholder()} textType=SubheadingBold />
-      // <Space height=5. />
       {switch required_fields_type.field_type {
       | AddressCountry(countryArr) =>
         <CustomPicker
