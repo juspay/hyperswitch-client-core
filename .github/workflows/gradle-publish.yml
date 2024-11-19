@@ -69,7 +69,7 @@ jobs:
 
           COMMIT_MSG=$(git log -1 --pretty=%B)
           if [[ ! "$COMMIT_MSG" =~ ^release:\[(.*)\] ]]; then
-            exho "$COMMIT_MSG"
+            echo "$COMMIT_MSG"
             echo "Invalid commit message format. Expected: release:[lib1,lib2]"
             exit 0
           fi
