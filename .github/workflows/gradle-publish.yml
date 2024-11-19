@@ -38,14 +38,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
 
-      - name: Checkout Android Repo
-        uses: actions/checkout@v4
-        with:
-          repository: juspay/hyperswitch-sdk-android
-          ref: newPublishPipeline
-          path: android
       - name: Checkout Android Repo
         uses: actions/checkout@v4
         with:
@@ -63,33 +56,6 @@ jobs:
       #       echo "Commit message does not start with 'release:'. Skipping workflow."
       #       exit 0
       #     fi
-      # - name: Check if commit message starts with "release:"
-      #   id: check_commit
-      #   run: |
-      #     COMMIT_MSG="${{ github.event.head_commit.message }}"
-
-      #     # Check if commit message starts with 'release:'
-      #     if [[ "$COMMIT_MSG" != release:* ]]; then
-      #       echo "Commit message does not start with 'release:'. Skipping workflow."
-      #       exit 0
-      #     fi
-
-      - name: Check android subrepo branch and commit message
-        id: extract-libs
-        working-directory: ./android
-        run: |
-          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-          if [[ "$CURRENT_BRANCH" != "newPublishPipeline" ]]; then
-            echo "Not on newPublishPipeline branch in android directory. Skipping workflow."
-            # exit 0
-          fi
-
-          COMMIT_MSG=$(git log -1 --pretty=%B)
-          if [[ ! "$COMMIT_MSG" =~ ^release:\[(.*)\] ]]; then
-            exho "$COMMIT_MSG"
-            echo "Invalid commit message format. Expected: release:[lib1,lib2]"
-            exit 0
-          fi
 
       - name: Check android subrepo branch and commit message
         id: extract-libs
