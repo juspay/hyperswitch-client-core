@@ -39,7 +39,13 @@ jobs:
           fi
 
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          if [[ ! "$COMMIT_MSG" =~ ^release:\[(.*)\] ]]; then
+          # if [[ ! "$COMMIT_MSG" =~ ^release:\[(.*)\] ]]; then
+          #   echo "$COMMIT_MSG"
+          #   echo "Invalid commit message format. Expected: release:[lib1,lib2]"
+          #   exit 0
+          # fi
+
+          if [[ ! "$COMMIT_MSG" =~ ^release:\[([-a-zA-Z0-9,_-]+)\] ]]; then
             echo "$COMMIT_MSG"
             echo "Invalid commit message format. Expected: release:[lib1,lib2]"
             exit 0
@@ -70,6 +76,11 @@ jobs:
         uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582
         with:
           build-root-directory: ./android
+
+      - name: Remove demo-app from settings.gradle
+        working-directory: ./android
+        run: |
+          sed -i "s/include ':app', ':react-native-code-push', ':demo-app', ':hyperswitch-sdk-android-lite'/include ':app', ':react-native-code-push', ':hyperswitch-sdk-android-lite'/" settings.gradle
 
       - name: Build and Publish
         working-directory: ./android
