@@ -18,6 +18,9 @@ let defaultProps = {
     // displaySavedPaymentMethods: false,
     appearance: {
       theme: 'Light',
+      typography: {
+        fontFamily: 'Helvetica',
+      },
       // componentBackground:"black",
       // colors:{
       //   background:"#F5F8F9",

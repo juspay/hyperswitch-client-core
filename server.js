@@ -5,7 +5,7 @@ app.use(cors());
 app.use(express.static('./dist'));
 app.use(express.json());
 
-require('dotenv').config({path: './.env'});
+require('dotenv').config({ path: './.env' });
 
 try {
   var hyper = require('@juspay-tech/hyperswitch-node')(
@@ -15,13 +15,80 @@ try {
   console.error('process.env.HYPERSWITCH_SECRET_KEY not found, ', err.message);
   process.exit(0);
 }
+const paymentData = {
+  currency: "GBP",
+  amount: 2999,
+  order_details: [
+    {
+      product_name: "Apple iPhone 15",
+      quantity: 1,
+      amount: 2999,
+    },
+  ],
+  confirm: false,
+  capture_method: "automatic",
+  authentication_type: "three_ds",
+  customer_id: "hyperswitch_sdk_demo_id232432",
+  // email: "hyperswitch_sdk_demo_id@gmail.com",
+  request_external_three_ds_authentication: false,
+  description: "Hello this is description",
+  shipping: {
+    address: {
+      line1: "1467",
+      line2: "Harrison Street",
+      line3: "Harrison Street",
+      city: "San Fransico",
+      state: "California",
+      zip: "94122",
+      country: "GB",
+      first_name: "joseph",
+      last_name: "Doe",
+    },
+    phone: {
+      number: "8056594427",
+      country_code: "+91",
+    },
+  },
+  metadata: {
+    udf1: "value1",
+    new_customer: "true",
+    login_date: "2019-09-10T10:11:12Z",
+  },
+  billing: {
+    address: {
+      line1: "1467",
+      line2: "Harrison Street",
+      line3: "Harrison Street",
+      city: "San Fransico",
+      state: "California",
+      zip: "94122",
+      country: "GB",
+      first_name: "joseph",
+      last_name: "Doe",
+    },
+    phone: {
+      number: "8056594427",
+      country_code: "+91",
+    },
+  },
+}
+
+const profileId = process.env.HYPERSWITCH_PROFILE_ID;
+if (profileId) {
+  paymentData.profile_id = profileId;
+}
+
+
+
+
+
 
 app.get('/create-payment-intent', async (req, res) => {
   try {
-    var paymentIntent = await hyper.paymentIntents.create({
-      amount: 2999,
-      currency: 'USD',
-    });
+    var paymentIntent = await hyper.paymentIntents.create(
+      paymentData);
+
+
 
     // Send publishable key and PaymentIntent details to client
     res.send({
@@ -47,7 +114,7 @@ app.get('/create-ephemeral-key', async (req, res) => {
           'Content-Type': 'application/json',
           'api-key': process.env.HYPERSWITCH_SECRET_KEY,
         },
-        body: JSON.stringify({customer_id: "hyperswitch_sdk_demo_id"}),
+        body: JSON.stringify({ customer_id: "hyperswitch_sdk_demo_id" }),
       },
     );
     const ephemeralKey = await response.json();
