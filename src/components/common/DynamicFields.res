@@ -135,11 +135,21 @@ module RenderField = {
                       ? Some(localeObject.requiredText)
                       : Some(localeObject.cardHolderNameRequiredText),
                   )
-                : (JSON.Encode.string(firstNameVal), None)
+                : (
+                    JSON.Encode.string(firstNameVal),
+                    firstNameVal->ValidationFunctions.containsDigit
+                      ? Some(localeObject.invalidDigitsCardHolderNameError)
+                      : None,
+                  )
             let (lastNameVal, lastNameErrorMessage) =
               lastNameVal === ""
                 ? (JSON.Encode.null, Some(localeObject.lastNameRequiredText))
-                : (JSON.Encode.string(lastNameVal), None)
+                : (
+                    JSON.Encode.string(lastNameVal),
+                    lastNameVal->ValidationFunctions.containsDigit
+                      ? Some(localeObject.invalidDigitsCardHolderNameError)
+                      : None,
+                  )
 
             setErrorMesage(_ =>
               switch firstNameErrorMessage {
