@@ -146,7 +146,7 @@ jobs:
         run: |
           # Install dependencies using yarn
           npm i
-          # npm run re:start
+          npm run re:start
           echo "Directory structure after setup:"
           ls -L
 
