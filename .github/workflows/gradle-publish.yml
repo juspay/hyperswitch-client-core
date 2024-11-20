@@ -87,6 +87,7 @@ jobs:
         env:
           SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
           SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
+          GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
 
         run: |
           ./build-lib.sh
