@@ -38,11 +38,10 @@ let make = (
     | _ => true
     }
   })
-  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
-    RescriptCoreFuture.Dict.key,
-    JSON.t,
+  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): RescriptCore.Dict.t<(
+    Core__JSON.t,
     option<string>,
-  )> => [])
+  )> => Dict.make())
   let (error, setError) = React.useState(_ => None)
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
@@ -107,7 +106,10 @@ let make = (
       (),
     )
 
-    let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(body, dynamicFieldsJson)
+    let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
+      body,
+      dynamicFieldsJson->Dict.toArray->Array.map(((key, (value, error))) => (key, value, error)),
+    )
     fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
@@ -132,7 +134,12 @@ let make = (
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false isAllValuesValid=true handlePress paymentMethod="CARD" errorText=error
+          loading=false
+          isAllValuesValid=true
+          handlePress
+          paymentMethod="CARD"
+          errorText=error
+          bottomSpace=10.
         />,
       )
     }

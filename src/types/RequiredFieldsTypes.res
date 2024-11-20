@@ -283,8 +283,8 @@ let useGetPlaceholder = (
         localeObject.cardHolderName
       } else {
         switch fieldName {
-        | "first_name" => localeObject.firstName
-        | "last_name" => localeObject.lastName
+        | "first_name" => localeObject.fullNameLabel
+        | "last_name" => localeObject.fullNameLabel
         | "card_holder_name" => localeObject.cardHolderName
         | _ => placeholder
         }
@@ -453,7 +453,7 @@ let getIsAnyBillingDetailEmpty = (requiredFields: array<required_fields_type>) =
 
 let filterDynamicFieldsFromRendering = (
   requiredFields: array<required_fields_type>,
-  finalJson: array<(string, Core__JSON.t, option<string>)>,
+  finalJson: RescriptCore.Dict.t<(Core__JSON.t, option<string>)>,
 ) => {
   let isAnyBillingDetailEmpty = requiredFields->getIsAnyBillingDetailEmpty
   requiredFields->Array.filter(requiredField => {
@@ -462,13 +462,12 @@ let filterDynamicFieldsFromRendering = (
     let isRenderRequiredField = switch requiredField.required_field {
     | StringField(_) => requiredField.value === ""
     | FullNameField(firstNameVal, lastNameVal) =>
-      finalJson->Array.reduce(false, (acc, (key, _, errorMsg)) => {
-        if key === firstNameVal || key === lastNameVal {
-          acc || errorMsg->Option.isSome
-        } else {
-          acc
-        }
-      })
+      switch (finalJson->Dict.get(firstNameVal), finalJson->Dict.get(lastNameVal)) {
+      | (Some((_, Some(_))), Some((_, Some(_))))
+      | (Some((_, Some(_))), _)
+      | (_, Some((_, Some(_)))) => true
+      | _ => false
+      }
     }
 
     isRenderRequiredField || isShowBillingField
@@ -534,7 +533,7 @@ let getKey = (path, value) => {
 }
 
 let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
-  requiredFields->Array.reduce([], (acc, requiredField) => {
+  requiredFields->Array.reduce(Dict.make(), (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
     | ("", AddressCountry(values)) => (
         values->Array.includes(clientCountry)
@@ -552,7 +551,7 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
     let requiredFieldPath = getRequiredFieldPath(~isSaveCardsFlow, ~requiredField)
 
     switch requiredFieldPath {
-    | StringField(fieldPath) => acc->Array.push((fieldPath, value, isValid))
+    | StringField(fieldPath) => acc->Dict.set(fieldPath, (value, isValid))
 
     | FullNameField(firstName, lastName) =>
       let arr = requiredField.value->String.split(" ")
@@ -568,8 +567,8 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
           ? (JSON.Encode.null, Some("Last Name is required"))
           : (JSON.Encode.string(lastNameVal), None)
 
-      acc->Array.push((firstName, firstNameVal, isFirstNameValid))
-      acc->Array.push((lastName, lastNameVal, isLastNameValid))
+      acc->Dict.set(firstName, (firstNameVal, isFirstNameValid))
+      acc->Dict.set(lastName, (lastNameVal, isLastNameValid))
     }
 
     acc
