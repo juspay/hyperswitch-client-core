@@ -12,7 +12,7 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected, ~setIsNicknameValid) =
       setErrorMesage(_ => Some(localeObject.nickNameLengthExceedError))
       setIsNicknameValid(_ => false)
     } else {
-      switch text->ValidationFunctions.containsMoreThanTwoDigits {
+      switch text->Validation.containsMoreThanTwoDigits {
       | true => {
           setErrorMesage(_ => Some(localeObject.invalidDigitsNickNameError))
           setIsNicknameValid(_ => false)
