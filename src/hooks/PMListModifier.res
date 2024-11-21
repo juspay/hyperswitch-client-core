@@ -379,8 +379,6 @@ let widgetModifier = (
               )
             switch switch walletVal.payment_method_type_wallet {
             | GOOGLE_PAY =>
-              ReactNative.Platform.os !== #ios && sessionObject.wallet_name !== NONE ? exp : None
-            | SAMSUNG_PAY =>
               WebKit.platform !== #ios &&
               WebKit.platform !== #iosWebView &&
               sessionObject.wallet_name !== NONE
