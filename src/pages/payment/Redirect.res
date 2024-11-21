@@ -27,13 +27,37 @@ let make = (
       required_field: [],
     }
   }
-
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
   let (email, setEmail) = React.useState(_ => None)
   let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
   let (emailIsFocus, setEmailIsFocus) = React.useState(_ => false)
+  let (phone, setphone) = React.useState(_ => None)
+  let (accountnum, setaccountnum) = React.useState(_ => None)
+  let (isaccountnumValid, setisaccountnumValid) = React.useState(_ => None)
+  let (accountnumbecs, setaccountnumbecs) = React.useState(_ => None)
+  let (isaccountnumbecsValid, setisaccountnumbecsValid) = React.useState(_ => None)
+  let (line1, setLine1) = React.useState(() => None)
+  let (zip, setZip) = React.useState(() => None)
+  let (routingnum, setroutingnum) = React.useState(_ => None)
+  let (isroutingnumValid, setisroutingnumValid) = React.useState(_ => None)
+  let (address, setaddress) = React.useState(_ => None)
+  let (address2, setaddress2) = React.useState(_ => None)
+  let (isAddressValid, setIsAddressValid) = React.useState(_ => None)
+  let (isAddress2Valid, setIsAddress2Valid) = React.useState(_ => None)
+  let (account, setaccount) = React.useState(_ => None)
+  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
+  let (state, setState) = React.useState(_ => Some(nativeProp.hyperParams.state))
+  let (postalCode, setpostalCode) = React.useState(_ => None)
+  let (city, setcity) = React.useState(_ => None)
+  let (iscityValid, setIscityValid) = React.useState(_ => None)
+  let (statesJson, setStatesJson) = React.useState(_ => None)
+  let (bsbnum, setbsbnum) = React.useState(_ => None)
+  let (isbsbnumValid, setisbsbnumValid) = React.useState(_ => None)
+  let (iban, setiban) = React.useState(_ => None)
+  let (sortCode, setsortCode) = React.useState(_ => None)
+  //let (AddressIsFocus, setAddressIsFocus) = React.useState(_ => false)
 
   let (name, setName) = React.useState(_ => None)
   let (isNameValid, setIsNameValid) = React.useState(_ => None)
@@ -74,6 +98,10 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
   | OPEN_BANKING(prop) => prop.payment_method_type
+  | BANK_DEBIT(prop) => prop.payment_method_type
+  | BECS_DEBIT(prop) => prop.payment_method_type
+  | SEPA_DEBIT(prop) => prop.payment_method_type
+  | BACS_DEBIT(prop) => prop.payment_method_type
   }
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
@@ -93,6 +121,22 @@ let make = (
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   | CRYPTO(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BANK_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BECS_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | SEPA_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BACS_DEBIT(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
@@ -163,6 +207,32 @@ let make = (
       onlyNumerics
     }
     setBlikCode(_ => Some(finalVal))
+  }
+
+  let onChangebsbnum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length === 6 {
+      Some(true)
+    } else {
+      None
+    }
+    setisbsbnumValid(_ => y)
+    setbsbnum(_ => Some(onlyNumerics))
+  }
+  let onChangeiban = (val: string) => {
+    setiban(_ => Some(val))
+  }
+  let onChangeSortCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    setsortCode(_ => Some(onlyNumerics))
+  }
+  let onChangePhoneNum = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    setphone(_ => Some(onlyNumerics))
+  }
+  let onChangePostalCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    setpostalCode(_ => Some(onlyNumerics))
   }
 
   let (error, setError) = React.useState(_ => None)
@@ -237,23 +307,34 @@ let make = (
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
       setup_future_usage: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
+        allApiData.additionalPMLData.mandateType == NORMAL ? Some("off_session") : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
-      // mandate_data: ?(
-      //   allApiData.mandateType != NORMAL
-      //     ? Some({
-      //         customer_acceptance: {
-      //           acceptance_type: "online",
-      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-      //           online: {
-      //             ip_address: ?nativeProp.hyperParams.ip,
-      //             user_agent: ?nativeProp.hyperParams.userAgent,
-      //           },
-      //         },
-      //       })
-      //     : None
-      // ),
+      mandate_data: ?(
+        allApiData.additionalPMLData.mandateType == NORMAL
+          ? Some({
+              customer_acceptance: {
+                acceptance_type: "offline",
+                accepted_at: "1963-05-03T04:07:52.723Z",
+                online: {
+                  ip_address: "125.0.0.1",
+                  user_agent: "amet irure esse",
+                },
+              },
+              mandate_type: {
+                multi_use: {
+                  amount: 1000,
+                  currency: "USD",
+                  start_date: "2023-04-21T00:00:00Z",
+                  end_date: "2023-05-21T00:00:00Z",
+                  metadata: {
+                    frequency: "13",
+                  },
+                },
+              },
+            })
+          : None
+      ),
       customer_acceptance: ?(
         allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate
           ? Some({
@@ -851,7 +932,303 @@ let make = (
     )
   }
 
-  //need refactoring
+  let processRequestBankDebit = (payment_method: string, payment_method_type: string) => {
+    let redirectData =
+      [
+        ("account_number", accountnum->Option.getOr("")->JSON.Encode.string),
+        ("routing_number", routingnum->Option.getOr("")->JSON.Encode.string),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    let payment_method_data =
+      [
+        (
+          payment_method,
+          [
+            (
+              "ach_bank_debit",
+              [
+                ("account_number", accountnum->Option.getOr("")->JSON.Encode.string),
+                ("routing_number", routingnum->Option.getOr("")->JSON.Encode.string),
+                ("ach" ++ "_redirect", redirectData),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+        (
+          "billing",
+          [
+            (
+              "address",
+              [
+                (
+                  "first_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(0)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+                (
+                  "last_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(1)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+
+    Console.log4("ACh", paymentMethodType, paymentMethod, payment_method_data)
+    processRequest(~payment_method_data, ~payment_method, ~payment_method_type, ())
+  }
+  let processRequestBecsDebit = (payment_method: string, payment_method_type: string) => {
+    let payment_method_data =
+      [
+        (
+          payment_method,
+          [
+            (
+              "becs_bank_debit",
+              [
+                ("account_number", accountnum->Option.getOr("")->JSON.Encode.string),
+                ("bsb_number", bsbnum->Option.getOr("")->JSON.Encode.string),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+        (
+          "billing",
+          [
+            (
+              "address",
+              [
+                (
+                  "first_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(0)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+                (
+                  "last_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(1)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+            ("email", email->Option.getOr("")->JSON.Encode.string),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    Console.log2("bsbnum", bsbnum)
+    Console.log2("acc num", accountnum)
+    processRequest(~payment_method_data, ~payment_method, ~payment_method_type, ())
+  }
+  let processRequestSepaDebit = (payment_method: string, payment_method_type: string) => {
+    let payment_method_data =
+      [
+        (
+          payment_method,
+          [
+            (
+              "sepa_bank_debit",
+              [("iban", iban->Option.getOr("")->JSON.Encode.string)]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+        (
+          "billing",
+          [
+            (
+              "address",
+              [
+                (
+                  "first_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(0)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+                (
+                  "last_name",
+                  switch name {
+                  | Some(text) => text->String.split(" ")->Array.get(1)
+                  | _ => Some("")
+                  }
+                  ->Option.getOr("")
+                  ->JSON.Encode.string,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+            ("email", email->Option.getOr("")->JSON.Encode.string),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    processRequest(~payment_method_data, ~payment_method, ~payment_method_type, ())
+  }
+  let processRequestBacsDebit = (payment_method: string, payment_method_type: string) => {
+    let payment_method_data =
+      [
+        (
+          payment_method,
+          [
+            (
+              "bacs_bank_debit",
+              [
+                ("account_number", accountnum->Option.getOr("")->JSON.Encode.string),
+                ("sort_code", sortCode->Option.getOr("")->JSON.Encode.string),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+        (
+          // "billing",
+          // [
+          //   (
+          //     "address",
+          //     [
+          //       (
+          //         "country",
+          //         switch name {
+          //         | Some(text) => text->String.split(" ")->Array.get(0)
+          //         | _ => Some("")
+          //         }
+          //         ->Option.getOr("")
+          //         ->JSON.Encode.string,
+          //       ),
+          //       (
+          //         "first_name",
+          //         switch name {
+          //         | Some(text) => text->String.split(" ")->Array.get(1)
+          //         | _ => Some("")
+          //         }
+          //         ->Option.getOr("")
+          //         ->JSON.Encode.string,
+          //       ),
+          //       (
+          //         "line1",
+          //         switch name {
+          //         | Some(text) => text->String.split(" ")->Array.get(3)
+          //         | _ => Some("")
+          //         }
+          //         ->Option.getOr("")
+          //         ->JSON.Encode.string,
+          //       ),
+          //       (
+          //         "zip",
+          //         switch name {
+          //         | Some(text) => text->String.split(" ")->Array.get(4)
+          //         | _ => Some("")
+          //         }
+          //     ->Option.getOr("")
+          //     ->JSON.Encode.string,
+          //   ),
+          // ]
+          // ->Dict.fromArray
+          // ->JSON.Encode.object,
+          "billing",
+          [
+            (
+              "address",
+              [
+                ("country", country->Option.getOr("")->JSON.Encode.string),
+                ("first_name", name->Option.getOr("")->JSON.Encode.string),
+                ("line1", line1->Option.getOr("")->JSON.Encode.string),
+                ("zip", zip->Option.getOr("")->JSON.Encode.string),
+                ("city", city->Option.getOr("")->JSON.Encode.string),
+                //  ("state", state->Option.getOr("")->JSON.Encode.string),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+            ("email", email->Option.getOr("")->JSON.Encode.string),
+            // ("phone", phone->Option.getOr("")->JSON.Encode.string),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    processRequest(~payment_method_data, ~payment_method, ~payment_method_type, ())
+  }
+
+  let processBankDebit = (bank_debit: payment_method_types_ach_bank_debit) => {
+    switch bank_debit.payment_method_type_bank_debit {
+    | ACH => processRequestBankDebit(bank_debit.payment_method, bank_debit.payment_method_type)
+    | BECS => processRequestBecsDebit(bank_debit.payment_method, bank_debit.payment_method_type)
+    | SEPA => processRequestSepaDebit(bank_debit.payment_method, bank_debit.payment_method_type)
+    | BACS => processRequestBacsDebit(bank_debit.payment_method, bank_debit.payment_method_type)
+    | NONE => ()
+    }
+  }
+
+  let handlePress = _ => {
+    setLoading(ProcessingPayments(None))
+    switch redirectProp {
+    | PAY_LATER(prop) =>
+      fields.name == "klarna" && isKlarna
+        ? setLaunchKlarna(_ => Some(prop))
+        : processRequestPayLater(prop, "redirect")
+    | BANK_REDIRECT(prop) => processRequestBankRedirect(prop)
+    | CRYPTO(prop) => processRequestCrypto(prop)
+    | WALLET(prop) => processRequestWallet(prop)
+    | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
+    | BANK_DEBIT(prop) => processBankDebit(prop)
+    | _ => ()
+    }
+    Console.log2("Payment Redirect", redirectProp)
+  }
+
   let handlePressEmail = text => {
     setIsEmailValid(_ => text->ValidationFunctions.isValidEmail)
     setEmail(_ => Some(text))
@@ -866,6 +1243,65 @@ let make = (
     setIsNameValid(_ => y)
     setName(_ => Some(text))
   }
+  let handlecity = text => {
+    let y = if text->String.length >= 3 {
+      Some(true)
+    } else {
+      None
+    }
+    setIscityValid(_ => y)
+    setcity(_ => Some(text))
+  }
+  let handleAddress1 = text => {
+    let y = if text->String.length >= 5 {
+      Some(true)
+    } else {
+      None
+    }
+    setIsAddressValid(_ => y)
+    setaddress(_ => Some(text))
+  }
+  let handleAddress2 = text => {
+    let y = if text->String.length >= 5 {
+      Some(true)
+    } else {
+      None
+    }
+    setIsAddress2Valid(_ => y)
+    setaddress2(_ => Some(text))
+  }
+  let handlePressAccNum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length <= 12 {
+      Some(true)
+    } else {
+      None
+    }
+    setisaccountnumValid(_ => y)
+    setaccountnum(_ => Some(onlyNumerics))
+  }
+  let handlePressAccNumBECS = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length == 9 {
+      Some(true)
+    } else {
+      None
+    }
+    setisaccountnumbecsValid(_ => y)
+    setaccountnumbecs(_ => Some(onlyNumerics))
+  }
+
+  let handlePressRouNum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length === 9 {
+      Some(true)
+    } else {
+      None
+    }
+    setisroutingnumValid(_ => y)
+    setroutingnum(_ => Some(onlyNumerics))
+  }
+
   let isEmailValidForFocus = {
     emailIsFocus ? true : isEmailValid->Option.getOr(true)
   }
@@ -932,35 +1368,50 @@ let make = (
     email,
     country,
     selectedBank,
+    address,
+    address2,
+    city,
+    isEmailValid,
+    isNameValid,
+    isAddressValid,
+    isAddress2Valid,
+    iscityValid,
+    isaccountnumValid,
+    isroutingnumValid,
+    isaccountnumbecsValid,
+    accountnum,
+    routingnum,
+    accountnumbecs,
+    bsbnum,
+    iban,
+    setiban,
+    sortCode,
   ))
   <>
     <Space />
-    <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
-      <UIUtils.RenderIf condition={fields.header->String.length > 0}>
-        <TextWrapper text={fields.header} textType=Subheading />
-      </UIUtils.RenderIf>
-      {KlarnaModule.klarnaReactPaymentView->Option.isSome && fields.name == "klarna" && isKlarna
-        ? <>
-            <Space />
-            <Klarna
-              launchKlarna
-              processRequest=processRequestPayLater
-              return_url={Utils.getReturnUrl(nativeProp.hyperParams.appId)}
-              klarnaSessionTokens=session_token
-            />
-            <ErrorText text=error />
-          </>
-        : <>
-            {if isDynamicFields {
-              <DynamicFields
-                requiredFields=dynamicFields
-                setIsAllDynamicFieldValid
-                setDynamicFieldsJson
-                keyToTrigerButtonClickError
-                savedCardsData=None
+    {switch paymentMethod {
+    | "ach" => <TextWrapper text="Bank Details" textType={SubheadingBold} />
+    | "becs" => <TextWrapper text="Bank Details" textType={SubheadingBold} />
+    | _ => React.null
+    }}
+    {<>
+      <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
+        <UIUtils.RenderIf condition={fields.header->String.length > 0}>
+          <TextWrapper text={fields.header} textType=Subheading />
+        </UIUtils.RenderIf>
+        {KlarnaModule.klarnaReactPaymentView->Option.isSome && fields.name == "klarna" && isKlarna
+          ? <>
+              <Space />
+              <Klarna
+                launchKlarna
+                processRequest=processRequestPayLater
+                return_url={Utils.getReturnUrl(nativeProp.hyperParams.appId)}
+                klarnaSessionTokens=session_token
               />
-            } else {
-              fields.fields
+              <ErrorText text=error />
+            </>
+          : <>
+              {fields.fields
               ->Array.mapWithIndex((field, index) =>
                 <View key={`field-${fields.text}${index->Int.toString}`}>
                   <Space />
@@ -1021,6 +1472,22 @@ let make = (
                       items=countryData
                       placeholderText=localeObject.countryLabel
                     />
+
+                  // | "State" =>
+                  //   switch statesJson {
+                  //   | Some(states) =>
+                  //     <CustomPicker
+                  //       value=state
+                  //       setValue=onChangeState
+                  //       borderBottomLeftRadius=borderRadius
+                  //       borderBottomRightRadius=borderRadius
+                  //       borderBottomWidth=borderWidth
+                  //       items={states->getStateData}
+                  //       placeholderText=localeObject.stateLabel
+                  //     />
+                  //   | None => React.null
+                  //   }
+
                   | "bank" =>
                     <CustomPicker
                       value=selectedBank
@@ -1042,16 +1509,249 @@ let make = (
                       keyboardType=#numeric
                       maxLength=Some(7)
                     />
+                  | "Address_Line_1" =>
+                    <CustomInput
+                      state={address->Option.getOr("")}
+                      setState={handleAddress1}
+                      placeholder="Address Line 1"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  | "line1" =>
+                    <CustomInput
+                      state={line1->Option.getOr("")}
+                      setState={text => setLine1(_ => Some(text))}
+                      placeholder="Address Line 1"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+
+                  | "Address_Line_2" =>
+                    <CustomInput
+                      state={address2->Option.getOr("")}
+                      setState={handleAddress2}
+                      placeholder="Address Line 2"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  | "City" =>
+                    <CustomInput
+                      state={city->Option.getOr("")}
+                      setState={handlecity}
+                      placeholder="City"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  | "city" =>
+                    <CustomInput
+                      state={city->Option.getOr("")}
+                      setState={text => setcity(_ => Some(text))}
+                      placeholder="City"
+                      keyboardType=#default
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  // | "account_type" =>
+                  //   <>
+                  //     <CustomPicker
+                  //       value=account
+                  //       setValue=onChangeAccountType
+                  //       borderBottomLeftRadius=borderRadius
+                  //       borderBottomRightRadius=borderRadius
+                  //       borderBottomWidth=borderWidth
+                  //       items=accountTypes
+                  //       placeholderText="Account Type"
+                  //     />
+                  //     <Space />
+                  //     <ClickableTextElement
+                  //       disabled={false}
+                  //       initialIconName="checkboxClicked"
+                  //       updateIconName=Some("checkboxNotClicked")
+                  //       text=" Save this bank Details for faster payments"
+                  //       isSelected=isNicknameSelected
+                  //       setIsSelected=setIsNicknameSelected
+                  //       textType={ModalText}
+                  //       disableScreenSwitch=true
+                  //     />
+                  //   <Space />
+                  //   <Space />
+                  //   <TextWrapper text="Billing Address" textType=SubheadingBold />
+                  //   <Space />
+                  // </>
+
+                  | "postal_code" =>
+                    <CustomInput
+                      state={postalCode->Option.getOr("")}
+                      setState={onChangePostalCode}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="Postal Code"
+                      keyboardType=#numeric
+                      maxLength=Some(120)
+                    />
+                  | "zip" =>
+                    <CustomInput
+                      state={zip->Option.getOr("")}
+                      setState={text => setZip(_ => Some(text))}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="Zip Code"
+                      keyboardType=#numeric
+                      maxLength=Some(10)
+                    />
+                  | "sort_code" =>
+                    <CustomInput
+                      state={sortCode->Option.getOr("")}
+                      setState={onChangeSortCode}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="Sort Code"
+                      keyboardType=#numeric
+                      maxLength=Some(6)
+                    />
+                  | "iban" =>
+                    <CustomInput
+                      state={iban->Option.getOr("")}
+                      setState={onChangeiban}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="IBAN Number"
+                      keyboardType=#numeric
+                      maxLength=Some(36)
+                    />
+                  | "phone" =>
+                    <CustomInput
+                      state={phone->Option.getOr("")}
+                      setState={onChangePhoneNum}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="Phone Number"
+                      keyboardType=#numeric
+                      maxLength=Some(10)
+                    />
+
+                  | "account_number" =>
+                    <CustomInput
+                      state={accountnum->Option.getOr("")}
+                      setState={handlePressAccNum}
+                      placeholder="Account Number"
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      maxLength=Some(12)
+                      keyboardType=#numeric
+                    />
+                  | "account_number_BECS" =>
+                    <CustomInput
+                      state={accountnumbecs->Option.getOr("")}
+                      setState={handlePressAccNumBECS}
+                      placeholder="Account Number"
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      maxLength=Some(9)
+                      keyboardType=#numeric
+                    />
+                  | "bsb_number" =>
+                    // <>
+                    <CustomInput
+                      state={bsbnum->Option.getOr("")}
+                      setState={onChangebsbnum}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="BSB Number"
+                      keyboardType=#numeric
+                      maxLength=Some(6)
+                    />
+                  // <Space />
+                  // <ClickableTextElement
+                  //   disabled={false}
+                  //   initialIconName="checkboxClicked"
+                  //   updateIconName=Some("checkboxNotClicked")
+                  //   text=" Save this bank Details for faster payments"
+                  //   isSelected=isNicknameSelected
+                  //   setIsSelected=setIsNicknameSelected
+                  //   textType={ModalText}
+                  //   disableScreenSwitch=true
+                  // />
+                  // <Space />
+                  // <Space />
+                  // <TextWrapper text="Billing Address" textType=SubheadingBold />
+                  // <Space />
+                  //</>
+                  | "routing_number" =>
+                    <CustomInput
+                      state={routingnum->Option.getOr("")}
+                      setState={handlePressRouNum}
+                      placeholder="Routing Number"
+                      keyboardType=#numeric
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      maxLength=Some(9)
+                    />
+
                   | _ => React.null
                   }}
                 </View>
               )
-              ->React.array
-            }}
-            <Space />
-            <RedirectionText />
-          </>}
-    </ErrorBoundary>
-    <Space height=5. />
+              ->React.array}
+              <Space />
+              {switch paymentMethod {
+              | "ach" => React.null
+              | "becs" => React.null
+              | "sepa" => React.null
+              | "bacs" => React.null
+              | _ => <RedirectionText />
+              }}
+            </>}
+      </ErrorBoundary>
+      <Space height=5. />
+    </>}
   </>
 }
