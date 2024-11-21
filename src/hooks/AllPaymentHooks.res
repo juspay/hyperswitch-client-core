@@ -300,7 +300,14 @@ let useBrowserHook = () => {
             | "requires_capture"
             | "requires_confirmation"
             | "cancelled"
-            | "requires_merchant_action" =>
+            | "requires_customer_action"
+            | //=>
+            // responseCallback(
+            //   ~paymentStatus=LoadingContext.ProcessingPayments(None),
+            //   ~status={status, message: "", code: "", type_: ""},
+            // )
+            // Console.log2("status", status)
+            "requires_merchant_action" =>
               responseCallback(
                 ~paymentStatus=LoadingContext.ProcessingPayments(None),
                 ~status={status, message: "", code: "", type_: ""},
@@ -450,7 +457,36 @@ let useRedirectHook = () => {
           )
         | "requires_capture"
         | "processing"
-        | "requires_confirmation"
+        | //=> {
+        //     setAllApiData({
+        //       ...allApiData,
+        //       additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+        //     })
+        //     logger(
+        //       ~logType=INFO,
+        //       ~category=USER_EVENT,
+        //       ~value="",
+        //       ~internalMetadata=reUri,
+        //       ~eventName=REDIRECTING_USER,
+        //       ~paymentMethod,
+        //       (),
+        //     )
+        //     redirectioBrowserHook(
+        //       ~clientSecret,
+        //       ~publishableKey,
+        //       ~openUrl=reUri,
+        //       ~responseCallback,
+        //       ~errorCallback,
+        //       ~processor=body,
+        //     )
+        //     responseCallback(
+        //       ~paymentStatus=LoadingContext.ProcessingPayments(None),
+        //       ~status={status, message: "", code: "", type_: ""},
+        //     )
+        //     Console.log2("reUri", reUri)
+        //   }
+
+        "requires_confirmation"
         | "requires_merchant_action" => {
             setAllApiData({
               ...allApiData,
