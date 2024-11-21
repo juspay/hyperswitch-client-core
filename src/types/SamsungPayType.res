@@ -55,11 +55,11 @@ let get3DSData = (dict, str) => {
 let getPaymentMethodData = dict => {
   {
     payment_credential: {
-      card_brand: getString(dict, "card_brand", ""),
+      card_brand: getString(dict, "payment_card_brand", ""),
       recurring_payment: getBool(dict, "recurring_payment", false),
-      card_last4digits: getString(dict, "card_last4digits", ""),
+      card_last4digits: getString(dict, "payment_last4_fpan", ""),
       method: getString(dict, "method", ""),
-      \"3_d_s": get3DSData(dict, "3_d_s"),
+      \"3_d_s": get3DSData(dict, "3DS"),
     },
   }
 }

@@ -317,8 +317,14 @@ let make = (
     }
   }
 
-  let confirmSamsungPay = (status, response) => {
+  let confirmSamsungPay = status => {
     if status->ThreeDsUtils.isStatusSuccess {
+      let response =
+        status.message
+        ->JSON.parseExn
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+
       let obj = response->SamsungPayType.itemToObjMapper
 
       let payment_method_data =

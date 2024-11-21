@@ -2,7 +2,7 @@ open ExternalThreeDsTypes
 
 type module_ = {
   checkSamsungPayValidity: (string, statusType => unit) => unit,
-  presentSamsungPayPaymentSheet: ((statusType, Dict.t<JSON.t>) => unit) => unit,
+  presentSamsungPayPaymentSheet: (statusType => unit) => unit,
   isAvailable: bool,
 }
 
