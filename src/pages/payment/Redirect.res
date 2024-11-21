@@ -94,6 +94,10 @@ let make = (
   | BECS_DEBIT(prop) => prop.payment_method_type
   | SEPA_DEBIT(prop) => prop.payment_method_type
   | BACS_DEBIT(prop) => prop.payment_method_type
+  | BANK_DEBIT(prop) => prop.payment_method_type
+  | BECS_DEBIT(prop) => prop.payment_method_type
+  | SEPA_DEBIT(prop) => prop.payment_method_type
+  | BACS_DEBIT(prop) => prop.payment_method_type
   }
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
@@ -113,6 +117,22 @@ let make = (
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   | CRYPTO(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BANK_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BECS_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | SEPA_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BACS_DEBIT(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
@@ -199,6 +219,32 @@ let make = (
       onlyNumerics
     }
     setBlikCode(_ => Some(finalVal))
+  }
+
+  let onChangebsbnum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length === 6 {
+      Some(true)
+    } else {
+      None
+    }
+    setisbsbnumValid(_ => y)
+    setbsbnum(_ => Some(onlyNumerics))
+  }
+  let onChangeiban = (val: string) => {
+    setiban(_ => Some(val))
+  }
+  let onChangeSortCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    setsortCode(_ => Some(onlyNumerics))
+  }
+  let onChangePhoneNum = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    setphone(_ => Some(onlyNumerics))
+  }
+  let onChangePostalCode = (val: string) => {
+    let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
+    setpostalCode(_ => Some(onlyNumerics))
   }
 
   let onChangebsbnum = number => {
@@ -1159,8 +1205,10 @@ let make = (
     | WALLET(prop) => processRequestWallet(prop)
     | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
     | BANK_DEBIT(prop) => processBankDebit(prop)
+    | BANK_DEBIT(prop) => processBankDebit(prop)
     | _ => ()
     }
+    Console.log2("Payment Redirect", redirectProp)
     Console.log2("Payment Redirect", redirectProp)
   }
 
@@ -1177,6 +1225,65 @@ let make = (
     setIsNameValid(_ => y)
     setName(_ => Some(text))
   }
+  let handlecity = text => {
+    let y = if text->String.length >= 3 {
+      Some(true)
+    } else {
+      None
+    }
+    setIscityValid(_ => y)
+    setcity(_ => Some(text))
+  }
+  let handleAddress1 = text => {
+    let y = if text->String.length >= 5 {
+      Some(true)
+    } else {
+      None
+    }
+    setIsAddressValid(_ => y)
+    setaddress(_ => Some(text))
+  }
+  let handleAddress2 = text => {
+    let y = if text->String.length >= 5 {
+      Some(true)
+    } else {
+      None
+    }
+    setIsAddress2Valid(_ => y)
+    setaddress2(_ => Some(text))
+  }
+  let handlePressAccNum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length <= 12 {
+      Some(true)
+    } else {
+      None
+    }
+    setisaccountnumValid(_ => y)
+    setaccountnum(_ => Some(onlyNumerics))
+  }
+  let handlePressAccNumBECS = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length == 9 {
+      Some(true)
+    } else {
+      None
+    }
+    setisaccountnumbecsValid(_ => y)
+    setaccountnumbecs(_ => Some(onlyNumerics))
+  }
+
+  let handlePressRouNum = number => {
+    let onlyNumerics = number->String.replaceRegExp(%re("/\D+/g"), "")
+    let y = if number->String.length === 9 {
+      Some(true)
+    } else {
+      None
+    }
+    setisroutingnumValid(_ => y)
+    setroutingnum(_ => Some(onlyNumerics))
+  }
+
   let handlecity = text => {
     let y = if text->String.length >= 3 {
       Some(true)
@@ -1278,6 +1385,24 @@ let make = (
     email,
     country,
     selectedBank,
+    address,
+    address2,
+    city,
+    isEmailValid,
+    isNameValid,
+    isAddressValid,
+    isAddress2Valid,
+    iscityValid,
+    isaccountnumValid,
+    isroutingnumValid,
+    isaccountnumbecsValid,
+    accountnum,
+    routingnum,
+    accountnumbecs,
+    bsbnum,
+    iban,
+    setiban,
+    sortCode,
     address,
     address2,
     city,
