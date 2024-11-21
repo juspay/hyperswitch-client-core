@@ -224,10 +224,10 @@ let darkRecord = {
     color: "#ffffff",
   },
   locale: En,
-  fontFamily: switch ReactNative.Platform.os {
-  | #ios => DefaultIOS
-  | #web => DefaultWeb
-  | _ => DefaultAndroid
+  fontFamily: switch WebKit.platform {
+  | #ios | #iosWebView => DefaultIOS
+  | #android | #androidWebView => DefaultAndroid
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
@@ -301,10 +301,10 @@ let lightRecord = {
     color: "#000000",
   },
   locale: En,
-  fontFamily: switch ReactNative.Platform.os {
-  | #ios => DefaultIOS
-  | #web => DefaultWeb
-  | _ => DefaultAndroid
+  fontFamily: switch WebKit.platform {
+  | #ios | #iosWebView => DefaultIOS
+  | #android | #androidWebView => DefaultAndroid
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
@@ -379,10 +379,10 @@ let minimal = {
     color: "#000000",
   },
   locale: En,
-  fontFamily: switch ReactNative.Platform.os {
-  | #ios => DefaultIOS
-  | #web => DefaultWeb
-  | _ => DefaultAndroid
+  fontFamily: switch WebKit.platform {
+  | #ios | #iosWebView => DefaultIOS
+  | #android | #androidWebView => DefaultAndroid
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
@@ -392,7 +392,7 @@ let minimal = {
   linkTextSizeAdjust: 0.,
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
-  paypalButonColor: ("#ffc439", "#ffd500"),
+  paypalButonColor: ("#ffc439", "#ffc439"),
   samsungPayButtonColor: ("#000000", "#000000"),
   applePayButtonColor: #black,
   googlePayButtonColor: #dark,
@@ -457,10 +457,10 @@ let flatMinimal = {
     color: "#30313d",
   },
   locale: En,
-  fontFamily: switch ReactNative.Platform.os {
-  | #ios => DefaultIOS
-  | #web => DefaultWeb
-  | _ => DefaultAndroid
+  fontFamily: switch WebKit.platform {
+  | #ios | #iosWebView => DefaultIOS
+  | #android | #androidWebView => DefaultAndroid
+  | #web | #next => DefaultWeb
   },
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
@@ -470,7 +470,7 @@ let flatMinimal = {
   linkTextSizeAdjust: 0.,
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
-  paypalButonColor: ("#ffc439", "#ffd500"),
+  paypalButonColor: ("#ffc439", "#ffc439"),
   applePayButtonColor: #black,
   googlePayButtonColor: #dark,
   samsungPayButtonColor: ("#000000", "#000000"),

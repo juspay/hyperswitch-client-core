@@ -1,8 +1,6 @@
 open SdkTypes
 open Utils
 
-external toJson: 'a => JSON.t = "%identity"
-
 type merchantInfo = {
   merchantId: string,
   merchantName: string,
@@ -245,10 +243,7 @@ let getGpayTokenStringified = (
   ~obj: SessionsType.sessions,
   ~appEnv: GlobalVars.envType,
   ~requiredFields: option<RequiredFieldsTypes.required_fields>=?,
-) =>
-  getGpayToken(~obj, ~appEnv, ~requiredFields?)
-  ->toJson
-  ->JSON.stringify
+) => getGpayToken(~obj, ~appEnv, ~requiredFields?)->Utils.getStringFromRecord
 
 let getAllowedPaymentMethods = (
   ~obj: SessionsType.sessions,
@@ -266,6 +261,4 @@ let getAllowedPaymentMethods = (
       | None => true
       },
     )
-  }.allowedPaymentMethods
-  ->toJson
-  ->JSON.stringify
+  }.allowedPaymentMethods->Utils.getStringFromRecord

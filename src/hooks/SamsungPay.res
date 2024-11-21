@@ -15,7 +15,7 @@ let useSamsungPayValidityHook = () => {
 
   let stringifiedSessionToken =
     sessionToken
-    ->GooglePayTypeNew.toJson
+    ->Utils.getJsonObjectFromRecord
     ->JSON.stringify
 
   React.useEffect2(() => {

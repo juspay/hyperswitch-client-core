@@ -324,7 +324,7 @@ type nativeProp = {
 }
 let defaultAppearance: appearance = {
   locale: None,
-  colors: switch ReactNative.Platform.os {
+  colors: switch WebKit.platform {
   | #android =>
     Some(
       DefaultColors({
@@ -375,7 +375,7 @@ let defaultAppearance: appearance = {
       borderWidth: None,
       shadow: None,
     }),
-    primaryButtonColor: switch ReactNative.Platform.os {
+    primaryButtonColor: switch WebKit.platform {
     | #android =>
       Some(
         PrimaryButtonDefault({
@@ -552,10 +552,12 @@ let getAppearanceObj = (
       family: switch retOptionalStr(getProp(keys.family, fontDict)) {
       | Some(str) => Some(CustomFont(str))
       | None =>
-        switch ReactNative.Platform.os {
+        switch WebKit.platform {
         | #ios => DefaultIOS
-        | #web => DefaultWeb
-        | _ => DefaultAndroid
+        | #iosWebView => DefaultIOS
+        | #android => DefaultAndroid
+        | #androidWebView => DefaultAndroid
+        | #web | #next => DefaultWeb
         }->Some
       },
       scale: retOptionalFloat(getProp(keys.scale, fontDict)),
@@ -756,22 +758,17 @@ let parseConfigurationDict = (configObj, from) => {
 
   let appearanceDict = configObj->Dict.get("appearance")->Option.flatMap(JSON.Decode.object)
   let appearance = {
-    from == "rn" || from == "flutter"
+    from == "rn" || from == "flutter" || WebKit.platform === #web
       ? switch appearanceDict {
         | Some(appObj) => getAppearanceObj(appObj, NativeSdkPropsKeys.rnKeys, from)
         | None => defaultAppearance
         }
       : switch appearanceDict {
         | Some(appObj) =>
-          switch ReactNative.Platform.os {
-          | #ios
-          | #web =>
-            //For Ios
-            getAppearanceObj(appObj, NativeSdkPropsKeys.iosKeys, from)
-          | #android =>
-            // For Android
+          switch WebKit.platform {
+          | #ios | #iosWebView => getAppearanceObj(appObj, NativeSdkPropsKeys.iosKeys, from)
+          | #android | #androidWebView =>
             getAppearanceObj(appObj, NativeSdkPropsKeys.androidKeys, from)
-
           | _ => defaultAppearance
           }
         | None => defaultAppearance

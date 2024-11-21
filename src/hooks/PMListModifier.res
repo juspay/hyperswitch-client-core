@@ -116,21 +116,29 @@ let useListModifier = () => {
 
           switch walletVal.payment_method_type_wallet {
           | GOOGLE_PAY =>
-            ReactNative.Platform.os !== #ios &&
+            WebKit.platform !== #ios &&
+            WebKit.platform !== #iosWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
             allApiData.additionalPMLData.mandateType != NORMAL
-              ? Some({
-                  name: fields.text,
-                  componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-                    <Redirect
-                      isScreenFocus
-                      redirectProp=WALLET(walletVal)
-                      fields
-                      setConfirmButtonDataRef
-                      sessionObject
-                    />,
-                })
-                //exp
+              ? {
+                  if ReactNative.Platform.os === #web {
+                    addGooglePay(~sessionObject, ~requiredFields=walletVal.required_field)
+                  }
+
+                  Some({
+                    name: fields.text,
+                    componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                      <Redirect
+                        isScreenFocus
+                        redirectProp=WALLET(walletVal)
+                        fields
+                        setConfirmButtonDataRef
+                        sessionObject
+                      />,
+                  })
+                  //exp
+                }
               : None
           | PAYPAL =>
             exp->Option.isNone &&
@@ -163,21 +171,35 @@ let useListModifier = () => {
           //   )
           // : exp
           | APPLE_PAY =>
-            ReactNative.Platform.os !== #android &&
+            WebKit.platform !== #android &&
+            WebKit.platform !== #androidWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
             allApiData.additionalPMLData.mandateType != NORMAL
-              ? Some({
-                  name: fields.text,
-                  componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-                    <Redirect
-                      isScreenFocus
-                      redirectProp=WALLET(walletVal)
-                      fields
-                      setConfirmButtonDataRef
-                      sessionObject
-                    />,
-                })
-                //exp
+              ? {
+                  if ReactNative.Platform.os === #web {
+                    Promise.make((resolve, _) => {
+                      addApplePay(~sessionObject, ~resolve)
+                    })
+                    // ->Promise.then(isApplePaySupported => {
+                    //   isApplePaySupported ? exp : None
+                    //   Promise.resolve()
+                    // })
+                    ->ignore
+                  }
+                  Some({
+                    name: fields.text,
+                    componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                      <Redirect
+                        isScreenFocus
+                        redirectProp=WALLET(walletVal)
+                        fields
+                        setConfirmButtonDataRef
+                        sessionObject
+                      />,
+                  })
+                  //exp
+                }
               : None
           | _ =>
             Some({
@@ -251,8 +273,9 @@ let useListModifier = () => {
             )
           switch switch walletVal.payment_method_type_wallet {
           | GOOGLE_PAY =>
-            ReactNative.Platform.os !== #ios &&
-            WebKit.webType !== #iosWebView &&
+            WebKit.platform !== #ios &&
+            WebKit.platform !== #iosWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
             sessionObject.connector !== "trustpay"
               ? {
@@ -276,8 +299,9 @@ let useListModifier = () => {
                   x.payment_experience_type_decode === REDIRECT_TO_URL
                 )
           | APPLE_PAY =>
-            ReactNative.Platform.os !== #android &&
-            WebKit.webType !== #androidWebView &&
+            WebKit.platform !== #android &&
+            WebKit.platform !== #androidWebView &&
+            WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE
               ? {
                   if ReactNative.Platform.os === #web {
@@ -357,7 +381,11 @@ let widgetModifier = (
             | GOOGLE_PAY =>
               ReactNative.Platform.os !== #ios && sessionObject.wallet_name !== NONE ? exp : None
             | SAMSUNG_PAY =>
-              ReactNative.Platform.os !== #ios && sessionObject.wallet_name !== NONE ? exp : None
+              WebKit.platform !== #ios &&
+              WebKit.platform !== #iosWebView &&
+              sessionObject.wallet_name !== NONE
+                ? exp
+                : None
             | PAYPAL =>
               exp->Option.isNone
                 ? walletVal.payment_experience->Array.find(x =>
@@ -365,7 +393,9 @@ let widgetModifier = (
                   )
                 : exp
             | APPLE_PAY =>
-              ReactNative.Platform.os !== #android && sessionObject.wallet_name !== NONE
+              WebKit.platform !== #android &&
+              WebKit.platform !== #androidWebView &&
+              sessionObject.wallet_name !== NONE
                 ? exp
                 : None
             | _ => None

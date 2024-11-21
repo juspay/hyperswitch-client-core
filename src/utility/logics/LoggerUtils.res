@@ -44,7 +44,7 @@ let logFileToObj = logFile => {
     (
       "app_id",
       logFile.appId
-      ->Option.getOr(ReactNative.Platform.os->JSON.stringifyAny->Option.getOr("defaultAppId"))
+      ->Option.getOr(WebKit.platform->JSON.stringifyAny->Option.getOr("defaultAppId"))
       ->JSON.Encode.string,
     ),
     ("platform", logFile.platform->Utils.convertToScreamingSnakeCase->JSON.Encode.string),
@@ -77,7 +77,7 @@ let logFileToObj = logFile => {
   ->JSON.Encode.object
 }
 let sendLogs = (logFile, uri, publishableKey, appId) => {
-  if Next.getNextEnv != "next" {
+  if WebKit.platform != #next {
     let data = logFile->logFileToObj->JSON.stringify
     CommonHooks.fetchApi(
       ~uri,

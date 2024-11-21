@@ -1,5 +1,3 @@
-@get external data: ReactEvent.Form.t => string = "data"
-
 @react.component
 let app = (~props) => {
   let (propFromEvent, setPropFromEvent) = React.useState(() => None)
@@ -23,7 +21,6 @@ let app = (~props) => {
       "sdkLoaded": true,
     })->Option.getOr("")
 
-    Window.postMessageToParent(sdkInitialisedProp, "*")
     sdkInitialised(sdkInitialisedProp)
 
     None

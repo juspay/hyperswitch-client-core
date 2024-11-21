@@ -110,11 +110,21 @@ module RenderField = {
             let (firstNameVal, firstNameErrorMessage) =
               firstNameVal === ""
                 ? (JSON.Encode.null, Some(localeObject.cardHolderNameRequiredText))
-                : (JSON.Encode.string(firstNameVal), None)
+                : (
+                    JSON.Encode.string(firstNameVal),
+                    firstNameVal->ValidationFunctions.containsDigit
+                      ? Some(localeObject.invalidDigitsCardHolderNameError)
+                      : None,
+                  )
             let (lastNameVal, lastNameErrorMessage) =
               lastNameVal === ""
                 ? (JSON.Encode.null, Some(localeObject.lastNameRequiredText))
-                : (JSON.Encode.string(lastNameVal), None)
+                : (
+                    JSON.Encode.string(lastNameVal),
+                    lastNameVal->ValidationFunctions.containsDigit
+                      ? Some(localeObject.invalidDigitsCardHolderNameError)
+                      : None,
+                  )
 
             setErrorMesage(_ =>
               switch firstNameErrorMessage {
@@ -301,7 +311,7 @@ let make = (
   // let localeObject = GetLocale.useGetLocalObj()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  let clientTimeZone = Utils.dateTimeFormat().resolvedOptions().timeZone
+  let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
   let clientCountry = Utils.getClientCountry(clientTimeZone)
 
   let keysValArray =

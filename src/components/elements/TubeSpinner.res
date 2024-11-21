@@ -1,7 +1,6 @@
 open ReactNative
 open Style
 open ReactNativeSvg
-external toString: 'a => string = "%identity"
 
 @react.component
 let make = (~loaderColor=?, ~size=?) => {
