@@ -53,6 +53,8 @@ let walletNameToTypeMapper = str => {
   }
 }
 
+type payment_method_type_bank_debit = ACH | BECS | SEPA | BACS | NONE
+
 type savedCard = {
   cardScheme?: string,
   // walletType?: string,
@@ -298,6 +300,7 @@ type hyperParams = {
   country: string,
   disableBranding: bool,
   ip: option<string>,
+  state?: string,
   userAgent: option<string>,
   defaultView: bool,
   launchTime?: float,

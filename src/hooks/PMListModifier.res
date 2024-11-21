@@ -237,6 +237,58 @@ let useListModifier = () => {
                   />,
               })
             : None
+        | BANK_DEBIT(achDebitVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == achDebitVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
+
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus redirectProp=BANK_DEBIT(achDebitVal) fields setConfirmButtonDataRef
+              />,
+          })
+        | BECS_DEBIT(becsDebitVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == becsDebitVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
+
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus redirectProp=BECS_DEBIT(becsDebitVal) fields setConfirmButtonDataRef
+              />,
+          })
+        | SEPA_DEBIT(sepaDebitVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == sepaDebitVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
+
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus redirectProp=SEPA_DEBIT(sepaDebitVal) fields setConfirmButtonDataRef
+              />,
+          })
+        | BACS_DEBIT(bacsDebitVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == bacsDebitVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
+
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus redirectProp=BACS_DEBIT(bacsDebitVal) fields setConfirmButtonDataRef
+              />,
+          })
         | CRYPTO(cryptoVal) =>
           let fields =
             redirectionList

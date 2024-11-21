@@ -20,7 +20,18 @@ type config = {
 
 let defaultConfig = {
   priorityArr: {
-    let priorityArr = ["card", "klarna", "afterpay_clearpay", "crypto", "paypal", "google_pay"]
+    let priorityArr = [
+      "card",
+      "klarna",
+      "afterpay_clearpay",
+      "ach",
+      "becs",
+      "sepa",
+      "bacs",
+      "crypto",
+      "paypal",
+      "google_pay",
+    ]
     priorityArr->Array.reverse
     priorityArr
   },
@@ -96,6 +107,42 @@ let defaultConfig = {
       text: "Open Banking",
       header: "",
       fields: [],
+    },
+    {
+      name: "ach",
+      text: "ACH Debit",
+      header: "",
+      fields: ["name", "routing_number", "account_number"],
+    },
+    {
+      name: "becs",
+      text: "BECS Debit",
+      header: "",
+      fields: [
+        "name",
+        "email",
+        "account_number",
+        "bsb_number",
+        // "Address_Line_1",
+        // "Address_Line_2",
+        // "country",
+        // "State",
+        // "City",
+        // "postal_code",
+        // "phone",
+      ],
+    },
+    {
+      name: "sepa",
+      text: "SEPA Debit",
+      header: "",
+      fields: ["name", "email", "iban"],
+    },
+    {
+      name: "bacs",
+      text: "BACS Debit",
+      header: "",
+      fields: ["country", "city", "name", "line1", "zip", "email", "account_number", "sort_code"],
     },
     // {
     //   name: "google_pay",
