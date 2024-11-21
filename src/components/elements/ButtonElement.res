@@ -2,13 +2,11 @@ open ReactNative
 open Style
 open PaymentMethodListType
 
-external parser: GooglePayTypeNew.paymentMethodData => JSON.t = "%identity"
-external parser2: SdkTypes.addressDetails => JSON.t = "%identity"
-
 type item = {
   linearGradientColorTuple: option<ThemebasedStyle.buttonColorConfig>,
   name: string,
   iconName: string,
+  iconNameRight: option<string>,
 }
 
 @react.component
@@ -51,47 +49,6 @@ let make = (
         delay: 0.,
       },
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
-  }
-
-  let {linearGradientColorTuple, name, iconName} = switch (
-    walletType.payment_method_type_wallet,
-    walletType.payment_experience
-    ->Array.get(0)
-    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
-  ) {
-  | (payment_method_type_wallet, Some(INVOKE_SDK_CLIENT)) =>
-    switch payment_method_type_wallet {
-    | PAYPAL => {
-        linearGradientColorTuple: Some(paypalButonColor),
-        name: "PayPal",
-        iconName: "paypal",
-      }
-    | GOOGLE_PAY => {
-        linearGradientColorTuple: Some("#00000000", "#00000000"),
-        name: "Google Pay",
-        iconName: "googlePayWalletBtn",
-      }
-    | APPLE_PAY => {
-        linearGradientColorTuple: Some("#00000000", "#00000000"),
-        name: "Apple Pay",
-        iconName: "applePayWalletBtn",
-      }
-    | _ => {
-        linearGradientColorTuple: None,
-        name: "",
-        iconName: "",
-      }
-    }
-  | (PAYPAL, Some(REDIRECT_TO_URL)) => {
-      linearGradientColorTuple: Some(paypalButonColor),
-      name: "PayPal",
-      iconName: "paypal",
-    }
-  | _ => {
-      linearGradientColorTuple: None,
-      name: "",
-      iconName: "",
-    }
   }
 
   let processRequest = (~payment_method_data, ~walletTypeAlt=?, ~email=?, ()) => {
@@ -282,7 +239,7 @@ let make = (
         [
           (
             walletType.payment_method,
-            [(walletType.payment_method_type, obj.paymentMethodData->parser)]
+            [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
@@ -291,7 +248,7 @@ let make = (
             switch obj.paymentMethodData.info {
             | Some(info) =>
               switch info.billing_address {
-              | Some(address) => address->parser2
+              | Some(address) => address->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               }
             | None => JSON.Encode.null
@@ -373,7 +330,7 @@ let make = (
             (
               "billing",
               switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
-              | Some(billing) => billing->parser2
+              | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
             ),
@@ -434,7 +391,7 @@ let make = (
         | PAYPAL =>
           if (
             sessionObject.session_token !== "" &&
-            ReactNative.Platform.os == #android &&
+            WebKit.platform == #android &&
             PaypalModule.payPalModule->Option.isSome
           ) {
             PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
@@ -598,10 +555,13 @@ let make = (
   <>
     <CustomButton
       borderRadius=buttonBorderRadius
-      linearGradientColorTuple
-      leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
+      linearGradientColorTuple=?{switch walletType.payment_method_type_wallet {
+      | PAYPAL => Some(Some(paypalButonColor))
+      | _ => None
+      }}
+      leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=24. height=32. />)
       onPress={_ => pressHandler()}
-      name>
+      name=walletType.payment_method_type>
       {switch walletType.payment_method_type_wallet {
       | APPLE_PAY =>
         Some(
@@ -625,7 +585,20 @@ let make = (
             borderRadius={buttonBorderRadius}
           />,
         )
-
+      | PAYPAL =>
+        Some(
+          <View
+            style={viewStyle(
+              ~flexDirection=#row,
+              ~alignItems=#center,
+              ~justifyContent=#center,
+              (),
+            )}>
+            <Icon name=walletType.payment_method_type width=22. height=28. />
+            <Space width=10. />
+            <Icon name={walletType.payment_method_type ++ "2"} width=90. height=28. />
+          </View>,
+        )
       | _ => None
       }}
     </CustomButton>

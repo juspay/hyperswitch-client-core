@@ -1,13 +1,19 @@
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 
+require('dotenv').config({ path: './.env' });
+
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const appDirectory = path.resolve(__dirname);
-const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
-const isDevelopment = process.env.NODE_ENV !== 'production';
-console.log('dev mode --- >', isDevelopment);
+const { presets, plugins } = require(`${appDirectory}/babel.config.js`);
+const isDevelopment = process.env.NODE_ENV == 'development';
+const repoVersion = require("./version.json").version;
+const majorVersion = "v" + repoVersion.split(".")[0];
+const repoPublicPath = isDevelopment ? `` : `/mobile/${repoVersion}/mobile/${majorVersion}`;
+
+// console.log('dev mode --- >', isDevelopment);
 const compileNodeModules = [
   // Add every react-native package that needs compiling
   // 'react-native-gesture-handler',
@@ -79,8 +85,8 @@ module.exports = {
   },
   output: {
     path: path.resolve(appDirectory, 'dist'),
-    publicPath: '/',
     filename: 'index.bundle.js',
+    publicPath: `${repoPublicPath}/`,
   },
   devtool: 'source-map',
   devServer: {

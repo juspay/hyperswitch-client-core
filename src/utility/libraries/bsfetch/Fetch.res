@@ -273,9 +273,9 @@ let decodeRequestRedirect = x =>
 module HeadersInit = {
   type t = headersInit
 
-  external make: {..} => t = "%identity"
-  external makeWithDict: Js.Dict.t<string> => t = "%identity"
-  external makeWithArray: array<(string, string)> => t = "%identity"
+  let make: {..} => t = Utils.getJsonObjectFromRecord
+  let makeWithDict: Js.Dict.t<string> => t = Utils.getJsonObjectFromRecord
+  let makeWithArray: array<(string, string)> => t = Utils.getJsonObjectFromRecord
 }
 
 module Headers = {
@@ -297,11 +297,11 @@ module Headers = {
 module BodyInit = {
   type t = bodyInit
 
-  external make: string => t = "%identity"
-  external makeWithBlob: blob => t = "%identity"
-  external makeWithBufferSource: bufferSource => t = "%identity"
-  external makeWithFormData: formData => t = "%identity"
-  external makeWithUrlSearchParams: urlSearchParams => t = "%identity"
+  let make: string => t = Utils.getJsonObjectFromRecord
+  let makeWithBlob: blob => t = Utils.getJsonObjectFromRecord
+  let makeWithBufferSource: bufferSource => t = Utils.getJsonObjectFromRecord
+  let makeWithFormData: formData => t = Utils.getJsonObjectFromRecord
+  let makeWithUrlSearchParams: urlSearchParams => t = Utils.getJsonObjectFromRecord
 }
 
 module Body = {

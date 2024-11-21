@@ -133,7 +133,7 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
         })
   }->Promise.then(res => {
     try {
-      let message = ReactNative.Platform.os === #ios ? res.url->Option.getOr("") : res.message
+      let message = WebKit.platform === #ios ? res.url->Option.getOr("") : res.message
       if (
         message->String.includes("status=succeeded") ||
         message->String.includes("status=processing") ||

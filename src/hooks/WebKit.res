@@ -1,11 +1,17 @@
-type webType = [#iosWebView | #androidWebView | #pureWeb]
+type platformType = [#ios | #iosWebView | #android | #androidWebView | #web | #next]
 
-let webType = if Window.webKit->Nullable.toOption->Option.isSome {
-  #iosWebView
+let (platform, platformString) = if Next.getNextEnv == "next" {
+  (#next, "next")
+} else if ReactNative.Platform.os === #android {
+  (#android, "android")
+} else if ReactNative.Platform.os === #ios {
+  (#ios, "ios")
+} else if Window.webKit->Nullable.toOption->Option.isSome {
+  (#iosWebView, "iosWebView")
 } else if Window.androidInterface->Nullable.toOption->Option.isSome {
-  #androidWebView
+  (#androidWebView, "androidWebView")
 } else {
-  #pureWeb
+  (#web, "web")
 }
 
 type useWebKit = {
@@ -21,7 +27,7 @@ let useWebKit = () => {
   | None => None
   }
   let exitPaymentSheet = str => {
-    switch webType {
+    switch platform {
     | #iosWebView =>
       switch messageHandlers {
       | Some(messageHandlers) =>
@@ -36,11 +42,11 @@ let useWebKit = () => {
       | Some(interface) => interface.exitPaymentSheet(str)
       | None => ()
       }
-    | #pureWeb => ()
+    | _ => Window.postMessageToParent(str, "*")
     }
   }
   let sdkInitialised = str => {
-    switch webType {
+    switch platform {
     | #iosWebView =>
       switch messageHandlers {
       | Some(messageHandlers) =>
@@ -55,11 +61,11 @@ let useWebKit = () => {
       | Some(interface) => interface.sdkInitialised(str)
       | None => ()
       }
-    | #pureWeb => ()
+    | _ => Window.postMessageToParent(str, "*")
     }
   }
   let launchApplePay = str => {
-    switch webType {
+    switch platform {
     | #iosWebView =>
       switch messageHandlers {
       | Some(messageHandlers) =>
@@ -67,19 +73,19 @@ let useWebKit = () => {
         | Some(launchApplePay) => launchApplePay.postMessage(str)
         | None => ()
         }
-      | None => ()
+      | None => Window.postMessageToParent(str, "*")
       }
     | _ => ()
     }
   }
   let launchGPay = str => {
-    switch webType {
+    switch platform {
     | #androidWebView =>
       switch Window.androidInterface->Nullable.toOption {
       | Some(interface) => interface.launchGPay(str)
       | None => ()
       }
-    | _ => ()
+    | _ => Window.postMessageToParent(str, "*")
     }
   }
   {exitPaymentSheet, sdkInitialised, launchApplePay, launchGPay}

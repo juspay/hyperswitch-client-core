@@ -1,6 +1,5 @@
-open LoggerUtils
 open LoggerTypes
-external toPlatform: ReactNative.Platform.os => string = "%identity"
+open LoggerUtils
 
 let useCalculateLatency = () => {
   let (events, _setEvents) = React.useContext(LoggerContext.loggingContext)
@@ -54,6 +53,7 @@ let inactiveScreenApiCall = (
     sessionId: session_id,
     version: nativeProp.hyperParams.sdkVersion,
     codePushVersion: getCodePushVersionNoFromRef(),
+    clientCoreVersion: getClientCoreVersionNoFromRef(),
     component: MOBILE,
     value: "Inactive Screen",
     internalMetadata: "",
@@ -109,6 +109,7 @@ let useLoggerHook = () => {
   let calculateLatency = useCalculateLatency()
   let getLoggingEndpointHook = GlobalHooks.useGetLoggingUrl()
   getGetPushVersion()
+  getClientCoreVersion()
   (
     ~logType,
     ~value,
@@ -136,6 +137,7 @@ let useLoggerHook = () => {
       sessionId: nativeProp.sessionId,
       version: nativeProp.hyperParams.sdkVersion,
       codePushVersion: getCodePushVersionNoFromRef(),
+      clientCoreVersion: getClientCoreVersionNoFromRef(),
       component: MOBILE,
       value,
       internalMetadata: internalMetadata->Option.getOr(""),
@@ -143,7 +145,7 @@ let useLoggerHook = () => {
       paymentId: String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
       merchantId: nativeProp.publishableKey,
       appId: ?nativeProp.hyperParams.appId,
-      platform: ReactNative.Platform.os->toPlatform,
+      platform: WebKit.platformString,
       userAgent: "userAgent",
       eventName,
       firstEvent,
@@ -161,7 +163,7 @@ let useLoggerHook = () => {
       ~paymentId=String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~appId=nativeProp.hyperParams.appId,
-      ~platform=ReactNative.Platform.os->toPlatform,
+      ~platform=WebKit.platformString,
       ~session_id=nativeProp.sessionId,
       ~events,
       ~setEvents,

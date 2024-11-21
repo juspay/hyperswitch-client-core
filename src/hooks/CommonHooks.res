@@ -1,6 +1,3 @@
-external toJson: 't => string = "%identity"
-external dictToObj: Dict.t<'a> => {..} = "%identity"
-external toPlatform: ReactNative.Platform.os => string = "%identity"
 let fetchApi = (
   ~uri,
   ~bodyStr: string="",
@@ -10,7 +7,7 @@ let fetchApi = (
   (),
 ) => {
   Dict.set(headers, "Content-Type", "application/json")
-  Dict.set(headers, "X-Client-Platform", ReactNative.Platform.os->toPlatform)
+  Dict.set(headers, "X-Client-Platform", WebKit.platformString)
   let body = switch method_ {
   | Get => Promise.resolve(None)
   | _ => Promise.resolve(Some(Fetch.BodyInit.make(bodyStr)))
@@ -24,14 +21,14 @@ let fetchApi = (
       Fetch.RequestInit.make(
         ~method_,
         ~body?,
-        ~headers=Fetch.HeadersInit.make(headers->dictToObj),
+        ~headers=Fetch.HeadersInit.makeWithDict(headers),
         ~mode?,
         (),
       ),
     )
     ->catch(err => {
       exception Error(string)
-      Promise.reject(Error(err->toJson))
+      Promise.reject(Error(err->Utils.getError(`API call failed: ${uri}`)->JSON.stringify))
     })
     ->then(resp => {
       //let status = resp->Fetch.Response.status
