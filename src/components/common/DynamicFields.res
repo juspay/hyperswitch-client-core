@@ -114,7 +114,10 @@ module RenderField = {
               let newData = Dict.assign(Dict.make(), prev)
               if isCountryField {
                 let stateKey = getKey(stringFieldPath, "state")
-                newData->Dict.set(stateKey, (JSON.Encode.null, tempValid))
+                switch newData->Dict.get(stateKey) {
+                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, tempValid))
+                | None => ()
+                }
               }
               newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, tempValid))
               newData
@@ -129,7 +132,6 @@ module RenderField = {
                 required_fields_type.field_type === ShippingName
             let (firstNameVal, firstNameErrorMessage) =
               firstNameVal === ""
-
                 ? (
                     JSON.Encode.null,
                     isBillingFields
@@ -310,8 +312,9 @@ let make = (
   ~keyToTrigerButtonClickError,
   ~renderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
+  ~fieldsOrder=[0, 1, 2],
 ) => {
-  let {component} = ThemebasedStyle.useThemeBasedStyle()
+  // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
   let clientCountry = Utils.getClientCountry(clientTimeZone)
 
@@ -353,26 +356,42 @@ let make = (
     ? requiredFields
     : requiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(initialKeysValDict)
 
-  let (outsideBilling, insideBilling, shippingFields) = React.useMemo(() =>
-    filteredFields->Array.reduce(([], [], []), ((outside, inside, shipping), item) => {
-      let isBillingField =
-        item.required_field
-        ->RequiredFieldsTypes.getRequiredFieldName
-        ->String.split(".")
-        ->Array.includes("billing")
-      let isShippingField =
-        item.required_field
-        ->RequiredFieldsTypes.getRequiredFieldName
-        ->String.split(".")
-        ->Array.includes("shipping")
-      switch (isBillingField, isShippingField, renderShippingFields) {
-      | (true, _, _) => (outside, inside->Array.concat([item]), shipping)
-      | (_, true, true) => (outside, inside, shipping->Array.concat([item]))
-      | (_, true, false) => (outside, inside, shipping)
-      | _ => (outside->Array.concat([item]), inside, shipping)
-      }
-    })
-  , (filteredFields, renderShippingFields))
+  // let (outsideBilling, insideBilling, shippingFields) = React.useMemo(() =>
+  //   filteredFields->Array.reduce(([], [], []), ((outside, inside, shipping), item) => {
+  //     let isBillingField =
+  //       item.required_field
+  //       ->RequiredFieldsTypes.getRequiredFieldName
+  //       ->String.split(".")
+  //       ->Array.includes("billing")
+  //     let isShippingField =
+  //       item.required_field
+  //       ->RequiredFieldsTypes.getRequiredFieldName
+  //       ->String.split(".")
+  //       ->Array.includes("shipping")
+  //     switch (isBillingField, isShippingField, renderShippingFields) {
+  //     | (true, _, _) => (outside, inside->Array.concat([item]), shipping)
+  //     | (_, true, true) => (outside, inside, shipping->Array.concat([item]))
+  //     | (_, true, false) => (outside, inside, shipping)
+  //     | _ => (outside->Array.concat([item]), inside, shipping)
+  //     }
+  //   })
+  // , (filteredFields, renderShippingFields))
+
+  //logic to sort the fields based on the fieldsOrder
+  let giveValue = field => {
+    let path = field.required_field->RequiredFieldsTypes.getRequiredFieldName->String.split(".")
+    switch (path->Array.includes("billing"), path->Array.includes("shipping")) {
+    | (true, _) => fieldsOrder->Array.get(1)->Option.getOr(1)
+    | (_, true) => fieldsOrder->Array.get(2)->Option.getOr(2)
+    | _ => fieldsOrder->Array.get(0)->Option.getOr(0)
+    }
+  }
+
+  let fields = filteredFields->Array.toSorted((a, b) => {
+    let aPath = giveValue(a)
+    let bPath = giveValue(b)
+    float(aPath - bPath)
+  })
 
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
@@ -389,20 +408,20 @@ let make = (
         </>
       : React.null
 
-  let renderSectionTitle = (title, show) =>
-    show
-      ? <Text style={textStyle(~color=component.color, ~fontSize=16., ~marginVertical=10.->dp, ())}>
-          {title->React.string}
-        </Text>
-      : React.null
+  // let renderSectionTitle = (title, show) =>
+  //   show
+  //     ? <Text style={textStyle(~color=component.color, ~fontSize=16., ~marginVertical=10.->dp, ())}>
+  //         {title->React.string}
+  //       </Text>
+  //     : React.null
 
   <View style={viewStyle()}>
-    {renderFields(outsideBilling, true)}
-    <Space height=10. />
-    {renderSectionTitle("Billing", insideBilling->Array.length > 0)}
-    {renderFields(insideBilling, false)}
-    <Space height=10. />
-    {renderSectionTitle("Shipping", renderShippingFields && shippingFields->Array.length > 0)}
-    {renderFields(shippingFields, false)}
+    {renderFields(fields, true)}
+    // <Space height=10. />
+    // {renderSectionTitle("Billing", insideBilling->Array.length > 0)}
+    // {renderFields(insideBilling, false)}
+    // <Space height=10. />
+    // {renderSectionTitle("Shipping", renderShippingFields && shippingFields->Array.length > 0)}
+    // {renderFields(shippingFields, false)}
   </View>
 }
