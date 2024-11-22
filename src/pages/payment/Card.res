@@ -32,20 +32,20 @@ let make = (
   // Validity Hooks
   let (isAllCardValuesValid, setIsAllCardValuesValid) = React.useState(_ => false)
   let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
+  let (isNicknameValid, setIsNicknameValid) = React.useState(_ => true)
   let requiredFields = cardVal.required_field->Array.filter(val => {
     switch val.field_type {
     | RequiredFieldsTypes.UnKnownField(_) => false
     | _ => true
     }
   })
-  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
-    RescriptCoreFuture.Dict.key,
+  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): dict<(
     JSON.t,
     option<string>,
-  )> => [])
+  )> => Dict.make())
   let (error, setError) = React.useState(_ => None)
 
-  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid
+  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && (isNicknameSelected ? isNicknameValid : true)
 
   let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
   let (isInitialised, setIsInitialised) = React.useState(_ => false)
@@ -107,7 +107,10 @@ let make = (
       (),
     )
 
-    let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(body, dynamicFieldsJson)
+    let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
+      body,
+      dynamicFieldsJson->Dict.toArray->Array.map(((key, (value, error))) => (key, value, error)),
+    )
     fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
@@ -132,7 +135,12 @@ let make = (
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false isAllValuesValid=true handlePress paymentMethod="CARD" errorText=error
+          loading=false
+          isAllValuesValid=true
+          handlePress
+          paymentMethod="CARD"
+          errorText=error
+          bottomSpace=10.
         />,
       )
     }
@@ -185,9 +193,9 @@ let make = (
         allApiData.additionalPMLData.mandateType,
       ) {
       | (false, _, true, NEW_MANDATE | NORMAL) =>
-        <NickNameElement nickname setNickname isNicknameSelected />
+        <NickNameElement nickname setNickname isNicknameSelected setIsNicknameValid />
       | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
-        <NickNameElement nickname setNickname isNicknameSelected=true />
+        <NickNameElement nickname setNickname isNicknameSelected=true setIsNicknameValid />
       | _ => React.null
       }}
     </View>

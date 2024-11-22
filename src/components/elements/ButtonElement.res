@@ -6,6 +6,7 @@ type item = {
   linearGradientColorTuple: option<ThemebasedStyle.buttonColorConfig>,
   name: string,
   iconName: string,
+  iconNameRight: option<string>,
 }
 
 @react.component
@@ -48,47 +49,6 @@ let make = (
         delay: 0.,
       },
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
-  }
-
-  let {linearGradientColorTuple, name, iconName} = switch (
-    walletType.payment_method_type_wallet,
-    walletType.payment_experience
-    ->Array.get(0)
-    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
-  ) {
-  | (payment_method_type_wallet, Some(INVOKE_SDK_CLIENT)) =>
-    switch payment_method_type_wallet {
-    | PAYPAL => {
-        linearGradientColorTuple: Some(paypalButonColor),
-        name: "PayPal",
-        iconName: "paypal",
-      }
-    | GOOGLE_PAY => {
-        linearGradientColorTuple: Some("#00000000", "#00000000"),
-        name: "Google Pay",
-        iconName: "googlePayWalletBtn",
-      }
-    | APPLE_PAY => {
-        linearGradientColorTuple: Some("#00000000", "#00000000"),
-        name: "Apple Pay",
-        iconName: "applePayWalletBtn",
-      }
-    | _ => {
-        linearGradientColorTuple: None,
-        name: "",
-        iconName: "",
-      }
-    }
-  | (PAYPAL, Some(REDIRECT_TO_URL)) => {
-      linearGradientColorTuple: Some(paypalButonColor),
-      name: "PayPal",
-      iconName: "paypal",
-    }
-  | _ => {
-      linearGradientColorTuple: None,
-      name: "",
-      iconName: "",
-    }
   }
 
   let processRequest = (~payment_method_data, ~walletTypeAlt=?, ~email=?, ()) => {
@@ -307,7 +267,7 @@ let make = (
     }
   }
 
-  let confirmApplePay = (var: RescriptCore.Dict.t<Core__JSON.t>) => {
+  let confirmApplePay = (var: dict<JSON.t>) => {
     logger(
       ~logType=DEBUG,
       ~value=walletType.payment_method_type,
@@ -595,10 +555,13 @@ let make = (
   <>
     <CustomButton
       borderRadius=buttonBorderRadius
-      linearGradientColorTuple
-      leftIcon=CustomIcon(<Icon name=iconName width=120. height=115. />)
+      linearGradientColorTuple=?{switch walletType.payment_method_type_wallet {
+      | PAYPAL => Some(Some(paypalButonColor))
+      | _ => None
+      }}
+      leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=24. height=32. />)
       onPress={_ => pressHandler()}
-      name>
+      name=walletType.payment_method_type>
       {switch walletType.payment_method_type_wallet {
       | APPLE_PAY =>
         Some(
@@ -622,7 +585,20 @@ let make = (
             borderRadius={buttonBorderRadius}
           />,
         )
-
+      | PAYPAL =>
+        Some(
+          <View
+            style={viewStyle(
+              ~flexDirection=#row,
+              ~alignItems=#center,
+              ~justifyContent=#center,
+              (),
+            )}>
+            <Icon name=walletType.payment_method_type width=22. height=28. />
+            <Space width=10. />
+            <Icon name={walletType.payment_method_type ++ "2"} width=90. height=28. />
+          </View>,
+        )
       | _ => None
       }}
     </CustomButton>
