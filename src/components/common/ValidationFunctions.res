@@ -27,3 +27,17 @@ let isValidZip = (~zipCode, ~country) => {
   let isZipCodeValid = RegExp.test(postalCode.regex->Js.Re.fromString, zipCode)
   zipCode->String.length > 0 && isZipCodeValid
 }
+
+let containsDigit = text => {
+  switch text->String.match(%re("/\d/")) {
+  | Some(_) => true
+  | None => false
+  }
+}
+
+let containsMoreThanTwoDigits = text => {
+  switch text->String.match(%re("/\d/g")) {
+  | Some(matches) => matches->Array.length > 2
+  | None => false
+  }
+}
