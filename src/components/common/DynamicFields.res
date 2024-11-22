@@ -129,6 +129,7 @@ module RenderField = {
                 required_fields_type.field_type === ShippingName
             let (firstNameVal, firstNameErrorMessage) =
               firstNameVal === ""
+
                 ? (
                     JSON.Encode.null,
                     isBillingFields
