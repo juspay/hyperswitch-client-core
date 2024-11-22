@@ -302,6 +302,8 @@ module Fields = {
   }
 }
 
+type fieldType = Other | Billing | Shipping
+
 @react.component
 let make = (
   ~requiredFields: RequiredFieldsTypes.required_fields,
@@ -310,9 +312,9 @@ let make = (
   ~isSaveCardsFlow=false,
   ~savedCardsData: option<SdkTypes.savedDataType>,
   ~keyToTrigerButtonClickError,
-  ~renderShippingFields=false, //To render shipping fields
+  ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
-  ~fieldsOrder=[0, 1, 2],
+  ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
@@ -321,7 +323,7 @@ let make = (
   let initialKeysValDict = React.useMemo(() =>
     requiredFields
     ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
-    ->RequiredFieldsTypes.filterRequiredFieldsForShipping(renderShippingFields)
+    ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
     ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2)
   , (requiredFields, isSaveCardsFlow, savedCardsData, clientCountry.isoAlpha2))
 
@@ -378,18 +380,21 @@ let make = (
   // , (filteredFields, renderShippingFields))
 
   //logic to sort the fields based on the fieldsOrder
-  let giveValue = field => {
+  let getOrderValue = field => {
     let path = field.required_field->RequiredFieldsTypes.getRequiredFieldName->String.split(".")
-    switch (path->Array.includes("billing"), path->Array.includes("shipping")) {
-    | (true, _) => fieldsOrder->Array.get(1)->Option.getOr(1)
-    | (_, true) => fieldsOrder->Array.get(2)->Option.getOr(2)
-    | _ => fieldsOrder->Array.get(0)->Option.getOr(0)
+    let x = if path->Array.includes("billing") {
+      Billing
+    } else if path->Array.includes("shipping") {
+      Shipping
+    } else {
+      Other
     }
+    fieldsOrder->Array.indexOf(x)
   }
 
   let fields = filteredFields->Array.toSorted((a, b) => {
-    let aPath = giveValue(a)
-    let bPath = giveValue(b)
+    let aPath = getOrderValue(a)
+    let bPath = getOrderValue(b)
     float(aPath - bPath)
   })
 

@@ -39,8 +39,8 @@ let make = (
     | _ => true
     }
   })
-  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): RescriptCore.Dict.t<(
-    Core__JSON.t,
+  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): dict<(
+    JSON.t,
     option<string>,
   )> => Dict.make())
   let (error, setError) = React.useState(_ => None)

@@ -150,11 +150,12 @@ let sortRequirFields = (
   }
 }
 
-let mergeNameFields = (arr, ~fieldType, ~displayName="") => {
+let mergeNameFields = (arr, ~fieldType, ~displayName=?) => {
   let nameFields = arr->Array.filter(requiredField => {
-    requiredField.field_type === fieldType && (
-        displayName === "" ? true : requiredField.display_name === displayName
-      )
+    requiredField.field_type === fieldType &&
+      displayName
+      ->Option.map(displayName => requiredField.display_name === displayName)
+      ->Option.getOr(true)
   })
 
   switch (nameFields[0], nameFields[1]) {
@@ -453,7 +454,7 @@ let getIsAnyBillingDetailEmpty = (requiredFields: array<required_fields_type>) =
 
 let filterDynamicFieldsFromRendering = (
   requiredFields: array<required_fields_type>,
-  finalJson: RescriptCore.Dict.t<(Core__JSON.t, option<string>)>,
+  finalJson: dict<(JSON.t, option<string>)>,
 ) => {
   let isAnyBillingDetailEmpty = requiredFields->getIsAnyBillingDetailEmpty
   requiredFields->Array.filter(requiredField => {
@@ -517,13 +518,15 @@ let filterRequiredFields = (
 
 let filterRequiredFieldsForShipping = (
   requiredFields: array<required_fields_type>,
-  isRenderShippingFields: bool,
+  shouldRenderShippingFields: bool,
 ) => {
-  isRenderShippingFields
-    ? requiredFields
-    : requiredFields->Array.filter(requiredField => {
-        !(requiredField.required_field->getRequiredFieldName->String.includes("shipping"))
-      })
+  if shouldRenderShippingFields {
+    requiredFields
+  } else {
+    requiredFields->Array.filter(requiredField => {
+      !(requiredField.required_field->getRequiredFieldName->String.includes("shipping"))
+    })
+  }
 }
 
 let getKey = (path, value) => {

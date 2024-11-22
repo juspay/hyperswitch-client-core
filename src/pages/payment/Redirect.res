@@ -40,8 +40,8 @@ let make = (
   let (nameIsFocus, setNameIsFocus) = React.useState(_ => false)
   let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => false)
 
-  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): RescriptCore.Dict.t<(
-    Core__JSON.t,
+  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): dict<(
+    JSON.t,
     option<string>,
   )> => Dict.make())
   let (keyToTrigerButtonClickError, setKeyToTrigerButtonClickError) = React.useState(_ => 0)
@@ -366,16 +366,13 @@ let make = (
       //   ->Dict.fromArray
       //   ->JSON.Encode.object
       let payment_method_data = Dict.make()
-
       let innerData = Dict.make()
       innerData->Dict.set(
         prop.payment_method_type ++ (authToken == "redirect" ? "_redirect" : "_sdk"),
         authToken == "redirect" ? redirectData : sdkData,
       )
-
       let middleData = Dict.make()
       middleData->Dict.set(prop.payment_method, innerData->JSON.Encode.object)
-
       payment_method_data->Dict.set("payment_method_data", middleData->JSON.Encode.object)
       let dynamic_pmd =
         payment_method_data->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
@@ -886,23 +883,23 @@ let make = (
   , (isEmailValid, isNameValid, allApiData.sessions, isDynamicFields, isAllDynamicFieldValid))
 
   let handlePress = _ => {
-    isAllValuesValid
-      ? {
-          setLoading(ProcessingPayments(None))
-          setKeyToTrigerButtonClickError(prev => prev + 1)
-          switch redirectProp {
-          | PAY_LATER(prop) =>
-            fields.name == "klarna" && isKlarna
-              ? setLaunchKlarna(_ => Some(prop))
-              : processRequestPayLater(prop, "redirect")
-          | BANK_REDIRECT(prop) => processRequestBankRedirect(prop)
-          | CRYPTO(prop) => processRequestCrypto(prop)
-          | WALLET(prop) => processRequestWallet(prop)
-          | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
-          | _ => ()
-          }
-        }
-      : setKeyToTrigerButtonClickError(prev => prev + 1)
+    if isAllValuesValid {
+      setLoading(ProcessingPayments(None))
+      setKeyToTrigerButtonClickError(prev => prev + 1)
+      switch redirectProp {
+      | PAY_LATER(prop) =>
+        fields.name == "klarna" && isKlarna
+          ? setLaunchKlarna(_ => Some(prop))
+          : processRequestPayLater(prop, "redirect")
+      | BANK_REDIRECT(prop) => processRequestBankRedirect(prop)
+      | CRYPTO(prop) => processRequestCrypto(prop)
+      | WALLET(prop) => processRequestWallet(prop)
+      | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
+      | _ => ()
+      }
+    } else {
+      setKeyToTrigerButtonClickError(prev => prev + 1)
+    }
   }
 
   React.useEffect(() => {
@@ -952,101 +949,103 @@ let make = (
             <ErrorText text=error />
           </>
         : <>
-            {isDynamicFields
-              ? <DynamicFields
-                  requiredFields=dynamicFields
-                  setIsAllDynamicFieldValid
-                  setDynamicFieldsJson
-                  keyToTrigerButtonClickError
-                  savedCardsData=None
-                />
-              : fields.fields
-                ->Array.mapWithIndex((field, index) =>
-                  <View key={`field-${fields.text}${index->Int.toString}`}>
-                    <Space />
-                    {switch field {
-                    | "email" =>
-                      <CustomInput
-                        state={email->Option.getOr("")}
-                        setState={handlePressEmail}
-                        placeholder=localeObject.emailLabel
-                        keyboardType=#"email-address"
-                        borderBottomLeftRadius=borderRadius
-                        borderBottomRightRadius=borderRadius
-                        borderTopLeftRadius=borderRadius
-                        borderTopRightRadius=borderRadius
-                        borderTopWidth=borderWidth
-                        borderBottomWidth=borderWidth
-                        borderLeftWidth=borderWidth
-                        borderRightWidth=borderWidth
-                        isValid=isEmailValidForFocus
-                        onFocus={_ => {
-                          setEmailIsFocus(_ => true)
-                        }}
-                        onBlur={_ => {
-                          setEmailIsFocus(_ => false)
-                        }}
-                        textColor=component.color
-                      />
-                    | "name" =>
-                      <CustomInput
-                        state={name->Option.getOr("")}
-                        setState={handlePressName}
-                        placeholder=localeObject.fullNameLabel
-                        keyboardType=#default
-                        isValid=isNameValidForFocus
-                        onFocus={_ => {
-                          setNameIsFocus(_ => true)
-                        }}
-                        onBlur={_ => {
-                          setNameIsFocus(_ => false)
-                        }}
-                        textColor=component.color
-                        borderBottomLeftRadius=borderRadius
-                        borderBottomRightRadius=borderRadius
-                        borderTopLeftRadius=borderRadius
-                        borderTopRightRadius=borderRadius
-                        borderTopWidth=borderWidth
-                        borderBottomWidth=borderWidth
-                        borderLeftWidth=borderWidth
-                        borderRightWidth=borderWidth
-                      />
-                    | "country" =>
-                      <CustomPicker
-                        value=country
-                        setValue=onChangeCountry
-                        borderBottomLeftRadius=borderRadius
-                        borderBottomRightRadius=borderRadius
-                        borderBottomWidth=borderWidth
-                        items=countryData
-                        placeholderText=localeObject.countryLabel
-                      />
-                    | "bank" =>
-                      <CustomPicker
-                        value=selectedBank
-                        setValue=onChangeBank
-                        borderBottomLeftRadius=borderRadius
-                        borderBottomRightRadius=borderRadius
-                        borderBottomWidth=borderWidth
-                        items=bankData
-                        placeholderText=localeObject.bankLabel
-                      />
-                    | "blik_code" =>
-                      <CustomInput
-                        state={blikCode->Option.getOr("")}
-                        setState={onChangeBlikCode}
-                        borderBottomLeftRadius=borderRadius
-                        borderBottomRightRadius=borderRadius
-                        borderBottomWidth=borderWidth
-                        placeholder="000-000"
-                        keyboardType=#numeric
-                        maxLength=Some(7)
-                      />
-                    | _ => React.null
-                    }}
-                  </View>
-                )
-                ->React.array}
+            {if isDynamicFields {
+              <DynamicFields
+                requiredFields=dynamicFields
+                setIsAllDynamicFieldValid
+                setDynamicFieldsJson
+                keyToTrigerButtonClickError
+                savedCardsData=None
+              />
+            } else {
+              fields.fields
+              ->Array.mapWithIndex((field, index) =>
+                <View key={`field-${fields.text}${index->Int.toString}`}>
+                  <Space />
+                  {switch field {
+                  | "email" =>
+                    <CustomInput
+                      state={email->Option.getOr("")}
+                      setState={handlePressEmail}
+                      placeholder=localeObject.emailLabel
+                      keyboardType=#"email-address"
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                      isValid=isEmailValidForFocus
+                      onFocus={_ => {
+                        setEmailIsFocus(_ => true)
+                      }}
+                      onBlur={_ => {
+                        setEmailIsFocus(_ => false)
+                      }}
+                      textColor=component.color
+                    />
+                  | "name" =>
+                    <CustomInput
+                      state={name->Option.getOr("")}
+                      setState={handlePressName}
+                      placeholder=localeObject.fullNameLabel
+                      keyboardType=#default
+                      isValid=isNameValidForFocus
+                      onFocus={_ => {
+                        setNameIsFocus(_ => true)
+                      }}
+                      onBlur={_ => {
+                        setNameIsFocus(_ => false)
+                      }}
+                      textColor=component.color
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderTopLeftRadius=borderRadius
+                      borderTopRightRadius=borderRadius
+                      borderTopWidth=borderWidth
+                      borderBottomWidth=borderWidth
+                      borderLeftWidth=borderWidth
+                      borderRightWidth=borderWidth
+                    />
+                  | "country" =>
+                    <CustomPicker
+                      value=country
+                      setValue=onChangeCountry
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      items=countryData
+                      placeholderText=localeObject.countryLabel
+                    />
+                  | "bank" =>
+                    <CustomPicker
+                      value=selectedBank
+                      setValue=onChangeBank
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      items=bankData
+                      placeholderText=localeObject.bankLabel
+                    />
+                  | "blik_code" =>
+                    <CustomInput
+                      state={blikCode->Option.getOr("")}
+                      setState={onChangeBlikCode}
+                      borderBottomLeftRadius=borderRadius
+                      borderBottomRightRadius=borderRadius
+                      borderBottomWidth=borderWidth
+                      placeholder="000-000"
+                      keyboardType=#numeric
+                      maxLength=Some(7)
+                    />
+                  | _ => React.null
+                  }}
+                </View>
+              )
+              ->React.array
+            }}
             <Space />
             <RedirectionText />
           </>}
