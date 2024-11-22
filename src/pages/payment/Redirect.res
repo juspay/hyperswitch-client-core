@@ -307,47 +307,49 @@ let make = (
         acc->Dict.set(key, val)
         acc
       })
-      let redirectData = isDynamicFields
-        ? [
-            (
-              "billing_email",
+      let redirectData = if isDynamicFields {
+        [
+          (
+            "billing_email",
+            dynamicFieldsArray
+            ->Array.find(((key, _)) => key->String.includes("email") == true)
+            ->Option.map(((_, (value, _))) => value)
+            ->Option.getOr(""->JSON.Encode.string),
+          ),
+          (
+            "billing_name",
+            dynamicFieldsArray
+            ->Array.find(((key, _)) => key->String.includes("first_name") == true)
+            ->Option.map(((_, (value, _))) => value->JSON.Decode.string->Option.getOr(""))
+            ->Option.getOr("")
+            ->String.concat(" ")
+            ->String.concat(
               dynamicFieldsArray
-              ->Array.find(((key, _)) => key->String.includes("email") == true)
-              ->Option.map(((_, (value, _))) => value)
-              ->Option.getOr(""->JSON.Encode.string),
-            ),
-            (
-              "billing_name",
-              dynamicFieldsArray
-              ->Array.find(((key, _)) => key->String.includes("first_name") == true)
+              ->Array.find(((key, _)) => key->String.includes("last_name") == true)
               ->Option.map(((_, (value, _))) => value->JSON.Decode.string->Option.getOr(""))
-              ->Option.getOr("")
-              ->String.concat(" ")
-              ->String.concat(
-                dynamicFieldsArray
-                ->Array.find(((key, _)) => key->String.includes("last_name") == true)
-                ->Option.map(((_, (value, _))) => value->JSON.Decode.string->Option.getOr(""))
-                ->Option.getOr(""),
-              )
-              ->JSON.Encode.string,
-            ),
-            (
-              "billing_country",
-              dynamicFieldsArray
-              ->Array.find(((key, _)) => key->String.includes("country") == true)
-              ->Option.map(((_, (value, _))) => value)
-              ->Option.getOr(""->JSON.Encode.string),
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        : [
-            ("billing_email", email->Option.getOr("")->JSON.Encode.string),
-            ("billing_name", name->Option.getOr("")->JSON.Encode.string),
-            ("billing_country", country->Option.getOr("")->JSON.Encode.string),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+              ->Option.getOr(""),
+            )
+            ->JSON.Encode.string,
+          ),
+          (
+            "billing_country",
+            dynamicFieldsArray
+            ->Array.find(((key, _)) => key->String.includes("country") == true)
+            ->Option.map(((_, (value, _))) => value)
+            ->Option.getOr(""->JSON.Encode.string),
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+      } else {
+        [
+          ("billing_email", email->Option.getOr("")->JSON.Encode.string),
+          ("billing_name", name->Option.getOr("")->JSON.Encode.string),
+          ("billing_country", country->Option.getOr("")->JSON.Encode.string),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+      }
       let sdkData = [("token", authToken->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object
       // let payment_method_data =
       //   [
