@@ -67,7 +67,6 @@ let usePlaidProps = () => {
         })
         ->ignore
       },
-
       onExit: linkExit => {
         Plaid.dismissLink()
         let error: error = {

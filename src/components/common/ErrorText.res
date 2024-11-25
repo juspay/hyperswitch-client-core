@@ -1,15 +1,12 @@
-
 @react.component
 let make = (~text=None) => {
-
   switch text {
   | None => React.null
-  | Some(val) => val == ""
+  | Some(val) =>
+    val == ""
       ? React.null
       : <>
-          <TextWrapper textType={ErrorText}>
-            {val->React.string}
-          </TextWrapper>
+          <TextWrapper textType={ErrorText}> {val->React.string} </TextWrapper>
         </>
   }
 }

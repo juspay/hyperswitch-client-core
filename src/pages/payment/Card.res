@@ -45,7 +45,8 @@ let make = (
   )> => Dict.make())
   let (error, setError) = React.useState(_ => None)
 
-  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && (isNicknameSelected ? isNicknameValid : true)
+  let isConfirmButtonValid =
+    isAllCardValuesValid && isAllDynamicFieldValid && (isNicknameSelected ? isNicknameValid : true)
 
   let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
   let (isInitialised, setIsInitialised) = React.useState(_ => false)

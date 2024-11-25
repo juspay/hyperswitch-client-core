@@ -14,12 +14,8 @@ let make = () => {
           ~justifyContent=#center,
           (),
         )}>
-        <TextWrapper textType={Heading}>
-          {"powered by "->React.string}
-        </TextWrapper>
-        <TextWrapper textType={HeadingBold}>
-          {"Hyperswitch"->React.string}
-        </TextWrapper>
+        <TextWrapper textType={Heading}> {"powered by "->React.string} </TextWrapper>
+        <TextWrapper textType={HeadingBold}> {"Hyperswitch"->React.string} </TextWrapper>
       </View>
       // <Icon
       //   name={switch themeType {

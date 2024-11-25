@@ -42,6 +42,7 @@ let make = () => {
           showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
           React.null
         }
+
   | None =>
     showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
     React.null

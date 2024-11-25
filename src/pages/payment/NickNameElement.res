@@ -7,7 +7,7 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected, ~setIsNicknameValid) =
 
   let onChange = text => {
     setNickname(_ => Some(text))
-    
+
     if text->String.length > 12 {
       setErrorMesage(_ => Some(localeObject.nickNameLengthExceedError))
       setIsNicknameValid(_ => false)

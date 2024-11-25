@@ -8,7 +8,7 @@
     "re:start": "rescript build -w",
     "re:format": "rescript format -all",
     "web": "webpack serve --mode=development --config reactNativeWeb/webpack.config.js",
-    "web:demo" : "concurrently \" yarn web\" \" webpack server --mode=development --config reactNativeWeb/DemoApp/webpack.config.js\" ",
+    "web:demo": "concurrently \" yarn web\" \"yarn server\" \" webpack server --mode=development --config reactNativeWeb/DemoApp/webpack.config.js\" ",
     "ios": "cd ios && rm -rf build && pod install && cd .. && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
     "web:next": "cd reactNativeWeb && next",

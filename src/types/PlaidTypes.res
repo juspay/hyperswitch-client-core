@@ -10,7 +10,7 @@ type linkTokenConfiguration = {
   noLoadingState?: bool,
   ...commonPlaidLinkOptions,
 }
-  
+
 type linkInstitution = {
   id: string,
   name: string,

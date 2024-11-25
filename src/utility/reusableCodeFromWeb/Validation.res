@@ -76,7 +76,10 @@ let formatCardNumber = (val, cardType) => {
   | AMEX => `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 15)}`
   | DINERSCLUB =>
     if clearValue->String.length > 14 {
-      `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(8, 12)}  ${clearValue->slice(12, 16)} `
+      `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(
+          8,
+          12,
+        )}  ${clearValue->slice(12, 16)} `
     } else {
       `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 14)}`
     }
