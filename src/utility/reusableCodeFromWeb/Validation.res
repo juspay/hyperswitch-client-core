@@ -75,7 +75,11 @@ let formatCardNumber = (val, cardType) => {
   let formatedCard = switch cardType {
   | AMEX => `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 15)}`
   | DINERSCLUB =>
-    `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 14)}`
+    if clearValue->String.length > 14 {
+      `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(8, 12)}  ${clearValue->slice(12, 16)} `
+    } else {
+      `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 14)}`
+    }
   | MASTERCARD
   | DISCOVER
   | SODEXO
@@ -328,16 +332,17 @@ let maxCardLength = cardBrand => {
   Array.reduce(obj.length, 0, (acc, val) => acc > val ? acc : val)
 }
 
-// let cardValid = (cardNumber, cardBrand) => {
-//   let clearValue = cardNumber->clearSpaces
-//   Array.includes(getobjFromCardPattern(cardBrand).length, clearValue->String.length) &&
-//   calculateLuhn(cardNumber)
-// }
 let cardValid = (cardNumber, cardBrand) => {
-  let clearValueLength = cardNumber->clearSpaces->String.length
-  (clearValueLength == maxCardLength(cardBrand) ||
-    (cardBrand === "Visa" && clearValueLength == 16)) && calculateLuhn(cardNumber)
+  let clearValue = cardNumber->clearSpaces
+  Array.includes(getobjFromCardPattern(cardBrand).length, clearValue->String.length) &&
+  calculateLuhn(cardNumber)
 }
+
+// let cardValid = (cardNumber, cardBrand) => {
+//   let clearValueLength = cardNumber->clearSpaces->String.length
+//   (clearValueLength == maxCardLength(cardBrand) ||
+//     (cardBrand === "Visa" && clearValueLength == 16)) && calculateLuhn(cardNumber)
+// }
 
 // let blurRef = (ref: React.ref<Nullable.t<Dom.element>>) => {
 //   ref.current->Nullable.toOption->Option.forEach(input => input->blur)->ignore

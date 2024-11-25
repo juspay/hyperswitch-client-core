@@ -333,6 +333,7 @@ let make = (
     shouldRenderShippingFields,
   ))
 
+
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
   let (statesJson, setStatesJson) = React.useState(_ => None)
 
@@ -397,6 +398,7 @@ let make = (
     }
     fieldsOrder->Array.indexOf(x)
   }
+  
   let fields = React.useMemo(() => {
     filteredFields->Array.sort((a, b) => {
       let aPath = getOrderValue(a)
@@ -413,6 +415,7 @@ let make = (
     displayPreValueFields,
     shouldRenderShippingFields,
   ))
+
 
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
