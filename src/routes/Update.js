@@ -1,7 +1,7 @@
 import React, {useEffect} from 'react';
-import CodePush from 'react-native-code-push';
+// import CodePush from 'react-native-code-push';
 import App from './AppExports.js';
-import {Platform} from 'react-native';
+// import {Platform} from 'react-native';
 import {
   sentryReactNative,
   initiateSentry,
@@ -14,27 +14,27 @@ const NewApp = props => {
 
   const checkForUpdate = () => {
     // setShow(true);
-    CodePush.checkForUpdate(
-      Platform.OS == 'android'
-        ? process.env.HYPERSWITCH_CODEPUSH_ANDROID_KEY
-        : process.env.HYPERSWITCH_CODEPUSH_IOS_KEY,
-    )
-      .then(update => {
-        if (update) syncImmediate();
-      })
-      .catch(err => {});
+    // CodePush.checkForUpdate(
+    //   Platform.OS == 'android'
+    //     ? process.env.HYPERSWITCH_CODEPUSH_ANDROID_KEY
+    //     : process.env.HYPERSWITCH_CODEPUSH_IOS_KEY,
+    // )
+    //   .then(update => {
+    //     if (update) syncImmediate();
+    //   })
+    //   .catch(err => {});
   };
 
   const syncImmediate = async () => {
-    await CodePush.sync(
-      {
-        checkFrequency: CodePush.CheckFrequency.ON_APP_START,
-        installMode: CodePush.InstallMode.IMMEDIATE,
-        updateDialog: false,
-      },
-      //   codePushStatusDidChange,
-      //   codePushDownloadDidProgress,
-    );
+    // await CodePush.sync(
+    //   {
+    //     checkFrequency: CodePush.CheckFrequency.ON_APP_START,
+    //     installMode: CodePush.InstallMode.IMMEDIATE,
+    //     updateDialog: false,
+    //   },
+    //   //   codePushStatusDidChange,
+    //   //   codePushDownloadDidProgress,
+    // );
   };
 
   return (
@@ -54,6 +54,8 @@ const SentryApp = React.memo(props => {
     return sentryReactNative.wrap(NewApp)(props);
 });
 
-export default CodePush({checkFrequency: CodePush.CheckFrequency.MANUAL})(
-  SentryApp,
-);
+// export default CodePush({checkFrequency: CodePush.CheckFrequency.MANUAL})(
+//   SentryApp,
+// );
+
+export default SentryApp
