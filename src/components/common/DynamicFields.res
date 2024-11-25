@@ -325,7 +325,13 @@ let make = (
     ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
     ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
     ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2)
-  , (requiredFields, isSaveCardsFlow, savedCardsData, clientCountry.isoAlpha2))
+  , (
+    requiredFields,
+    isSaveCardsFlow,
+    savedCardsData,
+    clientCountry.isoAlpha2,
+    shouldRenderShippingFields,
+  ))
 
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
   let (statesJson, setStatesJson) = React.useState(_ => None)
@@ -391,12 +397,22 @@ let make = (
     }
     fieldsOrder->Array.indexOf(x)
   }
-
-  let fields = filteredFields->Array.toSorted((a, b) => {
-    let aPath = getOrderValue(a)
-    let bPath = getOrderValue(b)
-    float(aPath - bPath)
-  })
+  let fields = React.useMemo(() => {
+    filteredFields->Array.sort((a, b) => {
+      let aPath = getOrderValue(a)
+      let bPath = getOrderValue(b)
+      float(aPath - bPath)
+    })
+    filteredFields
+  }, (
+    requiredFields,
+    isSaveCardsFlow,
+    savedCardsData,
+    clientCountry.isoAlpha2,
+    fieldsOrder,
+    displayPreValueFields,
+    shouldRenderShippingFields,
+  ))
 
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
