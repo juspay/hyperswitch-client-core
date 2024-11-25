@@ -789,6 +789,7 @@ let parseConfigurationDict = (configObj, from) => {
         getOptionString(shippingObj, "name")
         ->Option.getOr("default")
         ->String.split(" ")
+      //need changes
       addressObj == Dict.make()
         ? None
         : Some({

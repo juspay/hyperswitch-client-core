@@ -1,2 +1,2 @@
 @module("react")
-external useEffect: (. unit => option<unit => unit>) => unit = "useEffect"
+external useEffect: (unit => option<unit => unit>) => unit = "useEffect"
