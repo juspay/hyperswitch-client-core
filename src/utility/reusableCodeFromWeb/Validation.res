@@ -79,7 +79,7 @@ let formatCardNumber = (val, cardType) => {
       `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(
           8,
           12,
-        )}  ${clearValue->slice(12, 16)} `
+        )} ${clearValue->slice(12, 16)}   ${clearValue->slice(16, 19)}`
     } else {
       `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 14)}`
     }
@@ -91,7 +91,7 @@ let formatCardNumber = (val, cardType) => {
     `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(
         8,
         12,
-      )} ${clearValue->slice(12, 16)}`
+      )} ${clearValue->slice(12, 16)} ${clearValue->slice(16, 19)}`
   | _ =>
     `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(
         8,
