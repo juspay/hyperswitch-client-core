@@ -864,34 +864,12 @@ let useSavePaymentMethod = () => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (cardData, _) = React.useContext(CardDataContext.cardDataContext)
 
-  let (month, year) = Validation.getExpiryDates(cardData.expireDate)
-  let payment_method_data =
-    [
-      (
-        "card",
-        [
-          ("card_number", cardData.cardNumber->Validation.clearSpaces->JSON.Encode.string),
-          ("card_exp_month", month->JSON.Encode.string),
-          ("card_exp_year", year->JSON.Encode.string),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object,
-      ),
-    ]
-    ->Dict.fromArray
-    ->JSON.Encode.object
-
-  let body: PaymentMethodListType.redirectType = {
-    payment_method: "card",
-    client_secret: nativeProp.pmClientSecret->Option.getOr(""),
-    payment_method_data,
-  }
-
-  () => {
-    let paymentMethodId = nativeProp.paymentMethodManagementId->Option.getOr("")
-    let uri = `${baseUrl}/payment_methods/${paymentMethodId}/save`
+  (
+    ~body: PaymentMethodListType.redirectType
+  ) => {
+    let uriParam = nativeProp.paymentMethodId
+    let uri = `${baseUrl}/payment_methods/${uriParam}/save`
     apiLogWrapper(
       ~logType=INFO,
       ~eventName=ADD_PAYMENT_METHOD_CALL_INIT,

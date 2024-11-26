@@ -9,6 +9,7 @@ type hyperModule = {
   exitWidget: (string, string) => unit,
   exitCardForm: string => unit,
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
+  onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
 }
 
@@ -42,6 +43,7 @@ let hyperModule = {
     _,
     _,
   ) => ()),
+  onAddPaymentMethod: getFunctionFromModule(hyperModuleDict, "onAddPaymentMethod", _ => ()),
   exitWidgetPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitWidgetPaymentsheet", (
     _,
     _,

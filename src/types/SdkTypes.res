@@ -308,9 +308,8 @@ type hyperParams = {
 type nativeProp = {
   publishableKey: string,
   clientSecret: string,
+  paymentMethodId: string,
   ephemeralKey: option<string>,
-  paymentMethodManagementId: option<string>,
-  pmClientSecret: option<string>,
   customBackendUrl: option<string>,
   customLogUrl: option<string>,
   sessionId: string,
@@ -895,9 +894,10 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     rootTag,
     publishableKey,
     clientSecret: getString(dictfromNative, "clientSecret", ""),
+    paymentMethodId: String.split(getString(dictfromNative, "clientSecret", ""), "_secret_")
+    ->Array.get(0)
+    ->Option.getOr(""),
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
-    paymentMethodManagementId: getOptionString(dictfromNative, "paymentMethodId"),
-    pmClientSecret: getOptionString(dictfromNative, "pmClientSecret"),
     customBackendUrl,
     customLogUrl,
     sessionId: "",
