@@ -8,7 +8,9 @@ module AddPaymentMethodButton = {
     let localeObject = GetLocale.useGetLocalObj()
 
     <CustomTouchableOpacity
-      onPress={_ => ()} // TODO: navigate to ADD_PM_SCREEN
+      onPress={_ => (
+        HyperModule.hyperModule.onAddPaymentMethod("")
+      )}
       style={viewStyle(
         ~paddingVertical=16.->dp,
         ~paddingHorizontal=24.->dp,
@@ -16,9 +18,6 @@ module AddPaymentMethodButton = {
         ~borderBottomColor=component.borderColor,
         ~flexDirection=#row,
         ~flexWrap=#nowrap,
-        ~alignItems=#center,
-        ~justifyContent=#"space-between",
-        ~flex=1.,
         (),
       )}>
       <View
@@ -26,7 +25,7 @@ module AddPaymentMethodButton = {
           ~flexDirection=#row,
           ~flexWrap=#nowrap,
           ~alignItems=#center,
-          ~flex=4.,
+          ~flex=1.,
           (),
         )}>
         <Icon

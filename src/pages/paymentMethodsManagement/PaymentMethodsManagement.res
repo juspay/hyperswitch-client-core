@@ -112,14 +112,20 @@ let make = () => {
         <Space height=200. />
       </ScrollView>
     </View>
-    : <View
-        style={viewStyle(
-          ~backgroundColor=component.background,
-          ~flex=1.,
-          ~alignItems=#center,
-          ~justifyContent=#center,
-          (),
-        )}>
-        <TextWrapper text={"No saved payment methods available."} textType={CardText} />
-      </View>
+    : <>
+        <View
+          style={viewStyle(
+            ~width=100.->pct,
+            ~paddingVertical=24.->dp,
+            ~paddingHorizontal=24.->dp,
+            ~borderBottomWidth=0.8,
+            ~borderBottomColor=component.borderColor,
+            ~backgroundColor=component.background,
+            ~alignItems=#center,
+            (),
+          )}>
+          <TextWrapper text={"No saved payment methods available."} textType={ModalTextLight} />
+        </View>
+        <PaymentMethodListItem.AddPaymentMethodButton />
+      </>
 }
