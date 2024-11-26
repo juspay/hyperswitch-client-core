@@ -96,7 +96,7 @@ let make = (
     setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isthisValid)})
   }
   let onChangeZip = (text, zipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
-    let isthisValid = ValidationFunctions.isValidZip(~zipCode=text, ~country="United States")
+    let isthisValid = Validation.isValidZip(~zipCode=text, ~country="United States")
     if isthisValid {
       switch zipRef.current->Nullable.toOption {
       | None => ()

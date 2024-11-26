@@ -853,7 +853,7 @@ let make = (
 
   //need refactoring
   let handlePressEmail = text => {
-    setIsEmailValid(_ => text->ValidationFunctions.isValidEmail)
+    setIsEmailValid(_ => text->Validation.isValidEmail)
     setEmail(_ => Some(text))
   }
 
