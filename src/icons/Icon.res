@@ -51,7 +51,7 @@ let make = (
     | "addwithcircle" => addwithcircle
     | "checkboxclicked" => checkboxclicked
     | "checkboxnotclicked" => checkboxnotclicked
-    | "defaultTick" => defaultTick
+    | "defaulttick" => defaultTick
     | _ => ""
     }
     localName == ""
