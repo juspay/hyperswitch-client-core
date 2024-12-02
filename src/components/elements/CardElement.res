@@ -83,8 +83,9 @@ let make = (
   }
   let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let cvvData = formatCVCNumber(text, getCardBrand(cardData.cardNumber))
-    let isthisValid = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
-    if isthisValid {
+    let isValidCvv = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
+    let shouldShiftFocusToNextField = checkMaxCardCvv(cvvData, getCardBrand(cardData.cardNumber))
+    if isValidCvv && shouldShiftFocusToNextField {
       switch cvvOrZipRef.current->Nullable.toOption {
       | None => ()
       | Some(ref) =>
@@ -93,7 +94,7 @@ let make = (
           : ref->ReactNative.TextInputElement.blur
       }
     }
-    setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isthisValid)})
+    setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isValidCvv)})
   }
   let onChangeZip = (text, zipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let isthisValid = Validation.isValidZip(~zipCode=text, ~country="United States")
