@@ -910,7 +910,7 @@ let make = (
         <ConfirmButton
           loading=false
           bottomSpace=50.
-          isAllValuesValid=true
+          isAllValuesValid
           handlePress
           hasSomeFields
           paymentMethod
