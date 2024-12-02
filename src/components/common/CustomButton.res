@@ -15,7 +15,7 @@ let make = (
   ~buttonType: buttonType=Primary,
   ~leftIcon: iconType=NoIcon,
   ~rightIcon: iconType=NoIcon,
-  ~onPress=?,
+  ~onPress,
   ~linearGradientColorTuple=None,
   ~borderWidth=0.,
   ~borderRadius=0.,
@@ -117,7 +117,10 @@ let make = (
           (),
         ),
       ])}
-      ?onPress>
+      onPress={ev => {
+        Keyboard.dismiss()
+        onPress(ev)
+      }}>
       {switch children {
       | Some(child) => child
       | _ =>
