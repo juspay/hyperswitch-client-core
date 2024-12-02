@@ -350,7 +350,7 @@ let cardValid = (cardNumber, cardBrand) => {
 
 let isCardNumberEqualsMax = (cardNumber, cardBrand) => {
   let clearValue = cardNumber->clearSpaces
-  clearValue->String.length == maxCardLength(cardBrand)
+  clearValue->String.length == maxCardLength(cardBrand) || clearValue->String.length == 16
 }
 
 // let cardValid = (cardNumber, cardBrand) => {
