@@ -154,6 +154,7 @@ let make = (
           iconRight={getScanCardComponent(ScanCardModule.isAvailable, cardBrand, cardNumber)}
           onFocus={() => {
             setCardNumberIsFocus(_ => true)
+            onChangeCvv("", nullRef)
             onChangeCardNumber(cardNumber, nullRef)
           }}
           onBlur={() => {
