@@ -301,6 +301,14 @@ let cvcNumberInRange = (val, cardBrand) => {
     ->Option.isSome
   cvcLengthInRange
 }
+
+let cvcNumberEqualsMaxLength = (val, cardBrand) => {
+  let clearValue = val->clearSpaces
+  let obj = getobjFromCardPattern(cardBrand)
+  let cvcMaxLengthEquals = clearValue->String.length == obj.maxCVCLenth
+  cvcMaxLengthEquals
+}
+
 // let genreateFontsLink = (fonts: array<CardThemeType.fonts>) => {
 //   if fonts->Array.length > 0 {
 //     fonts
@@ -397,6 +405,9 @@ let cardValid = (cardNumber, cardBrand) => {
 //   }
 //   thirdIframeVal === "" ? secondIframeVal === "" ? firstIframeVal : secondIframeVal : thirdIframeVal
 // }
+let checkMaxCardCvv = (cvcNumber, cardBrand) => {
+  cvcNumber->String.length > 0 && cvcNumberEqualsMaxLength(cvcNumber, cardBrand)
+}
 
 let checkCardCVC = (cvcNumber, cardBrand) => {
   cvcNumber->String.length > 0 && cvcNumberInRange(cvcNumber, cardBrand)
@@ -524,7 +535,6 @@ let isValidZip = (~zipCode, ~country) => {
   let isZipCodeValid = RegExp.test(postalCode.regex->Js.Re.fromString, zipCode)
   zipCode->String.length > 0 && isZipCodeValid
 }
-
 
 let containsDigit = text => {
   switch text->String.match(%re("/\d/")) {
