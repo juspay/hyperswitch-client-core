@@ -54,7 +54,7 @@ let make = (
   let errorMsgText = if !isCardNumberValid {
     Some(localeObject.inValidCardErrorText)
   } else if !isExpireDateValid {
-    Some(localeObject.inCompleteExpiryErrorText)
+    Some(localeObject.pastExpiryErrorText)
   } else if !isCvvValid {
     Some(localeObject.inCompleteCVCErrorText)
   } else {

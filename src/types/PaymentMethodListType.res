@@ -62,8 +62,16 @@ type payment_method_types_open_banking = {
   payment_experience: array<payment_experience>,
   required_field: RequiredFieldsTypes.required_fields,
 }
+type payment_method_types_bank_transfer = {
+  payment_method: string,
+  payment_method_type: string,
+  payment_method_type_bank_transfer: SdkTypes.payment_method_type_bank_transfer,
+  payment_experience: array<payment_experience>, // ACHBankTransfer
+  required_field: RequiredFieldsTypes.required_fields,
+  mandate_data: string,
+}
 
-type payment_method_types_ach_bank_debit = {
+type payment_method_types_bank_debit = {
   payment_method: string,
   payment_method_type: string,
   payment_method_type_bank_debit: SdkTypes.payment_method_type_bank_debit,
@@ -100,10 +108,8 @@ type payment_method =
   | BANK_REDIRECT(payment_method_types_bank_redirect)
   | CRYPTO(payment_method_types_pay_later)
   | OPEN_BANKING(payment_method_types_open_banking)
-  | BANK_DEBIT(payment_method_types_ach_bank_debit) // ACHBankDebit
-  | BECS_DEBIT(payment_method_types_becs_bank_debit) // BECSBankDebit
-  | SEPA_DEBIT(payment_method_types_sepa_bank_debit) // SEPADebit
-  | BACS_DEBIT(payment_method_types_bacs_bank_debit) // BACSBankDebit
+  | BANK_DEBIT(payment_method_types_bank_debit) // BankDebit
+  | BANK_TRANSFER(payment_method_types_bank_transfer) // BankTransfer
 type payment_method_type = {
   payment_method: string,
   payment_method_type: string,
@@ -136,16 +142,11 @@ type multi_use = {
   metadata: metadata,
 }
 
-type mandate_type = {
-  multi_use: multi_use,
-  // metadata: metadata,
-}
+type mandate_type = {multi_use: multi_use}
 
 type mandate_data = {
   customer_acceptance: customer_acceptance,
   mandate_type: mandate_type,
-  // multi_use: multi_use,
-  // metadata: metadata,
 }
 type redirectType = {
   client_secret: string,
@@ -338,29 +339,36 @@ let flattenPaymentListArray = (plist, item) => {
       })->Js.Array.push(plist)
     })
 
-  // | "becs_debit" =>
-  //   payment_method_types_array->Array.map(item2 => {
-  //     let dict2 = item2->getDictFromJson
-  //     BECS_DEBIT({
-  //       payment_method: "becs_debit",
-  //       mandate_data: dict2->getString("mandate_data", ""),
-  //       payment_method_type: dict2->getString("payment_method_type", ""),
-  //       payment_experience: dict2
-  //       ->getArray("payment_experience")
-  //       ->Array.map(item3 => {
-  //         let dict3 = item3->getDictFromJson
-  //         {
-  //           payment_experience_type: dict3->getString("payment_experience_type", ""),
-  //           payment_experience_type_decode: switch dict3->getString("payment_experience_type", "") {
-  //           | "redirect_to_url" => REDIRECT_TO_URL
-  //           | _ => NONE
-  //           },
-  //           eligible_connectors: dict3->getArray("eligible_connectors"),
-  //         }
-  //       }),
-  //       required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
-  //     })->Js.Array.push(plist)
-  //   })
+  | "bank_transfer" =>
+    payment_method_types_array->Array.map(item2 => {
+      let dict2 = item2->getDictFromJson
+      BANK_TRANSFER({
+        payment_method: "bank_transfer",
+        mandate_data: dict2->getString("mandate_data", ""),
+        payment_method_type: dict2->getString("payment_method_type", ""),
+        payment_method_type_bank_transfer: switch dict2->getString("payment_method_type", "") {
+        | "ach" => ACH
+        | "multibanco" => MULTIBANCO
+        | "sepa" => SEPA
+        | "bacs" => BACS
+        | _ => NONE
+        },
+        payment_experience: dict2
+        ->getArray("payment_experience")
+        ->Array.map(item3 => {
+          let dict3 = item3->getDictFromJson
+          {
+            payment_experience_type: dict3->getString("payment_experience_type", ""),
+            payment_experience_type_decode: switch dict3->getString("payment_experience_type", "") {
+            | "redirect_to_url" => REDIRECT_TO_URL
+            | _ => NONE
+            },
+            eligible_connectors: dict3->getArray("eligible_connectors"),
+          }
+        }),
+        required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
+      })->Js.Array.push(plist)
+    })
   | _ => []
   }->ignore
 
@@ -376,9 +384,7 @@ let getPaymentMethodType = pm => {
   | CRYPTO(payment_method_type) => payment_method_type.payment_method_type
   | OPEN_BANKING(payment_method_type) => payment_method_type.payment_method_type
   | BANK_DEBIT(payment_method_type) => payment_method_type.payment_method_type
-  | BECS_DEBIT(payment_method_type) => payment_method_type.payment_method_type
-  | SEPA_DEBIT(payment_method_type) => payment_method_type.payment_method_type
-  | BACS_DEBIT(payment_method_type) => payment_method_type.payment_method_type
+  | BANK_TRANSFER(payment_method_type) => payment_method_type.payment_method_type
   }
 }
 

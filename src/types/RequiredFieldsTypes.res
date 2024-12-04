@@ -22,7 +22,12 @@ type paymentMethodsFields =
   | AddressPincode
   | AddressState
   | AddressCountry(array<string>)
+  | AccountNumber
   | BlikCode
+  | Iban
+  | BsbNumber
+  | SortCode
+  | RoutingNumber
   | Currency(array<string>)
 
 type requiredField =
@@ -60,6 +65,9 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_blik_code" => BlikCode
   | "user_billing_name" => BillingName
   | "user_shipping_name" => ShippingName
+  | "user_bank_account_number" => AccountNumber
+  | "text" => SortCode
+  | "user_iban" => Iban
   | var => UnKnownField(var)
   }
 }
@@ -319,10 +327,15 @@ let useGetPlaceholder = (
     // | ShippingAddressPincode => localeObject.postalCodeLabel
     // | ShippingAddressState => localeObject.stateLabel
     | SpecialField(_)
+    | AccountNumber
     | UnKnownField(_)
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | Iban
+    | BsbNumber
+    | SortCode
+    | RoutingNumber
     | BlikCode =>
       display_name->toCamelCase
     }

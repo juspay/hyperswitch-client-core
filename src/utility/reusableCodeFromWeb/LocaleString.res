@@ -65,6 +65,7 @@ type localeStrings = {
   addPaymentMethodLabel: string,
   walletDisclaimer: string,
   deletePaymentMethod?: string,
+  enterNumberDigits?: string => string,
 }
 
 let defaultLocale = {
@@ -136,6 +137,7 @@ let defaultLocale = {
   addPaymentMethodLabel: "Add new payment method",
   walletDisclaimer: "Wallet details will be saved upon selection",
   deletePaymentMethod: "Delete",
+  enterNumberDigits: number => `Please enter valid ${number} digit number`,
 }
 
 type locale = {localeStrings: array<localeStrings>}
@@ -210,6 +212,7 @@ let localeStrings = [
     invalidDigitsNickNameError: "Nickname cannot have more than 2 digits",
     walletDisclaimer: "Wallet details will be saved upon selection",
     deletePaymentMethod: "Delete",
+    enterNumberDigits: number => `Please enter valid ${number} digit number`,
   },
   //    Hebrew (he),
   {

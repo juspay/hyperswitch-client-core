@@ -54,6 +54,7 @@ let walletNameToTypeMapper = str => {
 }
 
 type payment_method_type_bank_debit = ACH | BECS | SEPA | BACS | NONE
+type payment_method_type_bank_transfer = ACH | MULTIBANCO | SEPA | BACS | NONE
 
 type savedCard = {
   cardScheme?: string,

@@ -301,13 +301,7 @@ let useBrowserHook = () => {
             | "requires_confirmation"
             | "cancelled"
             | "requires_customer_action"
-            | //=>
-            // responseCallback(
-            //   ~paymentStatus=LoadingContext.ProcessingPayments(None),
-            //   ~status={status, message: "", code: "", type_: ""},
-            // )
-            // Console.log2("status", status)
-            "requires_merchant_action" =>
+            | "requires_merchant_action" =>
               responseCallback(
                 ~paymentStatus=LoadingContext.ProcessingPayments(None),
                 ~status={status, message: "", code: "", type_: ""},
@@ -455,38 +449,10 @@ let useRedirectHook = () => {
             ~paymentStatus=PaymentSuccess,
             ~status={status, message: "", code: "", type_: ""},
           )
+          Console.log2("status", status)
         | "requires_capture"
         | "processing"
-        | //=> {
-        //     setAllApiData({
-        //       ...allApiData,
-        //       additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
-        //     })
-        //     logger(
-        //       ~logType=INFO,
-        //       ~category=USER_EVENT,
-        //       ~value="",
-        //       ~internalMetadata=reUri,
-        //       ~eventName=REDIRECTING_USER,
-        //       ~paymentMethod,
-        //       (),
-        //     )
-        //     redirectioBrowserHook(
-        //       ~clientSecret,
-        //       ~publishableKey,
-        //       ~openUrl=reUri,
-        //       ~responseCallback,
-        //       ~errorCallback,
-        //       ~processor=body,
-        //     )
-        //     responseCallback(
-        //       ~paymentStatus=LoadingContext.ProcessingPayments(None),
-        //       ~status={status, message: "", code: "", type_: ""},
-        //     )
-        //     Console.log2("reUri", reUri)
-        //   }
-
-        "requires_confirmation"
+        | "requires_confirmation"
         | "requires_merchant_action" => {
             setAllApiData({
               ...allApiData,
@@ -519,6 +485,12 @@ let useRedirectHook = () => {
               ~errorCallback,
               ~processor=body,
             )
+            Console.log2("reUri", reUri)
+            responseCallback(
+              ~paymentStatus=ProcessingPayments(None),
+              ~status={status, message: "", code: "", type_: ""},
+            )
+            Console.log2("status", status)
           }
         | statusVal =>
           logger(
