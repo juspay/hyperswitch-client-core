@@ -74,25 +74,29 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
   | OPEN_BANKING(prop) => prop.payment_method_type
+  | BANK_DEBIT(prop) => prop.payment_method_type
   }
   let paymentExperience = switch redirectProp {
-  | CARD(_) => None
+  | CARD(_)
+  | BANK_REDIRECT(_) =>
+    None
   | WALLET(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
   | PAY_LATER(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
-  | BANK_REDIRECT(_) => None
   | OPEN_BANKING(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   | CRYPTO(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BANK_DEBIT(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
@@ -226,6 +230,8 @@ let make = (
     ~eligible_connectors=?,
     (),
   ) => {
+    let dateNow = Date.now()
+    let futureDate = Date.makeWithYM(~year=dateNow->Date.fromTime->Date.getFullYear + 2, ~month=0)->Date.toDateString
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
       return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
@@ -237,23 +243,36 @@ let make = (
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
       setup_future_usage: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
+        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
+          ? Some("off_session")
+          : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
-      // mandate_data: ?(
-      //   allApiData.mandateType != NORMAL
-      //     ? Some({
-      //         customer_acceptance: {
-      //           acceptance_type: "online",
-      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-      //           online: {
-      //             ip_address: ?nativeProp.hyperParams.ip,
-      //             user_agent: ?nativeProp.hyperParams.userAgent,
-      //           },
-      //         },
-      //       })
-      //     : None
-      // ),
+      mandate_data: ?(
+        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
+          ? Some({
+              customer_acceptance: {
+                acceptance_type: "offline",
+                accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+                online: {
+                  ip_address: ?nativeProp.hyperParams.ip,
+                  user_agent: ?nativeProp.hyperParams.userAgent,
+                },
+              },
+              mandate_type: {
+                multi_use: {
+                  amount: 1000,
+                  currency: "AUD",
+                  start_date: dateNow->Date.fromTime->Date.toISOString,
+                  end_date: futureDate->Date.fromString->Date.toISOString,
+                  metadata: {
+                    frequency: "13",
+                  },
+                },
+              },
+            })
+          : None
+      ),
       customer_acceptance: ?(
         allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate
           ? Some({
@@ -851,6 +870,34 @@ let make = (
     )
   }
 
+  let processRequestBankDebit = (prop: payment_method_types_bank_debit) => {
+    let dynamicFieldsArray = dynamicFieldsJson->Dict.toArray
+    let dynamicFieldsJsonDict = dynamicFieldsArray->Array.reduce(Dict.make(), (
+      acc,
+      (key, (val, _)),
+    ) => {
+      let updatedKey = switch prop.payment_method_type {
+      | _ => prop.payment_method_type ++ "_bank_debit"
+      }
+
+      acc->Dict.set(key->String.replace(prop.payment_method_type, updatedKey), val)
+      acc
+    })
+
+    let payment_method_data =
+      dynamicFieldsJsonDict->JSON.Encode.object->RequiredFieldsTypes.unflattenObject
+    processRequest(
+      ~payment_method_data=payment_method_data
+      ->Utils.getJsonObjectFromDict("payment_method_data")
+      ->JSON.stringifyAny
+      ->Option.getOr("{}")
+      ->JSON.parseExn,
+      ~payment_method=prop.payment_method,
+      ~payment_method_type=prop.payment_method_type,
+      (),
+    )
+  }
+
   //need refactoring
   let handlePressEmail = text => {
     setIsEmailValid(_ => text->Validation.isValidEmail)
@@ -882,7 +929,14 @@ let make = (
       : ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
           fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
         )) || (fields.name == "klarna" && isKlarna)
-  , (isEmailValid, isNameValid, allApiData.sessions, isDynamicFields, isAllDynamicFieldValid))
+  , (
+    isEmailValid,
+    isNameValid,
+    allApiData.sessions,
+    isDynamicFields,
+    isAllDynamicFieldValid,
+    dynamicFieldsJson,
+  ))
 
   let handlePress = _ => {
     if isAllValuesValid {
@@ -897,6 +951,7 @@ let make = (
       | CRYPTO(prop) => processRequestCrypto(prop)
       | WALLET(prop) => processRequestWallet(prop)
       | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
+      | BANK_DEBIT(prop) => processRequestBankDebit(prop)
       | _ => ()
       }
     } else {
@@ -933,6 +988,37 @@ let make = (
     country,
     selectedBank,
   ))
+
+  let numberOfDigitsValidation = (text, digits) => {
+    if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
+      if text->String.length == digits {
+        DynamicFields.NoError
+      } else {
+        DynamicFields.Error(
+          switch localeObject.enterDigitsText {
+          | Some(func) => func(digits->Int.toString)
+          | None => `Please Enter Valid ${digits->Int.toString} digits`
+          },
+        )
+      }
+    } else {
+      DynamicFields.Error(localeObject.enterValidDetailsText)
+    }
+  }
+
+  let customValidation = React.useCallback((~text, ~field_type) => {
+    switch field_type {
+    | RequiredFieldsTypes.AccountNumber =>
+      switch paymentMethod {
+      | "ach" => numberOfDigitsValidation(text, 12)
+      | _ => DynamicFields.OtherValidation
+      }
+    | RequiredFieldsTypes.RoutingNumber => numberOfDigitsValidation(text, 9)
+
+    | _ => DynamicFields.OtherValidation
+    }
+  }, [paymentMethod])
+
   <>
     <Space />
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
@@ -958,6 +1044,10 @@ let make = (
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
+                customValidation={switch paymentMethod {
+                | "ach" => Some(customValidation)
+                | _ => None
+                }}
               />
             } else {
               fields.fields

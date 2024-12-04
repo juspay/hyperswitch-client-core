@@ -272,6 +272,10 @@ let getExpiryValidity = cardExpiry => {
   valid
 }
 
+let containsOnlyDigits = text => {
+  %re("/^[0-9]*$/")->Js.Re.test_(text)
+}
+
 // let max = (a, b) => {
 //   a > b ? a : b
 // }
