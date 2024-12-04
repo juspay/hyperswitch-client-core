@@ -29,7 +29,8 @@ const paymentData = {
   capture_method: "automatic",
   authentication_type: "three_ds",
   customer_id: "hyperswitch_sdk_demo_id232432",
-  // email: "hyperswitch_sdk_demo_id@gmail.com",
+  // setup_future_usage: "off_session",
+  email: "hyperswitch_sdk_demo_id@gmail.com",
   request_external_three_ds_authentication: false,
   description: "Hello this is description",
   shipping: {
@@ -37,10 +38,10 @@ const paymentData = {
       line1: "1467",
       line2: "Harrison Street",
       line3: "Harrison Street",
-      city: "San Fransico",
-      state: "California",
+      city: "Sydney",
+      state: "Sydney",
       zip: "94122",
-      country: "GB",
+      country: "FR",
       first_name: "joseph",
       last_name: "Doe",
     },
@@ -59,10 +60,10 @@ const paymentData = {
       line1: "1467",
       line2: "Harrison Street",
       line3: "Harrison Street",
-      city: "San Fransico",
-      state: "California",
+      city: "Sydney",
+      state: "Sydney",
       zip: "94122",
-      country: "GB",
+      country: "FR",
       first_name: "joseph",
       last_name: "Doe",
     },
@@ -79,10 +80,6 @@ if (profileId) {
 }
 
 
-
-
-
-
 app.get('/create-payment-intent', async (req, res) => {
   try {
     var paymentIntent = await hyper.paymentIntents.create({
@@ -91,9 +88,8 @@ app.get('/create-payment-intent', async (req, res) => {
       authentication_type: 'no_three_ds',
       customer_id: 'hyperswitch_demo_id',
       capture_method: 'automatic',
-      email: 'abc@gmail.com',
-      business_country: 'US',
-      business_label: 'default',
+      email: 'pradeepkumar@gmail.com',
+      profile_id: process.env.HYPERSWITCH_PROFILE_ID,
       billing: {
         address: {
           line1: '1467',
@@ -102,10 +98,16 @@ app.get('/create-payment-intent', async (req, res) => {
           city: 'San Fransico',
           state: 'California',
           zip: '94122',
-          country: 'PL',
+          country: 'US',
           first_name: 'joseph',
           last_name: 'Doe',
-        }
+        },
+        phone: {
+          number: '8056594427',
+          country_code: '+91',
+        },
+
+        email: 'pradeepKumar@gmail.com',
       },
       shipping: {
         address: {
@@ -115,14 +117,13 @@ app.get('/create-payment-intent', async (req, res) => {
           city: 'San Fransico',
           state: 'California',
           zip: '94122',
-          country: 'PL',
+          country: 'US',
           first_name: 'joseph',
           last_name: 'Doe',
         }
       },
     });
 
-    // Send publishable key and PaymentIntent details to client
     res.send({
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: paymentIntent.client_secret,

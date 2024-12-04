@@ -35,9 +35,28 @@ let containsDigit = text => {
   }
 }
 
+let containsOnlyDigits = text => {
+  switch text->String.match(%re("/^\d+$/")) {
+  | Some(_) => true
+  | None => false
+  }
+}
+
 let containsMoreThanTwoDigits = text => {
   switch text->String.match(%re("/\d/g")) {
   | Some(matches) => matches->Array.length > 2
   | None => false
   }
+}
+
+let containAlphanumeric = text => {
+  let lengthValid = switch text->String.match(%re("/[a-zA-Z0-9]/g")) {
+  | Some(matches) => matches->Array.length > 15 && matches->Array.length <= 34
+  | None => false
+  }
+  let firstTwoAlphabets = switch text->String.match(%re("/^[a-zA-Z]{2}/")) {
+  | Some(_) => true
+  | None => false
+  }
+  lengthValid && firstTwoAlphabets
 }

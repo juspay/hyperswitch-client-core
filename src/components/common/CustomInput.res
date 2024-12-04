@@ -14,7 +14,7 @@ let make = (
   ~width=100.->pct,
   ~height: float=46.,
   ~secureTextEntry=false,
-  ~keyboardType=#default,
+  ~keyboardType=#"number-pad",
   ~iconLeft: iconType=NoIcon,
   ~iconRight: iconType=NoIcon,
   ~multiline: bool=false,
@@ -214,6 +214,7 @@ let make = (
           placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
           value={state}
           ?onKeyPress
+          inputMode={#numeric}
           onChangeText={text => setState(text)}
           keyboardType
           autoFocus

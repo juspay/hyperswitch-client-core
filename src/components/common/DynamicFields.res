@@ -2,6 +2,15 @@ open ReactNative
 open Style
 open RequiredFieldsTypes
 
+type customValidation =
+  | Error(string)
+  | OtherValidation
+  | NoError
+
+type setCustomData =
+  | Set(string)
+  | Other
+
 module RenderField = {
   let getStateData = (states, country) => {
     states
@@ -42,6 +51,8 @@ module RenderField = {
     ~required_fields_type: RequiredFieldsTypes.required_fields_type,
     ~setFinalJsonDict,
     ~finalJsonDict,
+    ~customValidation,
+    // ~setCustomDataFunc,
     ~isSaveCardsFlow,
     ~statesJson: option<JSON.t>,
     ~keyToTrigerButtonClickError,
@@ -98,11 +109,19 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let tempValid = RequiredFieldsTypes.checkIsValid(
-              ~text,
-              ~field_type=required_fields_type.field_type,
-              ~localeObject,
-            )
+            let tempValid = switch switch customValidation {
+            | Some(validation) => validation(~text, ~field_type=required_fields_type.field_type)
+            | None => OtherValidation
+            } {
+            | Error(errorMessage) => Some(errorMessage)
+            | OtherValidation =>
+              RequiredFieldsTypes.checkIsValid(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~localeObject,
+              )
+            | NoError => None
+            }
 
             let isCountryField = switch required_fields_type.field_type {
             | AddressCountry(_) => true
@@ -119,6 +138,15 @@ module RenderField = {
                 | None => ()
                 }
               }
+              // let value = switch setCustomDataFunc {
+              // | Some(func) =>
+              //   switch func(text, required_fields_type.field_type) {
+              //   | Set(val) => val
+              //   | Other => text
+              //   }
+              // | None => text
+              // }
+              //setVal(_ => Some(value))
               newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, tempValid))
               newData
             })
@@ -278,6 +306,8 @@ module Fields = {
     ~finalJsonDict,
     ~setFinalJsonDict,
     ~isSaveCardsFlow,
+    // ~setCustomDataFunc,
+    ~customValidation,
     ~statesJson,
     ~keyToTrigerButtonClickError,
   ) => {
@@ -290,6 +320,8 @@ module Fields = {
           key={index->Int.toString}
           isSaveCardsFlow
           statesJson
+          customValidation
+          // setCustomDataFunc
           finalJsonDict
           setFinalJsonDict
           keyToTrigerButtonClickError
@@ -308,6 +340,8 @@ let make = (
   ~setIsAllDynamicFieldValid,
   ~setDynamicFieldsJson,
   ~isSaveCardsFlow=false,
+  ~customValidation=None,
+  // ~setCustomDataFunc=None,
   ~savedCardsData: option<SdkTypes.savedDataType>,
   ~keyToTrigerButtonClickError,
   ~shouldRenderShippingFields=false, //To render shipping fields
@@ -423,6 +457,8 @@ let make = (
             setFinalJsonDict
             isSaveCardsFlow
             statesJson
+            customValidation
+            // setCustomDataFunc
             keyToTrigerButtonClickError
           />
         </>

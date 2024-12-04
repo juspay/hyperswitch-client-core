@@ -237,56 +237,41 @@ let useListModifier = () => {
                   />,
               })
             : None
-        | BANK_DEBIT(achDebitVal) =>
+        | BANK_DEBIT(bankDebitVal) =>
           let fields =
             redirectionList
-            ->Array.find(l => l.name == achDebitVal.payment_method_type)
+            ->Array.find(l => l.name == bankDebitVal.payment_method_type)
             ->Option.getOr(Types.defaultRedirectType)
-
           Some({
             name: fields.text,
             componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
               <Redirect
-                isScreenFocus redirectProp=BANK_DEBIT(achDebitVal) fields setConfirmButtonDataRef
+                isScreenFocus
+                isDynamicFields={true}
+                dynamicFields={bankDebitVal.required_field}
+                redirectProp=BANK_DEBIT(bankDebitVal)
+                fields
+                setConfirmButtonDataRef
               />,
           })
-        | BECS_DEBIT(becsDebitVal) =>
+        | BANK_TRANSFER(bankTransferVal) =>
           let fields =
             redirectionList
-            ->Array.find(l => l.name == becsDebitVal.payment_method_type)
+            ->Array.find(l => {
+              l.name === bankTransferVal.payment_method_type ++ "_bank_transfer"
+            })
             ->Option.getOr(Types.defaultRedirectType)
 
           Some({
             name: fields.text,
             componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
               <Redirect
-                isScreenFocus redirectProp=BECS_DEBIT(becsDebitVal) fields setConfirmButtonDataRef
-              />,
-          })
-        | SEPA_DEBIT(sepaDebitVal) =>
-          let fields =
-            redirectionList
-            ->Array.find(l => l.name == sepaDebitVal.payment_method_type)
-            ->Option.getOr(Types.defaultRedirectType)
-
-          Some({
-            name: fields.text,
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-              <Redirect
-                isScreenFocus redirectProp=SEPA_DEBIT(sepaDebitVal) fields setConfirmButtonDataRef
-              />,
-          })
-        | BACS_DEBIT(bacsDebitVal) =>
-          let fields =
-            redirectionList
-            ->Array.find(l => l.name == bacsDebitVal.payment_method_type)
-            ->Option.getOr(Types.defaultRedirectType)
-
-          Some({
-            name: fields.text,
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-              <Redirect
-                isScreenFocus redirectProp=BACS_DEBIT(bacsDebitVal) fields setConfirmButtonDataRef
+                isScreenFocus
+                isDynamicFields={true}
+                dynamicFields={bankTransferVal.required_field}
+                redirectProp=BANK_TRANSFER(bankTransferVal)
+                fields
+                setConfirmButtonDataRef
               />,
           })
         | CRYPTO(cryptoVal) =>
