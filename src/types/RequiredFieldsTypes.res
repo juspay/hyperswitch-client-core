@@ -24,8 +24,7 @@ type paymentMethodsFields =
   | AddressCountry(array<string>)
   | BlikCode
   | Currency(array<string>)
-  | AccountNumber
-  | RoutingNumber
+  | Iban
 
 type requiredField =
   | StringField(string)
@@ -62,8 +61,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_blik_code" => BlikCode
   | "user_billing_name" => BillingName
   | "user_shipping_name" => ShippingName
-  | "user_bank_account_number" => AccountNumber
-  | "text" => RoutingNumber // need backend changes
+  | "user_iban" => Iban
   | var => UnKnownField(var)
   }
 }
@@ -118,8 +116,7 @@ let getFieldType = dict => {
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
   | FullName | ShippingName | BillingName => 1
-  | AccountNumber => -1
-  | RoutingNumber => 1
+  | Iban => 1
   | Email => 2
   | AddressLine1 => 4
   | AddressLine2 => 5
@@ -326,12 +323,11 @@ let useGetPlaceholder = (
     // | ShippingAddressPincode => localeObject.postalCodeLabel
     // | ShippingAddressState => localeObject.stateLabel
     | SpecialField(_)
-    | AccountNumber
-    | RoutingNumber
     | UnKnownField(_)
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | Iban
     | BlikCode =>
       display_name->toCamelCase
     }

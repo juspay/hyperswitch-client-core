@@ -231,7 +231,11 @@ let make = (
     (),
   ) => {
     let dateNow = Date.now()
-    let futureDate = Date.makeWithYM(~year=dateNow->Date.fromTime->Date.getFullYear + 2, ~month=0)->Date.toDateString
+    let futureDate =
+      Date.makeWithYM(
+        ~year=dateNow->Date.fromTime->Date.getFullYear + 2,
+        ~month=0,
+      )->Date.toDateString
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
       return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
@@ -243,13 +247,13 @@ let make = (
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
       setup_future_usage: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
+        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "sepa"
           ? Some("off_session")
           : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
       mandate_data: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
+        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "sepa"
           ? Some({
               customer_acceptance: {
                 acceptance_type: "offline",
@@ -877,6 +881,7 @@ let make = (
       (key, (val, _)),
     ) => {
       let updatedKey = switch prop.payment_method_type {
+      | "sepa" => prop.payment_method_type
       | _ => prop.payment_method_type ++ "_bank_debit"
       }
 
@@ -989,32 +994,14 @@ let make = (
     selectedBank,
   ))
 
-  let numberOfDigitsValidation = (text, digits) => {
-    if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
-      if text->String.length == digits {
-        DynamicFields.NoError
-      } else {
-        DynamicFields.Error(
-          switch localeObject.enterDigitsText {
-          | Some(func) => func(digits->Int.toString)
-          | None => `Please Enter Valid ${digits->Int.toString} digits`
-          },
-        )
-      }
-    } else {
-      DynamicFields.Error(localeObject.enterValidDetailsText)
-    }
-  }
-
   let customValidation = React.useCallback((~text, ~field_type) => {
     switch field_type {
-    | RequiredFieldsTypes.AccountNumber =>
-      switch paymentMethod {
-      | "ach" => numberOfDigitsValidation(text, 12)
-      | _ => DynamicFields.OtherValidation
+    | RequiredFieldsTypes.Iban =>
+      if text->Validation.isValidIban {
+        DynamicFields.NoError
+      } else {
+        DynamicFields.Error(localeObject.enterValidDetailsText)
       }
-    | RequiredFieldsTypes.RoutingNumber => numberOfDigitsValidation(text, 9)
-
     | _ => DynamicFields.OtherValidation
     }
   }, [paymentMethod])
@@ -1045,7 +1032,7 @@ let make = (
                 keyToTrigerButtonClickError
                 savedCardsData=None
                 customValidation={switch paymentMethod {
-                | "ach" => Some(customValidation)
+                | "sepa" => Some(customValidation)
                 | _ => None
                 }}
               />

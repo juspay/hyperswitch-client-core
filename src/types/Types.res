@@ -98,8 +98,8 @@ let defaultConfig = {
       fields: [],
     },
     {
-      name: "ach",
-      text: "ACH Bank Debit",
+      name: "sepa",
+      text: "Sepa Bank Debit",
       header: "",
       fields: [],
     },
