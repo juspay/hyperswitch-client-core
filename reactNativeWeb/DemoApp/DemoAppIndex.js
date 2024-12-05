@@ -15,6 +15,17 @@ let defaultProps = {
       currencyCode: 'US',
     },
     displaySavedPaymentMethodsCheckbox: false,
+    // shippingDetails: {
+    //   address: {
+    //     city: 'city',
+    //     country: 'US',
+    //     line1: 'US',
+    //     line2: 'line2',
+    //     postalCode: '560060',
+    //     state: 'California',
+    //   },
+    //   name: 'Shipping INC',
+    // },
     // displaySavedPaymentMethods: false,
     appearance: {
       theme: 'Light',
@@ -29,8 +40,8 @@ let defaultProps = {
       // }}
       // locale: "en"
       typography: {
-        fontResId: 'montserrat'
-      }
+        fontResId: 'montserrat',
+      },
     },
   },
   hyperParams: {
@@ -64,15 +75,17 @@ const initReactNativeWeb = async () => {
 
   const handleMessage = event => {
     try {
-      let data = JSON.parse(event.data)
+      let data = JSON.parse(event.data);
       if (data.sdkLoaded) {
         createProps();
       }
       if (data.status) {
-        document.querySelector("iframe").style.display = "none"
-        document.getElementById("status").innerHTML = `Status: ${data.status} ${data.message ? "Message: " + data.message : ""}`
+        document.querySelector('iframe').style.display = 'none';
+        document.getElementById('status').innerHTML = `Status: ${data.status} ${
+          data.message ? 'Message: ' + data.message : ''
+        }`;
       }
-    } catch (ex) { }
+    } catch (ex) {}
   };
 
   window.addEventListener('message', handleMessage);

@@ -7,12 +7,12 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected, ~setIsNicknameValid) =
 
   let onChange = text => {
     setNickname(_ => Some(text))
-    
+
     if text->String.length > 12 {
       setErrorMesage(_ => Some(localeObject.nickNameLengthExceedError))
       setIsNicknameValid(_ => false)
     } else {
-      switch text->ValidationFunctions.containsMoreThanTwoDigits {
+      switch text->Validation.containsMoreThanTwoDigits {
       | true => {
           setErrorMesage(_ => Some(localeObject.invalidDigitsNickNameError))
           setIsNicknameValid(_ => false)
@@ -35,7 +35,7 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected, ~setIsNicknameValid) =
           setState={str => onChange(str)}
           placeholder={`${localeObject.cardNickname}${" (Optional)"}`}
           keyboardType=#default
-          isValid=true
+          isValid={isFocus || errorMessage->Option.isNone}
           onFocus={_ => setisFocus(_ => true)}
           onBlur={_ => setisFocus(_ => false)}
           textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
@@ -50,7 +50,7 @@ let make = (~nickname, ~setNickname, ~isNicknameSelected, ~setIsNicknameValid) =
           animateLabel=localeObject.cardNickname
         />
         {switch errorMessage {
-        | Some(text) => <ErrorText text=Some(text) />
+        | Some(text) => !isFocus ? <ErrorText text=Some(text) /> : React.null
         | None => React.null
         }}
         <Space height=5. />

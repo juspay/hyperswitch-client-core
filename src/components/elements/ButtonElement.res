@@ -299,7 +299,7 @@ let make = (
     }
   }
 
-  let confirmApplePay = (var: RescriptCore.Dict.t<Core__JSON.t>) => {
+  let confirmApplePay = (var: dict<JSON.t>) => {
     logger(
       ~logType=DEBUG,
       ~value=walletType.payment_method_type,

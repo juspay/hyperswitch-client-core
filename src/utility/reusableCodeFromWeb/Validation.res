@@ -75,7 +75,14 @@ let formatCardNumber = (val, cardType) => {
   let formatedCard = switch cardType {
   | AMEX => `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 15)}`
   | DINERSCLUB =>
-    `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 14)}`
+    if clearValue->String.length > 14 {
+      `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(
+          8,
+          12,
+        )} ${clearValue->slice(12, 16)}   ${clearValue->slice(16, 19)}`
+    } else {
+      `${clearValue->slice(0, 4)} ${clearValue->slice(4, 10)} ${clearValue->slice(10, 14)}`
+    }
   | MASTERCARD
   | DISCOVER
   | SODEXO
@@ -85,7 +92,6 @@ let formatCardNumber = (val, cardType) => {
         8,
         12,
       )} ${clearValue->slice(12, 16)} ${clearValue->slice(16, 19)}`
-
   | _ =>
     `${clearValue->slice(0, 4)} ${clearValue->slice(4, 8)} ${clearValue->slice(
         8,
@@ -257,7 +263,7 @@ let getExpiryValidity = cardExpiry => {
   let valid = if currentYear == year->toInt && month->toInt >= currentMonth && month->toInt <= 12 {
     true
   } else if (
-    year->toInt > currentYear && year->toInt < 2075 && month->toInt >= 1 && month->toInt <= 12
+    year->toInt > currentYear && year->toInt < 2099 && month->toInt >= 1 && month->toInt <= 12
   ) {
     true
   } else {
@@ -295,6 +301,14 @@ let cvcNumberInRange = (val, cardBrand) => {
     ->Option.isSome
   cvcLengthInRange
 }
+
+let cvcNumberEqualsMaxLength = (val, cardBrand) => {
+  let clearValue = val->clearSpaces
+  let obj = getobjFromCardPattern(cardBrand)
+  let cvcMaxLengthEquals = clearValue->String.length == obj.maxCVCLenth
+  cvcMaxLengthEquals
+}
+
 // let genreateFontsLink = (fonts: array<CardThemeType.fonts>) => {
 //   if fonts->Array.length > 0 {
 //     fonts
@@ -328,16 +342,17 @@ let maxCardLength = cardBrand => {
   Array.reduce(obj.length, 0, (acc, val) => acc > val ? acc : val)
 }
 
-// let cardValid = (cardNumber, cardBrand) => {
-//   let clearValue = cardNumber->clearSpaces
-//   Array.includes(getobjFromCardPattern(cardBrand).length, clearValue->String.length) &&
-//   calculateLuhn(cardNumber)
-// }
 let cardValid = (cardNumber, cardBrand) => {
-  let clearValueLength = cardNumber->clearSpaces->String.length
-  (clearValueLength == maxCardLength(cardBrand) ||
-    (cardBrand === "Visa" && clearValueLength == 16)) && calculateLuhn(cardNumber)
+  let clearValue = cardNumber->clearSpaces
+  Array.includes(getobjFromCardPattern(cardBrand).length, clearValue->String.length) &&
+  calculateLuhn(cardNumber)
 }
+
+// let cardValid = (cardNumber, cardBrand) => {
+//   let clearValueLength = cardNumber->clearSpaces->String.length
+//   (clearValueLength == maxCardLength(cardBrand) ||
+//     (cardBrand === "Visa" && clearValueLength == 16)) && calculateLuhn(cardNumber)
+// }
 
 // let blurRef = (ref: React.ref<Nullable.t<Dom.element>>) => {
 //   ref.current->Nullable.toOption->Option.forEach(input => input->blur)->ignore
@@ -390,6 +405,9 @@ let cardValid = (cardNumber, cardBrand) => {
 //   }
 //   thirdIframeVal === "" ? secondIframeVal === "" ? firstIframeVal : secondIframeVal : thirdIframeVal
 // }
+let checkMaxCardCvv = (cvcNumber, cardBrand) => {
+  cvcNumber->String.length > 0 && cvcNumberEqualsMaxLength(cvcNumber, cardBrand)
+}
 
 let checkCardCVC = (cvcNumber, cardBrand) => {
   cvcNumber->String.length > 0 && cvcNumberInRange(cvcNumber, cardBrand)
@@ -487,3 +505,47 @@ let checkCardExpiry = expiry => {
 //   let countryPostal = Utils.getCountryPostal(clientCountry.isoAlpha2, postalCodes)
 //   countryPostal.regex == "" ? "" : countryPostal.regex
 // }
+
+let isValidEmail = text => {
+  switch text->String.match(
+    %re(
+      "/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/"
+    ),
+  ) {
+  | Some(_match) => Some(true)
+  | None =>
+    if text->String.length == 0 {
+      None
+    } else {
+      Some(false)
+    }
+  }
+}
+
+let isValidZip = (~zipCode, ~country) => {
+  let countryObj =
+    Country.country
+    ->Array.find(item => item.countryName === country)
+    ->Option.getOr(Country.defaultTimeZone)
+  let postalCode =
+    PostalCodes.postalCode
+    ->Array.find(item => item.iso == countryObj.isoAlpha2)
+    ->Option.getOr(PostalCodes.defaultPostalCode)
+
+  let isZipCodeValid = RegExp.test(postalCode.regex->Js.Re.fromString, zipCode)
+  zipCode->String.length > 0 && isZipCodeValid
+}
+
+let containsDigit = text => {
+  switch text->String.match(%re("/\d/")) {
+  | Some(_) => true
+  | None => false
+  }
+}
+
+let containsMoreThanTwoDigits = text => {
+  switch text->String.match(%re("/\d/g")) {
+  | Some(matches) => matches->Array.length > 2
+  | None => false
+  }
+}

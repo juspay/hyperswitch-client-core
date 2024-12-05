@@ -214,9 +214,9 @@ let darkRecord = {
   },
   primaryColor: "#0057c7",
   borderRadius: 7.0,
-  borderWidth: 0.5,
+  borderWidth: 1.,
   buttonBorderRadius: 4.0,
-  buttonBorderWidth: 0.5,
+  buttonBorderWidth: 0.0,
   component: {
     background: Color.rgb(~r=57, ~g=57, ~b=57),
     borderColor: "#e6e6e650",

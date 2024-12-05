@@ -9,7 +9,7 @@ module AddPaymentMethodButton = {
 
     <CustomTouchableOpacity
       onPress={_ => (
-        // TODO: navigate to ADD_PM_SCREEN
+        HyperModule.hyperModule.onAddPaymentMethod("")
       )}
       style={viewStyle(
         ~paddingVertical=16.->dp,
@@ -18,9 +18,6 @@ module AddPaymentMethodButton = {
         ~borderBottomColor=component.borderColor,
         ~flexDirection=#row,
         ~flexWrap=#nowrap,
-        ~alignItems=#center,
-        ~justifyContent=#"space-between",
-        ~flex=1.,
         (),
       )}>
       <View
@@ -28,7 +25,7 @@ module AddPaymentMethodButton = {
           ~flexDirection=#row,
           ~flexWrap=#nowrap,
           ~alignItems=#center,
-          ~flex=4.,
+          ~flex=1.,
           (),
         )}>
         <Icon
@@ -94,19 +91,17 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
   }
   <CustomTouchableOpacity
     onPress={_ => handleDelete(paymentMethodId->Option.getOr(""))}
-    style={
-      viewStyle(
-        ~padding=16.->dp,
-        ~borderBottomWidth=0.8,
-        ~borderBottomColor=component.borderColor,
-        ~flexDirection=#row,
-        ~flexWrap=#nowrap,
-        ~alignItems=#center,
-        ~justifyContent=#"space-between",
-        ~flex=1.,
-        (),
-      )
-    }>
+    style={viewStyle(
+      ~padding=16.->dp,
+      ~borderBottomWidth=0.8,
+      ~borderBottomColor=component.borderColor,
+      ~flexDirection=#row,
+      ~flexWrap=#nowrap,
+      ~alignItems=#center,
+      ~justifyContent=#"space-between",
+      ~flex=1.,
+      (),
+    )}>
     <View
       style={viewStyle(~flexDirection=#row, ~flexWrap=#nowrap, ~alignItems=#center, ~flex=4., ())}>
       <Icon

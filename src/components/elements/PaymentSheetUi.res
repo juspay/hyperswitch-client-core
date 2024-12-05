@@ -54,9 +54,9 @@ let make = (
   let errorMsgText = if !isCardNumberValid {
     Some(localeObject.inValidCardErrorText)
   } else if !isExpireDateValid {
-    Some(localeObject.inCompleteExpiryErrorText)
+    Some(localeObject.inValidExpiryErrorText)
   } else if !isCvvValid {
-    Some(localeObject.inCompleteCVCErrorText)
+    Some(localeObject.inValidCVCErrorText)
   } else {
     None
   }
@@ -154,6 +154,9 @@ let make = (
           iconRight={getScanCardComponent(ScanCardModule.isAvailable, cardBrand, cardNumber)}
           onFocus={() => {
             setCardNumberIsFocus(_ => true)
+            if cardNumber->String.length != 0 {
+              onChangeCvv("", nullRef)
+            }
             onChangeCardNumber(cardNumber, nullRef)
           }}
           onBlur={() => {

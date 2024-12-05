@@ -12,6 +12,7 @@ type paymentMethodsFields =
   | SpecialField(React.element)
   | UnKnownField(string)
   | BillingName
+  | ShippingName
   | PhoneNumber
   | AddressLine1
   | AddressLine2
@@ -48,16 +49,17 @@ let getPaymentMethodsFieldTypeFromString = str => {
   switch str {
   | "user_email_address" => Email
   | "user_full_name" => FullName
-  | "user_country" => Country
+  | "user_country" | "country" => Country
   | "user_bank" => Bank
   | "user_phone_number" => PhoneNumber
-  | "user_address_line1" => AddressLine1
-  | "user_address_line2" => AddressLine2
-  | "user_address_city" => AddressCity
-  | "user_address_pincode" => AddressPincode
-  | "user_address_state" => AddressState
+  | "user_address_line1" | "user_shipping_address_line1" => AddressLine1
+  | "user_address_line2" | "user_shipping_address_line2" => AddressLine2
+  | "user_address_city" | "user_shipping_address_city" => AddressCity
+  | "user_address_pincode" | "user_shipping_address_pincode" => AddressPincode
+  | "user_address_state" | "user_shipping_address_state" => AddressState
   | "user_blik_code" => BlikCode
   | "user_billing_name" => BillingName
+  | "user_shipping_name" => ShippingName
   | var => UnKnownField(var)
   }
 }
@@ -77,13 +79,21 @@ let getPaymentMethodsFieldTypeFromDict = (dict: Dict.t<JSON.t>) => {
     dict->Dict.get("user_currency"),
     dict->Dict.get("user_address_country"),
     dict->Dict.get("user_country"),
+    dict->Dict.get("user_shipping_address_country"),
   ) {
-  | (Some(user_currency), _, _) =>
+  | (Some(user_currency), _, _, _) =>
     let options = user_currency->getArrayValFromJsonDict("options")
     Currency(options)
-  | (_, Some(user_address_country), _)
-  | (_, _, Some(user_address_country)) =>
+  | (_, Some(user_address_country), _, _)
+  | (_, _, Some(user_address_country), _) =>
     let options = user_address_country->getArrayValFromJsonDict("options")
+    switch options->Array.get(0)->Option.getOr("") {
+    | "" => UnKnownField("empty_list")
+    | "ALL" => AddressCountry(Country.country->Array.map(item => item.isoAlpha2))
+    | _ => AddressCountry(options)
+    }
+  | (_, _, _, Some(user_shipping_address_country)) =>
+    let options = user_shipping_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
     | "" => UnKnownField("empty_list")
     | "ALL" => AddressCountry(Country.country->Array.map(item => item.isoAlpha2))
@@ -103,17 +113,16 @@ let getFieldType = dict => {
 }
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
-  | FullName => 1
+  | FullName | ShippingName | BillingName => 1
   | Email => 2
-  | BillingName => 3
   | AddressLine1 => 4
   | AddressLine2 => 5
   | AddressCity => 6
-  | AddressState => 7
-  | StateAndCity => 7
-  | AddressCountry(_) => 8
-  | CountryAndPincode(_) => 8
-  | AddressPincode => 9
+  | AddressCountry(_) => 7
+  | AddressState => 8
+  | StateAndCity => 9
+  | CountryAndPincode(_) => 10
+  | AddressPincode => 11
   | InfoElement => 99
   | _ => 0
   }
@@ -140,6 +149,43 @@ let sortRequirFields = (
       secondPaymentMethodField.field_type->getPaymentMethodsFieldsOrder
   }
 }
+
+let mergeNameFields = (arr, ~fieldType, ~displayName=?) => {
+  let nameFields = arr->Array.filter(requiredField => {
+    requiredField.field_type === fieldType &&
+      displayName
+      ->Option.map(displayName => requiredField.display_name === displayName)
+      ->Option.getOr(true)
+  })
+
+  switch (nameFields[0], nameFields[1]) {
+  | (Some(firstNameField), Some(lastNameField)) =>
+    let value = switch (firstNameField.value, lastNameField.value) {
+    | (firstNameValue, "") => firstNameValue
+    | ("", lastNameValue) => lastNameValue
+    | (firstNameValue, lastNameValue) => [firstNameValue, lastNameValue]->Array.join(" ")
+    }
+
+    arr->Array.filterMap(x => {
+      if x === firstNameField {
+        {
+          ...x,
+          required_field: FullNameField(
+            firstNameField.required_field->getRequiredFieldName,
+            lastNameField.required_field->getRequiredFieldName,
+          ),
+          value,
+        }->Some
+      } else if x === lastNameField {
+        None
+      } else {
+        Some(x)
+      }
+    })
+  | _ => arr
+  }
+}
+
 let getRequiredFieldsFromDict = dict => {
   let requiredFields = dict->Dict.get("required_fields")->Option.flatMap(JSON.Decode.object)
   switch requiredFields {
@@ -158,38 +204,11 @@ let getRequiredFieldsFromDict = dict => {
       })
       ->Belt.SortArray.stableSortBy(sortRequirFields)
 
-    // merge logic here
-    let fullCardHolderNameFields = arr->Array.filter(requiredField => {
-      requiredField.field_type === FullName && requiredField.display_name === "card_holder_name"
-    })
-
-    switch (fullCardHolderNameFields->Array.get(0), fullCardHolderNameFields[1]) {
-    | (Some(firstNameField), Some(lastNameField)) =>
-      let value = switch (firstNameField.value, lastNameField.value) {
-      | (firstNameValue, "") => firstNameValue
-      | ("", lastNameValue) => lastNameValue
-      | (firstNameValue, lastNameValue) => [firstNameValue, lastNameValue]->Array.join(" ")
-      }
-
-      arr->Array.filterMap(x => {
-        if x === firstNameField {
-          {
-            ...x,
-            required_field: FullNameField(
-              firstNameField.required_field->getRequiredFieldName,
-              lastNameField.required_field->getRequiredFieldName,
-            ),
-            value,
-          }->Some
-        } else if x === lastNameField {
-          None
-        } else {
-          Some(x)
-        }
-      })
-
-    | _ => arr
-    }
+    arr
+    ->mergeNameFields(~fieldType=FullName)
+    ->mergeNameFields(~fieldType=FullName, ~displayName="card_holder_name")
+    ->mergeNameFields(~fieldType=BillingName)
+    ->mergeNameFields(~fieldType=ShippingName)
 
   | _ => []
   }
@@ -218,7 +237,7 @@ let checkIsValid = (
   } else {
     switch field_type {
     | Email =>
-      switch text->ValidationFunctions.isValidEmail {
+      switch text->Validation.isValidEmail {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
       | None => Some(localeObject.emailEmptyText)
@@ -259,16 +278,21 @@ let useGetPlaceholder = (
       requiredFieldsPath
       ->Array.get(requiredFieldsPath->Array.length - 1)
       ->Option.getOr("")
-
-    if field_type === FullName && display_name === "card_holder_name" {
-      localeObject.cardHolderName
-    } else {
-      switch fieldName {
-      | "first_name" => localeObject.firstName
-      | "last_name" => localeObject.lastName
-      | "card_holder_name" => localeObject.cardHolderName
-      | _ => placeholder
+    switch field_type {
+    | FullName =>
+      if display_name === "card_holder_name" {
+        localeObject.cardHolderName
+      } else {
+        switch fieldName {
+        | "first_name" => localeObject.fullNameLabel
+        | "last_name" => localeObject.fullNameLabel
+        | "card_holder_name" => localeObject.cardHolderName
+        | _ => placeholder
+        }
       }
+    | BillingName => localeObject.billingNameLabel
+    | ShippingName => localeObject.fullNamePlaceholder
+    | _ => placeholder
     }
   }
 
@@ -276,9 +300,10 @@ let useGetPlaceholder = (
     switch field_type {
     | Email => localeObject.emailLabel
     | FullName => localeObject.fullNamePlaceholder->getName
+    | ShippingName => localeObject.fullNamePlaceholder->getName
     | Country => localeObject.countryLabel
     | Bank => localeObject.bankLabel
-    | BillingName => localeObject.billingNamePlaceholder->getName
+    | BillingName => localeObject.fullNamePlaceholder->getName
     | AddressLine1 => localeObject.line1Placeholder
     | AddressLine2 => localeObject.line2Placeholder
     | AddressCity => localeObject.cityLabel
@@ -286,7 +311,13 @@ let useGetPlaceholder = (
     | AddressState => localeObject.stateLabel
     | AddressCountry(_) => localeObject.countryLabel
     | Currency(_) => localeObject.currencyLabel
-    | InfoElement
+    | InfoElement => localeObject.requiredText
+    // | ShippingCountry(_) => localeObject.countryLabel
+    // | ShippingAddressLine1 => localeObject.line1Placeholder
+    // | ShippingAddressLine2 => localeObject.line2Placeholder
+    // | ShippingAddressCity => localeObject.cityLabel
+    // | ShippingAddressPincode => localeObject.postalCodeLabel
+    // | ShippingAddressState => localeObject.stateLabel
     | SpecialField(_)
     | UnKnownField(_)
     | PhoneNumber
@@ -423,7 +454,7 @@ let getIsAnyBillingDetailEmpty = (requiredFields: array<required_fields_type>) =
 
 let filterDynamicFieldsFromRendering = (
   requiredFields: array<required_fields_type>,
-  finalJson: array<(string, Core__JSON.t, option<string>)>,
+  finalJson: dict<(JSON.t, option<string>)>,
 ) => {
   let isAnyBillingDetailEmpty = requiredFields->getIsAnyBillingDetailEmpty
   requiredFields->Array.filter(requiredField => {
@@ -432,13 +463,12 @@ let filterDynamicFieldsFromRendering = (
     let isRenderRequiredField = switch requiredField.required_field {
     | StringField(_) => requiredField.value === ""
     | FullNameField(firstNameVal, lastNameVal) =>
-      finalJson->Array.reduce(false, (acc, (key, _, errorMsg)) => {
-        if key === firstNameVal || key === lastNameVal {
-          acc || errorMsg->Option.isSome
-        } else {
-          acc
-        }
-      })
+      switch (finalJson->Dict.get(firstNameVal), finalJson->Dict.get(lastNameVal)) {
+      | (Some((_, Some(_))), Some((_, Some(_))))
+      | (Some((_, Some(_))), _)
+      | (_, Some((_, Some(_)))) => true
+      | _ => false
+      }
     }
 
     isRenderRequiredField || isShowBillingField
@@ -486,10 +516,37 @@ let filterRequiredFields = (
   }
 }
 
+let filterRequiredFieldsForShipping = (
+  requiredFields: array<required_fields_type>,
+  shouldRenderShippingFields: bool,
+) => {
+  if shouldRenderShippingFields {
+    requiredFields
+  } else {
+    requiredFields->Array.filter(requiredField => {
+      !(requiredField.required_field->getRequiredFieldName->String.includes("shipping"))
+    })
+  }
+}
+
+let getKey = (path, value) => {
+  let arr = path->String.split(".")
+  let key = arr->Array.slice(~start=0, ~end=arr->Array.length - 1)->Array.join(".") ++ "." ++ value
+  key
+}
+
 let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
-  requiredFields->Array.reduce([], (acc, requiredField) => {
+  requiredFields->Array.reduce(Dict.make(), (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
-    | ("", AddressCountry(_)) => (clientCountry->JSON.Encode.string, None)
+    | ("", AddressCountry(values)) => (
+        values->Array.includes(clientCountry)
+          ? clientCountry->JSON.Encode.string
+          : values->Array.length === 1
+          ? values->Array.get(0)->Option.getOr("")->JSON.Encode.string
+          : JSON.Encode.null,
+        None,
+      )
+
     | ("", _) => (JSON.Encode.null, Some("Required"))
     | (value, _) => (value->JSON.Encode.string, None)
     }
@@ -497,7 +554,7 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
     let requiredFieldPath = getRequiredFieldPath(~isSaveCardsFlow, ~requiredField)
 
     switch requiredFieldPath {
-    | StringField(fieldPath) => acc->Array.push((fieldPath, value, isValid))
+    | StringField(fieldPath) => acc->Dict.set(fieldPath, (value, isValid))
 
     | FullNameField(firstName, lastName) =>
       let arr = requiredField.value->String.split(" ")
@@ -513,8 +570,8 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
           ? (JSON.Encode.null, Some("Last Name is required"))
           : (JSON.Encode.string(lastNameVal), None)
 
-      acc->Array.push((firstName, firstNameVal, isFirstNameValid))
-      acc->Array.push((lastName, lastNameVal, isLastNameValid))
+      acc->Dict.set(firstName, (firstNameVal, isFirstNameValid))
+      acc->Dict.set(lastName, (lastNameVal, isLastNameValid))
     }
 
     acc
