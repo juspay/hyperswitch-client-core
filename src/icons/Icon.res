@@ -55,6 +55,9 @@ let make = (
     | "addwithcircle" => addwithcircle
     | "checkboxclicked" => checkboxclicked
     | "checkboxnotclicked" => checkboxnotclicked
+    | "defaulttick" => defaultTick
+    | "google pay" => google_pay
+    | "apple pay" => applePayList
     | "samsung_pay" => samsungPay
     | _ => ""
     }
