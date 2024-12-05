@@ -67,6 +67,7 @@ type localeStrings = {
   addPaymentMethodLabel: string,
   walletDisclaimer: string,
   deletePaymentMethod?: string,
+  enterDigitsText?: string => string,
 }
 
 let defaultLocale = {
@@ -140,6 +141,7 @@ let defaultLocale = {
   addPaymentMethodLabel: "Add new payment method",
   walletDisclaimer: "Wallet details will be saved upon selection",
   deletePaymentMethod: "Delete",
+  enterDigitsText: number => `Please enter valid ${number} digits`,
 }
 
 type locale = {localeStrings: array<localeStrings>}
@@ -154,8 +156,7 @@ let localeStrings = [
     cardNumberLabel: "Card Number",
     inValidCardErrorText: "Card number is invalid.",
     inCompleteCVCErrorText: "Your card's security code is incomplete.",
-        inValidCVCErrorText: "Your card's security code is invalid."
-,
+    inValidCVCErrorText: "Your card's security code is invalid.",
     inCompleteExpiryErrorText: "Your card's expiration date is incomplete.",
     inValidExpiryErrorText: "Your card's expiration date is invalid.",
     pastExpiryErrorText: "Your card's expiration year is in the past.",
@@ -217,6 +218,7 @@ let localeStrings = [
     invalidDigitsNickNameError: "Nickname cannot have more than 2 digits",
     walletDisclaimer: "Wallet details will be saved upon selection",
     deletePaymentMethod: "Delete",
+    enterDigitsText: number => `Please enter valid ${number} digits`,
   },
   //    Hebrew (he),
   {
@@ -228,8 +230,7 @@ let localeStrings = [
     cardNumberLabel: `מספר כרטיס`,
     inValidCardErrorText: `אינו תקין`,
     inCompleteCVCErrorText: `קוד האבטחה של הכרטיס שלך אינו שלם`,
-        inValidCVCErrorText: "קוד האבטחה של הכרטיס שלך אינו תקין."
-,
+    inValidCVCErrorText: "קוד האבטחה של הכרטיס שלך אינו תקין.",
     inCompleteExpiryErrorText: `פרטי תוקף של הכרטיס שלך אינם מלאים`,
     inValidExpiryErrorText: "תאריך התפוגה של הכרטיס שלך אינו תקין.",
     pastExpiryErrorText: `שנת תוקף של הכרטיס שלך עברה.`,
@@ -302,8 +303,7 @@ let localeStrings = [
     cardNumberLabel: `Numéro de carte`,
     inValidCardErrorText: `Le numéro de carte n'est pas valide.`,
     inCompleteCVCErrorText: `Le code de sécurité de votre carte est incomplet.`,
-        inValidCVCErrorText: "Le code de sécurité de votre carte est invalide."
-,
+    inValidCVCErrorText: "Le code de sécurité de votre carte est invalide.",
     inCompleteExpiryErrorText: `La date d'expiration de votre carte est incomplète.`,
     inValidExpiryErrorText: "La date d'expiration de votre carte est invalide.",
     pastExpiryErrorText: `L'année d'expiration de votre carte est passée.`,
@@ -376,8 +376,7 @@ let localeStrings = [
     cardNumberLabel: "Card Number",
     inValidCardErrorText: "Card number is invalid.",
     inCompleteCVCErrorText: "Your card's security code is incomplete.",
-        inValidCVCErrorText: "Your card's security code is invalid."
-,
+    inValidCVCErrorText: "Your card's security code is invalid.",
     inCompleteExpiryErrorText: "Your card's expiration date is incomplete.",
     inValidExpiryErrorText: "Your card's expiration date is invalid.",
     pastExpiryErrorText: "Your card's expiration year is in the past.",
@@ -450,8 +449,7 @@ let localeStrings = [
     cardNumberLabel: `رقم البطاقة`,
     inValidCardErrorText: `رقم البطاقة غير صالحة`,
     inCompleteCVCErrorText: `رمز أمان بطاقتك غير مكتمل`,
-        inValidCVCErrorText: "رمز الأمان الخاص ببطاقتك غير صالح."
-,
+    inValidCVCErrorText: "رمز الأمان الخاص ببطاقتك غير صالح.",
     inCompleteExpiryErrorText: `تاريخ انتهاء صلاحية بطاقتك غير مكتمل`,
     inValidExpiryErrorText: "تاريخ انتهاء صلاحية بطاقتك غير صالح.",
     pastExpiryErrorText: `انقضت سنة انتهاء صلاحية بطاقتك`,
@@ -524,8 +522,7 @@ let localeStrings = [
     cardNumberLabel: `カード番号`,
     inValidCardErrorText: `カード番号が無効です`,
     inCompleteCVCErrorText: `カードのセキュリティ コードが不完全です`,
-        inValidCVCErrorText: "カードのセキュリティコードが無効です。"
-,
+    inValidCVCErrorText: "カードのセキュリティコードが無効です。",
     inCompleteExpiryErrorText: `カードの有効期限が不完全です`,
     inValidExpiryErrorText: "カードの有効期限が無効です。",
     pastExpiryErrorText: `カードの有効期限が過ぎています`,
@@ -598,8 +595,7 @@ let localeStrings = [
     cardNumberLabel: `Kartennummer`,
     inValidCardErrorText: `Kartennummer ist ungültig.`,
     inCompleteCVCErrorText: `Der Sicherheitscode Ihrer Karte ist unvollständig.`,
-        inValidCVCErrorText: "Der Sicherheitscode Ihrer Karte ist ungültig."
-,
+    inValidCVCErrorText: "Der Sicherheitscode Ihrer Karte ist ungültig.",
     inCompleteExpiryErrorText: `Das Ablaufdatum Ihrer Karte ist unvollständig.`,
     inValidExpiryErrorText: "Das Ablaufdatum Ihrer Karte ist ungültig.",
     pastExpiryErrorText: `Das Ablaufjahr Ihrer Karte liegt in der Vergangenheit.`,
@@ -670,8 +666,7 @@ let localeStrings = [
     cardNumberLabel: "Numéro de carte",
     inValidCardErrorText: "Le numéro de carte n'est pas valide.",
     inCompleteCVCErrorText: "Le code de sécurité de votre carte est incomplet.",
-        inValidCVCErrorText: "Le code de sécurité de votre carte est invalide."
-,
+    inValidCVCErrorText: "Le code de sécurité de votre carte est invalide.",
     inCompleteExpiryErrorText: "La date d'expiration de votre carte est incomplète.",
     inValidExpiryErrorText: "La date d'expiration de votre carte est invalide.",
     pastExpiryErrorText: "L'année d'expiration de votre carte est passée.",
@@ -744,8 +739,7 @@ let localeStrings = [
     cardNumberLabel: "Número de tarjeta",
     inValidCardErrorText: "El número de la tarjeta no es válido.",
     inCompleteCVCErrorText: "El código de seguridad de su tarjeta está incompleto.",
-        inValidCVCErrorText: "El código de seguridad de su tarjeta no es válido."
-,
+    inValidCVCErrorText: "El código de seguridad de su tarjeta no es válido.",
     inCompleteExpiryErrorText: "La fecha de vencimiento de su tarjeta está incompleta.",
     inValidExpiryErrorText: "La fecha de caducidad de su tarjeta no es válida.",
     pastExpiryErrorText: "El año de vencimiento de su tarjeta ya ha pasado.",
@@ -818,8 +812,7 @@ let localeStrings = [
     cardNumberLabel: "Número de targeta",
     inValidCardErrorText: "El número de targeta no és vàlid.",
     inCompleteCVCErrorText: "El codi de seguretat de la targeta està incomplet.",
-        inValidCVCErrorText: "El codi de seguretat de la teva targeta no és vàlid."
-,
+    inValidCVCErrorText: "El codi de seguretat de la teva targeta no és vàlid.",
     inCompleteExpiryErrorText: "La data de venciment de la targeta està incompleta.",
     inValidExpiryErrorText: "La data de caducitat de la teva targeta no és vàlida.",
     pastExpiryErrorText: "La data de venciment de la targeta ja ha passat.",
@@ -892,8 +885,7 @@ let localeStrings = [
     cardNumberLabel: "Número do cartão",
     inValidCardErrorText: "O número do cartão é inválido.",
     inCompleteCVCErrorText: "O código de segurança do seu cartão está incompleto.",
-        inValidCVCErrorText: "O código de segurança do seu cartão é inválido."
-,
+    inValidCVCErrorText: "O código de segurança do seu cartão é inválido.",
     inCompleteExpiryErrorText: "A data de validade do seu cartão está incompleta.",
     pastExpiryErrorText: "O ano de validade do seu cartão já passou.",
     inValidExpiryErrorText: "A data de validade do seu cartão é inválida.",
@@ -966,8 +958,7 @@ let localeStrings = [
     cardNumberLabel: "Numero della carta",
     inValidCardErrorText: "Il numero della carta non è valido.",
     inCompleteCVCErrorText: "Il codice di sicurezza della carta è incompleto.",
-        inValidCVCErrorText: "Il codice di sicurezza della tua carta non è valido."
-,
+    inValidCVCErrorText: "Il codice di sicurezza della tua carta non è valido.",
     inCompleteExpiryErrorText: "La data di scadenza della carta è incompleta.",
     inValidExpiryErrorText: "La data di scadenza della tua carta non è valida.",
     pastExpiryErrorText: "L'anno di scadenza della tua carta è passato.",
@@ -1040,8 +1031,7 @@ let localeStrings = [
     cardDetailsLabel: "Szczegóły karty",
     inValidCardErrorText: "Numer karty jest nieprawidłowy.",
     inCompleteCVCErrorText: "Kod zabezpieczający karty jest niekompletny.",
-        inValidCVCErrorText: "Kod bezpieczeństwa Twojej karty jest nieprawidłowy."
-,
+    inValidCVCErrorText: "Kod bezpieczeństwa Twojej karty jest nieprawidłowy.",
     inCompleteExpiryErrorText: "Data ważności karty jest niepełna.",
     inValidExpiryErrorText: "Data ważności Twojej karty jest nieprawidłowa.",
     pastExpiryErrorText: "Rok w dacie ważności karty minął.",
@@ -1114,8 +1104,7 @@ let localeStrings = [
     cardNumberLabel: "Kortnummer",
     inValidCardErrorText: "Kortnummeret er ugyldigt.",
     inCompleteCVCErrorText: "Dit korts sikkerhedskode er ufuldstændig.",
-        inValidCVCErrorText: "De beveiligingscode van uw kaart is ongeldig."
-,
+    inValidCVCErrorText: "De beveiligingscode van uw kaart is ongeldig.",
     inCompleteExpiryErrorText: "Dit korts udløbsdato er ufuldstændig.",
     pastExpiryErrorText: "Dit korts udløbsår er i fortiden",
     inValidExpiryErrorText: "De vervaldatum van uw kaart is ongeldig.",
@@ -1188,8 +1177,7 @@ let localeStrings = [
     cardNumberLabel: "Kaardi number",
     inValidCardErrorText: "Kaardi number on vale.",
     inCompleteCVCErrorText: "Kaardi turvakood on poolikult sisestatud.",
-        inValidCVCErrorText: "De beveiligingscode van uw kaart is ongeldig."
-,
+    inValidCVCErrorText: "De beveiligingscode van uw kaart is ongeldig.",
     inCompleteExpiryErrorText: "Kaardi aegumiskuupäev on poolikult sisestatud.",
     pastExpiryErrorText: "Kaardi aegumisaasta on möödas.",
     inValidExpiryErrorText: "De vervaldatum van uw kaart is ongeldig.",
@@ -1262,8 +1250,7 @@ let localeStrings = [
     cardDetailsLabel: "Kortdetaljer",
     inValidCardErrorText: "Kortnumret är ogiltigt.",
     inCompleteCVCErrorText: "Kortets säkerhetskod är ofullständig.",
-        inValidCVCErrorText: "Säkerhetskoden för ditt kort är ogiltig."
-,
+    inValidCVCErrorText: "Säkerhetskoden för ditt kort är ogiltig.",
     inCompleteExpiryErrorText: "Kortets utgångsdatum är ofullständigt.",
     pastExpiryErrorText: "Kortets utgångsår är i det förflutna.",
     inValidExpiryErrorText: "Utgångsdatumet för ditt kort är ogiltigt.",
@@ -1336,8 +1323,7 @@ let localeStrings = [
     cardNumberLabel: "Номер карты",
     inValidCardErrorText: "Номер карты недействителен.",
     inCompleteCVCErrorText: "Неправильно указан код безопасности карты.",
-        inValidCVCErrorText: "Код безопасности вашей карты недействителен."
-,
+    inValidCVCErrorText: "Код безопасности вашей карты недействителен.",
     inCompleteExpiryErrorText: "Неправильно указан срок действия карты.",
     pastExpiryErrorText: "Год истечения срока действия карты в прошлом.",
     inValidExpiryErrorText: "Срок действия вашей карты недействителен.",
@@ -1410,8 +1396,7 @@ let localeStrings = [
     cardNumberLabel: "Kortelės numeris",
     inValidCardErrorText: "Neteisingas kortelės numeris.",
     inCompleteCVCErrorText: "Jūsų kortelės saugos kodas neišsamus.",
-        inValidCVCErrorText: "Jūsų kortelės saugos kodas yra netinkamas."
-,
+    inValidCVCErrorText: "Jūsų kortelės saugos kodas yra netinkamas.",
     inCompleteExpiryErrorText: "Jūsų kortelės galiojimo pabaigos data neišsami.",
     pastExpiryErrorText: "Jūsų kortelės galiojimo pabaigos metai jau praėjo.",
     inValidExpiryErrorText: "Jūsų kortelės galiojimo laikas yra netinkamas.",
@@ -1484,8 +1469,7 @@ let localeStrings = [
     cardNumberLabel: "Číslo karty",
     inValidCardErrorText: "Číslo karty je neplatné.",
     inCompleteCVCErrorText: "Bezpečnostní kód karty je neúplný.",
-        inValidCVCErrorText: "Bezpečnostní kód vaší karty je neplatný."
-,
+    inValidCVCErrorText: "Bezpečnostní kód vaší karty je neplatný.",
     inCompleteExpiryErrorText: "Datum vypršení platnosti karty je neúplné.",
     pastExpiryErrorText: "Rok vypršení platnosti karty je v minulosti.",
     inValidExpiryErrorText: "Datum platnosti vaší karty je neplatné.",
@@ -1558,8 +1542,7 @@ let localeStrings = [
     cardNumberLabel: "Číslo karty",
     inValidCardErrorText: "Číslo karty je neplatné.",
     inCompleteCVCErrorText: "Bezpečnostný kód vašej karty je neúplný.",
-        inValidCVCErrorText: "Bezpečnostný kód vašej karty je neplatný."
-,
+    inValidCVCErrorText: "Bezpečnostný kód vašej karty je neplatný.",
     inCompleteExpiryErrorText: "Dátum vypršania platnosti vašej karty je neúplný.",
     pastExpiryErrorText: "Rok vypršania platnosti vašej karty je v minulosti.",
     inValidExpiryErrorText: "Dátum platnosti vašej karty je neplatný.",
@@ -1632,8 +1615,7 @@ let localeStrings = [
     cardNumberLabel: "Kortanúmer",
     inValidCardErrorText: "Kortanúmerið er ekki gilt.",
     inCompleteCVCErrorText: "Öryggiskóði kortsins þíns er ófullnægjandi.",
-        inValidCVCErrorText: "Öryggiskóði kortsins þíns er ógildur."
-,
+    inValidCVCErrorText: "Öryggiskóði kortsins þíns er ógildur.",
     inCompleteExpiryErrorText: "Gildistími kortsins þíns er ófullnægjandi",
     pastExpiryErrorText: "Gildistími kortsins þíns er runninn út.",
     inValidExpiryErrorText: "Gildistími kortsins þíns er ógildur.",
@@ -1706,8 +1688,7 @@ let localeStrings = [
     cardNumberLabel: "Rhif y Cerdyn",
     inValidCardErrorText: "Mae rhif y cerdyn yn annilys.",
     inCompleteCVCErrorText: "Mae cod diogelwch eich cerdyn yn anghyflawn.",
-        inValidCVCErrorText: "Cod diogelwch eich cerdyn yn annilys."
-,
+    inValidCVCErrorText: "Cod diogelwch eich cerdyn yn annilys.",
     inCompleteExpiryErrorText: "Mae dyddiad dod i ben eich cerdyn yn anghyflawn.",
     pastExpiryErrorText: "Mae blwyddyn dod i ben eich cerdyn yn y gorffennol.",
     inValidExpiryErrorText: "Dyddiad dod i ben eich cerdyn yn annilys.",
@@ -1780,8 +1761,7 @@ let localeStrings = [
     cardNumberLabel: "Kaardi number",
     inValidCardErrorText: "Kaardi number on vale.",
     inCompleteCVCErrorText: "Kaardi turvakood on poolikult sisestatud.",
-        inValidCVCErrorText: "Ο κωδικός ασφαλείας της κάρτας σας δεν είναι έγκυρος."
-,
+    inValidCVCErrorText: "Ο κωδικός ασφαλείας της κάρτας σας δεν είναι έγκυρος.",
     inCompleteExpiryErrorText: "Kaardi aegumiskuupäev on poolikult sisestatud.",
     pastExpiryErrorText: "Kaardi aegumisaasta on möödas.",
     inValidExpiryErrorText: "Η ημερομηνία λήξης της κάρτας σας δεν είναι έγκυρη.",
@@ -1854,8 +1834,7 @@ let localeStrings = [
     cardNumberLabel: "Kaardi number",
     inValidCardErrorText: "Kaardi number on vale.",
     inCompleteCVCErrorText: "Kaardi turvakood on poolikult sisestatud.",
-        inValidCVCErrorText: "Teie kaardi turvakood on vigane."
-,
+    inValidCVCErrorText: "Teie kaardi turvakood on vigane.",
     inCompleteExpiryErrorText: "Kaardi aegumiskuupäev on poolikult sisestatud.",
     pastExpiryErrorText: "Kaardi aegumisaasta on möödas.",
     inValidExpiryErrorText: "Teie kaardi aegumiskuupäev on vigane.",
@@ -1928,8 +1907,7 @@ let localeStrings = [
     cardNumberLabel: "Kaardi number",
     inValidCardErrorText: "Kaardi number on vale.",
     inCompleteCVCErrorText: "Kaardi turvakood on poolikult sisestatud.",
-        inValidCVCErrorText: "Korttisi turvakoodi on virheellinen."
-,
+    inValidCVCErrorText: "Korttisi turvakoodi on virheellinen.",
     inCompleteExpiryErrorText: "Kaardi aegumiskuupäev on poolikult sisestatud.",
     inValidExpiryErrorText: "Korttisi viimeinen voimassaolopäivä on virheellinen.",
     pastExpiryErrorText: "Kaardi aegumisaasta on möödas.",
@@ -2002,8 +1980,7 @@ let localeStrings = [
     cardNumberLabel: "Kortnummer",
     inValidCardErrorText: "Kortnummeret er ugyldig.",
     inCompleteCVCErrorText: "Kortets sikkerhetskode er ufullstendig.",
-        inValidCVCErrorText: "Sikkerhetskoden for kortet ditt er ugyldig."
-,
+    inValidCVCErrorText: "Sikkerhetskoden for kortet ditt er ugyldig.",
     inCompleteExpiryErrorText: "Kortets utløpsdato er ufullstendig.",
     pastExpiryErrorText: "Kortets utløpsår er i fortiden.",
     inValidExpiryErrorText: "Utløpsdatoen for kortet ditt er ugyldig.",
@@ -2076,8 +2053,7 @@ let localeStrings = [
     cardDetailsLabel: "Detalji kartice",
     inValidCardErrorText: "Broj kartice je nevažeći.",
     inCompleteCVCErrorText: "Sigurnosni kod vaše kartice je nepotpun.",
-        inValidCVCErrorText: "Sigurnosni kod vaše kartice nije važeći."
-,
+    inValidCVCErrorText: "Sigurnosni kod vaše kartice nije važeći.",
     inCompleteExpiryErrorText: "Datum isteka vaše kartice je nepotpun.",
     pastExpiryErrorText: "Godina isteka vaše kartice je u prošlosti.",
     inValidExpiryErrorText: "Datum isteka vaše kartice nije važeći.",
@@ -2150,8 +2126,7 @@ let localeStrings = [
     cardNumberLabel: "Kortnummer",
     inValidCardErrorText: "Kortnummeret er ugyldigt.",
     inCompleteCVCErrorText: "Dit korts sikkerhedskode er ufuldstændig.",
-        inValidCVCErrorText: "Sikkerhedskoden på dit kort er ugyldig."
-,
+    inValidCVCErrorText: "Sikkerhedskoden på dit kort er ugyldig.",
     inCompleteExpiryErrorText: "Dit korts udløbsdato er ufuldstændig.",
     pastExpiryErrorText: "Dit korts udløbsår er i fortiden",
     inValidExpiryErrorText: "Udløbsdatoen på dit kort er ugyldig.",
@@ -2224,8 +2199,7 @@ let localeStrings = [
     cardDetailsLabel: "Butiran Kad",
     inValidCardErrorText: "Nombor kad tidak sah.",
     inCompleteCVCErrorText: "Kod keselamatan kad anda tidak lengkap.",
-        inValidCVCErrorText: "Kod keselamatan kad anda tidak sah."
-,
+    inValidCVCErrorText: "Kod keselamatan kad anda tidak sah.",
     inCompleteExpiryErrorText: "Tarikh tamat tempoh kad anda tidak lengkap.",
     pastExpiryErrorText: "Tahun tamat tempoh kad anda telah berlalu.",
     inValidExpiryErrorText: "Tarikh luput kad anda tidak sah.",
@@ -2300,8 +2274,7 @@ let localeStrings = [
     inCompleteCVCErrorText: "Kartınızın güvenlik kodu eksik.",
     inCompleteExpiryErrorText: "Kartınızın son kullanma tarihi eksik.",
     pastExpiryErrorText: "Kartınızın son kullanma tarihi geçmiş.",
-        inValidCVCErrorText: "Kartınızın güvenlik kodu geçersiz."
-,
+    inValidCVCErrorText: "Kartınızın güvenlik kodu geçersiz.",
     inValidExpiryErrorText: "Kartınızın son kullanma tarihi geçersiz.",
     poweredBy: "Hyperswitch Tarafından Desteklenmektedir",
     validThruText: "Son kullanma tarihi",
