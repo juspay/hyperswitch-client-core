@@ -99,7 +99,7 @@ let defaultConfig = {
     },
     {
       name: "sepa",
-      text: "Sepa Bank Debit",
+      text: "Sepa Debit",
       header: "",
       fields: [],
     },

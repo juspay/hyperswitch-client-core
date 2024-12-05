@@ -57,7 +57,7 @@ let make = (
     | "defaulttick" => defaultTick
     | "google pay" => google_pay
     | "apple pay" => applePayList
-    | "sepa bank debit" => sepadebit
+    | "sepa debit" => sepadebit
     | _ => ""
     }
     localName == ""
