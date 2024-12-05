@@ -99,7 +99,7 @@ let defaultConfig = {
     },
     {
       name: "ach",
-      text: "ACH Bank Debit",
+      text: "ACH Debit",
       header: "",
       fields: [],
     },
