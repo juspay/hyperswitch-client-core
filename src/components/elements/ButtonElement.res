@@ -35,6 +35,7 @@ let make = (
     applePayButtonColor,
     buttonBorderRadius,
     primaryButtonHeight,
+    samsungPayButtonColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
@@ -267,6 +268,37 @@ let make = (
     }
   }
 
+  let confirmSamsungPay = status => {
+    if status->ThreeDsUtils.isStatusSuccess {
+      let response =
+        status.message
+        ->JSON.parseExn
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+
+      let obj = response->SamsungPayType.itemToObjMapper
+
+      let payment_method_data =
+        [
+          (
+            walletType.payment_method,
+            [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+      processRequest(~payment_method_data, ())
+    } else {
+      setLoading(FillingDetails)
+      showAlert(
+        ~errorType="warning",
+        ~message=`Samsung Pay Error, Please try again ${status.message}`,
+      )
+    }
+  }
+
   let confirmApplePay = (var: dict<JSON.t>) => {
     logger(
       ~logType=DEBUG,
@@ -494,6 +526,7 @@ let make = (
               },
             )
           }
+        | SAMSUNG_PAY => SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
         | _ => {
             logger(
               ~logType=DEBUG,
@@ -557,9 +590,13 @@ let make = (
       borderRadius=buttonBorderRadius
       linearGradientColorTuple=?{switch walletType.payment_method_type_wallet {
       | PAYPAL => Some(Some(paypalButonColor))
+      | SAMSUNG_PAY => {
+          Console.log2("HERE", walletType.payment_method_type)
+          Some(Some(samsungPayButtonColor))
+        }
       | _ => None
       }}
-      leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=24. height=32. />)
+      leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=120. height=115. />)
       onPress={_ => pressHandler()}
       name=walletType.payment_method_type>
       {switch walletType.payment_method_type_wallet {
