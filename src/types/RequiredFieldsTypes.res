@@ -26,6 +26,7 @@ type paymentMethodsFields =
   | Currency(array<string>)
   | AccountNumber
   | RoutingNumber
+  | BSBNumber
 
 type requiredField =
   | StringField(string)
@@ -63,7 +64,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_billing_name" => BillingName
   | "user_shipping_name" => ShippingName
   | "user_bank_account_number" => AccountNumber
-  | "text" => RoutingNumber // need backend changes
+  | "text" => BSBNumber // need backend changes
   | var => UnKnownField(var)
   }
 }
@@ -121,6 +122,7 @@ let getPaymentMethodsFieldsOrder = paymentMethodField => {
   | AccountNumber => -1
   | RoutingNumber => 1
   | Email => 2
+  | BSBNumber => 3
   | AddressLine1 => 4
   | AddressLine2 => 5
   | AddressCity => 6
@@ -328,6 +330,7 @@ let useGetPlaceholder = (
     | SpecialField(_)
     | AccountNumber
     | RoutingNumber
+    | BSBNumber
     | UnKnownField(_)
     | PhoneNumber
     | StateAndCity

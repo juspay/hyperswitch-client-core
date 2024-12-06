@@ -30,6 +30,13 @@ let make = (
 
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+
+  let isMandateFlow =
+    allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate ||
+      switch redirectProp {
+      | BANK_DEBIT(_) => true
+      | _ => false
+      }
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
   let (email, setEmail) = React.useState(_ => None)
   let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
@@ -230,8 +237,12 @@ let make = (
     ~eligible_connectors=?,
     (),
   ) => {
-    let dateNow = Date.now()
-    let futureDate = Date.makeWithYM(~year=dateNow->Date.fromTime->Date.getFullYear + 2, ~month=0)->Date.toDateString
+    // let dateNow = Date.now()
+    // let futureDate =
+    //   Date.makeWithYM(
+    //     ~year=dateNow->Date.fromTime->Date.getFullYear + 2,
+    //     ~month=0,
+    //   )->Date.toDateString
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
       return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
@@ -242,44 +253,40 @@ let make = (
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
-      setup_future_usage: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
-          ? Some("off_session")
-          : None
-      ),
-      payment_type: ?allApiData.additionalPMLData.paymentType,
-      mandate_data: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
-          ? Some({
-              customer_acceptance: {
-                acceptance_type: "offline",
-                accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-                online: {
-                  ip_address: ?nativeProp.hyperParams.ip,
-                  user_agent: ?nativeProp.hyperParams.userAgent,
-                },
-              },
-              mandate_type: {
-                multi_use: {
-                  amount: 1000,
-                  currency: "AUD",
-                  start_date: dateNow->Date.fromTime->Date.toISOString,
-                  end_date: futureDate->Date.fromString->Date.toISOString,
-                  metadata: {
-                    frequency: "13",
-                  },
-                },
-              },
-            })
-          : None
-      ),
+      setup_future_usage: ?(isMandateFlow ? Some("off_session") : None),
+      //  payment_type: ?allApiData.additionalPMLData.paymentType,
+      // mandate_data: ?(
+      //   allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "becs"
+      //     ? Some({
+      //         customer_acceptance: {
+      //           acceptance_type: "offline",
+      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+      //           online: {
+      //             ip_address: ?nativeProp.hyperParams.ip,
+      //             user_agent: ?nativeProp.hyperParams.userAgent,
+      //           },
+      //         },
+      //         mandate_type: {
+      //           multi_use: {
+      //             amount: 1000,
+      //             currency: "AUD",
+      //             start_date: dateNow->Date.fromTime->Date.toISOString,
+      //             end_date: futureDate->Date.fromString->Date.toISOString,
+      //             metadata: {
+      //               frequency: "13",
+      //             },
+      //           },
+      //         },
+      //       })
+      //     : None
+      // ),
       customer_acceptance: ?(
-        allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate
+        isMandateFlow
           ? Some({
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
               online: {
-                ip_address: ?nativeProp.hyperParams.ip,
+                // ip_address: ?nativeProp.hyperParams.ip,
                 user_agent: ?nativeProp.hyperParams.userAgent,
               },
             })
@@ -1010,11 +1017,10 @@ let make = (
     switch field_type {
     | RequiredFieldsTypes.AccountNumber =>
       switch paymentMethod {
-      | "ach" => numberOfDigitsValidation(text, 12)
+      | "becs" => numberOfDigitsValidation(text, 9)
       | _ => DynamicFields.OtherValidation
       }
-    | RequiredFieldsTypes.RoutingNumber => numberOfDigitsValidation(text, 9)
-
+    | RequiredFieldsTypes.BSBNumber => numberOfDigitsValidation(text, 6)
     | _ => DynamicFields.OtherValidation
     }
   }, [paymentMethod])
@@ -1045,7 +1051,7 @@ let make = (
                 keyToTrigerButtonClickError
                 savedCardsData=None
                 customValidation={switch paymentMethod {
-                | "ach" => Some(customValidation)
+                | "becs" => Some(customValidation)
                 | _ => None
                 }}
               />
