@@ -17,7 +17,7 @@ jobs:
           node-version-file: .nvmrc
 
       - name: Install Yarn dependencies
-        run: yarn --frozen-lockfile --prefer-offline
+        run: yarn
 
       - name: Setup Java
         uses: actions/setup-java@v4.5.0
