@@ -16,7 +16,7 @@ let make = (~onModalClose) => {
   <View
     style={viewStyle(
       ~display=#flex,
-      ~flexGrow=?{WebKit.platform !== #web ? Some(1.) : None},
+      ~flexGrow=?{ReactNative.Platform.os !== #web ? Some(1.) : None},
       ~flexDirection=#row,
       ~alignItems=#center,
       ~justifyContent=#"space-between",
