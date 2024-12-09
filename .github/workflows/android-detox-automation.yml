@@ -13,11 +13,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4.1.0
         with:
-          cache: yarn
-          node-version-file: .nvmrc
+          cache: 'npm'
+          node-version: '20'
 
-      - name: Install Yarn dependencies
-        run: yarn
+      - name: Install dependencies
+        run: npm install
 
       - name: Setup Java
         uses: actions/setup-java@v4.5.0
