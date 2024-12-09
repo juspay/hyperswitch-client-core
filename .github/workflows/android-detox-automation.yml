@@ -19,12 +19,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Setup Java
-        uses: actions/setup-java@v4.5.0
+      - name: Install Java JDK
+        uses: joschi/setup-jdk@v1
         with:
-          cache: gradle
-          distribution: temurin
-          java-version: 17
+          java-version: 'openjdk8'
+          architecture: 'x64'
+        env:
+          # https://github.com/actions/toolkit/issues/641#issuecomment-728963957
+          ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
       - name: Cache Detox build
         id: cache-detox-build
