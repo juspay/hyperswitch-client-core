@@ -26,6 +26,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Checkout Android Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-android
+          ref: detox-poc
+          path: android
+
       - name: Detox build
         run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
 
