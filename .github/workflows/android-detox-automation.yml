@@ -27,7 +27,7 @@ jobs:
           java-version: 17
 
       - name: Detox build
-        run: ls && npx detox build --configuration android.emu.ci.debug
+        run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
 
       # - name: Get device name
       #   id: device
