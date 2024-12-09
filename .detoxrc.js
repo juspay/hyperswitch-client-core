@@ -58,6 +58,12 @@ module.exports = {
         avdName: 'Pixel_3a_API_34_extension_level_7_arm64-v8a',
       },
     },
+    ciEmulator: {
+      type: 'android.emulator',
+      device: {
+        avdName: 'Pixel_API_29_AOSP',
+      },
+    },
   },
   configurations: {
     'ios.sim.debug': {
@@ -78,6 +84,10 @@ module.exports = {
     },
     'android.emu.debug': {
       device: 'emulator',
+      app: 'android.debug',
+    },
+    'android.emu.ci.debug': {
+      device: 'ciEmulator',
       app: 'android.debug',
     },
     'android.emu.release': {

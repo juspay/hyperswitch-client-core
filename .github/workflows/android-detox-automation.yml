@@ -41,7 +41,7 @@ jobs:
           arch: x86_64
           profile: pixel
           avd-name: Pixel_API_29_AOSP
-          script: npx detox test --configuration android.emu.debug  --headless --loglevel trace --record-logs all
+          script: npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
 
       - name: Upload artifacts
         if: failure()
