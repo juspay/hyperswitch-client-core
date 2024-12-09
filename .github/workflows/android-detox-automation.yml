@@ -45,9 +45,11 @@ jobs:
       - name: Detox test
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 31
+          api-level: 29
+          target: default
           arch: x86_64
-          avd-name: ${{ steps.device.outputs.AVD_NAME }}
+          profile: pixel
+          avd-name: Pixel_API_29_AOSP
           script: npx detox test --configuration android.emu.debug  --headless --loglevel trace --record-logs all
 
       - name: Upload artifacts
