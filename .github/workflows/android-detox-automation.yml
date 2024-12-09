@@ -4,7 +4,7 @@ on: push
 
 jobs:
   e2e-android:
-    runs-on: macOS-latest
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -26,17 +26,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Cache Detox build
-        id: cache-detox-build
-        uses: actions/cache@v3
-        with:
-          path: android/app/build
-          key: ${{ runner.os }}-detox-build
-          restore-keys: |
-            ${{ runner.os }}-detox-build
-
       - name: Detox build
-        run: npx detox build --configuration  android.emu.debug
+        run: ls && npx detox build --configuration  android.emu.debug
 
       # - name: Get device name
       #   id: device
