@@ -4,8 +4,7 @@ on: push
 
 jobs:
   e2e-android:
-    runs-on: macos-13
-
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -49,7 +48,7 @@ jobs:
           api-level: 31
           arch: x86_64
           avd-name: ${{ steps.device.outputs.AVD_NAME }}
-          script: yarn detox test --configuration android.emu.debug  --loglevel trace --record-logs all
+          script: npx detox test --configuration android.emu.debug  --headless --loglevel trace --record-logs all
 
       - name: Upload artifacts
         if: failure()
