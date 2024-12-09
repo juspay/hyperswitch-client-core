@@ -37,7 +37,7 @@ jobs:
             ${{ runner.os }}-detox-build
 
       - name: Detox build
-        run: yarn detox build --configuration  android.emu.debug
+        run: npx detox build --configuration  android.emu.debug
 
       - name: Get device name
         id: device
