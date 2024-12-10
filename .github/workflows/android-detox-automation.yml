@@ -79,6 +79,11 @@ jobs:
       - name: Start server
         run: |
           nohup node server.js > server.log 2>&1 &
+
+      - name: Check Android branch
+        run: |
+          cd android && git branch && cd ..
+
       - name: Detox test
         uses: reactivecircus/android-emulator-runner@v2
         with:
