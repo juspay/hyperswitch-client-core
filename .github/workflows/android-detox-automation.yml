@@ -68,11 +68,9 @@ jobs:
           git pull
           git checkout detox-poc
           git branch --show-current
-          cd ..
-          pwd
 
       - name: Detox build
-        run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
+        run: cd android && ls && cd .. && pwd && npx detox build --configuration android.emu.ci.debug
 
       - name: Get device name
         id: device
