@@ -1,6 +1,9 @@
 describe('Example', () => {
   beforeAll(async () => {
-    await device.launchApp();
+    await device.launchApp({
+      launchArgs: {detoxEnableSynchronization: 0},
+      newInstance: true,
+    });
   });
 
   beforeEach(async () => {
