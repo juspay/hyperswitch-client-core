@@ -40,8 +40,8 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set executable permissions for Gradle
-        run: chmod +x /home/runner/.gradle/wrapper/dists/gradle-8.8-all/6gdy1pgp427xkqcjbxw3ylt6h/gradle-8.8/bin/gradle
+      - name: Trigger Gradle Wrapper to download Gradle
+        run: ./gradlew --version
 
       - name: Cache Detox build
         id: cache-detox-build
