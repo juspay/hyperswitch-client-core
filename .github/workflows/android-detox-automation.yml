@@ -9,13 +9,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Free Disk Space
-        run: |
-          sudo rm -rf /opt/hostedtoolcache
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /opt/ghc
-          sudo rm -rf "/usr/local/share/boost"
-          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      # - name: Free Disk Space
+      #   run: |
+      #     sudo rm -rf /opt/hostedtoolcache
+      #     sudo rm -rf /usr/share/dotnet
+      #     sudo rm -rf /opt/ghc
+      #     sudo rm -rf "/usr/local/share/boost"
+      #     sudo rm -rf "$AGENT_TOOLSDIRECTORY"
 
       - name: Enable KVM
         run: |
