@@ -60,6 +60,7 @@ jobs:
           cd android
           git fetch --all
           git branch -r
+          cd ..
 
       - name: Checkout Android Repo
         run: |
@@ -67,6 +68,8 @@ jobs:
           git pull
           git checkout detox-poc
           git branch --show-current
+          cd ..
+          pwd
 
       - name: Detox build
         run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
