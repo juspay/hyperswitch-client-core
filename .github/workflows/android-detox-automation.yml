@@ -60,17 +60,17 @@ jobs:
           cd android
           git fetch --all
           git branch -r
-          cd ..
 
       - name: Checkout Android Repo
-        run: |
-          cd android
-          git pull
-          git checkout detox-poc
-          git branch --show-current
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-android
+          ref: detox-poc
+          path: android
+          fetch-depth: 0
 
       - name: Detox build
-        run: cd android && ls && cd .. && pwd && npx detox build --configuration android.emu.ci.debug
+        run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
 
       - name: Get device name
         id: device
