@@ -12,6 +12,7 @@ jobs:
       - name: Free Disk Space
         run: |
           sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/share/dotnet
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
 
@@ -30,6 +31,16 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Create .env file
+        run: |
+          touch .env
+          echo STATIC_DIR = ./dist >> .env
+          echo HYPERSWITCH_PUBLISHABLE_KEY = $HYPERSWITCH_PUBLISHABLE_KEY >> .env
+          echo HYPERSWITCH_SECRET_KEY = $HYPERSWITCH_SECRET_KEY >> .env
+
+      - name: Start server
+        run: node server.js
 
       - name: Setup Java
         uses: actions/setup-java@v3
