@@ -40,9 +40,6 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
       - name: Cache Detox build
         id: cache-detox-build
         uses: actions/cache@v3
