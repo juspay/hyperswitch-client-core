@@ -55,12 +55,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-detox-build
 
+      - name: List branches
+        run: |
+          cd android
+          git fetch --all
+          git branch -r
+
       - name: Checkout Android Repo
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-android
           ref: detox-poc
           path: android
+          fetch-depth: 0
 
       - name: Detox build
         run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
