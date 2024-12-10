@@ -40,9 +40,6 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Trigger Gradle Wrapper to download Gradle
-        run: ./gradlew --version
-
       - name: Cache Detox build
         id: cache-detox-build
         uses: actions/cache@v3
