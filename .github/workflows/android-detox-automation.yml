@@ -62,12 +62,11 @@ jobs:
           git branch -r
 
       - name: Checkout Android Repo
-        uses: actions/checkout@v4
-        with:
-          repository: juspay/hyperswitch-sdk-android
-          ref: detox-poc
-          path: android
-          fetch-depth: 0
+        run: |
+          cd android
+          git pull
+          git checkout detox-poc
+          git branch --show-current
 
       - name: Detox build
         run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
