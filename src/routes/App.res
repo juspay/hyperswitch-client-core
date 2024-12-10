@@ -25,6 +25,7 @@ module ContextWrapper = {
 module App = {
   @react.component
   let make = () => {
+    // raise(Not_found)
     <View style={viewStyle(~flex=1., ())}>
       {WebKit.platform === #android
         ? <StatusBar translucent=true backgroundColor="transparent" />

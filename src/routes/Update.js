@@ -36,7 +36,6 @@ const NewApp = props => {
       //   codePushDownloadDidProgress,
     );
   };
-
   return (
     <App
       props={props.props}
@@ -47,11 +46,11 @@ const NewApp = props => {
 };
 
 const SentryApp = React.memo(props => {
-    initiateSentry(
-      process.env.HYPERSWITCH_SENTRY_DSN ||
-        'https://c9e476046dd766abc5ed73583e8f6b69@sentry.hyperswitch.io/3',
-    );
-    return sentryReactNative.wrap(NewApp)(props);
+  initiateSentry(
+    process.env.HYPERSWITCH_SENTRY_DSN ||
+      'https://c09c3a80aaf5d7bbf89da81497ef2017@o4508442528251904.ingest.us.sentry.io/4508442529562624',
+  );
+  return sentryReactNative.wrap(NewApp)(props);
 });
 
 export default CodePush({checkFrequency: CodePush.CheckFrequency.MANUAL})(

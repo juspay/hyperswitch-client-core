@@ -7,12 +7,35 @@ let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
   switch isInitialisedPromiseRef.contents {
   | Some(promiseVal) => promiseVal
   | None => {
-      let promiseVal = Promise.make((resolve, _reject) => {
-        Netcetera3dsModule.initialiseNetceteraSDK(
-          netceteraSDKApiKey,
-          sdkEnvironment->sdkEnvironmentToStrMapper,
-          status => resolve(status),
-        )
+      let promiseVal = Promise.make((resolve, reject) => {
+        let timeOutId = setTimeout(() => {
+          Console.log2("error", "this is called")
+          reject({
+            status: "failure",
+            message: "netcetera sdk initialization failed",
+          })
+        }, 3000)
+        try {
+          Console.log("started waiting")
+          Netcetera3dsModule.initialiseNetceteraSDK(
+            netceteraSDKApiKey,
+            sdkEnvironment->sdkEnvironmentToStrMapper,
+            status => {
+              Console.log2("error", status)
+              clearTimeout(timeOutId)
+              resolve(status)
+            },
+          )
+          Console.log("end waiting")
+        } catch {
+        | Exn.Error(e) => {
+            Console.log2("error_handling", e)
+            resolve({
+              status: "failure",
+              message: "netcetera sdk initialization failed",
+            })
+          }
+        }
       })
 
       isInitialisedPromiseRef := Some(promiseVal)

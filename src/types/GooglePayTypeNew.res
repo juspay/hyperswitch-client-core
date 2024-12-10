@@ -5,11 +5,16 @@ type merchantInfo = {
   merchantId: string,
   merchantName: string,
 }
+type billingAddressParametersType = {
+  format: string,
+  phoneNumberRequired: bool,
+}
 
 type allowedPaymentMethodsParameters = {
   allowedAuthMethods: array<string>,
   allowedCardNetworks: array<string>,
   billingAddressRequired: bool,
+  billingAddressParameters: billingAddressParametersType,
 }
 
 type tokenizationSpecificationParameters = {
