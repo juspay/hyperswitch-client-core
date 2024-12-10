@@ -108,7 +108,8 @@ let useLoggerHook = () => {
   let (events, setEvents) = React.useContext(LoggerContext.loggingContext)
   let calculateLatency = useCalculateLatency()
   let getLoggingEndpointHook = GlobalHooks.useGetLoggingUrl()
-  getGetPushVersion()
+  // getGetPushVersion() ||
+  
   getClientCoreVersion()
   (
     ~logType,

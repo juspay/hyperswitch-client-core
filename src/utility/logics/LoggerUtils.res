@@ -95,23 +95,23 @@ let sendLogs = (logFile, uri, publishableKey, appId) => {
   }
 }
 
-let getGetPushVersion = () => {
-  if codePushVersionRef.contents == CP_NOT_STARTED {
-    codePushVersionRef := CP_VERSION_LOADING
-    CodePushModule.getUpdateMetaData()
-    ->Promise.then(res => {
-      let codePushMetaData =
-        res
-        ->Nullable.fromOption
-        ->Nullable.toOption
-        ->Option.getOr({appVersion: "", label: "NOT_AVAILABLE"})
+// let getGetPushVersion = () => {
+//   // if codePushVersionRef.contents == CP_NOT_STARTED {
+//   //   codePushVersionRef := CP_VERSION_LOADING
+//   //   // CodePushModule.getUpdateMetaData()
+//   //   ->Promise.then(res => {
+//   //     let codePushMetaData =
+//   //       res
+//   //       ->Nullable.fromOption
+//   //       ->Nullable.toOption
+//   //       ->Option.getOr({appVersion: "", label: "NOT_AVAILABLE"})
 
-      codePushVersionRef := CP_VERSION_LOADED(codePushMetaData.label)
-      Promise.resolve()
-    })
-    ->ignore
-  }
-}
+//   //     codePushVersionRef := CP_VERSION_LOADED(codePushMetaData.label)
+//   //     Promise.resolve()
+//   //   })
+//   //   ->ignore
+//   // }
+// }
 
 let getCodePushVersionNoFromRef = () => {
   switch codePushVersionRef.contents {
