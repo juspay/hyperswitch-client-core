@@ -39,10 +39,6 @@ jobs:
           echo HYPERSWITCH_PUBLISHABLE_KEY = $HYPERSWITCH_PUBLISHABLE_KEY >> .env
           echo HYPERSWITCH_SECRET_KEY = $HYPERSWITCH_SECRET_KEY >> .env
 
-      # - name: Start server
-      #   run: |
-      #     nohup node server.js > server.log 2>&1 &
-
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
@@ -73,6 +69,9 @@ jobs:
         id: device
         run: node -e "console.log('AVD_NAME=' + require('./.detoxrc').devices.ciEmulator.device.avdName)" >> $GITHUB_OUTPUT
 
+      - name: Start server
+        run: |
+          nohup node server.js > server.log 2>&1 &
       - name: Detox test
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -81,7 +80,7 @@ jobs:
           arch: x86_64
           profile: pixel
           avd-name: ${{ steps.device.outputs.AVD_NAME }}
-          script: node server.js && npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
+          script: npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
 
       - name: Upload artifacts
         if: failure()
