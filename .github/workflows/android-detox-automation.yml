@@ -80,6 +80,10 @@ jobs:
         run: |
           nohup node server.js > server.log 2>&1 &
 
+      - name: Check Server
+        run: |
+          curl http://localhost:5252/create-payment-intent
+
       - name: Check Android branch
         run: |
           cd android && git branch && cd ..
