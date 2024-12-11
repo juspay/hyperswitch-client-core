@@ -41,8 +41,7 @@ jobs:
 
       - name: Start server
         run: |
-          nohup node server.js 
-          sleep 5
+          nohup node server.js &
 
       - name: Check Server
         run: |
