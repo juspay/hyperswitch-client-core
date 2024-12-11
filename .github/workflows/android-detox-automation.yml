@@ -39,6 +39,14 @@ jobs:
           echo HYPERSWITCH_PUBLISHABLE_KEY = $HYPERSWITCH_PUBLISHABLE_KEY >> .env
           echo HYPERSWITCH_SECRET_KEY = $HYPERSWITCH_SECRET_KEY >> .env
 
+      - name: Start server
+        run: |
+          nohup node server.js > && sleep 5
+
+      - name: Check Server
+        run: |
+          curl http://localhost:5252/create-payment-intent
+
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
@@ -75,14 +83,6 @@ jobs:
       - name: Get device name
         id: device
         run: node -e "console.log('AVD_NAME=' + require('./.detoxrc').devices.ciEmulator.device.avdName)" >> $GITHUB_OUTPUT
-
-      - name: Start server
-        run: |
-          nohup node server.js > server.log 2>&1 &
-
-      - name: Check Server
-        run: |
-          curl http://localhost:5252/create-payment-intent
 
       - name: Check Android branch
         run: |
