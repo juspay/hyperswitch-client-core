@@ -35,10 +35,10 @@ jobs:
       - name: Create .env file
         run: |
           touch .env
-          echo  $HYPERSWITCH_PUBLISHABLE_KEY 
+          echo  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
           echo STATIC_DIR = ./dist >> .env
-          echo HYPERSWITCH_PUBLISHABLE_KEY = $HYPERSWITCH_PUBLISHABLE_KEY >> .env
-          echo HYPERSWITCH_SECRET_KEY = $HYPERSWITCH_SECRET_KEY >> .env
+          echo HYPERSWITCH_PUBLISHABLE_KEY =  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}>> .env
+          echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
 
       - name: Start server
         run: |
