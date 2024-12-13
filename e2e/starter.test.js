@@ -10,6 +10,7 @@ describe('Example', () => {
     });
   });
 
+  // testing
   // beforeEach(async () => {
   //   await device.reloadReactNative();
   // });
