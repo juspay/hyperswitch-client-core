@@ -33,7 +33,7 @@ let make = () => {
       paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
       data.pmList->Option.getOr([])->Array.length > 0 &&
       allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
-        ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
+        ? <SavedPaymentScreenParent setConfirmButtonDataRef savedPaymentMethordContextObj=data />
         : <PaymentSheet setConfirmButtonDataRef />
 
     | (None, _) => <PaymentSheet setConfirmButtonDataRef />

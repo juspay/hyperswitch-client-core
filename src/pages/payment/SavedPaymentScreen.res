@@ -4,6 +4,7 @@ open ReactNative
 let make = (
   ~setConfirmButtonDataRef,
   ~savedPaymentMethordContextObj: AllApiDataContext.savedPaymentMethodDataObj,
+  ~cardData: ClickToPayComponent.clickToPayData,
 ) => {
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -526,5 +527,6 @@ let make = (
     savedCardCvv
     setSavedCardCvv
     setIsCvcValid
+    cardData
   />
 }

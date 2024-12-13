@@ -11,6 +11,7 @@ let make = (
   ~savedCardCvv,
   ~setSavedCardCvv,
   ~setIsCvcValid,
+  ~cardData,
 ) => {
   let {borderRadius, component, shadowColor, shadowIntensity} = ThemebasedStyle.useThemeBasedStyle()
   let (selected, isSelected) = React.useState(_ => true)
@@ -35,6 +36,7 @@ let make = (
       <SavedPMListWithLoader
         listArr={savedPaymentMethodsData} savedCardCvv setSavedCardCvv setIsCvcValid
       />
+      <ClickToPayComponent cardData />
     </View>
     <Space height=20. />
     <ClickableTextElement
