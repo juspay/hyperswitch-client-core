@@ -5,7 +5,7 @@ const payButtonTestId = 'Pay';
 describe('Example', () => {
   beforeAll(async () => {
     await device.launchApp({
-      launchArgs: {detoxEnableSynchronization: 0},
+      launchArgs: {detoxEnableSynchronization: 1},
       newInstance: true,
     });
   });
