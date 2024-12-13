@@ -9,6 +9,7 @@ describe('Example', () => {
       launchArgs: {detoxEnableSynchronization: 1},
       newInstance: true,
     });
+    await device.enableSynchronization();
   });
 
   // testing 5
