@@ -70,6 +70,10 @@ jobs:
       #     git fetch --all
       #     git branch -r
 
+      - name: Generate & Supply JS Bundle to Test APK
+        run: |
+          npm run re:start && npm run bundle:android
+
       - name: Checkout Android Repo
         uses: actions/checkout@v4
         with:
