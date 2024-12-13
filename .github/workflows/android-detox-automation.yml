@@ -64,11 +64,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-detox-build
 
-      - name: List branches
-        run: |
-          cd android
-          git fetch --all
-          git branch -r
+      # - name: List branches
+      #   run: |
+      #     cd android
+      #     git fetch --all
+      #     git branch -r
 
       - name: Checkout Android Repo
         uses: actions/checkout@v4
