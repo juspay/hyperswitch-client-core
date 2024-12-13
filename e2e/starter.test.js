@@ -15,6 +15,7 @@ describe('Example', () => {
   // testing 2
   // testing 3
   //
+  //
   // beforeEach(async () => {
   //   await device.reloadReactNative();
   // });
