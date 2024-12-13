@@ -55,14 +55,14 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Cache Detox build
-        id: cache-detox-build
-        uses: actions/cache@v3
-        with:
-          path: android/app/build
-          key: ${{ runner.os }}-detox-build
-          restore-keys: |
-            ${{ runner.os }}-detox-build
+      # - name: Cache Detox build
+      #   id: cache-detox-build
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: android/app/build
+      #     key: ${{ runner.os }}-detox-build
+      #     restore-keys: |
+      #       ${{ runner.os }}-detox-build
 
       # - name: List branches
       #   run: |
