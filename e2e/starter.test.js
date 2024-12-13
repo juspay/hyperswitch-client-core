@@ -37,6 +37,7 @@ describe('Example', () => {
     await waitFor(element(by.id(cardNumberInputTestId))).toExist();
     await waitFor(element(by.id(cardNumberInputTestId))).toBeVisible();
 
+    await element(by.id(cardNumberInputTestId)).clearText();
     await element(by.id(cardNumberInputTestId)).replaceText('4242424242424242');
     await expect(element(by.id(cardNumberInputTestId))).toHaveText(
       '4242424242424242',
