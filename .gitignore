@@ -113,3 +113,7 @@ hyperswitch-react-native/lib/bs/
 .next/
 next-env.d.ts
 /out
+
+#detox
+.log
+.trace.json
