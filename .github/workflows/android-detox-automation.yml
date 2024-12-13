@@ -70,10 +70,6 @@ jobs:
       #     git fetch --all
       #     git branch -r
 
-      - name: Generate & Supply JS Bundle to Test APK
-        run: |
-          npm run re:start && npm run bundle:android
-
       - name: Checkout Android Repo
         uses: actions/checkout@v4
         with:
@@ -81,6 +77,10 @@ jobs:
           ref: detox-poc
           path: android
           fetch-depth: 0
+
+      - name: Generate & Supply JS Bundle to Test APK
+        run: |
+          npm run re:start && npm run bundle:android
 
       - name: Detox build
         run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
