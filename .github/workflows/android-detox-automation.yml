@@ -78,6 +78,10 @@ jobs:
           path: android
           fetch-depth: 0
 
+      - name: Check Android branch
+        run: |
+          cd android && git branch && cd ..
+
       - name: Generate & Supply JS Bundle to Test APK
         run: |
           npm run re:start && npm run bundle:android
