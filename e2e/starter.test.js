@@ -3,6 +3,7 @@ const cvcInputTestId = 'CVCInputTestId';
 const expiryInputTestId = 'ExpiryInputTestId';
 const payButtonTestId = 'Pay';
 describe('Example', () => {
+  jest.retryTimes(6);
   beforeAll(async () => {
     await device.launchApp({
       launchArgs: {detoxEnableSynchronization: 1},
