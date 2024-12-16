@@ -67,7 +67,7 @@ type localeStrings = {
   addPaymentMethodLabel: string,
   walletDisclaimer: string,
   deletePaymentMethod?: string,
-  enterDigitsText?: (string, option<string>) => string,
+  enterDigitsText: (string, option<string>) => string,
 }
 
 let defaultLocale = {

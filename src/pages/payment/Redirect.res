@@ -987,12 +987,10 @@ let make = (
         DynamicFields.NoError
       } else {
         DynamicFields.Error(
-          switch localeObject.enterDigitsText {
-          | Some(func) =>
-            func(digits->Int.toString, Some(display_name->RequiredFieldsTypes.toCamelCase))
-          | None =>
-            `Please Enter Valid ${digits->Int.toString} digits ${display_name->RequiredFieldsTypes.toCamelCase}`
-          },
+          localeObject.enterDigitsText(
+            digits->Int.toString,
+            Some(display_name->RequiredFieldsTypes.toCamelCase),
+          ),
         )
       }
     } else {
