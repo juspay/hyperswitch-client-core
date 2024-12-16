@@ -63,7 +63,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_billing_name" => BillingName
   | "user_shipping_name" => ShippingName
   | "user_bank_account_number" => AccountNumber
-  | "text" => RoutingNumber // need backend changes
+  | "user_bank_routing_number" => RoutingNumber
   | var => UnKnownField(var)
   }
 }

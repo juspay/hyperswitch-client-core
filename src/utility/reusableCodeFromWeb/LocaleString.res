@@ -67,7 +67,7 @@ type localeStrings = {
   addPaymentMethodLabel: string,
   walletDisclaimer: string,
   deletePaymentMethod?: string,
-  enterDigitsText?: string => string,
+  enterDigitsText?: (string, option<string>) => string,
 }
 
 let defaultLocale = {
@@ -141,7 +141,8 @@ let defaultLocale = {
   addPaymentMethodLabel: "Add new payment method",
   walletDisclaimer: "Wallet details will be saved upon selection",
   deletePaymentMethod: "Delete",
-  enterDigitsText: number => `Please enter valid ${number} digits`,
+  enterDigitsText: (number, string) =>
+    `Please enter valid ${number} digits ${string->Option.getOr("")}`,
 }
 
 type locale = {localeStrings: array<localeStrings>}
@@ -218,7 +219,8 @@ let localeStrings = [
     invalidDigitsNickNameError: "Nickname cannot have more than 2 digits",
     walletDisclaimer: "Wallet details will be saved upon selection",
     deletePaymentMethod: "Delete",
-    enterDigitsText: number => `Please enter valid ${number} digits`,
+    enterDigitsText: (number, string) =>
+      `Please enter valid ${number} digits ${string->Option.getOr("")}`,
   },
   //    Hebrew (he),
   {
@@ -292,6 +294,8 @@ let localeStrings = [
     addPaymentMethodLabel: `הוסף שיטת תשלום חדשה`,
     cardHolderNameRequiredText: `נדרש שם בעל הכרטיס`,
     walletDisclaimer: `פרטי הארנק יישמרו עם הבחירה`,
+    enterDigitsText: (number, string) =>
+      `יש להזין ${number} ספרות תקינות ${string->Option.getOr("")}`,
   },
   //    French (fr),
   {
@@ -365,6 +369,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
     cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
     walletDisclaimer: `Les détails du portefeuille seront enregistrés lors de la sélection`,
+    enterDigitsText: (number, string) =>
+      `Veuillez saisir ${number} chiffres valides ${string->Option.getOr("")}`,
   },
   //    English (British) (en-GB),
   {
@@ -438,6 +444,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Add new payment method`,
     cardHolderNameRequiredText: `Card Holder's name required`,
     walletDisclaimer: `Wallet details will be saved upon selection`,
+    enterDigitsText: (number, string) =>
+      `Please enter valid ${number} digits ${string->Option.getOr("")}`,
   },
   //    Arabic (ar),
   {
@@ -511,6 +519,8 @@ let localeStrings = [
     addPaymentMethodLabel: `أضف طريقة دفع جديدة`,
     cardHolderNameRequiredText: `اسم حامل البطاقة مطلوب`,
     walletDisclaimer: `سيتم حفظ تفاصيل المحفظة عند الاختيار`,
+    enterDigitsText: (number, string) =>
+      `الرجاء إدخال ${number} أرقام صالحة ${string->Option.getOr("")}`,
   },
   //    Japanese (ja),
   {
@@ -584,6 +594,8 @@ let localeStrings = [
     addPaymentMethodLabel: `新しい支払い方法を追加`,
     cardHolderNameRequiredText: `カード所有者の名前が必要です`,
     walletDisclaimer: `ウォレットの詳細は選択時に保存されます`,
+    enterDigitsText: (number, string) =>
+      `有効な ${number} 桁の ${string->Option.getOr("")} を入力してください`,
   },
   //    German (de),
   {
@@ -657,6 +669,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Neue Zahlungsmethode hinzufügen`,
     cardHolderNameRequiredText: `Name des Karteninhabers erforderlich`,
     walletDisclaimer: `Wallet-Details werden bei Auswahl gespeichert`,
+    enterDigitsText: (number, string) =>
+      `Bitte geben Sie gültige ${number} Ziffern ${string->Option.getOr("")}`,
   },
   //    French (Belgium) (fr-BE),
   {
@@ -730,6 +744,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
     cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
     walletDisclaimer: `Les détails du portefeuille seront enregistrés lors de la sélection`,
+    enterDigitsText: (number, string) =>
+      `Veuillez saisir ${number} chiffres valides ${string->Option.getOr("")}`,
   },
   //    Spanish (es)
   {
@@ -803,6 +819,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Agregar nuevo método de pago`,
     cardHolderNameRequiredText: `Se requiere el nombre del titular de la tarjeta`,
     walletDisclaimer: `Los detalles de la billetera se guardarán al realizar la selección.`,
+    enterDigitsText: (number, string) =>
+      `Ingrese ${number} dígitos válidos ${string->Option.getOr("")}`,
   },
   //    Catalan (ca)
   {
@@ -876,6 +894,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Afegir un nou mètode de pagament`,
     cardHolderNameRequiredText: `Cal el nom del titular de la targeta`,
     walletDisclaimer: `Els detalls de la cartera es desaran en seleccionar-lo`,
+    enterDigitsText: (number, string) =>
+      `Introdueixi ${number} dígits vàlids ${string->Option.getOr("")}`,
   },
   //    Portuguese (pt)
   {
@@ -949,6 +969,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Adicione uma nova forma de pagamento`,
     cardHolderNameRequiredText: `Nome do titular do cartão obrigatório`,
     walletDisclaimer: `Os detalhes da carteira serão salvos após a seleção`,
+    enterDigitsText: (number, string) =>
+      `Por favor, insira ${number} dígitos válidos ${string->Option.getOr("")}`,
   },
   //    Italian (it)
   {
@@ -1022,6 +1044,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Aggiungi un nuovo metodo di pagamento`,
     cardHolderNameRequiredText: `È obbligatorio il nome del titolare della carta`,
     walletDisclaimer: `I dettagli del portafoglio verranno salvati al momento della selezione`,
+    enterDigitsText: (number, string) =>
+      `Inserisci ${number} cifre valide ${string->Option.getOr("")}`,
   },
   //    Polish (pl)
   {
@@ -1095,6 +1119,8 @@ let localeStrings = [
     invalidDigitsNickNameError: "Pseudonim nie może zawierać więcej niż 2 cyfry",
     cardHolderNameRequiredText: `Wymagane jest podanie imienia i nazwiska posiadacza karty`,
     walletDisclaimer: `Szczegóły portfela zostaną zapisane po dokonaniu wyboru`,
+    enterDigitsText: (number, string) =>
+      `Wprowadź ${number} poprawnych cyfr ${string->Option.getOr("")}`,
   },
   //    Dutch (nl)
   {
@@ -1168,6 +1194,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
     walletDisclaimer: `Portemonneegegevens worden opgeslagen bij selectie`,
+    enterDigitsText: (number, string) =>
+      `Voer ${number} geldige cijfers in ${string->Option.getOr("")}`,
   },
   //    Dutch (Belgium) (nl-BE)
   {
@@ -1241,6 +1269,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
     walletDisclaimer: `Portemonneegegevens worden opgeslagen bij selectie`,
+    enterDigitsText: (number, string) =>
+      `Voer ${number} geldige cijfers in ${string->Option.getOr("")}`,
   },
   //    Swedish (sv)
   {
@@ -1314,6 +1344,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Lägg till ny betalningsmetod`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
     walletDisclaimer: `Information om plånboken sparas vid val`,
+    enterDigitsText: (number, string) =>
+      `Ange ${number} giltiga siffror ${string->Option.getOr("")}`,
   },
   //    Russian (ru)
   {
@@ -1387,6 +1419,10 @@ let localeStrings = [
     addPaymentMethodLabel: ` Добавить новый способ оплаты`,
     cardHolderNameRequiredText: `Требуется имя держателя карты`,
     walletDisclaimer: `Данные кошелька будут сохранены после выбора`,
+    enterDigitsText: (number, string) =>
+      `Введите ${number} действительных цифр в ${string->Option.getOr(
+          "",
+        )}`,
   },
   //    Lithuanian (lt)
   {
@@ -1460,6 +1496,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Pridėti naują mokėjimo būdą`,
     cardHolderNameRequiredText: `Būtinas kortelės turėtojo vardas`,
     walletDisclaimer: `Išsami piniginės informacija bus išsaugota pasirinkus`,
+    enterDigitsText: (number, string) =>
+      `Įveskite ${number} galiojančius skaitmenis ${string->Option.getOr("")}`,
   },
   //    Czech (cs)
   {
@@ -1533,6 +1571,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Přidat nový způsob platby`,
     cardHolderNameRequiredText: `Je vyžadováno jméno držitele karty`,
     walletDisclaimer: `Podrobnosti o peněžence se po výběru uloží`,
+    enterDigitsText: (number, string) =>
+      `Zadejte ${number} platných čísel ${string->Option.getOr("")}`,
   },
   //    Slovak (sk)
   {
@@ -1606,6 +1646,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Pridať nový spôsob platby`,
     cardHolderNameRequiredText: `Vyžaduje sa meno držiteľa karty`,
     walletDisclaimer: `Podrobnosti o peňaženke sa po výbere uložia`,
+    enterDigitsText: (number, string) =>
+      `Zadajte ${number} platných čísiel ${string->Option.getOr("")}`,
   },
   //    Icelandic (is)
   {
@@ -1679,6 +1721,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Bæta við nýrri greiðsluaðferð`,
     cardHolderNameRequiredText: `Nafn korthafa krafist`,
     walletDisclaimer: `Upplýsingar um veski verða vistaðar við val`,
+    enterDigitsText: (number, string) =>
+      `Sláðu inn ${number} gild tölustafi ${string->Option.getOr("")}`,
   },
   //    Welsh (cy)
   {
@@ -1752,6 +1796,8 @@ let localeStrings = [
     addPaymentMethodLabel: ` Ychwanegu dull talu newydd`,
     cardHolderNameRequiredText: `Angen enw Deiliad y Cerdyn`,
     walletDisclaimer: `Bydd manylion waled yn cael eu cadw wrth ddewis`,
+    enterDigitsText: (number, string) =>
+      `Rhowch ${number} o rifau dilys ${string->Option.getOr("")}`,
   },
   //    Greek (el)
   {
@@ -1825,6 +1871,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Προσθήκη νέας μεθόδου πληρωμής`,
     cardHolderNameRequiredText: `Απαιτείται το όνομα του κατόχου της κάρτας`,
     walletDisclaimer: `Τα στοιχεία του πορτοφολιού θα αποθηκευτούν κατά την επιλογή`,
+    enterDigitsText: (number, string) =>
+      `Εισάγετε ${number} έγκυρους αριθμούς ${string->Option.getOr("")}`,
   },
   //    Estonian (et)
   {
@@ -1898,6 +1946,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Lisa uus makseviis`,
     cardHolderNameRequiredText: `Vajalik on kaardi omaniku nimi`,
     walletDisclaimer: `Rahakoti andmed salvestatakse valimisel`,
+    enterDigitsText: (number, string) =>
+      `Sisestage ${number} kehtivat numbrit ${string->Option.getOr("")}`,
   },
   //    Finnish (fi)
   {
@@ -1971,6 +2021,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Lisää uusi maksutapa`,
     cardHolderNameRequiredText: `Kortinhaltijan nimi vaaditaan`,
     walletDisclaimer: `Lompakon tiedot tallennetaan valinnan yhteydessä`,
+    enterDigitsText: (number, string) =>
+      `Syötä ${number} kelvollista numeroa ${string->Option.getOr("")}`,
   },
   //    Norwegian (no)
   {
@@ -2044,6 +2096,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Legg til en ny betalingsmåte`,
     cardHolderNameRequiredText: `Kortholders navn kreves`,
     walletDisclaimer: `Lommebokdetaljer vil bli lagret ved valg`,
+    enterDigitsText: (number, string) =>
+      `Skriv inn ${number} gyldige numre ${string->Option.getOr("")}`,
   },
   //    Bosnian (bs)
   {
@@ -2117,6 +2171,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Dodajte novi način plaćanja`,
     cardHolderNameRequiredText: `Potrebno je ime vlasnika kartice`,
     walletDisclaimer: `Detalji novčanika će biti sačuvani nakon odabira`,
+    enterDigitsText: (number, string) =>
+      `Unesite ${number} važećih brojeva ${string->Option.getOr("")}`,
   },
   //    Danish (da)
   {
@@ -2190,6 +2246,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Tilføj ny betalingsmetode`,
     cardHolderNameRequiredText: `Kortholders navn påkrævet`,
     walletDisclaimer: `Tegnebogsoplysninger gemmes ved valg`,
+    enterDigitsText: (number, string) =>
+      `Indtast ${number} gyldige numre ${string->Option.getOr("")}`,
   },
   //    Malay (ms)
   {
@@ -2263,6 +2321,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Tambah kaedah pembayaran baru`,
     cardHolderNameRequiredText: `Nama Pemegang Kad diperlukan`,
     walletDisclaimer: `Butiran dompet akan disimpan semasa pemilihan`,
+    enterDigitsText: (number, string) =>
+      `Masukkan ${number} nombor yang sah ${string->Option.getOr("")}`,
   },
   //    Turkish (tr-CY)
   {
@@ -2336,5 +2396,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Yeni ödeme yöntemi ekle`,
     cardHolderNameRequiredText: `Kart Sahibinin adı gereklidir`,
     walletDisclaimer: `Cüzdan bilgileri seçim sırasında kaydedilecektir`,
+    enterDigitsText: (number, string) =>
+      `Geçerli ${number} numarayı girin ${string->Option.getOr("")}`,
   },
 ]

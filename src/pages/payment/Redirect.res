@@ -230,8 +230,6 @@ let make = (
     ~eligible_connectors=?,
     (),
   ) => {
-    let dateNow = Date.now()
-    let futureDate = Date.makeWithYM(~year=dateNow->Date.fromTime->Date.getFullYear + 2, ~month=0)->Date.toDateString
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
       return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
@@ -243,13 +241,11 @@ let make = (
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
       setup_future_usage: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
-          ? Some("off_session")
-          : None
+        allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
       mandate_data: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "ach"
+        allApiData.additionalPMLData.mandateType != NORMAL
           ? Some({
               customer_acceptance: {
                 acceptance_type: "offline",
@@ -259,17 +255,17 @@ let make = (
                   user_agent: ?nativeProp.hyperParams.userAgent,
                 },
               },
-              mandate_type: {
-                multi_use: {
-                  amount: 1000,
-                  currency: "AUD",
-                  start_date: dateNow->Date.fromTime->Date.toISOString,
-                  end_date: futureDate->Date.fromString->Date.toISOString,
-                  metadata: {
-                    frequency: "13",
-                  },
-                },
-              },
+              // mandate_type: {
+              //   multi_use: {
+              //     amount: 1000,
+              //     currency: "AUD",
+              //     start_date: dateNow->Date.fromTime->Date.toISOString,
+              //     end_date: futureDate->Date.fromString->Date.toISOString,
+              //     metadata: {
+              //       frequency: "13",
+              //     },
+              //   },
+              // },
             })
           : None
       ),
@@ -876,11 +872,7 @@ let make = (
       acc,
       (key, (val, _)),
     ) => {
-      let updatedKey = switch prop.payment_method_type {
-      | _ => prop.payment_method_type ++ "_bank_debit"
-      }
-
-      acc->Dict.set(key->String.replace(prop.payment_method_type, updatedKey), val)
+      acc->Dict.set(key, val)
       acc
     })
 
@@ -989,15 +981,17 @@ let make = (
     selectedBank,
   ))
 
-  let numberOfDigitsValidation = (text, digits) => {
+  let numberOfDigitsValidation = (text, digits, display_name) => {
     if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
       if text->String.length == digits {
         DynamicFields.NoError
       } else {
         DynamicFields.Error(
           switch localeObject.enterDigitsText {
-          | Some(func) => func(digits->Int.toString)
-          | None => `Please Enter Valid ${digits->Int.toString} digits`
+          | Some(func) =>
+            func(digits->Int.toString, Some(display_name->RequiredFieldsTypes.toCamelCase))
+          | None =>
+            `Please Enter Valid ${digits->Int.toString} digits ${display_name->RequiredFieldsTypes.toCamelCase}`
           },
         )
       }
@@ -1006,15 +1000,12 @@ let make = (
     }
   }
 
-  let customValidation = React.useCallback((~text, ~field_type) => {
+  let customValidation = React.useCallback((~text, ~field_type, ~display_name) => {
     switch field_type {
     | RequiredFieldsTypes.AccountNumber =>
-      switch paymentMethod {
-      | "ach" => numberOfDigitsValidation(text, 12)
-      | _ => DynamicFields.OtherValidation
-      }
-    | RequiredFieldsTypes.RoutingNumber => numberOfDigitsValidation(text, 9)
-
+      numberOfDigitsValidation(text, 12, display_name->Option.getOr(""))
+    | RequiredFieldsTypes.RoutingNumber =>
+      numberOfDigitsValidation(text, 9, display_name->Option.getOr(""))
     | _ => DynamicFields.OtherValidation
     }
   }, [paymentMethod])

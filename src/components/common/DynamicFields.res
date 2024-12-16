@@ -103,7 +103,12 @@ module RenderField = {
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
             let tempValid = switch switch customValidation {
-            | Some(validation) => validation(~text, ~field_type=required_fields_type.field_type)
+            | Some(validation) =>
+              validation(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~display_name=Some(required_fields_type.display_name),
+              )
             | None => OtherValidation
             } {
             | Error(errorMessage) => Some(errorMessage)

@@ -68,7 +68,6 @@ type payment_method_types_bank_debit = {
   payment_method_type: string,
   payment_experience: array<payment_experience>,
   required_field: RequiredFieldsTypes.required_fields,
-  mandate_data: string,
 }
 
 type payment_method =
@@ -108,10 +107,7 @@ type multi_use = {
 
 type mandate_type = {multi_use: multi_use}
 
-type mandate_data = {
-  customer_acceptance: customer_acceptance,
-  mandate_type: mandate_type,
-}
+type mandate_data = {customer_acceptance: customer_acceptance}
 type redirectType = {
   client_secret: string,
   return_url?: string,
@@ -277,7 +273,6 @@ let flattenPaymentListArray = (plist, item) => {
       let dict2 = item2->getDictFromJson
       BANK_DEBIT({
         payment_method: "bank_debit",
-        mandate_data: dict2->getString("mandate_data", ""),
         payment_method_type: dict2->getString("payment_method_type", ""),
         payment_experience: dict2
         ->getArray("payment_experience")
