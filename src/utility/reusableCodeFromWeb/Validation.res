@@ -348,6 +348,11 @@ let cardValid = (cardNumber, cardBrand) => {
   calculateLuhn(cardNumber)
 }
 
+let isCardNumberEqualsMax = (cardNumber, cardBrand) => {
+  let clearValue = cardNumber->clearSpaces
+  clearValue->String.length == maxCardLength(cardBrand) || clearValue->String.length == 16
+}
+
 // let cardValid = (cardNumber, cardBrand) => {
 //   let clearValueLength = cardNumber->clearSpaces->String.length
 //   (clearValueLength == maxCardLength(cardBrand) ||
