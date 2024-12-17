@@ -36,6 +36,7 @@ let logWrapper = (
   ~latency,
   ~env,
   ~customLogUrl,
+  ~version,
   (),
 ) => {
   let (value, internalMetadata) = switch apiLogType {
@@ -66,7 +67,7 @@ let logWrapper = (
     logType,
     timestamp: timestamp->Float.toString,
     sessionId: "",
-    version: "repoVersion",
+    version,
     codePushVersion: LoggerUtils.getCodePushVersionNoFromRef(),
     clientCoreVersion: LoggerUtils.getClientCoreVersionNoFromRef(),
     component: MOBILE,
@@ -124,6 +125,7 @@ let savedPaymentMethodAPICall = nativeProp => {
     ~paymentExperience=None,
     ~timestamp=initTimestamp,
     ~latency=0.,
+    ~version=nativeProp.hyperParams.sdkVersion,
     (),
   )
   CommonHooks.fetchApi(
@@ -155,6 +157,7 @@ let savedPaymentMethodAPICall = nativeProp => {
           ~paymentExperience=None,
           ~timestamp=respTimestamp,
           ~latency={respTimestamp -. initTimestamp},
+          ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
         Some(data)->Promise.resolve
@@ -188,6 +191,7 @@ let savedPaymentMethodAPICall = nativeProp => {
           ~paymentExperience=None,
           ~timestamp=respTimestamp,
           ~latency={respTimestamp -. initTimestamp},
+          ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
         Some(error)->Promise.resolve
@@ -212,6 +216,7 @@ let savedPaymentMethodAPICall = nativeProp => {
       ~paymentExperience=None,
       ~timestamp=respTimestamp,
       ~latency={respTimestamp -. initTimestamp},
+      ~version=nativeProp.hyperParams.sdkVersion,
       (),
     )
     None->Promise.resolve
@@ -250,6 +255,7 @@ let sessionAPICall = nativeProp => {
     ~paymentExperience=None,
     ~timestamp=initTimestamp,
     ~latency=0.,
+    ~version=nativeProp.hyperParams.sdkVersion,
     (),
   )
 
@@ -274,6 +280,7 @@ let sessionAPICall = nativeProp => {
         ~paymentExperience=None,
         ~timestamp=respTimestamp,
         ~latency={respTimestamp -. initTimestamp},
+        ~version=nativeProp.hyperParams.sdkVersion,
         (),
       )
       data->Fetch.Response.json
@@ -305,6 +312,7 @@ let sessionAPICall = nativeProp => {
           ~paymentExperience=None,
           ~timestamp=respTimestamp,
           ~latency={respTimestamp -. initTimestamp},
+          ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
         Promise.resolve(error)
@@ -329,6 +337,7 @@ let sessionAPICall = nativeProp => {
       ~paymentExperience=None,
       ~timestamp=respTimestamp,
       ~latency={respTimestamp -. initTimestamp},
+      ~version=nativeProp.hyperParams.sdkVersion,
       (),
     )
     Promise.resolve(JSON.Encode.null)
@@ -356,6 +365,7 @@ let confirmAPICall = (nativeProp, body) => {
     ~paymentExperience=None,
     ~timestamp=initTimestamp,
     ~latency=0.,
+    ~version=nativeProp.hyperParams.sdkVersion,
     (),
   )
 
@@ -380,6 +390,7 @@ let confirmAPICall = (nativeProp, body) => {
         ~paymentExperience=None,
         ~timestamp=respTimestamp,
         ~latency={respTimestamp -. initTimestamp},
+        ~version=nativeProp.hyperParams.sdkVersion,
         (),
       )
       data->Fetch.Response.json
@@ -412,6 +423,7 @@ let confirmAPICall = (nativeProp, body) => {
           ~paymentExperience=None,
           ~timestamp=respTimestamp,
           ~latency={respTimestamp -. initTimestamp},
+          ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
         Promise.resolve(error)
@@ -441,6 +453,7 @@ let confirmAPICall = (nativeProp, body) => {
       ~paymentExperience=None,
       ~timestamp=respTimestamp,
       ~latency={respTimestamp -. initTimestamp},
+      ~version=nativeProp.hyperParams.sdkVersion,
       (),
     )
     Promise.resolve(None)
