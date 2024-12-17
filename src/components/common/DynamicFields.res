@@ -1,7 +1,10 @@
 open ReactNative
 open Style
 open RequiredFieldsTypes
-
+type customValidation =
+  | Error(string)
+  | OtherValidation
+  | NoError
 module RenderField = {
   let getStateData = (states, country) => {
     states
@@ -42,6 +45,7 @@ module RenderField = {
     ~required_fields_type: RequiredFieldsTypes.required_fields_type,
     ~setFinalJsonDict,
     ~finalJsonDict,
+    ~customValidation,
     ~isSaveCardsFlow,
     ~statesJson: option<JSON.t>,
     ~keyToTrigerButtonClickError,
@@ -98,12 +102,24 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let tempValid = RequiredFieldsTypes.checkIsValid(
-              ~text,
-              ~field_type=required_fields_type.field_type,
-              ~localeObject,
-            )
-
+            let tempValid = switch switch customValidation {
+            | Some(validation) =>
+              validation(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~display_name=Some(required_fields_type.display_name),
+              )
+            | None => OtherValidation
+            } {
+            | Error(errorMessage) => Some(errorMessage)
+            | OtherValidation =>
+              RequiredFieldsTypes.checkIsValid(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~localeObject,
+              )
+            | NoError => None
+            }
             let isCountryField = switch required_fields_type.field_type {
             | AddressCountry(_) => true
             | _ => false
@@ -281,6 +297,7 @@ module Fields = {
     ~setFinalJsonDict,
     ~isSaveCardsFlow,
     ~statesJson,
+    ~customValidation,
     ~keyToTrigerButtonClickError,
   ) => {
     fields
@@ -292,6 +309,7 @@ module Fields = {
           key={index->Int.toString}
           isSaveCardsFlow
           statesJson
+          customValidation
           finalJsonDict
           setFinalJsonDict
           keyToTrigerButtonClickError
@@ -314,6 +332,7 @@ let make = (
   ~keyToTrigerButtonClickError,
   ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
+  ~customValidation=None,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
@@ -425,6 +444,7 @@ let make = (
             setFinalJsonDict
             isSaveCardsFlow
             statesJson
+            customValidation
             keyToTrigerButtonClickError
           />
         </>
