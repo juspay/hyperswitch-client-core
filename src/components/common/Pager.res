@@ -280,7 +280,7 @@ let make = (
     }
   }, (layout.width, panX))
 
-  let (height, setHeight) = React.useState(_ => 100.)
+  let (height, setHeight) = React.useState(_ => 0.)
 
   let setDynamicHeight = React.useCallback1(height => {
     setHeight(_ => height)
