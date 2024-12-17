@@ -11,7 +11,7 @@ let make = (
   ~loadingText="Loading..",
   ~buttonState: buttonState=Normal,
   ~text=?,
-  ~name as _=?,
+  ~name=?,
   ~buttonType: buttonType=Primary,
   ~leftIcon: iconType=NoIcon,
   ~rightIcon: iconType=NoIcon,
@@ -21,6 +21,7 @@ let make = (
   ~borderRadius=0.,
   ~borderColor="#ffffff",
   ~children=None,
+  ~testID=?,
 ) => {
   let fillAnimation = React.useRef(Animated.Value.create(0.)).current
   let {
@@ -105,6 +106,7 @@ let make = (
     ])}>
     <CustomTouchableOpacity
       disabled
+      testID={testID->Option.getOr("")}
       style={array([
         viewStyle(
           ~height=100.->pct,
@@ -142,7 +144,7 @@ let make = (
                 text={switch buttonState {
                 | LoadingButton => loadingText
                 | Completed => "Complete"
-                | _ => textStr
+                | _ => name->Option.getOr("")
                 }}
                 // textType=CardText
                 textType={ButtonTextBold}

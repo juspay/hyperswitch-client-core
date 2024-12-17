@@ -1,0 +1,115 @@
+# .github/workflows/e2e-android.yml
+name: e2e-android
+on: push
+
+jobs:
+  e2e-android:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          # cache: 'npm'
+          # cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Create .env file
+        run: |
+          touch .env
+          echo  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+          echo STATIC_DIR = ./dist >> .env
+          echo HYPERSWITCH_PUBLISHABLE_KEY =  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}>> .env
+          echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
+
+      - name: Start server
+        run: |
+          nohup node server.js &
+
+      - name: Check Server
+        run: |
+          curl http://localhost:5252/create-payment-intent
+
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          cache: gradle
+          distribution: temurin
+          java-version: 17
+
+      # - name: Cache Detox build
+      #   id: cache-detox-build
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: android/app/build
+      #     key: ${{ runner.os }}-detox-build
+      #     restore-keys: |
+      #       ${{ runner.os }}-detox-build
+
+      # - name: List branches
+      #   run: |
+      #     cd android
+      #     git fetch --all
+      #     git branch -r
+
+      - name: Checkout Android Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-android
+          ref: detox-poc
+          path: android
+          fetch-depth: 0
+
+      - name: Check Android branch
+        run: |
+          cd android && git branch && cd ..
+
+      - name: Generate & Supply JS Bundle to Test APK
+        run: |
+          npm run re:start && npm run bundle:android
+
+      - name: Detox build
+        run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
+
+      - name: Get device name
+        id: device
+        run: node -e "console.log('AVD_NAME=' + require('./.detoxrc').devices.ciEmulator.device.avdName)" >> $GITHUB_OUTPUT
+
+      - name: Check Android branch
+        run: |
+          cd android && git branch && cd ..
+
+      - name: Detox test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: default
+          arch: x86_64
+          profile: pixel
+          avd-name: ${{ steps.device.outputs.AVD_NAME }}
+          script: npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: detox-artifacts
+          path: artifacts
