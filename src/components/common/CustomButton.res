@@ -21,8 +21,8 @@ let make = (
   ~borderRadius=0.,
   ~borderColor="#ffffff",
   ~children=None,
+  ~testID=?,
 ) => {
- 
   let fillAnimation = React.useRef(Animated.Value.create(0.)).current
   let {
     payNowButtonTextColor,
@@ -106,7 +106,7 @@ let make = (
     ])}>
     <CustomTouchableOpacity
       disabled
-      testID={name->Option.getOr("")}
+      testID={testID->Option.getOr("")}
       style={array([
         viewStyle(
           ~height=100.->pct,
@@ -144,7 +144,7 @@ let make = (
                 text={switch buttonState {
                 | LoadingButton => loadingText
                 | Completed => "Complete"
-                | _ => {name->Option.getOr("")}
+                | _ => name->Option.getOr("")
                 }}
                 // textType=CardText
                 textType={ButtonTextBold}
