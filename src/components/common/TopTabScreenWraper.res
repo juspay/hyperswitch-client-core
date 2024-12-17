@@ -3,7 +3,7 @@ open Style
 
 @react.component
 let make = (~children, ~setDynamicHeight, ~isScreenFocus) => {
-  let (viewHeight, setViewHeight) = React.useState(_ => 0.)
+  let (viewHeight, setViewHeight) = React.useState(_ => 100.)
   let updateTabHeight = (event: Event.layoutEvent) => {
     let {height} = event.nativeEvent.layout
     if height > 100. && (viewHeight -. height)->Math.abs > 10. {
