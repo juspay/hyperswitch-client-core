@@ -1,8 +1,4 @@
-const cardNumberInputTestId = 'CardNumberInputTestId';
-const cvcInputTestId = 'CVCInputTestId';
-const expiryInputTestId = 'ExpiryInputTestId';
-const payButtonTestId = 'Pay';
-
+import * as testIds from "../../src/utility/test/TestUtils.bs.js";
 import { device } from "detox"
 describe('Example', () => {
   jest.retryTimes(6);
@@ -31,29 +27,29 @@ describe('Example', () => {
       .toBeVisible()
       .withTimeout(10000);
 
-    await element(by.id(cardNumberInputTestId)).tap();
+    await element(by.id(testIds.cardNumberInputTestId)).tap();
 
-    await waitFor(element(by.id(cardNumberInputTestId))).toExist();
-    await waitFor(element(by.id(cardNumberInputTestId))).toBeVisible();
+    await waitFor(element(by.id(testIds.cardNumberInputTestId))).toExist();
+    await waitFor(element(by.id(testIds.cardNumberInputTestId))).toBeVisible();
 
-    await element(by.id(cardNumberInputTestId)).clearText();
-    await element(by.id(cardNumberInputTestId)).replaceText('4242424242424242');
+    await element(by.id(testIds.cardNumberInputTestId)).clearText();
+    await element(by.id(testIds.cardNumberInputTestId)).replaceText('4242424242424242');
 
-    await waitFor(element(by.id(expiryInputTestId))).toExist();
-    await waitFor(element(by.id(expiryInputTestId))).toBeVisible();
-    await element(by.id(expiryInputTestId)).typeText('04/44');
+    await waitFor(element(by.id(testIds.expiryInputTestId))).toExist();
+    await waitFor(element(by.id(testIds.expiryInputTestId))).toBeVisible();
+    await element(by.id(testIds.expiryInputTestId)).typeText('04/44');
 
-    await waitFor(element(by.id(cvcInputTestId))).toExist();
-    await waitFor(element(by.id(cvcInputTestId))).toBeVisible();
-    await element(by.id(cvcInputTestId)).typeText('123');
+    await waitFor(element(by.id(testIds.cvcInputTestId))).toExist();
+    await waitFor(element(by.id(testIds.cvcInputTestId))).toBeVisible();
+    await element(by.id(testIds.cvcInputTestId)).typeText('123');
 
 
-    await waitFor(element(by.id(payButtonTestId)))
+    await waitFor(element(by.id(testIds.payButtonTestId)))
       .toBeVisible()
       .withTimeout(10000);
 
 
-    await element(by.id(payButtonTestId)).tap();
+    await element(by.id(testIds.payButtonTestId)).tap();
     await waitFor(element(by.text('succeeded')))
       .toBeVisible()
       .withTimeout(10000);

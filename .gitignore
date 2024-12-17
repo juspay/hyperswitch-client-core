@@ -117,3 +117,4 @@ next-env.d.ts
 #detox
 *.log
 *.trace.json
+*.detox.jsonl
