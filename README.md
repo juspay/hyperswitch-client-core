@@ -1,4 +1,4 @@
-# Hyperswitch Client Core test
+# Hyperswitch Client Core
 
 This repository hosts the essential components of the Hyperswitch SDK, which supports various platforms. Directly cloning this repository allows immediate access to a web-compatible version of the SDK.
 
