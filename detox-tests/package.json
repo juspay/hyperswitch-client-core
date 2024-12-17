@@ -1,0 +1,17 @@
+{
+  "name": "detox-tests",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.10.2",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.7.2"
+  }
+}

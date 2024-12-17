@@ -115,5 +115,5 @@ next-env.d.ts
 /out
 
 #detox
-.log
-.trace.json
+*.log
+*.trace.json

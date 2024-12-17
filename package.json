@@ -30,6 +30,8 @@
     "deploy-to-s3": "node ./scripts/pushToS3.js",
     "lint": "eslint .",
     "test": "jest",
+    "android:e2e": "npx detox test --configuration android.emu.debug  --loglevel trace --record-logs all",
+    "build:android-e2e": "npx detox build --configuration  android.emu.debug",
     "prepare": "husky"
   },
   "dependencies": {
