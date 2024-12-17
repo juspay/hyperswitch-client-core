@@ -1,7 +1,7 @@
 {
   "name": "detox-tests",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "e2e/jest.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
