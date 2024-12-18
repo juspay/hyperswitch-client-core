@@ -866,13 +866,13 @@ let useSavePaymentMethod = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (cardData, _) = React.useContext(CardDataContext.cardDataContext)
 
-  let (month, year) = Validation.getExpiryDates(cardData.expireDate)
+  let (month, year) = CardExpiryValidation.getExpiryDates(cardData.expireDate)
   let payment_method_data =
     [
       (
         "card",
         [
-          ("card_number", cardData.cardNumber->Validation.clearSpaces->JSON.Encode.string),
+          ("card_number", cardData.cardNumber->ValidationUtils.clearSpaces->JSON.Encode.string),
           ("card_exp_month", month->JSON.Encode.string),
           ("card_exp_year", year->JSON.Encode.string),
         ]

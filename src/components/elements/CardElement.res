@@ -1,4 +1,6 @@
 open Validation
+open CardExpiryValidation
+
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 @react.component
@@ -83,7 +85,7 @@ let make = (
   }
   let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let cvvData = formatCVCNumber(text, getCardBrand(cardData.cardNumber))
-    let isthisValid = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
+    let isthisValid = CardCvcValidation.checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
     if isthisValid {
       switch cvvOrZipRef.current->Nullable.toOption {
       | None => ()
