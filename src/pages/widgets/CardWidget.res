@@ -41,13 +41,13 @@ let make = () => {
       | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
-    let (month, year) = Validation.getExpiryDates(expireDate)
+    let (month, year) = CardExpiryValidation.getExpiryDates(expireDate)
     let payment_method_data =
       [
         (
           prop.payment_method,
           [
-            ("card_number", cardNumber->Validation.clearSpaces->JSON.Encode.string),
+            ("card_number", cardNumber->ValidationUtils.clearSpaces->JSON.Encode.string),
             ("card_exp_month", month->JSON.Encode.string),
             ("card_exp_year", year->JSON.Encode.string),
             ("card_holder_name", ""->JSON.Encode.string),

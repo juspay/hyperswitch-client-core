@@ -1,3 +1,5 @@
+open ValidationUtils
+
 type cardIssuer =
   | VISA
   | MASTERCARD
@@ -10,8 +12,6 @@ type cardIssuer =
   | RUPAY
   | JCB
   | NOTFOUND
-
-let toInt = val => val->Int.fromString->Option.getOr(0)
 
 let cardType = val => {
   switch val->String.toUpperCase {
@@ -29,20 +29,6 @@ let cardType = val => {
   }
 }
 
-let getobjFromCardPattern = cardBrand => {
-  let patternsDict = CardPattern.cardPatterns
-  patternsDict
-  ->Array.filter(item => {
-    cardBrand === item.issuer
-  })
-  ->Array.get(0)
-  ->Option.getOr(CardPattern.defaultCardPattern)
-}
-
-let clearSpaces = value => {
-  value->String.replaceRegExp(%re("/\D+/g"), "")
-}
-
 let slice = (val, start: int, end: int) => {
   val->String.slice(~start, ~end)
 }
@@ -54,20 +40,7 @@ let getStrFromIndex = (arr: array<string>, index) => {
 let formatCVCNumber = (val, cardType) => {
   let clearValue = val->clearSpaces
   let obj = getobjFromCardPattern(cardType)
-  clearValue->slice(0, obj.maxCVCLenth)
-}
-
-let getCurrentMonthAndYear = (dateTimeIsoString: string) => {
-  let tempTimeDateString = dateTimeIsoString->String.replace("Z", "")
-  let tempTimeDate = tempTimeDateString->String.split("T")
-
-  let date = tempTimeDate->Array.get(0)->Option.getOr("")
-  let dateComponents = date->String.split("-")
-
-  let currentMonth = dateComponents->Array.get(1)->Option.getOr("")
-  let currentYear = dateComponents->Array.get(0)->Option.getOr("")
-
-  (currentMonth->toInt, currentYear->toInt)
+  clearValue->slice(0, obj.maxCVCLength)
 }
 
 let formatCardNumber = (val, cardType) => {
@@ -94,20 +67,6 @@ let formatCardNumber = (val, cardType) => {
   }
 
   formatedCard->String.trim
-}
-let splitExpiryDates = val => {
-  let split = val->String.split("/")
-  let value = split->Array.map(item => item->String.trim)
-  let month = value->Array.get(0)->Option.getOr("")
-  let year = value->Array.get(1)->Option.getOr("")
-  (month, year)
-}
-let getExpiryDates = val => {
-  let date = Date.make()->Date.toISOString
-  let (month, year) = splitExpiryDates(val)
-  let (_, currentYear) = getCurrentMonthAndYear(date)
-  let prefix = currentYear->Int.toString->String.slice(~start=0, ~end=2)
-  (month, `${prefix}${year}`)
 }
 
 let formatCardExpiryNumber = val => {
@@ -250,22 +209,6 @@ let calculateLuhn = value => {
 //   }
 // }
 
-let getExpiryValidity = cardExpiry => {
-  let date = Date.make()->Date.toISOString
-  let (month, year) = getExpiryDates(cardExpiry)
-  let (currentMonth, currentYear) = getCurrentMonthAndYear(date)
-  let valid = if currentYear == year->toInt && month->toInt >= currentMonth && month->toInt <= 12 {
-    true
-  } else if (
-    year->toInt > currentYear && year->toInt < 2075 && month->toInt >= 1 && month->toInt <= 12
-  ) {
-    true
-  } else {
-    false
-  }
-  valid
-}
-
 // let max = (a, b) => {
 //   a > b ? a : b
 // }
@@ -284,17 +227,6 @@ let getExpiryValidity = cardExpiry => {
 //   }
 // }
 
-let cvcNumberInRange = (val, cardBrand) => {
-  let clearValue = val->clearSpaces
-  let obj = getobjFromCardPattern(cardBrand)
-  let cvcLengthInRange =
-    obj.cvcLength
-    ->Array.find(item => {
-      clearValue->String.length == item
-    })
-    ->Option.isSome
-  cvcLengthInRange
-}
 // let genreateFontsLink = (fonts: array<CardThemeType.fonts>) => {
 //   if fonts->Array.length > 0 {
 //     fonts
@@ -390,13 +322,6 @@ let cardValid = (cardNumber, cardBrand) => {
 //   }
 //   thirdIframeVal === "" ? secondIframeVal === "" ? firstIframeVal : secondIframeVal : thirdIframeVal
 // }
-
-let checkCardCVC = (cvcNumber, cardBrand) => {
-  cvcNumber->String.length > 0 && cvcNumberInRange(cvcNumber, cardBrand)
-}
-let checkCardExpiry = expiry => {
-  expiry->String.length > 0 && getExpiryValidity(expiry)
-}
 
 // let commonKeyDownEvent = (ev, srcRef, destRef, srcEle, destEle, setEle) => {
 //   let key = ReactEvent.Keyboard.keyCode(ev)
