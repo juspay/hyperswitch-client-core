@@ -51,6 +51,7 @@ let make = (
     }
     None
   }, [reset])
+ let nullRef = React.useRef(Nullable.null)
   let (cardBrand, setCardBrand) = React.useState(_ => "")
   let onChangeCardNumber = (
     text,
@@ -62,7 +63,7 @@ let make = (
     let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
     setCardData(prev => {...prev, cardNumber: num, isCardNumberValid: Some(isthisValid)})
     if num->String.length == 0 {
-      setCardData(prev => {...prev, cvv: ""})
+       onChangeCvv("", nullRef)
     }
 
     // Adding support for 19 digit card hence disabling ref
@@ -100,7 +101,7 @@ let make = (
     }
     setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isValidCvv)})
   }
-  let nullRef = React.useRef(Nullable.null)
+ 
 
   React.useEffect2(() => {
     let newCardBrand = getCardBrand(cardData.cardNumber)
