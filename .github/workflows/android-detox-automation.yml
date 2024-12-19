@@ -1,6 +1,6 @@
 # .github/workflows/e2e-android.yml
 name: e2e-android
-on: push
+on: deployment
 
 jobs:
   e2e-android:
