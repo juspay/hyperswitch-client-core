@@ -1,0 +1,80 @@
+# .github/workflows/e2e-ios.yml
+name: e2e-ios
+on: push
+
+jobs:
+  e2e-ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          cache: yarn
+          node-version-file: .node-version
+
+      - name: Dependency Install
+        run: |
+          curl -o package.json -L https://raw.githubusercontent.com/juspay/hyperswitch-client-core/main/package.json
+          jq 'del(.resolutions) | 
+          del(.dependencies["react-native-hyperswitch-netcetera-3ds"]) | 
+          del(.dependencies["react-native-hyperswitch-scancard"])' package.json > package.json.tmp && 
+          mv package.json.tmp package.json
+          yarn
+          cd frameworkgen
+          brew bundle install --no-lock --file Brewfile
+          bundle install
+          xcodegen && RCT_NEW_ARCH_ENABLED=0 USE_FRAMEWORKS=dynamic bundle exec pod install --verbose && scripts/xcode_env.sh
+
+      - name: Install macOS dependencies
+        run: |
+          brew tap wix/brew
+          brew install applesimutils
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_CLEANUP: 1
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Cache CocoaPods
+        id: cache-cocoapods
+        uses: actions/cache@v3
+        with:
+          path: ios/Pods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
+
+      - name: Install CocoaPods
+        if: steps.cache-cocoapods.outputs.cache-hit != 'true'
+        run: cd ios ; pod install ; cd -
+
+      - name: Detox rebuild framework cache
+        run: yarn detox rebuild-framework-cache
+
+      - name: Cache Detox build
+        id: cache-detox-build
+        uses: actions/cache@v3
+        with:
+          path: ios/build
+          key: ${{ runner.os }}-detox-build
+          restore-keys: |
+            ${{ runner.os }}-detox-build
+
+      - name: Detox build
+        run: yarn detox build --configuration ios.sim.debug
+
+      - name: Detox test
+        run: yarn detox test --configuration ios.sim.debug  --loglevel trace --record-logs all
+
+      - name: Upload artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: detox-artifacts
+          path: artifacts
