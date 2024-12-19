@@ -5,7 +5,7 @@ app.use(cors());
 app.use(express.static('./dist'));
 app.use(express.json());
 
-require('dotenv').config({ path: './.env' });
+require('dotenv').config({path: './.env'});
 
 try {
   var hyper = require('@juspay-tech/hyperswitch-node')(
@@ -26,7 +26,7 @@ app.get('/create-payment-intent', async (req, res) => {
       capture_method: 'automatic',
       email: 'abc@gmail.com',
       business_country: 'US',
-      business_label: 'default',
+      profile_id: 'pro_ihVPK2u35TOUOp6ipPjF',
       billing: {
         address: {
           line1: '1467',
@@ -38,7 +38,7 @@ app.get('/create-payment-intent', async (req, res) => {
           country: 'PL',
           first_name: 'joseph',
           last_name: 'Doe',
-        }
+        },
       },
       shipping: {
         address: {
@@ -51,7 +51,7 @@ app.get('/create-payment-intent', async (req, res) => {
           country: 'PL',
           first_name: 'joseph',
           last_name: 'Doe',
-        }
+        },
       },
     });
 
@@ -61,7 +61,7 @@ app.get('/create-payment-intent', async (req, res) => {
       clientSecret: paymentIntent.client_secret,
     });
   } catch (err) {
-          console.log(err)
+    console.log(err);
 
     return res.status(400).send({
       error: {
@@ -81,7 +81,7 @@ app.get('/create-ephemeral-key', async (req, res) => {
           'Content-Type': 'application/json',
           'api-key': process.env.HYPERSWITCH_SECRET_KEY,
         },
-        body: JSON.stringify({ customer_id: "hyperswitch_sdk_demo_id" }),
+        body: JSON.stringify({customer_id: 'hyperswitch_sdk_demo_id'}),
       },
     );
     const ephemeralKey = await response.json();
@@ -108,7 +108,7 @@ app.get('/payment_methods', async (req, res) => {
           'Content-Type': 'application/json',
           'api-key': process.env.HYPERSWITCH_SECRET_KEY,
         },
-        body: JSON.stringify({ customer_id: 'hyperswitch_sdk_demo_id' }),
+        body: JSON.stringify({customer_id: 'hyperswitch_sdk_demo_id'}),
       },
     );
     const json = await response.json();
