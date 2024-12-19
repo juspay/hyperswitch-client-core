@@ -30,6 +30,14 @@ jobs:
           mv package.json.tmp package.json
           npm install
 
+      - name: Start server
+        run: |
+          nohup node server.js &
+
+      - name: Check Server
+        run: |
+          curl http://localhost:5252/create-payment-intent
+
       - name: Install macOS dependencies
         run: |
           brew tap wix/brew
