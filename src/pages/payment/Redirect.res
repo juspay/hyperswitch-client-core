@@ -909,7 +909,6 @@ let make = (
       setConfirmButtonDataRef(
         <ConfirmButton
           loading=false
-          bottomSpace=50.
           isAllValuesValid=true
           handlePress
           hasSomeFields

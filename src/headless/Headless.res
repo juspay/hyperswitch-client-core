@@ -282,6 +282,7 @@ let registerHeadless = headless => {
             ~paymentExperience=None,
             ~timestamp=0.,
             ~latency=0.,
+            ~version=nativeProp.hyperParams.sdkVersion,
             (),
           )
           headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
@@ -324,6 +325,7 @@ let registerHeadless = headless => {
               ~paymentExperience=None,
               ~timestamp=0.,
               ~latency=0.,
+              ~version=nativeProp.hyperParams.sdkVersion,
               (),
             )
           },
@@ -455,6 +457,7 @@ let registerHeadless = headless => {
         ~paymentExperience=None,
         ~timestamp,
         ~latency=0.,
+        ~version=nativeProp.hyperParams.sdkVersion,
         (),
       )
       savedPaymentMethodAPICall(nativeProp)
