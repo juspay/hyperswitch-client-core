@@ -46,6 +46,7 @@ jobs:
         if: steps.cache-cocoapods.outputs.cache-hit != 'true'
         run: |
           pod setup --verbose
+          sudo gem install cocoapods
           cd ios
           ls
           pod install
