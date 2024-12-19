@@ -12,8 +12,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          cache: yarn
-          node-version-file: .node-version
+          node-version: '20'
 
       - name: Dependency Install
         run: |
