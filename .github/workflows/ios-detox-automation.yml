@@ -47,6 +47,7 @@ jobs:
         run: |
           pod setup --verbose
           cd ios
+          ls
           pod install
           cd ..
 
