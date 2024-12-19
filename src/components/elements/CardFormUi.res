@@ -3,6 +3,7 @@ open Style
 open Validation
 open CardCvcValidation
 open ValidationUtils
+open CardNumberValidation
 
 @react.component
 let make = (

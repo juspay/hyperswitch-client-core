@@ -218,7 +218,7 @@ let checkIsValid = (
   } else {
     switch field_type {
     | Email =>
-      switch text->ValidationFunctions.isValidEmail {
+      switch text->EmailValidation.isEmailValid {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
       | None => Some(localeObject.emailEmptyText)

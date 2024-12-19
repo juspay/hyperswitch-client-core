@@ -1,6 +1,6 @@
 open Validation
 open CardExpiryValidation
-
+open CardNumberValidation
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 @react.component

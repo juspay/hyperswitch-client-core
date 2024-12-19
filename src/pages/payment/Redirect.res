@@ -802,7 +802,7 @@ let make = (
   }
 
   let handlePressEmail = text => {
-    setIsEmailValid(_ => text->ValidationFunctions.isValidEmail)
+    setIsEmailValid(_ => text->EmailValidation.isEmailValid)
     setEmail(_ => Some(text))
   }
   let handlePressName = text => {
