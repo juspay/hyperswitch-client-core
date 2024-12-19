@@ -63,6 +63,10 @@ jobs:
       - name: Detox rebuild framework cache
         run: npx detox rebuild-framework-cache
 
+      - name: Generate & Supply JS Bundle to App
+        run: |
+          npm run re:start && npm run bundle:ios
+
       - name: Cache Detox build
         id: cache-detox-build
         uses: actions/cache@v3
