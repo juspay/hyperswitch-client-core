@@ -33,7 +33,11 @@ describe('Example', () => {
     await waitFor(element(by.id(testIds.cardNumberInputTestId))).toBeVisible();
 
     await element(by.id(testIds.cardNumberInputTestId)).clearText();
-    await element(by.id(testIds.cardNumberInputTestId)).replaceText('4242424242424242');
+
+    const cardNumberInput = await element(by.id(testIds.cardNumberInputTestId))
+
+    device.getPlatform() == "ios" ?
+      await cardNumberInput.typeText('4242424242424242') : await cardNumberInput.replaceText('4242424242424242');
 
     await waitFor(element(by.id(testIds.expiryInputTestId))).toExist();
     await waitFor(element(by.id(testIds.expiryInputTestId))).toBeVisible();
@@ -50,8 +54,17 @@ describe('Example', () => {
 
 
     await element(by.id(testIds.payButtonTestId)).tap();
-    await waitFor(element(by.text('succeeded')))
-      .toBeVisible()
-      .withTimeout(10000);
+
+    if (device.getPlatform() === "ios") {
+      await waitFor(element(by.text('Payment complete')))
+        .toBeVisible()
+        .withTimeout(10000);
+    }
+    else {
+      await waitFor(element(by.text('succeeded')))
+        .toBeVisible()
+        .withTimeout(10000);
+    }
+
   });
 });
