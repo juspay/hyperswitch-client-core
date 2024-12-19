@@ -30,6 +30,14 @@ jobs:
           mv package.json.tmp package.json
           npm install
 
+      - name: Create .env file
+        run: |
+          touch .env
+          echo  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+          echo STATIC_DIR = ./dist >> .env
+          echo HYPERSWITCH_PUBLISHABLE_KEY =  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}>> .env
+          echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
+
       - name: Start server
         run: |
           nohup node server.js &
