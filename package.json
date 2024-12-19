@@ -32,6 +32,8 @@
     "test": "jest",
     "android:e2e": "npx detox test --configuration android.emu.debug  --loglevel trace --record-logs all",
     "build:android-e2e": "npx detox build --configuration  android.emu.debug",
+    "build:ios-e2e": "npx detox build --configuration ios.sim.debug",
+    "ios-e2e": "npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all",
     "prepare": "husky"
   },
   "dependencies": {
