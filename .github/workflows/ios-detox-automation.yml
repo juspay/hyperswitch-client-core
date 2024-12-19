@@ -4,7 +4,7 @@ on: push
 
 jobs:
   e2e-ios:
-    runs-on: macos-latest
+    runs-on: macos-14
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -44,9 +44,10 @@ jobs:
 
       - name: Install CocoaPods
         run: |
+          ls
           pod setup --verbose
           sudo gem install cocoapods
-          cd ios && ls
+          cd ios
           pod install
           cd ..
 
