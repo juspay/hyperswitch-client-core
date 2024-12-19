@@ -45,6 +45,7 @@ jobs:
       - name: Install CocoaPods
         if: steps.cache-cocoapods.outputs.cache-hit != 'true'
         run: |
+          pod setup --verbose
           cd ios
           pod install
           cd ..
