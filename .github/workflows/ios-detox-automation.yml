@@ -33,22 +33,20 @@ jobs:
       # - name: Setup Ruby, JRuby and TruffleRuby
       #   uses: ruby/setup-ruby@v1.204.0
 
-      - name: Cache CocoaPods
-        id: cache-cocoapods
-        uses: actions/cache@v3
-        with:
-          path: ios/Pods
-          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
+      # - name: Cache CocoaPods
+      #   id: cache-cocoapods
+      #   uses: actions/cache@v3
+      #   with:
+      #     path: ios/Pods
+      #     key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+      #     restore-keys: |
+      #       ${{ runner.os }}-pods-
 
       - name: Install CocoaPods
-        if: steps.cache-cocoapods.outputs.cache-hit != 'true'
         run: |
           pod setup --verbose
           sudo gem install cocoapods
-          cd ios
-          ls
+          cd ios && ls
           pod install
           cd ..
 
