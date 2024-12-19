@@ -16,16 +16,15 @@ jobs:
 
       - name: Dependency Install
         run: |
-          curl -o package.json -L https://raw.githubusercontent.com/juspay/hyperswitch-client-core/main/package.json
           jq 'del(.resolutions) | 
           del(.dependencies["react-native-hyperswitch-netcetera-3ds"]) | 
           del(.dependencies["react-native-hyperswitch-scancard"])' package.json > package.json.tmp && 
           mv package.json.tmp package.json
-          yarn
-          cd frameworkgen
-          brew bundle install --no-lock --file Brewfile
-          bundle install
-          xcodegen && RCT_NEW_ARCH_ENABLED=0 USE_FRAMEWORKS=dynamic bundle exec pod install --verbose && scripts/xcode_env.sh
+           yarn
+           cd frameworkgen
+           brew bundle install --no-lock --file Brewfile
+           bundle install
+           xcodegen && RCT_NEW_ARCH_ENABLED=0 USE_FRAMEWORKS=dynamic bundle exec pod install --verbose && scripts/xcode_env.sh
 
       - name: Install macOS dependencies
         run: |
