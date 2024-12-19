@@ -20,7 +20,7 @@ jobs:
           del(.dependencies["react-native-hyperswitch-netcetera-3ds"]) | 
           del(.dependencies["react-native-hyperswitch-scancard"])' package.json > package.json.tmp && 
           mv package.json.tmp package.json
-          yarn
+          npm install
 
       - name: Install macOS dependencies
         run: |
