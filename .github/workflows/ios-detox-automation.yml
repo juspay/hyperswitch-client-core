@@ -45,6 +45,8 @@ jobs:
       - name: Install CocoaPods
         run: |
           ls
+          cd ios
+          ls
           pod setup --verbose
           sudo gem install cocoapods
           cd ios
