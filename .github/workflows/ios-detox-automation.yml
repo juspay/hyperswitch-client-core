@@ -9,6 +9,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Checkout iOS Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-ios
+          ref: main
+          path: ios
+          fetch-depth: 0
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
