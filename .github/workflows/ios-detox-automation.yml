@@ -61,7 +61,7 @@ jobs:
           cd ..
 
       - name: Detox rebuild framework cache
-        run: yarn detox rebuild-framework-cache
+        run: npx detox rebuild-framework-cache
 
       - name: Cache Detox build
         id: cache-detox-build
@@ -73,10 +73,10 @@ jobs:
             ${{ runner.os }}-detox-build
 
       - name: Detox build
-        run: yarn detox build --configuration ios.sim.debug
+        run: npx detox build --configuration ios.sim.debug
 
       - name: Detox test
-        run: yarn detox test --configuration ios.sim.debug  --loglevel trace --record-logs all
+        run: npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all
 
       - name: Upload artifacts
         if: failure()
