@@ -58,7 +58,7 @@ let make = (
     expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
     let cardBrand = getCardBrand(text)
-    let num = formatCardNumber(text, cardType(cardBrand))
+    let num = formatCardNumber(text, getCardType(cardBrand))
     let isthisValid = cardValid(num, cardBrand)
 
     setCardData(prev => {...prev, cardNumber: num, isCardNumberValid: Some(isthisValid)})
@@ -115,7 +115,7 @@ let make = (
     cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
     let cardBrand = getCardBrand(pan)
-    let cardNumber = formatCardNumber(pan, cardType(cardBrand))
+    let cardNumber = formatCardNumber(pan, getCardType(cardBrand))
     let isCardValid = cardValid(cardNumber, cardBrand)
     let expireDate = formatCardExpiryNumber(expiry)
     let isExpiryValid = checkCardExpiry(expireDate)
