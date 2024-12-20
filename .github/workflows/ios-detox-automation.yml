@@ -79,9 +79,13 @@ jobs:
       - name: Detox rebuild framework cache
         run: npx detox rebuild-framework-cache
 
-      - name: Generate & Supply JS Bundle to App
+      - name: Start Rescript
         run: |
-          npm run re:start && npm run start
+          npm run re:start
+
+      - name: Start Metro
+        run: |
+          nohup npm run start &
 
       - name: Cache Detox build
         id: cache-detox-build
