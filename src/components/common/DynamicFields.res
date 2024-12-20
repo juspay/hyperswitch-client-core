@@ -1,7 +1,10 @@
 open ReactNative
 open Style
 open RequiredFieldsTypes
-
+type customValidationFunc =
+  | Error(string)
+  | OtherValidation
+  | NoError
 module RenderField = {
   let getStateData = (states, country) => {
     states
@@ -42,9 +45,11 @@ module RenderField = {
     ~required_fields_type: RequiredFieldsTypes.required_fields_type,
     ~setFinalJsonDict,
     ~finalJsonDict,
+    ~customValidationFunc,
     ~isSaveCardsFlow,
     ~statesJson: option<JSON.t>,
     ~keyToTrigerButtonClickError,
+    ~customOnChangeFunc,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
     let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -98,12 +103,24 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let tempValid = RequiredFieldsTypes.checkIsValid(
-              ~text,
-              ~field_type=required_fields_type.field_type,
-              ~localeObject,
-            )
-
+            let tempValid = switch switch customValidationFunc {
+            | Some(validation) =>
+              validation(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~display_name=Some(required_fields_type.display_name),
+              )
+            | None => OtherValidation
+            } {
+            | Error(errorMessage) => Some(errorMessage)
+            | OtherValidation =>
+              RequiredFieldsTypes.checkIsValid(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~localeObject,
+              )
+            | NoError => None
+            }
             let isCountryField = switch required_fields_type.field_type {
             | AddressCountry(_) => true
             | _ => false
@@ -178,7 +195,11 @@ module RenderField = {
       setVal(val)
     }
     let onChange = text => {
-      setVal(_ => text)
+      switch customOnChangeFunc {
+      | Some(setter) =>
+        setVal(prev => setter(~text, ~field_type=required_fields_type.field_type, ~prev))
+      | None => setVal(_ => text)
+      }
     }
     React.useEffect1(() => {
       keyToTrigerButtonClickError != 0
@@ -281,7 +302,9 @@ module Fields = {
     ~setFinalJsonDict,
     ~isSaveCardsFlow,
     ~statesJson,
+    ~customValidationFunc,
     ~keyToTrigerButtonClickError,
+    ~customOnChangeFunc,
   ) => {
     fields
     ->Array.mapWithIndex((item, index) =>
@@ -292,7 +315,9 @@ module Fields = {
           key={index->Int.toString}
           isSaveCardsFlow
           statesJson
+          customValidationFunc
           finalJsonDict
+          customOnChangeFunc
           setFinalJsonDict
           keyToTrigerButtonClickError
         />
@@ -314,6 +339,8 @@ let make = (
   ~keyToTrigerButtonClickError,
   ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
+  ~customValidationFunc=None,
+  ~customOnChangeFunc=None,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
@@ -425,7 +452,9 @@ let make = (
             setFinalJsonDict
             isSaveCardsFlow
             statesJson
+            customValidationFunc
             keyToTrigerButtonClickError
+            customOnChangeFunc
           />
         </>
       : React.null
