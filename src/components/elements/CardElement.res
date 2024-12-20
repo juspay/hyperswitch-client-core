@@ -1,4 +1,4 @@
-open Validation
+open ValidationUtils
 open CardExpiryValidation
 open CardNumberValidation
 type cardFormType = {isZipAvailable: bool}
