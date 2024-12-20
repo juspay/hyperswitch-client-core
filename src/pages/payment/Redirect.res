@@ -1,7 +1,7 @@
 open ReactNative
 open PaymentMethodListType
 open CustomPicker
-
+open RequiredFieldsTypes
 type klarnaSessionCheck = {
   isKlarna: bool,
   session_token: string,
@@ -13,7 +13,7 @@ let make = (
   ~fields: Types.redirectTypeJson,
   ~isScreenFocus,
   ~isDynamicFields: bool=false,
-  ~dynamicFields: RequiredFieldsTypes.required_fields=[],
+  ~dynamicFields: required_fields=[],
   ~setConfirmButtonDataRef: React.element => unit,
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
 ) => {
@@ -23,6 +23,16 @@ let make = (
       payment_method: "",
       payment_method_type: "",
       payment_method_type_wallet: NONE,
+      payment_experience: [],
+      required_field: [],
+    }
+  }
+  let bankDebitType: PaymentMethodListType.payment_method_types_bank_debit = switch redirectProp {
+  | BANK_DEBIT(bankDebitVal) => bankDebitVal
+  | _ => {
+      payment_method: "",
+      payment_method_type: "",
+      payment_method_type_var: NONE,
       payment_experience: [],
       required_field: [],
     }
@@ -391,8 +401,7 @@ let make = (
       let middleData = Dict.make()
       middleData->Dict.set(prop.payment_method, innerData->JSON.Encode.object)
       payment_method_data->Dict.set("payment_method_data", middleData->JSON.Encode.object)
-      let dynamic_pmd =
-        payment_method_data->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
+      let dynamic_pmd = payment_method_data->mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
       processRequest(
         ~payment_method_data=dynamic_pmd
         ->Utils.getJsonObjectFromDict("payment_method_data")
@@ -525,7 +534,7 @@ let make = (
 
   React.useEffect0(() => {
     // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    importStates("./../../utility/reusableCodeFromWeb/States.json")
     ->Promise.then(res => {
       setStatesJson(_ => Some(res.states))
       Promise.resolve()
@@ -876,8 +885,7 @@ let make = (
       acc
     })
 
-    let payment_method_data =
-      dynamicFieldsJsonDict->JSON.Encode.object->RequiredFieldsTypes.unflattenObject
+    let payment_method_data = dynamicFieldsJsonDict->JSON.Encode.object->unflattenObject
     processRequest(
       ~payment_method_data=payment_method_data
       ->Utils.getJsonObjectFromDict("payment_method_data")
@@ -987,10 +995,7 @@ let make = (
         DynamicFields.NoError
       } else {
         DynamicFields.Error(
-          localeObject.enterDigitsText(
-            digits->Int.toString,
-            Some(display_name->RequiredFieldsTypes.toCamelCase),
-          ),
+          localeObject.enterDigitsText(digits->Int.toString, Some(display_name->toCamelCase)),
         )
       }
     } else {
@@ -998,13 +1003,31 @@ let make = (
     }
   }
 
-  let customValidation = React.useCallback((~text, ~field_type, ~display_name) => {
+  let customValidationFunc = React.useCallback((~text, ~field_type, ~display_name) => {
     switch field_type {
-    | RequiredFieldsTypes.AccountNumber =>
-      numberOfDigitsValidation(text, 12, display_name->Option.getOr(""))
-    | RequiredFieldsTypes.RoutingNumber =>
-      numberOfDigitsValidation(text, 9, display_name->Option.getOr(""))
+    | AccountNumber => numberOfDigitsValidation(text, 12, display_name->Option.getOr(""))
+    | RoutingNumber => numberOfDigitsValidation(text, 9, display_name->Option.getOr(""))
     | _ => DynamicFields.OtherValidation
+    }
+  }, [paymentMethod])
+
+  let customOnChangeFunc = React.useCallback((~text, ~field_type, ~prev) => {
+    switch field_type {
+    | AccountNumber =>
+      let val = text->Option.getOr("")->Validation.clearSpaces
+      if val->String.length <= 12 {
+        Some(val)
+      } else {
+        prev
+      }
+    | RoutingNumber =>
+      let val = text->Option.getOr("")->Validation.clearSpaces
+      if val->String.length <= 9 {
+        Some(val)
+      } else {
+        prev
+      }
+    | _ => text
     }
   }, [paymentMethod])
 
@@ -1033,8 +1056,12 @@ let make = (
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
-                customValidation={switch paymentMethod {
-                | "ach" => Some(customValidation)
+                customOnChangeFunc={switch bankDebitType.payment_method_type_var {
+                | ACH => Some(customOnChangeFunc)
+                | _ => None
+                }}
+                customValidationFunc={switch bankDebitType.payment_method_type_var {
+                | ACH => Some(customValidationFunc)
                 | _ => None
                 }}
               />

@@ -1,7 +1,7 @@
 open ReactNative
 open Style
 open RequiredFieldsTypes
-type customValidation =
+type customValidationFunc =
   | Error(string)
   | OtherValidation
   | NoError
@@ -45,10 +45,11 @@ module RenderField = {
     ~required_fields_type: RequiredFieldsTypes.required_fields_type,
     ~setFinalJsonDict,
     ~finalJsonDict,
-    ~customValidation,
+    ~customValidationFunc,
     ~isSaveCardsFlow,
     ~statesJson: option<JSON.t>,
     ~keyToTrigerButtonClickError,
+    ~customOnChangeFunc,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
     let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -102,7 +103,7 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let tempValid = switch switch customValidation {
+            let tempValid = switch switch customValidationFunc {
             | Some(validation) =>
               validation(
                 ~text,
@@ -194,7 +195,11 @@ module RenderField = {
       setVal(val)
     }
     let onChange = text => {
-      setVal(_ => text)
+      switch customOnChangeFunc {
+      | Some(setter) =>
+        setVal(prev => setter(~text, ~field_type=required_fields_type.field_type, ~prev))
+      | None => setVal(_ => text)
+      }
     }
     React.useEffect1(() => {
       keyToTrigerButtonClickError != 0
@@ -297,8 +302,9 @@ module Fields = {
     ~setFinalJsonDict,
     ~isSaveCardsFlow,
     ~statesJson,
-    ~customValidation,
+    ~customValidationFunc,
     ~keyToTrigerButtonClickError,
+    ~customOnChangeFunc,
   ) => {
     fields
     ->Array.mapWithIndex((item, index) =>
@@ -309,8 +315,9 @@ module Fields = {
           key={index->Int.toString}
           isSaveCardsFlow
           statesJson
-          customValidation
+          customValidationFunc
           finalJsonDict
+          customOnChangeFunc
           setFinalJsonDict
           keyToTrigerButtonClickError
         />
@@ -332,7 +339,8 @@ let make = (
   ~keyToTrigerButtonClickError,
   ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
-  ~customValidation=None,
+  ~customValidationFunc=None,
+  ~customOnChangeFunc=None,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
@@ -444,8 +452,9 @@ let make = (
             setFinalJsonDict
             isSaveCardsFlow
             statesJson
-            customValidation
+            customValidationFunc
             keyToTrigerButtonClickError
+            customOnChangeFunc
           />
         </>
       : React.null
