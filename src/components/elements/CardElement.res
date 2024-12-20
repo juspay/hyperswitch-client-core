@@ -58,11 +58,11 @@ let make = (
     let cardBrand = getCardBrand(text)
     let num = formatCardNumber(text, cardType(cardBrand))
     let isthisValid = cardValid(num, cardBrand)
-
+    let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
     setCardData(prev => {...prev, cardNumber: num, isCardNumberValid: Some(isthisValid)})
 
     // Adding support for 19 digit card hence disabling ref
-    if isthisValid {
+    if isthisValid && shouldShiftFocusToNextField {
       switch expireRef.current->Nullable.toOption {
       | None => ()
       | Some(ref) => ref->ReactNative.TextInputElement.focus
