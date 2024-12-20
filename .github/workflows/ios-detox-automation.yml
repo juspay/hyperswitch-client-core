@@ -81,7 +81,7 @@ jobs:
 
       - name: Generate & Supply JS Bundle to App
         run: |
-          npm run re:start && npm run bundle:ios
+          npm run re:start && npm run start
 
       - name: Cache Detox build
         id: cache-detox-build
