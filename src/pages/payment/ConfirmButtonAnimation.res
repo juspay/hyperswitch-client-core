@@ -51,6 +51,7 @@ let make = (
       linearGradientColorTuple=Some(isAllValuesValid ? payNowButtonColor : ("#CCCCCC", "#CCCCCC"))
       text={displayText == "Pay Now" ? localeObject.payNowButton : displayText}
       name="Pay"
+      testID={TestUtils.payButtonTestId}
       onPress={ev => {
         if !(isAllValuesValid && hasSomeFields) {
           logger(
