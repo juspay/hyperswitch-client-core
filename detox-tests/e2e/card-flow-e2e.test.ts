@@ -1,6 +1,8 @@
 import * as testIds from "../../src/utility/test/TestUtils.bs.js";
 import { device } from "detox"
-describe('Example', () => {
+import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT } from "../fixtures/Constants"
+import { waitForVisibility, typeTextInInput } from "../utils/DetoxHelpers"
+describe('card-flow-e2e-test', () => {
   jest.retryTimes(6);
   beforeAll(async () => {
     await device.launchApp({
@@ -11,60 +13,44 @@ describe('Example', () => {
   });
 
   it('demo app should load successfully', async () => {
-    await waitFor(element(by.text('Launch Payment Sheet')))
-      .toBeVisible()
-      .withTimeout(10000);
-    await element(by.text('Launch Payment Sheet')).tap();
-
-    await waitFor(element(by.text('Test Mode')))
-      .toBeVisible()
-      .withTimeout(10000);
+    await waitForVisibility(element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)))
   });
 
-  it('should enter card no', async () => {
-    await device.enableSynchronization();
-    await waitFor(element(by.text('1234 1234 1234 1234')))
-      .toBeVisible()
-      .withTimeout(10000);
+  it('payment sheet should open', async () => {
+    await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
+    await waitForVisibility(element(by.text('Test Mode')))
+  })
 
-    await element(by.id(testIds.cardNumberInputTestId)).tap();
-
-    await waitFor(element(by.id(testIds.cardNumberInputTestId))).toExist();
-    await waitFor(element(by.id(testIds.cardNumberInputTestId))).toBeVisible();
-
-    await element(by.id(testIds.cardNumberInputTestId)).clearText();
-
+  it('should enter details in card form', async () => {
     const cardNumberInput = await element(by.id(testIds.cardNumberInputTestId))
+    const expiryInput = await element(by.id(testIds.expiryInputTestId))
+    const cvcInput = await element(by.id(testIds.cvcInputTestId))
 
-    device.getPlatform() == "ios" ?
-      await cardNumberInput.typeText('4242424242424242') : await cardNumberInput.replaceText('4242424242424242');
+    await waitFor(cardNumberInput).toExist();
+    await waitForVisibility(cardNumberInput);
+    await cardNumberInput.tap();
 
-    await waitFor(element(by.id(testIds.expiryInputTestId))).toExist();
-    await waitFor(element(by.id(testIds.expiryInputTestId))).toBeVisible();
-    await element(by.id(testIds.expiryInputTestId)).typeText('04/44');
+    await cardNumberInput.clearText();
+    await typeTextInInput(cardNumberInput, visaSandboxCard.cardNumber)
 
-    await waitFor(element(by.id(testIds.cvcInputTestId))).toExist();
-    await waitFor(element(by.id(testIds.cvcInputTestId))).toBeVisible();
-    await element(by.id(testIds.cvcInputTestId)).typeText('123');
+    await waitFor(expiryInput).toExist();
+    await waitForVisibility(expiryInput);
+    await expiryInput.typeText(visaSandboxCard.expiryDate);
 
-
-    await waitFor(element(by.id(testIds.payButtonTestId)))
-      .toBeVisible()
-      .withTimeout(10000);
-
-
-    await element(by.id(testIds.payButtonTestId)).tap();
-
-    if (device.getPlatform() === "ios") {
-      await waitFor(element(by.text('Payment complete')))
-        .toBeVisible()
-        .withTimeout(10000);
-    }
-    else {
-      await waitFor(element(by.text('succeeded')))
-        .toBeVisible()
-        .withTimeout(10000);
-    }
-
+    await waitFor(cvcInput).toExist();
+    await waitForVisibility(cvcInput);
+    await cvcInput.typeText(visaSandboxCard.cvc);
   });
+
+  it('should be able to succesfully complete card payment', async () => {
+    const payNowButton = await element(by.id(testIds.payButtonTestId))
+    await waitFor(payNowButton).toExist();
+    await waitForVisibility(payNowButton)
+    await payNowButton.tap();
+
+    if (device.getPlatform() === "ios")
+      await waitForVisibility(element(by.text('Payment complete')))
+    else
+      await waitForVisibility(element(by.text('succeeded')))
+  })
 });

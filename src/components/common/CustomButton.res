@@ -11,7 +11,7 @@ let make = (
   ~loadingText="Loading..",
   ~buttonState: buttonState=Normal,
   ~text=?,
-  ~name=?,
+  ~name as _=?,
   ~buttonType: buttonType=Primary,
   ~leftIcon: iconType=NoIcon,
   ~rightIcon: iconType=NoIcon,
@@ -144,7 +144,7 @@ let make = (
                 text={switch buttonState {
                 | LoadingButton => loadingText
                 | Completed => "Complete"
-                | _ => name->Option.getOr("")
+                | _ => textStr
                 }}
                 // textType=CardText
                 textType={ButtonTextBold}
