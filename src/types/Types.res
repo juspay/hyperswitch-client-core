@@ -97,6 +97,12 @@ let defaultConfig = {
       header: "",
       fields: [],
     },
+    {
+      name: "sepa",
+      text: "Sepa Debit",
+      header: "",
+      fields: [],
+    },
     // {
     //   name: "google_pay",
     //   text: "Google Pay",
