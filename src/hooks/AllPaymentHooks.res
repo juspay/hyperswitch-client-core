@@ -266,7 +266,15 @@ let useBrowserHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
-  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
+  (
+    ~clientSecret,
+    ~publishableKey,
+    ~openUrl,
+    ~responseCallback,
+    ~errorCallback,
+    ~processor,
+    ~paymentMethod=?,
+  ) => {
     BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId, intervalId)
     ->Promise.then(res => {
       if res.error === Success {
@@ -331,6 +339,17 @@ let useBrowserHook = () => {
             }),
           },
         })
+        if paymentMethod->Option.getOr("") == "ach" {
+          responseCallback(
+            ~paymentStatus=ProcessingPayments(None),
+            ~status={
+              message: "Bank Debit Payment Method: Transactions through this method typically take 1-4 business days to process. Please ensure a valid descriptor code, starting with 'SM,' is provided to initiate the payment successfully.",
+              code: "",
+              type_: "",
+              status: "failed",
+            },
+          )
+        }
         errorCallback(
           ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
           ~closeSDK={false},
@@ -481,6 +500,7 @@ let useRedirectHook = () => {
               ~openUrl=reUri,
               ~responseCallback,
               ~errorCallback,
+              ~paymentMethod,
               ~processor=body,
             )
           }
