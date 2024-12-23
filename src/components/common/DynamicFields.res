@@ -126,7 +126,7 @@ module RenderField = {
             let arr = text->String.split(" ")
 
             let firstNameVal = arr->Array.get(0)->Option.getOr("")
-            let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join("")
+            let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
             let isBillingFields =
               required_fields_type.field_type === BillingName ||
                 required_fields_type.field_type === ShippingName
