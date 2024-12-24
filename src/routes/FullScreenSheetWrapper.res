@@ -52,6 +52,16 @@ let make = (~children) => {
     None
   }, [loading])
 
+  let navigationBarHeight = React.useMemo(() => {
+    if Platform.os !== #android {
+      0.
+    } else {
+      let screenHeight = Dimensions.get(#screen).height
+      let windowHeight = Dimensions.get(#window).height
+      screenHeight -. windowHeight
+    }
+  }, [])
+
   <View
     style={viewStyle(
       ~flex=1.,
@@ -68,7 +78,10 @@ let make = (~children) => {
         (),
       )}>
       <CustomView onDismiss=onModalClose>
-        <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
+        <CustomView.Wrapper onModalClose>
+          {children}
+          <Space height={navigationBarHeight} />
+        </CustomView.Wrapper>
       </CustomView>
     </Animated.View>
     <LoadingOverlay />
