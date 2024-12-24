@@ -349,12 +349,13 @@ let useBrowserHook = () => {
               status: "failed",
             },
           )
+        } else {
+          errorCallback(
+            ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
+            ~closeSDK={false},
+            (),
+          )
         }
-        errorCallback(
-          ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
-          ~closeSDK={false},
-          (),
-        )
       } else if res.error === Failed {
         setAllApiData({
           ...allApiData,

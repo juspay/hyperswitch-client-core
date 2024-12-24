@@ -992,14 +992,12 @@ let make = (
   let numberOfDigitsValidation = (text, digits, display_name) => {
     if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
       if text->String.length == digits {
-        DynamicFields.NoError
+        None
       } else {
-        DynamicFields.Error(
-          localeObject.enterDigitsText(digits->Int.toString, Some(display_name->toCamelCase)),
-        )
+        Some(localeObject.enterDigitsText(digits->Int.toString, Some(display_name->toCamelCase)))
       }
     } else {
-      DynamicFields.Error(localeObject.enterValidDetailsText)
+      Some(localeObject.enterValidDetailsText)
     }
   }
 
@@ -1007,7 +1005,7 @@ let make = (
     switch field_type {
     | AccountNumber => numberOfDigitsValidation(text, 12, display_name->Option.getOr(""))
     | RoutingNumber => numberOfDigitsValidation(text, 9, display_name->Option.getOr(""))
-    | _ => DynamicFields.OtherValidation
+    | _ => RequiredFieldsTypes.checkIsValid(~text, ~field_type, ~localeObject) // need for other all fields
     }
   }, [paymentMethod])
 

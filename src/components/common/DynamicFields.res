@@ -1,10 +1,7 @@
 open ReactNative
 open Style
 open RequiredFieldsTypes
-type customValidationFunc =
-  | Error(string)
-  | OtherValidation
-  | NoError
+
 module RenderField = {
   let getStateData = (states, country) => {
     states
@@ -103,40 +100,36 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let tempValid = switch switch customValidationFunc {
+            let validationErrMsg = switch customValidationFunc {
             | Some(validation) =>
               validation(
                 ~text,
                 ~field_type=required_fields_type.field_type,
                 ~display_name=Some(required_fields_type.display_name),
               )
-            | None => OtherValidation
-            } {
-            | Error(errorMessage) => Some(errorMessage)
-            | OtherValidation =>
+            | None =>
               RequiredFieldsTypes.checkIsValid(
                 ~text,
                 ~field_type=required_fields_type.field_type,
                 ~localeObject,
               )
-            | NoError => None
             }
             let isCountryField = switch required_fields_type.field_type {
             | AddressCountry(_) => true
             | _ => false
             }
 
-            setErrorMesage(_ => tempValid)
+            setErrorMesage(_ => validationErrMsg)
             setFinalJsonDict(prev => {
               let newData = Dict.assign(Dict.make(), prev)
               if isCountryField {
                 let stateKey = getKey(stringFieldPath, "state")
                 switch newData->Dict.get(stateKey) {
-                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, tempValid))
+                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, validationErrMsg))
                 | None => ()
                 }
               }
-              newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, tempValid))
+              newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, validationErrMsg))
               newData
             })
           | FullNameField(firstNameFieldPath, lastNameFieldPath) =>
