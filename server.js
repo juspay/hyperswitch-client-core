@@ -18,7 +18,7 @@ try {
 
 app.get('/create-payment-intent', async (req, res) => {
   try {
-    var paymentIntent = await hyper.paymentIntents.create({
+    const createPaymentBody = {
       amount: 2999,
       currency: 'USD',
       authentication_type: 'no_three_ds',
@@ -26,7 +26,6 @@ app.get('/create-payment-intent', async (req, res) => {
       capture_method: 'automatic',
       email: 'abc@gmail.com',
       business_country: 'US',
-      profile_id: 'pro_ihVPK2u35TOUOp6ipPjF',
       billing: {
         address: {
           line1: '1467',
@@ -53,7 +52,14 @@ app.get('/create-payment-intent', async (req, res) => {
           last_name: 'Doe',
         },
       },
-    });
+    };
+
+    const profileId = process.env.PROFILE_ID;
+    if (profileId) {
+      createPaymentBody.profile_id = profileId;
+    }
+
+    var paymentIntent = await hyper.paymentIntents.create(createPaymentBody);
 
     // Send publishable key and PaymentIntent details to client
     res.send({

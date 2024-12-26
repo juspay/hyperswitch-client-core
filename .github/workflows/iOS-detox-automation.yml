@@ -37,6 +37,7 @@ jobs:
           echo STATIC_DIR = ./dist >> .env
           echo HYPERSWITCH_PUBLISHABLE_KEY =  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}>> .env
           echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
+          echo PROFILE_ID =  ${{ secrets.PROFILE_ID }}>> .env
 
       - name: Start server
         run: |
