@@ -309,15 +309,16 @@ let cvcNumberEqualsMaxLength = (val, cardBrand) => {
   cvcMaxLengthEquals
 }
 let isValidIban = text => {
-  let lengthValid = switch text->String.match(%re("/[a-zA-Z0-9]/g")) {
-  | Some(_) => text->String.length > 15 && text->String.length <= 34
+  let trimmedText = text->String.trim
+  let lengthValid = switch trimmedText->String.match(%re("/[a-zA-Z0-9]/g")) {
+  | Some(_) => trimmedText->String.length > 15 && trimmedText->String.length <= 34
   | None => false
   }
-  let firstTwoAlphabets = switch text->String.match(%re("/^[a-zA-Z]{2}/")) {
+  let firstTwoAlphabetsAndDigits = switch trimmedText->String.match(%re("/^[A-Z]{2}[0-9]{2}/")) {
   | Some(_) => true
   | None => false
   }
-  lengthValid && firstTwoAlphabets
+  lengthValid && firstTwoAlphabetsAndDigits
 }
 // let genreateFontsLink = (fonts: array<CardThemeType.fonts>) => {
 //   if fonts->Array.length > 0 {
@@ -558,4 +559,7 @@ let containsMoreThanTwoDigits = text => {
   | Some(matches) => matches->Array.length > 2
   | None => false
   }
+}
+let containsOnlyDigits = text => {
+  %re("/^[0-9]*$/")->Js.Re.test_(text)
 }
