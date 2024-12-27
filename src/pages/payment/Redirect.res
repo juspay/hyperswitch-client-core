@@ -883,11 +883,7 @@ let make = (
       acc,
       (key, (val, _)),
     ) => {
-      let updatedKey = switch prop.payment_method_type {
-      | _ => prop.payment_method_type ++ "_bank_debit"
-      }
-
-      acc->Dict.set(key->String.replace(prop.payment_method_type, updatedKey), val)
+      acc->Dict.set(key, val)
       acc
     })
 
