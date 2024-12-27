@@ -1,12 +1,13 @@
 open ReactNative
 open Style
 type modalPosition = [#center | #top | #bottom]
+
 @react.component
 let make = (
   ~onDismiss=() => (),
   ~children,
   ~closeOnClickOutSide=true,
-  ~modalPosition: modalPosition=#bottom,
+  ~modalPosition=#bottom,
   ~bottomModalWidth=100.->pct,
   (),
 ) => {
@@ -68,14 +69,50 @@ module Wrapper = {
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
 
-    <Animated.ScrollView
+    let defaultHeight = 25.
+    let navigationBarHeight = React.useMemo(() => {
+      if Platform.os !== #android {
+        defaultHeight
+      } else {
+        let screenHeight = Dimensions.get(#screen).height
+        let windowHeight = Dimensions.get(#window).height
+        let statusBarHeight = StatusBar.currentHeight
+        let navigationHeight = screenHeight -. windowHeight -. statusBarHeight
+        Math.min(75., Math.max(0., navigationHeight) +. defaultHeight)
+      }
+    }, [])
+
+    let windowHeight = Dimensions.get(#window).height
+    let maxScrollViewHeight = (windowHeight*.0.95 -. navigationBarHeight)
+    let (isScrollable, setIsScrollable) = React.useState(_ => false)
+
+    <ScrollView
+      onLayout={event => {
+        let height = event.nativeEvent.layout.height
+        if height > maxScrollViewHeight {
+          setIsScrollable(_ => true)
+        } else {
+          setIsScrollable(_ => false)
+        }
+      }}
+      contentContainerStyle={viewStyle(
+        ~paddingBottom=isScrollable ? (navigationBarHeight +. 15.)->dp : navigationBarHeight->dp,
+        (),
+      )}
       keyboardShouldPersistTaps={#handled}
       style={array([
-        viewStyle(~flexGrow=1., ~width, ~minHeight=250.->dp, ~padding=20.->dp, ()),
+        viewStyle(
+          ~flexGrow=1.,
+          ~width,
+          ~minHeight=250.->dp,
+          ~paddingHorizontal=20.->dp,
+          ~paddingTop=20.->dp,
+          (),
+        ),
         bgColor,
       ])}>
       <ModalHeader onModalClose />
       children
-    </Animated.ScrollView>
+    </ScrollView>
   }
 }
