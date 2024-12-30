@@ -21,6 +21,7 @@ let make = (
   ~borderRadius=0.,
   ~borderColor="#ffffff",
   ~children=None,
+  ~testID=?,
 ) => {
   let fillAnimation = React.useRef(Animated.Value.create(0.)).current
   let {
@@ -105,6 +106,7 @@ let make = (
     ])}>
     <CustomTouchableOpacity
       disabled
+      testID={testID->Option.getOr("")}
       style={array([
         viewStyle(
           ~height=100.->pct,
