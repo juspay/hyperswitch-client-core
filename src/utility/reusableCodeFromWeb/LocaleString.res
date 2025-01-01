@@ -68,6 +68,7 @@ type localeStrings = {
   walletDisclaimer: string,
   deletePaymentMethod?: string,
   enterDigitsText?: string => string,
+  enterValidIban : string,
 }
 
 let defaultLocale = {
@@ -142,6 +143,7 @@ let defaultLocale = {
   walletDisclaimer: "Wallet details will be saved upon selection",
   deletePaymentMethod: "Delete",
   enterDigitsText: number => `Please enter valid ${number} digits`,
+  enterValidIban : `Please enter valid Iban`
 }
 
 type locale = {localeStrings: array<localeStrings>}
@@ -219,6 +221,7 @@ let localeStrings = [
     walletDisclaimer: "Wallet details will be saved upon selection",
     deletePaymentMethod: "Delete",
     enterDigitsText: number => `Please enter valid ${number} digits`,
+    enterValidIban: `Please enter valid Iban`
   },
   //    Hebrew (he),
   {
@@ -292,6 +295,7 @@ let localeStrings = [
     addPaymentMethodLabel: `הוסף שיטת תשלום חדשה`,
     cardHolderNameRequiredText: `נדרש שם בעל הכרטיס`,
     walletDisclaimer: `פרטי הארנק יישמרו עם הבחירה`,
+     enterValidIban: `אנא הזן IBAN תקין`,
   },
   //    French (fr),
   {
@@ -365,6 +369,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
     cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
     walletDisclaimer: `Les détails du portefeuille seront enregistrés lors de la sélection`,
+    enterValidIban: `Veuillez entrer un IBAN valide`,
   },
   //    English (British) (en-GB),
   {
@@ -438,6 +443,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Add new payment method`,
     cardHolderNameRequiredText: `Card Holder's name required`,
     walletDisclaimer: `Wallet details will be saved upon selection`,
+     enterValidIban : `Please enter valid Iban`,
   },
   //    Arabic (ar),
   {
@@ -511,6 +517,7 @@ let localeStrings = [
     addPaymentMethodLabel: `أضف طريقة دفع جديدة`,
     cardHolderNameRequiredText: `اسم حامل البطاقة مطلوب`,
     walletDisclaimer: `سيتم حفظ تفاصيل المحفظة عند الاختيار`,
+    enterValidIban: `الرجاء إدخال IBAN صالح`,
   },
   //    Japanese (ja),
   {
@@ -584,6 +591,7 @@ let localeStrings = [
     addPaymentMethodLabel: `新しい支払い方法を追加`,
     cardHolderNameRequiredText: `カード所有者の名前が必要です`,
     walletDisclaimer: `ウォレットの詳細は選択時に保存されます`,
+    enterValidIban: `有効なIBANを入力してください`,
   },
   //    German (de),
   {
@@ -657,6 +665,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Neue Zahlungsmethode hinzufügen`,
     cardHolderNameRequiredText: `Name des Karteninhabers erforderlich`,
     walletDisclaimer: `Wallet-Details werden bei Auswahl gespeichert`,
+    enterValidIban: `Bitte geben Sie eine gültige IBAN ein`,
   },
   //    French (Belgium) (fr-BE),
   {
@@ -730,6 +739,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Ajouter un nouveau mode de paiement`,
     cardHolderNameRequiredText: `Nom du titulaire de la carte requis`,
     walletDisclaimer: `Les détails du portefeuille seront enregistrés lors de la sélection`,
+    enterValidIban: `Veuillez entrer un IBAN valide`,
   },
   //    Spanish (es)
   {
@@ -803,7 +813,8 @@ let localeStrings = [
     addPaymentMethodLabel: `Agregar nuevo método de pago`,
     cardHolderNameRequiredText: `Se requiere el nombre del titular de la tarjeta`,
     walletDisclaimer: `Los detalles de la billetera se guardarán al realizar la selección.`,
-  },
+    enterValidIban: `Por favor, introduzca un IBAN válido`,
+    },
   //    Catalan (ca)
   {
     locale: "ca",
@@ -876,6 +887,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Afegir un nou mètode de pagament`,
     cardHolderNameRequiredText: `Cal el nom del titular de la targeta`,
     walletDisclaimer: `Els detalls de la cartera es desaran en seleccionar-lo`,
+    enterValidIban: `Si us plau, introdueix un IBAN vàlid`,
   },
   //    Portuguese (pt)
   {
@@ -949,6 +961,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Adicione uma nova forma de pagamento`,
     cardHolderNameRequiredText: `Nome do titular do cartão obrigatório`,
     walletDisclaimer: `Os detalhes da carteira serão salvos após a seleção`,
+    enterValidIban: `Por favor, insira um IBAN válido`,
   },
   //    Italian (it)
   {
@@ -1022,6 +1035,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Aggiungi un nuovo metodo di pagamento`,
     cardHolderNameRequiredText: `È obbligatorio il nome del titolare della carta`,
     walletDisclaimer: `I dettagli del portafoglio verranno salvati al momento della selezione`,
+    enterValidIban: `Si prega di inserire un IBAN valido`,
   },
   //    Polish (pl)
   {
@@ -1095,7 +1109,8 @@ let localeStrings = [
     invalidDigitsNickNameError: "Pseudonim nie może zawierać więcej niż 2 cyfry",
     cardHolderNameRequiredText: `Wymagane jest podanie imienia i nazwiska posiadacza karty`,
     walletDisclaimer: `Szczegóły portfela zostaną zapisane po dokonaniu wyboru`,
-  },
+    enterValidIban: `Proszę wprowadzić prawidłowy IBAN`, 
+   },
   //    Dutch (nl)
   {
     locale: "nl",
@@ -1168,6 +1183,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
     walletDisclaimer: `Portemonneegegevens worden opgeslagen bij selectie`,
+    enterValidIban: `Voer een geldige IBAN in`,
   },
   //    Dutch (Belgium) (nl-BE)
   {
@@ -1241,6 +1257,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Nieuwe betaalmethode toevoegen`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
     walletDisclaimer: `Portemonneegegevens worden opgeslagen bij selectie`,
+    enterValidIban: `Voer een geldige IBAN in`,
   },
   //    Swedish (sv)
   {
@@ -1314,6 +1331,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Lägg till ny betalningsmetod`,
     cardHolderNameRequiredText: `Naam van de kaarthouder vereist`,
     walletDisclaimer: `Information om plånboken sparas vid val`,
+    enterValidIban: `Ange ett giltigt IBAN`,
   },
   //    Russian (ru)
   {
@@ -1387,6 +1405,7 @@ let localeStrings = [
     addPaymentMethodLabel: ` Добавить новый способ оплаты`,
     cardHolderNameRequiredText: `Требуется имя держателя карты`,
     walletDisclaimer: `Данные кошелька будут сохранены после выбора`,
+    enterValidIban: `Пожалуйста, введите действительный IBAN`,
   },
   //    Lithuanian (lt)
   {
@@ -1460,6 +1479,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Pridėti naują mokėjimo būdą`,
     cardHolderNameRequiredText: `Būtinas kortelės turėtojo vardas`,
     walletDisclaimer: `Išsami piniginės informacija bus išsaugota pasirinkus`,
+    enterValidIban: `Prašome įvesti galiojantį IBAN`, 
   },
   //    Czech (cs)
   {
@@ -1533,6 +1553,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Přidat nový způsob platby`,
     cardHolderNameRequiredText: `Je vyžadováno jméno držitele karty`,
     walletDisclaimer: `Podrobnosti o peněžence se po výběru uloží`,
+    enterValidIban: `Zadejte platný IBAN`,
   },
   //    Slovak (sk)
   {
@@ -1606,6 +1627,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Pridať nový spôsob platby`,
     cardHolderNameRequiredText: `Vyžaduje sa meno držiteľa karty`,
     walletDisclaimer: `Podrobnosti o peňaženke sa po výbere uložia`,
+    enterValidIban: `Zadajte platný IBAN`,
   },
   //    Icelandic (is)
   {
@@ -1679,6 +1701,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Bæta við nýrri greiðsluaðferð`,
     cardHolderNameRequiredText: `Nafn korthafa krafist`,
     walletDisclaimer: `Upplýsingar um veski verða vistaðar við val`,
+     enterValidIban: `Sláðu inn gilt IBAN`, 
   },
   //    Welsh (cy)
   {
@@ -1752,6 +1775,7 @@ let localeStrings = [
     addPaymentMethodLabel: ` Ychwanegu dull talu newydd`,
     cardHolderNameRequiredText: `Angen enw Deiliad y Cerdyn`,
     walletDisclaimer: `Bydd manylion waled yn cael eu cadw wrth ddewis`,
+    enterValidIban: `Rhowch IBAN dilys`,
   },
   //    Greek (el)
   {
@@ -1825,6 +1849,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Προσθήκη νέας μεθόδου πληρωμής`,
     cardHolderNameRequiredText: `Απαιτείται το όνομα του κατόχου της κάρτας`,
     walletDisclaimer: `Τα στοιχεία του πορτοφολιού θα αποθηκευτούν κατά την επιλογή`,
+    enterValidIban: `Παρακαλώ εισάγετε έγκυρο IBAN`, 
   },
   //    Estonian (et)
   {
@@ -1898,6 +1923,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Lisa uus makseviis`,
     cardHolderNameRequiredText: `Vajalik on kaardi omaniku nimi`,
     walletDisclaimer: `Rahakoti andmed salvestatakse valimisel`,
+     enterValidIban: `Palun sisestage kehtiv IBAN`,
   },
   //    Finnish (fi)
   {
@@ -1971,6 +1997,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Lisää uusi maksutapa`,
     cardHolderNameRequiredText: `Kortinhaltijan nimi vaaditaan`,
     walletDisclaimer: `Lompakon tiedot tallennetaan valinnan yhteydessä`,
+     enterValidIban: `Anna kelvollinen IBAN`,
   },
   //    Norwegian (no)
   {
@@ -2044,7 +2071,9 @@ let localeStrings = [
     addPaymentMethodLabel: `Legg til en ny betalingsmåte`,
     cardHolderNameRequiredText: `Kortholders navn kreves`,
     walletDisclaimer: `Lommebokdetaljer vil bli lagret ved valg`,
+    enterValidIban: `Vennligst skriv inn en gyldig IBAN`,
   },
+   
   //    Bosnian (bs)
   {
     locale: "bs",
@@ -2117,6 +2146,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Dodajte novi način plaćanja`,
     cardHolderNameRequiredText: `Potrebno je ime vlasnika kartice`,
     walletDisclaimer: `Detalji novčanika će biti sačuvani nakon odabira`,
+    enterValidIban: `Molimo unesite važeći IBAN`,
   },
   //    Danish (da)
   {
@@ -2190,6 +2220,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Tilføj ny betalingsmetode`,
     cardHolderNameRequiredText: `Kortholders navn påkrævet`,
     walletDisclaimer: `Tegnebogsoplysninger gemmes ved valg`,
+    enterValidIban: `Indtast venligst en gyldig IBAN`,
   },
   //    Malay (ms)
   {
@@ -2263,6 +2294,7 @@ let localeStrings = [
     addPaymentMethodLabel: `Tambah kaedah pembayaran baru`,
     cardHolderNameRequiredText: `Nama Pemegang Kad diperlukan`,
     walletDisclaimer: `Butiran dompet akan disimpan semasa pemilihan`,
+    enterValidIban: `Sila masukkan IBAN yang sah`, 
   },
   //    Turkish (tr-CY)
   {
@@ -2336,5 +2368,6 @@ let localeStrings = [
     addPaymentMethodLabel: `Yeni ödeme yöntemi ekle`,
     cardHolderNameRequiredText: `Kart Sahibinin adı gereklidir`,
     walletDisclaimer: `Cüzdan bilgileri seçim sırasında kaydedilecektir`,
+    enterValidIban: `Lütfen geçerli bir IBAN girin`,
   },
 ]

@@ -27,6 +27,16 @@ let make = (
       required_field: [],
     }
   }
+   let bankDebitType: PaymentMethodListType.payment_method_types_bank_debit = switch redirectProp {
+  | BANK_DEBIT(bankDebitVal) => bankDebitVal
+  | _ => {
+      payment_method: "",
+      payment_method_type: "",
+      payment_method_type_var: NONE,
+      payment_experience: [],
+      required_field: [],
+    }
+  }
 
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -994,15 +1004,16 @@ let make = (
     selectedBank,
   ))
 
-  let customValidation = React.useCallback((~text, ~field_type) => {
+  let customValidationFunc = React.useCallback((~text, ~field_type, ~display_name) => {
     switch field_type {
     | RequiredFieldsTypes.Iban =>
-      if text->Validation.isValidIban {
-        DynamicFields.NoError
+      if text->Validation.isValidIban  && text->Validation.validateIBAN  
+     {
+        None
       } else {
-        DynamicFields.Error(localeObject.enterValidDetailsText)
+        Some(localeObject.enterValidIban)
       }
-    | _ => DynamicFields.OtherValidation
+    | _ =>  RequiredFieldsTypes.checkIsValid(~text, ~field_type, ~localeObject)
     }
   }, [paymentMethod])
 
@@ -1031,8 +1042,8 @@ let make = (
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
-                customValidation={switch paymentMethod {
-                | "sepa" => Some(customValidation)
+                customValidationFunc={switch bankDebitType.payment_method_type_var {
+                | SEPA => Some(customValidationFunc)
                 | _ => None
                 }}
               />

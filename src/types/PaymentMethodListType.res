@@ -62,13 +62,14 @@ type payment_method_types_open_banking = {
   payment_experience: array<payment_experience>,
   required_field: RequiredFieldsTypes.required_fields,
 }
-
+type bank_debit_types = SEPA | NONE
 type payment_method_types_bank_debit = {
   payment_method: string,
   payment_method_type: string,
+  payment_method_type_var: bank_debit_types,
   payment_experience: array<payment_experience>,
   required_field: RequiredFieldsTypes.required_fields,
-  mandate_data: string,
+  
 }
 
 type payment_method =
@@ -277,8 +278,11 @@ let flattenPaymentListArray = (plist, item) => {
       let dict2 = item2->getDictFromJson
       BANK_DEBIT({
         payment_method: "bank_debit",
-        mandate_data: dict2->getString("mandate_data", ""),
         payment_method_type: dict2->getString("payment_method_type", ""),
+          payment_method_type_var: switch dict2->getString("payment_method_type", "") {
+        | "sepa" => SEPA
+        | _ => NONE
+        },
         payment_experience: dict2
         ->getArray("payment_experience")
         ->Array.map(item3 => {
