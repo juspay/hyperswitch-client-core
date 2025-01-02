@@ -98,20 +98,9 @@ type customer_acceptance = {
   accepted_at: string,
   online: online,
 }
-type metadata = {frequency: string}
-type multi_use = {
-  amount: int,
-  currency: string,
-  start_date: string,
-  end_date: string,
-  metadata: metadata,
-}
-
-type mandate_type = {multi_use: multi_use}
 
 type mandate_data = {
   customer_acceptance: customer_acceptance,
-  mandate_type: mandate_type,
 }
 type redirectType = {
   client_secret: string,

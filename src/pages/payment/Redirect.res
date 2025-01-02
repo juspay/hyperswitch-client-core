@@ -1,6 +1,7 @@
 open ReactNative
 open PaymentMethodListType
 open CustomPicker
+open RequiredFieldsTypes
 
 type klarnaSessionCheck = {
   isKlarna: bool,
@@ -13,7 +14,7 @@ let make = (
   ~fields: Types.redirectTypeJson,
   ~isScreenFocus,
   ~isDynamicFields: bool=false,
-  ~dynamicFields: RequiredFieldsTypes.required_fields=[],
+  ~dynamicFields: required_fields=[],
   ~setConfirmButtonDataRef: React.element => unit,
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
 ) => {
@@ -27,7 +28,7 @@ let make = (
       required_field: [],
     }
   }
-   let bankDebitType: PaymentMethodListType.payment_method_types_bank_debit = switch redirectProp {
+  let bankDebitType: PaymentMethodListType.payment_method_types_bank_debit = switch redirectProp {
   | BANK_DEBIT(bankDebitVal) => bankDebitVal
   | _ => {
       payment_method: "",
@@ -240,12 +241,6 @@ let make = (
     ~eligible_connectors=?,
     (),
   ) => {
-    let dateNow = Date.now()
-    let futureDate =
-      Date.makeWithYM(
-        ~year=dateNow->Date.fromTime->Date.getFullYear + 2,
-        ~month=0,
-      )->Date.toDateString
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
       return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
@@ -257,13 +252,11 @@ let make = (
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
       setup_future_usage: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "sepa"
-          ? Some("off_session")
-          : None
+        allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
       mandate_data: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL || paymentMethod == "sepa"
+        allApiData.additionalPMLData.mandateType != NORMAL 
           ? Some({
               customer_acceptance: {
                 acceptance_type: "offline",
@@ -273,17 +266,17 @@ let make = (
                   user_agent: ?nativeProp.hyperParams.userAgent,
                 },
               },
-              mandate_type: {
-                multi_use: {
-                  amount: 1000,
-                  currency: "AUD",
-                  start_date: dateNow->Date.fromTime->Date.toISOString,
-                  end_date: futureDate->Date.fromString->Date.toISOString,
-                  metadata: {
-                    frequency: "13",
-                  },
-                },
-              },
+              // mandate_type: {
+              //   multi_use: {
+              //     amount: 1000,
+              //     currency: "AUD",
+              //     start_date: dateNow->Date.fromTime->Date.toISOString,
+              //     end_date: futureDate->Date.fromString->Date.toISOString,
+              //     metadata: {
+              //       frequency: "13",
+              //     },
+              //   },
+              // },
             })
           : None
       ),
@@ -409,8 +402,7 @@ let make = (
       let middleData = Dict.make()
       middleData->Dict.set(prop.payment_method, innerData->JSON.Encode.object)
       payment_method_data->Dict.set("payment_method_data", middleData->JSON.Encode.object)
-      let dynamic_pmd =
-        payment_method_data->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
+      let dynamic_pmd = payment_method_data->mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
       processRequest(
         ~payment_method_data=dynamic_pmd
         ->Utils.getJsonObjectFromDict("payment_method_data")
@@ -543,7 +535,7 @@ let make = (
 
   React.useEffect0(() => {
     // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    importStates("./../../utility/reusableCodeFromWeb/States.json")
     ->Promise.then(res => {
       setStatesJson(_ => Some(res.states))
       Promise.resolve()
@@ -890,17 +882,11 @@ let make = (
       acc,
       (key, (val, _)),
     ) => {
-      let updatedKey = switch prop.payment_method_type {
-      | "sepa" => prop.payment_method_type
-      | _ => prop.payment_method_type ++ "_bank_debit"
-      }
-
-      acc->Dict.set(key->String.replace(prop.payment_method_type, updatedKey), val)
+      acc->Dict.set(key, val)
       acc
     })
 
-    let payment_method_data =
-      dynamicFieldsJsonDict->JSON.Encode.object->RequiredFieldsTypes.unflattenObject
+    let payment_method_data = dynamicFieldsJsonDict->JSON.Encode.object->unflattenObject
     processRequest(
       ~payment_method_data=payment_method_data
       ->Utils.getJsonObjectFromDict("payment_method_data")
@@ -1006,14 +992,13 @@ let make = (
 
   let customValidationFunc = React.useCallback((~text, ~field_type, ~display_name) => {
     switch field_type {
-    | RequiredFieldsTypes.Iban =>
-      if text->Validation.isValidIban  && text->Validation.validateIBAN  
-     {
+    | Iban =>
+      if text->Validation.isValidIban && text->Validation.validateIBAN {
         None
       } else {
         Some(localeObject.enterValidIban)
       }
-    | _ =>  RequiredFieldsTypes.checkIsValid(~text, ~field_type, ~localeObject)
+    | _ => checkIsValid(~text, ~field_type, ~localeObject)
     }
   }, [paymentMethod])
 
