@@ -11,6 +11,7 @@ let make = (
   ~bottomModalWidth=100.->pct,
   (),
 ) => {
+  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let modalPosStyle = array([
     viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
     switch modalPosition {
@@ -52,7 +53,7 @@ let make = (
         ~borderBottomLeftRadius=0.,
         ~borderBottomRightRadius=0.,
         ~overflow=#hidden,
-        ~maxHeight=95.->pct,
+        ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
         ~alignItems=#center,
         ~justifyContent=#center,
         (),
@@ -68,22 +69,11 @@ module Wrapper = {
   @react.component
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
+    let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-    let defaultHeight = 25.
-    let navigationBarHeight = React.useMemo(() => {
-      if Platform.os !== #android {
-        defaultHeight
-      } else {
-        let screenHeight = Dimensions.get(#screen).height
-        let windowHeight = Dimensions.get(#window).height
-        let statusBarHeight = StatusBar.currentHeight
-        let navigationHeight = screenHeight -. windowHeight -. statusBarHeight
-        Math.min(75., Math.max(0., navigationHeight) +. defaultHeight)
-      }
-    }, [])
-
-    let windowHeight = Dimensions.get(#window).height
-    let maxScrollViewHeight = (windowHeight*.0.95 -. navigationBarHeight)
+    let maxScrollViewHeight =
+      viewPortContants.windowHeight *. viewPortContants.maxPaymentSheetHeight /. 100. -.
+        viewPortContants.navigationBarHeight
     let (isScrollable, setIsScrollable) = React.useState(_ => false)
 
     <ScrollView
@@ -96,7 +86,9 @@ module Wrapper = {
         }
       }}
       contentContainerStyle={viewStyle(
-        ~paddingBottom=isScrollable ? (navigationBarHeight +. 15.)->dp : navigationBarHeight->dp,
+        ~paddingBottom=isScrollable
+          ? (viewPortContants.navigationBarHeight +. 15.)->dp
+          : viewPortContants.navigationBarHeight->dp,
         (),
       )}
       keyboardShouldPersistTaps={#handled}
