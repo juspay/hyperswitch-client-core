@@ -71,38 +71,16 @@ module Wrapper = {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-    let maxScrollViewHeight =
-      viewPortContants.windowHeight *. viewPortContants.maxPaymentSheetHeight /. 100. -.
-        viewPortContants.navigationBarHeight
-    let (isScrollable, setIsScrollable) = React.useState(_ => false)
-
     <ScrollView
-      onLayout={event => {
-        let height = event.nativeEvent.layout.height
-        if height > maxScrollViewHeight {
-          setIsScrollable(_ => true)
-        } else {
-          setIsScrollable(_ => false)
-        }
-      }}
       contentContainerStyle={viewStyle(
-        ~paddingBottom=isScrollable
-          ? (viewPortContants.navigationBarHeight +. 15.)->dp
-          : viewPortContants.navigationBarHeight->dp,
+        ~minHeight=250.->dp,
+        ~paddingHorizontal=20.->dp,
+        ~paddingTop=20.->dp,
+        ~paddingBottom=viewPortContants.navigationBarHeight->dp,
         (),
       )}
       keyboardShouldPersistTaps={#handled}
-      style={array([
-        viewStyle(
-          ~flexGrow=1.,
-          ~width,
-          ~minHeight=250.->dp,
-          ~paddingHorizontal=20.->dp,
-          ~paddingTop=20.->dp,
-          (),
-        ),
-        bgColor,
-      ])}>
+      style={array([viewStyle(~flexGrow=1., ~width, ()), bgColor])}>
       <ModalHeader onModalClose />
       children
     </ScrollView>
