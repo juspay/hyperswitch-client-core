@@ -8,6 +8,7 @@ module ContextWrapper = {
       <NativePropContext nativeProp={SdkTypes.nativeJsonToRecord(props, rootTag)}>
         <PaymentScreenContext>
           <ThemeContext>
+            <ViewportContext>
             <LoggerContext>
               <CardDataContext>
                 <CountryStateDataContext>
@@ -17,6 +18,7 @@ module ContextWrapper = {
                 </CountryStateDataContext>
               </CardDataContext>
             </LoggerContext>
+           </ViewportContext>
           </ThemeContext>
         </PaymentScreenContext>
       </NativePropContext>

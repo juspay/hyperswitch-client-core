@@ -82,6 +82,9 @@ type online = {
   screen_height?: int,
   screen_width?: int,
   time_zone?: int,
+  device_model?: string,
+  os_type?: string,
+  os_version?: string,
 }
 type customer_acceptance = {
   acceptance_type: string,

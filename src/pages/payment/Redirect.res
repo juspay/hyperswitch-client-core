@@ -274,6 +274,9 @@ let make = (
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
         language: ?nativeProp.configuration.appearance.locale,
+        device_model: ?nativeProp.hyperParams.device_model,
+        os_type: ?nativeProp.hyperParams.os_type,
+        os_version: ?nativeProp.hyperParams.os_version,
         // TODO: Remove these hardcoded values and get actual values from web-view (iOS and android)
         // accept_header: "",
         // color_depth: 0,
