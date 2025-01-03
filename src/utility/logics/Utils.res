@@ -153,27 +153,21 @@ let getCountryFlags = isoAlpha2 => {
   })->Array.join("") ++ "   "
 }
 
-let getStateNames = (list: JSON.t, country: string) => {
-  let options = list->getDictFromJson->getOptionalArrayFromDict(country)->Option.getOr([])
+let getStateNames = (list: CountryStateDataHookTypes.states, country: string) => {
+  let options = list->Dict.get(country)->Option.getOr([])
 
   options->Array.reduce([], (arr, item) => {
     arr
-    ->Array.push(
-      item
-      ->getDictFromJson
-      ->Dict.get("name")
-      ->Option.flatMap(JSON.Decode.string)
-      ->Option.getOr(""),
-    )
+    ->Array.push(item.name)
     ->ignore
     arr
   })
 }
 
-let getClientCountry = clientTimeZone => {
-  Country.country
+let getClientCountry = (countryArr: CountryStateDataHookTypes.countries, clientTimeZone) => {
+  countryArr
   ->Array.find(item => item.timeZones->Array.find(i => i == clientTimeZone)->Option.isSome)
-  ->Option.getOr(Country.defaultTimeZone)
+  ->Option.getOr(CountryStateDataHookTypes.defaultTimeZone)
 }
 
 let getStateNameFromStateCodeAndCountry = (
