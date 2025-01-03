@@ -74,8 +74,9 @@ let decodeJsonTocountryStateData: Js.Json.t => countryStateData = jsonData => {
 let getDataFromZipFile = data => {
   data
 }
-let useCountryStateDataFetch = () => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+
+let useCountryStateDataFetch = (~locale: option<SdkTypes.localeTypes>) => {
+  let localeString = SdkTypes.localeToString(locale)
   let statesEndpoint = ""
 
   // let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
