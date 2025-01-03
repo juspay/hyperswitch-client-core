@@ -10,9 +10,11 @@ module ContextWrapper = {
           <ThemeContext>
             <LoggerContext>
               <CardDataContext>
-                <AllApiDataContext>
-                  <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
-                </AllApiDataContext>
+                <CountryStateDataContext>
+                  <AllApiDataContext>
+                    <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
+                  </AllApiDataContext>
+                </CountryStateDataContext>
               </CardDataContext>
             </LoggerContext>
           </ThemeContext>

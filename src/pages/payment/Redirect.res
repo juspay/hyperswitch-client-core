@@ -115,14 +115,19 @@ let make = (
       value: item.hyperSwitch,
     }
   })
+  let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
-  let countryData: array<customPickerType> = Country.country->Array.map(item => {
-    {
-      name: item.countryName,
-      value: item.isoAlpha2,
-      icon: Utils.getCountryFlags(item.isoAlpha2),
-    }
-  })
+  let countryData: array<customPickerType> = switch statesAndCountry {
+  | Some(data) =>
+    data.countries->Array.map(item => {
+      {
+        name: item.countryName,
+        value: item.isoAlpha2,
+        icon: Utils.getCountryFlags(item.isoAlpha2),
+      }
+    })
+  | _ => []
+  }
 
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(
     switch bankItems->Array.get(0) {
@@ -510,7 +515,7 @@ let make = (
 
   React.useEffect0(() => {
     // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/StatesAndCountry.json")
     ->Promise.then(res => {
       setStatesJson(_ => Some(res.states))
       Promise.resolve()

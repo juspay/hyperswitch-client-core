@@ -252,7 +252,9 @@ let registerHeadless = headless => {
             ~requiredFields=[],
           ), //walletType.required_field,
           var => {
-            RequiredFieldsTypes.importStates("./../utility/reusableCodeFromWeb/States.json")
+            RequiredFieldsTypes.importStates(
+              "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
+            )
             ->Promise.then(res => {
               confirmGPay(var, Some(res.states), data, nativeProp)
               Promise.resolve()
@@ -297,7 +299,9 @@ let registerHeadless = headless => {
           ->JSON.Encode.object
           ->JSON.stringify,
           var => {
-            RequiredFieldsTypes.importStates("./../utility/reusableCodeFromWeb/States.json")
+            RequiredFieldsTypes.importStates(
+              "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
+            )
             ->Promise.then(res => {
               confirmApplePay(var, Some(res.states), data, nativeProp)
               Promise.resolve()

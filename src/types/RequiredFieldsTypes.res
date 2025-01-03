@@ -3,6 +3,11 @@ type dataModule = {states: JSON.t}
 @val
 external importStates: string => promise<dataModule> = "import"
 
+@val
+external importStatesAndCountries: string => promise<JSON.t> = "import"
+
+type addressCountry = UseContextData | UseBackEndData(array<string>)
+
 type paymentMethodsFields =
   | Email
   | FullName
@@ -21,7 +26,7 @@ type paymentMethodsFields =
   | CountryAndPincode(array<string>)
   | AddressPincode
   | AddressState
-  | AddressCountry(array<string>)
+  | AddressCountry(addressCountry)
   | BlikCode
   | Currency(array<string>)
 
@@ -89,15 +94,15 @@ let getPaymentMethodsFieldTypeFromDict = (dict: Dict.t<JSON.t>) => {
     let options = user_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
     | "" => UnKnownField("empty_list")
-    | "ALL" => AddressCountry(Country.country->Array.map(item => item.isoAlpha2))
-    | _ => AddressCountry(options)
+    | "ALL" => AddressCountry(UseContextData)
+    | _ => AddressCountry(UseBackEndData(options))
     }
   | (_, _, _, Some(user_shipping_address_country)) =>
     let options = user_shipping_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
     | "" => UnKnownField("empty_list")
-    | "ALL" => AddressCountry(Country.country->Array.map(item => item.isoAlpha2))
-    | _ => AddressCountry(options)
+    | "ALL" => AddressCountry(UseContextData)
+    | _ => AddressCountry(UseBackEndData(options))
     }
   | _ => UnKnownField("empty_list")
   }
@@ -535,17 +540,23 @@ let getKey = (path, value) => {
   key
 }
 
-let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry) => {
+let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry, countries) => {
   requiredFields->Array.reduce(Dict.make(), (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
-    | ("", AddressCountry(values)) => (
-        values->Array.includes(clientCountry)
-          ? clientCountry->JSON.Encode.string
-          : values->Array.length === 1
-          ? values->Array.get(0)->Option.getOr("")->JSON.Encode.string
-          : JSON.Encode.null,
-        None,
-      )
+    | ("", AddressCountry(values)) => {
+        let values = switch values {
+        | UseContextData => countries
+        | UseBackEndData(a) => a
+        }
+        (
+          values->Array.includes(clientCountry)
+            ? clientCountry->JSON.Encode.string
+            : values->Array.length === 1
+            ? values->Array.get(0)->Option.getOr("")->JSON.Encode.string
+            : JSON.Encode.null,
+          None,
+        )
+      }
 
     | ("", _) => (JSON.Encode.null, Some("Required"))
     | (value, _) => (value->JSON.Encode.string, None)

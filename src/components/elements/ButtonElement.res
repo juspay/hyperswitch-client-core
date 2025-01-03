@@ -215,7 +215,7 @@ let make = (
 
   React.useEffect0(() => {
     // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
+    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/StatesAndCountry.json")
     ->Promise.then(res => {
       setStatesJson(_ => Some(res.states))
       Promise.resolve()
