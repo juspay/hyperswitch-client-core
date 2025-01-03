@@ -71,25 +71,12 @@ let decodeJsonTocountryStateData: Js.Json.t => countryStateData = jsonData => {
     }
   }
 }
-let getDataFromZipFile = data => {
-  data
-}
 
 let useCountryStateDataFetch = (~locale: option<SdkTypes.localeTypes>) => {
   let localeString = SdkTypes.localeToString(locale)
-  let statesEndpoint = ""
-
-  // let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
+  let statesEndpoint = `https://dev.hyperswitch.io/assets/v1/location/${localeString}`
   let apiFunction = CommonHooks.fetchApi
   () => {
-    // let delay = (ms, res) => {
-    //   Js.Promise.make((~resolve, ~reject as _) => {
-    //     let _ = Js.Global.setTimeout(_ => {
-    //       resolve(res)
-    //     }, ms)
-    //   })
-    // }
-
     apiFunction(
       ~uri=statesEndpoint,
       ~method_=Get,
@@ -97,20 +84,12 @@ let useCountryStateDataFetch = (~locale: option<SdkTypes.localeTypes>) => {
       ~dontUseDefaultHeader=true,
       (),
     )
-    ->Promise.then(res => {
-      res->Fetch.Response.json
-    })
-    // ->Promise.then(result => {
-    //   Js.log(result)
-    //   delay(5000, result)
-    // })
+    ->GZipUtils.extractJson
     ->Promise.then(data => {
-      let jsonData = getDataFromZipFile(data)
-      let countryStaterecord = decodeJsonTocountryStateData(jsonData)
+      let countryStaterecord = decodeJsonTocountryStateData(data)
       Promise.resolve(countryStaterecord)
     })
     ->Promise.catch(_ => {
-      Console.log("ERROR caught")
       let countryStaterecord = decodeJsonTocountryStateData(Js.Json.null)
       Promise.resolve(countryStaterecord)
     })
