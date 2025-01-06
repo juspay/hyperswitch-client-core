@@ -250,6 +250,23 @@ let useListModifier = () => {
                 isScreenFocus redirectProp=CRYPTO(cryptoVal) fields setConfirmButtonDataRef
               />,
           })
+          | BANK_DEBIT(bankDebitVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == bankDebitVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus
+                isDynamicFields={true}
+                dynamicFields={bankDebitVal.required_field}
+                redirectProp=BANK_DEBIT(bankDebitVal)
+                fields
+                setConfirmButtonDataRef
+              />,
+          })
         } {
         | Some(tab) =>
           let isInvalidScreen =
