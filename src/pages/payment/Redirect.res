@@ -993,7 +993,7 @@ let make = (
   let customValidationFunc = React.useCallback((~text, ~field_type, ~display_name) => {
     switch field_type {
     | Iban =>
-      if text->Validation.isValidIban && text->Validation.validateIBAN {
+      if text->Validation.isValidIban {
         None
       } else {
         Some(localeObject.enterValidIban)
