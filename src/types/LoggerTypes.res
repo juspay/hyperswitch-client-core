@@ -10,6 +10,7 @@ type sdkVersionFetched =
   | PACKAGE_JSON_LOADED(string)
 type eventName =
   | APP_RENDERED
+  | S3_API
   | INACTIVE_SCREEN
   | COUNTRY_CHANGED
   | SDK_CLOSED
