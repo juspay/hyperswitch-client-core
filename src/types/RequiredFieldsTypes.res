@@ -24,6 +24,8 @@ type paymentMethodsFields =
   | AddressCountry(array<string>)
   | BlikCode
   | Currency(array<string>)
+  | AccountNumber
+  | SortCode
 
 type requiredField =
   | StringField(string)
@@ -60,6 +62,8 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_blik_code" => BlikCode
   | "user_billing_name" => BillingName
   | "user_shipping_name" => ShippingName
+  | "user_bank_account_number" => AccountNumber
+  | "user_bank_sort_code" => SortCode
   | var => UnKnownField(var)
   }
 }
@@ -115,6 +119,8 @@ let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
   | FullName | ShippingName | BillingName => 1
   | Email => 2
+  | AccountNumber => -1
+  | SortCode => 1
   | AddressLine1 => 4
   | AddressLine2 => 5
   | AddressCity => 6
@@ -323,6 +329,8 @@ let useGetPlaceholder = (
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | AccountNumber
+    | SortCode
     | BlikCode =>
       display_name->toCamelCase
     }
