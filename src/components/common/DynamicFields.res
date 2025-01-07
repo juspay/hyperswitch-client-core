@@ -8,8 +8,8 @@ module RenderField = {
     ->Utils.getStateNames(country)
     ->Array.map((item): CustomPicker.customPickerType => {
       {
-        name: item,
-        value: item,
+        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
+        value: item.value,
       }
     })
   }
@@ -21,7 +21,7 @@ module RenderField = {
     })
     ->Array.map((item): CustomPicker.customPickerType => {
       {
-        name: item.countryName,
+        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
         value: item.isoAlpha2,
         icon: Utils.getCountryFlags(item.isoAlpha2),
       }
@@ -242,45 +242,20 @@ module RenderField = {
               finalJsonDict,
             ),
           )
-          stateData->Array.length > 0
-            ? <CustomPicker
-                value=val
-                setValue=onChangeCountry
-                borderBottomLeftRadius=borderRadius
-                borderBottomRightRadius=borderRadius
-                borderBottomWidth=borderWidth
-                items=stateData
-                placeholderText={placeholder()}
-                isValid
-                isLoading={switch statesAndCountry {
-                | Loading(_) => true
-                | _ => false
-                }}
-              />
-            : <CustomInput
-                state={val->Option.getOr("")}
-                setState={text => onChange(Some(text))}
-                placeholder={placeholder()}
-                keyboardType={RequiredFieldsTypes.getKeyboardType(
-                  ~field_type=required_fields_type.field_type,
-                )}
-                enableCrossIcon=false
-                isValid=isValidForFocus
-                onFocus={_ => {
-                  setisFocus(_ => true)
-                  val->Option.isNone ? setVal(_ => Some("")) : ()
-                }}
-                onBlur={_ => {
-                  setisFocus(_ => false)
-                }}
-                textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
-                borderTopLeftRadius=borderRadius
-                borderTopRightRadius=borderRadius
-                borderBottomWidth=borderWidth
-                borderLeftWidth=borderWidth
-                borderRightWidth=borderWidth
-                borderTopWidth=borderWidth
-              />
+          <CustomPicker
+            value=val
+            setValue=onChangeCountry
+            borderBottomLeftRadius=borderRadius
+            borderBottomRightRadius=borderRadius
+            borderBottomWidth=borderWidth
+            items=stateData
+            placeholderText={placeholder()}
+            isValid
+            isLoading={switch statesAndCountry {
+            | Loading(_) => true
+            | _ => false
+            }}
+          />
 
         | None => React.null
         }

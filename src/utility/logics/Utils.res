@@ -155,10 +155,9 @@ let getCountryFlags = isoAlpha2 => {
 
 let getStateNames = (list: CountryStateDataHookTypes.states, country: string) => {
   let options = list->Dict.get(country)->Option.getOr([])
-
   options->Array.reduce([], (arr, item) => {
     arr
-    ->Array.push(item.name)
+    ->Array.push(item)
     ->ignore
     arr
   })

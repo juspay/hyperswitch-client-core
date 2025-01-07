@@ -111,7 +111,7 @@ let make = (
 
   let bankData: array<customPickerType> = bankItems->Array.map(item => {
     {
-      name: item.displayName,
+      label: item.displayName,
       value: item.hyperSwitch,
     }
   })
@@ -121,7 +121,7 @@ let make = (
   | Some(data) =>
     data.countries->Array.map(item => {
       {
-        name: item.countryName,
+        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
         value: item.isoAlpha2,
         icon: Utils.getCountryFlags(item.isoAlpha2),
       }

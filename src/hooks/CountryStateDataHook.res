@@ -1,21 +1,16 @@
 open CountryStateDataHookTypes
 
 let decodeCountryArray: array<Js.Json.t> => array<country> = data => {
-  let defaultData = {
-    isoAlpha3: "",
-    isoAlpha2: "",
-    timeZones: [],
-    countryName: "",
-  }
+
   data->Array.map(item => {
     switch item->Js.Json.decodeObject {
     | Some(res) => {
-        isoAlpha3: Utils.getString(res, "isoAlpha3", ""),
         isoAlpha2: Utils.getString(res, "isoAlpha2", ""),
         timeZones: Utils.getStrArray(res, "timeZones"),
-        countryName: Utils.getString(res, "countryName", ""),
+        value: Utils.getString(res, "value", ""),
+        label: Utils.getString(res, "label", ""),
       }
-    | None => defaultData
+    | None => defaultTimeZone
     }
   })
 }
@@ -33,12 +28,8 @@ let decodeStateJson: Js.Json.t => Dict.t<array<state>> = data => {
       ->Array.map(jsonItem => {
         let dictItem = jsonItem->Utils.getDictFromJson
         {
-          id: Utils.getOptionFloat(dictItem, "id")->Option.getOr(0.),
-          name: Utils.getString(dictItem, "name", ""),
-          state_code: Utils.getString(dictItem, "state_code", ""),
-          latitude: Utils.getString(dictItem, "latitude", ""),
-          longitude: Utils.getString(dictItem, "longitude", ""),
-          stateType: Utils.getString(dictItem, "type", ""),
+          label: Utils.getString(dictItem, "label", ""),
+          value: Utils.getString(dictItem, "value", ""),
         }
       })
     (key, newVal)

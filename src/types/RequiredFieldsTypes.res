@@ -535,9 +535,14 @@ let filterRequiredFieldsForShipping = (
 }
 
 let getKey = (path, value) => {
-  let arr = path->String.split(".")
-  let key = arr->Array.slice(~start=0, ~end=arr->Array.length - 1)->Array.join(".") ++ "." ++ value
-  key
+  if path == "" {
+    path
+  } else {
+    let arr = path->String.split(".")
+    let key =
+      arr->Array.slice(~start=0, ~end=arr->Array.length - 1)->Array.join(".") ++ "." ++ value
+    key
+  }
 }
 
 let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry, countries) => {

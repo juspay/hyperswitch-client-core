@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 type customPickerType = {
-  name: string,
+  label: string,
   value: string,
   icon?: string,
 }
@@ -43,7 +43,7 @@ let make = (
     <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
         state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
-        | Some(y) => y.name
+        | Some(y) => y.label
         | _ => value->Option.getOr("")
         }}
         setState={_ => ()}
@@ -134,7 +134,7 @@ let make = (
                 ref={pickerRef->ReactNative.Ref.value}
                 keyboardShouldPersistTaps={#handled}
                 data={items->Array.filter(x =>
-                  x.name
+                  x.label
                   ->String.toLowerCase
                   ->String.includes(searchInput->Option.getOr("")->String.toLowerCase)
                 )}
@@ -151,7 +151,7 @@ let make = (
                       setIsModalVisible(_ => false)
                     }}>
                     <TextWrapper
-                      text={item.icon->Option.getOr("") ++ item.name} textType=ModalText
+                      text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
                     />
                   </CustomTouchableOpacity>}
               />}
