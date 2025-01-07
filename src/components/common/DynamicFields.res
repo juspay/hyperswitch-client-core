@@ -499,34 +499,40 @@ let make = (
   //   None
   // }, [statesAndCountry])
 
-  React.useEffect1(() => {
+  let isAddressCountryField = fieldType =>
+    switch fieldType.field_type {
+    | AddressCountry(_) => true
+    | _ => false
+    }
+
+  let updateDictWithCountry = (dict, path, countryCode) => {
+    let newDict = Dict.assign(Dict.make(), dict)
+    newDict->Dict.set(path, (countryCode->JSON.Encode.string, None))
+    newDict
+  }
+
+  let handleStringField = (path, prevDict, countryCode) =>
+    switch prevDict->Dict.get(path) {
+    | Some((key, _)) if key->JSON.Decode.string->Option.getOr("") != "" => prevDict
+    | _ => updateDictWithCountry(prevDict, path, countryCode)
+    }
+
+  React.useEffect2(() => {
     switch statesAndCountry {
     | Some(_) =>
       requiredFields
-      ->Array.find(requiredFieldsType =>
-        switch requiredFieldsType.field_type {
-        | AddressCountry(_) => true
-        | _ => false
-        }
-      )
+      ->Array.find(isAddressCountryField)
       ->Option.forEach(required => {
         switch required.required_field {
         | StringField(path) =>
-          setFinalJsonDict(
-            prev => {
-              let newDict = Dict.assign(Dict.make(), prev)
-              newDict->Dict.set(path, (clientCountry.isoAlpha2->JSON.Encode.string, None))
-              newDict
-            },
-          )
+          setFinalJsonDict(prev => handleStringField(path, prev, clientCountry.isoAlpha2))
         | _ => ()
         }
       })
-      ()
     | _ => ()
     }
     None
-  }, [statesAndCountry])
+  }, (statesAndCountry, clientCountry.isoAlpha2))
 
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
