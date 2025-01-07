@@ -1,5 +1,5 @@
 type options = {to: string}
-@module("./zip-utils/pako")
+@module("pako")
 external inflate: (Fetch.arrayBuffer, options) => string = "inflate"
 
 let extractZipFromResp = resp => {

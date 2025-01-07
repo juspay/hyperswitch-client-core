@@ -72,11 +72,15 @@ let decodeJsonTocountryStateData: Js.Json.t => countryStateData = jsonData => {
   }
 }
 
-let useCountryStateDataFetch = (~locale: option<SdkTypes.localeTypes>) => {
-  let localeString = SdkTypes.localeToString(locale)
-  let statesEndpoint = `https://dev.hyperswitch.io/assets/v1/location/${localeString}`
+let useCountryStateDataFetch = () => {
   let apiFunction = CommonHooks.fetchApi
-  () => {
+  let logger = LoggerHook.useLoggerHook()
+
+  (~locale: option<SdkTypes.localeTypes>=None) => {
+    let localeString = SdkTypes.localeToString(locale)
+    let statesEndpoint = `https://dev.hyperswitch.io/assets/v1/location/${localeString}`
+
+    logger(~logType=INFO, ~value="initialize Locale API", ~category=API, ~eventName=S3_API, ())
     apiFunction(
       ~uri=statesEndpoint,
       ~method_=Get,
@@ -90,6 +94,13 @@ let useCountryStateDataFetch = (~locale: option<SdkTypes.localeTypes>) => {
       Promise.resolve(countryStaterecord)
     })
     ->Promise.catch(_ => {
+      logger(
+        ~logType=ERROR,
+        ~value=`Locale API failed - ${statesEndpoint}`,
+        ~category=API,
+        ~eventName=S3_API,
+        (),
+      )
       let countryStaterecord = decodeJsonTocountryStateData(Js.Json.null)
       Promise.resolve(countryStaterecord)
     })

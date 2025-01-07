@@ -1,1 +1,0 @@
-"use strict";const adler32=(adler,buf,len,pos)=>{let s1=65535&adler|0,s2=adler>>>16&65535|0,n=0;for(;0!==len;){n=len>2e3?2e3:len,len-=n;do{s1=s1+buf[pos++]|0,s2=s2+s1|0}while(--n);s1%=65521,s2%=65521}return s1|s2<<16|0};module.exports=adler32;

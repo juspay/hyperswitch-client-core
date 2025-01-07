@@ -21,9 +21,9 @@ let make = (~children) => {
   let (state, setState) = React.useState(_ => Loading(initialDummyData))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let locale = nativeProp.configuration.appearance.locale
-
+  let countryStateDataHook = CountryStateDataHook.useCountryStateDataFetch()
   React.useEffect0(() => {
-    CountryStateDataHook.useCountryStateDataFetch(~locale)()
+    countryStateDataHook(~locale)
     ->Promise.then(res => {
       if res.countries->Js.Array2.length == 0 {
         Promise.reject(Exn.raiseError("API call failed"))
@@ -33,7 +33,7 @@ let make = (~children) => {
       }
     })
     ->Promise.catch(_ => {
-      CountryStateDataHook.useCountryStateDataFetch(~locale=Some(En))()
+      countryStateDataHook()
       ->Promise.then(
         res => {
           if res.countries->Js.Array2.length == 0 {
