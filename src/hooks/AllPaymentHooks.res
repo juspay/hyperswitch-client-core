@@ -269,7 +269,7 @@ let useBrowserHook = () => {
   (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
     BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId, intervalId)
     ->Promise.then(res => {
-      if res.error === Success {
+      if res.status === Success {
         retrievePayment(Payment, clientSecret, publishableKey)
         ->Promise.then(s => {
           if s == JSON.Encode.null {
@@ -320,7 +320,7 @@ let useBrowserHook = () => {
           Promise.resolve()
         })
         ->ignore
-      } else if res.error == Cancel {
+      } else if res.status == Cancel {
         setAllApiData({
           ...allApiData,
           additionalPMLData: {
@@ -336,7 +336,7 @@ let useBrowserHook = () => {
           ~closeSDK={false},
           (),
         )
-      } else if res.error === Failed {
+      } else if res.status === Failed {
         setAllApiData({
           ...allApiData,
           additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
