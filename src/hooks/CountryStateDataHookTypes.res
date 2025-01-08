@@ -7,6 +7,7 @@ type country = {
 type state = {
   label: string,
   value: string,
+  code: string,
 }
 type states = Dict.t<array<state>>
 type countries = array<country>

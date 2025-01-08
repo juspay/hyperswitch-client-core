@@ -1,7 +1,6 @@
 open CountryStateDataHookTypes
 
 let decodeCountryArray: array<Js.Json.t> => array<country> = data => {
-
   data->Array.map(item => {
     switch item->Js.Json.decodeObject {
     | Some(res) => {
@@ -30,6 +29,7 @@ let decodeStateJson: Js.Json.t => Dict.t<array<state>> = data => {
         {
           label: Utils.getString(dictItem, "label", ""),
           value: Utils.getString(dictItem, "value", ""),
+          code: Utils.getString(dictItem, "code", ""),
         }
       })
     (key, newVal)
