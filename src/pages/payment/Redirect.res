@@ -514,30 +514,23 @@ let make = (
     }
   }
 
-  let (statesJson, setStatesJson) = React.useState(_ => None)
-
-  React.useEffect0(() => {
-    // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/StatesAndCountry.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      setStatesJson(_ => None)
-      Promise.resolve()
-    })
-    ->ignore
-
-    None
-  })
+  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
+      let obj =
+        json
+        ->Utils.getDictFromJson
+        ->GooglePayTypeNew.itemToObjMapper(
+          switch countryStateData {
+          | Some(data) => data.states
+          | _ => Dict.make()
+          },
+        )
+
       let payment_method_data =
         [
           (

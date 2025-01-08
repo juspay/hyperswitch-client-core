@@ -170,29 +170,24 @@ let getClientCountry = (countryArr: CountryStateDataHookTypes.countries, clientT
 }
 
 let getStateNameFromStateCodeAndCountry = (
-  list: option<JSON.t>,
+  list: CountryStateDataHookTypes.states,
   stateCode: string,
   country: option<string>,
 ) => {
   switch (list, country) {
-  | (Some(list), Some(country)) =>
+  | (list, Some(country)) =>
+    Console.log3("UTILS", list, country)
     let options =
       list
-      ->getDictFromJson
-      ->getOptionalArrayFromDict(country)
+      ->Dict.get(country)
       ->Option.getOr([])
+    Console.log2("UTILS Options", options)
 
-    let val = options->Array.find(item =>
-      item
-      ->getDictFromJson
-      ->getString("code", "") === stateCode
-    )
+    let val = options->Array.find(item => item.code === stateCode)
+    Console.log3("UTILS Val", val, stateCode)
 
     switch val {
-    | Some(stateObj) =>
-      stateObj
-      ->getDictFromJson
-      ->getString("name", stateCode)
+    | Some(stateObj) => stateObj.value
     | None => stateCode
     }
   | (_, _) => stateCode

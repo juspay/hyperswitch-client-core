@@ -1,8 +1,3 @@
-type dataModule = {states: JSON.t}
-
-@val
-external importStates: string => promise<dataModule> = "import"
-
 @val
 external importStatesAndCountries: string => promise<JSON.t> = "import"
 
