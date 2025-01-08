@@ -51,17 +51,15 @@ let make = (
     }
     None
   }, [reset])
-  let (cardBrand, setCardBrand) = React.useState(_ => "")
   let onChangeCardNumber = (
     text,
     expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
-    let newCardBrand = getCardBrand(text)
-    let num = formatCardNumber(text, cardType(newCardBrand))
-    let isthisValid = cardValid(num, newCardBrand)
-    let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, newCardBrand)
-    setCardData(prev => {...prev, cardNumber: num, isCardNumberValid: Some(isthisValid)})
-    if cardBrand !== newCardBrand {
+    let cardBrand = getCardBrand(text)
+    let num = formatCardNumber(text, cardType(cardBrand))
+    let isthisValid = cardValid(num, cardBrand)
+    let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
+    if cardData.cardBrand->Option.getOr("") !== cardBrand && cardData.cardBrand != None {
       setCardData(prev => {
         ...prev,
         cvv: "",
@@ -70,7 +68,12 @@ let make = (
         isExpireDataValid: None,
       })
     }
-    setCardBrand(_ => newCardBrand)
+    setCardData(prev => {
+      ...prev,
+      cardNumber: num,
+      isCardNumberValid: Some(isthisValid),
+      cardBrand: cardBrand === "" ? None : Some(cardBrand),
+    })
 
     // Adding support for 19 digit card hence disabling ref
     if isthisValid && shouldShiftFocusToNextField {
@@ -127,7 +130,6 @@ let make = (
   ) => {
     let cardBrand = getCardBrand(pan)
     let cardNumber = formatCardNumber(pan, cardType(cardBrand))
-    setCardBrand(_ => cardBrand)
     let isCardValid = cardValid(cardNumber, cardBrand)
     let expireDate = formatCardExpiryNumber(expiry)
     let isExpiryValid = checkCardExpiry(expireDate)
@@ -138,6 +140,7 @@ let make = (
       isCardNumberValid: Some(isCardValid),
       expireDate,
       isExpireDataValid,
+      cardBrand: cardBrand === "" ? None : Some(cardBrand),
     })
     switch (isCardValid, isExpiryValid) {
     | (true, true) =>
