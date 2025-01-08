@@ -48,6 +48,33 @@ let make = (~children) => {
           easing: Easing.linear,
         },
       )->Animated.start()
+    // } else if loading == LoadingContext.BankTransfer {
+    //   Animated.timing(
+    //     heightPosition,
+    //     {
+    //       toValue: {
+    //         1000.->Animated.Value.Timing.fromRawValue
+    //       },
+    //       isInteraction: true,
+    //       useNativeDriver: false,
+    //       delay: 0.,
+    //       duration: 300.,
+    //       easing: Easing.linear,
+    //     },
+    //   )->Animated.start()
+    //   Animated.timing(
+    //     heightPosition,
+    //     {
+    //       toValue: {
+    //         0.->Animated.Value.Timing.fromRawValue
+    //       },
+    //       isInteraction: true,
+    //       useNativeDriver: false,
+    //       delay: 0.,
+    //       duration: 300.,
+    //       easing: Easing.linear,
+    //     },
+    //   )->Animated.start()
     }
     None
   }, [loading])
@@ -68,9 +95,7 @@ let make = (~children) => {
         (),
       )}>
       <CustomView onDismiss=onModalClose>
-        <CustomView.Wrapper onModalClose>
-          {children}
-        </CustomView.Wrapper>
+        <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
       </CustomView>
     </Animated.View>
     <LoadingOverlay />
