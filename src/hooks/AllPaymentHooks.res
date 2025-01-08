@@ -367,6 +367,8 @@ let useBrowserHook = () => {
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectioBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
@@ -429,11 +431,20 @@ let useRedirectHook = () => {
           }
         }
       | "display_bank_transfer_information" => {
-            responseCallback(
-              ~paymentStatus=ProcessingPayments(None),
-              ~status={status, message: "", code: "", type_: ""},
+          switch nextAction {
+          | None => ()
+          | Some(data) =>
+            setLoading(BankTransfer)
+            setPaymentScreenType(
+              BANK_TRANSFER(
+                Some(
+                  data.bank_transfer_steps_and_charges_detail->getACH_bank_transfer->getACH_details,
+                ),
+              ),
             )
-      }
+          }
+          ()
+        }
       | _ =>
         switch status {
         | "succeeded" =>

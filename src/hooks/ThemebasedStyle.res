@@ -173,6 +173,13 @@ type themeBasedStyleObj = {
   shadowColor: string,
   shadowIntensity: float,
   primaryButtonHeight: float,
+  disclaimerBackgroundColor: string,
+  disclaimerTextColor: string,
+  instructionalTextColor: string,
+  poweredByTextColor: string,
+  detailsViewTextKeyColor: string,
+  detailsViewTextValueColor: string,
+  silverBorderColor:string,
 }
 
 let darkRecord = {
@@ -251,6 +258,13 @@ let darkRecord = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 2.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor:"#CCCCCC",
 }
 let lightRecord = {
   primaryButtonHeight: 45.,
@@ -328,6 +342,13 @@ let lightRecord = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 2.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor:"#CCCCCC",
 }
 
 let minimal = {
@@ -406,6 +427,13 @@ let minimal = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 3.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor:"#CCCCCC",
 }
 
 let flatMinimal = {
@@ -484,6 +512,13 @@ let flatMinimal = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 3.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor:"#CCCCCC",
 }
 
 let some = (~override, ~fn, ~default) => {
@@ -870,6 +905,13 @@ let itemToObj = (
       ~defaultProp=themeObj.shadowIntensity,
     ),
     paymentSheetOverlay: themeObj.paymentSheetOverlay,
+    disclaimerBackgroundColor: themeObj.disclaimerBackgroundColor,
+    disclaimerTextColor: themeObj.disclaimerTextColor,
+    instructionalTextColor: themeObj.instructionalTextColor,
+    poweredByTextColor: themeObj.poweredByTextColor,
+    detailsViewTextKeyColor: themeObj.detailsViewTextKeyColor,
+    detailsViewTextValueColor: themeObj.detailsViewTextValueColor,
+    silverBorderColor:themeObj.silverBorderColor,
   }
 }
 

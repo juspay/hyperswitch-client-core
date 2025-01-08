@@ -78,6 +78,12 @@ let make = (
   | OPEN_BANKING(prop) => prop.payment_method_type
   | BANK_DEBIT(prop) => prop.payment_method_type
   | BANK_TRANSFER(prop) => prop.payment_method_type
+
+  }
+
+   let bankDebitPMType = switch redirectProp {
+  | BANK_DEBIT(prop) => prop.payment_method_type_var
+  | _ => Other
   }
 
   let paymentExperience = switch redirectProp {
@@ -100,7 +106,7 @@ let make = (
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-   | BANK_DEBIT(prop) =>
+  | BANK_DEBIT(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
