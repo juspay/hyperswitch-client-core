@@ -37,6 +37,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@react-native-clipboard/clipboard": "^1.16.1",
     "@sentry/react-native": "^5.9.1",
     "pako": "^2.1.0",
     "react-native-code-push": "^8.3.1",

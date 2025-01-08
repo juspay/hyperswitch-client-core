@@ -57,6 +57,33 @@ let defaultCancelError = {
   code: "",
   message: "",
 }
+let defaultSuccess = {
+  type_: "",
+  status: "Processing",
+  code: "",
+  message: "",
+}
+let getACH_bank_transfer = (data: option<bank_transfer_steps_and_charges_details>) => {
+  switch data {
+  | Some(data) => data.ach_credit_transfer
+  | None =>
+    Some({
+      account_number: "",
+      bank_name: "",
+      routing_number: "",
+      swift_code: "",
+    })
+  }
+}
+
+let getACH_details = (data: option<ach_credit_transfer>) => {
+  data->Option.getOr({
+    account_number: "",
+    bank_name: "",
+    routing_number: "",
+    swift_code: "",
+  })
+}
 
 let getNextAction = (dict, str) => {
   dict
