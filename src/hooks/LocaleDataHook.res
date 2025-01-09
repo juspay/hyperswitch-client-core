@@ -187,19 +187,19 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
 
 let useLocaleDataFetch = () => {
   let apiFunction = CommonHooks.fetchApi
-  //   let logger = LoggerHook.useLoggerHook()
+  let logger = LoggerHook.useLoggerHook()
 
-  (~locale: option<SdkTypes.localeTypes>=None) => {
+  (~locale: option<SdkTypes.localeTypes>=None, ~timeout=10000) => {
     let localeString = SdkTypes.localeTypeToString(locale)
     let localeStringEndPoint = `https://dev.hyperswitch.io/assets/v1/locales/${localeString}`
 
-    // logger(
-    //   ~logType=INFO,
-    //   ~value="initialize Locale Strings API",
-    //   ~category=API,
-    //   ~eventName=S3_API,
-    //   (),
-    // )
+    logger(
+      ~logType=INFO,
+      ~value="initialize Locale Strings API",
+      ~category=API,
+      ~eventName=S3_API,
+      (),
+    )
 
     apiFunction(
       ~uri=localeStringEndPoint,
@@ -209,18 +209,23 @@ let useLocaleDataFetch = () => {
       (),
     )
     ->GZipUtils.extractJson
+    ->PromiseHelper.withTimeout(timeout, Null)
     ->Promise.then(data => {
-      Promise.resolve(getLocaleStringsFromJson(data))
+      if data != Null {
+        Promise.resolve(Some(getLocaleStringsFromJson(data)))
+      } else {
+        Promise.reject(Exn.raiseError("API Failed"))
+      }
     })
     ->Promise.catch(_ => {
-      //   logger(
-      //     ~logType=ERROR,
-      //     ~value=`Locale Strings API failed - ${localeStringEndPoint}`,
-      //     ~category=API,
-      //     ~eventName=S3_API,
-      //     (),
-      //   )
-      Promise.resolve(getLocaleStringsFromJson(Js.Json.null))
+      logger(
+        ~logType=ERROR,
+        ~value=`Locale Strings API failed - ${localeStringEndPoint}`,
+        ~category=API,
+        ~eventName=S3_API,
+        (),
+      )
+      Promise.resolve(None)
     })
   }
 }

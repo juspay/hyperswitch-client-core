@@ -1,7 +1,7 @@
 open ReactNative
 open PaymentMethodListType
 open CustomPicker
-
+open PaymentMethodListType2
 type klarnaSessionCheck = {
   isKlarna: bool,
   session_token: string,

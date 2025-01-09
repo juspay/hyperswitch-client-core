@@ -60,7 +60,7 @@ let logFileToObj = logFile => {
     ),
     (
       "payment_experience",
-      switch (logFile.paymentExperience: option<PaymentMethodListType.payment_experience_type>) {
+      switch (logFile.paymentExperience: option<PaymentMethodListType2.payment_experience_type>) {
       | None => ""
       | Some(exp) =>
         switch exp {

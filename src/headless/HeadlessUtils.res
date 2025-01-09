@@ -29,7 +29,7 @@ let logWrapper = (
   ~category,
   ~data: JSON.t,
   ~paymentMethod: option<string>,
-  ~paymentExperience: option<PaymentMethodListType.payment_experience_type>,
+  ~paymentExperience: option<PaymentMethodListType2.payment_experience_type>,
   ~publishableKey: string,
   ~paymentId: string,
   ~timestamp,
@@ -83,7 +83,7 @@ let logWrapper = (
     source: Headless->sdkStateToStrMapper,
     paymentMethod: paymentMethod->Option.getOr(""),
     paymentExperience: paymentExperience->Option.getOr(
-      (NONE: PaymentMethodListType.payment_experience_type),
+      (NONE: PaymentMethodListType2.payment_experience_type),
     ),
     latency: latency->Float.toString,
   }

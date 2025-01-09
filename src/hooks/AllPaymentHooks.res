@@ -381,7 +381,7 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<PaymentMethodListType.payment_experience_type>=?,
+    ~paymentExperience: option<PaymentMethodListType2.payment_experience_type>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     (),
   ) => {

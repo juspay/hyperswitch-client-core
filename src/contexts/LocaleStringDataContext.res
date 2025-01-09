@@ -1,6 +1,5 @@
 type data =
   | Loading
-  | None
   | Some(LocaleDataType.localeStrings)
 
 let localeDataContext = React.createContext((Loading, (_: data => data) => ()))
@@ -18,12 +17,31 @@ let make = (~children) => {
   React.useEffect0(() => {
     localeDataFetch(~locale)
     ->Promise.then(res => {
-      setState(_ => Some(res))
-      Promise.resolve()
+      switch res {
+      | Some(data) =>
+        setState(_ => Some(data))
+        Promise.resolve()
+      | _ => Promise.reject(Exn.raiseError("API Failed"))
+      }
     })
     ->Promise.catch(_ => {
-      setState(_ => None)
-      Promise.resolve()
+      localeDataFetch()
+      ->Promise.then(
+        res => {
+          switch res {
+          | Some(data) =>
+            setState(_ => Some(data))
+            Promise.resolve()
+          | _ => Promise.reject(Exn.raiseError("API Failed"))
+          }
+        },
+      )
+      ->Promise.catch(
+        _ => {
+          setState(_ => Some(LocaleDataType.defaultLocale))
+          Promise.resolve()
+        },
+      )
     })
     ->ignore
     None

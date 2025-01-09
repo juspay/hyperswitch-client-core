@@ -3,6 +3,6 @@ type setChildRef = (
   ~handlePress: ReactNative.Event.pressEvent => unit,
   ~hasSomeFields: bool=?,
   ~paymentMethod: string,
-  ~paymentExperience: PaymentMethodListType.payment_experience_type=?,
+  ~paymentExperience: PaymentMethodListType2.payment_experience_type=?,
   unit,
 ) => unit
