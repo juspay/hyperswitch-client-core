@@ -14,27 +14,16 @@ let make = (~children) => {
   let (state, setState) = React.useState(_ => Loading)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let locale = nativeProp.configuration.appearance.locale
-  let countryStateDataHook = LocaleDataHook.useLocaleDataFetch()
+  let localeDataFetch = LocaleDataHook.useLocaleDataFetch()
   React.useEffect0(() => {
-    countryStateDataHook(~locale)
+    localeDataFetch(~locale)
     ->Promise.then(res => {
       setState(_ => Some(res))
       Promise.resolve()
     })
     ->Promise.catch(_ => {
-      countryStateDataHook()
-      ->Promise.then(
-        res => {
-          setState(_ => Some(res))
-          Promise.resolve()
-        },
-      )
-      ->Promise.catch(
-        _ => {
-          setState(_ => None)
-          Promise.resolve()
-        },
-      )
+      setState(_ => None)
+      Promise.resolve()
     })
     ->ignore
     None

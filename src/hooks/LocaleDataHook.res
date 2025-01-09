@@ -200,13 +200,6 @@ let useLocaleDataFetch = () => {
     //   ~eventName=S3_API,
     //   (),
     // )
-    // let delay = (ms, res) => {
-    //   Js.Promise.make((~resolve, ~reject as _) => {
-    //     let _ = Js.Global.setTimeout(_ => {
-    //       resolve(res)
-    //     }, ms)
-    //   })
-    // }
 
     apiFunction(
       ~uri=localeStringEndPoint,
