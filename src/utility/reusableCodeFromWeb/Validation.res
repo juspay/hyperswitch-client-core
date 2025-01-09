@@ -528,7 +528,7 @@ let isValidEmail = text => {
 }
 
 let isValidZip = (~zipCode, ~country) => {
-  Console.log(country)
+  let _ = country
   let countryObj = CountryStateDataHookTypes.defaultTimeZone
   // Country.country
   // ->Array.find(item => item.countryName === country)
