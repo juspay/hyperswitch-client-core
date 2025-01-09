@@ -1,1 +1,0 @@
-type payment_experience_type = INVOKE_SDK_CLIENT | REDIRECT_TO_URL | NONE

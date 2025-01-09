@@ -150,9 +150,7 @@ let useLoggerHook = () => {
       eventName,
       firstEvent,
       paymentMethod: paymentMethod->Option.getOr(""),
-      paymentExperience: paymentExperience->Option.getOr(
-        (NONE: PaymentMethodListType2.payment_experience_type),
-      ),
+      ?paymentExperience,
       latency,
       source: nativeProp.sdkState->SdkTypes.sdkStateToStrMapper,
     }

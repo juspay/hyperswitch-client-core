@@ -381,7 +381,7 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<PaymentMethodListType2.payment_experience_type>=?,
+    ~paymentExperience: option<string>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     (),
   ) => {
@@ -865,9 +865,7 @@ let useSavePaymentMethod = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  (
-    ~body: PaymentMethodListType.redirectType
-  ) => {
+  (~body: PaymentMethodListType.redirectType) => {
     let uriParam = nativeProp.paymentMethodId
     let uri = `${baseUrl}/payment_methods/${uriParam}/save`
     apiLogWrapper(

@@ -188,10 +188,10 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
 let useLocaleDataFetch = () => {
   let apiFunction = CommonHooks.fetchApi
   let logger = LoggerHook.useLoggerHook()
-
-  (~locale: option<SdkTypes.localeTypes>=None, ~timeout=10000) => {
+  let baseUrl = GlobalHooks.useGetAssetUrl()
+  (~locale: option<SdkTypes.localeTypes>=None) => {
     let localeString = SdkTypes.localeTypeToString(locale)
-    let localeStringEndPoint = `https://dev.hyperswitch.io/assets/v1/locales/${localeString}`
+    let localeStringEndPoint = `${baseUrl()}/assets/v1/locales/${localeString}`
 
     logger(
       ~logType=INFO,
@@ -209,7 +209,6 @@ let useLocaleDataFetch = () => {
       (),
     )
     ->GZipUtils.extractJson
-    ->PromiseHelper.withTimeout(timeout, Null)
     ->Promise.then(data => {
       if data != Null {
         Promise.resolve(Some(getLocaleStringsFromJson(data)))

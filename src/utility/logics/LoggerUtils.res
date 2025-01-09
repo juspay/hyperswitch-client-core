@@ -60,14 +60,9 @@ let logFileToObj = logFile => {
     ),
     (
       "payment_experience",
-      switch (logFile.paymentExperience: option<PaymentMethodListType2.payment_experience_type>) {
+      switch logFile.paymentExperience {
       | None => ""
-      | Some(exp) =>
-        switch exp {
-        | INVOKE_SDK_CLIENT => "INVOKE_SDK_CLIENT"
-        | REDIRECT_TO_URL => "REDIRECT_TO_URL"
-        | _ => ""
-        }
+      | Some(exp) => exp
       }->JSON.Encode.string,
     ),
     ("latency", logFile.latency->Option.getOr("")->JSON.Encode.string),
