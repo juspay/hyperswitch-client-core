@@ -1,0 +1,44 @@
+type data =
+  | Loading
+  | None
+  | Some(LocaleDataType.localeStrings)
+
+let localeDataContext = React.createContext((Loading, (_: data => data) => ()))
+
+module Provider = {
+  let make = React.Context.provider(localeDataContext)
+}
+
+@react.component
+let make = (~children) => {
+  let (state, setState) = React.useState(_ => Loading)
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let locale = nativeProp.configuration.appearance.locale
+  let countryStateDataHook = LocaleDataHook.useLocaleDataFetch()
+  React.useEffect0(() => {
+    countryStateDataHook(~locale)
+    ->Promise.then(res => {
+      setState(_ => Some(res))
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      countryStateDataHook()
+      ->Promise.then(
+        res => {
+          setState(_ => Some(res))
+          Promise.resolve()
+        },
+      )
+      ->Promise.catch(
+        _ => {
+          setState(_ => None)
+          Promise.resolve()
+        },
+      )
+    })
+    ->ignore
+    None
+  })
+
+  <Provider value=(state, setState)> children </Provider>
+}
