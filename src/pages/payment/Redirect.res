@@ -111,18 +111,23 @@ let make = (
 
   let bankData: array<customPickerType> = bankItems->Array.map(item => {
     {
-      name: item.displayName,
+      label: item.displayName,
       value: item.hyperSwitch,
     }
   })
+  let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
-  let countryData: array<customPickerType> = Country.country->Array.map(item => {
-    {
-      name: item.countryName,
-      value: item.isoAlpha2,
-      icon: Utils.getCountryFlags(item.isoAlpha2),
-    }
-  })
+  let countryData: array<customPickerType> = switch statesAndCountry {
+  | Some(data) =>
+    data.countries->Array.map(item => {
+      {
+        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
+        value: item.isoAlpha2,
+        icon: Utils.getCountryFlags(item.isoAlpha2),
+      }
+    })
+  | _ => []
+  }
 
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(
     switch bankItems->Array.get(0) {
@@ -509,30 +514,23 @@ let make = (
     }
   }
 
-  let (statesJson, setStatesJson) = React.useState(_ => None)
-
-  React.useEffect0(() => {
-    // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      setStatesJson(_ => None)
-      Promise.resolve()
-    })
-    ->ignore
-
-    None
-  })
+  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
+      let obj =
+        json
+        ->Utils.getDictFromJson
+        ->GooglePayTypeNew.itemToObjMapper(
+          switch countryStateData {
+          | Some(data) => data.states
+          | _ => Dict.make()
+          },
+        )
+
       let payment_method_data =
         [
           (
