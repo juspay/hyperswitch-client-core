@@ -8,20 +8,20 @@ module RenderField = {
     ->Utils.getStateNames(country)
     ->Array.map((item): CustomPicker.customPickerType => {
       {
-        name: item,
-        value: item,
+        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
+        value: item.value,
       }
     })
   }
 
-  let getCountryData = countryArr => {
-    Country.country
+  let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.countries) => {
+    contextCountryData
     ->Array.filter(item => {
       countryArr->Array.includes(item.isoAlpha2)
     })
     ->Array.map((item): CustomPicker.customPickerType => {
       {
-        name: item.countryName,
+        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
         value: item.isoAlpha2,
         icon: Utils.getCountryFlags(item.isoAlpha2),
       }
@@ -29,12 +29,15 @@ module RenderField = {
   }
 
   let getCountryValueOfRelativePath = (path, finalJsonDict) => {
-    let key = getKey(path, "country")
-
-    let value = finalJsonDict->Dict.get(key)
-    value
-    ->Option.map(((value, _)) => value->JSON.Decode.string->Option.getOr(""))
-    ->Option.getOr("")
+    if path->String.length != 0 {
+      let key = getKey(path, "country")
+      let value = finalJsonDict->Dict.get(key)
+      value
+      ->Option.map(((value, _)) => value->JSON.Decode.string->Option.getOr(""))
+      ->Option.getOr("")
+    } else {
+      ""
+    }
   }
 
   @react.component
@@ -43,7 +46,7 @@ module RenderField = {
     ~setFinalJsonDict,
     ~finalJsonDict,
     ~isSaveCardsFlow,
-    ~statesJson: option<JSON.t>,
+    ~statesAndCountry: CountryStateDataContext.data,
     ~keyToTrigerButtonClickError,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
@@ -199,6 +202,7 @@ module RenderField = {
       ~display_name=required_fields_type.display_name,
       ~required_field=required_fields_type.required_field,
     )
+    let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
     <>
       // <TextWrapper text={placeholder()} textType=SubheadingBold />
       // <Space height=5. />
@@ -210,31 +214,49 @@ module RenderField = {
           borderBottomLeftRadius=borderRadius
           borderBottomRightRadius=borderRadius
           borderBottomWidth=borderWidth
-          items={countryArr->getCountryData}
+          items={switch countryStateData {
+          | Some(res: CountryStateDataHookTypes.countryStateData) =>
+            switch countryArr {
+            | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
+            | UseBackEndData(data) => data
+            }->getCountryData(res.countries)
+          | _ => []
+          }}
           placeholderText={placeholder()}
           isValid
+          isLoading={switch statesAndCountry {
+          | Loading(_) => true
+          | _ => false
+          }}
         />
       | AddressState =>
-        switch statesJson {
-        | Some(options) =>
+        switch statesAndCountry {
+        | Loading(statesAndCountryVal) | Some(statesAndCountryVal) =>
+          let stateData = getStateData(
+            statesAndCountryVal.states,
+            getCountryValueOfRelativePath(
+              switch required_fields_type.required_field {
+              | StringField(x) => x
+              | _ => ""
+              },
+              finalJsonDict,
+            ),
+          )
           <CustomPicker
             value=val
             setValue=onChangeCountry
             borderBottomLeftRadius=borderRadius
             borderBottomRightRadius=borderRadius
             borderBottomWidth=borderWidth
-            items={options->getStateData(
-              getCountryValueOfRelativePath(
-                switch required_fields_type.required_field {
-                | StringField(x) => x
-                | _ => ""
-                },
-                finalJsonDict,
-              ),
-            )}
+            items=stateData
             placeholderText={placeholder()}
             isValid
+            isLoading={switch statesAndCountry {
+            | Loading(_) => true
+            | _ => false
+            }}
           />
+
         | None => React.null
         }
       | _ =>
@@ -280,7 +302,7 @@ module Fields = {
     ~finalJsonDict,
     ~setFinalJsonDict,
     ~isSaveCardsFlow,
-    ~statesJson,
+    ~statesAndCountry: CountryStateDataContext.data,
     ~keyToTrigerButtonClickError,
   ) => {
     fields
@@ -291,7 +313,7 @@ module Fields = {
           required_fields_type=item
           key={index->Int.toString}
           isSaveCardsFlow
-          statesJson
+          statesAndCountry
           finalJsonDict
           setFinalJsonDict
           keyToTrigerButtonClickError
@@ -318,23 +340,43 @@ let make = (
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
-  let clientCountry = Utils.getClientCountry(clientTimeZone)
+  let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
-  let initialKeysValDict = React.useMemo(() =>
-    requiredFields
-    ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
-    ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
-    ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2)
-  , (
+  let clientCountry = Utils.getClientCountry(
+    switch statesAndCountry {
+    | Some(data) => data.countries
+    | _ => []
+    },
+    clientTimeZone,
+  )
+
+  let initialKeysValDict = React.useMemo(() => {
+    switch statesAndCountry {
+    | Some(statesAndCountryData) =>
+      requiredFields
+      ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
+      ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
+      ->RequiredFieldsTypes.getKeysValArray(
+        isSaveCardsFlow,
+        clientCountry.isoAlpha2,
+        statesAndCountryData.countries->Array.map(item => {item.isoAlpha2}),
+      )
+    | _ =>
+      requiredFields
+      ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
+      ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
+      ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2, [])
+    }
+  }, (
     requiredFields,
     isSaveCardsFlow,
     savedCardsData,
     clientCountry.isoAlpha2,
     shouldRenderShippingFields,
+    statesAndCountry,
   ))
 
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
-  let (statesJson, setStatesJson) = React.useState(_ => None)
 
   React.useEffect1(() => {
     let isAllValid =
@@ -348,17 +390,6 @@ let make = (
     setDynamicFieldsJson(_ => finalJsonDict)
     None
   }, [finalJsonDict])
-
-  React.useEffect0(() => {
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => Promise.resolve())
-    ->ignore
-    None
-  })
 
   let filteredFields = displayPreValueFields
     ? requiredFields
@@ -415,6 +446,69 @@ let make = (
     shouldRenderShippingFields,
   ))
 
+  // React.useEffect1(() => {
+  //   switch statesAndCountry {
+  //   | Some(_) => {
+  //       switch requiredFields->Array.find(required_fields_type => {
+  //         switch required_fields_type.field_type {
+  //         | AddressCountry(_) => true
+  //         | _ => false
+  //         }
+  //       }) {
+  //       | Some(required) =>
+  //         switch required.required_field {
+  //         | StringField(path) =>
+  //           setFinalJsonDict(prev => {
+  //             let newData = Dict.assign(Dict.make(), prev)
+  //             newData->Dict.set(path, (clientCountry.isoAlpha2->JSON.Encode.string, None))
+  //             newData
+  //           })
+  //         | _ => ()
+  //         }
+  //       | _ => ()
+  //       }
+  //       ()
+  //     }
+  //   | _ => ()
+  //   }
+  //   None
+  // }, [statesAndCountry])
+
+  let isAddressCountryField = fieldType =>
+    switch fieldType.field_type {
+    | AddressCountry(_) => true
+    | _ => false
+    }
+
+  let updateDictWithCountry = (dict, path, countryCode) => {
+    let newDict = Dict.assign(Dict.make(), dict)
+    newDict->Dict.set(path, (countryCode->JSON.Encode.string, None))
+    newDict
+  }
+
+  let handleStringField = (path, prevDict, countryCode) =>
+    switch prevDict->Dict.get(path) {
+    | Some((key, _)) if key->JSON.Decode.string->Option.getOr("") != "" => prevDict
+    | _ => updateDictWithCountry(prevDict, path, countryCode)
+    }
+
+  React.useEffect2(() => {
+    switch statesAndCountry {
+    | Some(_) =>
+      requiredFields
+      ->Array.find(isAddressCountryField)
+      ->Option.forEach(required => {
+        switch required.required_field {
+        | StringField(path) =>
+          setFinalJsonDict(prev => handleStringField(path, prev, clientCountry.isoAlpha2))
+        | _ => ()
+        }
+      })
+    | _ => ()
+    }
+    None
+  }, (statesAndCountry, clientCountry.isoAlpha2))
+
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
       ? <>
@@ -424,7 +518,7 @@ let make = (
             finalJsonDict
             setFinalJsonDict
             isSaveCardsFlow
-            statesJson
+            statesAndCountry
             keyToTrigerButtonClickError
           />
         </>
