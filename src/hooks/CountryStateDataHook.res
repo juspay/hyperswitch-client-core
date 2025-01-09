@@ -68,7 +68,7 @@ let useCountryStateDataFetch = () => {
   let logger = LoggerHook.useLoggerHook()
 
   (~locale: option<SdkTypes.localeTypes>=None) => {
-    let localeString = SdkTypes.localeToString(locale)
+    let localeString = SdkTypes.localeTypeToString(locale)
     let statesEndpoint = `https://dev.hyperswitch.io/assets/v1/location/${localeString}`
 
     logger(~logType=INFO, ~value="initialize Locale API", ~category=API, ~eventName=S3_API, ())
