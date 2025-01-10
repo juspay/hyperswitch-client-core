@@ -38,10 +38,10 @@ let make = (
     None
   }, [name])
 
-  let getAssetUrl = GlobalHooks.useGetAssetUrl()
+  let getAssetUrl = GlobalHooks.useGetAssetUrlWithVersion()
 
   let uri = React.useMemo1(() => {
-    let assetUrl = `${getAssetUrl()}/assets/v1/images/error.svg`
+    let assetUrl = `${getAssetUrl()}/images/error.svg`
 
     let localName = switch iconName {
     | "card" => card
