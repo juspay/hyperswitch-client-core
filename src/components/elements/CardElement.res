@@ -58,11 +58,25 @@ let make = (
     let cardBrand = getCardBrand(text)
     let num = formatCardNumber(text, cardType(cardBrand))
     let isthisValid = cardValid(num, cardBrand)
-
-    setCardData(prev => {...prev, cardNumber: num, isCardNumberValid: Some(isthisValid)})
+    let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
+    if cardData.cardBrand->Option.getOr("") !== cardBrand && cardData.cardBrand != None {
+      setCardData(prev => {
+        ...prev,
+        cvv: "",
+        isCvvValid: None,
+        expireDate: "",
+        isExpireDataValid: None,
+      })
+    }
+    setCardData(prev => {
+      ...prev,
+      cardNumber: num,
+      isCardNumberValid: Some(isthisValid),
+      cardBrand: cardBrand === "" ? None : Some(cardBrand),
+    })
 
     // Adding support for 19 digit card hence disabling ref
-    if isthisValid {
+    if isthisValid && shouldShiftFocusToNextField {
       switch expireRef.current->Nullable.toOption {
       | None => ()
       | Some(ref) => ref->ReactNative.TextInputElement.focus
@@ -83,8 +97,9 @@ let make = (
   }
   let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let cvvData = formatCVCNumber(text, getCardBrand(cardData.cardNumber))
-    let isthisValid = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
-    if isthisValid {
+    let isValidCvv = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
+    let shouldShiftFocusToNextField = checkMaxCardCvv(cvvData, getCardBrand(cardData.cardNumber))
+    if isValidCvv && shouldShiftFocusToNextField {
       switch cvvOrZipRef.current->Nullable.toOption {
       | None => ()
       | Some(ref) =>
@@ -93,8 +108,9 @@ let make = (
           : ref->ReactNative.TextInputElement.blur
       }
     }
-    setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isthisValid)})
+    setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isValidCvv)})
   }
+
   let onChangeZip = (text, zipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let isthisValid = Validation.isValidZip(~zipCode=text, ~country="United States")
     if isthisValid {
@@ -124,6 +140,7 @@ let make = (
       isCardNumberValid: Some(isCardValid),
       expireDate,
       isExpireDataValid,
+      cardBrand: cardBrand === "" ? None : Some(cardBrand),
     })
     switch (isCardValid, isExpiryValid) {
     | (true, true) =>

@@ -303,6 +303,9 @@ type hyperParams = {
   defaultView: bool,
   launchTime?: float,
   sdkVersion: string,
+  device_model: option<string>,
+  os_type: option<string>,
+  os_version: option<string>,
 }
 
 type nativeProp = {
@@ -437,7 +440,41 @@ let getPrimaryButtonColorFromDict = (primaryButtonColorDict, keys: NativeSdkProp
     border: retOptionalStr(getProp(keys.primaryButton_border, primaryButtonColorDict)),
   }
 }
-
+let localeToString = locale => {
+  switch locale {
+  | Some(En) => "en"
+  | Some(He) => "he"
+  | Some(Fr) => "fr"
+  | Some(En_GB) => "en-GB"
+  | Some(Ar) => "ar"
+  | Some(Ja) => "ja"
+  | Some(De) => "de"
+  | Some(Fr_BE) => "fr-BE"
+  | Some(Es) => "es"
+  | Some(Ca) => "ca"
+  | Some(Pt) => "pt"
+  | Some(It) => "it"
+  | Some(Pl) => "pl"
+  | Some(Nl) => "nl"
+  | Some(NI_BE) => "nI-BE"
+  | Some(Sv) => "sv"
+  | Some(Ru) => "ru"
+  | Some(Lt) => "lt"
+  | Some(Cs) => "cs"
+  | Some(Sk) => "sk"
+  | Some(Ls) => "ls"
+  | Some(Cy) => "cy"
+  | Some(El) => "el"
+  | Some(Et) => "et"
+  | Some(Fi) => "fi"
+  | Some(Nb) => "nb"
+  | Some(Bs) => "bs"
+  | Some(Da) => "da"
+  | Some(Ms) => "ms"
+  | Some(Tr_CY) => "tr-CY"
+  | None => "en"
+  }
+}
 let getAppearanceObj = (
   appearanceDict: Dict.t<JSON.t>,
   keys: NativeSdkPropsKeys.keys,
@@ -924,6 +961,9 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),
       sdkVersion: getString(hyperParams, "sdkVersion", ""),
+      device_model: getOptionString(hyperParams, "device_model"),
+      os_type: getOptionString(hyperParams, "os_type"),
+      os_version: getOptionString(hyperParams, "os_version"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }

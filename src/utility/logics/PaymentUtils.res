@@ -129,6 +129,9 @@ let generateCardConfirmBody = (
     ),
     browser_info: {
       user_agent: ?nativeProp.hyperParams.userAgent,
+      device_model: ?nativeProp.hyperParams.device_model,
+      os_type: ?nativeProp.hyperParams.os_type,
+      os_version: ?nativeProp.hyperParams.os_version,
     },
   }
 }

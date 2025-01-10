@@ -128,7 +128,9 @@ let make = (~children) => {
         (),
       )}>
       <CustomView onDismiss=onModalClose>
-        <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
+        <CustomView.Wrapper onModalClose>
+          {children}
+        </CustomView.Wrapper>
       </CustomView>
     </Animated.View>
     <LoadingOverlay />

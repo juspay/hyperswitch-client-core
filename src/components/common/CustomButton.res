@@ -15,12 +15,13 @@ let make = (
   ~buttonType: buttonType=Primary,
   ~leftIcon: iconType=NoIcon,
   ~rightIcon: iconType=NoIcon,
-  ~onPress=?,
+  ~onPress,
   ~linearGradientColorTuple=None,
   ~borderWidth=0.,
   ~borderRadius=0.,
   ~borderColor="#ffffff",
   ~children=None,
+  ~testID=?,
 ) => {
   let fillAnimation = React.useRef(Animated.Value.create(0.)).current
   let {
@@ -105,6 +106,7 @@ let make = (
     ])}>
     <CustomTouchableOpacity
       disabled
+      testID={testID->Option.getOr("")}
       style={array([
         viewStyle(
           ~height=100.->pct,
@@ -117,7 +119,10 @@ let make = (
           (),
         ),
       ])}
-      ?onPress>
+      onPress={ev => {
+        Keyboard.dismiss()
+        onPress(ev)
+      }}>
       {switch children {
       | Some(child) => child
       | _ =>

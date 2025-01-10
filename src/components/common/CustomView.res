@@ -7,12 +7,13 @@ let make = (
   ~onDismiss=() => (),
   ~children,
   ~closeOnClickOutSide=true,
-  ~modalPosition: modalPosition=#bottom,
+  ~modalPosition=#bottom,
   ~bottomModalWidth=100.->pct,
   (),
 ) => {
   let (screenType, _) = DimensionHook.useDimension()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
   let modalPosStyle = array([
     viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
@@ -39,6 +40,7 @@ let make = (
       ~overflow=#hidden,
       ~alignItems=#center,
       ~justifyContent=#center,
+      ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
       (),
     ),
     switch (screenType, nativeProp.configuration.fullScreenModalView) {
@@ -48,7 +50,7 @@ let make = (
         ~borderBottomLeftRadius=15.,
         ~borderBottomRightRadius=15.,
         ~maxWidth=600.->dp,
-        ~maxHeight=95.->pct,
+        ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
         (),
       )
     | (_, true) =>
@@ -56,7 +58,7 @@ let make = (
         ~flex=1.,
         ~borderRadius=0.,
         ~maxWidth=100.0->pct,
-        ~maxHeight=100.->pct,
+        ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
         ~alignContent=#center,
         (),
       )
@@ -101,15 +103,20 @@ module Wrapper = {
   @react.component
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
+    let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-    <Animated.ScrollView
+    <ScrollView
+      contentContainerStyle={viewStyle(
+        ~minHeight=250.->dp,
+        ~paddingHorizontal=20.->dp,
+        ~paddingTop=20.->dp,
+        ~paddingBottom=viewPortContants.navigationBarHeight->dp,
+        (),
+      )}
       keyboardShouldPersistTaps={#handled}
-      style={array([
-        viewStyle(~flexGrow=1., ~width, ~minHeight=250.->dp, ~padding=20.->dp, ()),
-        bgColor,
-      ])}>
+      style={array([viewStyle(~flexGrow=1., ~width, ()), bgColor])}>
       <ModalHeader onModalClose />
       children
-    </Animated.ScrollView>
+    </ScrollView>
   }
 }

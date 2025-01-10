@@ -19,7 +19,7 @@ let make = (
   <CustomTouchableOpacity
     disabled
     activeOpacity=1.
-    style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}
+    style={viewStyle(~flexDirection=#row, ~alignItems=#center, ~alignSelf=#"flex-start", ())}
     onPress={_ => {
       !disableScreenSwitch
         ? {
