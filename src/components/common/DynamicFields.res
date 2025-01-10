@@ -216,7 +216,7 @@ module RenderField = {
           borderBottomRightRadius=borderRadius
           borderBottomWidth=borderWidth
           items={switch countryStateData {
-          | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
+          | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
             switch countryArr {
             | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
             | UseBackEndData(data) => data
@@ -231,36 +231,35 @@ module RenderField = {
           }}
         />
       | AddressState =>
-        switch statesAndCountry {
-        | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
-          let stateData = getStateData(
-            statesAndCountryVal.states,
-            getCountryValueOfRelativePath(
-              switch required_fields_type.required_field {
-              | StringField(x) => x
-              | _ => ""
-              },
-              finalJsonDict,
-            ),
-          )
-          <CustomPicker
-            value=val
-            isCountryStateFields=true
-            setValue=onChangeCountry
-            borderBottomLeftRadius=borderRadius
-            borderBottomRightRadius=borderRadius
-            borderBottomWidth=borderWidth
-            items=stateData
-            placeholderText={placeholder()}
-            isValid
-            isLoading={switch statesAndCountry {
-            | Loading => true
-            | _ => false
-            }}
-          />
+        <CustomPicker
+          value=val
+          isCountryStateFields=true
+          setValue=onChangeCountry
+          borderBottomLeftRadius=borderRadius
+          borderBottomRightRadius=borderRadius
+          borderBottomWidth=borderWidth
+          items={switch statesAndCountry {
+          | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
+            getStateData(
+              statesAndCountryVal.states,
+              getCountryValueOfRelativePath(
+                switch required_fields_type.required_field {
+                | StringField(x) => x
+                | _ => ""
+                },
+                finalJsonDict,
+              ),
+            )
+          | _ => []
+          }}
+          placeholderText={placeholder()}
+          isValid
+          isLoading={switch statesAndCountry {
+          | Loading => true
+          | _ => false
+          }}
+        />
 
-        | Loading => React.null
-        }
       | _ =>
         <CustomInput
           state={val->Option.getOr("")}
@@ -346,7 +345,7 @@ let make = (
 
   let clientCountry = Utils.getClientCountry(
     switch statesAndCountry {
-    | FetchData(data) => data.countries
+    | FetchData(data) | Localdata(data) => data.countries
     | _ => []
     },
     clientTimeZone,
@@ -497,7 +496,7 @@ let make = (
 
   React.useEffect2(() => {
     switch statesAndCountry {
-    | FetchData(_) =>
+    | FetchData(_) | Localdata(_) =>
       requiredFields
       ->Array.find(isAddressCountryField)
       ->Option.forEach(required => {
