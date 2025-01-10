@@ -7,8 +7,11 @@ let fetchApi = (
   ~dontUseDefaultHeader=false,
   (),
 ) => {
-  Dict.set(headers, "Content-Type", "application/json")
-  Dict.set(headers, "X-Client-Platform", WebKit.platformString)
+  if !dontUseDefaultHeader {
+    Dict.set(headers, "Content-Type", "application/json")
+    Dict.set(headers, "X-Client-Platform", WebKit.platformString)
+  }
+
   let body = switch method_ {
   | Get => Promise.resolve(None)
   | _ => Promise.resolve(Some(Fetch.BodyInit.make(bodyStr)))
@@ -22,7 +25,7 @@ let fetchApi = (
       Fetch.RequestInit.make(
         ~method_,
         ~body?,
-        ~headers=?dontUseDefaultHeader ? None : Some(Fetch.HeadersInit.makeWithDict(headers)),
+        ~headers=Fetch.HeadersInit.makeWithDict(headers),
         ~mode?,
         (),
       ),
