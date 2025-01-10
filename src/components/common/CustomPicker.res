@@ -23,12 +23,10 @@ let make = (
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
-  let (_, setIsCountryStateDataFetchRequired) = React.useContext(
-    CountryStateDataContext.countryStateDataContext,
-  )
+  let (_, fetchCountryStateData) = React.useContext(CountryStateDataContext.countryStateDataContext)
   React.useEffect1(() => {
     if isCountryStateFields {
-      setIsCountryStateDataFetchRequired(_ => true)
+      fetchCountryStateData()
     }
     None
   }, [isCountryStateFields])

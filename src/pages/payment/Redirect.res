@@ -118,7 +118,7 @@ let make = (
   let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let countryData: array<customPickerType> = switch statesAndCountry {
-  | Some(data) =>
+  | FetchData(data) =>
     data.countries->Array.map(item => {
       {
         label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
@@ -528,8 +528,9 @@ let make = (
         ->Utils.getDictFromJson
         ->GooglePayTypeNew.itemToObjMapper(
           switch countryStateData {
-          | Some(data) => data.states
-          | Loading(data) => data.states
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
           | _ => Dict.make()
           },
         )

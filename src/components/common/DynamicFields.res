@@ -216,7 +216,7 @@ module RenderField = {
           borderBottomRightRadius=borderRadius
           borderBottomWidth=borderWidth
           items={switch countryStateData {
-          | Some(res: CountryStateDataHookTypes.countryStateData) =>
+          | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
             switch countryArr {
             | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
             | UseBackEndData(data) => data
@@ -226,13 +226,13 @@ module RenderField = {
           placeholderText={placeholder()}
           isValid
           isLoading={switch statesAndCountry {
-          | Loading(_) => true
+          | Loading => true
           | _ => false
           }}
         />
       | AddressState =>
         switch statesAndCountry {
-        | Loading(statesAndCountryVal) | Some(statesAndCountryVal) =>
+        | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
           let stateData = getStateData(
             statesAndCountryVal.states,
             getCountryValueOfRelativePath(
@@ -254,12 +254,12 @@ module RenderField = {
             placeholderText={placeholder()}
             isValid
             isLoading={switch statesAndCountry {
-            | Loading(_) => true
+            | Loading => true
             | _ => false
             }}
           />
 
-        | None => React.null
+        | Loading => React.null
         }
       | _ =>
         <CustomInput
@@ -346,7 +346,7 @@ let make = (
 
   let clientCountry = Utils.getClientCountry(
     switch statesAndCountry {
-    | Some(data) => data.countries
+    | FetchData(data) => data.countries
     | _ => []
     },
     clientTimeZone,
@@ -354,7 +354,8 @@ let make = (
 
   let initialKeysValDict = React.useMemo(() => {
     switch statesAndCountry {
-    | Some(statesAndCountryData) =>
+    | FetchData(statesAndCountryData)
+    | Localdata(statesAndCountryData) =>
       requiredFields
       ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
       ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
@@ -496,7 +497,7 @@ let make = (
 
   React.useEffect2(() => {
     switch statesAndCountry {
-    | Some(_) =>
+    | FetchData(_) =>
       requiredFields
       ->Array.find(isAddressCountryField)
       ->Option.forEach(required => {

@@ -1,3 +1,67 @@
+open CountryStateDataHookTypes
+
+let decodeCountryArray: array<Js.Json.t> => array<country> = data => {
+  data->Array.map(item => {
+    switch item->Js.Json.decodeObject {
+    | Some(res) => {
+        isoAlpha2: Utils.getString(res, "isoAlpha2", ""),
+        timeZones: Utils.getStrArray(res, "timeZones"),
+        value: Utils.getString(res, "value", ""),
+        label: Utils.getString(res, "label", ""),
+      }
+    | None => defaultTimeZone
+    }
+  })
+}
+
+let decodeStateJson: Js.Json.t => Dict.t<array<state>> = data => {
+  data
+  ->Utils.getDictFromJson
+  ->Js.Dict.entries
+  ->Array.map(item => {
+    let (key, val) = item
+    let newVal =
+      val
+      ->JSON.Decode.array
+      ->Option.getOr([])
+      ->Array.map(jsonItem => {
+        let dictItem = jsonItem->Utils.getDictFromJson
+        {
+          label: Utils.getString(dictItem, "label", ""),
+          value: Utils.getString(dictItem, "value", ""),
+          code: Utils.getString(dictItem, "code", ""),
+        }
+      })
+    (key, newVal)
+  })
+  ->Js.Dict.fromArray
+}
+
+let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
+  switch jsonData->Js.Json.decodeObject {
+  | Some(res) => {
+      let countryArr =
+        res
+        ->Js.Dict.get("country")
+        ->Option.getOr([]->Js.Json.Array)
+        ->Js.Json.decodeArray
+        ->Option.getOr([])
+
+      let statesDict =
+        res
+        ->Js.Dict.get("states")
+        ->Option.getOr(Js.Json.Object(Js.Dict.empty()))
+      {
+        countries: decodeCountryArray(countryArr),
+        states: decodeStateJson(statesDict),
+      }
+    }
+  | None => {
+      countries: [],
+      states: Js.Dict.empty(),
+    }
+  }
+}
 open LocaleDataType
 let getLocaleStrings: Js.Json.t => localeStrings = data => {
   switch data->Js.Json.decodeObject {
@@ -185,41 +249,31 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
   }
 }
 
-let useLocaleDataFetch = () => {
+//-
+let useFetchDataFromS3WithGZipDecoding = () => {
   let apiFunction = CommonHooks.fetchApi
   let logger = LoggerHook.useLoggerHook()
-  let baseUrl = GlobalHooks.useGetAssetUrl()
-  (~locale: option<SdkTypes.localeTypes>=None) => {
-    let localeString = SdkTypes.localeTypeToString(locale)
-    let localeStringEndPoint = `${baseUrl()}/assets/v1/locales/${localeString}`
+  let baseUrl = GlobalHooks.useGetAssetUrlWithVersion()()
 
+  (~s3Path: string, ~decodeJsonToRecord) => {
+    let endpoint = `${baseUrl}${s3Path}`
     logger(
       ~logType=INFO,
-      ~value="initialize Locale Strings API",
+      ~value=`S3 API called - ${endpoint}`,
       ~category=API,
       ~eventName=S3_API,
       (),
     )
-
-    apiFunction(
-      ~uri=localeStringEndPoint,
-      ~method_=Get,
-      ~headers=Dict.make(),
-      ~dontUseDefaultHeader=true,
-      (),
-    )
+    apiFunction(~uri=endpoint, ~method_=Get, ~headers=Dict.make(), ~dontUseDefaultHeader=true, ())
     ->GZipUtils.extractJson
     ->Promise.then(data => {
-      if data != Null {
-        Promise.resolve(Some(getLocaleStringsFromJson(data)))
-      } else {
-        Promise.reject(Exn.raiseError("API Failed"))
-      }
+      let countryStaterecord = decodeJsonToRecord(data)
+      Promise.resolve(Some(countryStaterecord))
     })
     ->Promise.catch(_ => {
       logger(
         ~logType=ERROR,
-        ~value=`Locale Strings API failed - ${localeStringEndPoint}`,
+        ~value=`S3 API failed - ${endpoint}`,
         ~category=API,
         ~eventName=S3_API,
         (),
