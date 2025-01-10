@@ -146,7 +146,7 @@ let make = (
       ~category=USER_EVENT,
       ~eventName=COUNTRY_CHANGED,
       ~paymentMethod,
-      ~paymentExperience?,
+      ~paymentExperience=getPaymentExperienceType(paymentExperience->Option.getOr(NONE)),
       (),
     )
   }
@@ -295,7 +295,7 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod,
-      ~paymentExperience?,
+      ~paymentExperience=getPaymentExperienceType(paymentExperience->Option.getOr(NONE)),
       (),
     )
   }
@@ -406,7 +406,9 @@ let make = (
         ~eventName=NO_WALLET_ERROR,
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       setLoading(FillingDetails)
@@ -672,7 +674,9 @@ let make = (
       ~eventName=PAYMENT_METHOD_CHANGED,
       ~paymentExperience=?walletType.payment_experience
       ->Array.get(0)
-      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      ->Option.map(paymentExperience =>
+        getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+      ),
       (),
     )
     if (
@@ -816,7 +820,9 @@ let make = (
         ~eventName=NO_WALLET_ERROR,
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       setLoading(FillingDetails)
@@ -914,7 +920,7 @@ let make = (
           handlePress
           hasSomeFields
           paymentMethod
-          ?paymentExperience
+          paymentExperience={getPaymentExperienceType(paymentExperience->Option.getOr(NONE))}
           errorText=error
         />,
       )

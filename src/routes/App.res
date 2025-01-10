@@ -13,7 +13,9 @@ module ContextWrapper = {
               <CardDataContext>
                 <CountryStateDataContext>
                   <AllApiDataContext>
-                    <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
+                    <LocaleStringDataContext>
+                      <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
+                    </LocaleStringDataContext>
                   </AllApiDataContext>
                 </CountryStateDataContext>
               </CardDataContext>
