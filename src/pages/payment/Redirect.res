@@ -996,7 +996,7 @@ let make = (
     selectedBank,
   ))
 
-  let customValidationFunc = React.useCallback((~text, ~field_type, ~display_name) => {
+  let customValidationIban = React.useCallback((~text, ~field_type) => {
     switch field_type {
     | Iban =>
       if text->Validation.isValidIban {
@@ -1033,8 +1033,8 @@ let make = (
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
-                customValidationFunc={switch bankDebitType.payment_method_type_var {
-                | SEPA => Some(customValidationFunc)
+                customValidationIban={switch bankDebitType.payment_method_type_var {
+                | SEPA => Some(customValidationIban)
                 | _ => None
                 }}
               />

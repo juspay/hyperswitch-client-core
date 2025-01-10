@@ -44,7 +44,7 @@ module RenderField = {
     ~required_fields_type: RequiredFieldsTypes.required_fields_type,
     ~setFinalJsonDict,
     ~finalJsonDict,
-    ~customValidationFunc,
+    ~customValidationIban,
     ~isSaveCardsFlow,
     ~statesAndCountry: CountryStateDataContext.data,
     ~keyToTrigerButtonClickError,
@@ -101,8 +101,8 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let validationErrMsg = switch customValidationFunc {
-            | Some(validation) => validation(~text, ~field_type=required_fields_type.field_type, ~display_name=Some(required_fields_type.display_name),)
+            let validationErrMsg = switch customValidationIban {
+            | Some(validation) => validation(~text, ~field_type=required_fields_type.field_type)
               | None =>
               RequiredFieldsTypes.checkIsValid(
                 ~text,
@@ -306,7 +306,7 @@ module Fields = {
     ~setFinalJsonDict,
     ~isSaveCardsFlow,
     ~statesAndCountry: CountryStateDataContext.data,
-    ~customValidationFunc,
+    ~customValidationIban,
     ~keyToTrigerButtonClickError,
   ) => {
     fields
@@ -318,7 +318,7 @@ module Fields = {
           key={index->Int.toString}
           isSaveCardsFlow
           statesAndCountry
-          customValidationFunc
+          customValidationIban
           finalJsonDict
           setFinalJsonDict
           keyToTrigerButtonClickError
@@ -341,7 +341,7 @@ let make = (
   ~keyToTrigerButtonClickError,
   ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
-  ~customValidationFunc=None,
+  ~customValidationIban=None,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
@@ -525,7 +525,7 @@ let make = (
             setFinalJsonDict
             isSaveCardsFlow
             statesAndCountry
-            customValidationFunc
+            customValidationIban
             keyToTrigerButtonClickError
           />
         </>
