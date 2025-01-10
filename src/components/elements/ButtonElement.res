@@ -66,7 +66,9 @@ let make = (
         ~paymentMethod={walletType.payment_method_type},
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       if !closeSDK {
@@ -83,7 +85,9 @@ let make = (
         ~paymentMethod={walletType.payment_method_type},
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       logger(
@@ -94,7 +98,9 @@ let make = (
         ~paymentMethod=walletType.payment_method_type,
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       switch paymentStatus {
@@ -107,7 +113,9 @@ let make = (
             ~paymentMethod={walletType.payment_method_type},
             ~paymentExperience=?walletType.payment_experience
             ->Array.get(0)
-            ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+            ->Option.map(paymentExperience =>
+              getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+            ),
             (),
           )
           setLoading(PaymentSuccess)
@@ -184,7 +192,9 @@ let make = (
       ~paymentMethod=walletType.payment_method_type,
       ~paymentExperience=?walletType.payment_experience
       ->Array.get(0)
-      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      ->Option.map(paymentExperience =>
+        getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+      ),
       (),
     )
   }
@@ -271,7 +281,9 @@ let make = (
       ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
       ~paymentExperience=?walletType.payment_experience
       ->Array.get(0)
-      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      ->Option.map(paymentExperience =>
+        getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+      ),
       (),
     )
     switch var
@@ -376,7 +388,9 @@ let make = (
       ~eventName=PAYMENT_METHOD_CHANGED,
       ~paymentExperience=?walletType.payment_experience
       ->Array.get(0)
-      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      ->Option.map(paymentExperience =>
+        getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+      ),
       (),
     )
     setTimeout(_ => {
@@ -452,7 +466,9 @@ let make = (
               ~eventName=APPLE_PAY_STARTED_FROM_JS,
               ~paymentExperience=?walletType.payment_experience
               ->Array.get(0)
-              ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+              ->Option.map(paymentExperience =>
+                getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+              ),
               (),
             )
 
@@ -467,7 +483,10 @@ let make = (
                 ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
                 ~paymentExperience=?walletType.payment_experience
                 ->Array.get(0)
-                ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+                ->Option.map(
+                  paymentExperience =>
+                    getPaymentExperienceType(paymentExperience.payment_experience_type_decode),
+                ),
                 (),
               )
             }, 5000)
@@ -491,7 +510,7 @@ let make = (
                   ~paymentExperience=?walletType.payment_experience
                   ->Array.get(0)
                   ->Option.map(paymentExperience =>
-                    paymentExperience.payment_experience_type_decode
+                    getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
                   ),
                   (),
                 )
@@ -510,7 +529,9 @@ let make = (
               ~eventName=NO_WALLET_ERROR,
               ~paymentExperience=?walletType.payment_experience
               ->Array.get(0)
-              ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+              ->Option.map(paymentExperience =>
+                getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+              ),
               (),
             )
             setLoading(FillingDetails)
@@ -544,7 +565,9 @@ let make = (
           ~eventName=NO_WALLET_ERROR,
           ~paymentExperience=?walletType.payment_experience
           ->Array.get(0)
-          ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+          ->Option.map(paymentExperience =>
+            getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+          ),
           (),
         )
         setLoading(FillingDetails)
