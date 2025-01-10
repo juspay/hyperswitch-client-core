@@ -20,7 +20,7 @@ let useGetAssetUrl = () => {
     | None =>
       switch nativeProp.env {
       | PROD => "https://checkout.hyperswitch.io"
-      | SANDBOX => "https://dev.hyperswitch.io"
+      | SANDBOX => "https://beta.hyperswitch.io"
       | INTEG => "https://dev.hyperswitch.io"
       }
     }
