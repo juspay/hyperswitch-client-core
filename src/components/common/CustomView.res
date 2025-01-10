@@ -1,15 +1,17 @@
 open ReactNative
 open Style
 type modalPosition = [#center | #top | #bottom]
+
 @react.component
 let make = (
   ~onDismiss=() => (),
   ~children,
   ~closeOnClickOutSide=true,
-  ~modalPosition: modalPosition=#bottom,
+  ~modalPosition=#bottom,
   ~bottomModalWidth=100.->pct,
   (),
 ) => {
+  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let modalPosStyle = array([
     viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
     switch modalPosition {
@@ -51,7 +53,7 @@ let make = (
         ~borderBottomLeftRadius=0.,
         ~borderBottomRightRadius=0.,
         ~overflow=#hidden,
-        ~maxHeight=95.->pct,
+        ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
         ~alignItems=#center,
         ~justifyContent=#center,
         (),
@@ -67,15 +69,20 @@ module Wrapper = {
   @react.component
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
+    let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-    <Animated.ScrollView
+    <ScrollView
+      contentContainerStyle={viewStyle(
+        ~minHeight=250.->dp,
+        ~paddingHorizontal=20.->dp,
+        ~paddingTop=20.->dp,
+        ~paddingBottom=viewPortContants.navigationBarHeight->dp,
+        (),
+      )}
       keyboardShouldPersistTaps={#handled}
-      style={array([
-        viewStyle(~flexGrow=1., ~width, ~minHeight=250.->dp, ~padding=20.->dp, ()),
-        bgColor,
-      ])}>
+      style={array([viewStyle(~flexGrow=1., ~width, ()), bgColor])}>
       <ModalHeader onModalClose />
       children
-    </Animated.ScrollView>
+    </ScrollView>
   }
 }

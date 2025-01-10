@@ -420,6 +420,11 @@ let cardValid = (cardNumber, cardBrand) => {
   calculateLuhn(cardNumber)
 }
 
+let isCardNumberEqualsMax = (cardNumber, cardBrand) => {
+  let clearValue = cardNumber->clearSpaces
+  clearValue->String.length == maxCardLength(cardBrand) || clearValue->String.length == 16
+}
+
 // let cardValid = (cardNumber, cardBrand) => {
 //   let clearValueLength = cardNumber->clearSpaces->String.length
 //   (clearValueLength == maxCardLength(cardBrand) ||
@@ -595,10 +600,11 @@ let isValidEmail = text => {
 }
 
 let isValidZip = (~zipCode, ~country) => {
-  let countryObj =
-    Country.country
-    ->Array.find(item => item.countryName === country)
-    ->Option.getOr(Country.defaultTimeZone)
+  let _ = country
+  let countryObj = CountryStateDataHookTypes.defaultTimeZone
+  // Country.country
+  // ->Array.find(item => item.countryName === country)
+  // ->Option.getOr(Country.defaultTimeZone)
   let postalCode =
     PostalCodes.postalCode
     ->Array.find(item => item.iso == countryObj.isoAlpha2)

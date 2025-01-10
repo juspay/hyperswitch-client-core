@@ -12,6 +12,20 @@ let useGetBaseUrl = () => {
     }
   }
 }
+let useGetAssetUrl = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  () => {
+    switch nativeProp.customBackendUrl {
+    | Some(url) => url
+    | None =>
+      switch nativeProp.env {
+      | PROD => "https://checkout.hyperswitch.io"
+      | SANDBOX => "https://dev.hyperswitch.io"
+      | INTEG => "https://dev.hyperswitch.io"
+      }
+    }
+  }
+}
 
 let useGetLoggingUrl = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)

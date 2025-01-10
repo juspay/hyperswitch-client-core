@@ -7,7 +7,6 @@ let make = (
   ~paymentMethod: string,
   ~paymentExperience=?,
   ~errorText=None,
-  ~bottomSpace=0.,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -35,6 +34,5 @@ let make = (
               : localeObject.payNowButton
           }}
         />}
-    {bottomSpace > 0. ? <Space height={bottomSpace} /> : React.null}
   </>
 }

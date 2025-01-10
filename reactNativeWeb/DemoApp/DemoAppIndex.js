@@ -14,7 +14,7 @@ let defaultProps = {
       countryCode: 'US',
       currencyCode: 'US',
     },
-    displaySavedPaymentMethodsCheckbox: false,
+    // displaySavedPaymentMethodsCheckbox: false,
     // shippingDetails: {
     //   address: {
     //     city: 'city',

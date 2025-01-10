@@ -136,12 +136,7 @@ let make = (
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
-          loading=false
-          isAllValuesValid=true
-          handlePress
-          paymentMethod="CARD"
-          errorText=error
-          bottomSpace=10.
+          loading=false isAllValuesValid=true handlePress paymentMethod="CARD" errorText=error
         />,
       )
     }

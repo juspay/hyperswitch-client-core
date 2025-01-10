@@ -4,6 +4,7 @@ let fetchApi = (
   ~headers,
   ~method_: Fetch.requestMethod,
   ~mode: option<Fetch.requestMode>=?,
+  ~dontUseDefaultHeader=false,
   (),
 ) => {
   Dict.set(headers, "Content-Type", "application/json")
@@ -21,7 +22,7 @@ let fetchApi = (
       Fetch.RequestInit.make(
         ~method_,
         ~body?,
-        ~headers=Fetch.HeadersInit.makeWithDict(headers),
+        ~headers=?dontUseDefaultHeader ? None : Some(Fetch.HeadersInit.makeWithDict(headers)),
         ~mode?,
         (),
       ),

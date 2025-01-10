@@ -17,14 +17,20 @@ let make = (~setConfirmButtonDataRef) => {
     None
   })
 
+  let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
+
   <>
     <WalletView
-      loading={nativeProp.sdkState !== CardWidget && allApiData.sessions == Loading}
+      loading={nativeProp.sdkState !== CardWidget &&
+      allApiData.sessions == Loading &&
+      localeStrings == Loading}
       elementArr
       showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
     />
     <CustomTabView
-      hocComponentArr=tabArr loading={allApiData.sessions == Loading} setConfirmButtonDataRef
+      hocComponentArr=tabArr
+      loading={allApiData.sessions == Loading && localeStrings == Loading}
+      setConfirmButtonDataRef
     />
     {PaymentUtils.showUseExisitingSavedCardsBtn(
       ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,

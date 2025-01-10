@@ -47,6 +47,7 @@ let make = (
   ~enableShadow=true,
   ~animate=true,
   ~animateLabel=?,
+  ~name="",
 ) => {
   let {
     placeholderColor,
@@ -204,6 +205,7 @@ let make = (
             ),
             viewStyle(~padding=0.->dp, ~height=(height -. 10.)->dp, ~width=100.->pct, ()),
           ])}
+          testID=name
           secureTextEntry=showPass
           autoCapitalize=#none
           multiline

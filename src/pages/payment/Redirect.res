@@ -126,18 +126,23 @@ let make = (
 
   let bankData: array<customPickerType> = bankItems->Array.map(item => {
     {
-      name: item.displayName,
+      label: item.displayName,
       value: item.hyperSwitch,
     }
   })
+  let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
-  let countryData: array<customPickerType> = Country.country->Array.map(item => {
-    {
-      name: item.countryName,
-      value: item.isoAlpha2,
-      icon: Utils.getCountryFlags(item.isoAlpha2),
-    }
-  })
+  let countryData: array<customPickerType> = switch statesAndCountry {
+  | Some(data) =>
+    data.countries->Array.map(item => {
+      {
+        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
+        value: item.isoAlpha2,
+        icon: Utils.getCountryFlags(item.isoAlpha2),
+      }
+    })
+  | _ => []
+  }
 
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(
     switch bankItems->Array.get(0) {
@@ -156,7 +161,7 @@ let make = (
       ~category=USER_EVENT,
       ~eventName=COUNTRY_CHANGED,
       ~paymentMethod,
-      ~paymentExperience?,
+      ~paymentExperience=getPaymentExperienceType(paymentExperience->Option.getOr(NONE)),
       (),
     )
   }
@@ -295,6 +300,9 @@ let make = (
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
         language: ?nativeProp.configuration.appearance.locale,
+        device_model: ?nativeProp.hyperParams.device_model,
+        os_type: ?nativeProp.hyperParams.os_type,
+        os_version: ?nativeProp.hyperParams.os_version,
         // TODO: Remove these hardcoded values and get actual values from web-view (iOS and android)
         // accept_header: "",
         // color_depth: 0,
@@ -313,7 +321,7 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod,
-      ~paymentExperience?,
+      ~paymentExperience=getPaymentExperienceType(paymentExperience->Option.getOr(NONE)),
       (),
     )
   }
@@ -423,7 +431,9 @@ let make = (
         ~eventName=NO_WALLET_ERROR,
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       setLoading(FillingDetails)
@@ -531,30 +541,23 @@ let make = (
     }
   }
 
-  let (statesJson, setStatesJson) = React.useState(_ => None)
-
-  React.useEffect0(() => {
-    // Dynamically import/download Postal codes and states JSON
-    importStates("./../../utility/reusableCodeFromWeb/States.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      setStatesJson(_ => None)
-      Promise.resolve()
-    })
-    ->ignore
-
-    None
-  })
+  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
+      let obj =
+        json
+        ->Utils.getDictFromJson
+        ->GooglePayTypeNew.itemToObjMapper(
+          switch countryStateData {
+          | Some(data) => data.states
+          | _ => Dict.make()
+          },
+        )
+
       let payment_method_data =
         [
           (
@@ -696,7 +699,9 @@ let make = (
       ~eventName=PAYMENT_METHOD_CHANGED,
       ~paymentExperience=?walletType.payment_experience
       ->Array.get(0)
-      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      ->Option.map(paymentExperience =>
+        getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+      ),
       (),
     )
     if (
@@ -840,7 +845,9 @@ let make = (
         ~eventName=NO_WALLET_ERROR,
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       setLoading(FillingDetails)
@@ -965,12 +972,11 @@ let make = (
       setConfirmButtonDataRef(
         <ConfirmButton
           loading=false
-          bottomSpace=50.
           isAllValuesValid=true
           handlePress
           hasSomeFields
           paymentMethod
-          ?paymentExperience
+          paymentExperience={getPaymentExperienceType(paymentExperience->Option.getOr(NONE))}
           errorText=error
         />,
       )
