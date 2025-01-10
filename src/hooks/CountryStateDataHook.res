@@ -66,10 +66,11 @@ let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
 let useCountryStateDataFetch = () => {
   let apiFunction = CommonHooks.fetchApi
   let logger = LoggerHook.useLoggerHook()
+  let baseUrl = GlobalHooks.useGetAssetUrl()
 
   (~locale: option<SdkTypes.localeTypes>=None) => {
-    let localeString = SdkTypes.localeToString(locale)
-    let statesEndpoint = `https://dev.hyperswitch.io/assets/v1/location/${localeString}`
+    let localeString = SdkTypes.localeTypeToString(locale)
+    let statesEndpoint = `${baseUrl()}/assets/v1/location/${localeString}`
 
     logger(~logType=INFO, ~value="initialize Locale API", ~category=API, ~eventName=S3_API, ())
     apiFunction(

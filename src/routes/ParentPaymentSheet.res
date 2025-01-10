@@ -17,26 +17,31 @@ let make = () => {
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
   let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
 
   <FullScreenSheetWrapper>
-    {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType) {
-    | (_, None)
-    | (Loading, _) =>
+    {switch (
+      allApiData.savedPaymentMethods,
+      allApiData.additionalPMLData.paymentType,
+      localeStrings,
+    ) {
+    | (_, None, _)
+    | (_, _, Loading)
+    | (Loading, _, _) =>
       nativeProp.hyperParams.defaultView
         ? <PaymentSheet setConfirmButtonDataRef />
         : <SdkLoadingScreen />
-    | (Some(data), _) =>
+    | (Some(data), _, _) =>
       paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
       data.pmList->Option.getOr([])->Array.length > 0 &&
       allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
         ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
         : <PaymentSheet setConfirmButtonDataRef />
-
-    | (None, _) => <PaymentSheet setConfirmButtonDataRef />
+    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
     }}
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=15. />
