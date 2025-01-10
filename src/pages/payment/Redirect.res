@@ -913,6 +913,12 @@ let make = (
       setKeyToTrigerButtonClickError(prev => prev + 1)
     }
   }
+  React.useEffect0(() => {
+    if fields.fields->Array.some(field => field === "country") {
+      setIsCountryStateDataFetchRequired(_ => true)
+    }
+    None
+  })
 
   React.useEffect(() => {
     if isScreenFocus {
@@ -1021,7 +1027,6 @@ let make = (
                       borderRightWidth=borderWidth
                     />
                   | "country" =>
-                    setIsCountryStateDataFetchRequired(_ => true)
                     <CustomPicker
                       value=country
                       setValue=onChangeCountry

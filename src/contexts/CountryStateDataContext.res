@@ -77,7 +77,7 @@ let make = (~children) => {
     })
     ->ignore
   }
-  React.useEffect(() => {
+  React.useEffect1(() => {
     if isCountryStateDataFetchRequired {
       fetchCountryStateData()
     }
