@@ -21,10 +21,12 @@ module WrapperProvider = {
     let (state, setState) = React.useState(_ => Localdata(initialData))
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
     let locale = nativeProp.configuration.appearance.locale
+
     let countryStateDataHook = S3ApiHook.useFetchDataFromS3WithGZipDecoding()
     let isDataFetched = React.useRef(false)
     let logger = LoggerHook.useLoggerHook()
     let path = "/location"
+
     let fetchCountryStateData = () => {
       if !isDataFetched.current {
         ///do not change the ordering of the code below
@@ -35,10 +37,11 @@ module WrapperProvider = {
           ~s3Path=`${path}/${SdkTypes.localeTypeToString(locale)}`,
         )
         ->Promise.then(res => {
-          if res->Option.isNone {
+          let fetchedData = res->Option.getExn
+          if fetchedData.countries->Js.Array2.length == 0 {
             Promise.reject(Exn.raiseError("API call failed"))
           } else {
-            setState(_ => FetchData(res->Option.getExn))
+            setState(_ => FetchData(fetchedData))
             Promise.resolve()
           }
         })
@@ -48,10 +51,11 @@ module WrapperProvider = {
             ~s3Path=`${path}/${SdkTypes.localeTypeToString(Some(En))}`,
           )
           ->Promise.then(res => {
-            if res->Option.isNone {
+            let fetchedData = res->Option.getExn
+            if fetchedData.countries->Js.Array2.length == 0 {
               Promise.reject(Exn.raiseError("Api call failed again"))
             } else {
-              setState(_ => FetchData(res->Option.getExn))
+              setState(_ => FetchData(fetchedData))
               Promise.resolve()
             }
           })
