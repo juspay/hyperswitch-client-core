@@ -59,7 +59,7 @@ let make = (
     let num = formatCardNumber(text, cardType(cardBrand))
     let isthisValid = cardValid(num, cardBrand)
     let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
-    if cardData.cardBrand->Option.getOr("") !== cardBrand && cardData.cardBrand != None {
+    if cardData.cardBrand !== cardBrand && cardData.cardBrand != "" {
       setCardData(prev => {
         ...prev,
         cvv: "",
@@ -72,7 +72,7 @@ let make = (
       ...prev,
       cardNumber: num,
       isCardNumberValid: Some(isthisValid),
-      cardBrand: cardBrand === "" ? None : Some(cardBrand),
+      cardBrand,
     })
 
     // Adding support for 19 digit card hence disabling ref
@@ -140,7 +140,7 @@ let make = (
       isCardNumberValid: Some(isCardValid),
       expireDate,
       isExpireDataValid,
-      cardBrand: cardBrand === "" ? None : Some(cardBrand),
+      cardBrand,
     })
     switch (isCardValid, isExpiryValid) {
     | (true, true) =>

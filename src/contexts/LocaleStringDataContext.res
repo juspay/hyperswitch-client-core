@@ -15,7 +15,7 @@ let make = (~children) => {
   let locale = nativeProp.configuration.appearance.locale
   let fetchDataFromS3WithGZipDecoding = S3ApiHook.useFetchDataFromS3WithGZipDecoding()
   //getLocaleStringsFromJson
-  let path = "/locale"
+  let path = "/locales"
   React.useEffect0(() => {
     fetchDataFromS3WithGZipDecoding(
       ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
