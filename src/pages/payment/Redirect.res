@@ -118,7 +118,7 @@ let make = (
   let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let countryData: array<customPickerType> = switch statesAndCountry {
-  | FetchData(data) =>
+  | Localdata(data) | FetchData(data) =>
     data.countries->Array.map(item => {
       {
         label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
