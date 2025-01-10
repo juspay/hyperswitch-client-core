@@ -202,17 +202,7 @@ module RenderField = {
       ~display_name=required_fields_type.display_name,
       ~required_field=required_fields_type.required_field,
     )
-    let (countryStateData, setIsCountryStateDataFetchRequired) = React.useContext(
-      CountryStateDataContext.countryStateDataContext,
-    )
-
-    React.useEffect0(() => {
-      switch required_fields_type.field_type {
-      | AddressCountry(_) | AddressState => setIsCountryStateDataFetchRequired(_ => true)
-      | _ => ()
-      }
-      None
-    })
+    let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
     <>
       // <TextWrapper text={placeholder()} textType=SubheadingBold />
       // <Space height=5. />
@@ -221,6 +211,7 @@ module RenderField = {
         <CustomPicker
           value=val
           setValue=onChangeCountry
+          isCountryStateFields=true
           borderBottomLeftRadius=borderRadius
           borderBottomRightRadius=borderRadius
           borderBottomWidth=borderWidth
@@ -254,6 +245,7 @@ module RenderField = {
           )
           <CustomPicker
             value=val
+            isCountryStateFields=true
             setValue=onChangeCountry
             borderBottomLeftRadius=borderRadius
             borderBottomRightRadius=borderRadius

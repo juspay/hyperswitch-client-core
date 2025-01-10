@@ -516,9 +516,7 @@ let make = (
     }
   }
 
-  let (countryStateData, setIsCountryStateDataFetchRequired) = React.useContext(
-    CountryStateDataContext.countryStateDataContext,
-  )
+  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -913,12 +911,6 @@ let make = (
       setKeyToTrigerButtonClickError(prev => prev + 1)
     }
   }
-  React.useEffect0(() => {
-    if fields.fields->Array.some(field => field === "country") {
-      setIsCountryStateDataFetchRequired(_ => true)
-    }
-    None
-  })
 
   React.useEffect(() => {
     if isScreenFocus {
@@ -1029,6 +1021,7 @@ let make = (
                   | "country" =>
                     <CustomPicker
                       value=country
+                      isCountryStateFields=true
                       setValue=onChangeCountry
                       borderBottomLeftRadius=borderRadius
                       borderBottomRightRadius=borderRadius
