@@ -199,6 +199,7 @@ let make = (
         ->GooglePayTypeNew.itemToObjMapper(
           switch countryStateData {
           | Some(data) => data.states
+          | Loading(data) => data.states
           | _ => Dict.make()
           },
         )
@@ -300,6 +301,7 @@ let make = (
                 "billing_contact",
                 switch countryStateData {
                 | Some(data) => data.states
+                | Loading(data) => data.states
                 | _ => Dict.make()
                 },
               ) {
@@ -318,6 +320,7 @@ let make = (
             "billing_contact",
             switch countryStateData {
             | Some(data) => data.states
+            | Loading(data) => data.states
             | _ => Dict.make()
             },
           ) {

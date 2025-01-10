@@ -37,7 +37,7 @@ let decodeStateJson: Js.Json.t => Dict.t<array<state>> = data => {
   ->Js.Dict.fromArray
 }
 
-let decodeJsonTocountryStateData: Js.Json.t => countryStateData = jsonData => {
+let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
   switch jsonData->Js.Json.decodeObject {
   | Some(res) => {
       let countryArr =

@@ -514,7 +514,9 @@ let make = (
     }
   }
 
-  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
+  let (countryStateData, setIsCountryStateDataFetchRequired) = React.useContext(
+    CountryStateDataContext.countryStateDataContext,
+  )
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -527,6 +529,7 @@ let make = (
         ->GooglePayTypeNew.itemToObjMapper(
           switch countryStateData {
           | Some(data) => data.states
+          | Loading(data) => data.states
           | _ => Dict.make()
           },
         )
@@ -1012,6 +1015,7 @@ let make = (
                       borderRightWidth=borderWidth
                     />
                   | "country" =>
+                    setIsCountryStateDataFetchRequired(_ => true)
                     <CustomPicker
                       value=country
                       setValue=onChangeCountry
