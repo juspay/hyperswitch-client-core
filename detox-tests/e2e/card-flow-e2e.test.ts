@@ -2,9 +2,12 @@ import * as testIds from "../../src/utility/test/TestUtils.bs.js";
 import { device } from "detox"
 import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT } from "../fixtures/Constants"
 import { waitForVisibility, typeTextInInput } from "../utils/DetoxHelpers"
+import { CreateBody, setCreateBodyForTestAutomation } from "../utils/APIUtils";
 describe('card-flow-e2e-test', () => {
   jest.retryTimes(6);
   beforeAll(async () => {
+    const createPaymentBody = new CreateBody()
+    await setCreateBodyForTestAutomation(createPaymentBody.get())
     await device.launchApp({
       launchArgs: { detoxEnableSynchronization: 1 },
       newInstance: true,
