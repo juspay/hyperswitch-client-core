@@ -9,7 +9,7 @@ module RenderField = {
     ->Array.map((item): CustomPicker.customPickerType => {
       {
         label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
-        value: item.value,
+        value: item.code,
       }
     })
   }
