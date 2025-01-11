@@ -101,7 +101,7 @@ let getAssuranceDetails = (dict, str) => {
   })
 }
 
-let getBillingAddress = (dict, str, statesList) => {
+let getBillingAddress = (dict, str, _) => {
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
@@ -120,10 +120,7 @@ let getBillingAddress = (dict, str, statesList) => {
         line1: ?getOptionString(json, "address1"),
         line2: ?getOptionString(json, "address2"),
         zip: ?getOptionString(json, "postalCode"),
-        state: ?switch getOptionString(json, "administrativeArea") {
-        | Some(area) => Some(getStateNameFromStateCodeAndCountry(statesList, area, country))
-        | None => None
-        },
+        state: ?getOptionString(json, "administrativeArea"),
       }),
       email: getOptionString(json, "email"),
       phone: Some({
@@ -133,7 +130,7 @@ let getBillingAddress = (dict, str, statesList) => {
   })
 }
 
-let getBillingContact = (dict, str, statesList) => {
+let getBillingContact = (dict, str, _) => {
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
@@ -161,10 +158,7 @@ let getBillingContact = (dict, str, statesList) => {
         ?line1,
         ?line2,
         zip: ?getOptionString(postalAddress, "postalCode"),
-        state: ?switch getOptionString(postalAddress, "state") {
-        | Some(area) => Some(getStateNameFromStateCodeAndCountry(statesList, area, country))
-        | None => None
-        },
+        state: ?getOptionString(json, "administrativeArea"),
       }),
       email: getOptionString(json, "emailAddress"),
       phone: Some({
