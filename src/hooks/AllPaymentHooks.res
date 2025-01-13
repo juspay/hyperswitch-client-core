@@ -266,7 +266,15 @@ let useBrowserHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
-  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
+  (
+    ~clientSecret,
+    ~publishableKey,
+    ~openUrl,
+    ~responseCallback,
+    ~errorCallback,
+    ~processor,
+    ~paymentMethod=?,
+  ) => {
     BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId, intervalId)
     ->Promise.then(res => {
       if res.status === Success {
@@ -331,11 +339,23 @@ let useBrowserHook = () => {
             }),
           },
         })
-        errorCallback(
-          ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
-          ~closeSDK={false},
-          (),
-        )
+        if paymentMethod->Option.getOr("") == "ach" {
+          responseCallback(
+            ~paymentStatus=ProcessingPayments(None),
+            ~status={
+              message: "",
+              code: "",
+              type_: "",
+              status: "success",
+            },
+          )
+        } else {
+          errorCallback(
+            ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
+            ~closeSDK={false},
+            (),
+          )
+        }
       } else if res.status === Failed {
         setAllApiData({
           ...allApiData,
@@ -481,6 +501,7 @@ let useRedirectHook = () => {
               ~openUrl=reUri,
               ~responseCallback,
               ~errorCallback,
+              ~paymentMethod,
               ~processor=body,
             )
           }
