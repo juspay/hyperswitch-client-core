@@ -83,6 +83,19 @@ jobs:
         run: |
           cd android && git branch && cd ..
 
+      - name: Generate DS Root Certificate for Netcetera SDK
+        run: |
+          CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
+          OUTPUT_FILE="nca_demo_root.crt"
+          mkdir -p android/demo-app/src/main/assets
+          OUTPUT_PATH="android/demo-app/src/main/assets/$OUTPUT_FILE"
+          {
+            echo "-----BEGIN CERTIFICATE-----"
+            echo "$CERTIFICATE_STRING"
+            echo "-----END CERTIFICATE-----"
+          } > "$OUTPUT_PATH"
+          echo "Content has been successfully transferred to $OUTPUT_FILE."
+
       - name: Generate & Supply JS Bundle to Test APK
         run: |
           npm run re:start && npm run bundle:android
