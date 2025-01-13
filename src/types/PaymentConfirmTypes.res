@@ -20,12 +20,20 @@ type sessionToken = {
   wallet_name: string,
   open_banking_session_token: string,
 }
+type ach_credit_transfer = {
+  account_number: string,
+  bank_name: string,
+  routing_number: string,
+  swift_code: string,
+}
+type bank_transfer_steps_and_charges_details = {ach_credit_transfer?: ach_credit_transfer}
 
 type nextAction = {
   redirectToUrl: string,
   type_: string,
   threeDsData?: threeDsData,
   session_token?: sessionToken,
+  bank_transfer_steps_and_charges_detail?: bank_transfer_steps_and_charges_details,
 }
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
@@ -75,6 +83,18 @@ let getNextAction = (dict, str) => {
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.object
       ->Option.getOr(Dict.make())
+    let bankTransferStepsAndChargesDetailsDict = 
+      json
+      ->Dict.get("bank_transfer_steps_and_charges_details")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.object
+      ->Option.getOr(Dict.make())
+    let achCreditTransferDict =
+      bankTransferStepsAndChargesDetailsDict
+      ->Dict.get("ach_credit_transfer")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.object
+      ->Option.getOr(Dict.make())
 
     {
       redirectToUrl: getString(json, "redirect_to_url", ""),
@@ -90,6 +110,14 @@ let getNextAction = (dict, str) => {
           ->Option.getOr(0.)
           ->Int.fromFloat,
           frequency: getOptionFloat(pollConfigDict, "frequency")->Option.getOr(0.)->Int.fromFloat,
+        },
+      },
+      bank_transfer_steps_and_charges_detail: {
+        ach_credit_transfer: {
+          account_number: getString(achCreditTransferDict, "account_number", ""),
+          bank_name: getString(achCreditTransferDict, "bank_name", ""),
+          routing_number: getString(achCreditTransferDict, "routing_number", ""),
+          swift_code: getString(achCreditTransferDict, "swift_code", ""),
         },
       },
       session_token: {

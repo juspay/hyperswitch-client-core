@@ -428,6 +428,12 @@ let useRedirectHook = () => {
           | None => ()
           }
         }
+      | "display_bank_transfer_information" => {
+            responseCallback(
+              ~paymentStatus=ProcessingPayments(None),
+              ~status={status, message: "", code: "", type_: ""},
+            )
+      }
       | _ =>
         switch status {
         | "succeeded" =>
