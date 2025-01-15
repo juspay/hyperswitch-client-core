@@ -43,7 +43,7 @@ let payloadFromAutomation = null;
 app.post('/automation-create-body', async (req, res) => {
   console.log(req.body);
   payloadFromAutomation = req.body;
-  res.send(req.body);
+  res.send("OK");
 });
 
 app.get('/create-payment-intent', async (req, res) => {
