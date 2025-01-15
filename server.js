@@ -16,43 +16,52 @@ try {
   process.exit(0);
 }
 
+let payloadFromAutomation = null;
+app.post('/automation-create-body', async (req, res) => {
+  console.log(req.body);
+  payloadFromAutomation = req.body;
+  res.send("OK");
+});
+
 app.get('/create-payment-intent', async (req, res) => {
   try {
-    const createPaymentBody = {
-      amount: 2999,
-      currency: 'USD',
-      authentication_type: 'no_three_ds',
-      customer_id: 'hyperswitch_demo_id',
-      capture_method: 'automatic',
-      email: 'abc@gmail.com',
-      business_country: 'US',
-      billing: {
-        address: {
-          line1: '1467',
-          line2: 'Harrison Street',
-          line3: 'Harrison Street',
-          city: 'San Fransico',
-          state: 'California',
-          zip: '94122',
-          country: 'PL',
-          first_name: 'joseph',
-          last_name: 'Doe',
-        },
-      },
-      shipping: {
-        address: {
-          line1: '1467',
-          line2: 'Harrison Street',
-          line3: 'Harrison Street',
-          city: 'San Fransico',
-          state: 'California',
-          zip: '94122',
-          country: 'PL',
-          first_name: 'joseph',
-          last_name: 'Doe',
-        },
-      },
-    };
+    const createPaymentBody = payloadFromAutomation
+      ? payloadFromAutomation
+      : {
+          amount: 2999,
+          currency: 'USD',
+          authentication_type: 'no_three_ds',
+          customer_id: 'hyperswitch_demo_id',
+          capture_method: 'automatic',
+          email: 'abc@gmail.com',
+          business_country: 'US',
+          billing: {
+            address: {
+              line1: '1467',
+              line2: 'Harrison Street',
+              line3: 'Harrison Street',
+              city: 'San Fransico',
+              state: 'California',
+              zip: '94122',
+              country: 'PL',
+              first_name: 'joseph',
+              last_name: 'Doe',
+            },
+          },
+          shipping: {
+            address: {
+              line1: '1467',
+              line2: 'Harrison Street',
+              line3: 'Harrison Street',
+              city: 'San Fransico',
+              state: 'California',
+              zip: '94122',
+              country: 'PL',
+              first_name: 'joseph',
+              last_name: 'Doe',
+            },
+          },
+        };
 
     const profileId = process.env.PROFILE_ID;
     if (profileId) {
