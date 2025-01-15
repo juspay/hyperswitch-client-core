@@ -48,7 +48,7 @@ app.post('/automation-create-body', async (req, res) => {
 
 app.get('/create-payment-intent', async (req, res) => {
   try {
-    const createPaymentBody = !payloadFromAutomation
+    const createPaymentBody = payloadFromAutomation
       ? payloadFromAutomation
       : {
           amount: 2999,
