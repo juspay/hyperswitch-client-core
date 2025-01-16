@@ -267,7 +267,7 @@ let registerHeadless = headless => {
               "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
             )
             ->Promise.then(res => {
-              let states = res->CountryStateDataHook.decodeJsonTocountryStateData
+              let states = res->S3ApiHook.decodeJsonTocountryStateData
               confirmGPay(var, Some(states.states), data, nativeProp)
               Promise.resolve()
             })
@@ -315,7 +315,7 @@ let registerHeadless = headless => {
               "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
             )
             ->Promise.then(res => {
-              let states = res->CountryStateDataHook.decodeJsonTocountryStateData
+              let states = res->S3ApiHook.decodeJsonTocountryStateData
               confirmApplePay(var, Some(states.states), data, nativeProp)
               Promise.resolve()
             })

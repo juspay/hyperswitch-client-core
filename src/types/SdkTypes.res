@@ -440,7 +440,7 @@ let getPrimaryButtonColorFromDict = (primaryButtonColorDict, keys: NativeSdkProp
     border: retOptionalStr(getProp(keys.primaryButton_border, primaryButtonColorDict)),
   }
 }
-let localeToString = locale => {
+let localeTypeToString = locale => {
   switch locale {
   | Some(En) => "en"
   | Some(He) => "he"
@@ -475,6 +475,40 @@ let localeToString = locale => {
   | None => "en"
   }
 }
+let localeStringToType = locale => {
+  switch locale {
+  | "he" => Some(He)
+  | "fr" => Some(Fr)
+  | "en-GB" => Some(En_GB)
+  | "ar" => Some(Ar)
+  | "ja" => Some(Ja)
+  | "de" => Some(De)
+  | "fr-BE" => Some(Fr_BE)
+  | "es" => Some(Es)
+  | "ca" => Some(Ca)
+  | "pt" => Some(Pt)
+  | "it" => Some(It)
+  | "pl" => Some(Pl)
+  | "nl" => Some(Nl)
+  | "nI-BE" => Some(NI_BE)
+  | "sv" => Some(Sv)
+  | "ru" => Some(Ru)
+  | "lt" => Some(Lt)
+  | "cs" => Some(Cs)
+  | "sk" => Some(Sk)
+  | "ls" => Some(Ls)
+  | "cy" => Some(Cy)
+  | "el" => Some(El)
+  | "et" => Some(Et)
+  | "fi" => Some(Fi)
+  | "nb" => Some(Nb)
+  | "bs" => Some(Bs)
+  | "da" => Some(Da)
+  | "ms" => Some(Ms)
+  | "tr-CY" => Some(Tr_CY)
+  | _ => Some(En)
+  }
+}
 let getAppearanceObj = (
   appearanceDict: Dict.t<JSON.t>,
   keys: NativeSdkPropsKeys.keys,
@@ -495,39 +529,7 @@ let getAppearanceObj = (
 
   {
     locale: switch retOptionalStr(getProp(keys.locale, appearanceDict)) {
-    | Some(str) =>
-      switch str {
-      | "he" => Some(He)
-      | "fr" => Some(Fr)
-      | "en-GB" => Some(En_GB)
-      | "ar" => Some(Ar)
-      | "ja" => Some(Ja)
-      | "de" => Some(De)
-      | "fr-BE" => Some(Fr_BE)
-      | "es" => Some(Es)
-      | "ca" => Some(Ca)
-      | "pt" => Some(Pt)
-      | "it" => Some(It)
-      | "pl" => Some(Pl)
-      | "nl" => Some(Nl)
-      | "nI-BE" => Some(NI_BE)
-      | "sv" => Some(Sv)
-      | "ru" => Some(Ru)
-      | "lt" => Some(Lt)
-      | "cs" => Some(Cs)
-      | "sk" => Some(Sk)
-      | "ls" => Some(Ls)
-      | "cy" => Some(Cy)
-      | "el" => Some(El)
-      | "et" => Some(Et)
-      | "fi" => Some(Fi)
-      | "nb" => Some(Nb)
-      | "bs" => Some(Bs)
-      | "da" => Some(Da)
-      | "ms" => Some(Ms)
-      | "tr-CY" => Some(Tr_CY)
-      | _ => Some(En)
-      }
+    | Some(str) => localeStringToType(str)
     | _ => Some(En)
     },
     colors: from == "rn" || from == "flutter"

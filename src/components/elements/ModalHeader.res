@@ -7,9 +7,9 @@ let make = (~onModalClose) => {
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-
-  let isLoadingScreenActive = switch allApiData.savedPaymentMethods {
-  | Loading => true
+  let (localStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
+  let isLoadingScreenActive = switch (allApiData.savedPaymentMethods, localStrings) {
+  | (Loading, _) | (_, Loading) => true
   | _ => false
   }
 

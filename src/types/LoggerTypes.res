@@ -77,6 +77,6 @@ type logFile = {
   latency?: string,
   firstEvent: bool,
   paymentMethod?: string,
-  paymentExperience?: PaymentMethodListType.payment_experience_type,
+  paymentExperience?: string,
   source: string,
 }

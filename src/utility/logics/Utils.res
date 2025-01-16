@@ -176,15 +176,12 @@ let getStateNameFromStateCodeAndCountry = (
 ) => {
   switch (list, country) {
   | (list, Some(country)) =>
-    Console.log3("UTILS", list, country)
     let options =
       list
       ->Dict.get(country)
       ->Option.getOr([])
-    Console.log2("UTILS Options", options)
 
     let val = options->Array.find(item => item.code === stateCode)
-    Console.log3("UTILS Val", val, stateCode)
 
     switch val {
     | Some(stateObj) => stateObj.value

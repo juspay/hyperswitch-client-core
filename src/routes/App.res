@@ -9,16 +9,18 @@ module ContextWrapper = {
         <PaymentScreenContext>
           <ThemeContext>
             <ViewportContext>
-            <LoggerContext>
-              <CardDataContext>
-                <CountryStateDataContext>
-                  <AllApiDataContext>
-                    <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
-                  </AllApiDataContext>
-                </CountryStateDataContext>
-              </CardDataContext>
-            </LoggerContext>
-           </ViewportContext>
+              <LoggerContext>
+                <CardDataContext>
+                  <CountryStateDataContext>
+                    <AllApiDataContext>
+                      <LocaleStringDataContext>
+                        <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
+                      </LocaleStringDataContext>
+                    </AllApiDataContext>
+                  </CountryStateDataContext>
+                </CardDataContext>
+              </LoggerContext>
+            </ViewportContext>
           </ThemeContext>
         </PaymentScreenContext>
       </NativePropContext>

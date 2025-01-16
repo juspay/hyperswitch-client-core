@@ -118,7 +118,7 @@ let make = (
   let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let countryData: array<customPickerType> = switch statesAndCountry {
-  | Some(data) =>
+  | Localdata(data) | FetchData(data) =>
     data.countries->Array.map(item => {
       {
         label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
@@ -146,7 +146,7 @@ let make = (
       ~category=USER_EVENT,
       ~eventName=COUNTRY_CHANGED,
       ~paymentMethod,
-      ~paymentExperience?,
+      ~paymentExperience=getPaymentExperienceType(paymentExperience->Option.getOr(NONE)),
       (),
     )
   }
@@ -295,7 +295,7 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod,
-      ~paymentExperience?,
+      ~paymentExperience=getPaymentExperienceType(paymentExperience->Option.getOr(NONE)),
       (),
     )
   }
@@ -406,7 +406,9 @@ let make = (
         ~eventName=NO_WALLET_ERROR,
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       setLoading(FillingDetails)
@@ -526,7 +528,9 @@ let make = (
         ->Utils.getDictFromJson
         ->GooglePayTypeNew.itemToObjMapper(
           switch countryStateData {
-          | Some(data) => data.states
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
           | _ => Dict.make()
           },
         )
@@ -672,7 +676,9 @@ let make = (
       ~eventName=PAYMENT_METHOD_CHANGED,
       ~paymentExperience=?walletType.payment_experience
       ->Array.get(0)
-      ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+      ->Option.map(paymentExperience =>
+        getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+      ),
       (),
     )
     if (
@@ -816,7 +822,9 @@ let make = (
         ~eventName=NO_WALLET_ERROR,
         ~paymentExperience=?walletType.payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode),
+        ->Option.map(paymentExperience =>
+          getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+        ),
         (),
       )
       setLoading(FillingDetails)
@@ -914,7 +922,7 @@ let make = (
           handlePress
           hasSomeFields
           paymentMethod
-          ?paymentExperience
+          paymentExperience={getPaymentExperienceType(paymentExperience->Option.getOr(NONE))}
           errorText=error
         />,
       )
@@ -1014,6 +1022,7 @@ let make = (
                   | "country" =>
                     <CustomPicker
                       value=country
+                      isCountryStateFields=true
                       setValue=onChangeCountry
                       borderBottomLeftRadius=borderRadius
                       borderBottomRightRadius=borderRadius
