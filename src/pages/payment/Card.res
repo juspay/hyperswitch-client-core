@@ -147,7 +147,12 @@ let make = (
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
-      <CardElement setIsAllValid=setIsAllCardValuesValid reset=false keyToTrigerButtonClickError />
+      <CardElement
+        setIsAllValid=setIsAllCardValuesValid
+        reset=false
+        keyToTrigerButtonClickError
+        cardNetworks=cardVal.card_networks
+      />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFields

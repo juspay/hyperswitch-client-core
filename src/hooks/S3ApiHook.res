@@ -75,6 +75,11 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "inValidCardErrorText",
         defaultLocale.inValidCardErrorText,
       ),
+      unsupportedCardErrorText: Utils.getString(
+        res,
+        "unsupportedCardErrorText",
+        defaultLocale.unsupportedCardErrorText,
+      ),
       inCompleteCVCErrorText: Utils.getString(
         res,
         "inCompleteCVCErrorText",
