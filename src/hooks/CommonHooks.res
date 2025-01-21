@@ -4,10 +4,14 @@ let fetchApi = (
   ~headers,
   ~method_: Fetch.requestMethod,
   ~mode: option<Fetch.requestMode>=?,
+  ~dontUseDefaultHeader=false,
   (),
 ) => {
-  Dict.set(headers, "Content-Type", "application/json")
-  Dict.set(headers, "X-Client-Platform", WebKit.platformString)
+  if !dontUseDefaultHeader {
+    Dict.set(headers, "Content-Type", "application/json")
+    Dict.set(headers, "X-Client-Platform", WebKit.platformString)
+  }
+
   let body = switch method_ {
   | Get => Promise.resolve(None)
   | _ => Promise.resolve(Some(Fetch.BodyInit.make(bodyStr)))

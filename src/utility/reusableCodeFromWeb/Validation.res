@@ -528,10 +528,11 @@ let isValidEmail = text => {
 }
 
 let isValidZip = (~zipCode, ~country) => {
-  let countryObj =
-    Country.country
-    ->Array.find(item => item.countryName === country)
-    ->Option.getOr(Country.defaultTimeZone)
+  let _ = country
+  let countryObj = CountryStateDataHookTypes.defaultTimeZone
+  // Country.country
+  // ->Array.find(item => item.countryName === country)
+  // ->Option.getOr(Country.defaultTimeZone)
   let postalCode =
     PostalCodes.postalCode
     ->Array.find(item => item.iso == countryObj.isoAlpha2)
