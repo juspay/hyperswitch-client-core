@@ -46,7 +46,6 @@ module RenderField = {
     ~setFinalJsonDict,
     ~finalJsonDict,
     ~isSaveCardsFlow,
-    ~statesJson: option<JSON.t>,
     ~statesAndCountry: CountryStateDataContext.data,
     ~customValidationFunc,
     ~customOnChangeFunc,
@@ -317,8 +316,10 @@ module Fields = {
     ~fields: array<RequiredFieldsTypes.required_fields_type>,
     ~finalJsonDict,
     ~setFinalJsonDict,
+    ~statesAndCountry: CountryStateDataContext.data,
     ~isSaveCardsFlow,
-    ~statesJson,
+    ~customValidationFunc,
+    ~customOnChangeFunc,
     ~keyToTrigerButtonClickError,
   ) => {
     fields
@@ -539,7 +540,9 @@ let make = (
             finalJsonDict
             setFinalJsonDict
             isSaveCardsFlow
-            statesJson
+            statesAndCountry
+            customValidationFunc
+            customOnChangeFunc
             keyToTrigerButtonClickError
           />
         </>

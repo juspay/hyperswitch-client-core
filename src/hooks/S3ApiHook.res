@@ -237,6 +237,12 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "deletePaymentMethod",
         defaultLocale.deletePaymentMethod->Option.getOr("delete"),
       ),
+      enterValidDigitsText: Utils.getString(
+        res,
+        "enterValidDigitsText",
+        defaultLocale.enterValidDigitsText,
+      ),
+      digitsText: Utils.getString(res, "digitsText", defaultLocale.digitsText),
     }
   | None => defaultLocale
   }
