@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 type customPickerType = {
-  name: string,
+  label: string,
   value: string,
   icon?: string,
 }
@@ -18,10 +18,18 @@ let make = (
   ~placeholderText,
   ~items: array<customPickerType>,
   ~isValid=true,
+  ~isLoading=false,
+  ~isCountryStateFields=false,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
-
+  let (_, fetchCountryStateData) = React.useContext(CountryStateDataContext.countryStateDataContext)
+  React.useEffect1(() => {
+    if isCountryStateFields {
+      fetchCountryStateData()
+    }
+    None
+  }, [isCountryStateFields])
   let pickerRef = React.useRef(Nullable.null)
   let {
     bgColor,
@@ -42,7 +50,7 @@ let make = (
     <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
         state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
-        | Some(y) => y.name
+        | Some(y) => y.label
         | _ => value->Option.getOr("")
         }}
         setState={_ => ()}
@@ -123,31 +131,52 @@ let make = (
             borderRightWidth=borderWidth
           />
           <Space />
-          <FlatList
-            ref={pickerRef->ReactNative.Ref.value}
-            keyboardShouldPersistTaps={#handled}
-            data={items->Array.filter(x =>
-              x.name
-              ->String.toLowerCase
-              ->String.includes(searchInput->Option.getOr("")->String.toLowerCase)
-            )}
-            style={viewStyle(~flex=1., ~width=100.->pct, ~paddingHorizontal=10.->dp, ())}
-            showsHorizontalScrollIndicator=false
-            keyExtractor={(_, i) => i->Int.toString}
-            horizontal=false
-            renderItem={({item, index}) =>
-              <CustomTouchableOpacity
-                key={index->Int.toString}
-                style={viewStyle(~height=32.->dp, ~margin=1.->dp, ~justifyContent=#center, ())}
-                onPress={_ => {
-                  setValue(_ => Some(item.value))
-                  setIsModalVisible(_ => false)
-                }}>
-                <TextWrapper text={item.icon->Option.getOr("") ++ item.name} textType=ModalText />
-              </CustomTouchableOpacity>}
-          />
+          {isLoading
+            ? <ActivityIndicator
+                size={Large}
+                color=iconColor
+                style={viewStyle(~flex=1., ~width=100.->pct, ~paddingHorizontal=10.->dp, ())}
+              />
+            : <FlatList
+                ref={pickerRef->ReactNative.Ref.value}
+                keyboardShouldPersistTaps={#handled}
+                data={items->Array.filter(x =>
+                  x.label
+                  ->String.toLowerCase
+                  ->String.includes(searchInput->Option.getOr("")->String.toLowerCase)
+                )}
+                style={viewStyle(~flex=1., ~width=100.->pct, ~paddingHorizontal=10.->dp, ())}
+                showsHorizontalScrollIndicator=false
+                keyExtractor={(_, i) => i->Int.toString}
+                horizontal=false
+                renderItem={({item, index}) =>
+                  <CustomTouchableOpacity
+                    key={index->Int.toString}
+                    style={viewStyle(~height=32.->dp, ~margin=1.->dp, ~justifyContent=#center, ())}
+                    onPress={_ => {
+                      setValue(_ => Some(item.value))
+                      setIsModalVisible(_ => false)
+                    }}>
+                    <TextWrapper
+                      text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
+                    />
+                  </CustomTouchableOpacity>}
+              />}
         </View>
       </View>
     </Modal>
+    {isLoading
+      ? <View
+          style={viewStyle(
+            ~overflow=#hidden,
+            ~position=#absolute,
+            ~opacity=0.6,
+            ~width=100.->pct,
+            ~height=100.->pct,
+            (),
+          )}>
+          <CustomLoader />
+        </View>
+      : React.null}
   </View>
 }

@@ -153,53 +153,38 @@ let getCountryFlags = isoAlpha2 => {
   })->Array.join("") ++ "   "
 }
 
-let getStateNames = (list: JSON.t, country: string) => {
-  let options = list->getDictFromJson->getOptionalArrayFromDict(country)->Option.getOr([])
-
+let getStateNames = (list: CountryStateDataHookTypes.states, country: string) => {
+  let options = list->Dict.get(country)->Option.getOr([])
   options->Array.reduce([], (arr, item) => {
     arr
-    ->Array.push(
-      item
-      ->getDictFromJson
-      ->Dict.get("name")
-      ->Option.flatMap(JSON.Decode.string)
-      ->Option.getOr(""),
-    )
+    ->Array.push(item)
     ->ignore
     arr
   })
 }
 
-let getClientCountry = clientTimeZone => {
-  Country.country
+let getClientCountry = (countryArr: CountryStateDataHookTypes.countries, clientTimeZone) => {
+  countryArr
   ->Array.find(item => item.timeZones->Array.find(i => i == clientTimeZone)->Option.isSome)
-  ->Option.getOr(Country.defaultTimeZone)
+  ->Option.getOr(CountryStateDataHookTypes.defaultTimeZone)
 }
 
 let getStateNameFromStateCodeAndCountry = (
-  list: option<JSON.t>,
+  list: CountryStateDataHookTypes.states,
   stateCode: string,
   country: option<string>,
 ) => {
   switch (list, country) {
-  | (Some(list), Some(country)) =>
+  | (list, Some(country)) =>
     let options =
       list
-      ->getDictFromJson
-      ->getOptionalArrayFromDict(country)
+      ->Dict.get(country)
       ->Option.getOr([])
 
-    let val = options->Array.find(item =>
-      item
-      ->getDictFromJson
-      ->getString("code", "") === stateCode
-    )
+    let val = options->Array.find(item => item.code === stateCode)
 
     switch val {
-    | Some(stateObj) =>
-      stateObj
-      ->getDictFromJson
-      ->getString("name", stateCode)
+    | Some(stateObj) => stateObj.value
     | None => stateCode
     }
   | (_, _) => stateCode
