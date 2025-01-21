@@ -237,6 +237,7 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "deletePaymentMethod",
         defaultLocale.deletePaymentMethod->Option.getOr("delete"),
       ),
+      enterValidIban: Utils.getString(res, "enterValidIban", defaultLocale.enterValidIban),
     }
   | None => defaultLocale
   }

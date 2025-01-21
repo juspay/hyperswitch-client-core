@@ -24,6 +24,7 @@ type paymentMethodsFields =
   | AddressCountry(addressCountry)
   | BlikCode
   | Currency(array<string>)
+  | Iban
 
 type requiredField =
   | StringField(string)
@@ -60,6 +61,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_blik_code" => BlikCode
   | "user_billing_name" => BillingName
   | "user_shipping_name" => ShippingName
+  | "user_iban" => Iban
   | var => UnKnownField(var)
   }
 }
@@ -114,6 +116,7 @@ let getFieldType = dict => {
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
   | FullName | ShippingName | BillingName => 1
+  | Iban => 1
   | Email => 2
   | AddressLine1 => 4
   | AddressLine2 => 5
@@ -123,6 +126,7 @@ let getPaymentMethodsFieldsOrder = paymentMethodField => {
   | StateAndCity => 9
   | CountryAndPincode(_) => 10
   | AddressPincode => 11
+
   | InfoElement => 99
   | _ => 0
   }
@@ -323,6 +327,7 @@ let useGetPlaceholder = (
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | Iban
     | BlikCode =>
       display_name->toCamelCase
     }
