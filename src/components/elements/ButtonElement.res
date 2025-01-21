@@ -236,7 +236,9 @@ let make = (
         ->Utils.getDictFromJson
         ->GooglePayTypeNew.itemToObjMapper(
           switch countryStateData {
-          | Some(data) => data.states
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
           | _ => Dict.make()
           },
         )
@@ -339,7 +341,9 @@ let make = (
               switch var->GooglePayTypeNew.getBillingContact(
                 "billing_contact",
                 switch countryStateData {
-                | Some(data) => data.states
+                | FetchData(data)
+                | Localdata(data) =>
+                  data.states
                 | _ => Dict.make()
                 },
               ) {
@@ -355,7 +359,9 @@ let make = (
           ~email=?switch var->GooglePayTypeNew.getBillingContact(
             "shipping_contact",
             switch countryStateData {
-            | Some(data) => data.states
+            | FetchData(data)
+            | Localdata(data) =>
+              data.states
             | _ => Dict.make()
             },
           ) {

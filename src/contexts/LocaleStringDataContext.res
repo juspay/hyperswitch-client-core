@@ -13,9 +13,14 @@ let make = (~children) => {
   let (state, setState) = React.useState(_ => Loading)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let locale = nativeProp.configuration.appearance.locale
-  let localeDataFetch = LocaleDataHook.useLocaleDataFetch()
+  let fetchDataFromS3WithGZipDecoding = S3ApiHook.useFetchDataFromS3WithGZipDecoding()
+  //getLocaleStringsFromJson
+  let path = "/locales"
   React.useEffect0(() => {
-    localeDataFetch(~locale)
+    fetchDataFromS3WithGZipDecoding(
+      ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
+      ~s3Path=`${path}/${SdkTypes.localeTypeToString(locale)}`,
+    )
     ->Promise.then(res => {
       switch res {
       | Some(data) =>
@@ -25,7 +30,10 @@ let make = (~children) => {
       }
     })
     ->Promise.catch(_ => {
-      localeDataFetch()
+      fetchDataFromS3WithGZipDecoding(
+        ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
+        ~s3Path=`${path}/${SdkTypes.localeTypeToString(Some(En))}`,
+      )
       ->Promise.then(
         res => {
           switch res {

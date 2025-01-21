@@ -42,6 +42,8 @@ let make = () => {
       }
     }
     let (month, year) = Validation.getExpiryDates(expireDate)
+    let cardBrand = Validation.getCardBrand(cardNumber)
+
     let payment_method_data =
       [
         (
@@ -52,6 +54,7 @@ let make = () => {
             ("card_exp_year", year->JSON.Encode.string),
             ("card_holder_name", ""->JSON.Encode.string),
             ("card_cvc", cvv->JSON.Encode.string),
+            ("card_network", cardBrand->JSON.Encode.string),
           ]
           ->Dict.fromArray
           ->JSON.Encode.object,

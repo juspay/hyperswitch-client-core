@@ -19,10 +19,17 @@ let make = (
   ~items: array<customPickerType>,
   ~isValid=true,
   ~isLoading=false,
+  ~isCountryStateFields=false,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
-
+  let (_, fetchCountryStateData) = React.useContext(CountryStateDataContext.countryStateDataContext)
+  React.useEffect1(() => {
+    if isCountryStateFields {
+      fetchCountryStateData()
+    }
+    None
+  }, [isCountryStateFields])
   let pickerRef = React.useRef(Nullable.null)
   let {
     bgColor,

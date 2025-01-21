@@ -39,7 +39,7 @@ type status = Success | Failed | Cancel | Error
 type browserRes = {
   paymentID: string,
   amount: string,
-  error: status,
+  status: status,
 }
 
 module InAppBrowser = {
@@ -79,7 +79,7 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
           // let browserRes = {
           //   paymentID: "",
           //   amount: "",
-          //   error: Cancel,
+          //   status: Cancel,
           // }
           // resolve(browserRes)
         })
@@ -145,7 +145,7 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
         let browserRes = {
           paymentID: (resP[1]->Option.getOr("")->String.split("="))[1]->Option.getOr(""),
           amount: am,
-          error: Success,
+          status: Success,
         }
         Promise.resolve(browserRes)
       } else if (
@@ -157,21 +157,21 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
         let browserRes = {
           paymentID: String.split(resP[1]->Option.getOr(""), "=")[1]->Option.getOr(""),
           amount: am,
-          error: Failed,
+          status: Failed,
         }
         Promise.resolve(browserRes)
       } else if res.\"type" == "cancel" {
         let browserRes = {
           paymentID: "",
           amount: "",
-          error: Cancel,
+          status: Cancel,
         }
         Promise.resolve(browserRes)
       } else {
         let browserRes = {
           paymentID: "",
           amount: "",
-          error: Error,
+          status: Error,
         }
         Promise.resolve(browserRes)
       }
@@ -180,7 +180,7 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
       let browserRes = {
         paymentID: "",
         amount: "",
-        error: Failed,
+        status: Failed,
       }
       Promise.resolve(browserRes)
     }
