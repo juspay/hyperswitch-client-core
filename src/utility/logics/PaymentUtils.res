@@ -44,6 +44,7 @@ let generatePaymentMethodData = (
           },
         ),
         ("card_cvc", cardData.cvv->JSON.Encode.string),
+        ("card_network", cardData.cardBrand->JSON.Encode.string),
       ]
       ->Dict.fromArray
       ->JSON.Encode.object,
