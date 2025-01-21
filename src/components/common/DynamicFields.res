@@ -46,7 +46,10 @@ module RenderField = {
     ~setFinalJsonDict,
     ~finalJsonDict,
     ~isSaveCardsFlow,
+    ~statesJson: option<JSON.t>,
     ~statesAndCountry: CountryStateDataContext.data,
+    ~customValidationFunc,
+    ~customOnChangeFunc,
     ~keyToTrigerButtonClickError,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
@@ -101,28 +104,36 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let tempValid = RequiredFieldsTypes.checkIsValid(
-              ~text,
-              ~field_type=required_fields_type.field_type,
-              ~localeObject,
-            )
-
+            let validationErrMsg = switch customValidationFunc {
+            | Some(validation) =>
+              validation(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~display_name=Some(required_fields_type.display_name),
+              )
+            | None =>
+              RequiredFieldsTypes.checkIsValid(
+                ~text,
+                ~field_type=required_fields_type.field_type,
+                ~localeObject,
+              )
+            }
             let isCountryField = switch required_fields_type.field_type {
             | AddressCountry(_) => true
             | _ => false
             }
 
-            setErrorMesage(_ => tempValid)
+            setErrorMesage(_ => validationErrMsg)
             setFinalJsonDict(prev => {
               let newData = Dict.assign(Dict.make(), prev)
               if isCountryField {
                 let stateKey = getKey(stringFieldPath, "state")
                 switch newData->Dict.get(stateKey) {
-                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, tempValid))
+                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, validationErrMsg))
                 | None => ()
                 }
               }
-              newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, tempValid))
+              newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, validationErrMsg))
               newData
             })
           | FullNameField(firstNameFieldPath, lastNameFieldPath) =>
@@ -181,7 +192,11 @@ module RenderField = {
       setVal(val)
     }
     let onChange = text => {
-      setVal(_ => text)
+      switch customOnChangeFunc {
+      | Some(setter) =>
+        setVal(prev => setter(~text, ~field_type=required_fields_type.field_type, ~prev))
+      | None => setVal(_ => text)
+      }
     }
     React.useEffect1(() => {
       keyToTrigerButtonClickError != 0
@@ -303,7 +318,7 @@ module Fields = {
     ~finalJsonDict,
     ~setFinalJsonDict,
     ~isSaveCardsFlow,
-    ~statesAndCountry: CountryStateDataContext.data,
+    ~statesJson,
     ~keyToTrigerButtonClickError,
   ) => {
     fields
@@ -317,6 +332,8 @@ module Fields = {
           statesAndCountry
           finalJsonDict
           setFinalJsonDict
+          customValidationFunc
+          customOnChangeFunc
           keyToTrigerButtonClickError
         />
       </React.Fragment>
@@ -337,6 +354,8 @@ let make = (
   ~keyToTrigerButtonClickError,
   ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
+  ~customValidationFunc=None,
+  ~customOnChangeFunc=None,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
@@ -520,7 +539,7 @@ let make = (
             finalJsonDict
             setFinalJsonDict
             isSaveCardsFlow
-            statesAndCountry
+            statesJson
             keyToTrigerButtonClickError
           />
         </>

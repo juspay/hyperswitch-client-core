@@ -555,3 +555,7 @@ let containsMoreThanTwoDigits = text => {
   | None => false
   }
 }
+
+let containsOnlyDigits = text => {
+  %re("/^[0-9]*$/")->Js.Re.test_(text)
+}
