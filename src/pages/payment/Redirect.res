@@ -86,7 +86,7 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
   | OPEN_BANKING(prop) => prop.payment_method_type
-  |BANK_DEBIT(prop) =>prop.payment_method_type
+  | BANK_DEBIT(prop) => prop.payment_method_type
   }
   let paymentExperience = switch redirectProp {
   | CARD(_) => None
@@ -262,20 +262,20 @@ let make = (
         allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
-      mandate_data: ?(
-        allApiData.additionalPMLData.mandateType != NORMAL
-          ? Some({
-              customer_acceptance: {
-                acceptance_type: "online",
-                accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-                online: {
-                  ip_address: ?nativeProp.hyperParams.ip,
-                  user_agent: ?nativeProp.hyperParams.userAgent,
-                },
-              },
-            })
-          : None
-      ),
+      // mandate_data: ?(
+      //   allApiData.additionalPMLData.mandateType != NORMAL
+      //     ? Some({
+      //         customer_acceptance: {
+      //           acceptance_type: "online",
+      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+      //           online: {
+      //             ip_address: ?nativeProp.hyperParams.ip,
+      //             user_agent: ?nativeProp.hyperParams.userAgent,
+      //           },
+      //         },
+      //       })
+      //     : None
+      // ),
       customer_acceptance: ?(
         allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate
           ? Some({
@@ -401,8 +401,7 @@ let make = (
       let middleData = Dict.make()
       middleData->Dict.set(prop.payment_method, innerData->JSON.Encode.object)
       payment_method_data->Dict.set("payment_method_data", middleData->JSON.Encode.object)
-      let dynamic_pmd =
-        payment_method_data->mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
+      let dynamic_pmd = payment_method_data->mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
       processRequest(
         ~payment_method_data=dynamic_pmd
         ->Utils.getJsonObjectFromDict("payment_method_data")
@@ -931,7 +930,14 @@ let make = (
       : ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
           fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
         )) || (fields.name == "klarna" && isKlarna)
-  , (isEmailValid, isNameValid, allApiData.sessions, isDynamicFields, isAllDynamicFieldValid, dynamicFieldsJson))
+  , (
+    isEmailValid,
+    isNameValid,
+    allApiData.sessions,
+    isDynamicFields,
+    isAllDynamicFieldValid,
+    dynamicFieldsJson,
+  ))
 
   let handlePress = _ => {
     if isAllValuesValid {
@@ -982,13 +988,18 @@ let make = (
     country,
     selectedBank,
   ))
-   
-   let numberOfDigitsValidation = (text, digits, display_name) => {
+
+  let numberOfDigitsValidation = (text, digits, display_name) => {
     if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
       if text->String.length == digits {
         None
       } else {
-        Some(localeObject.enterDigitsText(digits->Int.toString, Some(display_name->toCamelCase)))
+        Some(
+          localeObject.enterValidDigitsText ++
+          digits->Int.toString ++
+          localeObject.digitsText ++
+          display_name->toCamelCase,
+        )
       }
     } else {
       Some(localeObject.enterValidDetailsText)
