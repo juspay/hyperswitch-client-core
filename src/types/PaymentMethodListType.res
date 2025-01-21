@@ -1,5 +1,5 @@
 open Utils
-
+type payment_experience_type = INVOKE_SDK_CLIENT | REDIRECT_TO_URL | NONE
 type mandatePaymentType = {
   amount: int,
   currency: string,
@@ -34,7 +34,6 @@ type payment_method_types_bank_redirect = {
   required_field: RequiredFieldsTypes.required_fields,
 }
 
-type payment_experience_type = INVOKE_SDK_CLIENT | REDIRECT_TO_URL | NONE
 type payment_experience = {
   payment_experience_type: string,
   payment_experience_type_decode: payment_experience_type,
@@ -303,6 +302,14 @@ let getPaymentMethodType = pm => {
   | CRYPTO(payment_method_type) => payment_method_type.payment_method_type
   | OPEN_BANKING(payment_method_type) => payment_method_type.payment_method_type
   | BANK_DEBIT(payment_method_type) => payment_method_type.payment_method_type
+  }
+}
+
+let getPaymentExperienceType = (payment_experience_type: payment_experience_type) => {
+  switch payment_experience_type {
+  | INVOKE_SDK_CLIENT => "INVOKE_SDK_CLIENT"
+  | REDIRECT_TO_URL => "REDIRECT_TO_URL"
+  | NONE => ""
   }
 }
 

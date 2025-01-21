@@ -7,6 +7,7 @@ type cardData = {
   isExpireDataValid: option<bool>,
   isCvvValid: option<bool>,
   isZipValid: option<bool>,
+  cardBrand: string,
 }
 
 let dafaultVal = {
@@ -18,6 +19,7 @@ let dafaultVal = {
   isExpireDataValid: None,
   isCvvValid: None,
   isZipValid: None,
+  cardBrand: "",
 }
 
 let cardDataContext = React.createContext((dafaultVal, (_: cardData => cardData) => ()))

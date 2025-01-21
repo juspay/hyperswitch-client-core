@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@sentry/react-native": "^5.9.1",
+    "pako": "^2.1.0",
     "react-native-code-push": "^8.3.1",
     "react-native-hyperswitch-netcetera-3ds": "^0.1.1",
     "react-native-hyperswitch-scancard": "^0.3.1",
@@ -73,6 +74,7 @@
     "@swc/core": "^1.7.23",
     "@tsconfig/react-native": "^3.0.0",
     "@types/jest": "^29.2.1",
+    "@types/pako": "^2",
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
