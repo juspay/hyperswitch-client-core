@@ -210,11 +210,6 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "invalidDigitsCardHolderNameError",
         defaultLocale.invalidDigitsCardHolderNameError,
       ),
-      nickNameLengthExceedError: Utils.getString(
-        res,
-        "nickNameLengthExceedError",
-        defaultLocale.nickNameLengthExceedError,
-      ),
       invalidDigitsNickNameError: Utils.getString(
         res,
         "invalidDigitsNickNameError",
