@@ -23,28 +23,39 @@ let make = () => {
   }, [setConfirmButtonDataRef])
   let samsungPayValidity = SamsungPay.useSamsungPayValidityHook()
 
-  <FullScreenSheetWrapper>
-    {switch (
-      allApiData.savedPaymentMethods,
-      allApiData.additionalPMLData.paymentType,
-      samsungPayValidity,
-    ) {
-    | (_, _, SamsungPay.Checking) => <SdkLoadingScreen />
-    | (_, _, SamsungPay.Not_Started) => <SdkLoadingScreen />
-    | (_, None, _)
-    | (Loading, _, _) =>
-      nativeProp.hyperParams.defaultView && samsungPayValidity->SamsungPay.isSamsungPayValid
-        ? <PaymentSheet setConfirmButtonDataRef />
-        : <SdkLoadingScreen />
-    | (Some(data), _, _) =>
-      paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
-      data.pmList->Option.getOr([])->Array.length > 0 &&
-      allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
-        ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
-        : <PaymentSheet setConfirmButtonDataRef />
+  let checkIsSDKAbleToLoad = () => {
+    if nativeProp.configuration.enablePartialLoading {
+      true
+    } else {
+      // in future it can have things like spay which are capable of increasing loadtime latency
+      samsungPayValidity != SamsungPay.Checking && samsungPayValidity != SamsungPay.Not_Started
+    }
+  }
 
-    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
-    }}
+  <FullScreenSheetWrapper>
+    {
+      let canLoadSDK = checkIsSDKAbleToLoad()
+      switch (
+        allApiData.savedPaymentMethods,
+        allApiData.additionalPMLData.paymentType,
+        canLoadSDK,
+      ) {
+      | (_, _, false) => <SdkLoadingScreen />
+      | (_, None, _)
+      | (Loading, _, _) =>
+        nativeProp.hyperParams.defaultView && samsungPayValidity->SamsungPay.isSamsungPayValid
+          ? <PaymentSheet setConfirmButtonDataRef />
+          : <SdkLoadingScreen />
+      | (Some(data), _, _) =>
+        paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
+        data.pmList->Option.getOr([])->Array.length > 0 &&
+        allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
+          ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
+          : <PaymentSheet setConfirmButtonDataRef />
+
+      | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
+      }
+    }
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=12. />
   </FullScreenSheetWrapper>

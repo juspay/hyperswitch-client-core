@@ -248,6 +248,7 @@ type configurationType = {
   placeholder: placeholder,
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
+  enablePartialLoading: bool,
 }
 
 type sdkState =
@@ -818,6 +819,7 @@ let parseConfigurationDict = (configObj, from) => {
     paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
     savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
     displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
+    enablePartialLoading: getBool(configObj, "enablePartialLoading", false),
     // customer: switch customerDict {
     // | Some(obj) =>
     //   Some({
