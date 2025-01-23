@@ -134,6 +134,7 @@ let make = (
     <View style={viewStyle(~width=100.->pct, ~borderRadius, ())}>
       <View style={viewStyle(~width=100.->pct, ())}>
         <CustomInput
+          name={TestUtils.cardNumberInputTestId}
           reference={None} // previously Some(cardRef->toInputRef)
           state=cardNumber
           setState={text => onChangeCardNumber(text, expireRef)}
@@ -154,9 +155,6 @@ let make = (
           iconRight={getScanCardComponent(ScanCardModule.isAvailable, cardBrand, cardNumber)}
           onFocus={() => {
             setCardNumberIsFocus(_ => true)
-            if cardNumber->String.length != 0 {
-              onChangeCvv("", nullRef)
-            }
             onChangeCardNumber(cardNumber, nullRef)
           }}
           onBlur={() => {
@@ -181,6 +179,7 @@ let make = (
         )}>
         <View style={viewStyle(~width=50.->pct, ())}>
           <CustomInput
+            name={TestUtils.expiryInputTestId}
             reference={Some(expireRef)}
             state=expireDate
             setState={text => onChangeCardExpire(text, cvvRef)}
@@ -217,6 +216,7 @@ let make = (
         </View>
         <View style={viewStyle(~width=50.->pct, ())}>
           <CustomInput
+            name={TestUtils.cvcInputTestId}
             reference={Some(cvvRef)}
             borderTopWidth=0.25
             borderLeftWidth=0.5

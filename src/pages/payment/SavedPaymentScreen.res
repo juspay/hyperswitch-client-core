@@ -65,21 +65,10 @@ let make = (
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
   }
 
-  let (statesJson, setStatesJson) = React.useState(_ => None)
+  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   React.useEffect0(() => {
     setPaymentScreenType(SAVEDCARDSCREEN)
-    // Dynamically import/download Postal codes and states JSON
-    RequiredFieldsTypes.importStates("./../../utility/reusableCodeFromWeb/States.json")
-    ->Promise.then(res => {
-      setStatesJson(_ => Some(res.states))
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      setStatesJson(_ => None)
-      Promise.resolve()
-    })
-    ->ignore
 
     None
   })
@@ -177,6 +166,9 @@ let make = (
       ),
       browser_info: {
         user_agent: ?nativeProp.hyperParams.userAgent,
+        device_model: ?nativeProp.hyperParams.device_model,
+        os_type: ?nativeProp.hyperParams.os_type,
+        os_version: ?nativeProp.hyperParams.os_version,
       },
     }
 
@@ -201,7 +193,17 @@ let make = (
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
+      let obj =
+        json
+        ->Utils.getDictFromJson
+        ->GooglePayTypeNew.itemToObjMapper(
+          switch countryStateData {
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
+          | _ => Dict.make()
+          },
+        )
       let payment_method_data =
         [
           (
@@ -296,7 +298,15 @@ let make = (
             ),
             (
               "billing",
-              switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+              switch var->GooglePayTypeNew.getBillingContact(
+                "billing_contact",
+                switch countryStateData {
+                | FetchData(data)
+                | Localdata(data) =>
+                  data.states
+                | _ => Dict.make()
+                },
+              ) {
               | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
@@ -308,7 +318,15 @@ let make = (
           ~payment_method="wallet",
           ~payment_method_data,
           ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-          ~email=?switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+          ~email=?switch var->GooglePayTypeNew.getBillingContact(
+            "billing_contact",
+            switch countryStateData {
+            | FetchData(data)
+            | Localdata(data) =>
+              data.states
+            | _ => Dict.make()
+            },
+          ) {
           | Some(billing) => billing.email
           | None => None
           },

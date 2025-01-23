@@ -30,10 +30,15 @@
     "deploy-to-s3": "node ./scripts/pushToS3.js",
     "lint": "eslint .",
     "test": "jest",
+    "android:e2e": "npx detox test --configuration android.emu.debug  --loglevel trace --record-logs all",
+    "build:android-e2e": "npx detox build --configuration  android.emu.debug",
+    "build:ios-e2e": "npx detox build --configuration ios.sim.debug",
+    "ios-e2e": "npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all",
     "prepare": "husky"
   },
   "dependencies": {
     "@sentry/react-native": "^5.9.1",
+    "pako": "^2.1.0",
     "react-native-code-push": "^8.3.1",
     "react-native-hyperswitch-netcetera-3ds": "^0.1.1",
     "react-native-hyperswitch-samsung-pay": "^0.1.0",
@@ -70,6 +75,7 @@
     "@swc/core": "^1.7.23",
     "@tsconfig/react-native": "^3.0.0",
     "@types/jest": "^29.2.1",
+    "@types/pako": "^2",
     "@types/react": "^18.2.6",
     "@types/react-test-renderer": "^18.0.0",
     "babel-jest": "^29.6.3",
@@ -80,6 +86,7 @@
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.3.0",
+    "detox": "^20.28.0",
     "dotenv": "^10.0.0",
     "esbuild": "^0.23.1",
     "eslint": "^8.19.0",
@@ -192,5 +199,8 @@
     "@react-native/assets-registry": "patch:@react-native/assets-registry@npm%3A0.75.2#~/.yarn/patches/@react-native-assets-registry-npm-0.75.2-553af80bf2.patch",
     "react-native-code-push": "patch:react-native-code-push@npm%3A8.3.1#~/.yarn/patches/react-native-code-push-npm-8.3.1-9608679893.patch",
     "@react-native/gradle-plugin": "patch:@react-native/gradle-plugin@npm%3A0.75.2#~/.yarn/patches/@react-native-gradle-plugin-npm-0.75.2-3de59c69c5.patch"
-  }
+  },
+  "workspaces": [
+    "detox-tests"
+  ]
 }

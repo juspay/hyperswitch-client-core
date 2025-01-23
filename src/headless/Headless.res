@@ -31,12 +31,20 @@ let registerHeadless = headless => {
     })
     ->ignore
 
-  let confirmGPay = (var, statesJson, data, nativeProp) => {
+  let confirmGPay = (
+    var,
+    statesJson: option<CountryStateDataHookTypes.states>,
+    data,
+    nativeProp,
+  ) => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj = json->Utils.getDictFromJson->GooglePayTypeNew.itemToObjMapper(statesJson)
+      let obj =
+        json
+        ->Utils.getDictFromJson
+        ->GooglePayTypeNew.itemToObjMapper(statesJson->Option.getOr(Dict.make()))
 
       let payment_method_data =
         [
@@ -162,7 +170,10 @@ let registerHeadless = headless => {
             ),
             (
               "billing",
-              switch var->GooglePayTypeNew.getBillingContact("billing_contact", statesJson) {
+              switch var->GooglePayTypeNew.getBillingContact(
+                "billing_contact",
+                statesJson->Option.getOr(Dict.make()),
+              ) {
               | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
@@ -252,9 +263,12 @@ let registerHeadless = headless => {
             ~requiredFields=[],
           ), //walletType.required_field,
           var => {
-            RequiredFieldsTypes.importStates("./../utility/reusableCodeFromWeb/States.json")
+            RequiredFieldsTypes.importStatesAndCountries(
+              "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
+            )
             ->Promise.then(res => {
-              confirmGPay(var, Some(res.states), data, nativeProp)
+              let states = res->S3ApiHook.decodeJsonTocountryStateData
+              confirmGPay(var, Some(states.states), data, nativeProp)
               Promise.resolve()
             })
             ->Promise.catch(_ => {
@@ -282,6 +296,7 @@ let registerHeadless = headless => {
             ~paymentExperience=None,
             ~timestamp=0.,
             ~latency=0.,
+            ~version=nativeProp.hyperParams.sdkVersion,
             (),
           )
           headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
@@ -296,9 +311,12 @@ let registerHeadless = headless => {
           ->JSON.Encode.object
           ->JSON.stringify,
           var => {
-            RequiredFieldsTypes.importStates("./../utility/reusableCodeFromWeb/States.json")
+            RequiredFieldsTypes.importStatesAndCountries(
+              "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
+            )
             ->Promise.then(res => {
-              confirmApplePay(var, Some(res.states), data, nativeProp)
+              let states = res->S3ApiHook.decodeJsonTocountryStateData
+              confirmApplePay(var, Some(states.states), data, nativeProp)
               Promise.resolve()
             })
             ->Promise.catch(_ => {
@@ -324,6 +342,7 @@ let registerHeadless = headless => {
               ~paymentExperience=None,
               ~timestamp=0.,
               ~latency=0.,
+              ~version=nativeProp.hyperParams.sdkVersion,
               (),
             )
           },
@@ -455,6 +474,7 @@ let registerHeadless = headless => {
         ~paymentExperience=None,
         ~timestamp,
         ~latency=0.,
+        ~version=nativeProp.hyperParams.sdkVersion,
         (),
       )
       savedPaymentMethodAPICall(nativeProp)

@@ -58,11 +58,25 @@ let make = (
     let cardBrand = getCardBrand(text)
     let num = formatCardNumber(text, cardType(cardBrand))
     let isthisValid = cardValid(num, cardBrand)
-
-    setCardData(prev => {...prev, cardNumber: num, isCardNumberValid: Some(isthisValid)})
+    let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
+    if cardData.cardBrand !== cardBrand && cardData.cardBrand != "" {
+      setCardData(prev => {
+        ...prev,
+        cvv: "",
+        isCvvValid: None,
+        expireDate: "",
+        isExpireDataValid: None,
+      })
+    }
+    setCardData(prev => {
+      ...prev,
+      cardNumber: num,
+      isCardNumberValid: Some(isthisValid),
+      cardBrand,
+    })
 
     // Adding support for 19 digit card hence disabling ref
-    if isthisValid {
+    if isthisValid && shouldShiftFocusToNextField {
       switch expireRef.current->Nullable.toOption {
       | None => ()
       | Some(ref) => ref->ReactNative.TextInputElement.focus
@@ -96,6 +110,7 @@ let make = (
     }
     setCardData(prev => {...prev, cvv: cvvData, isCvvValid: Some(isValidCvv)})
   }
+
   let onChangeZip = (text, zipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
     let isthisValid = Validation.isValidZip(~zipCode=text, ~country="United States")
     if isthisValid {
@@ -125,6 +140,7 @@ let make = (
       isCardNumberValid: Some(isCardValid),
       expireDate,
       isExpireDataValid,
+      cardBrand,
     })
     switch (isCardValid, isExpiryValid) {
     | (true, true) =>

@@ -17,6 +17,7 @@ let make = () => {
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
   let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
@@ -27,8 +28,9 @@ let make = () => {
     if nativeProp.configuration.enablePartialLoading {
       true
     } else {
-      // in future it can have things like spay which are capable of increasing loadtime latency
-      samsungPayValidity != SamsungPay.Checking && samsungPayValidity != SamsungPay.Not_Started
+      samsungPayValidity != SamsungPay.Checking &&
+      samsungPayValidity != SamsungPay.Not_Started &&
+      localeStrings != Loading
     }
   }
 
@@ -40,10 +42,9 @@ let make = () => {
         allApiData.additionalPMLData.paymentType,
         canLoadSDK,
       ) {
-      | (_, _, false) => <SdkLoadingScreen />
-      | (_, None, _)
+      | (_, None, false) => <SdkLoadingScreen />
       | (Loading, _, _) =>
-        nativeProp.hyperParams.defaultView && samsungPayValidity->SamsungPay.isSamsungPayValid
+        nativeProp.hyperParams.defaultView
           ? <PaymentSheet setConfirmButtonDataRef />
           : <SdkLoadingScreen />
       | (Some(data), _, _) =>
@@ -52,11 +53,10 @@ let make = () => {
         allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
           ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
           : <PaymentSheet setConfirmButtonDataRef />
-
       | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
       }
     }
     <GlobalConfirmButton confirmButtonDataRef />
-    <Space height=12. />
+    <Space height=15. />
   </FullScreenSheetWrapper>
 }
