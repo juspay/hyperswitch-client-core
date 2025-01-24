@@ -72,12 +72,12 @@ let generateCardConfirmBody = (
     return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
-    connector: switch prop.card_networks {
+    connector: ?switch prop.card_networks {
     | Some(cardNetwork) =>
       cardNetwork
       ->Array.get(0)
-      ->Option.mapOr([], card_network => card_network.eligible_connectors)
-    | None => []
+      ->Option.mapOr(None, card_network => card_network.eligible_connectors->Some)
+    | None => None
     },
     ?payment_method_data,
     ?payment_token,
