@@ -26,7 +26,7 @@ let make = () => {
 
   let checkIsSDKAbleToLoad = () => {
     if nativeProp.configuration.enablePartialLoading {
-      true
+      localeStrings != Loading // partial loading not implemented for locales
     } else {
       samsungPayValidity != SamsungPay.Checking &&
       samsungPayValidity != SamsungPay.Not_Started &&
@@ -37,12 +37,13 @@ let make = () => {
   <FullScreenSheetWrapper>
     {
       let canLoadSDK = checkIsSDKAbleToLoad()
+
       switch (
         allApiData.savedPaymentMethods,
         allApiData.additionalPMLData.paymentType,
         canLoadSDK,
       ) {
-      | (_, None, false) => <SdkLoadingScreen />
+      | (_, _, false) => <SdkLoadingScreen />
       | (Loading, _, _) =>
         nativeProp.hyperParams.defaultView
           ? <PaymentSheet setConfirmButtonDataRef />

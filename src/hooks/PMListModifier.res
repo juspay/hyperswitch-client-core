@@ -298,7 +298,7 @@ let useListModifier = () => {
           | SAMSUNG_PAY =>
             exp->Option.isSome &&
             SamsungPayModule.isAvailable &&
-            SamsungPay.val.contents == SamsungPay.Invalid
+            samsungPayStatus == SamsungPay.Invalid
               ? None
               : exp
 

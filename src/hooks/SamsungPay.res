@@ -14,7 +14,7 @@ let useSamsungPayValidityHook = () => {
   let sessionToken = allApiData.sessions->getSamsungPaySessionObject
 
   let stringifiedSessionToken =
-    sessionToken
+    {...sessionToken, service_id: "1ecae2763c954b29b4ec10"}
     ->Utils.getJsonObjectFromRecord
     ->JSON.stringify
 
