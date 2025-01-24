@@ -8,7 +8,7 @@ let make = (
   ~viewType=PaymentSheet,
   ~reset: bool,
   ~keyToTrigerButtonClickError=0,
-  ~cardNetworks: option<array<PaymentMethodListType.card_networks>>=?,
+  ~cardNetworks=?,
 ) => {
   let isZipAvailable = switch viewType {
   | CardForm(cardFormType) => cardFormType.isZipAvailable
@@ -16,9 +16,12 @@ let make = (
   }
   let isCardBrandSupported = (
     ~cardBrand,
-    ~cardNetworks: array<PaymentMethodListType.card_networks>,
+    ~cardNetworks: option<array<PaymentMethodListType.card_networks>>,
   ) => {
-    cardNetworks->Array.some(network => network.card_network == cardBrand)
+    switch cardNetworks {
+    | Some(cardNetwork) => cardNetwork->Array.some(network => network.card_network == cardBrand)
+    | None => true
+    }
   }
 
   // let (cardNumber, setCardNumber) = React.useState(_ => "")
