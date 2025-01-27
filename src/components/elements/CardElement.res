@@ -1,16 +1,27 @@
 open Validation
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
+
 @react.component
 let make = (
   ~setIsAllValid,
   ~viewType=PaymentSheet,
   ~reset: bool,
   ~keyToTrigerButtonClickError=0,
+  ~cardNetworks=?,
 ) => {
   let isZipAvailable = switch viewType {
   | CardForm(cardFormType) => cardFormType.isZipAvailable
   | _ => false
+  }
+  let isCardBrandSupported = (
+    ~cardBrand,
+    ~cardNetworks: option<array<PaymentMethodListType.card_networks>>,
+  ) => {
+    switch cardNetworks {
+    | Some(cardNetwork) => cardNetwork->Array.some(network => network.card_network == cardBrand)
+    | None => true
+    }
   }
 
   // let (cardNumber, setCardNumber) = React.useState(_ => "")
@@ -30,14 +41,15 @@ let make = (
       cardData.isCardNumberValid,
       cardData.isCvvValid,
       cardData.isExpireDataValid,
+      cardData.isCardBrandSupported,
       !isZipAvailable ||
       switch cardData.isZipValid {
       | Some(zipValid) => zipValid
       | None => false
       },
     ) {
-    | (Some(cardValid), Some(cvvValid), Some(expValid), zipValid) =>
-      cardValid && cvvValid && expValid && zipValid
+    | (Some(cardValid), Some(cvvValid), Some(expValid), Some(isCardBrandSupported), zipValid) =>
+      cardValid && cvvValid && expValid && isCardBrandSupported && zipValid
     | _ => false
     }
   }, [cardData])
@@ -57,7 +69,14 @@ let make = (
   ) => {
     let cardBrand = getCardBrand(text)
     let num = formatCardNumber(text, cardType(cardBrand))
+
     let isthisValid = cardValid(num, cardBrand)
+
+    let isSupported = switch cardNetworks {
+    | Some(networks) => isCardBrandSupported(~cardBrand, ~cardNetworks=networks)
+    | None => true
+    }
+
     let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
     if cardData.cardBrand !== cardBrand && cardData.cardBrand != "" {
       setCardData(prev => {
@@ -72,6 +91,7 @@ let make = (
       ...prev,
       cardNumber: num,
       isCardNumberValid: Some(isthisValid),
+      isCardBrandSupported: Some(isSupported),
       cardBrand,
     })
 
@@ -170,6 +190,7 @@ let make = (
         onScanCard
         isCardNumberValid=cardData.isCardNumberValid
         isExpireDataValid=cardData.isExpireDataValid
+        isCardBrandSupported=cardData.isCardBrandSupported
         isCvvValid=cardData.isCvvValid
         keyToTrigerButtonClickError
       />
