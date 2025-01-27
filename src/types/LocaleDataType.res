@@ -78,7 +78,7 @@ let defaultLocale = {
   cardNumberLabel: "Card Number",
   cardDetailsLabel: "Card Details",
   inValidCardErrorText: "Card number is invalid.",
-  unsupportedCardErrorText: "Card number is not supported.",
+  unsupportedCardErrorText: "Card brand is not supported.",
   inCompleteCVCErrorText: "Your card's security code is incomplete.",
   inValidCVCErrorText: "Your card's security code is invalid.",
   inCompleteExpiryErrorText: "Your card's expiration date is incomplete.",
