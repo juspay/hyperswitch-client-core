@@ -19,7 +19,7 @@ type card_networks = {
 type payment_method_types_card = {
   payment_method: string,
   payment_method_type: string,
-  card_networks: array<card_networks>,
+  card_networks: option<array<card_networks>>,
   required_field: RequiredFieldsTypes.required_fields,
 }
 
@@ -132,15 +132,19 @@ let flattenPaymentListArray = (plist, item) => {
       CARD({
         payment_method: "card",
         payment_method_type: dict2->getString("payment_method_type", ""),
-        card_networks: dict2
-        ->getArray("card_networks")
-        ->Array.map(item3 => {
-          let dict3 = item3->getDictFromJson
-          {
-            card_network: dict3->getString("card_network", ""),
-            eligible_connectors: dict3->getArray("eligible_connectors"),
-          }
-        }),
+        card_networks: switch dict2->getArray("card_networks") {
+        | [] => None
+        | data =>
+          Some(
+            data->Array.map(item3 => {
+              let dict3 = item3->getDictFromJson
+              {
+                card_network: dict3->getString("card_network", ""),
+                eligible_connectors: dict3->getArray("eligible_connectors"),
+              }
+            }),
+          )
+        },
         required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
       })->Js.Array.push(plist)
     })

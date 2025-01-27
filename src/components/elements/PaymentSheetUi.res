@@ -12,6 +12,7 @@ let make = (
   ~onChangeCvv,
   ~isCardNumberValid,
   ~isExpireDataValid,
+  ~isCardBrandSupported,
   ~isCvvValid,
   ~onScanCard,
   ~keyToTrigerButtonClickError,
@@ -19,6 +20,7 @@ let make = (
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let isCardNumberValid = isCardNumberValid->Option.getOr(true)
   let isExpireDateValid = isExpireDataValid->Option.getOr(true)
+  let isCardBrandSupported = isCardBrandSupported->Option.getOr(true)
   let isCvvValid = isCvvValid->Option.getOr(true)
   let isMaxCardLength =
     cardNumber->clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
@@ -27,6 +29,9 @@ let make = (
   let (cvvIsFocus, setCvvIsFocus) = React.useState(_ => false)
   let isCardNumberValid = {
     cardNumberIsFocus ? isCardNumberValid || !isMaxCardLength : isCardNumberValid
+  }
+  let isCardBrandSupported = {
+    cardNumberIsFocus ? isCardBrandSupported || !isMaxCardLength : isCardBrandSupported
   }
   let isExpireDateValid = {
     expireDateIsFocus ? isExpireDateValid || expireDate->String.length < 7 : isExpireDateValid
@@ -53,6 +58,8 @@ let make = (
 
   let errorMsgText = if !isCardNumberValid {
     Some(localeObject.inValidCardErrorText)
+  } else if !isCardBrandSupported {
+    Some(localeObject.unsupportedCardErrorText)
   } else if !isExpireDateValid {
     Some(localeObject.inValidExpiryErrorText)
   } else if !isCvvValid {
