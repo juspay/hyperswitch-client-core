@@ -6,7 +6,7 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
   let (errorMessage, setErrorMesage) = React.useState(_ => None)
 
   let onChange = text => {
-    setNickname(_ => Some(text))
+    setNickname(_ => text == "" ? None : Some(text))
 
     switch text->Validation.containsMoreThanTwoDigits {
     | true => {
