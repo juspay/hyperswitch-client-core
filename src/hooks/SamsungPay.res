@@ -14,7 +14,7 @@ let useSamsungPayValidityHook = () => {
   let sessionToken = allApiData.sessions->getSamsungPaySessionObject
 
   let stringifiedSessionToken =
-    {...sessionToken, service_id: "1ecae2763c954b29b4ec10"}
+    sessionToken
     ->Utils.getJsonObjectFromRecord
     ->JSON.stringify
 
@@ -30,7 +30,7 @@ let useSamsungPayValidityHook = () => {
           val := Checking
           Checking
         })
-        if isSamsungPayAvailable {
+        if isSamsungPayAvailable && sessionToken.wallet_name != NONE {
           SamsungPayModule.checkSamsungPayValidity(stringifiedSessionToken, status => {
             if status->ThreeDsUtils.isStatusSuccess {
               setState(
