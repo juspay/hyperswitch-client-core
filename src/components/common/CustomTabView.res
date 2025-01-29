@@ -1,3 +1,5 @@
+open ReactNative
+open Style
 @react.component
 let make = (
   ~hocComponentArr: array<PMListModifier.hoc>=[],
@@ -43,6 +45,8 @@ let make = (
   | 0 => React.null
   | _ =>
     <TabView
+      sceneContainerStyle={viewStyle(~overflow=#visible, ())}
+      style={viewStyle(~overflow=#visible, ())}
       indexInFocus
       routes={data->Array.mapWithIndex((hoc, index) => {
         let route: TabViewType.route = {
