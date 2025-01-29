@@ -12,6 +12,13 @@ let useSamsungPayValidityHook = () => {
   let isSamsungPayAvailable = SamsungPayModule.isAvailable
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let sessionToken = allApiData.sessions->getSamsungPaySessionObject
+  let isSamsungPayPresentInPML = allApiData.paymentList->Array.reduce(false, (acc, item) => {
+    let isSamsungPayPresent = switch item {
+    | WALLET(walletVal) => walletVal.payment_method_type_wallet == SAMSUNG_PAY
+    | _ => false
+    }
+    acc || isSamsungPayPresent
+  })
 
   let stringifiedSessionToken =
     sessionToken
@@ -30,7 +37,7 @@ let useSamsungPayValidityHook = () => {
           val := Checking
           Checking
         })
-        if isSamsungPayAvailable && sessionToken.wallet_name != NONE {
+        if isSamsungPayAvailable && sessionToken.wallet_name != NONE && isSamsungPayPresentInPML {
           SamsungPayModule.checkSamsungPayValidity(stringifiedSessionToken, status => {
             if status->ThreeDsUtils.isStatusSuccess {
               setState(
