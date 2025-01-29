@@ -27,6 +27,7 @@ let make = (
           ~paddingHorizontal=24.->dp,
           ~paddingVertical=5.->dp,
           ~borderRadius,
+          ~borderWidth=0.0,
           ~borderColor=component.borderColor,
           ~backgroundColor=component.background,
           (),
