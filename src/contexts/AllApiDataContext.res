@@ -26,7 +26,7 @@ let paymentList = [
   PaymentMethodListType.CARD({
     payment_method: "card",
     payment_method_type: "debit",
-    card_networks: [],
+    card_networks: None,
     required_field: [],
   }),
 ]
