@@ -68,9 +68,13 @@ let make = () => {
       return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
       payment_method: prop.payment_method,
       payment_method_type: prop.payment_method_type,
-      connector: prop.card_networks
-      ->Array.get(0)
-      ->Option.mapOr([], card_network => card_network.eligible_connectors),
+      connector: switch prop.card_networks {
+      | Some(cardNetworks) =>
+        cardNetworks
+        ->Array.get(0)
+        ->Option.mapOr([], card_network => card_network.eligible_connectors)
+      | None => []
+      },
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,
