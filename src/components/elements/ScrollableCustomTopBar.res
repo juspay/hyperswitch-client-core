@@ -121,7 +121,7 @@ let make = (
 
   <>
     <Space height=15. />
-    <View style={viewStyle(~height, ())}>
+    <View style={viewStyle(~height, ~paddingHorizontal=10.->dp, ())}>
       <FlatList
         ref={flatlistRef->ReactNative.Ref.value}
         keyboardShouldPersistTaps={#handled}

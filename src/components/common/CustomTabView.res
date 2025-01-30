@@ -45,8 +45,8 @@ let make = (
   | 0 => React.null
   | _ =>
     <TabView
-      sceneContainerStyle={viewStyle(~overflow=#visible, ())}
-      style={viewStyle(~overflow=#visible, ())}
+      sceneContainerStyle={viewStyle(~paddingHorizontal=10.->dp, ())}
+      style={viewStyle(~marginHorizontal=-10.->dp, ())}
       indexInFocus
       routes={data->Array.mapWithIndex((hoc, index) => {
         let route: TabViewType.route = {
