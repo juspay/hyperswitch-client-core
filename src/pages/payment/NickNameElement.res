@@ -6,7 +6,7 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
   let (errorMessage, setErrorMesage) = React.useState(_ => None)
 
   let onChange = text => {
-    setNickname(_ => text == "" ? None : Some(text))
+    setNickname(_ => text == "" || String.trim(text) == "" ? None : Some(text))
 
     switch text->Validation.containsMoreThanTwoDigits {
     | true => {
@@ -30,8 +30,14 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
       placeholder={`${localeObject.cardNickname}${" (Optional)"}`}
       keyboardType=#default
       isValid={isFocus || errorMessage->Option.isNone}
-      onFocus={_ => setisFocus(_ => true)}
-      onBlur={_ => setisFocus(_ => false)}
+      onFocus={_ => {
+        setNickname(nickname => String.trim(nickname->Option.getOr(""))->Some)
+        setisFocus(_ => true)
+      }}
+      onBlur={_ => {
+        setNickname(nickname => String.trim(nickname->Option.getOr(""))->Some)
+        setisFocus(_ => false)
+      }}
       textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
       borderBottomLeftRadius=borderRadius
       borderBottomRightRadius=borderRadius
