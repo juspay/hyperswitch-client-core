@@ -12,7 +12,7 @@ let defaultCardPattern = {
   pattern: %re("/^[0-9]/"),
   cvcLength: [3],
   maxCVCLenth: 3,
-  length: [16],
+  length: [14, 16, 19],
   pincodeRequired: false,
 }
 let cardPatterns = [
