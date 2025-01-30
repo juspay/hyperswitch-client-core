@@ -18,9 +18,11 @@ let make = (
     ~cardBrand,
     ~cardNetworks: option<array<PaymentMethodListType.card_networks>>,
   ) => {
-    switch cardNetworks {
-    | Some(cardNetwork) => cardNetwork->Array.some(network => network.card_network == cardBrand)
-    | None => true
+    switch (cardNetworks, cardBrand) {
+    | (_, "")
+    | (None, _) => true
+    | (Some(cardNetwork), cardBrand) =>
+      cardNetwork->Array.some(network => network.card_network == cardBrand)
     }
   }
 
