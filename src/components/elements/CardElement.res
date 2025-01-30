@@ -18,9 +18,6 @@ let make = (
     ~cardBrand,
     ~cardNetworks: option<array<PaymentMethodListType.card_networks>>,
   ) => {
-    // if cardBrand->String.equal("") {
-    //   true
-    // } else {
     switch (cardNetworks, cardBrand) {
     | (_, "")
     | (None, _) => true
