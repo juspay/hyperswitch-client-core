@@ -942,7 +942,6 @@ let make = (
     selectedBank,
   ))
   <>
-    <Space />
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
         <TextWrapper text={fields.header} textType=Subheading />
