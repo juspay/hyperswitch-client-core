@@ -151,7 +151,6 @@ let make = (
     None
   }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson))
   <>
-    <Space />
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
