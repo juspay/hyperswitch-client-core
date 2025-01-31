@@ -113,7 +113,7 @@ module PMWithNickNameComponent = {
           | SAVEDLISTWALLET(obj) => obj.walletType
           | NONE => None
           }->Option.getOr("")}
-          height=24.
+          height=25.
           width=24.
           style={viewStyle(~marginEnd=5.->dp, ())}
         />

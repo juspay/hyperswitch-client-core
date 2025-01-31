@@ -1017,7 +1017,6 @@ let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
     selectedBank,
   ))
   <>
-    <Space />
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
         <TextWrapper text={fields.header} textType=Subheading />
