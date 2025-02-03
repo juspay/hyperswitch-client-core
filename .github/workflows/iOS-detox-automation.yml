@@ -102,10 +102,3 @@ jobs:
 
       - name: Detox test
         run: npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all
-
-      - name: Upload artifacts
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: detox-artifacts
-          path: artifacts
