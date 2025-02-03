@@ -65,3 +65,12 @@ let useSamsungPayValidityHook = () => {
 
   state
 }
+
+@react.component
+let make = (
+  ~walletType: PaymentMethodListType.payment_method_types_wallet,
+  ~sessionObject: SessionsType.sessions,
+) => {
+  let samsungPayStatus = useSamsungPayValidityHook()
+  samsungPayStatus == Checking ? <CustomLoader /> : <ButtonElement walletType sessionObject />
+}

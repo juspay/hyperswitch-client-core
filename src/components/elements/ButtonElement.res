@@ -626,10 +626,7 @@ let make = (
       borderRadius=buttonBorderRadius
       linearGradientColorTuple=?{switch walletType.payment_method_type_wallet {
       | PAYPAL => Some(Some(paypalButonColor))
-      | SAMSUNG_PAY => {
-          Console.log2("HERE", walletType.payment_method_type)
-          Some(Some(samsungPayButtonColor))
-        }
+      | SAMSUNG_PAY => Some(Some(samsungPayButtonColor))
       | _ => None
       }}
       leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=120. height=115. />)

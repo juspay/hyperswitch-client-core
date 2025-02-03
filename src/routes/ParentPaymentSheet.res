@@ -1,3 +1,4 @@
+open SDKLoadCheckHook
 module SdkLoadingScreen = {
   @react.component
   let make = () => {
@@ -17,46 +18,29 @@ let make = () => {
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
   let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
-  let samsungPayValidity = SamsungPay.useSamsungPayValidityHook()
 
-  let checkIsSDKAbleToLoad = () => {
-    if nativeProp.configuration.enablePartialLoading {
-      localeStrings != Loading // partial loading not implemented for locales
-    } else {
-      samsungPayValidity != SamsungPay.Checking &&
-      samsungPayValidity != SamsungPay.Not_Started &&
-      localeStrings != Loading
-    }
-  }
+  let enablePartialLoading = nativeProp.configuration.enablePartialLoading
+  let canLoadSDK = useSDKLoadCheck(~enablePartialLoading)
 
   <FullScreenSheetWrapper>
-    {
-      let canLoadSDK = checkIsSDKAbleToLoad()
-
-      switch (
-        allApiData.savedPaymentMethods,
-        allApiData.additionalPMLData.paymentType,
-        canLoadSDK,
-      ) {
-      | (_, _, false) => <SdkLoadingScreen />
-      | (Loading, _, _) =>
-        nativeProp.hyperParams.defaultView
-          ? <PaymentSheet setConfirmButtonDataRef />
-          : <SdkLoadingScreen />
-      | (Some(data), _, _) =>
-        paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
-        data.pmList->Option.getOr([])->Array.length > 0 &&
-        allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
-          ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
-          : <PaymentSheet setConfirmButtonDataRef />
-      | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
-      }
-    }
+    {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
+    | (_, _, false) => <SdkLoadingScreen />
+    | (Loading, _, _) =>
+      nativeProp.hyperParams.defaultView
+        ? <PaymentSheet setConfirmButtonDataRef />
+        : <SdkLoadingScreen />
+    | (Some(data), _, _) =>
+      paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
+      data.pmList->Option.getOr([])->Array.length > 0 &&
+      allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
+        ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
+        : <PaymentSheet setConfirmButtonDataRef />
+    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
+    }}
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=15. />
   </FullScreenSheetWrapper>

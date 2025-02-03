@@ -347,9 +347,12 @@ let useListModifier = () => {
         | Some(walletProp) =>
           accumulator.elementArr
           ->Array.push(
-            samsungPayStatus == SamsungPay.Checking &&
-              walletProp.walletType.payment_method_type_wallet == SAMSUNG_PAY
-              ? <CustomLoader key=walletProp.walletType.payment_method_type />
+            walletProp.walletType.payment_method_type_wallet == SAMSUNG_PAY
+              ? <SamsungPay
+                  key=walletProp.walletType.payment_method_type
+                  walletType=walletProp.walletType
+                  sessionObject={walletProp.sessionObject}
+                />
               : <ButtonElement
                   key=walletProp.walletType.payment_method_type
                   walletType=walletProp.walletType
