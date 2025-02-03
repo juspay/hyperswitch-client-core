@@ -195,6 +195,7 @@ let make = (
         isCardBrandSupported=cardData.isCardBrandSupported
         isCvvValid=cardData.isCvvValid
         keyToTrigerButtonClickError
+        cardNetworks
       />
     | CardForm(_) =>
       <CardFormUi
