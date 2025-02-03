@@ -71,8 +71,11 @@ let logFileToObj = logFile => {
   ->Dict.fromArray
   ->JSON.Encode.object
 }
-let sendLogs = (logFile, uri, publishableKey, appId) => {
-  if WebKit.platform != #next {
+let sendLogs = (logFile, uri: option<string>, publishableKey, appId) => {
+  let isLoggingEnabled = uri->Option.isSome
+  let uri = uri->Option.getOr("")
+
+  if WebKit.platform != #next && isLoggingEnabled {
     let data = logFile->logFileToObj->JSON.stringify
     CommonHooks.fetchApi(
       ~uri,
@@ -87,6 +90,8 @@ let sendLogs = (logFile, uri, publishableKey, appId) => {
       Promise.resolve(JSON.Encode.null)
     })
     ->ignore
+  } else {
+    Console.warn("Please Provide a Custom Logging URL")
   }
 }
 
