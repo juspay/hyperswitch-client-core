@@ -70,6 +70,7 @@ type localeStrings = {
   addPaymentMethodLabel: string,
   walletDisclaimer: string,
   deletePaymentMethod?: string,
+  selectCardBrand: string,
 }
 let defaultLocale = {
   locale: "en",
@@ -143,4 +144,5 @@ let defaultLocale = {
   addPaymentMethodLabel: "Add new payment method",
   walletDisclaimer: "Wallet details will be saved upon selection",
   deletePaymentMethod: "Delete",
+  selectCardBrand: "Select a card brand",
 }

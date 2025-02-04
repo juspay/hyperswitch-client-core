@@ -4,12 +4,13 @@ open Style
 module CoBadgeCardSchemeDropDown = {
   @react.component
   let make = (~eligibleCardSchemes, ~setCardBrand) => {
+    let localeObject = GetLocale.useGetLocalObj()
     let {component} = ThemebasedStyle.useThemeBasedStyle()
     let (modalVisible, setModalVisible) = React.useState(_ => false)
     let (y, setY) = React.useState(_ => 0.)
     let dropdownMenuRef = React.useRef(Nullable.null)
 
-    let onLayout = (_) => {
+    let onLayout = _ => {
       switch dropdownMenuRef.current->Nullable.toOption {
       | Some(ref) =>
         ref->View.measureInWindow((~x as _, ~y, ~width as _, ~height) => setY(_ => y +. height))
@@ -18,11 +19,17 @@ module CoBadgeCardSchemeDropDown = {
     }
 
     <View ref={ReactNative.Ref.value(dropdownMenuRef)} onLayout>
-      <TouchableOpacity
+      <CustomTouchableOpacity
         onPress={_ => setModalVisible(_ => true)}
-        style={viewStyle(~justifyContent=#center, ~alignItems=#center, ~paddingLeft=10.->dp, ())}>
-        <Icon height=12. width=12. name="back" fill="grey" />
-      </TouchableOpacity>
+        style={viewStyle(~justifyContent=#center, ~alignItems=#center, ~paddingLeft=10.->dp, ~paddingVertical=10.->dp, ())}>
+        <Icon
+          height=12.
+          width=12.
+          name="back"
+          fill="grey"
+          style={viewStyle(~transform=[rotate(~rotate=270.->deg)], ())}
+        />
+      </CustomTouchableOpacity>
       <Modal
         visible={modalVisible}
         transparent=true
@@ -55,7 +62,7 @@ module CoBadgeCardSchemeDropDown = {
           <FlatList
             scrollEnabled={false}
             \"ListHeaderComponent"={_ =>
-              <TextWrapper textType={{ModalTextLight}} text="Select a card brand" />}
+              <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />}
             data={eligibleCardSchemes}
             keyExtractor={(_, i) => i->Int.toString}
             renderItem={({item, index}) =>
