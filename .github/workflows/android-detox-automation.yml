@@ -87,6 +87,10 @@ jobs:
         run: |
           npm run re:start && npm run bundle:android
 
+      - name: Start Metro
+        run: |
+          nohup npm run start &
+
       - name: Detox build
         run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
 
