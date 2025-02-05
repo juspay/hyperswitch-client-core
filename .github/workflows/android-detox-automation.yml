@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Free Disk Space
         run: |
@@ -23,7 +23,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           # cache: 'npm'
@@ -50,7 +50,7 @@ jobs:
           curl http://localhost:5252/create-payment-intent
 
       - name: Setup Java
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           cache: gradle
           distribution: temurin
@@ -107,10 +107,3 @@ jobs:
           profile: pixel
           avd-name: ${{ steps.device.outputs.AVD_NAME }}
           script: npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
-
-      - name: Upload artifacts
-        if: failure()
-        uses: actions/upload-artifact@v3
-        with:
-          name: detox-artifacts
-          path: artifacts
