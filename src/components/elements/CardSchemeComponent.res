@@ -1,6 +1,20 @@
 open ReactNative
 open Style
 
+module CardSchemeItem = {
+  @react.component
+  let make = (~onPress, ~item, ~index) => {
+    <CustomTouchableOpacity key={index->Int.toString} onPress>
+      <View
+        style={viewStyle(~flexDirection=#row, ~alignItems=#center, ~paddingVertical=5.->dp, ())}>
+        <Icon name={item === "" ? "waitcard" : item} height=30. width=30. fill="black" />
+        <Space />
+        <TextWrapper textType={CardText} text={item} />
+      </View>
+    </CustomTouchableOpacity>
+  }
+}
+
 module CoBadgeCardSchemeDropDown = {
   @react.component
   let make = (~eligibleCardSchemes, ~setCardBrand) => {
@@ -21,7 +35,13 @@ module CoBadgeCardSchemeDropDown = {
     <View ref={ReactNative.Ref.value(dropdownMenuRef)} onLayout>
       <CustomTouchableOpacity
         onPress={_ => setModalVisible(_ => true)}
-        style={viewStyle(~justifyContent=#center, ~alignItems=#center, ~paddingLeft=10.->dp, ~paddingVertical=10.->dp, ())}>
+        style={viewStyle(
+          ~justifyContent=#center,
+          ~alignItems=#center,
+          ~paddingLeft=10.->dp,
+          ~paddingVertical=10.->dp,
+          (),
+        )}>
         <Icon
           height=12.
           width=12.
@@ -38,54 +58,49 @@ module CoBadgeCardSchemeDropDown = {
           setModalVisible(modalVisible => !modalVisible)
         }}>
         <SafeAreaView />
-        <View
-          style={viewStyle(
-            ~position=#absolute,
-            ~top=y->dp,
-            ~right=10.->dp,
-            ~flex=1.,
-            ~margin=10.->dp,
-            ~paddingHorizontal=20.->dp,
-            ~paddingVertical=10.->dp,
-            ~backgroundColor=component.background,
-            ~borderRadius=8.,
-            ~alignSelf=#"flex-end",
-            ~shadowColor="#000",
-            ~shadowOffset={
-              ReactNative.Style.offset(~width=0., ~height=2.)
-            },
-            ~shadowOpacity=0.25,
-            ~shadowRadius=4.,
-            ~elevation=5.,
-            (),
-          )}>
-          <FlatList
-            scrollEnabled={false}
-            \"ListHeaderComponent"={_ =>
-              <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />}
-            data={eligibleCardSchemes}
-            keyExtractor={(_, i) => i->Int.toString}
-            renderItem={({item, index}) =>
-              <CustomTouchableOpacity
-                key={index->Int.toString}
-                onPress={_ => {
-                  setCardBrand(item)
-                  setModalVisible(_ => false)
-                }}>
-                <View
-                  style={viewStyle(
-                    ~flexDirection=#row,
-                    ~alignItems=#center,
-                    ~paddingVertical=5.->dp,
-                    (),
-                  )}>
-                  <Icon name={item === "" ? "waitcard" : item} height=30. width=30. fill="black" />
-                  <Space />
-                  <TextWrapper textType={CardText} text={item} />
-                </View>
-              </CustomTouchableOpacity>}
-          />
-        </View>
+        <CustomTouchableOpacity
+          onPress={_ => setModalVisible(modalVisible => !modalVisible)}
+          style={viewStyle(~flex=1., ())}>
+          <View
+            style={viewStyle(
+              ~position=#absolute,
+              ~top=y->dp,
+              ~right=10.->dp,
+              ~flex=1.,
+              ~margin=10.->dp,
+              ~paddingHorizontal=20.->dp,
+              ~paddingVertical=10.->dp,
+              ~backgroundColor=component.background,
+              ~borderRadius=8.,
+              ~alignSelf=#"flex-end",
+              ~shadowColor="#000",
+              ~shadowOffset={
+                ReactNative.Style.offset(~width=0., ~height=2.)
+              },
+              ~shadowOpacity=0.25,
+              ~shadowRadius=4.,
+              ~elevation=5.,
+              (),
+            )}>
+            <ScrollView>
+              <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
+              <Space />
+              {eligibleCardSchemes
+              ->Array.mapWithIndex((item, index) =>
+                <CardSchemeItem
+                  key={index->Int.toString}
+                  index={index}
+                  item
+                  onPress={_ => {
+                    setCardBrand(item)
+                    setModalVisible(_ => false)
+                  }}
+                />
+              )
+              ->React.array}
+            </ScrollView>
+          </View>
+        </CustomTouchableOpacity>
       </Modal>
     </View>
   }
