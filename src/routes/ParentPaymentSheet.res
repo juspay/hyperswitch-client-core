@@ -1,3 +1,4 @@
+open SDKLoadCheckHook
 module SdkLoadingScreen = {
   @react.component
   let make = () => {
@@ -17,20 +18,17 @@ let make = () => {
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
   let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
 
+  let enablePartialLoading = nativeProp.configuration.enablePartialLoading
+  let canLoadSDK = useSDKLoadCheck(~enablePartialLoading)
+
   <FullScreenSheetWrapper>
-    {switch (
-      allApiData.savedPaymentMethods,
-      allApiData.additionalPMLData.paymentType,
-      localeStrings,
-    ) {
-    | (_, None, _)
-    | (_, _, Loading)
+    {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
+    | (_, _, false) => <SdkLoadingScreen />
     | (Loading, _, _) =>
       nativeProp.hyperParams.defaultView
         ? <PaymentSheet setConfirmButtonDataRef />

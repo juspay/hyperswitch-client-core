@@ -34,7 +34,7 @@ type localeTypes =
 
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
-type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | NONE | KLARNA
+type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE | KLARNA
 
 type payment_method_type_bank_transfer = ACH | NONE
 
@@ -251,6 +251,7 @@ type configurationType = {
   placeholder: placeholder,
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
+  enablePartialLoading: bool,
 }
 
 type sdkState =
@@ -277,6 +278,7 @@ let walletTypeToStrMapper = walletType => {
   | GOOGLE_PAY => "google_pay"
   | APPLE_PAY => "apple_pay"
   | PAYPAL => "paypal"
+  | SAMSUNG_PAY => "samsung_pay"
   | _ => ""
   }
 }
@@ -859,6 +861,7 @@ let parseConfigurationDict = (configObj, from) => {
     paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
     savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
     displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
+    enablePartialLoading: getBool(configObj, "enablePartialLoading", false),
     // customer: switch customerDict {
     // | Some(obj) =>
     //   Some({
