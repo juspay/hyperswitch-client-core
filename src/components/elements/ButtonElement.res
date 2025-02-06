@@ -633,7 +633,21 @@ let make = (
       onPress={_ => pressHandler()}
       name=walletType.payment_method_type>
       {switch walletType.payment_method_type_wallet {
-      | SAMSUNG_PAY => Some(<Icon name=walletType.payment_method_type width=120. height=115. />)
+      | SAMSUNG_PAY =>
+        Some(
+          <View
+            style={viewStyle(
+              ~display=#flex,
+              ~flexDirection=#row,
+              ~alignItems=#center,
+              ~justifyContent=#center,
+              ~width=100.->pct,
+              ~height=100.->pct,
+              (),
+            )}>
+            <Icon name=walletType.payment_method_type width=120. height=115. />
+          </View>,
+        )
       | APPLE_PAY =>
         Some(
           <ApplePayButtonView
