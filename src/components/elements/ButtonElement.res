@@ -629,10 +629,11 @@ let make = (
       | SAMSUNG_PAY => Some(Some(samsungPayButtonColor))
       | _ => None
       }}
-      leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=120. height=115. />)
+      leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=24. height=32. />)
       onPress={_ => pressHandler()}
       name=walletType.payment_method_type>
       {switch walletType.payment_method_type_wallet {
+      | SAMSUNG_PAY => Some(<Icon name=walletType.payment_method_type width=120. height=115. />)
       | APPLE_PAY =>
         Some(
           <ApplePayButtonView
