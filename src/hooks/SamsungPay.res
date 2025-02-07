@@ -11,7 +11,25 @@ let useSamsungPayValidityHook = () => {
   let (state, setState) = React.useState(_ => val.contents)
   let isSamsungPayAvailable = SamsungPayModule.isAvailable
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+
   let sessionToken = allApiData.sessions->getSamsungPaySessionObject
+  let stringifiedSessionToken =
+    sessionToken
+    ->Utils.getJsonObjectFromRecord
+    ->JSON.stringify
+
+  let checkSPayStatus = () => {
+    Promise.make((resolve, _reject) =>
+      SamsungPayModule.checkSamsungPayValidity(stringifiedSessionToken, status => {
+        if status->ThreeDsUtils.isStatusSuccess {
+          resolve(Valid)
+        } else {
+          resolve(Invalid)
+        }
+      })
+    )
+  }
+
   let isSamsungPayPresentInPML = allApiData.paymentList->Array.reduce(false, (acc, item) => {
     let isSamsungPayPresent = switch item {
     | WALLET(walletVal) => walletVal.payment_method_type_wallet == SAMSUNG_PAY
@@ -20,11 +38,24 @@ let useSamsungPayValidityHook = () => {
     acc || isSamsungPayPresent
   })
 
-  let stringifiedSessionToken =
-    sessionToken
-    ->Utils.getJsonObjectFromRecord
-    ->JSON.stringify
-
+  let handleSPay = async () => {
+    setState(_ => {
+      val := Checking
+      Checking
+    })
+    if sessionToken.wallet_name != NONE && isSamsungPayPresentInPML {
+      let status = await checkSPayStatus()
+      setState(_ => {
+        val := status
+        status
+      })
+    } else {
+      setState(_ => {
+        val := Invalid
+        Invalid
+      })
+    }
+  }
   React.useEffect2(() => {
     switch (val.contents, isSamsungPayAvailable, allApiData.sessions) {
     | (_, false, _) =>
@@ -32,32 +63,7 @@ let useSamsungPayValidityHook = () => {
         val := Invalid
         Invalid
       })
-    | (Not_Started, true, Some(_)) => {
-        setState(_ => {
-          val := Checking
-          Checking
-        })
-        if isSamsungPayAvailable && sessionToken.wallet_name != NONE && isSamsungPayPresentInPML {
-          SamsungPayModule.checkSamsungPayValidity(stringifiedSessionToken, status => {
-            if status->ThreeDsUtils.isStatusSuccess {
-              setState(
-                _ => {
-                  val := Valid
-                  Valid
-                },
-              )
-            } else {
-              setState(
-                _ => {
-                  val := Invalid
-                  Invalid
-                },
-              )
-            }
-          })
-        }
-      }
-
+    | (Not_Started, true, Some(_)) => handleSPay()->ignore
     | (_, _, _) => ()
     }->ignore
     None
