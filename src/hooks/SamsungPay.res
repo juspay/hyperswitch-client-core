@@ -8,6 +8,9 @@ let isSamsungPayValid = state => {
 }
 
 let useSamsungPayValidityHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let isSamsungDevice = nativeProp.configuration.deviceBrand->Option.getOr("") == "samsung"
+
   let (state, setState) = React.useState(_ => val.contents)
   let isSamsungPayAvailable = SamsungPayModule.isAvailable
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -43,7 +46,7 @@ let useSamsungPayValidityHook = () => {
       val := Checking
       Checking
     })
-    if sessionToken.wallet_name != NONE && isSamsungPayPresentInPML {
+    if isSamsungDevice && sessionToken.wallet_name != NONE && isSamsungPayPresentInPML {
       let status = await checkSPayStatus()
       setState(_ => {
         val := status

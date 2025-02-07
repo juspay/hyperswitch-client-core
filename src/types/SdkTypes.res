@@ -249,6 +249,7 @@ type configurationType = {
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
   enablePartialLoading: bool,
+  deviceBrand: option<string>,
 }
 
 type sdkState =
@@ -907,6 +908,7 @@ let parseConfigurationDict = (configObj, from) => {
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
       cvv: getString(placeholderDict, "cvv", "CVC"),
     },
+    deviceBrand: getOptionString(configObj, "deviceBrand"),
   }
   configuration
 }
