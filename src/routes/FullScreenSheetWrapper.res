@@ -74,5 +74,6 @@ let make = (~children) => {
       </CustomView>
     </Animated.View>
     <LoadingOverlay />
+    <Tooltip />
   </View>
 }
