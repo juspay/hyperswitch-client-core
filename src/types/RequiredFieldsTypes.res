@@ -216,6 +216,7 @@ let getRequiredFieldsFromDict = dict => {
     arr
     ->mergeNameFields(~fieldType=FullName)
     ->mergeNameFields(~fieldType=FullName, ~displayName="card_holder_name")
+    ->mergeNameFields(~fieldType=Email)
     ->mergeNameFields(~fieldType=BillingName)
     ->mergeNameFields(~fieldType=ShippingName)
 

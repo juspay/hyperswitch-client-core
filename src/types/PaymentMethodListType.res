@@ -162,6 +162,7 @@ let flattenPaymentListArray = (plist, item) => {
         | "google_pay" => GOOGLE_PAY
         | "apple_pay" => APPLE_PAY
         | "paypal" => PAYPAL
+        | "samsung_pay" => SAMSUNG_PAY
         | _ => NONE
         },
         payment_experience: dict2

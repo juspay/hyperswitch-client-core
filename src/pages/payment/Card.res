@@ -23,6 +23,7 @@ let make = (
   | Some(data) => data
   | _ => AllApiDataContext.dafaultsavePMObj
   }
+
   let isSaveCardCheckboxVisible = nativeProp.configuration.displaySavedPaymentMethodsCheckbox
 
   // Fields Hooks
@@ -45,8 +46,7 @@ let make = (
   )> => Dict.make())
   let (error, setError) = React.useState(_ => None)
 
-  let isConfirmButtonValid =
-    isAllCardValuesValid && isAllDynamicFieldValid && (isNicknameSelected ? isNicknameValid : true)
+  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
 
   let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
   let (isInitialised, setIsInitialised) = React.useState(_ => false)
@@ -66,6 +66,14 @@ let make = (
     }
     None
   }, [cardData.cardNumber])
+
+  React.useEffect(() => {
+    if isNicknameSelected == false {
+      setNickname(_ => None)
+      setIsNicknameValid(_ => true)
+    }
+    None
+  }, [isNicknameSelected])
 
   let processRequest = (prop: PaymentMethodListType.payment_method_types_card) => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -143,7 +151,6 @@ let make = (
     None
   }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson))
   <>
-    <Space />
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
@@ -194,9 +201,11 @@ let make = (
         allApiData.additionalPMLData.mandateType,
       ) {
       | (false, _, true, NEW_MANDATE | NORMAL) =>
-        <NickNameElement nickname setNickname isNicknameSelected setIsNicknameValid />
+        isNicknameSelected
+          ? <NickNameElement nickname setNickname setIsNicknameValid />
+          : React.null
       | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
-        <NickNameElement nickname setNickname isNicknameSelected=true setIsNicknameValid />
+        <NickNameElement nickname setNickname setIsNicknameValid />
       | _ => React.null
       }}
     </View>

@@ -25,7 +25,6 @@ app.get('/create-payment-intent', async (req, res) => {
       customer_id: 'hyperswitch_demo_id',
       capture_method: 'automatic',
       email: 'abc@gmail.com',
-      business_country: 'US',
       billing: {
         address: {
           line1: '1467',
