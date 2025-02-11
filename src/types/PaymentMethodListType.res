@@ -62,12 +62,11 @@ type payment_method_types_open_banking = {
   required_field: RequiredFieldsTypes.required_fields,
 }
 
-type bank_debit_types = BECS | NONE
 type payment_method_types_bank_debit = {
   payment_method: string,
   payment_method_type: string,
   payment_experience: array<payment_experience>,
-  payment_method_type_var: bank_debit_types,
+  payment_method_type_var: RequiredFieldsTypes.payment_method_types_in_bank_debit,
   required_field: RequiredFieldsTypes.required_fields,
 }
 
@@ -275,9 +274,9 @@ let flattenPaymentListArray = (plist, item) => {
       BANK_DEBIT({
         payment_method: "bank_debit",
         payment_method_type: dict2->getString("payment_method_type", ""),
-         payment_method_type_var: switch dict2->getString("payment_method_type", "") {
+        payment_method_type_var: switch dict2->getString("payment_method_type", "") {
         | "becs" => BECS
-        | _ => NONE
+        | _ => Other
         },
         payment_experience: dict2
         ->getArray("payment_experience")

@@ -29,16 +29,6 @@ let make = (
     }
   }
 
-  let bankDebitType: PaymentMethodListType.payment_method_types_bank_debit = switch redirectProp {
-  | BANK_DEBIT(bankDebitVal) => bankDebitVal
-  | _ => {
-      payment_method: "",
-      payment_method_type: "",
-      payment_method_type_var: NONE,
-      payment_experience: [],
-      required_field: [],
-    }
-  }
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
@@ -88,6 +78,12 @@ let make = (
   | OPEN_BANKING(prop) => prop.payment_method_type
   | BANK_DEBIT(prop) => prop.payment_method_type
   }
+
+   let bankDebitPMType = switch redirectProp {
+  | BANK_DEBIT(prop) => prop.payment_method_type_var
+  | _ => Other
+  }
+
   let paymentExperience = switch redirectProp {
   | CARD(_)
   | BANK_REDIRECT(_) =>
@@ -988,60 +984,6 @@ let make = (
     selectedBank,
   ))
 
-  let numberOfDigitsValidation = (text, digits, display_name) => {
-    if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
-      if text->String.length == digits {
-        None
-      } else {
-       Some(
-          localeObject.enterValidDigitsText ++
-          digits->Int.toString ++
-          localeObject.digitsText ++
-          display_name->toCamelCase,
-        )
-      }
-    } else {
-      Some(localeObject.enterValidDetailsText)
-    }
-  }
-
-  let customValidationFunc = React.useCallback((~text, ~field_type, ~display_name) => {
-    switch field_type {
-    | AccountNumber =>
-      switch bankDebitType.payment_method_type_var {
-      | BECS => numberOfDigitsValidation(text, 9, display_name->Option.getOr(""))
-      | _ => None
-      }
-    | BSBNumber => numberOfDigitsValidation(text, 6, display_name->Option.getOr(""))
-    | _ => checkIsValid(~text, ~field_type, ~localeObject) // need for other all fields
-    }
-  }, [paymentMethod])
-
-  let customOnChangeFunc = React.useCallback((~text, ~field_type, ~prev) => {
-    switch field_type {
-    | AccountNumber =>
-      switch bankDebitType.payment_method_type_var {
-      | BECS =>
-        let val = text->Option.getOr("")->Validation.clearSpaces
-        if val->String.length <= 9 {
-          Some(val)
-        } else {
-          prev
-        }
-      | _ => None
-      }
-
-    | BSBNumber =>
-      let val = text->Option.getOr("")->Validation.clearSpaces
-      if val->String.length <= 6 {
-        Some(val)
-      } else {
-        prev
-      }
-    | _ => text
-    }
-  }, [paymentMethod])
-
   <>
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
@@ -1066,14 +1008,7 @@ let make = (
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
-                customOnChangeFunc={switch bankDebitType.payment_method_type_var {
-                | BECS => Some(customOnChangeFunc)
-                | _ => None
-                }}
-                customValidationFunc={switch bankDebitType.payment_method_type_var {
-                | BECS => Some(customValidationFunc)
-                | _ => None
-                }}
+                paymentMethodType={bankDebitPMType}
               />
             } else {
               fields.fields
