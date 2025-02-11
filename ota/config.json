@@ -6,7 +6,7 @@
     "properties": {}
   },
   "package": {
-    "name": "Hyperswitch_IOS_SDK",
+    "name": "Hyperswitch_SDK",
     "version": "v1",
     "properties": {
       "manifest": {},
