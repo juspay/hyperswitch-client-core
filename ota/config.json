@@ -1,0 +1,19 @@
+{
+  "config": {
+    "version": "v1",
+    "release_config_timeout": 10000,
+    "package_timeout": 10000,
+    "properties": {}
+  },
+  "package": {
+    "name": "Hyperswitch_IOS_SDK",
+    "version": "v1",
+    "properties": {
+      "manifest": {},
+      "manifest_hash": {}
+    },
+    "index": "",
+    "splits": []
+  },
+  "resources": {}
+}
