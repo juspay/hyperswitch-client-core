@@ -97,6 +97,12 @@ let defaultConfig = {
       header: "",
       fields: [],
     },
+    {
+      name: "becs",
+      text: "BECS Debit",
+      header: "",
+      fields: [],
+    },
     // {
     //   name: "google_pay",
     //   text: "Google Pay",

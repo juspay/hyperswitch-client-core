@@ -19,6 +19,7 @@ let useListModifier = () => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (addApplePay, addGooglePay) = WebButtonHook.usePayButton()
+  let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
   // React.useMemo2(() => {
   if allApiData.paymentList->Array.length == 0 {
@@ -250,6 +251,23 @@ let useListModifier = () => {
                 isScreenFocus redirectProp=CRYPTO(cryptoVal) fields setConfirmButtonDataRef
               />,
           })
+        | BANK_DEBIT(bankDebitVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => l.name == bankDebitVal.payment_method_type)
+            ->Option.getOr(Types.defaultRedirectType)
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus
+                isDynamicFields={true}
+                dynamicFields={bankDebitVal.required_field}
+                redirectProp=BANK_DEBIT(bankDebitVal)
+                fields
+                setConfirmButtonDataRef
+              />,
+          })
         } {
         | Some(tab) =>
           let isInvalidScreen =
@@ -294,6 +312,13 @@ let useListModifier = () => {
                   exp
                 }
               : None
+          | SAMSUNG_PAY =>
+            exp->Option.isSome &&
+            SamsungPayModule.isAvailable &&
+            samsungPayStatus == SamsungPay.Invalid
+              ? None
+              : exp
+
           | PAYPAL =>
             exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
               ? exp
@@ -339,11 +364,17 @@ let useListModifier = () => {
         | Some(walletProp) =>
           accumulator.elementArr
           ->Array.push(
-            <ButtonElement
-              key=walletProp.walletType.payment_method_type
-              walletType=walletProp.walletType
-              sessionObject={walletProp.sessionObject}
-            />,
+            walletProp.walletType.payment_method_type_wallet == SAMSUNG_PAY
+              ? <SamsungPay
+                  key=walletProp.walletType.payment_method_type
+                  walletType=walletProp.walletType
+                  sessionObject={walletProp.sessionObject}
+                />
+              : <ButtonElement
+                  key=walletProp.walletType.payment_method_type
+                  walletType=walletProp.walletType
+                  sessionObject={walletProp.sessionObject}
+                />,
           )
           ->ignore
         | None => ()
