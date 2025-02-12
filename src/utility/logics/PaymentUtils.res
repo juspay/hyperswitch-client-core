@@ -44,7 +44,13 @@ let generatePaymentMethodData = (
           },
         ),
         ("card_cvc", cardData.cvv->JSON.Encode.string),
-        ("card_network", cardData.cardBrand->JSON.Encode.string),
+        (
+          "card_network",
+          switch cardData.cardBrand {
+          | "" => JSON.Encode.null
+          | cardBrand => cardBrand->JSON.Encode.string
+          },
+        ),
       ]
       ->Dict.fromArray
       ->JSON.Encode.object,
@@ -72,9 +78,13 @@ let generateCardConfirmBody = (
     return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
-    connector: ?(
-      prop.card_networks->Array.get(0)->Option.map(cardNetwork => cardNetwork.eligible_connectors)
-    ),
+    connector: ?switch prop.card_networks {
+    | Some(cardNetwork) =>
+      cardNetwork
+      ->Array.get(0)
+      ->Option.mapOr(None, card_network => card_network.eligible_connectors->Some)
+    | None => None
+    },
     ?payment_method_data,
     ?payment_token,
     billing: ?nativeProp.configuration.defaultBillingDetails,

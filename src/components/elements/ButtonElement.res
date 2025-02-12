@@ -35,6 +35,7 @@ let make = (
     applePayButtonColor,
     buttonBorderRadius,
     primaryButtonHeight,
+    samsungPayButtonColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
@@ -271,6 +272,37 @@ let make = (
     | err =>
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message=err)
+    }
+  }
+
+  let confirmSamsungPay = status => {
+    if status->ThreeDsUtils.isStatusSuccess {
+      let response =
+        status.message
+        ->JSON.parseExn
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+
+      let obj = response->SamsungPayType.itemToObjMapper
+
+      let payment_method_data =
+        [
+          (
+            walletType.payment_method,
+            [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+      processRequest(~payment_method_data, ())
+    } else {
+      setLoading(FillingDetails)
+      showAlert(
+        ~errorType="warning",
+        ~message=`Samsung Pay Error, Please try again ${status.message}`,
+      )
     }
   }
 
@@ -526,6 +558,7 @@ let make = (
               },
             )
           }
+        | SAMSUNG_PAY => SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
         | _ => {
             logger(
               ~logType=DEBUG,
@@ -593,12 +626,28 @@ let make = (
       borderRadius=buttonBorderRadius
       linearGradientColorTuple=?{switch walletType.payment_method_type_wallet {
       | PAYPAL => Some(Some(paypalButonColor))
+      | SAMSUNG_PAY => Some(Some(samsungPayButtonColor))
       | _ => None
       }}
       leftIcon=CustomIcon(<Icon name=walletType.payment_method_type width=24. height=32. />)
       onPress={_ => pressHandler()}
       name=walletType.payment_method_type>
       {switch walletType.payment_method_type_wallet {
+      | SAMSUNG_PAY =>
+        Some(
+          <View
+            style={viewStyle(
+              ~display=#flex,
+              ~flexDirection=#row,
+              ~alignItems=#center,
+              ~justifyContent=#center,
+              ~width=100.->pct,
+              ~height=100.->pct,
+              (),
+            )}>
+            <Icon name=walletType.payment_method_type width=120. height=115. />
+          </View>,
+        )
       | APPLE_PAY =>
         Some(
           <ApplePayButtonView

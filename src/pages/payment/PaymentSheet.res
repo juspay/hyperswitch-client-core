@@ -39,7 +39,7 @@ let make = (~setConfirmButtonDataRef) => {
       ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
     )
       ? <>
-          <Space height=16. />
+          <Space height=10. />
           <ClickableTextElement
             initialIconName="cardv1"
             text=localeObject.useExisitingSavedCards
