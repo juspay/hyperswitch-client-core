@@ -62,6 +62,14 @@ type payment_method_types_open_banking = {
   required_field: RequiredFieldsTypes.required_fields,
 }
 
+type payment_method_types_bank_debit = {
+  payment_method: string,
+  payment_method_type: string,
+  payment_experience: array<payment_experience>,
+  payment_method_type_var: RequiredFieldsTypes.payment_method_types_in_bank_debit,
+  required_field: RequiredFieldsTypes.required_fields,
+}
+
 type payment_method_types_bank_transfer = {
   payment_method: string,
   payment_method_type: string,
@@ -77,6 +85,7 @@ type payment_method =
   | BANK_REDIRECT(payment_method_types_bank_redirect)
   | CRYPTO(payment_method_types_pay_later)
   | OPEN_BANKING(payment_method_types_open_banking)
+  | BANK_DEBIT(payment_method_types_bank_debit)
   | BANK_TRANSFER(payment_method_types_bank_transfer)
 
 type online = {
@@ -99,7 +108,10 @@ type customer_acceptance = {
   accepted_at: string,
   online: online,
 }
-type mandate_data = {customer_acceptance: customer_acceptance}
+
+type mandate_data = {
+  customer_acceptance: customer_acceptance,
+}
 type redirectType = {
   client_secret: string,
   return_url?: string,
@@ -265,6 +277,32 @@ let flattenPaymentListArray = (plist, item) => {
         required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
       })->Js.Array.push(plist)
     })
+  | "bank_debit" =>
+    payment_method_types_array->Array.map(item2 => {
+      let dict2 = item2->getDictFromJson
+      BANK_DEBIT({
+        payment_method: "bank_debit",
+        payment_method_type: dict2->getString("payment_method_type", ""),
+        payment_method_type_var: switch dict2->getString("payment_method_type", "") {
+        | "becs" => BECS
+        | _ => Other
+        },
+        payment_experience: dict2
+        ->getArray("payment_experience")
+        ->Array.map(item3 => {
+          let dict3 = item3->getDictFromJson
+          {
+            payment_experience_type: dict3->getString("payment_experience_type", ""),
+            payment_experience_type_decode: switch dict3->getString("payment_experience_type", "") {
+            | "redirect_to_url" => REDIRECT_TO_URL
+            | _ => NONE
+            },
+            eligible_connectors: dict3->getArray("eligible_connectors"),
+          }
+        }),
+        required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
+      })->Js.Array.push(plist)
+    })
   | "bank_transfer" =>
     payment_method_types_array->Array.map(item2 => {
       let dict2 = item2->getDictFromJson
@@ -305,6 +343,7 @@ let getPaymentMethodType = pm => {
   | BANK_REDIRECT(payment_method_type) => payment_method_type.payment_method_type
   | CRYPTO(payment_method_type) => payment_method_type.payment_method_type
   | OPEN_BANKING(payment_method_type) => payment_method_type.payment_method_type
+  | BANK_DEBIT(payment_method_type) => payment_method_type.payment_method_type
   | BANK_TRANSFER(payment_method_type) => payment_method_type.payment_method_type
   }
 }

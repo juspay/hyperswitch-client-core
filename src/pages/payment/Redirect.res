@@ -1,6 +1,7 @@
 open ReactNative
 open PaymentMethodListType
 open CustomPicker
+open RequiredFieldsTypes
 
 type klarnaSessionCheck = {
   isKlarna: bool,
@@ -13,7 +14,7 @@ let make = (
   ~fields: Types.redirectTypeJson,
   ~isScreenFocus,
   ~isDynamicFields: bool=false,
-  ~dynamicFields: RequiredFieldsTypes.required_fields=[],
+  ~dynamicFields: required_fields=[],
   ~setConfirmButtonDataRef: React.element => unit,
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
 ) => {
@@ -30,6 +31,7 @@ let make = (
 
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
   let (email, setEmail) = React.useState(_ => None)
   let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
@@ -74,21 +76,22 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
   | OPEN_BANKING(prop) => prop.payment_method_type
+  | BANK_DEBIT(prop) => prop.payment_method_type
   | BANK_TRANSFER(prop) => prop.payment_method_type
   }
+
   let paymentExperience = switch redirectProp {
-  | CARD(_) => None
+  | CARD(_)
+  | BANK_REDIRECT(_) =>
+    None
   | WALLET(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
   | PAY_LATER(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
-  | BANK_REDIRECT(_) => None
   | OPEN_BANKING(prop) =>
     prop.payment_experience
     ->Array.get(0)
@@ -97,11 +100,16 @@ let make = (
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+   | BANK_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   | BANK_TRANSFER(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   }
+ 
   let paymentMethodType = switch redirectProp {
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | _ => ""
@@ -251,10 +259,10 @@ let make = (
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
       // mandate_data: ?(
-      //   allApiData.mandateType != NORMAL
+      //   allApiData.additionalPMLData.mandateType != NORMAL
       //     ? Some({
       //         customer_acceptance: {
-      //           acceptance_type: "online",
+      //           acceptance_type: "offline",
       //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
       //           online: {
       //             ip_address: ?nativeProp.hyperParams.ip,
@@ -389,8 +397,7 @@ let make = (
       let middleData = Dict.make()
       middleData->Dict.set(prop.payment_method, innerData->JSON.Encode.object)
       payment_method_data->Dict.set("payment_method_data", middleData->JSON.Encode.object)
-      let dynamic_pmd =
-        payment_method_data->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
+      let dynamic_pmd = payment_method_data->mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
       processRequest(
         ~payment_method_data=dynamic_pmd
         ->Utils.getJsonObjectFromDict("payment_method_data")
@@ -864,6 +871,29 @@ let make = (
       (),
     )
   }
+
+  let processRequestBankDebit = (prop: payment_method_types_bank_debit) => {
+    let dynamicFieldsArray = dynamicFieldsJson->Dict.toArray
+    let dynamicFieldsJsonDict = dynamicFieldsArray->Array.reduce(Dict.make(), (
+      acc,
+      (key, (val, _)),
+    ) => {
+      acc->Dict.set(key, val)
+      acc
+    })
+
+    let payment_method_data = dynamicFieldsJsonDict->JSON.Encode.object->unflattenObject
+    processRequest(
+      ~payment_method_data=payment_method_data
+      ->Utils.getJsonObjectFromDict("payment_method_data")
+      ->JSON.stringifyAny
+      ->Option.getOr("{}")
+      ->JSON.parseExn,
+      ~payment_method=prop.payment_method,
+      ~payment_method_type=prop.payment_method_type,
+      (),
+    )
+  }
 let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
     let dynamicFieldsArray = dynamicFieldsJson->Dict.toArray
     let payment_method_data =
@@ -965,7 +995,14 @@ let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
       : ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
           fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
         )) || (fields.name == "klarna" && isKlarna)
-  , (isEmailValid, isNameValid, allApiData.sessions, isDynamicFields, isAllDynamicFieldValid))
+  , (
+    isEmailValid,
+    isNameValid,
+    allApiData.sessions,
+    isDynamicFields,
+    isAllDynamicFieldValid,
+    dynamicFieldsJson,
+  ))
 
   let handlePress = _ => {
     if isAllValuesValid {
@@ -980,6 +1017,7 @@ let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
       | CRYPTO(prop) => processRequestCrypto(prop)
       | WALLET(prop) => processRequestWallet(prop)
       | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
+      | BANK_DEBIT(prop) => processRequestBankDebit(prop)
       | BANK_TRANSFER(prop) => processRequestBankTransfer(prop)
       | _ => ()
       }
@@ -1016,6 +1054,7 @@ let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
     country,
     selectedBank,
   ))
+
   <>
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
@@ -1040,6 +1079,7 @@ let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
+                paymentMethodType={bankDebitPMType}
               />
             } else {
               fields.fields
