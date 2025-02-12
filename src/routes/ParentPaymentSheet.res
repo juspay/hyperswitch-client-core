@@ -41,7 +41,9 @@ let make = () => {
         : <PaymentSheet setConfirmButtonDataRef />
     | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
     }}
+    <ReactNative.Text>{"hyper-ota-1"->React.string}</ReactNative.Text>
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=15. />
+    
   </FullScreenSheetWrapper>
 }
