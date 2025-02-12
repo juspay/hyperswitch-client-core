@@ -30,16 +30,6 @@ let make = (
     }
   }
 
-  let bankDebitType: PaymentMethodListType.payment_method_types_bank_debit = switch redirectProp {
-  | BANK_DEBIT(bankDebitVal) => bankDebitVal
-  | _ => {
-      payment_method: "",
-      payment_method_type: "",
-      payment_method_type_var: NONE,
-      payment_experience: [],
-      required_field: [],
-    }
-  }
 
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -996,59 +986,6 @@ let make = (
     selectedBank,
   ))
 
-  let numberOfDigitsValidation = (text, digits, display_name) => {
-    if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
-      if text->String.length == digits {
-        None
-      } else {
-        Some(
-          localeObject.enterValidDigitsText ++
-          digits->Int.toString ++
-          localeObject.digitsText ++
-          display_name->toCamelCase,
-        )
-      }
-    } else {
-      Some(localeObject.enterValidDetailsText)
-    }
-  }
-
-  let customValidationFunc = React.useCallback((~text, ~field_type, ~display_name) => {
-    switch field_type {
-    | AccountNumber =>
-      switch bankDebitType.payment_method_type_var {
-      | BACS => numberOfDigitsValidation(text, 8, display_name->Option.getOr(""))
-      | _ => None
-      }
-    | SortCode => numberOfDigitsValidation(text, 6, display_name->Option.getOr(""))
-    | _ => checkIsValid(~text, ~field_type, ~localeObject) // need for other all fields
-    }
-  }, [paymentMethod])
-
-  let customOnChangeFunc = React.useCallback((~text, ~field_type, ~prev) => {
-    switch field_type {
-    | AccountNumber =>
-      switch bankDebitType.payment_method_type_var {
-      | BACS =>
-        let val = text->Option.getOr("")->Validation.clearSpaces
-        if val->String.length <= 8 {
-          Some(val)
-        } else {
-          prev
-        }
-      | _ => None
-      }
-
-    | SortCode =>
-      let val = text->Option.getOr("")->Validation.clearSpaces
-      if val->String.length <= 6 {
-        Some(val)
-      } else {
-        prev
-      }
-    | _ => text
-    }
-  }, [paymentMethod])
 
   <>
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>

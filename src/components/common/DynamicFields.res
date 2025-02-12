@@ -47,8 +47,6 @@ module RenderField = {
     ~finalJsonDict,
     ~isSaveCardsFlow,
     ~statesAndCountry: CountryStateDataContext.data,
-    ~customValidationFunc,
-    ~customOnChangeFunc,
     ~keyToTrigerButtonClickError,
     ~paymentMethodType: option<RequiredFieldsTypes.payment_method_types_in_bank_debit>,
   ) => {
@@ -315,8 +313,6 @@ module Fields = {
     ~setFinalJsonDict,
     ~statesAndCountry: CountryStateDataContext.data,
     ~isSaveCardsFlow,
-    ~customValidationFunc,
-    ~customOnChangeFunc,
     ~keyToTrigerButtonClickError,
     ~paymentMethodType,
   ) => {
@@ -331,8 +327,6 @@ module Fields = {
           statesAndCountry
           finalJsonDict
           setFinalJsonDict
-          customValidationFunc
-          customOnChangeFunc
           keyToTrigerButtonClickError
           paymentMethodType
         />
