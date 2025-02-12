@@ -1,4 +1,5 @@
 open Utils
+open NetceteraCustomisationType
 
 type localeTypes =
   | En
@@ -249,6 +250,9 @@ type configurationType = {
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
   enablePartialLoading: bool,
+  netceteraChallengeUICustomization: option<
+    NetceteraCustomisationType.netceteraChallengeUICustomizationType,
+  >,
 }
 
 type sdkState =
@@ -786,6 +790,10 @@ let getAppearanceObj = (
 let parseConfigurationDict = (configObj, from) => {
   let shippingDetailsDict =
     configObj->Dict.get("shippingDetails")->Option.flatMap(JSON.Decode.object)
+
+  let netceteraChallengeUICustomizationDict =
+    configObj->Dict.get("netceteraChallengeUICustomization")->Option.flatMap(JSON.Decode.object)
+
   let billingDetailsDict = getObj(configObj, "defaultBillingDetails", Dict.make())
 
   let _customerDict = configObj->Dict.get("customer")->Option.flatMap(JSON.Decode.object)
@@ -796,6 +804,7 @@ let parseConfigurationDict = (configObj, from) => {
     ->String.split(" ")
 
   let appearanceDict = configObj->Dict.get("appearance")->Option.flatMap(JSON.Decode.object)
+  let locale = getOptionString(appearanceDict->Option.getOr(Dict.make()), "locale")
   let appearance = {
     from == "rn" || from == "flutter" || WebKit.platform === #web
       ? switch appearanceDict {
@@ -859,6 +868,9 @@ let parseConfigurationDict = (configObj, from) => {
     savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
     displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
     enablePartialLoading: getBool(configObj, "enablePartialLoading", false),
+    netceteraChallengeUICustomization: Some(
+      getChallengeCustomisationRecord(netceteraChallengeUICustomizationDict, locale),
+    ),
     // customer: switch customerDict {
     // | Some(obj) =>
     //   Some({
