@@ -54,7 +54,7 @@ let getStrFromIndex = (arr: array<string>, index) => {
 let formatCVCNumber = (val, cardType) => {
   let clearValue = val->clearSpaces
   let obj = getobjFromCardPattern(cardType)
-  clearValue->slice(0, obj.maxCVCLenth)
+  clearValue->slice(0, obj.maxCVCLength)
 }
 
 let getCurrentMonthAndYear = (dateTimeIsoString: string) => {
@@ -272,6 +272,10 @@ let getExpiryValidity = cardExpiry => {
   valid
 }
 
+let containsOnlyDigits = text => {
+  %re("/^[0-9]*$/")->Js.Re.test_(text)
+}
+
 // let max = (a, b) => {
 //   a > b ? a : b
 // }
@@ -305,7 +309,7 @@ let cvcNumberInRange = (val, cardBrand) => {
 let cvcNumberEqualsMaxLength = (val, cardBrand) => {
   let clearValue = val->clearSpaces
   let obj = getobjFromCardPattern(cardBrand)
-  let cvcMaxLengthEquals = clearValue->String.length == obj.maxCVCLenth
+  let cvcMaxLengthEquals = clearValue->String.length == obj.maxCVCLength
   cvcMaxLengthEquals
 }
 

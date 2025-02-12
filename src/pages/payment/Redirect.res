@@ -3,6 +3,7 @@ open PaymentMethodListType
 open CustomPicker
 open RequiredFieldsTypes
 
+
 type klarnaSessionCheck = {
   isKlarna: bool,
   session_token: string,
@@ -42,6 +43,7 @@ let make = (
 
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
   let (email, setEmail) = React.useState(_ => None)
   let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
@@ -88,19 +90,24 @@ let make = (
   | OPEN_BANKING(prop) => prop.payment_method_type
   | BANK_DEBIT(prop) => prop.payment_method_type
   }
+
+   let bankDebitPMType = switch redirectProp {
+  | BANK_DEBIT(prop) => prop.payment_method_type_var
+  | _ => Other
+  }
+
   let paymentExperience = switch redirectProp {
-  | CARD(_) => None
+  | CARD(_)
+  | BANK_REDIRECT(_) =>
+    None
   | WALLET(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
   | PAY_LATER(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
-  | BANK_REDIRECT(_) => None
   | OPEN_BANKING(prop) =>
     prop.payment_experience
     ->Array.get(0)
@@ -266,7 +273,7 @@ let make = (
       //   allApiData.additionalPMLData.mandateType != NORMAL
       //     ? Some({
       //         customer_acceptance: {
-      //           acceptance_type: "online",
+      //           acceptance_type: "offline",
       //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
       //           online: {
       //             ip_address: ?nativeProp.hyperParams.ip,
@@ -1044,7 +1051,6 @@ let make = (
   }, [paymentMethod])
 
   <>
-    <Space />
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
         <TextWrapper text={fields.header} textType=Subheading />
@@ -1068,14 +1074,7 @@ let make = (
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
-                customOnChangeFunc={switch bankDebitType.payment_method_type_var {
-                | BACS => Some(customOnChangeFunc)
-                | _ => None
-                }}
-                customValidationFunc={switch bankDebitType.payment_method_type_var {
-                | BACS => Some(customValidationFunc)
-                | _ => None
-                }}
+                paymentMethodType={bankDebitPMType}
               />
             } else {
               fields.fields

@@ -19,7 +19,7 @@ type card_networks = {
 type payment_method_types_card = {
   payment_method: string,
   payment_method_type: string,
-  card_networks: array<card_networks>,
+  card_networks: option<array<card_networks>>,
   required_field: RequiredFieldsTypes.required_fields,
 }
 
@@ -62,12 +62,11 @@ type payment_method_types_open_banking = {
   required_field: RequiredFieldsTypes.required_fields,
 }
 
-type bank_debit_types = BACS | NONE
 type payment_method_types_bank_debit = {
   payment_method: string,
   payment_method_type: string,
   payment_experience: array<payment_experience>,
-  payment_method_type_var: bank_debit_types,
+  payment_method_type_var: RequiredFieldsTypes.payment_method_types_in_bank_debit,
   required_field: RequiredFieldsTypes.required_fields,
 }
 
@@ -79,7 +78,6 @@ type payment_method =
   | CRYPTO(payment_method_types_pay_later)
   | OPEN_BANKING(payment_method_types_open_banking)
   | BANK_DEBIT(payment_method_types_bank_debit)
-
 
 type online = {
   ip_address?: string,
@@ -101,7 +99,10 @@ type customer_acceptance = {
   accepted_at: string,
   online: online,
 }
-type mandate_data = {customer_acceptance: customer_acceptance}
+
+type mandate_data = {
+  customer_acceptance: customer_acceptance,
+}
 type redirectType = {
   client_secret: string,
   return_url?: string,
@@ -134,15 +135,19 @@ let flattenPaymentListArray = (plist, item) => {
       CARD({
         payment_method: "card",
         payment_method_type: dict2->getString("payment_method_type", ""),
-        card_networks: dict2
-        ->getArray("card_networks")
-        ->Array.map(item3 => {
-          let dict3 = item3->getDictFromJson
-          {
-            card_network: dict3->getString("card_network", ""),
-            eligible_connectors: dict3->getArray("eligible_connectors"),
-          }
-        }),
+        card_networks: switch dict2->getArray("card_networks") {
+        | [] => None
+        | data =>
+          Some(
+            data->Array.map(item3 => {
+              let dict3 = item3->getDictFromJson
+              {
+                card_network: dict3->getString("card_network", ""),
+                eligible_connectors: dict3->getArray("eligible_connectors"),
+              }
+            }),
+          )
+        },
         required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
       })->Js.Array.push(plist)
     })
@@ -156,6 +161,7 @@ let flattenPaymentListArray = (plist, item) => {
         | "google_pay" => GOOGLE_PAY
         | "apple_pay" => APPLE_PAY
         | "paypal" => PAYPAL
+        | "samsung_pay" => SAMSUNG_PAY
         | _ => NONE
         },
         payment_experience: dict2
@@ -262,14 +268,15 @@ let flattenPaymentListArray = (plist, item) => {
         required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
       })->Js.Array.push(plist)
     })
-  | "bank_debit" => payment_method_types_array->Array.map(item2 => {
+  | "bank_debit" =>
+    payment_method_types_array->Array.map(item2 => {
       let dict2 = item2->getDictFromJson
       BANK_DEBIT({
         payment_method: "bank_debit",
         payment_method_type: dict2->getString("payment_method_type", ""),
-         payment_method_type_var: switch dict2->getString("payment_method_type", "") {
-        | "bacs" => BACS
-        | _ => NONE
+        payment_method_type_var: switch dict2->getString("payment_method_type", "") {
+        | "becs" => BECS
+        | _ => Other
         },
         payment_experience: dict2
         ->getArray("payment_experience")

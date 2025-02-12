@@ -75,6 +75,11 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "inValidCardErrorText",
         defaultLocale.inValidCardErrorText,
       ),
+      unsupportedCardErrorText: Utils.getString(
+        res,
+        "unsupportedCardErrorText",
+        defaultLocale.unsupportedCardErrorText,
+      ),
       inCompleteCVCErrorText: Utils.getString(
         res,
         "inCompleteCVCErrorText",
@@ -209,11 +214,6 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         res,
         "invalidDigitsCardHolderNameError",
         defaultLocale.invalidDigitsCardHolderNameError,
-      ),
-      nickNameLengthExceedError: Utils.getString(
-        res,
-        "nickNameLengthExceedError",
-        defaultLocale.nickNameLengthExceedError,
       ),
       invalidDigitsNickNameError: Utils.getString(
         res,

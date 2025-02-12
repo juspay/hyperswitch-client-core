@@ -54,7 +54,13 @@ let make = () => {
             ("card_exp_year", year->JSON.Encode.string),
             ("card_holder_name", ""->JSON.Encode.string),
             ("card_cvc", cvv->JSON.Encode.string),
-            ("card_network", cardBrand->JSON.Encode.string),
+            (
+              "card_network",
+              switch cardBrand {
+              | "" => JSON.Encode.null
+              | cardBrand => cardBrand->JSON.Encode.string
+              },
+            ),
           ]
           ->Dict.fromArray
           ->JSON.Encode.object,
@@ -68,9 +74,13 @@ let make = () => {
       return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
       payment_method: prop.payment_method,
       payment_method_type: prop.payment_method_type,
-      connector: prop.card_networks
-      ->Array.get(0)
-      ->Option.mapOr([], card_network => card_network.eligible_connectors),
+      connector: switch prop.card_networks {
+      | Some(cardNetworks) =>
+        cardNetworks
+        ->Array.get(0)
+        ->Option.mapOr([], card_network => card_network.eligible_connectors)
+      | None => []
+      },
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
       shipping: ?nativeProp.configuration.shippingDetails,

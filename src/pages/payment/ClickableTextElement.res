@@ -32,7 +32,6 @@ let make = (
         : setIsSelected(_ => !isSelected)
     }}>
     <CustomSelectBox initialIconName updateIconName isSelected fillIcon />
-    <Space width=6. height=0. />
-    <TextWrapper text textType />
+    <TextWrapper text textType overrideStyle=Some(viewStyle(~paddingHorizontal=6.->dp, ())) />
   </CustomTouchableOpacity>
 }
