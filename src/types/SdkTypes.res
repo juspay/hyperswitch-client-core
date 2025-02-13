@@ -928,7 +928,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   }
 
   let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
-  Console.log2("HyperPArams", hyperParams)
 
   {
     from,
