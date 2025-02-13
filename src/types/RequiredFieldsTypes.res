@@ -2,7 +2,7 @@
 external importStatesAndCountries: string => promise<JSON.t> = "import"
 
 type addressCountry = UseContextData | UseBackEndData(array<string>)
-type payment_method_types_in_bank_debit = BECS | Other
+type payment_method_types_in_bank_debit = BECS | BACS | Other
 
 type paymentMethodsFields =
   | Email
@@ -28,6 +28,7 @@ type paymentMethodsFields =
   | AccountNumber
   | BSBNumber
   | PhoneCountryCode
+  | SortCode
 
 type requiredField =
   | StringField(string)
@@ -67,6 +68,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_shipping_name" => ShippingName
   | "user_bank_account_number" => AccountNumber
   | "user_bsb_number" => BSBNumber
+  | "user_bank_sort_code" => SortCode
   | var => UnKnownField(var)
   }
 }
@@ -120,18 +122,19 @@ let getFieldType = dict => {
 }
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
-  | FullName | ShippingName | BillingName => 1
-  | AccountNumber => -1
-  | Email => 2
-  | BSBNumber => 3
-  | AddressLine1 => 4
-  | AddressLine2 => 5
-  | AddressCity => 6
-  | AddressCountry(_) => 7
-  | AddressState => 8
-  | StateAndCity => 9
-  | CountryAndPincode(_) => 10
-  | AddressPincode => 11
+  | AccountNumber => 1
+  | BSBNumber => 2
+  | SortCode => 3
+  | FullName | ShippingName | BillingName => 4
+  | Email => 5
+  | AddressLine1 => 6
+  | AddressLine2 => 7
+  | AddressCity => 8
+  | AddressCountry(_) => 9
+  | AddressState => 10
+  | StateAndCity => 11
+  | CountryAndPincode(_) => 12
+  | AddressPincode => 13
   | InfoElement => 99
   | _ => 0
   }
@@ -278,15 +281,17 @@ let checkIsValid = (
     | AccountNumber =>
       switch paymentMethodType {
       | Some(BECS) => numberOfDigitsValidation(~text, ~localeObject, ~digits=9, ~display_name)
+      | Some(BACS) => numberOfDigitsValidation(~text, ~localeObject, ~digits=8, ~display_name)
       | _ => None
       }
     | BSBNumber => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
+    | SortCode => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
     | _ => None
     }
   }
 }
 
-let onlyDigits_restrictsChars = (
+let validateDigits = (
   ~text,
   ~fieldType,
   ~prev,
@@ -302,10 +307,16 @@ let onlyDigits_restrictsChars = (
       } else {
         prev
       }
+    | Some(BACS) =>
+      if val->String.length <= 8 {
+        Some(val)
+      } else {
+        prev
+      }
     | _ => None
     }
-
-  | BSBNumber =>
+  | BSBNumber
+  | SortCode =>
     if val->String.length <= 6 {
       Some(val)
     } else {
@@ -394,6 +405,7 @@ let useGetPlaceholder = (
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | SortCode
     | BlikCode =>
       display_name->toCamelCase
     }
