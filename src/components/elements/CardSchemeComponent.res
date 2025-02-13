@@ -32,13 +32,9 @@ module CoBadgeCardSchemeDropDown = {
     }
 
     <View ref={ReactNative.Ref.value(dropdownMenuRef)} onLayout>
-      <Icon
-        height=12.
-        width=12.
-        name="back"
-        fill="grey"
-        style={viewStyle(~marginLeft=8.->dp, ~transform=[rotate(~rotate=270.->deg)], ())}
-      />
+      <View style={viewStyle(~marginLeft=8.->dp, ())}>
+        <ChevronIcon width=12. height=12. fill="grey" />
+      </View>
       <UIUtils.RenderIf condition={modalVisible}>
         <Tooltip
           onClickOutside={_ => setModalVisible(_ => false)}
