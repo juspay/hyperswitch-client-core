@@ -19,6 +19,7 @@ type toolbarCustomization = {
 }
 
 type buttonCustomization = {
+  buttonType: string,
   backgroundColor?: string,
   cornerRadius?: float,
   textFontSize?: float,
@@ -34,8 +35,7 @@ type netceteraChallengeUICustomization = {
   labelCustomization?: labelCustomization,
   textBoxCustomization?: textBoxCustomization,
   toolbarCustomization?: toolbarCustomization,
-  submitButtonCustomization?: buttonCustomization,
-  cancelButtonCustomization?: buttonCustomization,
+  buttonCustomization?: array<buttonCustomization>,
   viewCustomization?: viewCustomization,
 }
 
@@ -81,39 +81,18 @@ let fun = netceteraChallengeUICustomization => {
       None
     }
 
-    let buttonObj = getObj(uiObj, "buttonCustomization", Dict.make())
+    let buttonCustomization = getArrayFromDict(uiObj, "buttonCustomization", [])
+    let buttonCustomizationArray = buttonCustomization->Array.map(obj => {
+    let objDict = getDictFromJson(obj)
+      ({
+        buttonType: getOptionString(objDict, "buttonType")->Option.getOr("SUBMIT"),
+        backgroundColor: ?getOptionString(objDict, "backgroundColor"),
+        cornerRadius: ?getOptionFloat(objDict, "cornerRadius"),
+        textFontSize: ?getOptionFloat(objDict, "textFontSize"),
+        textColor: ?getOptionString(objDict, "textColor"),
+      })
+    })
 
-    let submitButtonCustomization = if buttonObj != Dict.make() {
-      let submitBtn = getObj(buttonObj, "submit", Dict.make())
-      if submitBtn != Dict.make() {
-        Some({
-          backgroundColor: ?getOptionString(submitBtn, "backgroundColor"),
-          cornerRadius: ?getOptionFloat(submitBtn, "cornerRadius"),
-          textFontSize: ?getOptionFloat(submitBtn, "textFontSize"),
-          textColor: ?getOptionString(submitBtn, "textColor"),
-        })
-      } else {
-        None
-      }
-    } else {
-      None
-    }
-
-    let cancelButtonCustomization = if buttonObj != Dict.make() {
-      let cancelBtn = getObj(buttonObj, "cancel", Dict.make())
-      if cancelBtn != Dict.make() {
-        Some({
-          backgroundColor: ?getOptionString(cancelBtn, "backgroundColor"),
-          cornerRadius: ?getOptionFloat(cancelBtn, "cornerRadius"),
-          textFontSize: ?getOptionFloat(cancelBtn, "textFontSize"),
-          textColor: ?getOptionString(cancelBtn, "textColor"),
-        })
-      } else {
-        None
-      }
-    } else {
-      None
-    }
 
     let viewObj = getObj(uiObj, "viewCustomization", Dict.make())
     let viewCustomization = if viewObj != Dict.make() {
@@ -129,8 +108,7 @@ let fun = netceteraChallengeUICustomization => {
       ?labelCustomization,
       ?textBoxCustomization,
       ?toolbarCustomization,
-      ?submitButtonCustomization,
-      ?cancelButtonCustomization,
+      buttonCustomization : buttonCustomizationArray,
       ?viewCustomization,
     }
 
@@ -140,7 +118,7 @@ let fun = netceteraChallengeUICustomization => {
 }
 
 let getChallengeCustomisationRecord = (netceteraChallengeUICustomizationDict, locale) => {
-  let locale = locale->Option.getOr("")
+  let locale = locale->Option.getOr("en")
   let lightModeDict =
     netceteraChallengeUICustomizationDict
     ->Option.getOr(Dict.make())
@@ -153,12 +131,12 @@ let getChallengeCustomisationRecord = (netceteraChallengeUICustomizationDict, lo
     ->Dict.get("darkModeCustomization")
     ->Option.flatMap(JSON.Decode.object)
 
-  Console.log2("LightMode", lightModeDict)
+  // Console.log2("LightMode", lightModeDict)
 
   let lightX = fun(lightModeDict)
   let darkX = fun(darkModeDict)
 
-  Console.log2("LightMode X", lightX)
+  // Console.log2("LightMode X", lightX)
 
   {locale, lightMode: lightX, darkMode: darkX}
 }
