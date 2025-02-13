@@ -133,6 +133,15 @@ app.get('/payment_methods', async (req, res) => {
   }
 });
 
+app.get('/netcetera-sdk-api-key', (req, res) => {
+  const apiKey = process.env.NETCETERA_SDK_API_KEY;
+  if (apiKey) {
+    res.status(200).send({netceteraApiKey: apiKey});
+  } else {
+    res.status(500).send({error: 'Netcetera SDK API key is missing'});
+  }
+});
+
 app.listen(5252, () =>
   console.log(`Node server listening at http://localhost:5252`),
 );
