@@ -1,6 +1,6 @@
 {
   "name": "hyperswitch",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "private": true,
   "scripts": {
     "start": "react-native start --reset-cache",
@@ -41,6 +41,7 @@
     "pako": "^2.1.0",
     "react-native-code-push": "^8.3.1",
     "react-native-hyperswitch-netcetera-3ds": "^0.1.1",
+    "react-native-hyperswitch-samsung-pay": "^0.1.0",
     "react-native-hyperswitch-scancard": "^0.3.1",
     "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-klarna-inapp-sdk": "^2.1.13",

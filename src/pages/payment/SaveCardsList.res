@@ -113,7 +113,7 @@ module PMWithNickNameComponent = {
           | SAVEDLISTWALLET(obj) => obj.walletType
           | NONE => None
           }->Option.getOr("")}
-          height=24.
+          height=25.
           width=24.
           style={viewStyle(~marginEnd=5.->dp, ())}
         />
@@ -246,7 +246,7 @@ module PaymentMethodListView = {
       style={viewStyle(
         ~minHeight=60.->dp,
         ~paddingVertical=16.->dp,
-        ~borderBottomWidth={isButtomBorder ? 0.8 : 0.},
+        ~borderBottomWidth={isButtomBorder ? 1.0 : 0.},
         ~borderBottomColor=component.borderColor,
         ~justifyContent=#center,
         (),
