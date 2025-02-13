@@ -307,6 +307,7 @@ type hyperParams = {
   device_model: option<string>,
   os_type: option<string>,
   os_version: option<string>,
+  deviceBrand: option<string>,
 }
 
 type nativeProp = {
@@ -927,6 +928,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   }
 
   let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
+  Console.log2("HyperPArams", hyperParams)
 
   {
     from,
@@ -967,6 +969,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       device_model: getOptionString(hyperParams, "device_model"),
       os_type: getOptionString(hyperParams, "os_type"),
       os_version: getOptionString(hyperParams, "os_version"),
+      deviceBrand: getOptionString(hyperParams, "deviceBrand"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }
