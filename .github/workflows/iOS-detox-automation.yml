@@ -39,6 +39,18 @@ jobs:
           echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
           echo PROFILE_ID =  ${{ secrets.PROFILE_ID }}>> .env
 
+      - name: Generate DS Root Certificate for Netcetera SDK
+        run: |
+          CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
+          OUTPUT_FILE="nca_demo_root.crt"
+          OUTPUT_PATH="ios/hyperswitch"
+          {
+            echo "-----BEGIN CERTIFICATE-----"
+            echo "$CERTIFICATE_STRING"
+            echo "-----END CERTIFICATE-----"
+          } > "$OUTPUT_PATH"          
+          echo "Content has been successfully transferred to $OUTPUT_FILE."
+
       - name: Start server
         run: |
           nohup node server.js &
