@@ -1,28 +1,38 @@
 open Utils
 
 type labelCustomization = {
-  headingTextFontSize?: float,
+  textFontName?: string,
+  textColor?: string,
   textFontSize?: float,
+  headingTextFontName?: string,
+  headingTextColor?: string,
+  headingTextFontSize?: float,
 }
 
 type textBoxCustomization = {
-  borderColor?: string,
+  textFontName?: string,
+  textColor?: string,
+  textFontSize?: float,
   borderWidth?: float,
+  borderColor?: string,
   cornerRadius?: float,
 }
 
 type toolbarCustomization = {
-  backgroundColor?: string,
+  textFontName?: string,
   textColor?: string,
-  buttonText?: string,
+  textFontSize?: string,
+  backgroundColor?: string,
   headerText?: string,
+  buttonText?: string,
 }
 
 type buttonCustomization = {
   buttonType: string,
   backgroundColor?: string,
   cornerRadius?: float,
-  textFontSize?: float,
+  textFontName?: string,
+  textFontSize?: string,
   textColor?: string,
 }
 
@@ -53,6 +63,10 @@ let fun = netceteraChallengeUICustomization => {
       Some({
         headingTextFontSize: ?getOptionFloat(labelObj, "headingTextFontSize"),
         textFontSize: ?getOptionFloat(labelObj, "textFontSize"),
+        textFontName: ?getOptionString(labelObj, "textFontName"),
+        headingTextFontName: ?getOptionString(labelObj, "headingTextFontName"),
+        headingTextColor: ?getOptionString(labelObj, "headingTextColor"),
+        textColor: ?getOptionString(labelObj, "textColor"),
       })
     } else {
       None
@@ -64,6 +78,9 @@ let fun = netceteraChallengeUICustomization => {
         borderColor: ?getOptionString(textBoxObj, "borderColor"),
         borderWidth: ?getOptionFloat(textBoxObj, "borderWidth"),
         cornerRadius: ?getOptionFloat(textBoxObj, "cornerRadius"),
+        textFontName: ?getOptionString(textBoxObj, "textFontName"),
+        textColor: ?getOptionString(textBoxObj, "textColor"),
+        textFontSize: ?getOptionFloat(textBoxObj, "textFontSize"),
       })
     } else {
       None
@@ -76,6 +93,8 @@ let fun = netceteraChallengeUICustomization => {
         textColor: ?getOptionString(toolbarObj, "textColor"),
         buttonText: ?getOptionString(toolbarObj, "buttonText"),
         headerText: ?getOptionString(toolbarObj, "headerText"),
+        textFontName: ?getOptionString(toolbarObj, "textFontName"),
+        textFontSize: ?getOptionString(toolbarObj, "textFontSize"),
       })
     } else {
       None
@@ -83,16 +102,16 @@ let fun = netceteraChallengeUICustomization => {
 
     let buttonCustomization = getArrayFromDict(uiObj, "buttonCustomization", [])
     let buttonCustomizationArray = buttonCustomization->Array.map(obj => {
-    let objDict = getDictFromJson(obj)
-      ({
+      let objDict = getDictFromJson(obj)
+      {
         buttonType: getOptionString(objDict, "buttonType")->Option.getOr("SUBMIT"),
         backgroundColor: ?getOptionString(objDict, "backgroundColor"),
         cornerRadius: ?getOptionFloat(objDict, "cornerRadius"),
-        textFontSize: ?getOptionFloat(objDict, "textFontSize"),
+        textFontName: ?getOptionString(objDict, "textFontName"),
+        textFontSize: ?getOptionString(objDict, "textFontSize"),
         textColor: ?getOptionString(objDict, "textColor"),
-      })
+      }
     })
-
 
     let viewObj = getObj(uiObj, "viewCustomization", Dict.make())
     let viewCustomization = if viewObj != Dict.make() {
@@ -108,7 +127,7 @@ let fun = netceteraChallengeUICustomization => {
       ?labelCustomization,
       ?textBoxCustomization,
       ?toolbarCustomization,
-      buttonCustomization : buttonCustomizationArray,
+      buttonCustomization: buttonCustomizationArray,
       ?viewCustomization,
     }
 
@@ -131,12 +150,8 @@ let getChallengeCustomisationRecord = (netceteraChallengeUICustomizationDict, lo
     ->Dict.get("darkModeCustomization")
     ->Option.flatMap(JSON.Decode.object)
 
-  // Console.log2("LightMode", lightModeDict)
-
   let lightX = fun(lightModeDict)
   let darkX = fun(darkModeDict)
-
-  // Console.log2("LightMode X", lightX)
 
   {locale, lightMode: lightX, darkMode: darkX}
 }
