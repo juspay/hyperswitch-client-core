@@ -21,12 +21,35 @@ let make = (~portalRef) => {
     setPortals(prev => prev->Array.filter(item => item.key != key))
   }
 
-  React.useImperativeHandle(portalRef, (): PortalTypes.portalManagerRefType => {mount, unmount}, [])
+  let update = (key, children) => {
+    Promise.make((resolve, _) => {
+      setPortals(prev => {
+        keyIdx.current = keyIdx.current + 1
+        let updatePortalArray = prev->Array.map(
+          item =>
+            if item.key === key {
+              ({key: keyIdx.current, children}: PortalTypes.portalItem)
+            } else {
+              item
+            },
+        )
+        resolve(keyIdx.current)
+        updatePortalArray
+      })
+    })
+  }
+
+  React.useImperativeHandle(
+    portalRef,
+    (): PortalTypes.portalManagerRefType => {mount, unmount, update},
+    [],
+  )
 
   React.useEffect0(() => {
     setPortalContext({
       mount,
       unmount,
+      update,
     })
     None
   })

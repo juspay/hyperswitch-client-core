@@ -9,6 +9,7 @@ external toNullable: Js.nullable<PortalTypes.portalManagerRefType> => Js.Nullabl
 type operation =
   | Mount({key: int, children: React.element})
   | Unmount({key: int})
+  | Update({key: int, children: React.element})
 
 @react.component
 let make = (~children) => {
@@ -22,6 +23,7 @@ let make = (~children) => {
         switch queue.current->Array.pop {
         | Some(Mount(val)) => m.mount(val.children)->ignore
         | Some(Unmount(val)) => m.unmount(val.key)
+        | Some(Update(val)) => m.update(val.key, children)->ignore
         | None => ()
         }
       }

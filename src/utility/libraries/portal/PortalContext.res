@@ -1,5 +1,9 @@
 open PortalTypes
-let defaultVal = {mount: _ => Promise.resolve(0), unmount: _ => ()}
+let defaultVal = {
+  mount: _ => Promise.resolve(0),
+  unmount: _ => (),
+  update: (_, _) => Promise.resolve(0),
+}
 
 let portalContext = React.createContext((defaultVal, (_: portalManagerRefType) => ()))
 module Provider = {
