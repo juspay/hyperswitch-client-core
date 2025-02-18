@@ -20,27 +20,19 @@ module CoBadgeCardSchemeDropDown = {
   let make = (~eligibleCardSchemes, ~setCardBrand, ~modalVisible, ~setModalVisible) => {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
     let localeObject = GetLocale.useGetLocalObj()
-    let (y, setY) = React.useState(_ => 0.)
     let dropdownMenuRef = React.useRef(Nullable.null)
 
-    let onLayout = _ => {
-      switch dropdownMenuRef.current->Nullable.toOption {
-      | Some(ref) =>
-        ref->View.measureInWindow((~x as _, ~y, ~width as _, ~height) => setY(_ => y +. height))
-      | None => ()
-      }
-    }
-
-    <View ref={ReactNative.Ref.value(dropdownMenuRef)} onLayout>
+    <View ref={ReactNative.Ref.value(dropdownMenuRef)} onLayout={_ => ()}>
       <View style={viewStyle(~marginLeft=8.->dp, ())}>
         <ChevronIcon width=12. height=12. fill="grey" />
       </View>
       <UIUtils.RenderIf condition={modalVisible}>
         <Tooltip
-          onClickOutside={_ => setModalVisible(_ => false)}
+          onClickOutside={_ => {
+            setModalVisible(modalVisible => !modalVisible)
+          }}
           backgroundColor={component.background}
-          top={y}
-          right={10.}>
+          target={dropdownMenuRef}>
           <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
           <ScrollView contentContainerStyle={viewStyle(~flexGrow=0., ())}>
             <Space />
@@ -52,7 +44,7 @@ module CoBadgeCardSchemeDropDown = {
                 item
                 onPress={_ => {
                   setCardBrand(item)
-                  setModalVisible(_ => false)
+                  setModalVisible(modalVisible => !modalVisible)
                 }}
               />
             )
