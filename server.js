@@ -7,13 +7,27 @@ app.use(express.json());
 
 require('dotenv').config({path: './.env'});
 
-try {
-  var hyper = require('@juspay-tech/hyperswitch-node')(
-    process.env.HYPERSWITCH_SECRET_KEY,
-  );
-} catch (err) {
-  console.error('process.env.HYPERSWITCH_SECRET_KEY not found, ', err.message);
-  process.exit(0);
+const PORT = 5252;
+
+async function createPaymentIntent(request) {
+  const url = process.env.HYPERSWITCH_SERVER_URL || "https://sandbox.hyperswitch.io";
+  const apiResponse = await fetch(`${url}/payments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      "api-key": process.env.HYPERSWITCH_SECRET_KEY,
+    },
+    body: JSON.stringify(request),
+  });
+  const paymentIntent = await apiResponse.json();
+
+  if (paymentIntent.error) {
+    console.error("Error - ", paymentIntent.error);
+    throw new Error(paymentIntent?.error?.message ?? "Something went wrong.");
+  }
+
+  return paymentIntent;
 }
 
 app.get('/create-payment-intent', async (req, res) => {
@@ -58,7 +72,7 @@ app.get('/create-payment-intent', async (req, res) => {
       createPaymentBody.profile_id = profileId;
     }
 
-    var paymentIntent = await hyper.paymentIntents.create(createPaymentBody);
+    var paymentIntent = await createPaymentIntent(createPaymentBody);
 
     // Send publishable key and PaymentIntent details to client
     res.send({
@@ -142,6 +156,6 @@ app.get('/netcetera-sdk-api-key', (req, res) => {
   }
 });
 
-app.listen(5252, () =>
-  console.log(`Node server listening at http://localhost:5252`),
+app.listen(PORT, () =>
+  console.log(`Node server listening at http://localhost:${PORT}`),
 );
