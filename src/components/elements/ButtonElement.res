@@ -307,6 +307,25 @@ let make = (
 
       let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
+      Console.log2(
+        "APPLEPAY",
+        // var,
+        walletType,
+        // walletType.required_field->Array.map(required_fields_type =>
+        //   required_fields_type.required_field
+        // ),
+      )
+      let billing_contact = var->GooglePayTypeNew.getBillingContact(
+        "billing_contact",
+        switch countryStateData {
+        | FetchData(data)
+        | Localdata(data) =>
+          data.states
+        | _ => Dict.make()
+        },
+      )
+      let shipping_contact = var->Dict.get("shipping_contact")->Option.getOr(JSON.Encode.null)
+      Console.log4("billing", billing_contact, "shipping", shipping_contact)
       let transaction_identifier =
         var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
@@ -319,6 +338,14 @@ let make = (
           )
         }, 2000)->ignore
       } else {
+        // let finalJson = getPaymentBody(
+        //   var,
+        //   walletType.required_field
+        //   ->Array.map(required_fields_type => required_fields_type.required_field)
+        //   ->Dict.toArray
+        //   ->Array.map(((key, (value, error))) => (key, value, error)),
+        // )
+
         let paymentData =
           [
             ("payment_data", payment_data),
@@ -354,6 +381,161 @@ let make = (
           ]
           ->Dict.fromArray
           ->JSON.Encode.object
+
+        // let billing_contact = var->Dict.get("billing_contact")->Option.getOr(JSON.Encode.null)
+
+        let billing_contact = var->GooglePayTypeNew.getBillingContact(
+          "billing_contact",
+          switch countryStateData {
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
+          | _ => Dict.make()
+          },
+        )
+        let shipping_contact = var->GooglePayTypeNew.getBillingContact(
+          "shipping_contact",
+          switch countryStateData {
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
+          | _ => Dict.make()
+          },
+        )
+
+        Console.log4("billing", billing_contact, "shipping", shipping_contact)
+        // let billing_name = billing_contact->Dict.get("name")->Option.getOr(Dict.make())
+        // let first_name =
+        //   billing_name
+        //   ->Dict.get("givenName")
+        //   ->Option.getOr(JSON.Encode.string(""))
+        //   ->JSON.Decode.string
+        //   ->Option.getOr("")
+        // let last_name =
+        // billing_name
+        // ->Dict.get("familyName")
+        // ->Option.getOr(JSON.Encode.string(""))
+        // ->JSON.Decode.string
+        // ->Option.getOr("")
+
+        // // Extract address information
+        // // let postal_address = billing_contact->Dict.get("postalAddress")->Option.getOr(Dict.make())
+        // // let street =
+        // //   postal_address
+        // //   ->Dict.get("street")
+        // //   ->Option.getOr(JSON.Encode.string(""))
+        // //   ->JSON.Decode.string
+        // //   ->Option.getOr("")
+        // // let city =
+        // //   postal_address
+        // //   ->Dict.get("city")
+        // //   ->Option.getOr(JSON.Encode.string(""))
+        // //   ->JSON.Decode.string
+        // //   ->Option.getOr("")
+        // // let country =
+        // //   postal_address
+        // //   ->Dict.get("country")
+        // //   ->Option.getOr(JSON.Encode.string(""))
+        // //   ->JSON.Decode.string
+        // //   ->Option.getOr("")
+        // // let state =
+        // //   postal_address
+        // //   ->Dict.get("state")
+        // //   ->Option.getOr(JSON.Encode.string(""))
+        // //   ->JSON.Decode.string
+        // //   ->Option.getOr("")
+        // // let postal_code =
+        // //   postal_address
+        // //   ->Dict.get("postalCode")
+        // //   ->Option.getOr(JSON.Encode.string(""))
+        // //   ->JSON.Decode.string
+        // //   ->Option.getOr("")
+        // // let iso_country_code =
+        // // postal_address
+        // // ->Dict.get("isoCountryCode")
+        // // ->Option.getOr(JSON.Encode.string(""))
+        // // ->JSON.Decode.string
+        // // ->Option.getOr("")
+
+        // // Extract contact information
+        // let email =
+        //   shipping_contact
+        //   ->Dict.get("emailAddress")
+        //   ->Option.getOr(JSON.Encode.string(""))
+        //   ->JSON.Decode.string
+        //   ->Option.getOr("")
+        // let phone_number =
+        //   shipping_contact
+        //   ->Dict.get("phoneNumber")
+        //   ->Option.getOr(JSON.Encode.string(""))
+        //   ->JSON.Decode.string
+        //   ->Option.getOr("")
+        // let country_code = iso_country_code == "IN" ? "+91" : ""
+
+        // // Create data objects
+        // let address = Dict.make()
+        // let phone = Dict.make()
+        // let billing = Dict.make()
+        // let pmData = Dict.make()
+
+        // // Check each required field and populate accordingly
+        // walletType.required_field->Array.forEach(field => {
+        //   switch field["TAG"] {
+        //   | "StringField" => {
+        //       let path = field["_0"]
+        //       switch path {
+        //       | "payment_method_data.billing.phone.number" =>
+        //         phone->Dict.set("number", JSON.Encode.string(phone_number))
+        //       | "payment_method_data.billing.phone.country_code" =>
+        //         phone->Dict.set("country_code", JSON.Encode.string(country_code))
+        //       | "payment_method_data.billing.email" =>
+        //         billing->Dict.set("email", JSON.Encode.string(email))
+        //       | "payment_method_data.billing.address.line1" =>
+        //         address->Dict.set("line1", JSON.Encode.string(street))
+        //       | "payment_method_data.billing.address.line2" =>
+        //         address->Dict.set("line2", JSON.Encode.string(""))
+        //       | "payment_method_data.billing.address.city" =>
+        //         address->Dict.set("city", JSON.Encode.string(city))
+        //       | "payment_method_data.billing.address.country" =>
+        //         address->Dict.set("country", JSON.Encode.string(country))
+        //       | "payment_method_data.billing.address.state" =>
+        //         address->Dict.set("state", JSON.Encode.string(state))
+        //       | "payment_method_data.billing.address.zip" =>
+        //         address->Dict.set("zip", JSON.Encode.string(postal_code))
+        //       | _ => ()
+        //       }
+        //     }
+        //   | "FullNameField" => {
+        //       // Set name fields - typically first and last name
+        //       address->Dict.set("first_name", JSON.Encode.string(first_name))
+        //       address->Dict.set("last_name", JSON.Encode.string(last_name))
+        //     }
+        //   | _ => ()
+        //   }
+        // })
+
+        // // Assemble the structure
+        // // Only add filled objects
+        // if phone->Dict.keysToArray->Array.length > 0 {
+        //   billing->Dict.set("phone", phone->JSON.Encode.object)
+        // }
+
+        // if address->Dict.keysToArray->Array.length > 0 {
+        //   billing->Dict.set("address", address->JSON.Encode.object)
+        // }
+
+        // pmData->Dict.set("billing", billing->JSON.Encode.object)
+
+        // // Final result
+        // let payment_method_data = pmData->JSON.Encode.object
+
+        // // Use the mapped data
+        // setPaymentMethodData(payment_method_data)
+        // setLoading(FillingDetails)
+
+        // // Continue with payment processing
+        // handlePaymentMethodData(payment_method_data)
+
         processRequest(
           ~payment_method_data,
           ~email=?switch var->GooglePayTypeNew.getBillingContact(
