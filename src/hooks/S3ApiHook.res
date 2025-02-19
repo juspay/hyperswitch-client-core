@@ -243,6 +243,7 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         defaultLocale.enterValidDigitsText,
       ),
       digitsText: Utils.getString(res, "digitsText", defaultLocale.digitsText),
+      invalidInputText: Utils.getString(res, "invalidInputText", defaultLocale.invalidInputText),
     }
   | None => defaultLocale
   }
