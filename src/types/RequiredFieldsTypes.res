@@ -401,6 +401,7 @@ let useGetPlaceholder = (
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | Iban
     | BlikCode =>
       display_name->toCamelCase
     }
