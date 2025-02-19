@@ -311,8 +311,8 @@ module Fields = {
     ~fields: array<RequiredFieldsTypes.required_fields_type>,
     ~finalJsonDict,
     ~setFinalJsonDict,
-    ~isSaveCardsFlow,
     ~statesAndCountry: CountryStateDataContext.data,
+    ~isSaveCardsFlow,
     ~keyToTrigerButtonClickError,
     ~paymentMethodType,
   ) => {

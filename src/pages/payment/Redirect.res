@@ -3,6 +3,7 @@ open PaymentMethodListType
 open CustomPicker
 open RequiredFieldsTypes
 
+
 type klarnaSessionCheck = {
   isKlarna: bool,
   session_token: string,
@@ -28,6 +29,7 @@ let make = (
       required_field: [],
     }
   }
+
 
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -983,6 +985,7 @@ let make = (
     country,
     selectedBank,
   ))
+
 
   <>
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>

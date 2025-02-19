@@ -100,9 +100,7 @@ type customer_acceptance = {
   online: online,
 }
 
-type mandate_data = {
-  customer_acceptance: customer_acceptance,
-}
+type mandate_data = {customer_acceptance: customer_acceptance}
 type redirectType = {
   client_secret: string,
   return_url?: string,
@@ -276,6 +274,7 @@ let flattenPaymentListArray = (plist, item) => {
         payment_method_type: dict2->getString("payment_method_type", ""),
         payment_method_type_var: switch dict2->getString("payment_method_type", "") {
         | "becs" => BECS
+        | "bacs" => BACS
         | _ => Other
         },
         payment_experience: dict2

@@ -64,6 +64,7 @@ let make = (
     | "apple pay" => applePayList
     | "samsung_pay" => samsungPay
     | "becs debit" => becsDebit
+    | "bacs debit" =>becsDebit
     | _ => ""
     }
     localName == ""
