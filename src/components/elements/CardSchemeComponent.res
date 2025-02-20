@@ -15,44 +15,50 @@ module CardSchemeItem = {
   }
 }
 
+module CardSchemeSelectionPopoverElement = {
+  @react.component
+  let make = (~eligibleCardSchemes, ~setCardBrand, ~setModalVisible) => {
+    let localeObject = GetLocale.useGetLocalObj()
+    <>
+      <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
+      <ScrollView contentContainerStyle={viewStyle(~flexGrow=0., ())}>
+        <Space />
+        {eligibleCardSchemes
+        ->Array.mapWithIndex((item, index) =>
+          <CardSchemeItem
+            key={index->Int.toString}
+            index={index}
+            item
+            onPress={_ => {
+              setCardBrand(item)
+              setModalVisible(modalVisible => !modalVisible)
+            }}
+          />
+        )
+        ->React.array}
+      </ScrollView>
+    </>
+  }
+}
+
 module CoBadgeCardSchemeDropDown = {
   @react.component
   let make = (~eligibleCardSchemes, ~setCardBrand, ~modalVisible, ~setModalVisible) => {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
-    let localeObject = GetLocale.useGetLocalObj()
-    let dropdownMenuRef = React.useRef(Nullable.null)
 
-    <View ref={ReactNative.Ref.value(dropdownMenuRef)} onLayout={_ => ()}>
+    <Tooltip
+      width=200.
+      height=180.
+      isVisible={modalVisible}
+      setIsVisible={setModalVisible}
+      backgroundColor={component.background}
+      popover={<CardSchemeSelectionPopoverElement
+        eligibleCardSchemes setCardBrand setModalVisible
+      />}>
       <View style={viewStyle(~marginLeft=8.->dp, ())}>
         <ChevronIcon width=12. height=12. fill="grey" />
       </View>
-      <UIUtils.RenderIf condition={modalVisible}>
-        <Tooltip
-          onClickOutside={_ => {
-            setModalVisible(modalVisible => !modalVisible)
-          }}
-          backgroundColor={component.background}
-          target={dropdownMenuRef}>
-          <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
-          <ScrollView contentContainerStyle={viewStyle(~flexGrow=0., ())}>
-            <Space />
-            {eligibleCardSchemes
-            ->Array.mapWithIndex((item, index) =>
-              <CardSchemeItem
-                key={index->Int.toString}
-                index={index}
-                item
-                onPress={_ => {
-                  setCardBrand(item)
-                  setModalVisible(modalVisible => !modalVisible)
-                }}
-              />
-            )
-            ->React.array}
-          </ScrollView>
-        </Tooltip>
-      </UIUtils.RenderIf>
-    </View>
+    </Tooltip>
   }
 }
 
