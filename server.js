@@ -10,24 +10,34 @@ require('dotenv').config({path: './.env'});
 const PORT = 5252;
 
 async function createPaymentIntent(request) {
-  const url = process.env.HYPERSWITCH_SERVER_URL || "https://sandbox.hyperswitch.io";
-  const apiResponse = await fetch(`${url}/payments`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      "api-key": process.env.HYPERSWITCH_SECRET_KEY,
-    },
-    body: JSON.stringify(request),
-  });
-  const paymentIntent = await apiResponse.json();
+  try {
+    const url =
+      process.env.HYPERSWITCH_SERVER_URL || 'https://sandbox.hyperswitch.io';
+    const apiResponse = await fetch(`${url}/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'api-key': process.env.HYPERSWITCH_SECRET_KEY,
+      },
+      body: JSON.stringify(request),
+    });
 
-  if (paymentIntent.error) {
-    console.error("Error - ", paymentIntent.error);
-    throw new Error(paymentIntent?.error?.message ?? "Something went wrong.");
+    const paymentIntent = await apiResponse.json();
+
+    if (paymentIntent.error) {
+      console.error('Error - ', paymentIntent.error);
+      throw new Error(paymentIntent.error.message ?? 'Something went wrong.');
+    }
+
+    return paymentIntent;
+  } catch (error) {
+    console.error('Failed to create payment intent:', error);
+    throw new Error(
+      error.message ||
+        'Unexpected error occurred while creating payment intent.',
+    );
   }
-
-  return paymentIntent;
 }
 
 app.get('/create-payment-intent', async (req, res) => {
