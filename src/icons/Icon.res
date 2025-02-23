@@ -32,6 +32,7 @@ let make = (
   ~fill="#ffffff",
   ~defaultView: option<React.element>=?,
   ~style=viewStyle(),
+  ~fallbackIcon: option<string>=?,
 ) => {
   defaultView->ignore
   let (isLoaded, setIsLoaded) = React.useState(_ => false)
@@ -81,7 +82,7 @@ let make = (
       ? <ReactNativeSvg.SvgCss
           onError={() => {
             setIsLoaded(_ => true)
-            setIconName(_ => "error")
+            setIconName(_ => fallbackIcon->Option.getOr("error"))
           }}
           onLoad={() => {
             setIsLoaded(_ => true)
@@ -94,7 +95,7 @@ let make = (
       : <ReactNativeSvg.SvgUri
           onError={() => {
             setIsLoaded(_ => true)
-            setIconName(_ => "error")
+            setIconName(_ => fallbackIcon->Option.getOr("error"))
           }}
           onLoad={() => {
             setIsLoaded(_ => true)
