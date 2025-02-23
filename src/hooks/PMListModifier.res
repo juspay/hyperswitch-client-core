@@ -268,6 +268,26 @@ let useListModifier = () => {
                 setConfirmButtonDataRef
               />,
           })
+        | BANK_TRANSFER(bankTransferVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => {
+              l.name === bankTransferVal.payment_method_type ++ "_bank_transfer"
+            })
+            ->Option.getOr(Types.defaultRedirectType)
+
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
+                isScreenFocus
+                isDynamicFields={true}
+                dynamicFields={bankTransferVal.required_field}
+                redirectProp=BANK_TRANSFER(bankTransferVal)
+                fields
+                setConfirmButtonDataRef
+              />,
+          })
         } {
         | Some(tab) =>
           let isInvalidScreen =

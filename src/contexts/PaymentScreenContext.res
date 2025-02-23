@@ -1,4 +1,5 @@
-type paymentScreenType = PAYMENTSHEET | SAVEDCARDSCREEN
+type paymentScreenType =
+  PAYMENTSHEET | SAVEDCARDSCREEN | BANK_TRANSFER(option<PaymentConfirmTypes.ach_credit_transfer>)
 let dafaultVal = SAVEDCARDSCREEN
 
 let paymentScreenTypeContext = React.createContext((dafaultVal, (_: paymentScreenType) => ()))

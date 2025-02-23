@@ -77,9 +77,10 @@ let make = (
   | CRYPTO(prop) => prop.payment_method_type
   | OPEN_BANKING(prop) => prop.payment_method_type
   | BANK_DEBIT(prop) => prop.payment_method_type
+  | BANK_TRANSFER(prop) => prop.payment_method_type
   }
 
-   let bankDebitPMType = switch redirectProp {
+  let bankDebitPMType = switch redirectProp {
   | BANK_DEBIT(prop) => prop.payment_method_type_var
   | _ => Other
   }
@@ -105,6 +106,10 @@ let make = (
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   | BANK_DEBIT(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BANK_TRANSFER(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
@@ -870,7 +875,6 @@ let make = (
       (),
     )
   }
-
   let processRequestBankDebit = (prop: payment_method_types_bank_debit) => {
     let dynamicFieldsArray = dynamicFieldsJson->Dict.toArray
     let dynamicFieldsJsonDict = dynamicFieldsArray->Array.reduce(Dict.make(), (
@@ -893,6 +897,75 @@ let make = (
       (),
     )
   }
+  let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
+    let dynamicFieldsArray = dynamicFieldsJson->Dict.toArray
+    let payment_method_data =
+      [
+        (
+          prop.payment_method,
+          [
+            (
+              "ach_bank_transfer",
+              []
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+        (
+          "billing",
+          [
+            (
+              "email",
+              dynamicFieldsArray
+              ->Array.find(((key, _)) => key->String.includes("email") == true)
+              ->Option.map(((_, (value, _))) => value)
+              ->Option.getOr(""->JSON.Encode.string),
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    processRequest(
+      ~payment_method_data,
+      ~payment_method=prop.payment_method,
+      ~payment_method_type=prop.payment_method_type,
+      (),
+    )
+  }
+  // let processRequestBankTransfer = (prop: payment_method_types_bank_transfer) => {
+  //   let dynamicFieldsArray = dynamicFieldsJson->Dict.toArray
+  //   let dynamicFieldsJsonDict = dynamicFieldsArray->Array.reduce(Dict.make(), (
+  //     acc,
+  //     (key, (val, _)),
+  //   ) => {
+  //     acc->Dict.set(
+  //       key->String.replace(prop.payment_method_type, prop.payment_method_type ++ "_bank_transfer"),
+  //       val,
+  //     )
+  //     acc
+  //   })
+
+  //   let payment_method_data =
+  //     dynamicFieldsJsonDict->JSON.Encode.object->RequiredFieldsTypes.unflattenObject
+  //
+
+  //   processRequest(
+  //     ~payment_method_data=payment_method_data
+  //     ->Utils.getJsonObjectFromDict("payment_method_data")
+  //     ->JSON.stringifyAny
+  //     ->Option.getOr("{}")
+  //     ->JSON.parseExn,
+  //     ~payment_method=prop.payment_method,
+  //     ~payment_method_type=prop.payment_method_type,
+  //     (),
+  //   )
+  // }
 
   //need refactoring
   let handlePressEmail = text => {
@@ -948,6 +1021,7 @@ let make = (
       | WALLET(prop) => processRequestWallet(prop)
       | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
       | BANK_DEBIT(prop) => processRequestBankDebit(prop)
+      | BANK_TRANSFER(prop) => processRequestBankTransfer(prop)
       | _ => ()
       }
     } else {
