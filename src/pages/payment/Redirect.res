@@ -257,20 +257,20 @@ let make = (
         allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
-      // mandate_data: ?(
-      //   allApiData.additionalPMLData.mandateType != NORMAL
-      //     ? Some({
-      //         customer_acceptance: {
-      //           acceptance_type: "offline",
-      //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-      //           online: {
-      //             ip_address: ?nativeProp.hyperParams.ip,
-      //             user_agent: ?nativeProp.hyperParams.userAgent,
-      //           },
-      //         },
-      //       })
-      //     : None
-      // ),
+      mandate_data: ?(
+        allApiData.additionalPMLData.mandateType != NORMAL && bankDebitPMType != Other
+          ? Some({
+              customer_acceptance: {
+                acceptance_type: "offline",
+                accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+                online: {
+                  ip_address: ?nativeProp.hyperParams.ip,
+                  user_agent: ?nativeProp.hyperParams.userAgent,
+                },
+              },
+            })
+          : None
+      ),
       customer_acceptance: ?(
         allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate
           ? Some({
