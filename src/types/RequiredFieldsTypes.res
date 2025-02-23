@@ -231,7 +231,7 @@ let getErrorMsg = (
   | AddressCity => localeObject.cityEmptyText
   | AddressPincode => localeObject.postalCodeEmptyText
   | Email => localeObject.emailEmptyText
-  | _ => localeObject.requiredText
+  | _ => localeObject.invalidInputText
   }
 }
 let numberOfDigitsValidation = (
