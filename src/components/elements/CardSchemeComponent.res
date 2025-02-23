@@ -7,7 +7,7 @@ module CardSchemeItem = {
     <CustomTouchableOpacity key={index->Int.toString} onPress>
       <View
         style={viewStyle(~flexDirection=#row, ~alignItems=#center, ~paddingVertical=5.->dp, ())}>
-        <Icon name={item} height=30. width=30. fill="black" />
+        <Icon name={item} height=30. width=30. fill="black" fallbackIcon="waitcard" />
         <Space />
         <TextWrapper textType={CardText} text={item} />
       </View>
@@ -136,7 +136,7 @@ let make = (~cardNumber, ~cardNetworks) => {
       ~overflow=#hidden,
       (),
     )}>
-    <Icon name={cardBrandIcon} height=30. width=30. fill="black" />
+    <Icon name={cardBrandIcon} height=30. width=30. fill="black" fallbackIcon="waitcard" />
     <Animated.View style={viewStyle(~width=dropDownIconWidth->Animated.StyleProp.size, ())}>
       <UIUtils.RenderIf condition={showCardSchemeDropDown}>
         <CoBadgeCardSchemeDropDown eligibleCardSchemes setCardBrand modalVisible setModalVisible />
