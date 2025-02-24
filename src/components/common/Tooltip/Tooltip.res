@@ -8,6 +8,8 @@ let make = (
   ~popover: React.element,
   ~height=40.0,
   ~width=150.0,
+  ~leftAlign: option<float>=?,
+  ~rightAlign: option<float>=?,
   ~containerStyle=?,
   ~backgroundColor=?,
   ~isVisible,
@@ -64,7 +66,6 @@ let make = (
     viewStyle(
       ~position=#absolute,
       ~top=y->dp,
-      ~left=x->dp,
       ~paddingHorizontal=20.->dp,
       ~paddingVertical=10.->dp,
       ~width=width->dp,
@@ -74,6 +75,21 @@ let make = (
       (),
     ),
     shadowStyle,
+    if leftAlign->Option.isSome || rightAlign->Option.isSome {
+      let alignmentStyle = array([
+        switch leftAlign {
+        | Some(left) => viewStyle(~left=left->dp, ())
+        | None => viewStyle()
+        },
+        switch rightAlign {
+        | Some(right) => viewStyle(~right=right->dp, ())
+        | None => viewStyle()
+        },
+      ])
+      alignmentStyle
+    } else {
+      viewStyle(~left=x->dp, ())
+    },
   ])
 
   let tooltipStyle = switch containerStyle {
