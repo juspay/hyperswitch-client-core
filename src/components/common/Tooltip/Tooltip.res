@@ -22,51 +22,68 @@ let make = (
     elementHeight: 0.0,
   }
   let (elementInfo, setElementInfo) = React.useState(_ => defaultInfo)
+  let (tooltipPositon, setTooltipPosition) = React.useState(_ => Loading)
   let renderedElement = React.useRef(Js.Nullable.null)
 
   let {component} = ThemebasedStyle.useThemeBasedStyle()
   let {shadowColor, shadowIntensity} = ThemebasedStyle.useThemeBasedStyle()
   let shadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+  let (viewPortConstants, _) = React.useContext(ViewportContext.viewPortContext)
 
-  React.useEffect(() => {
-    let timeout = Js.Global.setTimeout(() => {
-      switch renderedElement.current->Js.Nullable.toOption {
-      | Some(element) =>
-        element->ReactNative.View.measureInWindow(
-          (~x, ~y, ~width, ~height) => {
-            setElementInfo(
-              _ => {xOffset: x, yOffset: y, elementWidth: width, elementHeight: height},
-            )
-          },
-        )
-      | None => ()
-      }
-    }, 500)
-    Some(() => Js.Global.clearTimeout(timeout))
+  React.useEffect(_ => {
+    switch renderedElement.current->Js.Nullable.toOption {
+    | Some(element) =>
+      element->ReactNative.View.measureInWindow((~x, ~y, ~width, ~height) => {
+        setElementInfo(_ => {xOffset: x, yOffset: y, elementWidth: width, elementHeight: height})
+      })
+    | None => ()
+    }
+
+    if !isVisible {
+      setTooltipPosition(_ => Loading)
+    }
+    None
   }, [isVisible])
 
-  let toggleTooltip = () => {
+  React.useEffect(_ => {
+    if isVisible {
+      let {x, y} = GetTooltipcoordinate.getTooltipCoordinate(
+        ~x=elementInfo.xOffset,
+        ~y=elementInfo.yOffset,
+        ~width=elementInfo.elementWidth,
+        ~height=elementInfo.elementHeight,
+        ~screenWidth=viewPortConstants.windowWidth,
+        ~screenHeight=viewPortConstants.windowHeight,
+        ~tooltipWidth=Number(width),
+        ~tooltipHeight=Number(height),
+      )
+      setTooltipPosition(_ => Coordinate({x, y}))
+    } else {
+      setTooltipPosition(_ => Loading)
+    }
+    None
+  }, [elementInfo])
+
+  let toggleTooltip = _ => {
     setIsVisible(visible => !visible)
   }
 
-  let {x, y} = React.useMemo(() => {
-    GetTooltipcoordinate.getTooltipCoordinate(
-      ~x=elementInfo.xOffset,
-      ~y=elementInfo.yOffset,
-      ~width=elementInfo.elementWidth,
-      ~height=elementInfo.elementHeight,
-      ~screenWidth=viewPortContants.windowWidth,
-      ~screenHeight=viewPortContants.windowHeight,
-      ~tooltipWidth=Number(width),
-      ~tooltipHeight=Number(height),
-    )
-  }, (elementInfo, viewPortContants.windowWidth, viewPortContants.windowHeight, width))
+  let isLoading = state =>
+    switch state {
+    | Loading => true
+    | Coordinate(_) => false
+    }
+
+  let getCoord = state =>
+    switch state {
+    | Coordinate({x, y}) => [x, y]
+    | Loading => [0., 0.]
+    }
 
   let tooltipBaseStyle = array([
     viewStyle(
       ~position=#absolute,
-      ~top=y->dp,
+      ~top=tooltipPositon->getCoord->Array.get(1)->Option.getOr(0.)->dp,
       ~paddingHorizontal=20.->dp,
       ~paddingVertical=10.->dp,
       ~width=width->dp,
@@ -89,7 +106,7 @@ let make = (
       ])
       alignmentStyle
     } else {
-      viewStyle(~left=x->dp, ())
+      viewStyle(~left=tooltipPositon->getCoord->Array.get(0)->Option.getOr(0.)->dp, ())
     },
   ])
 
@@ -110,8 +127,11 @@ let make = (
       </Portal>
     }
   }
+
   <ReactNative.View ref={ReactNative.Ref.value(renderedElement)} onLayout={_ => ()}>
     {renderContent(~withTooltip=false)}
-    <UIUtils.RenderIf condition={isVisible}> {renderContent(~withTooltip=true)} </UIUtils.RenderIf>
+    <UIUtils.RenderIf condition={isVisible && !(tooltipPositon->isLoading)}>
+      {renderContent(~withTooltip=true)}
+    </UIUtils.RenderIf>
   </ReactNative.View>
 }

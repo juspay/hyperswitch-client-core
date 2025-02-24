@@ -7,7 +7,9 @@ type elementInfo = {
   elementHeight: float,
 }
 
-type coord = {
+type coordinate = {
   x: float,
   y: float,
 }
+
+type coordinates = Loading | Coordinate(coordinate)
