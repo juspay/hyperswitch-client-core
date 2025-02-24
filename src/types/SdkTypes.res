@@ -218,7 +218,7 @@ type phone = {
 type addressDetails = {
   address: option<address>,
   email: option<string>,
-  phone: option<phone>,
+  phone?: option<phone>,
 }
 
 type customerConfiguration = {
