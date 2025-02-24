@@ -23,7 +23,7 @@ let getPointDistance = (a: (float, float), b: (float, float)) => {
   )
 }
 
-let constraintX = (newX, qIndex, x, screenWidth, tooltipWidth) => {
+let constraintX = (newX, qIndex, screenWidth, tooltipWidth) => {
   switch qIndex {
   | 0 | 3 => {
       let maxWidth = newX > screenWidth ? screenWidth -. 10.0 : newX
@@ -37,6 +37,20 @@ let constraintX = (newX, qIndex, x, screenWidth, tooltipWidth) => {
   }
 }
 
+let constraintY = (newY, qIndex, screenHeight, tooltipHeight) => {
+  switch qIndex {
+  | 2 | 3 => {
+      let minY = 10.0
+      newY < minY ? minY : newY
+    }
+  | 0 | 1 => {
+      let maxY = screenHeight -. tooltipHeight -. 10.0
+      newY > maxY ? maxY : newY
+    }
+  | _ => 0.0
+  }
+}
+
 let getTooltipCoordinate = (
   ~x: float, // x coordinate of the target element
   ~y: float, // y coordinate of the target element
@@ -45,11 +59,17 @@ let getTooltipCoordinate = (
   ~screenWidth: float, // width of the screen
   ~screenHeight: float, // height of the screen
   ~tooltipWidth: dimension, // width of the tooltip
+  ~tooltipHeight: dimension, // height of the tooltip
 ) => {
   let tooltipWidthNum = convertDimensionToNumber(
     tooltipWidth,
     ReactNative.Dimensions.get(#window).width,
   )
+  let tooltipHeightNum = convertDimensionToNumber(
+    tooltipHeight,
+    ReactNative.Dimensions.get(#window).height,
+  )
+
   let center = (x +. width /. 2.0, y +. height /. 2.0)
   let (centerX, centerY) = center
 
@@ -57,17 +77,25 @@ let getTooltipCoordinate = (
 
   let distances = points->Array.map(point => getPointDistance(center, point))
 
-  let areas =
-    Belt.Array.range(0, 3)
-    ->Belt.Array.map(i => {
-      let area = getArea(
-        distances->Array.get(i)->Option.getOr(0.),
-        distances->Array.get(mod(i + 1, 4))->Option.getOr(0.),
-      )
-      (area, i)
-    })
-    ->Belt.SortArray.stableSortBy(((a, _), (b, _)) => compare(b, a))
-
+  let areas = [
+    (
+      getArea(distances->Array.get(0)->Option.getOr(0.), distances->Array.get(3)->Option.getOr(0.)),
+      0,
+    ),
+    (
+      getArea(distances->Array.get(0)->Option.getOr(0.), distances->Array.get(1)->Option.getOr(0.)),
+      1,
+    ),
+    (
+      getArea(distances->Array.get(1)->Option.getOr(0.), distances->Array.get(2)->Option.getOr(0.)),
+      2,
+    ),
+    (
+      getArea(distances->Array.get(2)->Option.getOr(0.), distances->Array.get(3)->Option.getOr(0.)),
+      3,
+    ),
+  ]
+  areas->Array.sort(((a, _), (b, _)) => b -. a)
   let (_, qIndex) = areas[0]->Option.getOr((0., 0))
 
   let dX = 0.001
@@ -85,9 +113,10 @@ let getTooltipCoordinate = (
   let (deslocX, deslocY) = deslocateReferencePoint[qIndex]->Option.getOr((0., 0.))
 
   let newX = centerX +. (dX *. dirX +. deslocX)
+  let newY = centerY +. (dY *. dirY +. deslocY)
 
   {
-    x: constraintX(newX, qIndex, centerX, screenWidth, tooltipWidthNum),
-    y: centerY +. (dY *. dirY +. deslocY),
+    x: constraintX(newX, qIndex, screenWidth, tooltipWidthNum),
+    y: constraintY(newY, qIndex, screenHeight, tooltipHeightNum),
   }
 }

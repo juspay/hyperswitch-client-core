@@ -59,6 +59,7 @@ let make = (
       ~screenWidth=viewPortContants.windowWidth,
       ~screenHeight=viewPortContants.windowHeight,
       ~tooltipWidth=Number(width),
+      ~tooltipHeight=Number(height),
     )
   }, (elementInfo, viewPortContants.windowWidth, viewPortContants.windowHeight, width))
 
