@@ -56,6 +56,7 @@ type eventName =
   | DELETE_SAVED_PAYMENT_METHOD
   | ADD_PAYMENT_METHOD_CALL_INIT
   | ADD_PAYMENT_METHOD_CALL
+  | SAMSUNG_PAY
 
 type logFile = {
   timestamp: string,
