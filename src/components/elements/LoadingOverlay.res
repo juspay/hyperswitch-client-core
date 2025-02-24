@@ -71,6 +71,19 @@ let make = () => {
         </View>
       | _ => React.null
       }
+    | ClickToPayLoader =>
+      <View
+        style={viewStyle(
+          ~width=100.->pct,
+          ~height=93.->pct,
+          ~position=#absolute,
+          ~justifyContent=#center,
+          ~alignItems=#center,
+          ~backgroundColor="#ffffff",
+          (),
+        )}>
+        <ActivityIndicator size=ActivityIndicator.Number(80.) color="#007bff" />
+      </View>
     | _ => React.null
     }
   }

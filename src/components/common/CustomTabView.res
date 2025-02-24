@@ -8,6 +8,7 @@ let make = (
 ) => {
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
   let setIndexInFocus = React.useCallback1(ind => setIndexInFocus(_ => ind), [setIndexInFocus])
+  let (presentationStyle, _) = React.useContext(ClickToPayContext.clickToPayContext)
 
   let data = React.useMemo1(() => {
     if loading {
@@ -58,7 +59,7 @@ let make = (
       })}
       onIndexChange=setIndexInFocus
       renderTabBar={(~indexInFocus, ~routes as _, ~position as _, ~layout as _, ~jumpTo) => {
-        isScrollBarOnlyCards
+        isScrollBarOnlyCards || presentationStyle == Fullscreen
           ? React.null
           : <ScrollableCustomTopBar
               hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo}

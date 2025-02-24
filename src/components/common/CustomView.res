@@ -70,18 +70,22 @@ module Wrapper = {
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+    let (presentationStyle, _) = React.useContext(ClickToPayContext.clickToPayContext)
 
     <ScrollView
       contentContainerStyle={viewStyle(
         ~minHeight=250.->dp,
-        ~paddingHorizontal=20.->dp,
-        ~paddingTop=20.->dp,
+        ~paddingHorizontal={presentationStyle == Fullscreen ? 0. : 20.}->dp,
+        ~paddingTop={presentationStyle == Fullscreen ? 0. : 20.}->dp,
         ~paddingBottom=viewPortContants.navigationBarHeight->dp,
         (),
       )}
       keyboardShouldPersistTaps={#handled}
       style={array([viewStyle(~flexGrow=1., ~width, ()), bgColor])}>
-      <ModalHeader onModalClose />
+      {switch presentationStyle {
+      | Embedded | Hidden => <ModalHeader onModalClose />
+      | Fullscreen => React.null
+      }}
       children
     </ScrollView>
   }

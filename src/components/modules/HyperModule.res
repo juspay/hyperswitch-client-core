@@ -11,6 +11,8 @@ type hyperModule = {
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
+  onRedirectForClickToPay: (string, Dict.t<JSON.t> => unit) => unit,
+  onClickToPayResult: (string, Dict.t<JSON.t> => unit) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -49,6 +51,11 @@ let hyperModule = {
     _,
     _,
   ) => ()),
+  onRedirectForClickToPay: getFunctionFromModule(hyperModuleDict, "onRedirectForClickToPay", (
+    _,
+    _,
+  ) => ()),
+  onClickToPayResult: getFunctionFromModule(hyperModuleDict, "onClickToPayResult", (_, _) => ()),
 }
 
 let sendMessageToNative = str => {
@@ -166,4 +173,12 @@ let launchGPay = (requestObj: string, callback) => {
 
 let launchWidgetPaymentSheet = (requestObj: string, callback) => {
   hyperModule.launchWidgetPaymentSheet(requestObj, callback)
+}
+
+let onRedirectForClickToPay = (requestObj: string, callback) => {
+  hyperModule.onRedirectForClickToPay(requestObj, callback)
+}
+
+let onClickToPayResult = (requestObj: string, callback) => {
+  hyperModule.onClickToPayResult(requestObj, callback)
 }

@@ -10,15 +10,17 @@ module ContextWrapper = {
           <ThemeContext>
             <ViewportContext>
               <LoggerContext>
-                <CardDataContext>
-                  <CountryStateDataContext>
-                    <AllApiDataContext>
-                      <LocaleStringDataContext>
-                        <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
-                      </LocaleStringDataContext>
-                    </AllApiDataContext>
-                  </CountryStateDataContext>
-                </CardDataContext>
+                <ClickToPayContext>
+                  <CardDataContext>
+                    <CountryStateDataContext>
+                      <AllApiDataContext>
+                        <LocaleStringDataContext>
+                          <CustomKeyboardAvoidingView> children </CustomKeyboardAvoidingView>
+                        </LocaleStringDataContext>
+                      </AllApiDataContext>
+                    </CountryStateDataContext>
+                  </CardDataContext>
+                </ClickToPayContext>
               </LoggerContext>
             </ViewportContext>
           </ThemeContext>

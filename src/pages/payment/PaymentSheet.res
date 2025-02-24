@@ -19,37 +19,47 @@ let make = (~setConfirmButtonDataRef) => {
 
   let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
 
+  let (presentationStyle, _) = React.useContext(ClickToPayContext.clickToPayContext)
+
   <>
-    <WalletView
-      loading={nativeProp.sdkState !== CardWidget &&
-      allApiData.sessions == Loading &&
-      localeStrings == Loading}
-      elementArr
-      showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
-    />
+    {switch presentationStyle {
+    | Embedded | Hidden =>
+      <WalletView
+        loading={nativeProp.sdkState !== CardWidget &&
+        allApiData.sessions == Loading &&
+        localeStrings == Loading}
+        elementArr
+        showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
+      />
+    | Fullscreen => React.null
+    }}
     <CustomTabView
       hocComponentArr=tabArr
       loading={allApiData.sessions == Loading && localeStrings == Loading}
       setConfirmButtonDataRef
     />
-    {PaymentUtils.showUseExisitingSavedCardsBtn(
-      ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
-      ~pmList=savedPaymentMethodsData.pmList,
-      ~mandateType=allApiData.additionalPMLData.mandateType,
-      ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
-    )
-      ? <>
-          <Space height=10. />
-          <ClickableTextElement
-            initialIconName="cardv1"
-            text=localeObject.useExisitingSavedCards
-            isSelected=true
-            setIsSelected={_ => ()}
-            textType={TextWrapper.LinkTextBold}
-            fillIcon=true
-          />
-          <Space height=12. />
-        </>
-      : React.null}
+    {switch presentationStyle {
+    | Embedded | Hidden =>
+      PaymentUtils.showUseExisitingSavedCardsBtn(
+        ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
+        ~pmList=savedPaymentMethodsData.pmList,
+        ~mandateType=allApiData.additionalPMLData.mandateType,
+        ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
+      )
+        ? <>
+            <Space height=10. />
+            <ClickableTextElement
+              initialIconName="cardv1"
+              text=localeObject.useExisitingSavedCards
+              isSelected=true
+              setIsSelected={_ => ()}
+              textType={TextWrapper.LinkTextBold}
+              fillIcon=true
+            />
+            <Space height=12. />
+          </>
+        : React.null
+    | Fullscreen => React.null
+    }}
   </>
 }
