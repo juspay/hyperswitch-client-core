@@ -1,27 +1,27 @@
 open ReactNative
 open Style
-open TooltipTypes
+
+type positionX = Left(float) | Right(float)
+type positionY = Top(float) | Bottom(float)
+
+type tooltipPosition = {
+  x: positionX,
+  y: positionY,
+}
 
 @react.component
 let make = (
   ~children: React.element,
   ~popover: React.element,
-  ~height=40.0,
-  ~width=150.0,
-  ~leftAlign: option<float>=?,
-  ~rightAlign: option<float>=?,
+  ~maxHeight=200.,
+  ~maxWidth=200.,
   ~containerStyle=?,
   ~backgroundColor=?,
   ~isVisible,
   ~setIsVisible,
 ) => {
-  let defaultInfo = {
-    xOffset: 0.0,
-    yOffset: 0.0,
-    elementWidth: 0.0,
-    elementHeight: 0.0,
-  }
-  let (elementInfo, setElementInfo) = React.useState(_ => defaultInfo)
+  let (tooltipPosition, setTooltipPosition) = React.useState(_ => None)
+
   let renderedElement = React.useRef(Js.Nullable.null)
 
   let {component} = ThemebasedStyle.useThemeBasedStyle()
@@ -29,66 +29,79 @@ let make = (
   let shadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
+  let maxHeight =
+    viewPortContants.windowHeight > maxHeight ? maxHeight : viewPortContants.windowHeight
+  let maxWidth = viewPortContants.windowWidth > maxWidth ? maxWidth : viewPortContants.windowWidth
+  let defaultPadding = 20.
+  let adjustments = 2.
+
   React.useEffect(() => {
-    let timeout = Js.Global.setTimeout(() => {
+    if isVisible {
       switch renderedElement.current->Js.Nullable.toOption {
       | Some(element) =>
-        element->ReactNative.View.measureInWindow(
-          (~x, ~y, ~width, ~height) => {
-            setElementInfo(
-              _ => {xOffset: x, yOffset: y, elementWidth: width, elementHeight: height},
-            )
-          },
-        )
+        element->ReactNative.View.measure((
+          ~x as _,
+          ~y as _,
+          ~width as _,
+          ~height,
+          ~pageX,
+          ~pageY,
+        ) => {
+          let x = if viewPortContants.windowWidth -. pageX < maxWidth {
+            Right(defaultPadding -. adjustments)
+          } else {
+            Left(pageX)
+          }
+
+          let y = if viewPortContants.windowHeight -. pageY < maxHeight {
+            Bottom(viewPortContants.windowHeight -. pageY +. adjustments)
+          } else {
+            Top(pageY +. height +. adjustments)
+          }
+
+          setTooltipPosition(_ => Some({x, y}))
+        })
       | None => ()
       }
-    }, 500)
-    Some(() => Js.Global.clearTimeout(timeout))
+    } else {
+      setTooltipPosition(_ => None)
+    }
+    None
   }, [isVisible])
 
   let toggleTooltip = () => {
     setIsVisible(visible => !visible)
   }
 
-  let {x, y} = React.useMemo(() => {
-    GetTooltipcoordinate.getTooltipCoordinate(
-      ~x=elementInfo.xOffset,
-      ~y=elementInfo.yOffset,
-      ~width=elementInfo.elementWidth,
-      ~height=elementInfo.elementHeight,
-      ~screenWidth=viewPortContants.windowWidth,
-      ~screenHeight=viewPortContants.windowHeight,
-      ~tooltipWidth=Number(width),
-    )
-  }, (elementInfo, viewPortContants.windowWidth, viewPortContants.windowHeight, width))
-
   let tooltipBaseStyle = array([
     viewStyle(
       ~position=#absolute,
-      ~top=y->dp,
       ~paddingHorizontal=20.->dp,
       ~paddingVertical=10.->dp,
-      ~width=width->dp,
-      ~maxHeight=180.->dp,
+      ~maxWidth=maxWidth->dp,
+      ~maxHeight=maxHeight->dp,
       ~backgroundColor={backgroundColor->Option.getOr(component.background)},
       ~borderRadius=8.,
+      ~borderWidth=1.,
+      ~borderColor="#00000005",
       (),
     ),
     shadowStyle,
-    if leftAlign->Option.isSome || rightAlign->Option.isSome {
-      let alignmentStyle = array([
-        switch leftAlign {
-        | Some(left) => viewStyle(~left=left->dp, ())
-        | None => viewStyle()
-        },
-        switch rightAlign {
-        | Some(right) => viewStyle(~right=right->dp, ())
-        | None => viewStyle()
-        },
-      ])
-      alignmentStyle
-    } else {
-      viewStyle(~left=x->dp, ())
+    switch tooltipPosition {
+    | Some(x) =>
+      switch x.x {
+      | Left(x) => viewStyle(~left=x->dp, ())
+      | Right(x) => viewStyle(~right=x->dp, ())
+      }
+    | None => viewStyle()
+    },
+    switch tooltipPosition {
+    | Some(y) =>
+      switch y.y {
+      | Top(y) => viewStyle(~top=y->dp, ())
+      | Bottom(y) => viewStyle(~bottom=y->dp, ())
+      }
+    | None => viewStyle()
     },
   ])
 
@@ -97,20 +110,15 @@ let make = (
   | None => [tooltipBaseStyle]->ReactNative.StyleSheet.flatten
   }
 
-  let renderContent = (~withTooltip) => {
-    if !withTooltip {
-      children
-    } else {
+  <ReactNative.View ref={ReactNative.Ref.value(renderedElement)} onLayout={_ => ()}>
+    {children}
+    <UIUtils.RenderIf condition={isVisible && tooltipPosition->Option.isSome}>
       <Portal>
         <CustomTouchableOpacity
           activeOpacity=1. onPress={_ => toggleTooltip()} style={viewStyle(~flex=1., ())}>
           <ReactNative.View style={tooltipStyle}> popover </ReactNative.View>
         </CustomTouchableOpacity>
       </Portal>
-    }
-  }
-  <ReactNative.View ref={ReactNative.Ref.value(renderedElement)} onLayout={_ => ()}>
-    {renderContent(~withTooltip=false)}
-    <UIUtils.RenderIf condition={isVisible}> {renderContent(~withTooltip=true)} </UIUtils.RenderIf>
+    </UIUtils.RenderIf>
   </ReactNative.View>
 }
