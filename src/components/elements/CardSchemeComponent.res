@@ -47,9 +47,8 @@ module CoBadgeCardSchemeDropDown = {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
 
     <Tooltip
-      width=200.
-      height=180.
-      rightAlign=20.
+      maxWidth=200.
+      maxHeight=180.
       isVisible={modalVisible}
       setIsVisible={setModalVisible}
       backgroundColor={component.background}

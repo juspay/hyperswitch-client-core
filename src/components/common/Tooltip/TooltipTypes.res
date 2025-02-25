@@ -1,15 +1,7 @@
-type dimension = String(string) | Number(float)
+type positionX = Left(float) | Right(float)
+type positionY = Top(float) | Bottom(float)
 
-type elementInfo = {
-  xOffset: float,
-  yOffset: float,
-  elementWidth: float,
-  elementHeight: float,
+type tooltipPosition = {
+  x: positionX,
+  y: positionY,
 }
-
-type coordinate = {
-  x: float,
-  y: float,
-}
-
-type coordinates = Loading | Coordinate(coordinate)
