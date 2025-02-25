@@ -17,7 +17,7 @@ module CardSchemeItem = {
 
 module CardSchemeSelectionPopoverElement = {
   @react.component
-  let make = (~eligibleCardSchemes, ~setCardBrand, ~setModalVisible) => {
+  let make = (~eligibleCardSchemes, ~setCardBrand, ~toggleVisibility) => {
     let localeObject = GetLocale.useGetLocalObj()
     <>
       <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
@@ -31,34 +31,13 @@ module CardSchemeSelectionPopoverElement = {
             item
             onPress={_ => {
               setCardBrand(item)
-              setModalVisible(modalVisible => !modalVisible)
+              toggleVisibility()
             }}
           />
         )
         ->React.array}
       </ScrollView>
     </>
-  }
-}
-
-module CoBadgeCardSchemeDropDown = {
-  @react.component
-  let make = (~eligibleCardSchemes, ~setCardBrand, ~modalVisible, ~setModalVisible) => {
-    let {component} = ThemebasedStyle.useThemeBasedStyle()
-
-    <Tooltip
-      maxWidth=200.
-      maxHeight=180.
-      isVisible={modalVisible}
-      setIsVisible={setModalVisible}
-      backgroundColor={component.background}
-      popover={<CardSchemeSelectionPopoverElement
-        eligibleCardSchemes setCardBrand setModalVisible
-      />}>
-      <View style={viewStyle(~marginLeft=8.->dp, ())}>
-        <ChevronIcon width=12. height=12. fill="grey" />
-      </View>
-    </Tooltip>
   }
 }
 
@@ -70,7 +49,6 @@ let make = (~cardNumber, ~cardNetworks) => {
   let (cardBrandIcon, setCardBrandIcon) = React.useState(_ =>
     cardBrand === "" ? "waitcard" : cardBrand
   )
-  let (modalVisible, setModalVisible) = React.useState(_ => false)
   let (dropDownIconWidth, _) = React.useState(_ => Animated.Value.create(0.))
 
   let getCardNetworks = cardNetworks => {
@@ -122,25 +100,31 @@ let make = (~cardNumber, ~cardNetworks) => {
     None
   }, [showCardSchemeDropDown])
 
-  <CustomTouchableOpacity
-    onPress={_ => setModalVisible(modalVisible => !modalVisible)}
-    disabled={!showCardSchemeDropDown}
-    activeOpacity={showCardSchemeDropDown ? 0.2 : 1.}
-    style={viewStyle(
-      ~display=#flex,
-      ~flexDirection=#row,
-      ~justifyContent=#center,
-      ~alignItems=#center,
-      ~paddingLeft=10.->dp,
-      ~paddingVertical=10.->dp,
-      ~overflow=#hidden,
-      (),
-    )}>
-    <Icon name={cardBrandIcon} height=30. width=30. fill="black" fallbackIcon="waitcard" />
-    <Animated.View style={viewStyle(~width=dropDownIconWidth->Animated.StyleProp.size, ())}>
-      <UIUtils.RenderIf condition={showCardSchemeDropDown}>
-        <CoBadgeCardSchemeDropDown eligibleCardSchemes setCardBrand modalVisible setModalVisible />
-      </UIUtils.RenderIf>
-    </Animated.View>
-  </CustomTouchableOpacity>
+  <View style={viewStyle(~paddingLeft=10.->dp, ~paddingVertical=10.->dp, ())}>
+    <Tooltip
+      disabled={!showCardSchemeDropDown}
+      maxWidth=200.
+      maxHeight=180.
+      renderContent={toggleVisibility =>
+        <CardSchemeSelectionPopoverElement eligibleCardSchemes setCardBrand toggleVisibility />}>
+      <View
+        style={viewStyle(
+          ~display=#flex,
+          ~flexDirection=#row,
+          ~justifyContent=#center,
+          ~alignItems=#center,
+          ~overflow=#hidden,
+          (),
+        )}>
+        <Icon name={cardBrandIcon} height=30. width=30. fill="black" fallbackIcon="waitcard" />
+        <Animated.View style={viewStyle(~width=dropDownIconWidth->Animated.StyleProp.size, ())}>
+          <UIUtils.RenderIf condition={showCardSchemeDropDown}>
+            <View style={viewStyle(~marginLeft=8.->dp, ())}>
+              <ChevronIcon width=12. height=12. fill="grey" />
+            </View>
+          </UIUtils.RenderIf>
+        </Animated.View>
+      </View>
+    </Tooltip>
+  </View>
 }

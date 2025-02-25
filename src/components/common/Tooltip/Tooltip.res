@@ -4,15 +4,13 @@ open Style
 @react.component
 let make = (
   ~children: React.element,
-  ~popover: React.element,
+  ~renderContent: (_ => unit) => React.element,
   ~maxHeight=200.,
   ~maxWidth=200.,
-  ~adjustmentX=2.,
-  ~adjustmentY=10.,
+  ~adjustment=2.,
   ~containerStyle=?,
   ~backgroundColor=?,
-  ~isVisible,
-  ~setIsVisible,
+  ~disabled=false,
 ) => {
   let {
     component,
@@ -26,53 +24,40 @@ let make = (
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
   let defaultPadding = 20.
-  let maxHeight =
-    viewPortContants.screenHeight > maxHeight
-      ? maxHeight
-      : viewPortContants.screenHeight -. defaultPadding *. 2. -. adjustmentY *. 2.
-  let maxWidth =
-    viewPortContants.screenWidth > maxWidth
-      ? maxWidth
-      : viewPortContants.screenWidth -. defaultPadding *. 2. -. adjustmentX *. 2.
+  let maxHeight = min(viewPortContants.screenHeight -. defaultPadding *. 2., maxHeight)
+  let maxWidth = min(
+    viewPortContants.screenWidth -. defaultPadding *. 2. -. adjustment *. 2.,
+    maxWidth,
+  )
   let renderedElement = React.useRef(Nullable.null)
   let (tooltipPosition, setTooltipPosition) = React.useState(_ => None)
+  let (isVisible, setIsVisible) = React.useState(_ => false)
+  let toggleVisibility = () => {
+    setIsVisible(val => !val)
+  }
 
-  React.useEffect(_ => {
-    if isVisible {
-      switch renderedElement.current->Js.Nullable.toOption {
-      | Some(element) =>
-        element->ReactNative.View.measure((
-          ~x as _,
-          ~y as _,
-          ~width as _,
-          ~height,
-          ~pageX,
-          ~pageY,
-        ) => {
-          let x: TooltipTypes.positionX = if viewPortContants.screenWidth -. pageX < maxWidth {
-            Right(defaultPadding -. adjustmentX)
-          } else {
-            Left(pageX)
-          }
+  let onPress = _ => {
+    setTooltipPosition(_ => None)
+    toggleVisibility()
+    switch renderedElement.current->Js.Nullable.toOption {
+    | Some(element) =>
+      element->View.measure((~x as _, ~y as _, ~width as _, ~height, ~pageX, ~pageY) => {
+        let x: TooltipTypes.positionX = if viewPortContants.screenWidth -. pageX < maxWidth {
+          Right(defaultPadding -. adjustment)
+        } else {
+          Left(pageX)
+        }
 
-          let y: TooltipTypes.positionY = if viewPortContants.screenHeight -. pageY < maxHeight {
-            Bottom(viewPortContants.screenHeight -. pageY +. adjustmentY)
-          } else {
-            Top(pageY +. height +. adjustmentY)
-          }
+        let y: TooltipTypes.positionY = if viewPortContants.screenHeight -. pageY < maxHeight {
+          Bottom(viewPortContants.screenHeight -. pageY)
+        } else {
+          Top(pageY +. height)
+        }
 
-          setTooltipPosition(_ => Some(({x, y}: TooltipTypes.tooltipPosition)))
-        })
-      | None => ()
-      }
-    } else {
-      setTooltipPosition(_ => None)
+        setTooltipPosition(_ => Some(({x, y}: TooltipTypes.tooltipPosition)))
+      })
+    | None => ()
     }
-    None
-  }, (isVisible, viewPortContants.screenWidth, viewPortContants.screenHeight))
-
-  let toggleTooltip = () => {
-    setIsVisible(visible => !visible)
   }
 
   let getPositionStyle = (position: option<TooltipTypes.tooltipPosition>) => {
@@ -110,19 +95,21 @@ let make = (
   }
 
   let tooltipStyle = switch containerStyle {
-  | Some(customStyle) => [tooltipBaseStyle, customStyle]->ReactNative.StyleSheet.flatten
-  | None => [tooltipBaseStyle]->ReactNative.StyleSheet.flatten
+  | Some(customStyle) => [tooltipBaseStyle, customStyle]->StyleSheet.flatten
+  | None => [tooltipBaseStyle]->StyleSheet.flatten
   }
 
-  <ReactNative.View ref={ReactNative.Ref.value(renderedElement)} onLayout={_ => ()}>
-    children
+  <View ref={Ref.value(renderedElement)} onLayout={_ => ()}>
+    <CustomTouchableOpacity onPress activeOpacity={disabled ? 1. : 0.2} disabled>
+      children
+    </CustomTouchableOpacity>
     <UIUtils.RenderIf condition={isVisible && tooltipPosition->Option.isSome}>
       <Portal>
         <CustomTouchableOpacity
-          activeOpacity=1. onPress={_ => toggleTooltip()} style={viewStyle(~flex=1., ())}>
-          <ReactNative.View style={tooltipStyle}> popover </ReactNative.View>
+          activeOpacity=1. onPress={_ => toggleVisibility()} style={viewStyle(~flex=1., ())}>
+          <View style={tooltipStyle}> {renderContent(toggleVisibility)} </View>
         </CustomTouchableOpacity>
       </Portal>
     </UIUtils.RenderIf>
-  </ReactNative.View>
+  </View>
 }
