@@ -30,7 +30,7 @@ let make = () => {
     {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
     | (_, _, false) => <SdkLoadingScreen />
     | (Loading, _, _) =>
-      nativeProp.hyperParams.defaultView
+      nativeProp.configuration.defaultView
         ? <PaymentSheet setConfirmButtonDataRef />
         : <SdkLoadingScreen />
     | (Some(data), _, _) =>
