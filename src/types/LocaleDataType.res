@@ -72,6 +72,7 @@ type localeStrings = {
   deletePaymentMethod?: string,
   enterValidDigitsText: string,
   digitsText: string,
+  selectCardBrand: string,
 }
 let defaultLocale = {
   locale: "en",
@@ -147,4 +148,5 @@ let defaultLocale = {
   deletePaymentMethod: "Delete",
   enterValidDigitsText: "Please enter valid ",
   digitsText: " digits ",
+  selectCardBrand: "Select a card brand",
 }

@@ -29,13 +29,7 @@ let make = (~toggleModal) => {
           )}>
           <TextWrapper text="View Details" textType={LinkText} />
           <Space width=8. />
-          <Icon
-            style={viewStyle(~transform=[rotate(~rotate=270.->deg)], ())}
-            name="back"
-            height=14.
-            width=14.
-            fill="black"
-          />
+          <ChevronIcon width=14. height=14. fill="black" /> 
         </CustomTouchableOpacity>
       : React.null}
   </View>
