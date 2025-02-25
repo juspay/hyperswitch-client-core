@@ -1,0 +1,19 @@
+{
+  "config" : {
+    "ota" : true,
+    "platform" : "android",
+    "version" : "1.1.1",
+    "rollback" : false,
+    "rc_time" : 3000,
+    "pg_time" : 5000
+  },
+  "help" : {
+    "ota" : "To enable OTA, set the ota key to true",
+    "platform" : "set the platform key to android",
+    "version" : "set the version key to the version you want to release",
+    "rollback" : "set the rollback key to true if you want to rollback to the previous version",
+    "rc_time" : "set the rc_time key to the time you want to wait for the release config timeout",
+    "pg_time" : "set the pg_time key to the time you want to wait for the package timeout",
+    "env" : "set the env key to the environment you want to release to , [sandbox, prod]"
+  }
+}
