@@ -68,13 +68,7 @@ let make = (
         textColor=component.color
         iconRight=CustomIcon(
           <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
-            <Icon
-              style={viewStyle(~transform=[rotate(~rotate=270.->deg)], ())}
-              name="back"
-              height=13.
-              width=13.
-              fill=iconColor
-            />
+            <ChevronIcon width=13. height=13. fill=iconColor />
           </CustomTouchableOpacity>,
         )
         pointerEvents={#none}
