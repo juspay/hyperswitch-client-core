@@ -39,12 +39,13 @@ let useGetAssetUrlWithVersion = () => {
 let useGetLoggingUrl = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   () => {
-    switch nativeProp.customLogUrl {
-    | Some(url) => url
-    | None =>
+    switch (nativeProp.customBackendUrl, nativeProp.customLogUrl) {
+    | (Some(_), None) => None
+    | (_, Some(url)) => Some(url)
+    | (None, None) =>
       switch nativeProp.env {
-      | PROD => "https://api.hyperswitch.io/logs/sdk"
-      | _ => "https://sandbox.hyperswitch.io/logs/sdk"
+      | PROD => Some("https://api.hyperswitch.io/logs/sdk")
+      | _ => Some("https://sandbox.hyperswitch.io/logs/sdk")
       }
     }
   }
