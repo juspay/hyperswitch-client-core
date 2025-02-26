@@ -662,7 +662,7 @@ let make = (
               ~height=100.->pct,
               (),
             )}>
-            <Icon name=walletType.payment_method_type width=120. height=115. />
+            <Icon name=walletType.payment_method_type width=240. height=60. />
           </View>,
         )
       | APPLE_PAY =>
