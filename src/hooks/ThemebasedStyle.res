@@ -173,6 +173,7 @@ type themeBasedStyleObj = {
   shadowColor: string,
   shadowIntensity: float,
   primaryButtonHeight: float,
+  sheetContentPadding: float,
 }
 
 let darkRecord = {
@@ -251,6 +252,7 @@ let darkRecord = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 2.,
+  sheetContentPadding: 20.,
 }
 let lightRecord = {
   primaryButtonHeight: 45.,
@@ -328,6 +330,7 @@ let lightRecord = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 2.,
+  sheetContentPadding: 20.,
 }
 
 let minimal = {
@@ -406,6 +409,7 @@ let minimal = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 3.,
+  sheetContentPadding: 20.,
 }
 
 let flatMinimal = {
@@ -484,6 +488,7 @@ let flatMinimal = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 3.,
+  sheetContentPadding: 20.,
 }
 
 let some = (~override, ~fn, ~default) => {
@@ -870,6 +875,7 @@ let itemToObj = (
       ~defaultProp=themeObj.shadowIntensity,
     ),
     paymentSheetOverlay: themeObj.paymentSheetOverlay,
+    sheetContentPadding: themeObj.sheetContentPadding,
   }
 }
 

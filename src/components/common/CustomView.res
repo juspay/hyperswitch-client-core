@@ -68,14 +68,14 @@ let make = (
 module Wrapper = {
   @react.component
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
-    let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
+    let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
     <ScrollView
       contentContainerStyle={viewStyle(
         ~minHeight=250.->dp,
-        ~paddingHorizontal=20.->dp,
-        ~paddingTop=20.->dp,
+        ~paddingHorizontal=sheetContentPadding->dp,
+        ~paddingTop=sheetContentPadding->dp,
         ~paddingBottom=viewPortContants.navigationBarHeight->dp,
         (),
       )}

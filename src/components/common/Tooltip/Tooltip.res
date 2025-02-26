@@ -19,20 +19,21 @@ let make = (
     boxBorderColor,
     shadowColor,
     shadowIntensity,
+    sheetContentPadding,
   } = ThemebasedStyle.useThemeBasedStyle()
   let shadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-  let defaultPadding = 20.
-  let maxHeight = min(viewPortContants.screenHeight -. defaultPadding *. 2., maxHeight)
+  let maxHeight = min(viewPortContants.screenHeight -. sheetContentPadding *. 2., maxHeight)
   let maxWidth = min(
-    viewPortContants.screenWidth -. defaultPadding *. 2. -. adjustment *. 2.,
+    viewPortContants.screenWidth -. sheetContentPadding *. 2. -. adjustment *. 2.,
     maxWidth,
   )
   let renderedElement = React.useRef(Nullable.null)
   let (tooltipPosition, setTooltipPosition) = React.useState(_ => None)
   let (isVisible, setIsVisible) = React.useState(_ => false)
   let toggleVisibility = () => {
+    Keyboard.dismiss()
     setIsVisible(val => !val)
   }
 
@@ -43,7 +44,7 @@ let make = (
     | Some(element) =>
       element->View.measure((~x as _, ~y as _, ~width as _, ~height, ~pageX, ~pageY) => {
         let x: TooltipTypes.positionX = if viewPortContants.screenWidth -. pageX < maxWidth {
-          Right(defaultPadding -. adjustment)
+          Right(sheetContentPadding -. adjustment)
         } else {
           Left(pageX)
         }
