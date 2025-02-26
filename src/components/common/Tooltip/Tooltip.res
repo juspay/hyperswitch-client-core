@@ -33,11 +33,11 @@ let make = (
   let (tooltipPosition, setTooltipPosition) = React.useState(_ => None)
   let (isVisible, setIsVisible) = React.useState(_ => false)
   let toggleVisibility = () => {
-    Keyboard.dismiss()
     setIsVisible(val => !val)
   }
 
   let onPress = _ => {
+    Keyboard.dismiss()
     setTooltipPosition(_ => None)
     toggleVisibility()
     switch renderedElement.current->Js.Nullable.toOption {
