@@ -80,16 +80,19 @@ let make = (
     }
 
     let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
+
+    let isCardBrandChanged = cardData.cardBrand !== cardBrand && cardData.cardBrand != ""
+
     setCardData(prev => {
       ...prev,
       cardNumber: num,
       isCardNumberValid: Some(isthisValid),
       isCardBrandSupported: Some(isSupported),
       cardBrand,
-      expireDate:cardData.cardBrand !== cardBrand && cardData.cardBrand != ""? "" : cardData.expireDate,
-      cvv: cardData.cardBrand !== cardBrand && cardData.cardBrand != ""? "" : cardData.cvv,
-      isCvvValid: cardData.cardBrand !== cardBrand && cardData.cardBrand != ""? None : cardData.isCvvValid,
-      isExpireDataValid: cardData.cardBrand !== cardBrand && cardData.cardBrand != ""? None : cardData.isExpireDataValid,
+      expireDate: isCardBrandChanged ? "" : cardData.expireDate,
+      cvv: isCardBrandChanged ? "" : cardData.cvv,
+      isCvvValid: isCardBrandChanged ? None : cardData.isCvvValid,
+      isExpireDataValid: isCardBrandChanged ? None : cardData.isExpireDataValid,
     })
 
     // Adding support for 19 digit card hence disabling ref

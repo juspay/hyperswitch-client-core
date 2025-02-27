@@ -70,7 +70,7 @@ let make = (~cardNumber, ~cardNetworks) => {
     setCardBrandIcon(_ => cardBrand)
     setCardData(prev => {
       ...prev,
-      selectedCoBadgedCardBrand: cardBrand,
+      selectedCoBadgedCardBrand: Some(cardBrand),
     })
   }
 
@@ -87,7 +87,7 @@ let make = (~cardNumber, ~cardNetworks) => {
     if(!showCardSchemeDropDown) {
       setCardData(prev => {
         ...prev,
-        selectedCoBadgedCardBrand: "",
+        selectedCoBadgedCardBrand: None,
       })
     }
 
