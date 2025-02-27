@@ -9,6 +9,7 @@ type cardData = {
   isCvvValid: option<bool>,
   isZipValid: option<bool>,
   cardBrand: string,
+  selectedCoBadgedCardBrand: string,
 }
 
 let dafaultVal = {
@@ -22,6 +23,7 @@ let dafaultVal = {
   isCvvValid: None,
   isZipValid: None,
   cardBrand: "",
+  selectedCoBadgedCardBrand: "",
 }
 
 let cardDataContext = React.createContext((dafaultVal, (_: cardData => cardData) => ()))

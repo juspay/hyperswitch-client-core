@@ -140,7 +140,7 @@ let make = (
       : setKeyToTrigerButtonClickError(prev => prev + 1)
   }
 
-  React.useEffect6(() => {
+  React.useEffect(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton

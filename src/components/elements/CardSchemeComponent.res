@@ -70,7 +70,7 @@ let make = (~cardNumber, ~cardNetworks) => {
     setCardBrandIcon(_ => cardBrand)
     setCardData(prev => {
       ...prev,
-      cardBrand,
+      selectedCoBadgedCardBrand: cardBrand,
     })
   }
 
@@ -84,6 +84,13 @@ let make = (~cardNumber, ~cardNetworks) => {
   }, [cardNumber, cardBrand])
 
   React.useEffect(() => {
+    if(!showCardSchemeDropDown) {
+      setCardData(prev => {
+        ...prev,
+        selectedCoBadgedCardBrand: "",
+      })
+    }
+
     Animated.timing(
       dropDownIconWidth,
       {
