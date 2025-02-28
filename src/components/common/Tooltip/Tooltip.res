@@ -11,6 +11,7 @@ let make = (
   ~containerStyle=?,
   ~backgroundColor=?,
   ~disabled=false,
+  ~keyboardShouldPersistTaps=false,
 ) => {
   let {
     component,
@@ -36,8 +37,7 @@ let make = (
     setIsVisible(val => !val)
   }
 
-  let onPress = _ => {
-    Keyboard.dismiss()
+  let calculateTooltipPosition = _ => {
     setTooltipPosition(_ => None)
     toggleVisibility()
     switch renderedElement.current->Js.Nullable.toOption {
@@ -59,6 +59,12 @@ let make = (
       })
     | None => ()
     }
+  }
+
+  let onPress = _ => {
+    !keyboardShouldPersistTaps && Keyboard.isVisible()
+      ? Keyboard.dismiss()
+      : calculateTooltipPosition()
   }
 
   let getPositionStyle = (position: option<TooltipTypes.tooltipPosition>) => {

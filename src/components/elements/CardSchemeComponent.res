@@ -21,7 +21,8 @@ module CardSchemeSelectionPopoverElement = {
     let localeObject = GetLocale.useGetLocalObj()
     <>
       <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
-      <ScrollView contentContainerStyle={viewStyle(~flexGrow=0., ())}>
+      <ScrollView
+        keyboardShouldPersistTaps={#handled} contentContainerStyle={viewStyle(~flexGrow=0., ())}>
         <Space />
         {eligibleCardSchemes
         ->Array.mapWithIndex((item, index) =>
