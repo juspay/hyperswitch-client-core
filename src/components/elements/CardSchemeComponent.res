@@ -43,7 +43,7 @@ module CardSchemeSelectionPopoverElement = {
 
 @react.component
 let make = (~cardNumber, ~cardNetworks) => {
-  let (_, setCardData) = React.useContext(CardDataContext.cardDataContext)
+  let (cardData, setCardData) = React.useContext(CardDataContext.cardDataContext)
 
   let cardBrand = Validation.getCardBrand(cardNumber)
   let (cardBrandIcon, setCardBrandIcon) = React.useState(_ =>
@@ -79,9 +79,15 @@ let make = (~cardNumber, ~cardNetworks) => {
     isCardCoBadged && cardNumber->Validation.clearSpaces->String.length >= 16
 
   React.useEffect(() => {
-    setCardBrandIcon(_ => cardBrand === "" ? "waitcard" : cardBrand)
+    let selectedCardBrand =
+      eligibleCardSchemes->Array.includes(
+        cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand),
+      )
+        ? cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand)
+        : cardBrand
+    setCardBrandIcon(_ => selectedCardBrand === "" ? "waitcard" : selectedCardBrand)
     None
-  }, [cardNumber, cardBrand])
+  }, (cardNumber, cardBrand, eligibleCardSchemes, cardData))
 
   React.useEffect(() => {
     if(!showCardSchemeDropDown) {

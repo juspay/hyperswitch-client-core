@@ -149,7 +149,7 @@ let make = (
       )
     }
     None
-  }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson))
+  }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson, cardData))
   <>
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
