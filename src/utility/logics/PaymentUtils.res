@@ -48,7 +48,7 @@ let generatePaymentMethodData = (
           "card_network",
           switch cardData.cardBrand {
           | "" => JSON.Encode.null
-          | cardBrand => cardBrand->JSON.Encode.string
+          | cardBrand => cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand)->JSON.Encode.string
           },
         ),
       ]
