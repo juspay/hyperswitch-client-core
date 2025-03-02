@@ -3,7 +3,11 @@ open ThreeDsUtils
 open SdkStatusMessages
 let isInitialisedPromiseRef = ref(None)
 
-let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
+let initialisedNetceteraOnce = (
+  ~netceteraSDKApiKey,
+  ~sdkEnvironment,
+  ~challengeCustomisationProps,
+) => {
   switch isInitialisedPromiseRef.contents {
   | Some(promiseVal) => promiseVal
   | None => {
@@ -11,6 +15,7 @@ let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
         Netcetera3dsModule.initialiseNetceteraSDK(
           netceteraSDKApiKey,
           sdkEnvironment->sdkEnvironmentToStrMapper,
+          challengeCustomisationProps,
           status => resolve(status),
         )
       })
@@ -22,9 +27,15 @@ let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
 }
 
 let useInitNetcetera = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let challengeCustomisationProps =
+    nativeProp.configuration.netceteraChallengeUICustomization
+    ->Utils.getJsonObjectFromRecord
+    ->JSON.stringify
+
   let logger = LoggerHook.useLoggerHook()
   (~netceteraSDKApiKey, ~sdkEnvironment: GlobalVars.envType) => {
-    initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
+    initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment, ~challengeCustomisationProps)
     ->Promise.then(promiseVal => {
       logger(
         ~logType=INFO,
@@ -48,6 +59,12 @@ let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let challengeCustomisationProps =
+    nativeProp.configuration.netceteraChallengeUICustomization
+    ->Utils.getJsonObjectFromRecord
+    ->JSON.stringify
 
   (
     ~baseUrl,
@@ -401,7 +418,7 @@ let useExternalThreeDs = () => {
     }
 
     let startNetcetera3DSFlow = () => {
-      initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
+      initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment, ~challengeCustomisationProps)
       ->Promise.then(statusInfo => {
         logger(
           ~logType=INFO,
