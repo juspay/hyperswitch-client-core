@@ -243,6 +243,11 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         defaultLocale.enterValidDigitsText,
       ),
       digitsText: Utils.getString(res, "digitsText", defaultLocale.digitsText),
+      selectCardBrand: Utils.getString(
+        res,
+        "selectCardBrand",
+        defaultLocale.selectCardBrand,
+      ),
     }
   | None => defaultLocale
   }
