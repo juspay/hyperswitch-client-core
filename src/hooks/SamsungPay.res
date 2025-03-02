@@ -11,6 +11,7 @@ let useSamsungPayValidityHook = () => {
   let (state, setState) = React.useState(_ => val.contents)
   let isSamsungPayAvailable = SamsungPayModule.isAvailable
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   let sessionToken = allApiData.sessions->getSamsungPaySessionObject
   let stringifiedSessionToken =
@@ -38,12 +39,14 @@ let useSamsungPayValidityHook = () => {
     acc || isSamsungPayPresent
   })
 
+  let isSamsungDevice = nativeProp.hyperParams.deviceBrand->Option.getOr("") == "samsung"
+
   let handleSPay = async () => {
     setState(_ => {
       val := Checking
       Checking
     })
-    if sessionToken.wallet_name != NONE && isSamsungPayPresentInPML {
+    if sessionToken.wallet_name != NONE && isSamsungPayPresentInPML && isSamsungDevice {
       let status = await checkSPayStatus()
       setState(_ => {
         val := status

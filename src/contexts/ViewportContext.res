@@ -1,12 +1,17 @@
 type viewPortContants = {
   windowHeight: float,
+  windowWidth: float,
+  screenHeight: float,
+  screenWidth: float,
   navigationBarHeight: float,
   maxPaymentSheetHeight: float,
 }
 
 let defaultNavbarHeight = 25.
 let windowHeight = ReactNative.Dimensions.get(#window).height
+let windowWidth = ReactNative.Dimensions.get(#window).width
 let screenHeight = ReactNative.Dimensions.get(#screen).height
+let screenWidth = ReactNative.Dimensions.get(#screen).width
 let statusBarHeight = ReactNative.StatusBar.currentHeight
 
 let navigationBarHeight = if ReactNative.Platform.os !== #android {
@@ -18,7 +23,14 @@ let navigationBarHeight = if ReactNative.Platform.os !== #android {
 
 let maxPaymentSheetHeight = 95. // pct
 
-let defaultVal: viewPortContants = {windowHeight, navigationBarHeight, maxPaymentSheetHeight}
+let defaultVal: viewPortContants = {
+  windowHeight,
+  windowWidth,
+  screenHeight,
+  screenWidth,
+  navigationBarHeight,
+  maxPaymentSheetHeight,
+}
 
 let viewPortContext = React.createContext((defaultVal, (_: viewPortContants) => ()))
 

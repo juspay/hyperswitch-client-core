@@ -304,6 +304,14 @@ let make = (
         ~message=`Samsung Pay Error, Please try again ${status.message}`,
       )
     }
+
+    logger(
+      ~logType=INFO,
+      ~value=`SPAY result from native ${status.status->JSON.stringifyAny->Option.getOr("")}`,
+      ~category=USER_EVENT,
+      ~eventName=SAMSUNG_PAY,
+      (),
+    )
   }
 
   let confirmApplePay = (var: dict<JSON.t>) => {
@@ -558,7 +566,16 @@ let make = (
               },
             )
           }
-        | SAMSUNG_PAY => SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
+        | SAMSUNG_PAY => {
+            logger(
+              ~logType=INFO,
+              ~value="Samsung Pay Button Clicked",
+              ~category=USER_EVENT,
+              ~eventName=SAMSUNG_PAY,
+              (),
+            )
+            SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
+          }
         | _ => {
             logger(
               ~logType=DEBUG,
@@ -645,7 +662,7 @@ let make = (
               ~height=100.->pct,
               (),
             )}>
-            <Icon name=walletType.payment_method_type width=120. height=115. />
+            <Icon name=walletType.payment_method_type width=240. height=60. />
           </View>,
         )
       | APPLE_PAY =>
