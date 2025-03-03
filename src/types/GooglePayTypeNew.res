@@ -138,12 +138,19 @@ let getBillingContact = (dict, str, statesList) => {
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
   ->Option.map(json => {
-    let name = json->Dict.get("name")->Option.getOr(JSON.Encode.null)->getDictFromJson
-    let postalAddress =
-      json->Dict.get("postalAddress")->Option.getOr(JSON.Encode.null)->getDictFromJson
+    let name = json->getDictFromJsonKey("name")
+    let postalAddress = json->getDictFromJsonKey("postalAddress")
+
     let country = switch getOptionString(postalAddress, "isoCountryCode") {
     | Some(country) => Some(country->String.toUpperCase)
     | None => None
+    }
+    let street = getString(postalAddress, "street", "")->String.split("\n")
+    let line1 = Array.at(street, 0)
+    let line2 = if Array.length(street) > 1 {
+      Some(Array.join(Array.sliceToEnd(street, ~start=1), " "))
+    } else {
+      None
     }
     {
       address: Some({
@@ -151,7 +158,8 @@ let getBillingContact = (dict, str, statesList) => {
         last_name: ?getOptionString(name, "familyName"),
         city: ?getOptionString(postalAddress, "city"),
         ?country,
-        line1: ?getOptionString(postalAddress, "street"),
+        ?line1,
+        ?line2,
         zip: ?getOptionString(postalAddress, "postalCode"),
         state: ?switch getOptionString(postalAddress, "state") {
         | Some(area) => Some(getStateNameFromStateCodeAndCountry(statesList, area, country))
@@ -262,3 +270,89 @@ let getAllowedPaymentMethods = (
       },
     )
   }.allowedPaymentMethods->Utils.getStringFromRecord
+
+let getValue = (func, addressDetails: option<SdkTypes.addressDetails>) =>
+  addressDetails->Option.flatMap(func)
+
+let getNestedValue = (func, addressExtractor, addressDetails) =>
+  addressDetails->Option.flatMap(addressExtractor)->Option.flatMap(func)
+
+let getPhoneNumber = (addressDetails: option<SdkTypes.addressDetails>) =>
+  getNestedValue(phone => phone.number, address => address.phone, addressDetails)
+
+let getPhoneCountryCode = addressDetails =>
+  getNestedValue(phone => phone.country_code, address => address.phone, addressDetails)
+
+let getEmailAddress = (addressDetails: option<SdkTypes.addressDetails>) =>
+  getValue(address => address.email, addressDetails)
+
+let getAddressField = extractor => addressDetails =>
+  getNestedValue(extractor, address => address.address, addressDetails)
+
+let getAddressLine1 = getAddressField(address => address.line1)
+let getAddressLine2 = getAddressField(address => address.line2)
+let getAddressCity = getAddressField(address => address.city)
+let getAddressState = getAddressField(address => address.state)
+let getAddressCountry = getAddressField(address => address.country)
+let getAddressPincode = getAddressField(address => address.zip)
+let getFirstName = getAddressField(address => address.first_name)
+let getLastName = getAddressField(address => address.last_name)
+
+let getFlattenData = (
+  required_fields: RequiredFieldsTypes.required_fields,
+  ~billingAddress: option<SdkTypes.addressDetails>,
+  ~shippingAddress: option<SdkTypes.addressDetails>,
+) => {
+  let flattenedData = Dict.make()
+  required_fields->Array.forEach(required_field => {
+    switch required_field.required_field {
+    | StringField(path) =>
+      let isShippingField = path->String.includes("shipping")
+      let address = if isShippingField {
+        shippingAddress
+      } else {
+        billingAddress
+      }
+      let value = switch required_field.field_type {
+      | PhoneNumber => shippingAddress->getPhoneNumber
+      | Email => shippingAddress->getEmailAddress
+      | AddressLine1 => address->getAddressLine1
+      | AddressLine2 => address->getAddressLine2
+      | AddressCity => address->getAddressCity
+      | AddressPincode => address->getAddressPincode
+      | AddressState => address->getAddressState
+      | Country
+      | AddressCountry(_) =>
+        address->getAddressCountry
+      | PhoneCountryCode => address->getPhoneCountryCode
+      | _ => None
+      }
+      if value !== None {
+        flattenedData->Dict.set(path, value->Option.getOr("")->JSON.Encode.string)
+      }
+    | FullNameField(first_name, last_name) =>
+      let (firstName, lastName) = if required_field.field_type == Email {
+        let value = shippingAddress->getEmailAddress->Option.getOr("")->JSON.Encode.string
+        (value, value)
+      } else {
+        let isShippingField = first_name->String.includes("shipping")
+        let address = if isShippingField {
+          shippingAddress
+        } else {
+          billingAddress
+        }
+        (
+          address->getFirstName->Option.getOr("")->JSON.Encode.string,
+          address->getLastName->Option.getOr("")->JSON.Encode.string,
+        )
+      }
+      if firstName != JSON.Encode.null {
+        flattenedData->Dict.set(first_name, firstName)
+      }
+      if lastName !== JSON.Encode.null {
+        flattenedData->Dict.set(last_name, lastName)
+      }
+    }
+  })
+  flattenedData
+}

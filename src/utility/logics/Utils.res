@@ -58,6 +58,10 @@ let getDictFromJson = (json: JSON.t) => {
   json->JSON.Decode.object->Option.getOr(Dict.make())
 }
 
+let getDictFromJsonKey = (json, key) => {
+  json->Dict.get(key)->Option.getOr(JSON.Encode.null)->getDictFromJson
+}
+
 let getArray = (dict, key) => {
   dict->getOptionalArrayFromDict(key)->Option.getOr([])
 }
