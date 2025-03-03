@@ -89,10 +89,10 @@ let make = (
       isCardNumberValid: Some(isthisValid),
       isCardBrandSupported: Some(isSupported),
       cardBrand,
-      expireDate: isCardBrandChanged ? "" : cardData.expireDate,
-      cvv: isCardBrandChanged ? "" : cardData.cvv,
-      isCvvValid: isCardBrandChanged ? None : cardData.isCvvValid,
-      isExpireDataValid: isCardBrandChanged ? None : cardData.isExpireDataValid,
+      expireDate: isCardBrandChanged ? "" : prev.expireDate,
+      cvv: isCardBrandChanged ? "" : prev.cvv,
+      isCvvValid: isCardBrandChanged ? None : prev.isCvvValid,
+      isExpireDataValid: isCardBrandChanged ? None : prev.isExpireDataValid,
     })
 
     // Adding support for 19 digit card hence disabling ref
