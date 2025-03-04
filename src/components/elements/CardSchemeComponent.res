@@ -79,25 +79,26 @@ let make = (~cardNumber, ~cardNetworks) => {
   let showCardSchemeDropDown =
     isCardCoBadged && cardNumber->Validation.clearSpaces->String.length >= 16
 
+  let selectedCardBrand =
+    eligibleCardSchemes->Array.includes(cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand))
+      ? cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand)
+      : cardBrand
+
   React.useEffect(() => {
-    let selectedCardBrand =
-      eligibleCardSchemes->Array.includes(
-        cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand),
-      )
-        ? cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand)
-        : cardBrand
     setCardBrandIcon(_ => selectedCardBrand === "" ? "waitcard" : selectedCardBrand)
     None
-  }, (cardNumber, cardBrand, eligibleCardSchemes, cardData))
+  }, (cardBrand, eligibleCardSchemes, selectedCardBrand))
 
   React.useEffect(() => {
-    if(!showCardSchemeDropDown) {
-      setCardData(prev => {
-        ...prev,
-        selectedCoBadgedCardBrand: None,
-      })
-    }
+    setCardData(prev => {
+      ...prev,
+      selectedCoBadgedCardBrand: showCardSchemeDropDown ? Some(selectedCardBrand) : None,
+    })
 
+    None
+  }, (showCardSchemeDropDown, selectedCardBrand))
+
+  React.useEffect(() => {
     Animated.timing(
       dropDownIconWidth,
       {

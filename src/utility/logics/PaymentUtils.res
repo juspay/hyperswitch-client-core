@@ -46,10 +46,13 @@ let generatePaymentMethodData = (
         ("card_cvc", cardData.cvv->JSON.Encode.string),
         (
           "card_network",
-          switch cardData.cardBrand {
-          | "" => JSON.Encode.null
-          | cardBrand => cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand)->JSON.Encode.string
-          },
+          switch cardData.selectedCoBadgedCardBrand {
+            | Some(selectedCoBadgedCardBrand) => selectedCoBadgedCardBrand->JSON.Encode.string
+            | None => switch cardData.cardBrand {
+              | "" => JSON.Encode.null
+              | cardBrand => cardBrand->JSON.Encode.string
+            }
+          }
         ),
       ]
       ->Dict.fromArray
