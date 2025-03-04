@@ -215,11 +215,16 @@ let getPaymentMethodData = (str, dict, statesJson) => {
   ->Option.getOr({})
 }
 
-type paymentDataFromGPay = {paymentMethodData: paymentMethodData, email?: string}
+type paymentDataFromGPay = {
+  paymentMethodData: paymentMethodData,
+  email?: string,
+  shippingDetails?: addressDetails,
+}
 
 let itemToObjMapper = (dict, statesJson) => {
   paymentMethodData: getPaymentMethodData("paymentMethodData", dict, statesJson),
   email: ?getOptionString(dict, "email"),
+  shippingDetails: ?getBillingAddress(dict, "shippingAddress", statesJson),
 }
 
 let arrayJsonToCamelCase = arr => {
@@ -302,6 +307,8 @@ let getFlattenData = (
   required_fields: RequiredFieldsTypes.required_fields,
   ~billingAddress: option<SdkTypes.addressDetails>,
   ~shippingAddress: option<SdkTypes.addressDetails>,
+  ~email=None,
+  ~phoneNumber=None,
 ) => {
   let flattenedData = Dict.make()
   required_fields->Array.forEach(required_field => {
@@ -314,8 +321,14 @@ let getFlattenData = (
         billingAddress
       }
       let value = switch required_field.field_type {
-      | PhoneNumber => shippingAddress->getPhoneNumber
-      | Email => shippingAddress->getEmailAddress
+      | PhoneNumber =>
+        phoneNumber
+        ->Option.orElse(billingAddress->getPhoneNumber)
+        ->Option.orElse(shippingAddress->getPhoneNumber)
+      | Email =>
+        email
+        ->Option.orElse(billingAddress->getEmailAddress)
+        ->Option.orElse(shippingAddress->getEmailAddress)
       | AddressLine1 => address->getAddressLine1
       | AddressLine2 => address->getAddressLine2
       | AddressCity => address->getAddressCity
@@ -332,18 +345,37 @@ let getFlattenData = (
       }
     | FullNameField(first_name, last_name) =>
       let (firstName, lastName) = if required_field.field_type == Email {
-        let value = shippingAddress->getEmailAddress->Option.getOr("")->JSON.Encode.string
+        let value =
+          email
+          ->Option.orElse(billingAddress->getEmailAddress)
+          ->Option.orElse(shippingAddress->getEmailAddress)
+          ->Option.getOr("")
+          ->JSON.Encode.string
         (value, value)
       } else {
         let isShippingField = first_name->String.includes("shipping")
-        let address = if isShippingField {
+
+        let primaryAddress = if isShippingField {
           shippingAddress
         } else {
           billingAddress
         }
+        let fallbackAddress = if isShippingField {
+          billingAddress
+        } else {
+          shippingAddress
+        }
         (
-          address->getFirstName->Option.getOr("")->JSON.Encode.string,
-          address->getLastName->Option.getOr("")->JSON.Encode.string,
+          primaryAddress
+          ->getFirstName
+          ->Option.orElse(fallbackAddress->getFirstName)
+          ->Option.getOr("")
+          ->JSON.Encode.string,
+          primaryAddress
+          ->getLastName
+          ->Option.orElse(fallbackAddress->getLastName)
+          ->Option.getOr("")
+          ->JSON.Encode.string,
         )
       }
       if firstName != JSON.Encode.null {
