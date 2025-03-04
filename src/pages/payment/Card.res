@@ -140,7 +140,7 @@ let make = (
       : setKeyToTrigerButtonClickError(prev => prev + 1)
   }
 
-  React.useEffect6(() => {
+  React.useEffect(() => {
     if isScreenFocus {
       setConfirmButtonDataRef(
         <ConfirmButton
@@ -149,7 +149,7 @@ let make = (
       )
     }
     None
-  }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson))
+  }, (isConfirmButtonValid, isScreenFocus, error, isNicknameSelected, nickname, dynamicFieldsJson, cardData))
   <>
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />

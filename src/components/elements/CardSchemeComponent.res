@@ -44,7 +44,7 @@ module CardSchemeSelectionPopoverElement = {
 
 @react.component
 let make = (~cardNumber, ~cardNetworks) => {
-  let (_, setCardData) = React.useContext(CardDataContext.cardDataContext)
+  let (cardData, setCardData) = React.useContext(CardDataContext.cardDataContext)
 
   let cardBrand = Validation.getCardBrand(cardNumber)
   let (cardBrandIcon, setCardBrandIcon) = React.useState(_ =>
@@ -71,7 +71,7 @@ let make = (~cardNumber, ~cardNetworks) => {
     setCardBrandIcon(_ => cardBrand)
     setCardData(prev => {
       ...prev,
-      cardBrand,
+      selectedCoBadgedCardBrand: Some(cardBrand),
     })
   }
 
@@ -79,10 +79,24 @@ let make = (~cardNumber, ~cardNetworks) => {
   let showCardSchemeDropDown =
     isCardCoBadged && cardNumber->Validation.clearSpaces->String.length >= 16
 
+  let selectedCardBrand =
+    eligibleCardSchemes->Array.includes(cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand))
+      ? cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand)
+      : cardBrand
+
   React.useEffect(() => {
-    setCardBrandIcon(_ => cardBrand === "" ? "waitcard" : cardBrand)
+    setCardBrandIcon(_ => selectedCardBrand === "" ? "waitcard" : selectedCardBrand)
     None
-  }, [cardNumber, cardBrand])
+  }, (cardBrand, eligibleCardSchemes, selectedCardBrand))
+
+  React.useEffect(() => {
+    setCardData(prev => {
+      ...prev,
+      selectedCoBadgedCardBrand: showCardSchemeDropDown ? Some(selectedCardBrand) : None,
+    })
+
+    None
+  }, (showCardSchemeDropDown, selectedCardBrand))
 
   React.useEffect(() => {
     Animated.timing(
