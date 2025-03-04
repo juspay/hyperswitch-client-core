@@ -94,12 +94,12 @@ let make = (
     }
   }, (animationEnabled, panX))
 
-  React.useEffect2(() => {
+  React.useEffectOnEveryRender(() => {
     navigationStateRef.current = navigationState
     layoutRef.current = layout
     onIndexChangeRef.current = onIndexChange
     None
-  }, (navigationState, onIndexChange))
+  })
 
   React.useEffect2(() => {
     let offset = -.(navigationStateRef.current.index->Int.toFloat *. layout.width)
@@ -109,11 +109,10 @@ let make = (
   }, (layout.width, panX))
 
   React.useEffect4(() => {
-    if keyboardDismissMode == #auto {
-      Keyboard.dismiss()
-    }
-
     if layout.width != 0. && currentIndexRef.current !== indexInFocus {
+      if keyboardDismissMode == #auto {
+        Keyboard.dismiss()
+      }
       currentIndexRef.current = indexInFocus
       jumpToIndex(indexInFocus, animationEnabled)
     }
@@ -244,6 +243,7 @@ let make = (
       )
 
     jumpToIndex(index, false)
+    onIndexChange(index)
   }, [jumpToIndex])
 
   let panHandlers = PanResponder.create({
@@ -256,11 +256,11 @@ let make = (
     onPanResponderTerminationRequest: (_, _) => true,
   })->PanResponder.panHandlers
 
-  let maxTranslate = layout.width *. -(routes->Array.length - 1)->Int.toFloat
+  let maxTranslate = layout.width *. (routes->Array.length - 1)->Int.toFloat
   let translateX = Animated.Value.multiply(
     panX->Animated.Interpolation.interpolate({
-      inputRange: [maxTranslate, 0.0],
-      outputRange: [maxTranslate, 0.0]->Animated.Interpolation.fromFloatArray,
+      inputRange: [-.maxTranslate, 0.0],
+      outputRange: [-.maxTranslate, 0.0]->Animated.Interpolation.fromFloatArray,
       extrapolate: #clamp,
     }),
     if layoutDirection == #rtl {
