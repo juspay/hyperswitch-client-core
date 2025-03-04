@@ -35,13 +35,12 @@ let make = (
   ~tabBarPosition=#top,
   ~animationEnabled=true,
 ) => {
-  let (layout, setLayout) = React.useState(_ => {
-    let x: Event.ScrollEvent.dimensions = {
-      width: initialLayout.width->Option.getOr(0.),
-      height: initialLayout.height->Option.getOr(0.),
-    }
-    x
-  })
+  let defaultLayout: Event.ScrollEvent.dimensions = {
+    width: initialLayout.width->Option.getOr(0.),
+    height: initialLayout.height->Option.getOr(0.),
+  }
+
+  let (layout, setLayout) = React.useState(_ => defaultLayout)
 
   let jumpToIndex = index => {
     if index !== indexInFocus {

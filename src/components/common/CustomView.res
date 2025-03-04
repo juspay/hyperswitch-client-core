@@ -46,7 +46,7 @@ let make = (
     //       onDismiss()
     //     }
     //   }}>
-    <View
+    <CustomKeyboardAvoidingView
       style={viewStyle(
         ~width=bottomModalWidth,
         ~borderRadius=15.,
@@ -60,7 +60,7 @@ let make = (
       )}>
       <SafeAreaView />
       {children}
-    </View>
+    </CustomKeyboardAvoidingView>
     // </TouchableWithoutFeedback>
   </View>
 }

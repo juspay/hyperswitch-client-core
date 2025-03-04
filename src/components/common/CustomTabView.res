@@ -8,6 +8,7 @@ let make = (
 ) => {
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
   let setIndexInFocus = React.useCallback1(ind => setIndexInFocus(_ => ind), [setIndexInFocus])
+  let sceneMap = Map.make()
 
   let data = React.useMemo1(() => {
     if loading {
@@ -34,47 +35,43 @@ let make = (
     }
   }, [hocComponentArr])
 
-  let isScrollBarOnlyCards =
-    data->Array.length == 1 &&
-      switch data->Array.get(0) {
-      | Some({name}) => name == "Card"
-      | None => true
-      }
+  <UIUtils.RenderIf condition={data->Array.length > 0}>
+    {
+      let routes = data->Array.mapWithIndex((hoc, index) => {
+        sceneMap->Map.set(index, (~route as _, ~position as _, ~jumpTo as _) =>
+          hoc.componentHoc(~isScreenFocus=indexInFocus == index, ~setConfirmButtonDataRef)
+        )
 
-  switch data->Array.length {
-  | 0 => React.null
-  | _ =>
-    <TabView
-      sceneContainerStyle={viewStyle(~padding=10.->dp, ())}
-      style={viewStyle(~marginHorizontal=-10.->dp, ())}
-      indexInFocus
-      routes={data->Array.mapWithIndex((hoc, index) => {
         let route: TabViewType.route = {
           key: index,
           title: hoc.name,
           componentHoc: hoc.componentHoc,
         }
         route
-      })}
-      onIndexChange=setIndexInFocus
-      renderTabBar={(~indexInFocus, ~routes as _, ~position as _, ~layout as _, ~jumpTo) => {
-        isScrollBarOnlyCards
-          ? React.null
-          : <ScrollableCustomTopBar
-              hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo}
-            />
-      }}
-      renderScene={(~route, ~position, ~layout as _, ~jumpTo) =>
-        SceneMap.sceneMap(
-          switch data->Array.get(route.key) {
-          | Some(hoc) =>
-            hoc.componentHoc(~isScreenFocus=indexInFocus == route.key, ~setConfirmButtonDataRef)
-          | None => React.null
-          },
-          route,
-          jumpTo,
-          position,
-        )}
-    />
-  }
+      })
+
+      let isScrollBarOnlyCards =
+        data->Array.length == 1 &&
+          switch data->Array.get(0) {
+          | Some({name}) => name == "Card"
+          | None => true
+          }
+
+      <TabView
+        sceneContainerStyle={viewStyle(~padding=10.->dp, ())}
+        style={viewStyle(~marginHorizontal=-10.->dp, ())}
+        indexInFocus
+        routes
+        onIndexChange=setIndexInFocus
+        renderTabBar={(~indexInFocus, ~routes as _, ~position as _, ~layout as _, ~jumpTo) => {
+          isScrollBarOnlyCards
+            ? React.null
+            : <ScrollableCustomTopBar
+                hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo}
+              />
+        }}
+        renderScene={SceneMap.sceneMap(sceneMap)}
+      />
+    }
+  </UIUtils.RenderIf>
 }
