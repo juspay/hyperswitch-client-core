@@ -27,6 +27,7 @@ type paymentMethodsFields =
   | Currency(array<string>)
   | AccountNumber
   | BSBNumber
+  | PhoneCountryCode
 
 type requiredField =
   | StringField(string)
@@ -55,6 +56,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_country" | "country" => Country
   | "user_bank" => Bank
   | "user_phone_number" => PhoneNumber
+  | "user_phone_number_country_code" => PhoneCountryCode
   | "user_address_line1" | "user_shipping_address_line1" => AddressLine1
   | "user_address_line2" | "user_shipping_address_line2" => AddressLine2
   | "user_address_city" | "user_shipping_address_city" => AddressCity
@@ -384,6 +386,7 @@ let useGetPlaceholder = (
     // | ShippingAddressCity => localeObject.cityLabel
     // | ShippingAddressPincode => localeObject.postalCodeLabel
     // | ShippingAddressState => localeObject.stateLabel
+    | PhoneCountryCode
     | SpecialField(_)
     | AccountNumber
     | BSBNumber
