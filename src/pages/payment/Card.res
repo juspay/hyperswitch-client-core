@@ -8,6 +8,7 @@ let make = (
   ~setConfirmButtonDataRef: React.element => unit,
 ) => {
   let a = 0
+  let b = 0
   Console.log(a)
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
