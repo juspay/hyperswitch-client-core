@@ -18,9 +18,7 @@ let (create, open_, dismissLink) = switch try {
   isAvailable ? require("react-native-plaid-link-sdk")->Some : None
 } catch {
 | _ =>
-  Console.log(
-    "'Plaid-link-sdk' not found. If you are sure the module exists, try restarting Metro. You may also want to run `yarn` or `npm install`.",
-  )
+  // "'Plaid-link-sdk' not found. If you are sure the module exists, try restarting Metro. You may also want to run `yarn` or `npm install`.",
   None
 } {
 | Some(mod) => (mod.create, mod.open_, mod.dismissLink)
