@@ -85,7 +85,7 @@ let make = (~walletType) => {
         (),
       )}>
       {switch button {
-      | Some(component) => component == React.null ? <WidgetError /> : component
+      | Some(component) => component === React.null ? <WidgetError /> : component
       | None => <LoadingOverlay />
       }}
     </View>

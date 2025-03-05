@@ -80,7 +80,7 @@ module WrapperProvider = {
   }
 }
 
-type temp = None | Some(CountryStateDataHookTypes.countryStateData)
+type temp = option<CountryStateDataHookTypes.countryStateData>
 @react.component
 let make = (~children) => {
   let (state: temp, setState) = React.useState(_ => None)

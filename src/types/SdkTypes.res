@@ -790,7 +790,7 @@ let parseConfigurationDict = (configObj, from) => {
   let billingDetailsDict = getObj(configObj, "defaultBillingDetails", Dict.make())
 
   let _customerDict = configObj->Dict.get("customer")->Option.flatMap(JSON.Decode.object)
-  let addressDict = getObj(billingDetailsDict, "address", Dict.make())
+  let addressDict = getOptionalObj(billingDetailsDict, "address")
   let billingName =
     getOptionString(billingDetailsDict, "name")
     ->Option.getOr("default")
@@ -825,34 +825,31 @@ let parseConfigurationDict = (configObj, from) => {
     appearance,
     shippingDetails: switch shippingDetailsDict {
     | Some(shippingObj) =>
-      let addressObj = getObj(shippingObj, "address", Dict.make())
-      let shippingName =
-        getOptionString(shippingObj, "name")
-        ->Option.getOr("default")
-        ->String.split(" ")
+      let addressObj = getOptionalObj(shippingObj, "address")
+      let (first_name, last_name) = getOptionString(shippingObj, "name")->splitName
       //need changes
-      addressObj == Dict.make()
-        ? None
-        : Some({
-            address: Some({
-              first_name: ?(
-                shippingName->Array.get(0) == Some("default") ? None : shippingName->Array.get(0)
-              ),
-              last_name: ?(shippingName->Array.length > 1 ? shippingName[1] : None),
-              city: ?getOptionString(addressObj, "city"),
-              country: ?getOptionString(addressObj, "country"),
-              line1: ?getOptionString(addressObj, "line1"),
-              line2: ?getOptionString(addressObj, "line2"),
-              zip: ?getOptionString(addressObj, "postalCode"),
-              state: ?getOptionString(addressObj, "state"),
-            }),
-            phone: Some({
-              number: ?getOptionString(shippingObj, "phoneNumber"),
-            }),
-            //isCheckboxSelected: getOptionBool(shippingObj, "isCheckboxSelected"),
-            email: None, //getOptionString(shippingObj, "email"),
-            //name: None, getOptionString(shippingObj, "name"),
-          })
+      switch addressObj {
+      | None => None
+      | Some(addressObj) =>
+        Some({
+          address: Some({
+            first_name,
+            last_name,
+            city: ?getOptionString(addressObj, "city"),
+            country: ?getOptionString(addressObj, "country"),
+            line1: ?getOptionString(addressObj, "line1"),
+            line2: ?getOptionString(addressObj, "line2"),
+            zip: ?getOptionString(addressObj, "postalCode"),
+            state: ?getOptionString(addressObj, "state"),
+          }),
+          phone: Some({
+            number: ?getOptionString(shippingObj, "phoneNumber"),
+          }),
+          //isCheckboxSelected: getOptionBool(shippingObj, "isCheckboxSelected"),
+          email: None, //getOptionString(shippingObj, "email"),
+          //name: None, getOptionString(shippingObj, "name"),
+        })
+      }
     | None => None
     },
     primaryButtonLabel: getOptionString(configObj, "primaryButtonLabel"),
@@ -869,27 +866,29 @@ let parseConfigurationDict = (configObj, from) => {
     // | _ => None
     // },
     merchantDisplayName: getString(configObj, "merchantDisplayName", ""),
-    defaultBillingDetails: addressDict == Dict.make()
-      ? None
-      : Some({
-          address: Some({
-            first_name: ?(
-              billingName->Array.get(0) === Some("default") ? None : billingName->Array.get(0)
-            ),
-            last_name: ?(billingName->Array.length > 1 ? billingName[1] : None),
-            city: ?getOptionString(addressDict, "city"),
-            country: ?getOptionString(addressDict, "country"),
-            line1: ?getOptionString(addressDict, "line1"),
-            line2: ?getOptionString(addressDict, "line2"),
-            zip: ?getOptionString(addressDict, "postalCode"),
-            state: ?getOptionString(addressDict, "state"),
-          }),
-          phone: Some({
-            number: ?getOptionString(billingDetailsDict, "phoneNumber"),
-          }),
-          email: None, //getOptionString(billingDetailsDict, "email"),
-          //name: None, getOptionString(billingDetailsDict, "name"),
+    defaultBillingDetails: switch addressDict {
+    | None => None
+    | Some(addressDict) =>
+      Some({
+        address: Some({
+          first_name: ?(
+            billingName->Array.get(0) === Some("default") ? None : billingName->Array.get(0)
+          ),
+          last_name: ?(billingName->Array.length > 1 ? billingName[1] : None),
+          city: ?getOptionString(addressDict, "city"),
+          country: ?getOptionString(addressDict, "country"),
+          line1: ?getOptionString(addressDict, "line1"),
+          line2: ?getOptionString(addressDict, "line2"),
+          zip: ?getOptionString(addressDict, "postalCode"),
+          state: ?getOptionString(addressDict, "state"),
         }),
+        phone: Some({
+          number: ?getOptionString(billingDetailsDict, "phoneNumber"),
+        }),
+        email: None, //getOptionString(billingDetailsDict, "email"),
+        //name: None, getOptionString(billingDetailsDict, "name"),
+      })
+    },
     primaryButtonColor: getOptionString(configObj, "primaryButtonColor"),
     allowsPaymentMethodsRequiringShippingAddress: getBool(
       configObj,

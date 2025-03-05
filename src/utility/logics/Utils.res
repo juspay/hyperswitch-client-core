@@ -130,7 +130,7 @@ let rec transformKeysSnakeToCamel = (json: JSON.t) => {
         (key->toCamelCase, val->JSON.Encode.string)
       }
     | Number(val) => (key->toCamelCase, val->Float.toString->JSON.Encode.string)
-    | _ => (key->toCamelCase, value)
+    | Null | Bool(_) => (key->toCamelCase, value)
     }
     x
   })
@@ -288,7 +288,7 @@ let rec transformKeys = (json: JSON.t, to: case) => {
       }
     // | Number(val) => (key->toCase, val->Float.toString->JSON.Encode.string)
     | Number(val) => (key->toCase, val->Float.toInt->JSON.Encode.int)
-    | _ => (key->toCase, value)
+    | Null | Bool(_) => (key->toCase, value)
     }
     x
   })

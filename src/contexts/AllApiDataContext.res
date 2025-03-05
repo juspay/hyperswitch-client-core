@@ -48,7 +48,7 @@ type savedPaymentMethodDataObj = {
 
 type savedPaymentMethods = Loading | Some(savedPaymentMethodDataObj) | None
 
-let savedPaymentMethods = Loading
+let savedPaymentMethods: savedPaymentMethods = Loading
 let dafaultsavePMObj = {pmList: None, isGuestCustomer: false, selectedPaymentMethod: None}
 
 type allApiData = {
