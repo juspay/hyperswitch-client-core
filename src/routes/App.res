@@ -4,25 +4,27 @@ open Style
 module ContextWrapper = {
   @react.component
   let make = (~props, ~rootTag, ~children) => {
-    <LoadingContext>
-      <NativePropContext nativeProp={SdkTypes.nativeJsonToRecord(props, rootTag)}>
-        <PaymentScreenContext>
-          <ThemeContext>
-            <ViewportContext>
-              <LoggerContext>
-                <CardDataContext>
-                  <CountryStateDataContext>
-                    <AllApiDataContext>
-                      <LocaleStringDataContext> children </LocaleStringDataContext>
-                    </AllApiDataContext>
-                  </CountryStateDataContext>
-                </CardDataContext>
-              </LoggerContext>
-            </ViewportContext>
-          </ThemeContext>
-        </PaymentScreenContext>
-      </NativePropContext>
-    </LoadingContext>
+    <PortalHost>
+      <LoadingContext>
+        <NativePropContext nativeProp={SdkTypes.nativeJsonToRecord(props, rootTag)}>
+          <PaymentScreenContext>
+            <ThemeContext>
+              <ViewportContext>
+                <LoggerContext>
+                  <CardDataContext>
+                    <CountryStateDataContext>
+                      <AllApiDataContext>
+                        <LocaleStringDataContext> children </LocaleStringDataContext>
+                      </AllApiDataContext>
+                    </CountryStateDataContext>
+                  </CardDataContext>
+                </LoggerContext>
+              </ViewportContext>
+            </ThemeContext>
+          </PaymentScreenContext>
+        </NativePropContext>
+      </LoadingContext>
+    </PortalHost>
   }
 }
 

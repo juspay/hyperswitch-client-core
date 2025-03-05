@@ -62,7 +62,7 @@ let make = () => {
     logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
     error()
 
-    //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => /* Console.log(x) */ ())
+    //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => ())
 
     if nativeProp.clientSecret != "" && nativeProp.publishableKey != "" {
       Promise.all3((
