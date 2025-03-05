@@ -126,28 +126,32 @@
       "path": "./node_modules/cz-conventional-changelog",
       "types": {
         "feat": {
-          "description": "A new feature",
+          "description": "A new feature (increase the minor version)",
           "title": "Features"
         },
         "fix": {
-          "description": "A bug fix",
+          "description": "A bug fix (increase the patch version)",
           "title": "Bug Fixes"
         },
         "refactor": {
-          "description": "A code change that neither fixes a bug nor adds a feature",
+          "description": "A code change that neither fixes a bug nor adds a feature (No change in version)",
           "title": "Code Refactoring"
         },
         "chore": {
-          "description": "Other changes that don't modify src or test files",
+          "description": "Other changes that don't modify src or test files (No change in version)",
           "title": "Chores"
         },
         "docs": {
-          "description": "Documentation only changes",
+          "description": "Documentation only changes (No change in version)",
           "title": "Documentation"
         },
         "revert": {
-          "description": "Reverts a previous commit",
+          "description": "Reverts a previous commit (increase the patch version)",
           "title": "Reverts"
+        },
+        "CHANGE": {
+          "description": "A Major BREAKING Change (increase the patch version)",
+          "release": "major"
         }
       }
     }
@@ -174,11 +178,31 @@
           "releaseRules": [
             {
               "type": "refactor",
-              "release": "patch"
+              "release": false
+            },
+            {
+              "type": "docs",
+              "release": false
             },
             {
               "type": "chore",
+              "release": false
+            },
+            {
+              "type": "fix",
               "release": "patch"
+            },
+            {
+              "type": "revert",
+              "release": "patch"
+            },
+            {
+              "type": "feat",
+              "release": "minor"
+            },
+            {
+              "type": "CHANGE",
+              "release": "major"
             }
           ]
         }
