@@ -146,7 +146,11 @@ let registerHeadless = headless => {
       let transaction_identifier =
         var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
-      if transaction_identifier == "Simulated Identifier"->JSON.Encode.string {
+      if (
+        transaction_identifier->Utils.getStringFromJson(
+          "Simulated Identifier",
+        ) == "Simulated Identifier"
+      ) {
         headlessModule.exitHeadless(
           {message: "Simulated Identifier", status: "failed"}->HyperModule.stringifiedResStatus,
         )
@@ -415,13 +419,20 @@ let registerHeadless = headless => {
           lastUsedSpmData,
           spmData->Utils.getJsonObjectFromRecord,
           response => {
-            switch response->Utils.getDictFromJson->Dict.get("paymentToken") {
+            switch response->Utils.getDictFromJson->Utils.getOptionString("paymentToken") {
             | Some(token) =>
               switch spmData->Array.find(x =>
                 switch x {
-                | SAVEDLISTCARD(savedCard) => savedCard.payment_token == token->JSON.Decode.string
+                | SAVEDLISTCARD(savedCard) =>
+                  switch savedCard.payment_token {
+                  | Some(payment_token) => payment_token == token
+                  | None => false
+                  }
                 | SAVEDLISTWALLET(savedWallet) =>
-                  savedWallet.payment_token == token->JSON.Decode.string
+                  switch savedWallet.payment_token {
+                  | Some(payment_token) => payment_token == token
+                  | None => false
+                  }
                 | NONE => false
                 }
               ) {

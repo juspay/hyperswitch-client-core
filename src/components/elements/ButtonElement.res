@@ -359,7 +359,11 @@ let make = (
         let transaction_identifier =
           var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
-        if transaction_identifier == "Simulated Identifier"->JSON.Encode.string {
+        if (
+          transaction_identifier->Utils.getStringFromJson(
+            "Simulated Identifier",
+          ) == "Simulated Identifier"
+        ) {
           setTimeout(() => {
             setLoading(FillingDetails)
             showAlert(

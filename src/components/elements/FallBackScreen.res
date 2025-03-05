@@ -4,7 +4,7 @@ open Style
 type level = Top | Screen | Widget
 
 @react.component
-let make = (~error: Sentry.fallbackArg, ~level, ~rootTag) => {
+let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
   let {simplyExit} = HyperModule.useExitPaymentsheet()
 
   switch level {
