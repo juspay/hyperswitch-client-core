@@ -10,7 +10,7 @@ type portals = {
 }
 
 @react.component
-let make = React.forwardRef((~default=0, ref: Js.Nullable.t<React.ref<Nullable.t<portals>>>) => {
+let make = React.forwardRef((ref: Js.Nullable.t<React.ref<Nullable.t<portals>>>) => {
   let (portals, setPortals) = React.useState(_ => [])
 
   let mount = React.useCallback0((key, children) => {
