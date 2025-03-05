@@ -388,3 +388,13 @@ let getFlattenData = (
   })
   flattenedData
 }
+
+let getPaymentMethodData = (required_field, ~shippingAddress, ~billingAddress, ~email=None) => {
+  required_field
+  ->getFlattenData(~shippingAddress, ~billingAddress, ~email)
+  ->JSON.Encode.object
+  ->RequiredFieldsTypes.unflattenObject
+  ->Dict.get("payment_method_data")
+  ->Option.getOr(JSON.Encode.null)
+  ->Utils.getDictFromJson
+}

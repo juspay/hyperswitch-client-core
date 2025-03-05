@@ -256,14 +256,12 @@ let make = (
       | None => None
       }
       let shippingAddress = obj.shippingDetails
-      let payment_method_data =
-        walletType.required_field
-        ->GooglePayTypeNew.getFlattenData(~shippingAddress, ~billingAddress, ~email=obj.email)
-        ->JSON.Encode.object
-        ->RequiredFieldsTypes.unflattenObject
-        ->Dict.get("payment_method_data")
-        ->Option.getOr(JSON.Encode.null)
-        ->Utils.getDictFromJson
+      let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+        walletType.required_field,
+        ~shippingAddress,
+        ~billingAddress,
+        ~email=obj.email,
+      )
       payment_method_data->Dict.set(
         walletType.payment_method,
         [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
@@ -396,14 +394,11 @@ let make = (
             ->Dict.fromArray
             ->JSON.Encode.object
 
-          let payment_method_data =
-            walletType.required_field
-            ->GooglePayTypeNew.getFlattenData(~shippingAddress, ~billingAddress)
-            ->JSON.Encode.object
-            ->RequiredFieldsTypes.unflattenObject
-            ->Dict.get("payment_method_data")
-            ->Option.getOr(JSON.Encode.null)
-            ->Utils.getDictFromJson
+          let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+            walletType.required_field,
+            ~shippingAddress,
+            ~billingAddress,
+          )
 
           payment_method_data->Dict.set(
             walletType.payment_method,
