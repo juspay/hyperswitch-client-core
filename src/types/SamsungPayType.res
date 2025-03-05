@@ -98,6 +98,9 @@ let getBillingDetails = (dict): option<SdkTypes.addressDetails> => {
         state: getString(dict, "state", ""),
       }),
       email: dict->getOptionString("email"),
+      phone: Some({
+        number: ?getOptionString(dict, "phoneNumber"),
+      }),
     }
     Some(addressDetails)
   } else {
