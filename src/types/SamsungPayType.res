@@ -82,20 +82,19 @@ let getSamsungPaySessionObject = (sessionData: AllApiDataContext.sessions) => {
   sessionObject
 }
 
-let getBillingDetails = (dict): option<SdkTypes.addressDetails> => {
-  if dict->Option.isSome {
-    let dict = dict->Option.getOr(Dict.make())
-
+let getBillingDetails = dict => {
+  switch dict {
+  | Some(dict) =>
     let addressDetails: SdkTypes.addressDetails = {
       address: Some({
-        first_name: getString(dict, "first_name", ""),
-        last_name: getString(dict, "last_name", ""),
-        city: getString(dict, "city", ""),
-        country: getString(dict, "country", ""),
-        line1: getString(dict, "line1", ""),
-        line2: getString(dict, "line2", ""),
-        zip: getString(dict, "zip", ""),
-        state: getString(dict, "state", ""),
+        first_name: ?getOptionString(dict, "first_name"),
+        last_name: ?getOptionString(dict, "last_name"),
+        city: ?getOptionString(dict, "city"),
+        country: ?getOptionString(dict, "country"),
+        line1: ?getOptionString(dict, "line1"),
+        line2: ?getOptionString(dict, "line2"),
+        zip: ?getOptionString(dict, "zip"),
+        state: ?getOptionString(dict, "state"),
       }),
       email: dict->getOptionString("email"),
       phone: Some({
@@ -103,24 +102,18 @@ let getBillingDetails = (dict): option<SdkTypes.addressDetails> => {
       }),
     }
     Some(addressDetails)
-  } else {
-    None
+  | _ => None
   }
 }
 
 let getBillingAddressFromJson = billingDetails => {
-  if billingDetails->Option.isSome {
-    let billingDetails = billingDetails->Option.getOr({billingDetails: ""})
-
-    let billingDetailsDict =
-      billingDetails.billingDetails
-      ->JSON.parseExn
-      ->JSON.Decode.object
-
-    let address = billingDetailsDict->getBillingDetails
-    Some(address)
-  } else {
-    None
+  switch billingDetails {
+  | Some(details) =>
+    details.billingDetails
+    ->JSON.parseExn
+    ->JSON.Decode.object
+    ->getBillingDetails
+  | None => None
   }
 }
 
