@@ -1,3 +1,11 @@
+## [1.0.1](https://github.com/manideepk90/hyperswitch-client-core/compare/v1.0.0...v1.0.1) (2025-03-05)
+
+
+### Bug Fixes
+
+* fixed the test -1 ([c562452](https://github.com/manideepk90/hyperswitch-client-core/commit/c562452d1c2ea416825dc3082a23a96ff676c402))
+* my second fix -1 ([2f063f1](https://github.com/manideepk90/hyperswitch-client-core/commit/2f063f189e2010af3230d585fd141f68a8584bdd))
+
 # 1.0.0 (2025-03-05)
 
 
