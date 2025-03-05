@@ -11,7 +11,9 @@ let make = (~children) => {
     Some(
       () => {
         switch currentPortalKey.current->Nullable.toOption {
-        | Some(key) => portalManager.unmount(key)
+        | Some(key) =>
+          portalManager.unmount(key)
+          currentPortalKey.current = Null
         | None => ()
         }
       },
