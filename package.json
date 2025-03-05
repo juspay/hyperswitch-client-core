@@ -169,7 +169,7 @@
         "prerelease": true
       }
     ],
-    "repositoryUrl": "https://github.com/juspay/hyperswitch-client-core.git",
+    "repositoryUrl": "https://github.com/manideepk90/hyperswitch-client-core.git",
     "plugins": [
       [
         "@semantic-release/commit-analyzer",
