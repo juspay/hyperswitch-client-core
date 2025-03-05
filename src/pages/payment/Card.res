@@ -7,6 +7,8 @@ let make = (
   ~isScreenFocus,
   ~setConfirmButtonDataRef: React.element => unit,
 ) => {
+  let a = 0
+  Console.log(a)
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
