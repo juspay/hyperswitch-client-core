@@ -2,6 +2,7 @@
 external importStatesAndCountries: string => promise<JSON.t> = "import"
 
 type addressCountry = UseContextData | UseBackEndData(array<string>)
+type payment_method_types_in_bank_debit = BECS | Other
 
 type paymentMethodsFields =
   | Email
@@ -24,6 +25,9 @@ type paymentMethodsFields =
   | AddressCountry(addressCountry)
   | BlikCode
   | Currency(array<string>)
+  | AccountNumber
+  | BSBNumber
+  | PhoneCountryCode
 
 type requiredField =
   | StringField(string)
@@ -52,6 +56,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_country" | "country" => Country
   | "user_bank" => Bank
   | "user_phone_number" => PhoneNumber
+  | "user_phone_number_country_code" => PhoneCountryCode
   | "user_address_line1" | "user_shipping_address_line1" => AddressLine1
   | "user_address_line2" | "user_shipping_address_line2" => AddressLine2
   | "user_address_city" | "user_shipping_address_city" => AddressCity
@@ -60,6 +65,8 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_blik_code" => BlikCode
   | "user_billing_name" => BillingName
   | "user_shipping_name" => ShippingName
+  | "user_bank_account_number" => AccountNumber
+  | "user_bsb_number" => BSBNumber
   | var => UnKnownField(var)
   }
 }
@@ -114,7 +121,9 @@ let getFieldType = dict => {
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
   | FullName | ShippingName | BillingName => 1
+  | AccountNumber => -1
   | Email => 2
+  | BSBNumber => 3
   | AddressLine1 => 4
   | AddressLine2 => 5
   | AddressCity => 6
@@ -227,11 +236,34 @@ let getErrorMsg = (
   | _ => localeObject.requiredText
   }
 }
+let numberOfDigitsValidation = (
+  ~text,
+  ~localeObject: LocaleDataType.localeStrings,
+  ~digits,
+  ~display_name,
+) => {
+  if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
+    if text->String.length == digits {
+      None
+    } else {
+      Some(
+        localeObject.enterValidDigitsText ++
+        digits->Int.toString ++
+        localeObject.digitsText ++
+        display_name->Option.getOr("")->Utils.toCamelCase,
+      )
+    }
+  } else {
+    Some(localeObject.enterValidDetailsText)
+  }
+}
 
 let checkIsValid = (
   ~text: string,
   ~field_type: paymentMethodsFields,
   ~localeObject: LocaleDataType.localeStrings,
+  ~paymentMethodType: option<payment_method_types_in_bank_debit>,
+  ~display_name=?,
 ) => {
   if text == "" {
     getErrorMsg(~field_type, ~localeObject)->Some
@@ -243,8 +275,43 @@ let checkIsValid = (
       | Some(true) => None
       | None => Some(localeObject.emailEmptyText)
       }
+    | AccountNumber =>
+      switch paymentMethodType {
+      | Some(BECS) => numberOfDigitsValidation(~text, ~localeObject, ~digits=9, ~display_name)
+      | _ => None
+      }
+    | BSBNumber => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
     | _ => None
     }
+  }
+}
+
+let onlyDigits_restrictsChars = (
+  ~text,
+  ~fieldType,
+  ~prev,
+  ~paymentMethodType: option<payment_method_types_in_bank_debit>,
+) => {
+  let val = text->Option.getOr("")->Validation.clearSpaces
+  switch fieldType {
+  | AccountNumber =>
+    switch paymentMethodType {
+    | Some(BECS) =>
+      if val->String.length <= 9 {
+        Some(val)
+      } else {
+        prev
+      }
+    | _ => None
+    }
+
+  | BSBNumber =>
+    if val->String.length <= 6 {
+      Some(val)
+    } else {
+      prev
+    }
+  | _ => text
   }
 }
 
@@ -319,7 +386,10 @@ let useGetPlaceholder = (
     // | ShippingAddressCity => localeObject.cityLabel
     // | ShippingAddressPincode => localeObject.postalCodeLabel
     // | ShippingAddressState => localeObject.stateLabel
+    | PhoneCountryCode
     | SpecialField(_)
+    | AccountNumber
+    | BSBNumber
     | UnKnownField(_)
     | PhoneNumber
     | StateAndCity

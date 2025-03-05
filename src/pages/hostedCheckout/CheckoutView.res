@@ -60,13 +60,7 @@ module CheckoutHeader = {
               style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
               <TextWrapper text="Details" textType={ModalText} />
               <Space width=10. />
-              <Icon
-                style={viewStyle(~transform=[rotate(~rotate=270.->deg)], ())}
-                name="back"
-                height=15.
-                width=15.
-                fill="hsla(0,0%, 10% , 0.5 )"
-              />
+              <ChevronIcon width=15. height=15. fill="hsla(0,0%, 10% , 0.5 )" />
             </CustomTouchableOpacity>
           </View>
         : React.null}

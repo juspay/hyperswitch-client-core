@@ -48,6 +48,7 @@ module RenderField = {
     ~isSaveCardsFlow,
     ~statesAndCountry: CountryStateDataContext.data,
     ~keyToTrigerButtonClickError,
+    ~paymentMethodType: option<RequiredFieldsTypes.payment_method_types_in_bank_debit>,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
     let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -101,28 +102,29 @@ module RenderField = {
           )
           switch requiredFieldPath {
           | StringField(stringFieldPath) =>
-            let tempValid = RequiredFieldsTypes.checkIsValid(
+            let validationErrMsg = RequiredFieldsTypes.checkIsValid(
               ~text,
               ~field_type=required_fields_type.field_type,
               ~localeObject,
+              ~display_name=required_fields_type.display_name,
+              ~paymentMethodType,
             )
-
             let isCountryField = switch required_fields_type.field_type {
             | AddressCountry(_) => true
             | _ => false
             }
 
-            setErrorMesage(_ => tempValid)
+            setErrorMesage(_ => validationErrMsg)
             setFinalJsonDict(prev => {
               let newData = Dict.assign(Dict.make(), prev)
               if isCountryField {
                 let stateKey = getKey(stringFieldPath, "state")
                 switch newData->Dict.get(stateKey) {
-                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, tempValid))
+                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, validationErrMsg))
                 | None => ()
                 }
               }
-              newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, tempValid))
+              newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, validationErrMsg))
               newData
             })
           | FullNameField(firstNameFieldPath, lastNameFieldPath) =>
@@ -181,7 +183,14 @@ module RenderField = {
       setVal(val)
     }
     let onChange = text => {
-      setVal(_ => text)
+      setVal(prev =>
+        RequiredFieldsTypes.onlyDigits_restrictsChars(
+          ~text,
+          ~fieldType=required_fields_type.field_type,
+          ~prev,
+          ~paymentMethodType,
+        )
+      )
     }
     React.useEffect1(() => {
       keyToTrigerButtonClickError != 0
@@ -305,6 +314,7 @@ module Fields = {
     ~isSaveCardsFlow,
     ~statesAndCountry: CountryStateDataContext.data,
     ~keyToTrigerButtonClickError,
+    ~paymentMethodType,
   ) => {
     fields
     ->Array.mapWithIndex((item, index) =>
@@ -318,6 +328,7 @@ module Fields = {
           finalJsonDict
           setFinalJsonDict
           keyToTrigerButtonClickError
+          paymentMethodType
         />
       </React.Fragment>
     )
@@ -337,6 +348,7 @@ let make = (
   ~keyToTrigerButtonClickError,
   ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
+  ~paymentMethodType=?,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
@@ -521,6 +533,7 @@ let make = (
             setFinalJsonDict
             isSaveCardsFlow
             statesAndCountry
+            paymentMethodType
             keyToTrigerButtonClickError
           />
         </>

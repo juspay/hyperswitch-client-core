@@ -15,60 +15,53 @@ let make = () => {
   {
     switch loading {
     | ProcessingPayments(val) =>
-      <View
-        style={array([
-          viewStyle(
-            ~width=100.->pct,
-            ~height=100.->pct,
-            ~position=#absolute,
-            ~opacity=val->Option.isSome ? 0.90 : 1.0,
-            ~borderRadius,
-            (),
-          ),
-          val->Option.isSome ? bgColor : viewStyle(~backgroundColor="transparent", ()),
-        ])}>
-        {switch nativeProps.sdkState {
-        | CardWidget | CustomWidget(_) =>
-          <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
-            // <HyperLoaderAnimation shapeSize=20. />
-          </View>
-        | _ =>
-          <>
-            // <Animated.View
-            //   style={viewStyle(
-            //     ~backgroundColor="#FFB000",
-            //     ~marginVertical=2.->dp,
-            //     ~borderRadius=10.,
-            //     ~width={20.->pct},
-            //     ~height=2.->dp,
-            //     ~transform=Animated.ValueXY.getTranslateTransform(sliderPosition),
-            //     (),
-            //   )}
-            // />
-            <View style={viewStyle(~flex=1., ~justifyContent=#center, ~alignItems=#center, ())}>
-              // <HyperLoaderAnimation />
-              {switch val {
-              | Some(val) => val.showOverlay ? <PaymentSheetProcessingElement /> : React.null
-              | None => React.null
-              }}
+      <Portal>
+        <View
+          style={array([
+            viewStyle(~flex=1., ~opacity=val->Option.isSome ? 0.90 : 1.0, ~borderRadius, ()),
+            val->Option.isSome ? bgColor : viewStyle(~backgroundColor="transparent", ()),
+          ])}>
+          {switch nativeProps.sdkState {
+          | CardWidget | CustomWidget(_) =>
+            <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
+              // <HyperLoaderAnimation shapeSize=20. />
             </View>
-          </>
-        }}
-      </View>
+          | _ =>
+            <>
+              // <Animated.View
+              //   style={viewStyle(
+              //     ~backgroundColor="#FFB000",
+              //     ~marginVertical=2.->dp,
+              //     ~borderRadius=10.,
+              //     ~width={20.->pct},
+              //     ~height=2.->dp,
+              //     ~transform=Animated.ValueXY.getTranslateTransform(sliderPosition),
+              //     (),
+              //   )}
+              // />
+              <View style={viewStyle(~flex=1., ~justifyContent=#center, ~alignItems=#center, ())}>
+                // <HyperLoaderAnimation />
+                {switch val {
+                | Some(val) => val.showOverlay ? <PaymentSheetProcessingElement /> : React.null
+                | None => React.null
+                }}
+              </View>
+            </>
+          }}
+        </View>
+      </Portal>
 
     | PaymentSuccess =>
       switch nativeProps.sdkState {
       | PaymentSheet =>
-        //<SuccessScreen />
-        <View
-          style={array([
-            viewStyle(~width=100.->pct, ~height=100.->pct, ~position=#absolute, ~opacity=0., ()),
-            bgColor,
-          ])}>
-          <View style={viewStyle(~flex=1., ~justifyContent=#center, ~alignItems=#center, ())}>
-            // <HyperLoaderAnimation />
+        <Portal>
+          //<SuccessScreen />
+          <View style={array([viewStyle(~flex=1., ~opacity=0., ()), bgColor])}>
+            <View style={viewStyle(~flex=1., ~justifyContent=#center, ~alignItems=#center, ())}>
+              // <HyperLoaderAnimation />
+            </View>
           </View>
-        </View>
+        </Portal>
       | _ => React.null
       }
     | _ => React.null

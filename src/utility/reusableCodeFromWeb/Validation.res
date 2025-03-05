@@ -9,6 +9,7 @@ type cardIssuer =
   | SODEXO
   | RUPAY
   | JCB
+  | CARTESBANCAIRES
   | NOTFOUND
 
 let toInt = val => val->Int.fromString->Option.getOr(0)
@@ -25,6 +26,7 @@ let cardType = val => {
   | "SODEXO" => SODEXO
   | "RUPAY" => RUPAY
   | "JCB" => JCB
+  | "CARTESBANCAIRES" => CARTESBANCAIRES
   | _ => NOTFOUND
   }
 }
@@ -133,6 +135,21 @@ let formatCardExpiryNumber = val => {
   } else {
     formatted
   }
+}
+
+let getAllMatchedCardSchemes = cardNumber => {
+  CardPattern.cardPatterns->Array.reduce([], (acc, item) => {
+    if String.match(cardNumber, item.pattern)->Option.isSome {
+      acc->Array.push(item.issuer)
+    }
+    acc
+  })
+}
+
+let getEligibleCoBadgedCardSchemes = (~matchedCardSchemes, ~enabledCardSchemes) => {
+  matchedCardSchemes->Array.filter(ele => 
+    enabledCardSchemes->Array.includes(ele)
+  )
 }
 
 let getCardBrand = cardNumber => {
@@ -270,6 +287,10 @@ let getExpiryValidity = cardExpiry => {
     false
   }
   valid
+}
+
+let containsOnlyDigits = text => {
+  %re("/^[0-9]*$/")->Js.Re.test_(text)
 }
 
 // let max = (a, b) => {

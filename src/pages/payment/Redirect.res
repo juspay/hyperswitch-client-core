@@ -1,6 +1,7 @@
 open ReactNative
 open PaymentMethodListType
 open CustomPicker
+open RequiredFieldsTypes
 
 type klarnaSessionCheck = {
   isKlarna: bool,
@@ -13,7 +14,7 @@ let make = (
   ~fields: Types.redirectTypeJson,
   ~isScreenFocus,
   ~isDynamicFields: bool=false,
-  ~dynamicFields: RequiredFieldsTypes.required_fields=[],
+  ~dynamicFields: required_fields=[],
   ~setConfirmButtonDataRef: React.element => unit,
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
 ) => {
@@ -30,6 +31,7 @@ let make = (
 
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+
   let (launchKlarna, setLaunchKlarna) = React.useState(_ => None)
   let (email, setEmail) = React.useState(_ => None)
   let (isEmailValid, setIsEmailValid) = React.useState(_ => None)
@@ -74,25 +76,35 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | CRYPTO(prop) => prop.payment_method_type
   | OPEN_BANKING(prop) => prop.payment_method_type
+  | BANK_DEBIT(prop) => prop.payment_method_type
   }
+
+  let bankDebitPMType = switch redirectProp {
+  | BANK_DEBIT(prop) => prop.payment_method_type_var
+  | _ => Other
+  }
+
   let paymentExperience = switch redirectProp {
-  | CARD(_) => None
+  | CARD(_)
+  | BANK_REDIRECT(_) =>
+    None
   | WALLET(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
   | PAY_LATER(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
-
-  | BANK_REDIRECT(_) => None
   | OPEN_BANKING(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   | CRYPTO(prop) =>
+    prop.payment_experience
+    ->Array.get(0)
+    ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
+  | BANK_DEBIT(prop) =>
     prop.payment_experience
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
@@ -229,6 +241,7 @@ let make = (
     ~payment_method_type,
     ~payment_experience_type="redirect_to_url",
     ~eligible_connectors=?,
+    ~shipping=?,
     (),
   ) => {
     let body: redirectType = {
@@ -240,16 +253,22 @@ let make = (
       connector: ?eligible_connectors,
       payment_method_data,
       billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
+      shipping: shipping->Option.getOr(
+        nativeProp.configuration.shippingDetails->Option.getOr({
+          phone: None,
+          address: None,
+          email: None,
+        }),
+      ),
       setup_future_usage: ?(
         allApiData.additionalPMLData.mandateType != NORMAL ? Some("off_session") : None
       ),
       payment_type: ?allApiData.additionalPMLData.paymentType,
       // mandate_data: ?(
-      //   allApiData.mandateType != NORMAL
+      //   allApiData.additionalPMLData.mandateType != NORMAL
       //     ? Some({
       //         customer_acceptance: {
-      //           acceptance_type: "online",
+      //           acceptance_type: "offline",
       //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
       //           online: {
       //             ip_address: ?nativeProp.hyperParams.ip,
@@ -384,8 +403,7 @@ let make = (
       let middleData = Dict.make()
       middleData->Dict.set(prop.payment_method, innerData->JSON.Encode.object)
       payment_method_data->Dict.set("payment_method_data", middleData->JSON.Encode.object)
-      let dynamic_pmd =
-        payment_method_data->RequiredFieldsTypes.mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
+      let dynamic_pmd = payment_method_data->mergeTwoFlattenedJsonDicts(dynamicFieldsJsonDict)
       processRequest(
         ~payment_method_data=dynamic_pmd
         ->Utils.getJsonObjectFromDict("payment_method_data")
@@ -583,10 +601,6 @@ let make = (
       setLoading(FillingDetails)
       setError(_ => Some("Error"))
     | _ =>
-      let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
-
-      let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
-
       let transaction_identifier =
         var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
@@ -594,6 +608,26 @@ let make = (
         setLoading(FillingDetails)
         setError(_ => Some("Apple Pay is not supported in Simulated Environment"))
       } else {
+        let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
+        let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
+        let billingAddress = var->GooglePayTypeNew.getBillingContact(
+          "billing_contact",
+          switch countryStateData {
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
+          | _ => Dict.make()
+          },
+        )
+        let shippingAddress = var->GooglePayTypeNew.getBillingContact(
+          "shipping_contact",
+          switch countryStateData {
+          | FetchData(data)
+          | Localdata(data) =>
+            data.states
+          | _ => Dict.make()
+          },
+        )
         let paymentData =
           [
             ("payment_data", payment_data),
@@ -602,20 +636,24 @@ let make = (
           ]
           ->Dict.fromArray
           ->JSON.Encode.object
-
         let payment_method_data =
-          [
-            (
-              walletType.payment_method,
-              [(walletType.payment_method_type, paymentData)]->Dict.fromArray->JSON.Encode.object,
-            ),
-          ]
-          ->Dict.fromArray
+          walletType.required_field
+          ->GooglePayTypeNew.getFlattenData(~shippingAddress, ~billingAddress)
           ->JSON.Encode.object
+          ->RequiredFieldsTypes.unflattenObject
+          ->Dict.get("payment_method_data")
+          ->Option.getOr(JSON.Encode.null)
+          ->Utils.getDictFromJson
+        payment_method_data->Dict.set(
+          walletType.payment_method,
+          [(walletType.payment_method_type, paymentData)]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        )
 
         processRequest(
           ~payment_method=walletType.payment_method,
-          ~payment_method_data,
+          ~payment_method_data=payment_method_data->JSON.Encode.object,
           ~payment_method_type=paymentMethod,
           ~payment_experience_type=?walletType.payment_experience
           ->Array.get(0)
@@ -860,6 +898,29 @@ let make = (
     )
   }
 
+  let processRequestBankDebit = (prop: payment_method_types_bank_debit) => {
+    let dynamicFieldsArray = dynamicFieldsJson->Dict.toArray
+    let dynamicFieldsJsonDict = dynamicFieldsArray->Array.reduce(Dict.make(), (
+      acc,
+      (key, (val, _)),
+    ) => {
+      acc->Dict.set(key, val)
+      acc
+    })
+
+    let payment_method_data = dynamicFieldsJsonDict->JSON.Encode.object->unflattenObject
+    processRequest(
+      ~payment_method_data=payment_method_data
+      ->Utils.getJsonObjectFromDict("payment_method_data")
+      ->JSON.stringifyAny
+      ->Option.getOr("{}")
+      ->JSON.parseExn,
+      ~payment_method=prop.payment_method,
+      ~payment_method_type=prop.payment_method_type,
+      (),
+    )
+  }
+
   //need refactoring
   let handlePressEmail = text => {
     setIsEmailValid(_ => text->Validation.isValidEmail)
@@ -891,7 +952,14 @@ let make = (
       : ((fields.fields->Array.includes("email") ? isEmailValid->Option.getOr(false) : true) && (
           fields.fields->Array.includes("name") ? isNameValid->Option.getOr(false) : true
         )) || (fields.name == "klarna" && isKlarna)
-  , (isEmailValid, isNameValid, allApiData.sessions, isDynamicFields, isAllDynamicFieldValid))
+  , (
+    isEmailValid,
+    isNameValid,
+    allApiData.sessions,
+    isDynamicFields,
+    isAllDynamicFieldValid,
+    dynamicFieldsJson,
+  ))
 
   let handlePress = _ => {
     if isAllValuesValid {
@@ -906,6 +974,7 @@ let make = (
       | CRYPTO(prop) => processRequestCrypto(prop)
       | WALLET(prop) => processRequestWallet(prop)
       | OPEN_BANKING(prop) => processRequestOpenBanking(prop)
+      | BANK_DEBIT(prop) => processRequestBankDebit(prop)
       | _ => ()
       }
     } else {
@@ -941,6 +1010,7 @@ let make = (
     country,
     selectedBank,
   ))
+
   <>
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
@@ -965,6 +1035,7 @@ let make = (
                 setDynamicFieldsJson
                 keyToTrigerButtonClickError
                 savedCardsData=None
+                paymentMethodType={bankDebitPMType}
               />
             } else {
               fields.fields
