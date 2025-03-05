@@ -52,7 +52,14 @@ let make = (
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
   }
 
-  let processRequest = (~payment_method_data, ~walletTypeAlt=?, ~email=?, ()) => {
+  let processRequest = (
+    ~payment_method_data,
+    ~walletTypeAlt=?,
+    ~email=?,
+    ~shipping=None,
+    ~billing=None,
+    (),
+  ) => {
     let walletType = switch walletTypeAlt {
     | Some(wallet) => wallet
     | None => walletType
@@ -156,8 +163,8 @@ let make = (
         ->Option.map(paymentExperience => paymentExperience.eligible_connectors)
       ),
       payment_method_data,
-      billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
+      billing: ?billing->Option.orElse(nativeProp.configuration.defaultBillingDetails),
+      shipping: ?shipping->Option.orElse(nativeProp.configuration.shippingDetails),
       payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
@@ -243,29 +250,31 @@ let make = (
           | _ => Dict.make()
           },
         )
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-          (
-            "billing",
-            switch obj.paymentMethodData.info {
-            | Some(info) =>
-              switch info.billing_address {
-              | Some(address) => address->Utils.getJsonObjectFromRecord
-              | None => JSON.Encode.null
-              }
-            | None => JSON.Encode.null
-            },
-          ),
-        ]
+      let billingAddress = switch obj.paymentMethodData.info {
+      | Some(info) => info.billing_address
+
+      | None => None
+      }
+      let shippingAddress = obj.shippingDetails
+      let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+        walletType.required_field,
+        ~shippingAddress,
+        ~billingAddress,
+        ~email=obj.email,
+      )
+      payment_method_data->Dict.set(
+        walletType.payment_method,
+        [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
         ->Dict.fromArray
-        ->JSON.Encode.object
-      processRequest(~payment_method_data, ~email=?obj.email, ())
+        ->JSON.Encode.object,
+      )
+      processRequest(
+        ~payment_method_data=payment_method_data->JSON.Encode.object,
+        ~email=?obj.email,
+        ~shipping=shippingAddress,
+        ~billing=billingAddress,
+        (),
+      )
     | "Cancel" =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
@@ -353,61 +362,32 @@ let make = (
     | "Error" =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Error")
-    | _ =>
-      let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
+    | _ => {
+        let transaction_identifier =
+          var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
 
-      let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
+        if transaction_identifier == "Simulated Identifier"->JSON.Encode.string {
+          setTimeout(() => {
+            setLoading(FillingDetails)
+            showAlert(
+              ~errorType="warning",
+              ~message="Apple Pay is not supported in Simulated Environment",
+            )
+          }, 2000)->ignore
+        } else {
+          let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
+          let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
-      let transaction_identifier =
-        var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
-
-      if transaction_identifier == "Simulated Identifier"->JSON.Encode.string {
-        setTimeout(() => {
-          setLoading(FillingDetails)
-          showAlert(
-            ~errorType="warning",
-            ~message="Apple Pay is not supported in Simulated Environment",
+          let billingAddress = var->GooglePayTypeNew.getBillingContact(
+            "billing_contact",
+            switch countryStateData {
+            | FetchData(data)
+            | Localdata(data) =>
+              data.states
+            | _ => Dict.make()
+            },
           )
-        }, 2000)->ignore
-      } else {
-        let paymentData =
-          [
-            ("payment_data", payment_data),
-            ("payment_method", payment_method),
-            ("transaction_identifier", transaction_identifier),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-
-        let payment_method_data =
-          [
-            (
-              walletType.payment_method,
-              [(walletType.payment_method_type, paymentData)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-            (
-              "billing",
-              switch var->GooglePayTypeNew.getBillingContact(
-                "billing_contact",
-                switch countryStateData {
-                | FetchData(data)
-                | Localdata(data) =>
-                  data.states
-                | _ => Dict.make()
-                },
-              ) {
-              | Some(billing) => billing->Utils.getJsonObjectFromRecord
-              | None => JSON.Encode.null
-              },
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        processRequest(
-          ~payment_method_data,
-          ~email=?switch var->GooglePayTypeNew.getBillingContact(
+          let shippingAddress = var->GooglePayTypeNew.getBillingContact(
             "shipping_contact",
             switch countryStateData {
             | FetchData(data)
@@ -415,12 +395,39 @@ let make = (
               data.states
             | _ => Dict.make()
             },
-          ) {
-          | Some(billing) => billing.email
-          | None => None
-          },
-          (),
-        )
+          )
+          let paymentData =
+            [
+              ("payment_data", payment_data),
+              ("payment_method", payment_method),
+              ("transaction_identifier", transaction_identifier),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object
+
+          let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+            walletType.required_field,
+            ~shippingAddress,
+            ~billingAddress,
+          )
+
+          payment_method_data->Dict.set(
+            walletType.payment_method,
+            [(walletType.payment_method_type, paymentData)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          )
+
+          processRequest(
+            ~payment_method_data=payment_method_data->JSON.Encode.object,
+            ~shipping=shippingAddress,
+            ~billing=billingAddress,
+            ~email=?billingAddress
+            ->GooglePayTypeNew.getEmailAddress
+            ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
+            (),
+          )
+        }
       }
     }
   }
