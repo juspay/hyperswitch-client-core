@@ -1,20 +1,26 @@
-open PortalTypes
-let defaultVal = {
-  mount: _ => Promise.resolve(0),
-  unmount: _ => (),
-  update: (_, _) => Promise.resolve(0),
+type operation =
+  | Mount({key: int, children: React.element})
+  | Unmount({key: int})
+  | Update({key: int, children: React.element})
+
+type portalMethods = {
+  mount: React.element => int,
+  update: (int, React.element) => unit,
+  unmount: int => unit,
 }
 
-let portalContext = React.createContext((defaultVal, (_: portalManagerRefType) => ()))
+let defaultVal = {
+  mount: _ => 0,
+  unmount: _ => (),
+  update: (_, _) => (),
+}
+
+let portalContext = React.createContext(defaultVal)
 module Provider = {
   let make = React.Context.provider(portalContext)
 }
 
 @react.component
-let make = (~children) => {
-  let (state, setState) = React.useState(_ => defaultVal)
-  let setState = React.useCallback1(val => {
-    setState(_ => val)
-  }, [setState])
-  <Provider value=(state, setState)> children </Provider>
+let make = (~children, ~value) => {
+  <Provider value> children </Provider>
 }

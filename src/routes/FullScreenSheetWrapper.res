@@ -52,27 +52,25 @@ let make = (~children) => {
     None
   }, [loading])
 
-  <PortalHost>
-    <View
+  <View
+    style={viewStyle(
+      ~flex=1.,
+      ~alignContent=#"flex-end",
+      ~backgroundColor=paymentSheetOverlay,
+      ~justifyContent=#"flex-end",
+      ~paddingTop=48.->dp,
+      (),
+    )}>
+    <Animated.View
       style={viewStyle(
-        ~flex=1.,
-        ~alignContent=#"flex-end",
-        ~backgroundColor=paymentSheetOverlay,
-        ~justifyContent=#"flex-end",
-        ~paddingTop=48.->dp,
+        ~transform=[translateY(~translateY=heightPosition->Animated.StyleProp.float)],
+        ~flexGrow={sheetFlex->Animated.StyleProp.float},
         (),
       )}>
-      <Animated.View
-        style={viewStyle(
-          ~transform=[translateY(~translateY=heightPosition->Animated.StyleProp.float)],
-          ~flexGrow={sheetFlex->Animated.StyleProp.float},
-          (),
-        )}>
-        <CustomView onDismiss=onModalClose>
-          <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
-        </CustomView>
-      </Animated.View>
-      <LoadingOverlay />
-    </View>
-  </PortalHost>
+      <CustomView onDismiss=onModalClose>
+        <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
+      </CustomView>
+    </Animated.View>
+    <LoadingOverlay />
+  </View>
 }
