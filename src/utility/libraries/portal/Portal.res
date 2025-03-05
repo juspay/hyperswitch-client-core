@@ -1,36 +1,22 @@
 @react.component
 let make = (~children) => {
-  let (portalManager, _) = React.useContext(PortalContext.portalContext)
-  let currentPortalKey = React.useRef(0)
-  let isFirstRender = currentPortalKey.current == 0
-
-  let mount = async () => {
-    currentPortalKey.current = await portalManager.mount(children)
-  }
-
-  let unmount = () => {
-    portalManager.unmount(currentPortalKey.current)
-  }
-
-  let update = async () => {
-    currentPortalKey.current = await portalManager.update(currentPortalKey.current, children)
-  }
+  let portalManager = React.useContext(PortalContext.portalContext)
+  let currentPortalKey = React.useRef(null)
 
   React.useEffect1(() => {
-    if !isFirstRender {
-      update()->ignore
+    switch currentPortalKey.current->Nullable.toOption {
+    | Some(key) => portalManager.update(key, children)
+    | None => currentPortalKey.current = Value(portalManager.mount(children))
     }
-    None
-  }, [children])
-
-  React.useEffect0(() => {
-    mount()->ignore
     Some(
       () => {
-        unmount()
+        switch currentPortalKey.current->Nullable.toOption {
+        | Some(key) => portalManager.unmount(key)
+        | None => ()
+        }
       },
     )
-  })
+  }, [children])
 
   React.null
 }

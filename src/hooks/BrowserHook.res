@@ -60,7 +60,6 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
                 switch newTab->Nullable.toOption {
                 | Some(tab) =>
                   let currentUrl = tab.location.href
-                  Console.log2("Redirect detected:", currentUrl)
                   resolve({message: currentUrl, url: None, \"type": ""})
                   switch intervalId.current->Nullable.toOption {
                   | Some(id) => clearInterval(id)
