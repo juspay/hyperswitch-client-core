@@ -297,26 +297,19 @@ let make = (
 
       let billingAddress = billingDetails->SamsungPayType.getBillingAddressFromJson
       let obj = SamsungPayType.itemToObjMapper(response)
-
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-          (
-            "billing",
-            switch billingAddress {
-            | Some(billingAddress) => billingAddress->Utils.getJsonObjectFromRecord
-            | None => JSON.Encode.null
-            },
-          ),
-        ]
+      let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+        walletType.required_field,
+        ~shippingAddress=None,
+        ~billingAddress,
+      )
+      payment_method_data->Dict.set(
+        walletType.payment_method,
+        [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
         ->Dict.fromArray
-        ->JSON.Encode.object
-      processRequest(~payment_method_data, ())
+        ->JSON.Encode.object,
+      )
+
+      processRequest(~payment_method_data=payment_method_data->JSON.Encode.object, ())
     } else {
       setLoading(FillingDetails)
       showAlert(
