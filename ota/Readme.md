@@ -17,4 +17,6 @@ Explanation of Configuration Keys
 
 - `package_timeout_ms` → Timeout (in `milliseconds`) for downloading and applying the application package update. `(Optional)` `(default - from Config.json)`
 
+- `release_env` → Specify the release environment  [`sandbox` , `prod`] `(Optional)` `(default - sandbox)`
 
+- `test` → Enables or disables Test updates for local mobile testing.
