@@ -16,7 +16,6 @@ let make = (
   ~isCvvValid,
   ~onScanCard,
   ~keyToTrigerButtonClickError,
-  ~cardNetworks,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let isCardNumberValid = isCardNumberValid->Option.getOr(true)
@@ -95,10 +94,10 @@ let make = (
     None
   }, [keyToTrigerButtonClickError])
 
-  let getScanCardComponent = (isScanCardAvailable, cardNumber, cardNetworks) => {
+  let getScanCardComponent = (isScanCardAvailable, cardNumber) => {
     CustomInput.CustomIcon(
       <View style={array([viewStyle(~flexDirection=#row, ~alignItems=#center, ())])}>
-        <CardSchemeComponent cardNumber cardNetworks />
+        <CardSchemeComponent cardNumber />
         <UIUtils.RenderIf condition={isScanCardAvailable && cardNumber === ""}>
           {<>
             <View
@@ -160,7 +159,7 @@ let make = (
           borderBottomRightRadius=0.
           textColor={isCardNumberValid ? component.color : dangerColor}
           enableCrossIcon=false
-          iconRight={getScanCardComponent(ScanCardModule.isAvailable, cardNumber, cardNetworks)}
+          iconRight={getScanCardComponent(ScanCardModule.isAvailable, cardNumber)}
           onFocus={() => {
             setCardNumberIsFocus(_ => true)
             onChangeCardNumber(cardNumber, nullRef)

@@ -146,11 +146,11 @@ let getAllMatchedCardSchemes = cardNumber => {
   })
 }
 
-let getEligibleCoBadgedCardSchemes = (~matchedCardSchemes, ~enabledCardSchemes) => {
-  matchedCardSchemes->Array.filter(ele => 
-    enabledCardSchemes->Array.includes(ele)
-  )
-}
+// let getEligibleCoBadgedCardSchemes = (~matchedCardSchemes, ~enabledCardSchemes) => {
+//   matchedCardSchemes->Array.filter(ele => 
+//     enabledCardSchemes->Array.includes(ele)
+//   )
+// }
 
 let getCardBrand = cardNumber => {
   try {
