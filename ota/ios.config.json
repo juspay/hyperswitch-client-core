@@ -1,0 +1,11 @@
+{
+  "config": {
+    "enable_ota_updates": true,
+    "target_platform": "ios",
+    "target_version": "0.2.3",
+    "release_tag_version": "v1.0.0",
+    "enable_rollback": false,
+    "release_config_timeout_ms": 2000,
+    "package_timeout_ms": 5000
+  }
+}
