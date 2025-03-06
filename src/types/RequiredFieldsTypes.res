@@ -2,7 +2,7 @@
 external importStatesAndCountries: string => promise<JSON.t> = "import"
 
 type addressCountry = UseContextData | UseBackEndData(array<string>)
-type payment_method_types_in_bank_debit = BECS | Other
+type payment_method_types_in_bank_debit = BECS | SEPA | Other
 
 type paymentMethodsFields =
   | Email
@@ -25,6 +25,7 @@ type paymentMethodsFields =
   | AddressCountry(addressCountry)
   | BlikCode
   | Currency(array<string>)
+  | Iban
   | AccountNumber
   | BSBNumber
   | PhoneCountryCode
@@ -67,6 +68,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_shipping_name" => ShippingName
   | "user_bank_account_number" => AccountNumber
   | "user_bsb_number" => BSBNumber
+  | "user_iban" => Iban
   | var => UnKnownField(var)
   }
 }
@@ -120,18 +122,19 @@ let getFieldType = dict => {
 }
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
-  | FullName | ShippingName | BillingName => 1
-  | AccountNumber => -1
-  | Email => 2
+  | AccountNumber => 1
+  | Iban => 2
   | BSBNumber => 3
-  | AddressLine1 => 4
-  | AddressLine2 => 5
-  | AddressCity => 6
-  | AddressCountry(_) => 7
-  | AddressState => 8
-  | StateAndCity => 9
-  | CountryAndPincode(_) => 10
-  | AddressPincode => 11
+  | FullName | ShippingName | BillingName => 4
+  | Email => 5
+  | AddressLine1 => 6
+  | AddressLine2 => 7
+  | AddressCity => 8
+  | AddressCountry(_) => 9
+  | AddressState => 10
+  | StateAndCity => 11
+  | CountryAndPincode(_) => 12
+  | AddressPincode => 13
   | InfoElement => 99
   | _ => 0
   }
@@ -233,6 +236,7 @@ let getErrorMsg = (
   | AddressCity => localeObject.cityEmptyText
   | AddressPincode => localeObject.postalCodeEmptyText
   | Email => localeObject.emailEmptyText
+  | Iban => localeObject.enterValidIban
   | _ => localeObject.requiredText
   }
 }
@@ -281,6 +285,12 @@ let checkIsValid = (
       | _ => None
       }
     | BSBNumber => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
+    | Iban =>
+      if text->Validation.isValidIban {
+        None
+      } else {
+        Some(localeObject.enterValidIban)
+      }
     | _ => None
     }
   }
@@ -394,6 +404,7 @@ let useGetPlaceholder = (
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | Iban
     | BlikCode =>
       display_name->toCamelCase
     }
