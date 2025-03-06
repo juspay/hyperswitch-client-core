@@ -43,7 +43,7 @@ module CardSchemeSelectionPopoverElement = {
 }
 
 @react.component
-let make = (~cardNumber, ~cardNetworks) => {
+let make = (~cardNumber) => {
   let (cardData, setCardData) = React.useContext(CardDataContext.cardDataContext)
 
   let cardBrand = Validation.getCardBrand(cardNumber)
@@ -51,21 +51,7 @@ let make = (~cardNumber, ~cardNetworks) => {
     cardBrand === "" ? "waitcard" : cardBrand
   )
   let (dropDownIconWidth, _) = React.useState(_ => Animated.Value.create(0.))
-
-  let getCardNetworks = cardNetworks => {
-    switch cardNetworks {
-    | Some(cardNetworks) =>
-      cardNetworks->Array.map((item: PaymentMethodListType.card_networks) => item.card_network)
-    | None => []
-    }
-  }
-
-  let enabledCardSchemes = getCardNetworks(cardNetworks->Option.getOr(None))
   let matchedCardSchemes = cardNumber->Validation.clearSpaces->Validation.getAllMatchedCardSchemes
-  let eligibleCardSchemes = Validation.getEligibleCoBadgedCardSchemes(
-    ~matchedCardSchemes,
-    ~enabledCardSchemes,
-  )
 
   let setCardBrand = cardBrand => {
     setCardBrandIcon(_ => cardBrand)
@@ -75,19 +61,19 @@ let make = (~cardNumber, ~cardNetworks) => {
     })
   }
 
-  let isCardCoBadged = eligibleCardSchemes->Array.length > 1
+  let isCardCoBadged = matchedCardSchemes->Array.length > 1
   let showCardSchemeDropDown =
     isCardCoBadged && cardNumber->Validation.clearSpaces->String.length >= 16
 
   let selectedCardBrand =
-    eligibleCardSchemes->Array.includes(cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand))
+    matchedCardSchemes->Array.includes(cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand))
       ? cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand)
       : cardBrand
 
   React.useEffect(() => {
     setCardBrandIcon(_ => selectedCardBrand === "" ? "waitcard" : selectedCardBrand)
     None
-  }, (cardBrand, eligibleCardSchemes, selectedCardBrand))
+  }, (cardBrand, matchedCardSchemes, selectedCardBrand))
 
   React.useEffect(() => {
     setCardData(prev => {
@@ -121,7 +107,7 @@ let make = (~cardNumber, ~cardNetworks) => {
       maxWidth=200.
       maxHeight=180.
       renderContent={toggleVisibility =>
-        <CardSchemeSelectionPopoverElement eligibleCardSchemes setCardBrand toggleVisibility />}>
+        <CardSchemeSelectionPopoverElement eligibleCardSchemes=matchedCardSchemes setCardBrand toggleVisibility />}>
       <View
         style={viewStyle(
           ~display=#flex,

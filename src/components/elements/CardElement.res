@@ -65,11 +65,35 @@ let make = (
     }
     None
   }, [reset])
+
+  React.useEffect(() => {
+    switch cardData.selectedCoBadgedCardBrand {
+    | Some(cardBrand) => {
+        let num = cardData.cardNumber
+        let isthisValid = cardValid(num, cardBrand)
+        let isSupported = switch cardNetworks {
+        | Some(networks) => isCardBrandSupported(~cardBrand, ~cardNetworks=networks)
+        | None => true
+        }
+
+        setCardData(prev => {
+          ...prev,
+          isCardNumberValid: Some(isthisValid),
+          isCardBrandSupported: Some(isSupported),
+          cardBrand,
+        })
+      }
+    | None => ()
+    }
+
+    None
+  }, [cardData.selectedCoBadgedCardBrand])
+
   let onChangeCardNumber = (
     text,
     expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
-    let cardBrand = getCardBrand(text)
+    let cardBrand = cardData.selectedCoBadgedCardBrand->Option.getOr(getCardBrand(text))
     let num = formatCardNumber(text, cardType(cardBrand))
 
     let isthisValid = cardValid(num, cardBrand)
@@ -193,7 +217,6 @@ let make = (
         isCardBrandSupported=cardData.isCardBrandSupported
         isCvvValid=cardData.isCvvValid
         keyToTrigerButtonClickError
-        cardNetworks
       />
     | CardForm(_) =>
       <CardFormUi
