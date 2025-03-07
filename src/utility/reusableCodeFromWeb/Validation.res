@@ -330,6 +330,75 @@ let cvcNumberEqualsMaxLength = (val, cardBrand) => {
   cvcMaxLengthEquals
 }
 
+// let letterToNumber = (char: string): string => {
+//   if Js.Re.test_(%re("/[0-9]/"), char) {
+//     char
+//   } else {
+//     let code = Js.String.charCodeAt(0, char)
+//     if Js.Float.isNaN(code) {
+//       Js.log("Invalid character detected: " ++ char)
+//       ""
+//     } else {
+//       let number = int_of_float(code) - 55 // Convert A-Z to 10-35
+//       Belt.Int.toString(number)
+//     }
+//   }
+// } 
+// let clearOnlySpaces = (value: string): string => {
+//   value->Js.String2.replaceByRe(%re("/\s/g"), "")
+// }
+// let validateIBAN = (iban: string): bool => {
+//  let cleanIban = iban->clearOnlySpaces->Js.String2.toUpperCase
+//   Js.log("Clean IBAN: " ++ cleanIban)
+
+//   let rearrangedIBAN = 
+//     cleanIban->Js.String2.sliceToEnd(~from=4) ++ 
+//     cleanIban->Js.String2.slice(~from=0, ~to_=4)
+//   Js.log("Rearranged IBAN: " ++ rearrangedIBAN)
+
+//   let convertedIBAN =
+//     rearrangedIBAN
+//     ->Js.String2.split("")
+//     ->Belt.Array.map(letterToNumber)
+//     ->Belt.Array.reduce("", (acc, char) => acc ++ char)
+//   Js.log("Converted IBAN: " ++ convertedIBAN)
+
+//   let len = Js.String2.length(convertedIBAN)
+//   let first9 = Js.String2.slice(convertedIBAN, ~from=0, ~to_=9)
+//   let firstMod = Belt.Int.fromString(first9)->Belt.Option.getWithDefault(0)->mod(97)
+//   Js.log("Initial Modulo: " ++ Belt.Int.toString(firstMod))
+
+//   let rec calcMod = (str: string, start: int, acc: int): int => {
+//     if start >= len {
+//       acc
+//     } else {
+//       let endPos = Js.Math.min_int(start + 7, len)
+//       let chunk = Belt.Int.toString(acc) ++ Js.String2.slice(str, ~from=start, ~to_=endPos)
+//       let nextAcc = Belt.Int.fromString(chunk)->Belt.Option.getWithDefault(0)->mod(97)
+//       Js.log("Chunk: " ++ chunk ++ ", Next Modulo: " ++ Belt.Int.toString(nextAcc))
+//       calcMod(str, endPos, nextAcc)
+//     }
+//   }
+
+//   let result = calcMod(convertedIBAN, 9, firstMod)
+//   Js.log("Final Modulo: " ++ Belt.Int.toString(result))
+//   result == 1
+// }
+
+let isValidIban = text => {
+  let trimmedText = text->String.trim
+//   let lengthValid = switch trimmedText->String.match(%re("/[a-zA-Z0-9]/g")) {
+//   | Some(_) => trimmedText->String.length > 15 && trimmedText->String.length <= 34
+//   | None => false
+//   }
+//   let firstTwoAlphabetsAndDigits = switch trimmedText->String.match(%re("/^[A-Z]{2}\s*[0-9]{2}/")) {
+//   | Some(_) => true
+//   | None => false
+// }
+  let isIbanEmpty = trimmedText->String.length != 0
+     isIbanEmpty
+//   && lengthValid && firstTwoAlphabetsAndDigits
+}
 // let genreateFontsLink = (fonts: array<CardThemeType.fonts>) => {
 //   if fonts->Array.length > 0 {
 //     fonts
