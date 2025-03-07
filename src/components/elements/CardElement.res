@@ -69,7 +69,9 @@ let make = (
     text,
     expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
-    let cardBrand = getCardBrand(text)
+    let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
+    let validCardBrand = getFirstValidCardScheme(~cardNumber=text, ~enabledCardSchemes)
+    let cardBrand = validCardBrand === "" ? getCardBrand(text) : validCardBrand
     let num = formatCardNumber(text, cardType(cardBrand))
 
     let isthisValid = cardValid(num, cardBrand)
