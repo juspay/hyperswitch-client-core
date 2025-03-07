@@ -1,6 +1,6 @@
 {
   "name": "hyperswitch",
-  "version": "1.0.2",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "start": "react-native start --reset-cache",
@@ -20,6 +20,7 @@
     "build:lib": "android/build-lib.sh",
     "clean": "rm -rf node_modules && rm -rf package-lock.json && rm -rf yarn.lock && yarn run clean:gradle && yarn run clean:pod",
     "re:build": "rescript",
+    "re:check": "rescript build -warn-error +a-4-9",
     "re:clean": "rescript clean",
     "pod": "cd ios && pod install && cd ..",
     "adb": "adb reverse tcp:8081 tcp:8081",
@@ -174,11 +175,31 @@
           "releaseRules": [
             {
               "type": "refactor",
-              "release": "patch"
+              "release": false
+            },
+            {
+              "type": "docs",
+              "release": false
             },
             {
               "type": "chore",
+              "release": false
+            },
+            {
+              "type": "fix",
               "release": "patch"
+            },
+            {
+              "type": "revert",
+              "release": "patch"
+            },
+            {
+              "type": "feat",
+              "release": "minor"
+            },
+            {
+              "type": "BREAKING CHANGE",
+              "release": "major"
             }
           ]
         }

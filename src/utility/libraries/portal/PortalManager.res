@@ -1,70 +1,49 @@
-open React
-open ReactNative
+type portalItem = {
+  key: int,
+  children: React.element,
+}
+
+type portals = {
+  mount: (int, React.element) => unit,
+  update: (int, React.element) => unit,
+  unmount: int => unit,
+}
 
 @react.component
-let make = (~portalRef) => {
-  let (portals, setPortals) = React.useState(() => [])
-  let (_, setPortalContext) = React.useContext(PortalContext.portalContext)
-  let keyIdx = React.useRef(0)
+let make = React.forwardRef((ref: Js.Nullable.t<React.ref<Nullable.t<portals>>>) => {
+  let (portals, setPortals) = React.useState(_ => [])
 
-  let mount = children => {
-    Promise.make((resolve, _) => {
-      setPortals(prev => {
-        keyIdx.current = keyIdx.current + 1
-        resolve(keyIdx.current)
-        [...prev, ({key: keyIdx.current, children}: PortalTypes.portalItem)]
-      })
-    })
-  }
-
-  let unmount = key => {
-    setPortals(prev => prev->Array.filter(item => item.key != key))
-  }
-
-  let update = (key, children) => {
-    Promise.make((resolve, _) => {
-      setPortals(prev => {
-        keyIdx.current = keyIdx.current + 1
-        let updatePortalArray = prev->Array.map(
-          item =>
-            if item.key === key {
-              ({key: keyIdx.current, children}: PortalTypes.portalItem)
-            } else {
-              item
-            },
-        )
-        resolve(keyIdx.current)
-        updatePortalArray
-      })
-    })
-  }
-
-  React.useImperativeHandle(
-    portalRef,
-    (): PortalTypes.portalManagerRefType => {mount, unmount, update},
-    [],
-  )
-
-  React.useEffect0(() => {
-    setPortalContext({
-      mount,
-      unmount,
-      update,
-    })
-    None
+  let mount = React.useCallback0((key, children) => {
+    setPortals(prevPortals => [...prevPortals, {key, children}])
   })
 
-  <>
-    {portals
+  let update = React.useCallback0((key, children) => {
+    setPortals(
+      prevPortals => prevPortals->Array.map(item => item.key === key ? {...item, children} : item),
+    )
+  })
+
+  let unmount = React.useCallback0(key => {
+    setPortals(prevPortals => prevPortals->Array.filter(item => item.key !== key))
+  })
+
+  React.useImperativeHandle0(ref, () => Value({
+    mount,
+    update,
+    unmount,
+  }))
+
+  {
+    portals
     ->Array.map(({key, children}) =>
-      <View
+      <ReactNative.View
         key={key->Int.toString}
         collapsable=false
         pointerEvents=#"box-none"
-        style={StyleSheet.absoluteFill}>
+        style=ReactNative.StyleSheet.absoluteFill>
         {children}
-      </View>
+      </ReactNative.View>
     )
-    ->React.array}
-  </>
-}
+    ->React.array
+  }
+})

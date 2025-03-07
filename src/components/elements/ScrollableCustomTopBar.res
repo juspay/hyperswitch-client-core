@@ -5,8 +5,8 @@ module BottomTabList = {
   @react.component
   let make = (
     ~item: PMListModifier.hoc,
-    ~index,
-    ~indexInFocus,
+    ~index: int,
+    ~indexInFocus: int,
     ~setIndexToScrollParentFlatList,
   ) => {
     let isFocused = index == indexInFocus

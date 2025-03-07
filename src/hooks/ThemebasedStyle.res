@@ -888,7 +888,7 @@ let useThemeBasedStyle = () => {
   | Minimal => Some(minimal)
   | Light => Some(lightRecord)
   | Dark => Some(darkRecord)
-  | _ => None
+  | Default => None
   }
   let themerecordOverridedWithAppObj = switch themeType {
   | Light(appearance) => itemToObj(themerecord->Option.getOr(lightRecord), appearance, false)
