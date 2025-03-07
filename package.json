@@ -175,11 +175,31 @@
           "releaseRules": [
             {
               "type": "refactor",
-              "release": "patch"
+              "release": false
+            },
+            {
+              "type": "docs",
+              "release": false
             },
             {
               "type": "chore",
+              "release": false
+            },
+            {
+              "type": "fix",
               "release": "patch"
+            },
+            {
+              "type": "revert",
+              "release": "patch"
+            },
+            {
+              "type": "feat",
+              "release": "minor"
+            },
+            {
+              "type": "BREAKING CHANGE",
+              "release": "major"
             }
           ]
         }
