@@ -9,8 +9,11 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.AUTORELEASE_PAT || github.token }}
 
       - name: Setup Node.js & Yarn
         uses: actions/setup-node@v4
@@ -25,11 +28,4 @@ jobs:
         run: yarn install
 
       - name: Run Semantic Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.AUTORELEASE_PAT }}
-          USER_EMAIL: ${{ secrets.USER_EMAIL }}
-          USER_NAME: ${{ secrets.USER_NAME }}
-        run: |
-          git config --global user.email "${{env.USER_EMAIL}}"
-          git config --global user.name "${{env.USER_NAME}}"
-          npx semantic-release
+        run: npx semantic-release
