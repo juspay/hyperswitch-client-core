@@ -1,0 +1,7 @@
+{
+  "config": {
+    "target_platform": "ios",
+    "target_version": "0.2.3",
+    "release_tag_version": "v1.0.0"
+  }
+}
