@@ -87,6 +87,13 @@ jobs:
         working-directory: ./android
         run: |
           sed -i "s/include ':app', ':react-native-code-push', ':demo-app', ':hyperswitch-sdk-android-lite'/include ':app', ':react-native-code-push', ':hyperswitch-sdk-android-lite'/" settings.gradle
+      
+      - name: Replace the ota endpoint
+        working-directory: ./android
+        env:
+          PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+        run: | 
+          sed -i 's|<string name="hyperOTAEndPoint" moduleConfig="true">.*</string>|<string name="hyperOTAEndPoint" moduleConfig="true">'"$PROD_ASSETS_END_POINT"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
 
       - name: Build and Publish
         working-directory: ./android
