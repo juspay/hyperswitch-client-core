@@ -4,27 +4,25 @@ open Style
 module ContextWrapper = {
   @react.component
   let make = (~props, ~rootTag, ~children) => {
-    <PortalHost>
-      <LoadingContext>
-        <NativePropContext nativeProp={SdkTypes.nativeJsonToRecord(props, rootTag)}>
-          <PaymentScreenContext>
-            <ThemeContext>
-              <ViewportContext>
-                <LoggerContext>
-                  <CardDataContext>
-                    <CountryStateDataContext>
-                      <AllApiDataContext>
-                        <LocaleStringDataContext> children </LocaleStringDataContext>
-                      </AllApiDataContext>
-                    </CountryStateDataContext>
-                  </CardDataContext>
-                </LoggerContext>
-              </ViewportContext>
-            </ThemeContext>
-          </PaymentScreenContext>
-        </NativePropContext>
-      </LoadingContext>
-    </PortalHost>
+    <NativePropContext nativeProp={SdkTypes.nativeJsonToRecord(props, rootTag)}>
+      <LocaleStringDataContext>
+        <CountryStateDataContext>
+          <ViewportContext>
+            <LoadingContext>
+              <PaymentScreenContext>
+                <ThemeContext>
+                  <LoggerContext>
+                    <CardDataContext>
+                      <AllApiDataContext> children </AllApiDataContext>
+                    </CardDataContext>
+                  </LoggerContext>
+                </ThemeContext>
+              </PaymentScreenContext>
+            </LoadingContext>
+          </ViewportContext>
+        </CountryStateDataContext>
+      </LocaleStringDataContext>
+    </NativePropContext>
   }
 }
 
@@ -44,7 +42,9 @@ module App = {
 let make = (~props, ~rootTag) => {
   <ErrorBoundary rootTag level=FallBackScreen.Top>
     <ContextWrapper props rootTag>
-      <App />
+      <PortalHost>
+        <App />
+      </PortalHost>
     </ContextWrapper>
   </ErrorBoundary>
 }
