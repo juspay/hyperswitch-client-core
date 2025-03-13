@@ -174,6 +174,7 @@ type themeBasedStyleObj = {
   shadowIntensity: float,
   primaryButtonHeight: float,
   sheetContentPadding: float,
+  errorMessageSpacing: float,
 }
 
 let darkRecord = {
@@ -253,6 +254,7 @@ let darkRecord = {
   shadowColor: "black",
   shadowIntensity: 2.,
   sheetContentPadding: 20.,
+  errorMessageSpacing: 4.,
 }
 let lightRecord = {
   primaryButtonHeight: 45.,
@@ -331,6 +333,7 @@ let lightRecord = {
   shadowColor: "black",
   shadowIntensity: 2.,
   sheetContentPadding: 20.,
+  errorMessageSpacing: 4.,
 }
 
 let minimal = {
@@ -410,6 +413,7 @@ let minimal = {
   shadowColor: "black",
   shadowIntensity: 3.,
   sheetContentPadding: 20.,
+  errorMessageSpacing: 4.,
 }
 
 let flatMinimal = {
@@ -489,6 +493,7 @@ let flatMinimal = {
   shadowColor: "black",
   shadowIntensity: 3.,
   sheetContentPadding: 20.,
+  errorMessageSpacing: 4.,
 }
 
 let some = (~override, ~fn, ~default) => {
@@ -876,6 +881,7 @@ let itemToObj = (
     ),
     paymentSheetOverlay: themeObj.paymentSheetOverlay,
     sheetContentPadding: themeObj.sheetContentPadding,
+    errorMessageSpacing: themeObj.errorMessageSpacing,
   }
 }
 
