@@ -15,7 +15,6 @@ let defaultCardPattern = {
   length: [13, 14, 15, 16, 17, 18, 19],
   pincodeRequired: false,
 }
-   Console.log(defaultCardPattern.issuer)
 let cardPatterns = [
   {
     issuer: "Maestro",
