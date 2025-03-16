@@ -1,3 +1,10 @@
+## [1.0.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.0...v1.0.1) (2025-03-16)
+
+
+### Bug Fixes
+
+* global context hierarchy ([#239](https://github.com/juspay/hyperswitch-client-core/issues/239)) ([a2a80b8](https://github.com/juspay/hyperswitch-client-core/commit/a2a80b82e6c15985be75422e39f79199e361898f))
+
 # 1.0.0 (2025-03-07)
 
 
