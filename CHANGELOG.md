@@ -1,3 +1,10 @@
+## [1.0.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.1...v1.0.2) (2025-03-17)
+
+
+### Bug Fixes
+
+* fixed card brand validation for mastercard ([#243](https://github.com/juspay/hyperswitch-client-core/issues/243)) ([47cc3ac](https://github.com/juspay/hyperswitch-client-core/commit/47cc3ace5654d89dcf2a0f6aa6195aa6e6ad1ef9))
+
 ## [1.0.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.0...v1.0.1) (2025-03-16)
 
 
