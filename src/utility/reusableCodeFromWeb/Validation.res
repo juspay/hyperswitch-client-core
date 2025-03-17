@@ -195,9 +195,9 @@ let getCardBrand = cardNumber => {
     }
     let patternsDict = CardPattern.cardPatterns
     if doesFallInRange(rupayRanges, card) {
-      "RUPAY"
+      "RuPay"
     } else if doesFallInRange(masterCardRanges, card) {
-      "MASTERCARD"
+      "Mastercard"
     } else {
       patternsDict
       ->Array.map(item => {
