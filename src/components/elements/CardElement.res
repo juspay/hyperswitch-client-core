@@ -21,8 +21,12 @@ let make = (
     switch (cardNetworks, cardBrand) {
     | (_, "")
     | (None, _) => true
-    | (Some(cardNetwork), cardBrand) =>
-      cardNetwork->Array.some(network => network.card_network == cardBrand)
+    | (Some(cardNetwork), cardBrand) => {
+        let lowerCardBrand = cardBrand->String.toLowerCase
+        cardNetwork->Array.some(network =>
+          network.card_network->String.toLowerCase == lowerCardBrand
+        )
+      }
     }
   }
 
