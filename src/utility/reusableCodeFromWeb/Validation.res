@@ -147,9 +147,7 @@ let getAllMatchedCardSchemes = cardNumber => {
 }
 
 let getEligibleCoBadgedCardSchemes = (~matchedCardSchemes, ~enabledCardSchemes) => {
-  matchedCardSchemes->Array.filter(ele => 
-    enabledCardSchemes->Array.includes(ele)
-  )
+  matchedCardSchemes->Array.filter(ele => enabledCardSchemes->Array.includes(ele))
 }
 
 let getCardBrand = cardNumber => {
@@ -195,9 +193,9 @@ let getCardBrand = cardNumber => {
     }
     let patternsDict = CardPattern.cardPatterns
     if doesFallInRange(rupayRanges, card) {
-      "RuPay"
+      "RUPAY"
     } else if doesFallInRange(masterCardRanges, card) {
-      "Mastercard"
+      "MASTERCARD"
     } else {
       patternsDict
       ->Array.map(item => {
