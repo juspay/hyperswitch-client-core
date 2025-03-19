@@ -135,7 +135,6 @@ let getShippingDetails = (dict): SdkTypes.addressDetails => {
     ->Option.getOr(Dict.make())
 
   let fullName = getString(shippingDict, "addressee", "")
-  Console.log2("FullName", fullName)
 
   let nameArr = String.split(fullName, " ")
   let firstName = nameArr[0]->Option.getOr("")
