@@ -1,3 +1,10 @@
+## [1.0.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.2...v1.0.3) (2025-03-19)
+
+
+### Bug Fixes
+
+* co-badged card selection when priority scheme disabled ([#237](https://github.com/juspay/hyperswitch-client-core/issues/237)) ([e4bcede](https://github.com/juspay/hyperswitch-client-core/commit/e4bcedef082e890e384ffee887f289a47f0ce35d))
+
 ## [1.0.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.1...v1.0.2) (2025-03-17)
 
 
