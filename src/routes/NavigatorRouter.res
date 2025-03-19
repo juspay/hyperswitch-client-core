@@ -125,6 +125,7 @@ let make = () => {
     | Headless
     | NoView
     | PaymentMethodsManagement => React.null
+    | Authentication => React.null
     }
   }
 }

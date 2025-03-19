@@ -26,6 +26,8 @@ type nextAction = {
   type_: string,
   threeDsData?: threeDsData,
   session_token?: sessionToken,
+  merchantId?: string,
+  clientSecret?: string,
 }
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
@@ -77,6 +79,8 @@ let getNextAction = (dict, str) => {
       ->Option.getOr(Dict.make())
 
     {
+      clientSecret: getString(dict, "client_secret", ""),
+      merchantId: getString(dict, "merchant_id", ""),
       redirectToUrl: getString(json, "redirect_to_url", ""),
       type_: getString(json, "type", ""),
       threeDsData: {

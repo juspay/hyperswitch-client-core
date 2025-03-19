@@ -166,6 +166,80 @@ app.get('/netcetera-sdk-api-key', (req, res) => {
   }
 });
 
+app.get('/authenticate', async (req, res) => {
+  try {
+    const response = await fetch(
+      `https://auth.app.hyperswitch.io/api/authenticate`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': process.env.HYPERSWITCH_SECRET_KEY,
+        },
+        body: JSON.stringify({
+          amount: 100,
+          currency: 'PLN',
+          return_url: 'https://google.com',
+          payment_method: 'card',
+          payment_method_data: {
+            card: {
+              card_number: '5512459816707531',
+              card_exp_month: '04',
+              card_exp_year: '2029',
+              card_holder_name: 'John Smith',
+              card_cvc: '238',
+              card_network: 'Visa',
+            },
+          },
+          billing: {
+            address: {
+              line1: '1467',
+              line2: 'Harrison Street',
+              line3: 'Harrison Street',
+              city: 'San Fransico',
+              state: 'CA',
+              zip: '94122',
+              country: 'US',
+              first_name: 'John',
+              last_name: 'Doe',
+            },
+            phone: {
+              number: '8056594427',
+              country_code: '+91',
+            },
+          },
+          browser_info: {
+            user_agent:
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.110 Safari/537.36',
+            accept_header:
+              'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            language: 'nl-NL',
+            color_depth: 24,
+            screen_height: 723,
+            screen_width: 1536,
+            time_zone: 0,
+            java_enabled: true,
+            java_script_enabled: true,
+            ip_address: '125.0.0.1',
+          },
+        }),
+      },
+    );
+    const resp = await response.json();
+
+    res.send({
+      publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
+      clientSecret: resp.client_secret,
+    });
+  } catch (err) {
+    return res.status(400).send({
+      error: {
+        message: err.message,
+      },
+    });
+  }
+});
+
 app.listen(PORT, () =>
   console.log(`Node server listening at http://localhost:${PORT}`),
 );
