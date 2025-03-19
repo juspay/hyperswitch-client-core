@@ -181,3 +181,11 @@ let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
   let actionType = nextActionObj->Option.getOr({type_: "", redirectToUrl: ""})
   actionType.type_
 }
+
+let getCardNetworks = cardNetworks => {
+  switch cardNetworks {
+  | Some(cardNetworks) =>
+    cardNetworks->Array.map((item: PaymentMethodListType.card_networks) => item.card_network)
+  | None => []
+  }
+}

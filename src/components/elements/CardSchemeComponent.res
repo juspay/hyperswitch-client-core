@@ -46,21 +46,14 @@ module CardSchemeSelectionPopoverElement = {
 let make = (~cardNumber, ~cardNetworks) => {
   let (cardData, setCardData) = React.useContext(CardDataContext.cardDataContext)
 
-  let cardBrand = Validation.getCardBrand(cardNumber)
+  let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
+  let validCardBrand = Validation.getFirstValidCardScheme(~cardNumber, ~enabledCardSchemes)
+  let cardBrand = validCardBrand === "" ? Validation.getCardBrand(cardNumber) : validCardBrand
   let (cardBrandIcon, setCardBrandIcon) = React.useState(_ =>
     cardBrand === "" ? "waitcard" : cardBrand
   )
   let (dropDownIconWidth, _) = React.useState(_ => Animated.Value.create(0.))
 
-  let getCardNetworks = cardNetworks => {
-    switch cardNetworks {
-    | Some(cardNetworks) =>
-      cardNetworks->Array.map((item: PaymentMethodListType.card_networks) => item.card_network)
-    | None => []
-    }
-  }
-
-  let enabledCardSchemes = getCardNetworks(cardNetworks->Option.getOr(None))
   let matchedCardSchemes = cardNumber->Validation.clearSpaces->Validation.getAllMatchedCardSchemes
   let eligibleCardSchemes = Validation.getEligibleCoBadgedCardSchemes(
     ~matchedCardSchemes,
