@@ -28,6 +28,12 @@ jobs:
           ref: main
           path: android
 
+      - name: Sentry DSN
+        env:
+          SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+        run: |
+          sed -i "s|https://sentry@sentry.hyperswitch.io/3|$SENTRY_DSN|g" ./android/app/src/main/assets/hyperswitch.bundle
+        
       - name: Check android subrepo branch and commit message
         id: extract-libs
         working-directory: ./android

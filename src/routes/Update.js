@@ -49,7 +49,7 @@ const NewApp = props => {
 const SentryApp = React.memo(props => {
   initiateSentry(
     process.env.HYPERSWITCH_SENTRY_DSN ||
-      'https://1279f10869109bd8c60f13c26d9210ea@o4508930163474432.ingest.de.sentry.io/4508954991657040',
+      'https://sentry@sentry.hyperswitch.io/3',
   );
   return sentryReactNative.wrap(NewApp)(props);
 });
