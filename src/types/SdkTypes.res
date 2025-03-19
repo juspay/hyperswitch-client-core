@@ -262,6 +262,7 @@ type sdkState =
   | WidgetPaymentSheet
   | Headless
   | NoView
+  | Authentication
 
 let widgetToStrMapper = str => {
   switch str {
@@ -292,6 +293,7 @@ let sdkStateToStrMapper = sdkState => {
   | WidgetPaymentSheet => "WIDGET_PAYMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
+  | Authentication => "AUTHENTICATION"
   }
 }
 
@@ -308,6 +310,7 @@ type hyperParams = {
   os_type: option<string>,
   os_version: option<string>,
   deviceBrand: option<string>,
+  psd2ScaExemptionType: option<string>,
 }
 
 type nativeProp = {
@@ -856,7 +859,7 @@ let parseConfigurationDict = (configObj, from) => {
     paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
     savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
     displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
-    enablePartialLoading: getBool(configObj, "enablePartialLoading", false),
+    enablePartialLoading: getBool(configObj, "enablePartialLoading", true),
     // customer: switch customerDict {
     // | Some(obj) =>
     //   Some({
@@ -952,6 +955,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
     | "headless" => Headless
+    | "authentication" => Authentication
     | _ => NoView
     },
     configuration: parseConfigurationDict(configurationDict, from),
@@ -968,6 +972,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       os_type: getOptionString(hyperParams, "os_type"),
       os_version: getOptionString(hyperParams, "os_version"),
       deviceBrand: getOptionString(hyperParams, "deviceBrand"),
+      psd2ScaExemptionType: getOptionString(hyperParams, "psd2ScaExemptionType"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }

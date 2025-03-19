@@ -10,7 +10,7 @@ let make = (
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
+  let fetchAndRedirect = AllPaymentHooks.useAuthHook()
   // Custom context
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)

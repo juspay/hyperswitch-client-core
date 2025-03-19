@@ -42,7 +42,7 @@ let useErrorWarningValidationOnLoad = () => {
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
       | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
-      | NoView | PaymentMethodsManagement => ()
+      | NoView | PaymentMethodsManagement | Authentication => ()
       }
     } else if !isClientSecretValid {
       let dynamicStr = "ClientSecret is expected to be in format pay_******_secret_*****"
@@ -52,7 +52,7 @@ let useErrorWarningValidationOnLoad = () => {
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
       | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
-      | NoView | PaymentMethodsManagement => ()
+      | NoView | PaymentMethodsManagement | Authentication => ()
       }
     }
     // else if nativeProp.configuration.merchantDisplayName === "" {

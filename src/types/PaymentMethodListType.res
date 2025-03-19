@@ -100,11 +100,12 @@ type customer_acceptance = {
   online: online,
 }
 
-type mandate_data = {
-  customer_acceptance: customer_acceptance,
-}
+type mandate_data = {customer_acceptance: customer_acceptance}
 type redirectType = {
-  client_secret: string,
+  client_secret?: string,
+  psd2_sca_exemption_type?: string,
+  amount?: int,
+  currency?: string,
   return_url?: string,
   customer_id?: string,
   email?: string,

@@ -58,7 +58,7 @@ let useHandleSuccessFailure = () => {
   let exitWidget = HyperModule.useExitWidget()
   (~apiResStatus: error, ~closeSDK=true, ~reset=true, ()) => {
     switch nativeProp.sdkState {
-    | PaymentSheet | HostedCheckout | PaymentMethodsManagement =>
+    | PaymentSheet | HostedCheckout | PaymentMethodsManagement | Authentication =>
       if closeSDK {
         exit(apiResStatus, reset)
       }
@@ -416,6 +416,322 @@ let useRedirectHook = () => {
               )
             },
           )
+        }
+      | "third_party_sdk_session_token" => {
+          // TODO: add event loggers for analytics
+          let session_token = Option.getOr(nextAction, defaultNextAction).session_token
+          let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
+          switch session_token {
+          | Some(token) =>
+            Plaid.create({token: token.open_banking_session_token})
+            Plaid.open_(openProps)->ignore
+          | None => ()
+          }
+        }
+      | _ =>
+        switch status {
+        | "succeeded" =>
+          logger(
+            ~logType=INFO,
+            ~value="",
+            ~category=USER_EVENT,
+            ~eventName=PAYMENT_SUCCESS,
+            ~paymentMethod={paymentMethod},
+            ~paymentExperience?,
+            (),
+          )
+          setAllApiData({
+            ...allApiData,
+            additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+          })
+          responseCallback(
+            ~paymentStatus=PaymentSuccess,
+            ~status={status, message: "", code: "", type_: ""},
+          )
+        | "requires_capture"
+        | "processing"
+        | "requires_confirmation"
+        | "requires_merchant_action" => {
+            setAllApiData({
+              ...allApiData,
+              additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+            })
+            responseCallback(
+              ~paymentStatus=ProcessingPayments(None),
+              ~status={status, message: "", code: "", type_: ""},
+            )
+          }
+        | "requires_customer_action" => {
+            setAllApiData({
+              ...allApiData,
+              additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+            })
+            logger(
+              ~logType=INFO,
+              ~category=USER_EVENT,
+              ~value="",
+              ~internalMetadata=reUri,
+              ~eventName=REDIRECTING_USER,
+              ~paymentMethod,
+              (),
+            )
+            redirectioBrowserHook(
+              ~clientSecret,
+              ~publishableKey,
+              ~openUrl=reUri,
+              ~responseCallback,
+              ~errorCallback,
+              ~processor=body,
+            )
+          }
+        | statusVal =>
+          logger(
+            ~logType=ERROR,
+            ~value={statusVal ++ error.message->Option.getOr("")},
+            ~category=USER_EVENT,
+            ~eventName=PAYMENT_FAILED,
+            ~paymentMethod={paymentMethod},
+            ~paymentExperience?,
+            (),
+          )
+          setAllApiData({
+            ...allApiData,
+            additionalPMLData: {...allApiData.additionalPMLData, retryEnabled: None},
+          })
+          errorCallback(
+            ~errorMessage=error,
+            //~closeSDK={error.code == "IR_16" || error.code == "HE_00"},
+            ~closeSDK=true,
+            (),
+          )
+        }
+      }
+    }
+
+    switch allApiData.additionalPMLData.retryEnabled {
+    | Some({redirectUrl, processor}) =>
+      processor == body
+        ? retrievePayment(Payment, clientSecret, publishableKey)
+          ->Promise.then(res => {
+            if res == JSON.Encode.null {
+              errorCallback(~errorMessage={defaultConfirmError}, ~closeSDK=false, ())
+            } else {
+              let status = res->Utils.getDictFromJson->Utils.getString("status", "")
+              handleApiRes(
+                ~status,
+                ~reUri=redirectUrl,
+                ~error={
+                  code: "",
+                  message: "hardcoded retrieve payment error",
+                  type_: "",
+                  status: "failed",
+                },
+              )
+            }
+            Promise.resolve()
+          })
+          ->ignore
+        : {
+            apiLogWrapper(
+              ~logType=INFO,
+              ~eventName=CONFIRM_CALL_INIT,
+              ~url=uri,
+              ~statusCode="",
+              ~apiLogType=Request,
+              ~data=JSON.Encode.null,
+              (),
+            )
+            CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
+            ->Promise.then(data => {
+              let statusCode = data->Fetch.Response.status->string_of_int
+              if statusCode->String.charAt(0) === "2" {
+                apiLogWrapper(
+                  ~logType=INFO,
+                  ~eventName=CONFIRM_CALL,
+                  ~url=uri,
+                  ~statusCode,
+                  ~apiLogType=Response,
+                  ~data=JSON.Encode.null,
+                  (),
+                )
+                data->Fetch.Response.json
+              } else {
+                data
+                ->Fetch.Response.json
+                ->Promise.then(error => {
+                  let value =
+                    [
+                      ("url", uri->JSON.Encode.string),
+                      ("statusCode", statusCode->JSON.Encode.string),
+                      ("response", error),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+
+                  apiLogWrapper(
+                    ~logType=ERROR,
+                    ~eventName=CONFIRM_CALL,
+                    ~url=uri,
+                    ~statusCode,
+                    ~apiLogType=Response,
+                    ~data=value,
+                    (),
+                  )
+                  Promise.resolve(error)
+                })
+              }
+            })
+            ->Promise.then(jsonResponse => {
+              let {nextAction, status, error} = itemToObjMapper(jsonResponse->Utils.getDictFromJson)
+
+              handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error)
+              Promise.resolve()
+            })
+            ->Promise.catch(err => {
+              apiLogWrapper(
+                ~logType=ERROR,
+                ~eventName=CONFIRM_CALL,
+                ~url=uri,
+                ~statusCode="504",
+                ~apiLogType=NoResponse,
+                ~data=err->Utils.getError(`API call failed: ${uri}`),
+                (),
+              )
+              errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
+              Promise.resolve()
+            })
+            ->ignore
+          }
+
+    | _ => {
+        apiLogWrapper(
+          ~logType=INFO,
+          ~eventName=CONFIRM_CALL_INIT,
+          ~url=uri,
+          ~statusCode="",
+          ~apiLogType=Request,
+          ~data=JSON.Encode.null,
+          (),
+        )
+        CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
+        ->Promise.then(data => {
+          let statusCode = data->Fetch.Response.status->string_of_int
+          if statusCode->String.charAt(0) === "2" {
+            apiLogWrapper(
+              ~logType=INFO,
+              ~eventName=CONFIRM_CALL,
+              ~url=uri,
+              ~statusCode,
+              ~apiLogType=Response,
+              ~data=JSON.Encode.null,
+              (),
+            )
+            data->Fetch.Response.json
+          } else {
+            data
+            ->Fetch.Response.json
+            ->Promise.then(error => {
+              let value =
+                [
+                  ("url", uri->JSON.Encode.string),
+                  ("statusCode", statusCode->JSON.Encode.string),
+                  ("response", error),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object
+
+              apiLogWrapper(
+                ~logType=ERROR,
+                ~eventName=CONFIRM_CALL,
+                ~url=uri,
+                ~statusCode,
+                ~apiLogType=Err,
+                ~data=value,
+                (),
+              )
+              Promise.resolve(error)
+            })
+          }
+        })
+        ->Promise.then(jsonResponse => {
+          let confirmResponse = jsonResponse->Utils.getDictFromJson
+          let {nextAction, status, error} = itemToObjMapper(confirmResponse)
+
+          handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
+
+          Promise.resolve()
+        })
+        ->Promise.catch(err => {
+          apiLogWrapper(
+            ~logType=ERROR,
+            ~eventName=CONFIRM_CALL,
+            ~url=uri,
+            ~statusCode="504",
+            ~apiLogType=NoResponse,
+            ~data=err->Utils.getError(`API call failed: ${uri}`),
+            (),
+          )
+          errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
+          Promise.resolve()
+        })
+        ->ignore
+      }
+    }
+  }
+}
+
+let useAuthHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
+  let redirectioBrowserHook = useBrowserHook()
+  let retrievePayment = useRetrieveHook()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  let logger = LoggerHook.useLoggerHook()
+  let getOpenProps = PlaidHelperHook.usePlaidProps()
+
+  (
+    ~body: string,
+    ~publishableKey: string,
+    ~clientSecret: string,
+    ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
+    ~paymentMethod,
+    ~paymentExperience: option<string>=?,
+    ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
+    (),
+  ) => {
+    let uri = `https://auth.app.hyperswitch.io/api/authenticate`
+    let headers = Utils.getHeader(
+      "snd_ve2oZRGcFnEZFdIDUxXjL5ruqj6fIVpPZxJza7pOoyG7trqeCUMbGoFt7gvGVTyx",
+      nativeProp.hyperParams.appId,
+    )
+
+    let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
+      switch nextAction->PaymentUtils.getActionType {
+      | "three_ds_invoke" =>
+        switch nextAction {
+        | Some(nextAction) =>
+          HyperModule.launch3DS(
+            {
+              "publishableKey": publishableKey,
+              "clientSecret": nextAction.clientSecret,
+              "threeDsData": nextAction.threeDsData,
+              "merchantId": nextAction.merchantId,
+            }
+            ->JSON.stringifyAny
+            ->Option.getOr(""),
+            result => {
+              responseCallback(
+                ~paymentStatus=PaymentSuccess,
+                ~status={
+                  status: Utils.getString(result, "status", ""),
+                  message: Utils.getString(result, "message", ""),
+                  code: "",
+                  type_: "",
+                },
+              )
+            },
+          )
+        | None => ()
         }
       | "third_party_sdk_session_token" => {
           // TODO: add event loggers for analytics
