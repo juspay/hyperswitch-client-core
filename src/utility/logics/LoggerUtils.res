@@ -70,22 +70,26 @@ let logFileToObj = logFile => {
   ->Dict.fromArray
   ->JSON.Encode.object
 }
-let sendLogs = (logFile, uri, publishableKey, appId) => {
+let sendLogs = (logFile, uri: option<string>, publishableKey, appId) => {
   if WebKit.platform != #next {
-    let data = logFile->logFileToObj->JSON.stringify
-    CommonHooks.fetchApi(
-      ~uri,
-      ~method_=Post,
-      ~bodyStr=data,
-      ~headers=Utils.getHeader(publishableKey, appId),
-      ~mode=NoCORS,
-      (),
-    )
-    ->Promise.then(res => res->Fetch.Response.json)
-    ->Promise.catch(_ => {
-      Promise.resolve(JSON.Encode.null)
-    })
-    ->ignore
+    switch uri {
+    | Some("") | None => ()
+    | Some(uri) =>
+      let data = logFile->logFileToObj->JSON.stringify
+      CommonHooks.fetchApi(
+        ~uri,
+        ~method_=Post,
+        ~bodyStr=data,
+        ~headers=Utils.getHeader(publishableKey, appId),
+        ~mode=NoCORS,
+        (),
+      )
+      ->Promise.then(res => res->Fetch.Response.json)
+      ->Promise.catch(_ => {
+        Promise.resolve(JSON.Encode.null)
+      })
+      ->ignore
+    }
   }
 }
 
