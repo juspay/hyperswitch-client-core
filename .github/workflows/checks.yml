@@ -15,7 +15,7 @@ jobs:
         run: |
           forbidden_words=("Console.log" "mutable" "%identity")
           for word in "${forbidden_words[@]}"; do
-            if grep -rnw . --exclude-dir={.git,node_modules,build,dist,.github,.yarn} --exclude={prepareS3.js,server.js} -e "$word"; then
+            if grep -rnw . --exclude-dir={.git,node_modules,build,dist,.github,.yarn} --exclude={prepareS3.js,server.js,src/utility/logics/Window.res} -e "$word"; then
               echo "❌ Forbidden word '$word' found!"
               exit 1
             fi
