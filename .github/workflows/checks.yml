@@ -14,11 +14,14 @@ jobs:
       - name: Scan for forbidden words
         run: |
           forbidden_words=("Console.log" "mutable" "%identity")
-          for word in "${forbidden_words[@]}"; do
-            if grep -rnw . --exclude-dir={.git,node_modules,build,dist,.github,.yarn} --exclude={prepareS3.js,server.js,src/utility/logics/Window.res} -e "$word"; then
-              echo "❌ Forbidden word '$word' found!"
-              exit 1
-            fi
+          excluded_files=("prepareS3.js" "server.js" "src/utility/logics/Window.res")
+          find . -type f \( ! -path "*/.git/*" ! -path "*/node_modules/*" ! -path "*/build/*" ! -path "*/dist/*" ! -path "*/.github/*" ! -path "*/.yarn/*" \) | grep -v -E "$(IFS='|'; echo "${excluded_files[*]}")" | while read -r file; do
+            for word in "${forbidden_words[@]}"; do
+              if grep -Hn "$word" "$file"; then
+                echo "❌ Forbidden word '$word' found in $file!"
+                exit 1
+              fi
+            done
           done
 
   compile-rescript:
