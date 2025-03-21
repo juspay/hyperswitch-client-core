@@ -25,7 +25,6 @@ const compileNodeModules = [
   '@react-navigation/stack',
   '@rescript/react',
   'react-native',
-  'react-native-code-push',
   'react-native-gesture-handler',
   'react-native-safe-area-context',
   'react-native-screens',

@@ -13,7 +13,6 @@ let transpileModules = [
     '@sentry/react-native',
     'react-native',
     'react-native-web',
-    'react-native-code-push',
     'react-native-svg',
     'react-content-loader/native',
     'rescript'
