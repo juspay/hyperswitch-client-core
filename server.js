@@ -90,7 +90,7 @@ app.get('/create-payment-intent', async (req, res) => {
       clientSecret: paymentIntent.client_secret,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     return res.status(400).send({
       error: {
@@ -167,5 +167,5 @@ app.get('/netcetera-sdk-api-key', (req, res) => {
 });
 
 app.listen(PORT, () =>
-  console.log(`Node server listening at http://localhost:${PORT}`),
+  console.info(`Node server listening at http://localhost:${PORT}`),
 );
