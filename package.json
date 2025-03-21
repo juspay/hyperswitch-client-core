@@ -1,6 +1,6 @@
 {
   "name": "hyperswitch",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "scripts": {
     "start": "react-native start --reset-cache",
