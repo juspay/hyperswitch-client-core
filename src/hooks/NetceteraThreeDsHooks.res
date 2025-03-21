@@ -51,6 +51,7 @@ let useExternalThreeDs = () => {
 
   (
     ~baseUrl,
+    ~appId,
     ~netceteraSDKApiKey,
     ~clientSecret,
     ~publishableKey,
@@ -273,12 +274,16 @@ let useExternalThreeDs = () => {
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
+      let threeDSRequestorURL = getThreeDSRequestorURLForOOB(
+        challengeParams.threeDSRequestorURL,
+        appId,
+      )
       Promise.make((resolve, reject) => {
         Netcetera3dsModule.recieveChallengeParamsFromRN(
           challengeParams.acsSignedContent,
           challengeParams.acsRefNumber,
           challengeParams.acsTransactionId,
-          challengeParams.threeDSRequestorURL,
+          threeDSRequestorURL,
           challengeParams.threeDSServerTransId,
           status => {
             logger(
