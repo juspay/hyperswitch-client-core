@@ -1,3 +1,31 @@
+## [1.0.7](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.6...v1.0.7) (2025-03-21)
+
+
+### Bug Fixes
+
+* sentry dsn ([#240](https://github.com/juspay/hyperswitch-client-core/issues/240)) ([62b280a](https://github.com/juspay/hyperswitch-client-core/commit/62b280ab3221cdd00dacb938ab96a1988efbd813))
+
+## [1.0.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.5...v1.0.6) (2025-03-21)
+
+
+### Bug Fixes
+
+* removed samsung pay dependency ([11784d7](https://github.com/juspay/hyperswitch-client-core/commit/11784d728dd10b1a83eea550d0d92d6a5fb8546a))
+
+## [1.0.5](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.4...v1.0.5) (2025-03-21)
+
+
+### Bug Fixes
+
+* updated the regex for cartes Bancaires ([#241](https://github.com/juspay/hyperswitch-client-core/issues/241)) ([f1d7a5c](https://github.com/juspay/hyperswitch-client-core/commit/f1d7a5c00a33a877a2c32ae7f332fd93c04c3866))
+
+## [1.0.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.3...v1.0.4) (2025-03-21)
+
+
+### Bug Fixes
+
+* oob return url for netcetera android ([#246](https://github.com/juspay/hyperswitch-client-core/issues/246)) ([fef4c8f](https://github.com/juspay/hyperswitch-client-core/commit/fef4c8f5943115488ab70ed6d50c3d16247a0d7f))
+
 ## [1.0.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.2...v1.0.3) (2025-03-19)
 
 
