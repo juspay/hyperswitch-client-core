@@ -2,7 +2,6 @@ type logType = DEBUG | INFO | ERROR | WARNING
 type logCategory = API | USER_ERROR | USER_EVENT | MERCHANT_EVENT
 type logComponent = MOBILE
 type apiLogType = Request | Response | NoResponse | Err
-type codePushVersionFetched = CP_NOT_STARTED | CP_VERSION_LOADING | CP_VERSION_LOADED(string)
 type sdkVersionFetched =
   | PACKAGE_JSON_NOT_STARTED
   | PACKAGE_JSON_LOADING
