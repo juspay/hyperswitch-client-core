@@ -248,6 +248,11 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "selectCardBrand",
         defaultLocale.selectCardBrand,
       ),
+      mandatoryFieldText: Utils.getString(
+        res,
+        "mandatoryFieldText",
+        defaultLocale.mandatoryFieldText,
+      ),
     }
   | None => defaultLocale
   }

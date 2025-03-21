@@ -44,6 +44,7 @@ let make = (
     cardTextSizeAdjust,
     payNowButtonTextColor,
     errorTextInputColor,
+    errorMessageSpacing,
   } = ThemebasedStyle.useThemeBasedStyle()
   let fontFamily = FontFamily.useCustomFontFamily()
 
@@ -100,6 +101,7 @@ let make = (
         ~color={errorTextInputColor},
         ~fontFamily,
         ~fontSize=12. +. errorTextSizeAdjust,
+        ~marginTop=errorMessageSpacing->dp,
         (),
       ),
     ])
