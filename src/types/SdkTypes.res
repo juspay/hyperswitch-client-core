@@ -311,6 +311,7 @@ type hyperParams = {
   os_version: option<string>,
   deviceBrand: option<string>,
   psd2ScaExemptionType: option<string>,
+  debugApiKey: option<string>,
 }
 
 type nativeProp = {
@@ -973,6 +974,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       os_version: getOptionString(hyperParams, "os_version"),
       deviceBrand: getOptionString(hyperParams, "deviceBrand"),
       psd2ScaExemptionType: getOptionString(hyperParams, "psd2ScaExemptionType"),
+      debugApiKey: getOptionString(hyperParams, "debugApiKey"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }

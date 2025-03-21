@@ -78,9 +78,11 @@ let generateCardConfirmBody = (
 ): PaymentMethodListType.redirectType => {
   let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
   {
-    // client_secret: nativeProp.clientSecret,
-    amount: 100,
-    currency: "PLN",
+    client_secret: ?(
+      nativeProp.hyperParams.debugApiKey->Option.isNone ? Some(nativeProp.clientSecret) : None
+    ),
+    amount: ?(nativeProp.hyperParams.debugApiKey->Option.isSome ? Some(100) : None),
+    currency: ?(nativeProp.hyperParams.debugApiKey->Option.isSome ? Some("PLN") : None),
     psd2_sca_exemption_type: ?nativeProp.hyperParams.psd2ScaExemptionType,
     return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
     payment_method: prop.payment_method,

@@ -701,7 +701,7 @@ let useAuthHook = () => {
   ) => {
     let uri = `https://auth.app.hyperswitch.io/api/authenticate`
     let headers = Utils.getHeader(
-      "snd_ve2oZRGcFnEZFdIDUxXjL5ruqj6fIVpPZxJza7pOoyG7trqeCUMbGoFt7gvGVTyx",
+      nativeProp.hyperParams.debugApiKey->Option.getOr(publishableKey),
       nativeProp.hyperParams.appId,
     )
 
