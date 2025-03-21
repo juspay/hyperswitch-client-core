@@ -1,3 +1,10 @@
+## [1.0.8](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.7...v1.0.8) (2025-03-21)
+
+
+### Bug Fixes
+
+* sentry ([#250](https://github.com/juspay/hyperswitch-client-core/issues/250)) ([d6f4ac2](https://github.com/juspay/hyperswitch-client-core/commit/d6f4ac253c23d0bfc63df21ddeca15f04bdf37a5))
+
 ## [1.0.7](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.6...v1.0.7) (2025-03-21)
 
 
