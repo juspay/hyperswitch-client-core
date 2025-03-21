@@ -50,6 +50,7 @@ const SentryApp = React.memo(props => {
     initiateSentry(
       process.env.HYPERSWITCH_SENTRY_DSN ||
         'https://c9e476046dd766abc5ed73583e8f6b69@sentry.hyperswitch.io/3',
+        process.env.SENTRY_ENVIRONMENT || 'sandbox',
     );
     return sentryReactNative.wrap(NewApp)(props);
 });
