@@ -1,8 +1,8 @@
 {
   "config": {
     "version": "v1",
-    "release_config_timeout": 5000,
-    "package_timeout": 5000,
+    "release_config_timeout": 10000,
+    "package_timeout": 10000,
     "properties": {}
   },
   "package": {
