@@ -18,6 +18,7 @@ let make = () => {
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let packageVersion = LoggerUtils.getClientCoreVersionNoFromRef()
   let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
@@ -43,5 +44,12 @@ let make = () => {
     }}
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=15. />
+    {nativeProp.configuration.showVersionInfo
+      ? <TextWrapper
+          textType=TextWrapper.SubheadingBold
+          overrideStyle={Some(ReactNative.Style.textStyle(~textAlign=#right, ()))}>
+          {("v" ++ packageVersion)->React.string}
+        </TextWrapper>
+      : React.null}
   </FullScreenSheetWrapper>
 }
