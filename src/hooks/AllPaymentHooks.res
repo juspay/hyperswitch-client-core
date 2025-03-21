@@ -396,6 +396,7 @@ let useRedirectHook = () => {
 
           handleNativeThreeDS(
             ~baseUrl,
+            ~appId=nativeProp.hyperParams.appId,
             ~netceteraSDKApiKey,
             ~clientSecret,
             ~publishableKey,
