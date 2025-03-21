@@ -1,3 +1,10 @@
+## [1.0.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.3...v1.0.4) (2025-03-21)
+
+
+### Bug Fixes
+
+* oob return url for netcetera android ([#246](https://github.com/juspay/hyperswitch-client-core/issues/246)) ([fef4c8f](https://github.com/juspay/hyperswitch-client-core/commit/fef4c8f5943115488ab70ed6d50c3d16247a0d7f))
+
 ## [1.0.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.2...v1.0.3) (2025-03-19)
 
 
