@@ -1,3 +1,10 @@
+## [1.0.9](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.8...v1.0.9) (2025-03-21)
+
+
+### Bug Fixes
+
+* blocked logs for on prem merchants ([#204](https://github.com/juspay/hyperswitch-client-core/issues/204)) ([59372db](https://github.com/juspay/hyperswitch-client-core/commit/59372db8e3fc3796c8d21c6fa6daa3006886cfd5))
+
 ## [1.0.8](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.7...v1.0.8) (2025-03-21)
 
 
