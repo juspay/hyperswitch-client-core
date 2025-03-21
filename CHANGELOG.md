@@ -1,3 +1,10 @@
+## [1.0.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.5...v1.0.6) (2025-03-21)
+
+
+### Bug Fixes
+
+* removed samsung pay dependency ([11784d7](https://github.com/juspay/hyperswitch-client-core/commit/11784d728dd10b1a83eea550d0d92d6a5fb8546a))
+
 ## [1.0.5](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.4...v1.0.5) (2025-03-21)
 
 
