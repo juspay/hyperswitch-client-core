@@ -68,7 +68,7 @@ let authResponseItemToObjMapper = (dict): authResponse => {
         acsTransactionId: dict->Utils.getDictFromJson->Utils.getString("acs_trans_id", ""),
         threeDSRequestorURL: dict
         ->Utils.getDictFromJson
-        ->Utils.getString("three_ds_requestor_url", "https://example.com/3ds-requestor-url"),
+        ->Utils.getString("three_ds_requestor_url", ""),
         threeDSServerTransId: dict
         ->Utils.getDictFromJson
         ->Utils.getString("three_dsserver_trans_id", ""),
