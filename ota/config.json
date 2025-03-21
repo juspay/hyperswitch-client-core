@@ -1,0 +1,19 @@
+{
+  "config": {
+    "version": "v1",
+    "release_config_timeout": 10000,
+    "package_timeout": 10000,
+    "properties": {}
+  },
+  "package": {
+    "name": "sdk",
+    "version": "v1.0.0",
+    "properties": {
+      "manifest": {},
+      "manifest_hash": {}
+    },
+    "index": "",
+    "splits": []
+  },
+  "resources": {}
+}
