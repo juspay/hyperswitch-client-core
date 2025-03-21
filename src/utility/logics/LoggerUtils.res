@@ -4,7 +4,6 @@ let eventToStrMapper = (eventName: eventName) => {
   (eventName :> string)
 }
 
-let codePushVersionRef = ref(CP_NOT_STARTED)
 let sdkVersionRef = ref(PACKAGE_JSON_NOT_STARTED)
 let logFileToObj = logFile => {
   [
@@ -34,7 +33,7 @@ let logFileToObj = logFile => {
       }->JSON.Encode.string,
     ),
     ("version", logFile.version->JSON.Encode.string), // repoversion of orca-android
-    ("code_push_version", logFile.codePushVersion->JSON.Encode.string),
+    ("code_push_version", logFile.codePushVersion->JSON.Encode.string), // replace with ota version
     ("client_core_version", logFile.clientCoreVersion->JSON.Encode.string),
     ("value", logFile.value->JSON.Encode.string),
     ("internal_metadata", logFile.internalMetadata->JSON.Encode.string),
@@ -87,31 +86,6 @@ let sendLogs = (logFile, uri, publishableKey, appId) => {
       Promise.resolve(JSON.Encode.null)
     })
     ->ignore
-  }
-}
-
-let getGetPushVersion = () => {
-  if codePushVersionRef.contents == CP_NOT_STARTED {
-    codePushVersionRef := CP_VERSION_LOADING
-    CodePushModule.getUpdateMetaData()
-    ->Promise.then(res => {
-      let codePushMetaData =
-        res
-        ->Nullable.fromOption
-        ->Nullable.toOption
-        ->Option.getOr({appVersion: "", label: "NOT_AVAILABLE"})
-
-      codePushVersionRef := CP_VERSION_LOADED(codePushMetaData.label)
-      Promise.resolve()
-    })
-    ->ignore
-  }
-}
-
-let getCodePushVersionNoFromRef = () => {
-  switch codePushVersionRef.contents {
-  | CP_VERSION_LOADED(version) => version
-  | _ => "loading"
   }
 }
 
