@@ -3,6 +3,7 @@ type instrumentation = unit
 
 type sentryInitArg = {
   dsn: string,
+  environment: string,
   integrations?: array<integration>,
   tracesSampleRate: float,
   tracePropagationTargets?: array<string>,
@@ -73,7 +74,7 @@ module ErrorBoundary = {
   }
 }
 
-let initiateSentry = (~dsn: option<string>) => {
+let initiateSentry = (~dsn: option<string>, ~environment: string) => {
   try {
     let integrations =
       ReactNative.Platform.os === #web
@@ -90,6 +91,7 @@ let initiateSentry = (~dsn: option<string>) => {
     | Some(dsn) =>
       sentryReactNative.init({
         dsn,
+        environment,
         integrations,
         tracesSampleRate: 1.0,
       })
