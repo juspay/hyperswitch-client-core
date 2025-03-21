@@ -68,7 +68,7 @@ let logWrapper = (
     timestamp: timestamp->Float.toString,
     sessionId: "",
     version,
-    codePushVersion: LoggerUtils.getCodePushVersionNoFromRef(),
+    codePushVersion: LoggerUtils.getClientCoreVersionNoFromRef(),
     clientCoreVersion: LoggerUtils.getClientCoreVersionNoFromRef(),
     component: MOBILE,
     value: value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
