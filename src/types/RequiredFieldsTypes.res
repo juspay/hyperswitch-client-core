@@ -233,7 +233,7 @@ let getErrorMsg = (
   | AddressCity => localeObject.cityEmptyText
   | AddressPincode => localeObject.postalCodeEmptyText
   | Email => localeObject.emailEmptyText
-  | _ => localeObject.requiredText
+  | _ => localeObject.mandatoryFieldText
   }
 }
 let numberOfDigitsValidation = (
@@ -247,9 +247,9 @@ let numberOfDigitsValidation = (
       None
     } else {
       Some(
-        localeObject.enterValidDigitsText ++
+        localeObject.enterValidDigitsText ++ " " ++
         digits->Int.toString ++
-        localeObject.digitsText ++
+        localeObject.digitsText ++ " " ++
         display_name->Option.getOr("")->Utils.toCamelCase,
       )
     }
@@ -379,7 +379,7 @@ let useGetPlaceholder = (
     | AddressState => localeObject.stateLabel
     | AddressCountry(_) => localeObject.countryLabel
     | Currency(_) => localeObject.currencyLabel
-    | InfoElement => localeObject.requiredText
+    | InfoElement => localeObject.mandatoryFieldText
     // | ShippingCountry(_) => localeObject.countryLabel
     // | ShippingAddressLine1 => localeObject.line1Placeholder
     // | ShippingAddressLine2 => localeObject.line2Placeholder
