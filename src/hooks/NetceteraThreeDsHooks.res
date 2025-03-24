@@ -274,8 +274,8 @@ let useExternalThreeDs = () => {
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
-      let threeDSRequestorURL = getThreeDSRequestorURLForOOB(
-        challengeParams.threeDSRequestorURL,
+      let threeDSAppRequestorURL = getThreeDSRequestorURLForOOB(
+        challengeParams.threeDSRequestorAppURL,
         appId,
       )
       Promise.make((resolve, reject) => {
@@ -283,7 +283,6 @@ let useExternalThreeDs = () => {
           challengeParams.acsSignedContent,
           challengeParams.acsRefNumber,
           challengeParams.acsTransactionId,
-          threeDSRequestorURL,
           challengeParams.threeDSServerTransId,
           status => {
             logger(
@@ -294,24 +293,23 @@ let useExternalThreeDs = () => {
               (),
             )
             if status->isStatusSuccess {
-              Netcetera3dsModule.generateChallenge(
-                status => {
-                  logger(
-                    ~logType=INFO,
-                    ~value=status->JSON.stringifyAny->Option.getOr(""),
-                    ~category=USER_EVENT,
-                    ~eventName=NETCETERA_SDK,
-                    (),
-                  )
+              Netcetera3dsModule.generateChallenge(status => {
+                logger(
+                  ~logType=INFO,
+                  ~value=status->JSON.stringifyAny->Option.getOr(""),
+                  ~category=USER_EVENT,
+                  ~eventName=NETCETERA_SDK,
+                  (),
+                )
 
-                  resolve()
-                },
-              )
+                resolve()
+              })
             } else {
               retrieveAndShowStatus()
               reject()
             }
           },
+          threeDSAppRequestorURL,
         )
       })
     }
