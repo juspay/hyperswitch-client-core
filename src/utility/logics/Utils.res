@@ -314,15 +314,25 @@ let getArrofJsonString = (arr: array<string>) => {
   arr->Array.map(item => item->JSON.Encode.string)
 }
 
-let getReturnUrl = (~appId, ~appURL=None) => {
+type appURL = Null | NotSet | Value(string)
+
+let getReturnUrl = (~appId, ~appURL=NotSet) => {
   switch WebKit.platform {
   | #android =>
-    switch (appURL, appId) {
-    | (Some(_), Some(id)) => Some(id ++ ".hyperswitch://")
+    switch (appId, appURL) {
+    | (Some(id), NotSet | Value(_)) => Some(id ++ ".hyperswitch://")
     | _ => None
     }
-  | #ios => appURL
-  | _ => Some(appURL->Option.getOr(Window.location.href))
+  | #ios =>
+    switch appURL {
+    | Value(url) => url->Some
+    | _ => None
+    }
+  | _ =>
+    switch appURL {
+    | Value(url) => url->Some
+    | _ => Window.location.href->Some
+    }
   }
 }
 

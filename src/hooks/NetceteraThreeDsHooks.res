@@ -275,7 +275,10 @@ let useExternalThreeDs = () => {
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
       let threeDSRequestorAppURL = Utils.getReturnUrl(
-        ~appURL=challengeParams.threeDSRequestorAppURL,
+        ~appURL=switch challengeParams.threeDSRequestorAppURL {
+        | Some(url) => Value(url)
+        | None => Null
+        },
         ~appId,
       )
       Promise.make((resolve, reject) => {
