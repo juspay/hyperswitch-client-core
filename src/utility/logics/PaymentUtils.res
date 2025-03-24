@@ -47,12 +47,13 @@ let generatePaymentMethodData = (
         (
           "card_network",
           switch cardData.selectedCoBadgedCardBrand {
-            | Some(selectedCoBadgedCardBrand) => selectedCoBadgedCardBrand->JSON.Encode.string
-            | None => switch cardData.cardBrand {
-              | "" => JSON.Encode.null
-              | cardBrand => cardBrand->JSON.Encode.string
+          | Some(selectedCoBadgedCardBrand) => selectedCoBadgedCardBrand->JSON.Encode.string
+          | None =>
+            switch cardData.cardBrand {
+            | "" => JSON.Encode.null
+            | cardBrand => cardBrand->JSON.Encode.string
             }
-          }
+          },
         ),
       ]
       ->Dict.fromArray
@@ -78,7 +79,7 @@ let generateCardConfirmBody = (
   let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
   {
     client_secret: nativeProp.clientSecret,
-    return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
+    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
     connector: ?switch prop.card_networks {
