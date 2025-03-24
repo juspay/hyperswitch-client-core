@@ -274,7 +274,7 @@ let useExternalThreeDs = () => {
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
-      let threeDSRequestorAppURL = getThreeDSRequestorURLForOOB(
+      let threeDSRequestorAppURL = getThreeDSRequestorAppURL(
         challengeParams.threeDSRequestorAppURL,
         appId,
       )

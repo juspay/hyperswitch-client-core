@@ -97,7 +97,7 @@ let sdkEnvironmentToStrMapper = (env: GlobalVars.envType) => {
   }
 }
 
-let getThreeDSRequestorURLForOOB = (threeDSRequestorURLFromChallengeParams, appId) => {
+let getThreeDSRequestorAppURL = (threeDSRequestorURLFromChallengeParams, appId) => {
   let hsReturnURL = Utils.getReturnUrl(appId)
   ReactNative.Platform.os == #android && threeDSRequestorURLFromChallengeParams->Option.isSome
     ? hsReturnURL
