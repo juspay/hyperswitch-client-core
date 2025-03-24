@@ -1,3 +1,10 @@
+## [1.0.10](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.9...v1.0.10) (2025-03-24)
+
+
+### Bug Fixes
+
+* conditionally overwrite threeDSAppRequestorURL for Android ([#249](https://github.com/juspay/hyperswitch-client-core/issues/249)) ([e79664b](https://github.com/juspay/hyperswitch-client-core/commit/e79664b23b4567108fcd54378ebb56d051344def))
+
 ## [1.0.9](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.8...v1.0.9) (2025-03-21)
 
 
