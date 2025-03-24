@@ -274,7 +274,7 @@ let useExternalThreeDs = () => {
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
-      let threeDSAppRequestorURL = getThreeDSRequestorURLForOOB(
+      let threeDSRequestorAppURL = getThreeDSRequestorURLForOOB(
         challengeParams.threeDSRequestorAppURL,
         appId,
       )
@@ -287,7 +287,13 @@ let useExternalThreeDs = () => {
           status => {
             logger(
               ~logType=INFO,
-              ~value=status->JSON.stringifyAny->Option.getOr(""),
+              ~value={
+                "status": status.status,
+                "message": status.message,
+                "threeDSRequestorAppURL": threeDSRequestorAppURL,
+              }
+              ->JSON.stringifyAny
+              ->Option.getOr(""),
               ~category=USER_EVENT,
               ~eventName=NETCETERA_SDK,
               (),
@@ -309,7 +315,7 @@ let useExternalThreeDs = () => {
               reject()
             }
           },
-          threeDSAppRequestorURL,
+          threeDSRequestorAppURL,
         )
       })
     }
