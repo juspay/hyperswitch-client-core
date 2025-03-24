@@ -314,13 +314,26 @@ let getArrofJsonString = (arr: array<string>) => {
   arr->Array.map(item => item->JSON.Encode.string)
 }
 
-let getReturnUrl = appId => {
-  WebKit.platform === #web || WebKit.platform === #iosWebView || WebKit.platform === #androidWebView
-    ? Some(Window.location.href)
-    : switch appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | None => None
-      }
+type appURL = Null | NotSet | Value(string)
+
+let getReturnUrl = (~appId, ~appURL=NotSet) => {
+  switch WebKit.platform {
+  | #android =>
+    switch (appId, appURL) {
+    | (Some(id), NotSet | Value(_)) => Some(id ++ ".hyperswitch://")
+    | _ => None
+    }
+  | #ios =>
+    switch appURL {
+    | Value(url) => url->Some
+    | _ => None
+    }
+  | _ =>
+    switch appURL {
+    | Value(url) => url->Some
+    | _ => Window.location.href->Some
+    }
+  }
 }
 
 let getStringFromRecord = record => record->JSON.stringifyAny->Option.getOr("")

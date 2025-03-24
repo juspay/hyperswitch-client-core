@@ -274,44 +274,51 @@ let useExternalThreeDs = () => {
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
-      let threeDSRequestorURL = getThreeDSRequestorURLForOOB(
-        challengeParams.threeDSRequestorURL,
-        appId,
+      let threeDSRequestorAppURL = Utils.getReturnUrl(
+        ~appURL=switch challengeParams.threeDSRequestorAppURL {
+        | Some(url) => Value(url)
+        | None => Null
+        },
+        ~appId,
       )
       Promise.make((resolve, reject) => {
         Netcetera3dsModule.recieveChallengeParamsFromRN(
           challengeParams.acsSignedContent,
           challengeParams.acsRefNumber,
           challengeParams.acsTransactionId,
-          threeDSRequestorURL,
           challengeParams.threeDSServerTransId,
           status => {
             logger(
               ~logType=INFO,
-              ~value=status->JSON.stringifyAny->Option.getOr(""),
+              ~value={
+                "status": status.status,
+                "message": status.message,
+                "threeDSRequestorAppURL": threeDSRequestorAppURL,
+              }
+              ->JSON.stringifyAny
+              ->Option.getOr(""),
               ~category=USER_EVENT,
               ~eventName=NETCETERA_SDK,
               (),
             )
             if status->isStatusSuccess {
-              Netcetera3dsModule.generateChallenge(
-                status => {
-                  logger(
-                    ~logType=INFO,
-                    ~value=status->JSON.stringifyAny->Option.getOr(""),
-                    ~category=USER_EVENT,
-                    ~eventName=NETCETERA_SDK,
-                    (),
-                  )
+              Netcetera3dsModule.generateChallenge(status => {
+                logger(
+                  ~logType=INFO,
+                  ~value=status->JSON.stringifyAny->Option.getOr(""),
+                  ~category=USER_EVENT,
+                  ~eventName=NETCETERA_SDK,
+                  (),
+                )
 
-                  resolve()
-                },
-              )
+                resolve()
+              })
             } else {
               retrieveAndShowStatus()
               reject()
             }
           },
+          threeDSRequestorAppURL,
         )
       })
     }
