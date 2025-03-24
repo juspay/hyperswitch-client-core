@@ -140,7 +140,7 @@ module RenderField = {
                 ? (
                     JSON.Encode.null,
                     isBillingFields
-                      ? Some(localeObject.requiredText)
+                      ? Some(localeObject.mandatoryFieldText)
                       : Some(localeObject.cardHolderNameRequiredText),
                   )
                 : (
