@@ -250,7 +250,7 @@ let numberOfDigitsValidation = (
         localeObject.enterValidDigitsText ++ " " ++
         digits->Int.toString ++
         localeObject.digitsText ++ " " ++
-        display_name->Option.getOr("")->Utils.toCamelCase,
+        display_name->Option.getOr("")->Utils.underscoresToSpaces,
       )
     }
   } else {
@@ -286,7 +286,7 @@ let checkIsValid = (
   }
 }
 
-let onlyDigits_restrictsChars = (
+let allowOnlyDigits = (
   ~text,
   ~fieldType,
   ~prev,
@@ -318,6 +318,8 @@ let onlyDigits_restrictsChars = (
 let getKeyboardType = (~field_type: paymentMethodsFields) => {
   switch field_type {
   | Email => #"email-address"
+  | AccountNumber => #"number-pad"
+  | BSBNumber => #"number-pad"
   | _ => #default
   }
 }
