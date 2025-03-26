@@ -54,38 +54,60 @@ let defaultProps = {
   },
   country: 'US',
   type: 'payment',
-};
+};const TRUSTED_ORIGINS = ['http://localhost:8081', 'https://your-production-url.com']; // Add trusted origins
 
 const initReactNativeWeb = async () => {
   const createProps = async () => {
-    let response = await fetch('http://localhost:5252/create-payment-intent');
-    const data = await response.json();
-    defaultProps.publishableKey = data.publishableKey;
-    defaultProps.clientSecret = data.clientSecret;
-    defaultProps.local = true;
-    document.querySelector('iframe').contentWindow.postMessage(
-      JSON.stringify({
-        initialProps: {
-          props: defaultProps,
-        },
-      }),
-      '*',
-    );
+    try {
+      let response = await fetch('http://localhost:5252/create-payment-intent');
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      const data = await response.json();
+      defaultProps.publishableKey = data.publishableKey;
+      defaultProps.clientSecret = data.clientSecret;
+      defaultProps.local = true;
+
+      const iframe = document.querySelector('iframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({ initialProps: { props: defaultProps } }),
+          TRUSTED_ORIGINS[0]
+        );
+      } else {
+        console.error('Iframe not found or inaccessible.');
+      }
+    } catch (error) {
+      console.error('Error fetching payment intent:', error);
+    }
   };
 
-  const handleMessage = event => {
+  const handleMessage = (event) => {
+    if (!TRUSTED_ORIGINS.includes(event.origin)) {
+      console.warn(`Blocked message from untrusted origin: ${event.origin}`);
+      return;
+    }
+
     try {
       let data = JSON.parse(event.data);
+      
       if (data.sdkLoaded) {
         createProps();
       }
       if (data.status) {
-        document.querySelector('iframe').style.display = 'none';
-        document.getElementById('status').innerHTML = `Status: ${data.status} ${
-          data.message ? 'Message: ' + data.message : ''
-        }`;
+        const iframe = document.querySelector('iframe');
+        if (iframe) iframe.style.display = 'none';
+
+        const statusElement = document.getElementById('status');
+        if (statusElement) {
+          statusElement.textContent = `Status: ${data.status} ${data.message ? 'Message: ' + data.message : ''}`;
+        } else {
+          console.error('Status element not found.');
+        }
       }
-    } catch (ex) {}
+    } catch (error) {
+      console.error('Error processing message:', error);
+    }
   };
 
   window.addEventListener('message', handleMessage);

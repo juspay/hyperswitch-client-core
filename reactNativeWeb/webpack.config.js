@@ -91,6 +91,7 @@ module.exports = {
   devtool: 'source-map',
   devServer: {
     hot: true,
+    port: 8081,
   },
   resolve: {
     extensions: [
