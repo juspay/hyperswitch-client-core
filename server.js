@@ -1,13 +1,25 @@
 const express = require('express');
 const cors = require('cors');
+const crypto = require('crypto');
+
 const app = express();
-app.use(cors());
+app.use(
+  cors({
+    credentials: true,
+  }),
+);
 app.use(express.static('./dist'));
 app.use(express.json());
 
 require('dotenv').config({path: './.env'});
 
 const PORT = 5252;
+
+var csrfToken = crypto.randomBytes(32).toString('hex');
+
+app.get('/csrf-token', (req, res) => {
+  res.json({csrfToken});
+});
 
 async function createPaymentIntent(request) {
   try {
@@ -41,6 +53,12 @@ async function createPaymentIntent(request) {
 }
 
 app.get('/create-payment-intent', async (req, res) => {
+  if (
+    !req.headers['x-csrf-token'] ||
+    req.headers['x-csrf-token'] !== csrfToken
+  ) {
+    return res.status(403).json({error: 'Invalid CSRF token'});
+  }
   try {
     const createPaymentBody = {
       amount: 2999,
@@ -101,6 +119,13 @@ app.get('/create-payment-intent', async (req, res) => {
 });
 
 app.get('/create-ephemeral-key', async (req, res) => {
+  if (
+    !req.headers['x-csrf-token'] ||
+    req.headers['x-csrf-token'] !== csrfToken
+  ) {
+    return res.status(403).json({error: 'Invalid CSRF token'});
+  }
+
   try {
     const response = await fetch(
       `https://sandbox.hyperswitch.io/ephemeral_keys`,
@@ -128,6 +153,13 @@ app.get('/create-ephemeral-key', async (req, res) => {
 });
 
 app.get('/payment_methods', async (req, res) => {
+  if (
+    !req.headers['x-csrf-token'] ||
+    req.headers['x-csrf-token'] !== csrfToken
+  ) {
+    return res.status(403).json({error: 'Invalid CSRF token'});
+  }
+
   try {
     const response = await fetch(
       `https://sandbox.hyperswitch.io/payment_methods`,
@@ -158,6 +190,13 @@ app.get('/payment_methods', async (req, res) => {
 });
 
 app.get('/netcetera-sdk-api-key', (req, res) => {
+  if (
+    !req.headers['x-csrf-token'] ||
+    req.headers['x-csrf-token'] !== csrfToken
+  ) {
+    return res.status(403).json({error: 'Invalid CSRF token'});
+  }
+
   const apiKey = process.env.NETCETERA_SDK_API_KEY;
   if (apiKey) {
     res.status(200).send({netceteraApiKey: apiKey});
