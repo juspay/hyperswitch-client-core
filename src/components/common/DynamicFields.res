@@ -184,7 +184,7 @@ module RenderField = {
     }
     let onChange = text => {
       setVal(prev =>
-        RequiredFieldsTypes.onlyDigits_restrictsChars(
+        RequiredFieldsTypes.allowOnlyDigits(
           ~text,
           ~fieldType=required_fields_type.field_type,
           ~prev,

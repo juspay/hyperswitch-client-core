@@ -218,6 +218,11 @@ let getStringFromJson = (json, default) => {
   json->JSON.Decode.string->Option.getOr(default)
 }
 
+let underscoresToSpaces = str => {
+    str
+    ->String.replaceAll("_", " ")
+}
+
 let toCamelCase = str => {
   if str->String.includes(":") {
     str
