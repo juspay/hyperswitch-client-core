@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.10...v1.1.0) (2025-03-26)
+
+
+### Features
+
+* **cobadge card, netecetera, hyperota and other changes:** new features ([284e2a0](https://github.com/juspay/hyperswitch-client-core/commit/284e2a08bb0ea905b008a93d0df05e9670dd4ae2))
+
 ## [1.0.10](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.9...v1.0.10) (2025-03-24)
 
 
