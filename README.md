@@ -66,14 +66,6 @@ The following table outlines the available configuration variables, their values
 
 `HyperswitchSource` defaults to `LocalHosted`.
 
-**Note**: To run the SDK on a physical iOS device, ensure that your Mac and the iOS device are connected to the same Wi-Fi network. Additionally, you'll need to provide your Mac's IP address as the value for the HyperswitchSourceIP key, as shown in the following table:
-
-| Key                   | Value      |
-| :-------------------- | :--------- |
-| `HyperswitchSourceIP` | `10.0.0.1` |
-
-Replace `10.0.0.1` with your actual Mac's IP address.
-
 ### How to set variables
 
 During local development, you may need to set specific variables to configure the SDK's behavior. You can set these variables using Xcode, command line interface (CLI), or any text editor. All changes will be made inside ios folder(submodule).
@@ -100,8 +92,6 @@ If you prefer a more manual approach, you can open the Info.plist file in a text
 ```
 <key>HyperswitchSource</key>
 <string>LocalHosted</string>
-<key>HyperswitchSourceIP</key>
-<string>10.0.0.1</string>
 ```
 
 ## Integration
