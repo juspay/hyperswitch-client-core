@@ -47,7 +47,7 @@ let make = (
     None
   }, [isModalVisible])
   <View>
-    <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+    <CustomTouchableOpacity disabled activeOpacity=1. onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
         state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
         | Some(y) => y.label
