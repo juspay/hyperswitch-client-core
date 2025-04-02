@@ -81,10 +81,11 @@ let make = (
       animationType=#slide
       onShow={() => {
         let _ = setTimeout(() => {
-          if searchInputRef.current != Nullable.null {
-            searchInputRef.current->Nullable.getUnsafe->TextInputElement.focus
+          switch searchInputRef.current->Nullable.toOption{
+          | Some(input) => input->TextInputElement.focus
+          | None => ()
           }
-        }, 500)
+        }, 300)
       }}>
       <SafeAreaView />
       <View style={array([viewStyle(~flex=1., ~paddingTop=24.->dp, ()), transparentBG])}>
