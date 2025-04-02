@@ -31,6 +31,7 @@ let make = (
     None
   }, [isCountryStateFields])
   let pickerRef = React.useRef(Nullable.null)
+  let searchInputRef = React.useRef(Nullable.null)
   let {
     bgColor,
     component,
@@ -74,7 +75,17 @@ let make = (
         pointerEvents={#none}
       />
     </CustomTouchableOpacity>
-    <Modal visible={isModalVisible} transparent={true} animationType=#slide>
+    <Modal
+      visible={isModalVisible}
+      transparent={true}
+      animationType=#slide
+      onShow={() => {
+        let _ = setTimeout(() => {
+          if searchInputRef.current != Nullable.null {
+            searchInputRef.current->Nullable.getUnsafe->TextInputElement.focus
+          }
+        }, 500)
+      }}>
       <SafeAreaView />
       <View style={array([viewStyle(~flex=1., ~paddingTop=24.->dp, ()), transparentBG])}>
         <View
@@ -108,7 +119,8 @@ let make = (
             </CustomTouchableOpacity>
           </View>
           <CustomInput
-            placeholder={"Search " ++ placeholderText} // MARK: add Search to locale
+            reference={Some(searchInputRef)}
+            placeholder={"Search " ++ placeholderText}
             state={searchInput->Option.getOr("")}
             setState={val => {
               setSearchInput(_ => Some(val))
