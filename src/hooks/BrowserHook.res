@@ -1,3 +1,5 @@
+open ReactNative
+
 type animations = {
   startEnter: string,
   startExit: string,
@@ -95,7 +97,7 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
             },
             {
               // iOS Properties
-              ephemeralWebSession: false,
+              ephemeralWebSession: Platform.os === #ios ? true : false,
               dismissButtonStyle: "cancel",
               preferredBarTintColor: "#453AA4",
               preferredControlTintColor: "white",
