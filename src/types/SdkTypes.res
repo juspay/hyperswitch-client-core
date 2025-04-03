@@ -40,6 +40,7 @@ let walletNameMapper = str => {
   | "google_pay" => "Google Pay"
   | "apple_pay" => "Apple Pay"
   | "paypal" => "Paypal"
+  | "samsung_pay" => "Samsung Pay"
   | _ => ""
   }
 }
@@ -49,6 +50,7 @@ let walletNameToTypeMapper = str => {
   | "Google Pay" => GOOGLE_PAY
   | "Apple Pay" => APPLE_PAY
   | "Paypal" => PAYPAL
+  | "Samsung Pay" => SAMSUNG_PAY
   | _ => NONE
   }
 }
