@@ -284,7 +284,7 @@ let make = (
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
               online: {
-                ip_address: ?nativeProp.hyperParams.ip,
+                // ip_address: ?nativeProp.hyperParams.ip,
                 user_agent: ?nativeProp.hyperParams.userAgent,
               },
             })
