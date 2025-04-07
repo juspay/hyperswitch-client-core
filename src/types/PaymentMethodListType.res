@@ -80,7 +80,6 @@ type payment_method =
   | BANK_DEBIT(payment_method_types_bank_debit)
 
 type online = {
-  // ip_address?: string,
   user_agent?: string,
   accept_header?: string,
   language?: SdkTypes.localeTypes,
