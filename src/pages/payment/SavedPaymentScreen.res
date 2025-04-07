@@ -342,7 +342,7 @@ let make = (
 
   let confirmSamsungPay = (
     status,
-    billingDetails: option<SamsungPayType.billingCollectedFromSpay>,
+    billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
   ) => {
     if status->ThreeDsUtils.isStatusSuccess {
       let response =
@@ -351,7 +351,7 @@ let make = (
         ->JSON.Decode.object
         ->Option.getOr(Dict.make())
 
-      let billingAddress = billingDetails->SamsungPayType.getBillingAddressFromJson
+      let billingAddress = billingDetails->SamsungPayType.getAddressObj(BILLING_ADDRESS)
       let obj = SamsungPayType.itemToObjMapper(response)
       let payment_method_data =
         [

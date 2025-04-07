@@ -286,7 +286,7 @@ let make = (
 
   let confirmSamsungPay = (
     status,
-    billingDetails: option<SamsungPayType.billingCollectedFromSpay>,
+    addressFromSPay: option<SamsungPayType.addressCollectedFromSpay>,
   ) => {
     if status->ThreeDsUtils.isStatusSuccess {
       let response =
@@ -295,11 +295,14 @@ let make = (
         ->JSON.Decode.object
         ->Option.getOr(Dict.make())
 
-      let billingAddress = billingDetails->SamsungPayType.getBillingAddressFromJson
+      let billingAddress =
+        addressFromSPay->SamsungPayType.getAddressObj(SamsungPayType.BILLING_ADDRESS)
+      let shippingAddress =
+        addressFromSPay->SamsungPayType.getAddressObj(SamsungPayType.SHIPPING_ADDRESS)
       let obj = SamsungPayType.itemToObjMapper(response)
       let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
         walletType.required_field,
-        ~shippingAddress=None,
+        ~shippingAddress,
         ~billingAddress,
       )
       payment_method_data->Dict.set(
@@ -309,7 +312,15 @@ let make = (
         ->JSON.Encode.object,
       )
 
-      processRequest(~payment_method_data=payment_method_data->JSON.Encode.object, ())
+      processRequest(
+        ~payment_method_data=payment_method_data->JSON.Encode.object,
+        ~shipping=shippingAddress,
+        ~billing=billingAddress,
+        ~email=?billingAddress
+        ->GooglePayTypeNew.getEmailAddress
+        ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
+        (),
+      )
     } else {
       setLoading(FillingDetails)
       showAlert(
@@ -589,6 +600,16 @@ let make = (
               ~eventName=SAMSUNG_PAY,
               (),
             )
+
+            // let message = "{\"3DS\":{\"type\":\"S\",\"version\":\"100\",\"data\":\"eyJhbGciOiJSU0ExXzUiLCJraWQiOiJKdnI0ZlM1L0N0dmx6Ly95cGZYK2xkQ1p4dFBIUVBNUHg4SzI5Ty9lZm1JPSIsInR5cCI6IkpPU0UiLCJjaGFubmVsU2VjdXJpdHlDb250ZXh0IjoiUlNBX1BLSSIsImVuYyI6IkExMjhHQ00ifQ.JIzgR7CmyZ5_8fn3NqNd80hAKG_qyftRLmeS8v_CaDPA9EUlbvot2NcVGLgI7ZdtfF29hetZn9F0J7lfaqM_2roOJYIvMNY1_Q1dtNVSFMl0_MR0LfsYBbQLie8JrDabaOSzmUtTDHK2Wlz-rLSFssJPwltsXO-zbsyTW7oQ4tM_PWWFoAXzbPja1Q6-w-xypH0X81LjFl9vUcfIlSuA_XwGA48d60K48L1flZSJUU54V9ChzDy6qp9RRacnUFEzoAYjnKJMzkPF-LmqTZrib7UOBZEMCcWFdbZ9QFpMztKs5zvjW-jJsSArPi8uMpbH6-6qJVwuINN_izyfzE82pA.1iemAbyyi1-i2-7Z.TkIqec9IZIcqvonAIt-DwdW6_oWExTWIC56tz5z-aa5vUHW-KNkHjsOM2QDIFuD48Lt1OL7ng6JoxOdI-hyWz53w5r0bzF76nLLwHQ-9_HWUqHMgmAzuX5ambb2RoBS0Qk6AQJPXFQfZQe1EfnYPOO9Xof7xnIep26ZXo_E8l_3dVVAnkn-vPG_7aXEbzuBwAYquld_WQdKcxCOtSMOCU8lC7pWoYi-d8AollPiI8knLkplp8w.lwt2wzf9Hl8LzmiE1973Wg\"},\"payment_card_brand\":\"VI\",\"payment_currency_type\":\"USD\",\"payment_last4_dpan\":\"3219\",\"payment_last4_fpan\":\"7086\",\"merchant_ref\":\"123456\",\"method\":\"3DS\",\"recurring_payment\":false,\"payment_shipping_address\":{\"shipping\":{},\"email\":\"\"},\"payment_shipping_method\":\"\"}"
+            // let status: ExternalThreeDsTypes.statusType = {status: "success", message}
+            // let billing = "{\"country\":\"US\",\"city\":\"Los Angeles\",\"state\":\"California\",\"line1\":\"1234 Sunset Blvd\",\"line2\":\"Apt 56\",\"zip\":\"90026\",\"first_name\":\"John\",\"last_name\":\"Doe\",\"email\":\"john.doe@example.com\"}"
+            // let shipping = "{\"country\":\"US\",\"city\":\"Los Angeles\",\"state\":\"California\",\"line1\":\"1234 SS VILA\",\"line2\":\"Apt 56\",\"zip\":\"90026\",\"first_name\":\"John\",\"last_name\":\"Doe\",\"email\":\"john.doe@example.com\"}"
+            // let x: SamsungPayType.addressCollectedFromSpay = {
+            //   billingDetails: billing,
+            //   shippingDetails: shipping,
+            // }
+            // confirmSamsungPay(status, Some(x))
             SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
           }
         | _ => {
