@@ -89,7 +89,6 @@ let registerHeadless = headless => {
             (
               "online",
               [
-                ("ip_address", nativeProp.hyperParams.ip->Option.getOr("")->JSON.Encode.string),
                 (
                   "user_agent",
                   nativeProp.hyperParams.userAgent->Option.getOr("")->JSON.Encode.string,
@@ -201,7 +200,6 @@ let registerHeadless = headless => {
               (
                 "online",
                 [
-                  ("ip_address", nativeProp.hyperParams.ip->Option.getOr("")->JSON.Encode.string),
                   (
                     "user_agent",
                     nativeProp.hyperParams.userAgent->Option.getOr("")->JSON.Encode.string,
