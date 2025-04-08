@@ -3,7 +3,7 @@ open ExternalThreeDsTypes
 type module_ = {
   checkSamsungPayValidity: (string, statusType => unit) => unit,
   presentSamsungPayPaymentSheet: (
-    (statusType, option<SamsungPayType.billingCollectedFromSpay>) => unit
+    (statusType, option<SamsungPayType.addressCollectedFromSpay>) => unit
   ) => unit,
   isAvailable: bool,
 }

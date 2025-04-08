@@ -339,6 +339,68 @@ let make = (
     }
   }
 
+  let confirmSamsungPay = (
+    status,
+    billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
+  ) => {
+    if status->ThreeDsUtils.isStatusSuccess {
+      let response =
+        status.message
+        ->JSON.parseExn
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+
+      let billingAddress = billingDetails->SamsungPayType.getAddressObj(BILLING_ADDRESS)
+      let obj = SamsungPayType.itemToObjMapper(response)
+      let payment_method_data =
+        [
+          (
+            "wallet",
+            [
+              (
+                selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+                obj->Utils.getJsonObjectFromRecord,
+              ),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+          (
+            "billing",
+            switch billingAddress {
+            | Some(address) => address->Utils.getJsonObjectFromRecord
+            | None => JSON.Encode.null
+            },
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+
+      processRequest(
+        ~payment_method="wallet",
+        ~payment_method_data,
+        ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+        ~email=?switch billingAddress {
+        | Some(address) => address.email
+        | None => None
+        },
+        (),
+      )
+    } else {
+      setLoading(FillingDetails)
+      showAlert(
+        ~errorType="warning",
+        ~message=`Samsung Pay Error, Please try again ${status.message}`,
+      )
+    }
+    logger(
+      ~logType=INFO,
+      ~value=`SPAY result from native ${status.status->JSON.stringifyAny->Option.getOr("")}`,
+      ~category=USER_EVENT,
+      ~eventName=SAMSUNG_PAY,
+      (),
+    )
+  }
   React.useEffect1(() => {
     switch selectedObj.walletName {
     | APPLE_PAY => Window.registerEventListener("applePayData", confirmApplePay)
@@ -439,6 +501,16 @@ let make = (
           ->JSON.Encode.object
           ->JSON.stringify,
         )
+      }
+    | SAMSUNG_PAY => {
+        logger(
+          ~logType=INFO,
+          ~value="Samsung Pay Button Clicked",
+          ~category=USER_EVENT,
+          ~eventName=SAMSUNG_PAY,
+          (),
+        )
+        SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
       }
     | NONE =>
       let (body, paymentMethodType) = (

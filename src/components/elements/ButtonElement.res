@@ -285,7 +285,7 @@ let make = (
 
   let confirmSamsungPay = (
     status,
-    billingDetails: option<SamsungPayType.billingCollectedFromSpay>,
+    addressFromSPay: option<SamsungPayType.addressCollectedFromSpay>,
   ) => {
     if status->ThreeDsUtils.isStatusSuccess {
       let response =
@@ -294,11 +294,14 @@ let make = (
         ->JSON.Decode.object
         ->Option.getOr(Dict.make())
 
-      let billingAddress = billingDetails->SamsungPayType.getBillingAddressFromJson
+      let billingAddress =
+        addressFromSPay->SamsungPayType.getAddressObj(SamsungPayType.BILLING_ADDRESS)
+      let shippingAddress =
+        addressFromSPay->SamsungPayType.getAddressObj(SamsungPayType.SHIPPING_ADDRESS)
       let obj = SamsungPayType.itemToObjMapper(response)
       let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
         walletType.required_field,
-        ~shippingAddress=None,
+        ~shippingAddress,
         ~billingAddress,
       )
       payment_method_data->Dict.set(
@@ -308,7 +311,15 @@ let make = (
         ->JSON.Encode.object,
       )
 
-      processRequest(~payment_method_data=payment_method_data->JSON.Encode.object, ())
+      processRequest(
+        ~payment_method_data=payment_method_data->JSON.Encode.object,
+        ~shipping=shippingAddress,
+        ~billing=billingAddress,
+        ~email=?billingAddress
+        ->GooglePayTypeNew.getEmailAddress
+        ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
+        (),
+      )
     } else {
       setLoading(FillingDetails)
       showAlert(

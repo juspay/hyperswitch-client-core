@@ -20,6 +20,7 @@ let make = () => {
           ~customerSavedPMData,
           ~sessions=None,
           ~isPaymentMethodManagement=true,
+          ~nativeProp,
         )
 
         setAllApiData({
