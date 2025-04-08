@@ -12,14 +12,9 @@ type addressCollectedFromSpay = {billingDetails?: string, shippingDetails?: stri
 type paymentCredential = {
   \"3_d_s": payment3DS,
   card_brand: string,
-  // payment_currency_type: string,
-  // payment_last4_dpan: string,
-  // payment_last4_fpan: string,
   card_last4digits: string,
-  // merchant_ref: string,
   method: string,
   recurring_payment: bool,
-  // payment_shipping_method: string,
 }
 type paymentMethodData = {payment_credential: paymentCredential}
 
@@ -79,7 +74,7 @@ let getSamsungPaySessionObject = (sessionData: AllApiDataContext.sessions) => {
   sessionObject
 }
 
-let getBillingDetails = dict => {
+let getAddressFromDict = dict => {
   switch dict {
   | Some(dict) =>
     let addressDetails: SdkTypes.addressDetails = {
@@ -109,7 +104,7 @@ let getAddress = address => {
     address
     ->JSON.parseExn
     ->JSON.Decode.object
-    ->getBillingDetails
+    ->getAddressFromDict
   | None => None
   }
 }
