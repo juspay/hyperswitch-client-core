@@ -266,8 +266,21 @@ let useBrowserHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
-  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
-    BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId, intervalId)
+  (
+    ~clientSecret,
+    ~publishableKey,
+    ~openUrl,
+    ~responseCallback,
+    ~errorCallback,
+    ~processor,
+    ~isCardPayment=false,
+  ) => {
+    BrowserHook.openUrl(
+      openUrl,
+      nativeProp.hyperParams.appId,
+      intervalId,
+      ~useEphemeralWebSession=isCardPayment,
+    )
     ->Promise.then(res => {
       if res.status === Success {
         retrievePayment(Payment, clientSecret, publishableKey)
@@ -383,6 +396,7 @@ let useRedirectHook = () => {
     ~paymentMethod,
     ~paymentExperience: option<string>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
+    ~isCardPayment=false,
     (),
   ) => {
     let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
@@ -483,6 +497,8 @@ let useRedirectHook = () => {
               ~responseCallback,
               ~errorCallback,
               ~processor=body,
+              ~isCardPayment,
+              // add validation to check weather card payment or not
             )
           }
         | statusVal =>
