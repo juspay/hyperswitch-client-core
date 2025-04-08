@@ -50,7 +50,12 @@ module InAppBrowser = {
   external isAvailable: unit => promise<bool> = "isAvailable"
 }
 
-let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<intervalId>>) => {
+let openUrl = (
+  url,
+  returnUrl,
+  intervalId: React.ref<RescriptCore.Nullable.t<intervalId>>,
+  ~useEphemeralWebSession=false,
+) => {
   {
     ReactNative.Platform.os === #web
       ? Promise.make((resolve, _reject) => {
@@ -95,7 +100,7 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
             },
             {
               // iOS Properties
-              ephemeralWebSession: false,
+              ephemeralWebSession: useEphemeralWebSession,
               dismissButtonStyle: "cancel",
               preferredBarTintColor: "#453AA4",
               preferredControlTintColor: "white",
