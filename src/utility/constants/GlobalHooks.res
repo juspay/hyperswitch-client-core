@@ -1,3 +1,4 @@
+open EnvTypes
 let useGetBaseUrl = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   () => {
@@ -5,9 +6,9 @@ let useGetBaseUrl = () => {
     | Some(url) => url
     | None =>
       switch nativeProp.env {
-      | PROD => "https://api.hyperswitch.io"
-      | SANDBOX => "https://sandbox.hyperswitch.io"
-      | INTEG => "https://integ-api.hyperswitch.io"
+      | PROD => process.env["HYPERSWITCH_PRODUCTION_URL"]
+      | SANDBOX => process.env["HYPERSWITCH_SANDBOX_URL"]
+      | INTEG => process.env["HYPERSWITCH_INTEG_URL"]
       }
     }
   }
@@ -28,9 +29,9 @@ let useGetAssetUrlWithVersion = () => {
   let appendVersion = useGetS3AssetsVersion()()
   () => {
     switch nativeProp.env {
-    | PROD => "https://checkout.hyperswitch.io"
-    | SANDBOX => "https://beta.hyperswitch.io"
-    | INTEG => "https://dev.hyperswitch.io"
+    | PROD => process.env["PROD_ASSETS_END_POINT"]
+    | SANDBOX => process.env["SANDBOX_ASSETS_END_POINT"]
+    | INTEG => process.env["INTEG_ASSETS_END_POINT"]
     } ++
     appendVersion
   }
@@ -43,10 +44,13 @@ let useGetLoggingUrl = () => {
     | (Some(_), None) => None
     | (_, Some(url)) => Some(url)
     | (None, None) =>
-      switch nativeProp.env {
-      | PROD => Some("https://api.hyperswitch.io/logs/sdk")
-      | _ => Some("https://sandbox.hyperswitch.io/logs/sdk")
-      }
+      Some(
+        switch nativeProp.env {
+        | PROD => process.env["HYPERSWITCH_PRODUCTION_URL"]
+        | _ => process.env["HYPERSWITCH_SANDBOX_URL"]
+        } ++
+        process.env["HYPERSWITCH_LOGS_PATH"],
+      )
     }
   }
 }
