@@ -5,7 +5,7 @@
     "module": "esmodule",
     "in-source": true
   },
-  "bsc-flags": ["-open RescriptCore"],
+  "bsc-flags": ["-bs-super-errors","-open RescriptCore"],
   "suffix": ".bs.js",
   "sources": [
     {
@@ -14,6 +14,10 @@
     },
     {
       "dir": "reactNativeWeb",
+      "subdirs": true
+    },
+    {
+      "dir": "./shared-code/sdk-utils",
       "subdirs": true
     }
   ],
