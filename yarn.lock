@@ -11375,6 +11375,7 @@ __metadata:
     react-native-bundle-visualizer: "npm:^3.1.3"
     react-native-dotenv: "npm:^3.4.11"
     react-native-hyperswitch-netcetera-3ds: "npm:^0.1.3"
+    react-native-hyperswitch-samsung-pay: "npm:^0.1.3"
     react-native-hyperswitch-scancard: "npm:^0.3.1"
     react-native-inappbrowser-reborn: "npm:^3.7.0"
     react-native-klarna-inapp-sdk: "npm:^2.1.13"
@@ -16584,6 +16585,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/9e65977bad8929e5a90ae8f5b59fa2ac658ce7fdd076d796016a6a77fcb2734b3cbd8c10b27fab6119c413dcd675e578c00563c2bfb61ebf5816d4a2ba4d3fb8
+  languageName: node
+  linkType: hard
+
+"react-native-hyperswitch-samsung-pay@npm:^0.1.3":
+  version: 0.1.4
+  resolution: "react-native-hyperswitch-samsung-pay@npm:0.1.4"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/1e561b254f8b8ac38a30a16d6dfc6546be57cd758fb7c4ce796abc29f06b60431f23091b21ad0a0776caca55e16bc0d397b147b88aa91628d108f6a59c5ebe36
   languageName: node
   linkType: hard
 
