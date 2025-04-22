@@ -785,6 +785,16 @@ let getAppearanceObj = (
   }
 }
 
+let getPrimaryColor = (colors, ~theme=Default) =>
+  switch colors {
+  | Colors(c) => c.primary
+  | DefaultColors(df) =>
+    switch theme {
+    | Dark => df.dark->Option.flatMap(d => d.primary)
+    | _ => df.light->Option.flatMap(l => l.primary)
+    }
+  }
+
 let parseConfigurationDict = (configObj, from) => {
   let shippingDetailsDict =
     configObj->Dict.get("shippingDetails")->Option.flatMap(JSON.Decode.object)

@@ -219,8 +219,7 @@ let getStringFromJson = (json, default) => {
 }
 
 let underscoresToSpaces = str => {
-    str
-    ->String.replaceAll("_", " ")
+  str->String.replaceAll("_", " ")
 }
 
 let toCamelCase = str => {
@@ -331,7 +330,11 @@ let getReturnUrl = (~appId, ~appURL=NotSet) => {
   | #ios =>
     switch appURL {
     | Value(url) => url->Some
-    | _ => None
+    | Null => None
+    | NotSet => switch appId {
+      | Some(id) => Some(id ++ ".hyperswitch://")
+      | _ => None
+      }
     }
   | _ =>
     switch appURL {
