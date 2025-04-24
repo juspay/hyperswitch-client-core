@@ -520,6 +520,20 @@ let make = (
             }
             // when session token for paypal is absent, switch to redirect flow
             processRequest(~payment_method_data, ~walletTypeAlt, ())
+          } else {
+            let redirectData = []->Dict.fromArray->JSON.Encode.object
+            let payment_method_data =
+              [
+                (
+                  walletType.payment_method,
+                  [(walletType.payment_method_type ++ "_redirect", redirectData)]
+                  ->Dict.fromArray
+                  ->JSON.Encode.object,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object
+            processRequest(~payment_method_data, ())
           }
         | APPLE_PAY =>
           if (
