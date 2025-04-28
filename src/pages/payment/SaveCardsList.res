@@ -43,7 +43,8 @@ module CVVComponent = {
               <CustomInput
                 state={isPaymentMethodSelected ? savedCardCvv->Option.getOr("") : ""}
                 setState={isPaymentMethodSelected ? onCvvChange : _ => ()}
-                placeholder="CVC"
+                placeholder="123"
+                animateLabel="CVC"
                 fontSize=12.
                 keyboardType=#"number-pad"
                 enableCrossIcon=false
