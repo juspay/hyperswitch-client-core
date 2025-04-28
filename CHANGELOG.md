@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.0...v1.1.1) (2025-04-28)
+
+
+### Bug Fixes
+
+* active opacity issue for picker component ([#262](https://github.com/juspay/hyperswitch-client-core/issues/262)) ([423a780](https://github.com/juspay/hyperswitch-client-core/commit/423a780826fac4c271bf9af231541923145ebd64))
+
 # [1.1.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.10...v1.1.0) (2025-03-26)
 
 
