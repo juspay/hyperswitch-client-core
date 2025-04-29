@@ -275,11 +275,9 @@ let useExternalThreeDs = () => {
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
       let threeDSRequestorAppURL = Utils.getReturnUrl(
-        ~appURL=switch challengeParams.threeDSRequestorAppURL {
-        | Some(url) => Value(url)
-        | None => Null
-        },
         ~appId,
+        ~appURL=challengeParams.threeDSRequestorAppURL ,
+        ~useAppUrl=true
       )
       Promise.make((resolve, reject) => {
         Netcetera3dsModule.recieveChallengeParamsFromRN(

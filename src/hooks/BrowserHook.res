@@ -50,7 +50,13 @@ module InAppBrowser = {
   external isAvailable: unit => promise<bool> = "isAvailable"
 }
 
-let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<intervalId>>) => {
+let openUrl = (
+  url,
+  returnUrl,
+  intervalId: React.ref<RescriptCore.Nullable.t<intervalId>>,
+  ~useEphemeralWebSession=false,
+  ~appearance:SdkTypes.appearance,
+) => {
   {
     ReactNative.Platform.os === #web
       ? Promise.make((resolve, _reject) => {
@@ -89,15 +95,14 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
           InAppBrowser.openUrl(
             url,
             //"https://proyecto26.com/react-native-inappbrowser/?redirect_url=" ++ returnUrl,
-            switch returnUrl {
-            | Some(id) => Some(id ++ ".hyperswitch://")
-            | None => None
-            },
+            returnUrl,
             {
               // iOS Properties
-              ephemeralWebSession: false,
+              ephemeralWebSession: useEphemeralWebSession,
               dismissButtonStyle: "cancel",
-              preferredBarTintColor: "#453AA4",
+              preferredBarTintColor: appearance.colors
+              ->Option.flatMap(a => a->SdkTypes.getPrimaryColor(~theme=appearance.theme))
+              ->Option.getOr("#453AA4"),
               preferredControlTintColor: "white",
               readerMode: false,
               animated: true,
@@ -108,7 +113,9 @@ let openUrl = (url, returnUrl, intervalId: React.ref<RescriptCore.Nullable.t<int
               // Android Properties
               showInRecents: true,
               showTitle: false,
-              toolbarColor: "#6200EE",
+              toolbarColor: appearance.colors
+              ->Option.flatMap(a => a->SdkTypes.getPrimaryColor(~theme=appearance.theme))
+              ->Option.getOr("#6200EE"),
               secondaryToolbarColor: "black",
               navigationBarColor: "black",
               navigationBarDividerColor: "white",
