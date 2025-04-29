@@ -1,3 +1,10 @@
+## [1.1.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.2...v1.1.3) (2025-04-29)
+
+
+### Bug Fixes
+
+* state field error msg fix ([#269](https://github.com/juspay/hyperswitch-client-core/issues/269)) ([d8f8bd7](https://github.com/juspay/hyperswitch-client-core/commit/d8f8bd70736a159daa42f9fc4a3dc37db4f7c9ac))
+
 ## [1.1.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.1...v1.1.2) (2025-04-29)
 
 
