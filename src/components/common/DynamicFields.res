@@ -120,7 +120,7 @@ module RenderField = {
               if isCountryField {
                 let stateKey = getKey(stringFieldPath, "state")
                 switch newData->Dict.get(stateKey) {
-                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, validationErrMsg))
+                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, Some("required")))
                 | None => ()
                 }
               }
