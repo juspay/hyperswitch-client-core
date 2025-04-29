@@ -1,3 +1,10 @@
+## [1.1.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.1...v1.1.2) (2025-04-29)
+
+
+### Bug Fixes
+
+* remove popup / use ephemeral web session for card payments ([#267](https://github.com/juspay/hyperswitch-client-core/issues/267)) ([848f57d](https://github.com/juspay/hyperswitch-client-core/commit/848f57d088abd2f66f71a6dbc32507d9ce14b5ff))
+
 ## [1.1.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.0...v1.1.1) (2025-04-28)
 
 
