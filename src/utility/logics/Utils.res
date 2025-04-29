@@ -318,29 +318,33 @@ let getArrofJsonString = (arr: array<string>) => {
   arr->Array.map(item => item->JSON.Encode.string)
 }
 
-type appURL = Null | NotSet | Value(string)
+let getCustomReturnAppUrl = (~appId) => {
+  switch appId {
+  | Some(id) => Some(id ++ ".hyperswitch://")
+  | None => None
+  }
+}
 
-let getReturnUrl = (~appId, ~appURL=NotSet) => {
+let getReturnUrlWeb = (~appURL) =>
+  switch appURL {
+  | Some(url) => url->Some
+  | _ => None // Window.location.href->Some
+  }
+
+let getReturnUrl = (~appId, ~appURL: option<string>=None, ~useAppUrl=false) => {
   switch WebKit.platform {
   | #android =>
-    switch (appId, appURL) {
-    | (Some(id), NotSet | Value(_)) => Some(id ++ ".hyperswitch://")
+    switch appURL {
+    | Some(_) => getCustomReturnAppUrl(~appId)
     | _ => None
     }
   | #ios =>
-    switch appURL {
-    | Value(url) => url->Some
-    | Null => None
-    | NotSet => switch appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | _ => None
-      }
+    switch (appURL, useAppUrl) {
+    | (Some(url), true) => url->Some
+    | (Some(_), false) => getCustomReturnAppUrl(~appId)
+    | _ => None
     }
-  | _ =>
-    switch appURL {
-    | Value(url) => url->Some
-    | _ => Window.location.href->Some
-    }
+  | _ => getReturnUrlWeb(~appURL)
   }
 }
 
