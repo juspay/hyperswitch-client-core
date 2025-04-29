@@ -721,7 +721,7 @@ let make = (
               ~justifyContent=#center,
               (),
             )}>
-            <Icon name=walletType.payment_method_type width=90. height=28. />
+           <Icon name={walletType.payment_method_type ++ "2"} width=90. height=28. />
           </View>,
         )
       | _ => None
