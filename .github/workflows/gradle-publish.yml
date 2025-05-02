@@ -86,8 +86,10 @@ jobs:
         working-directory: ./android
         env:
           PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+          SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
         run: | 
-          sed -i 's|<string name="hyperOTAEndPoint" moduleConfig="true">.*</string>|<string name="hyperOTAEndPoint" moduleConfig="true">'"$PROD_ASSETS_END_POINT"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
+          sed -i 's|<string name="hyperOTAEndPoint">.*</string>|<string name="hyperOTAEndPoint">'"$PROD_ASSETS_END_POINT"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
+          sed -i 's|<string name="hyperOTASandBoxEndPoint">.*</string>|<string name="hyperOTASandBoxEndPoint">'"$SANDBOX_ASSETS_END_POINT"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
 
       - name: Build and Publish
         working-directory: ./android
