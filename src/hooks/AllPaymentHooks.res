@@ -277,7 +277,7 @@ let useBrowserHook = () => {
   ) => {
     BrowserHook.openUrl(
       openUrl,
-      Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=None),
+      Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
       intervalId,
       ~useEphemeralWebSession,
       ~appearance=nativeProp.configuration.appearance
