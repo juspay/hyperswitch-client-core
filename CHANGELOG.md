@@ -1,3 +1,10 @@
+## [1.1.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.3...v1.1.4) (2025-05-02)
+
+
+### Bug Fixes
+
+* redirection issue in ios ([#273](https://github.com/juspay/hyperswitch-client-core/issues/273)) ([af691a6](https://github.com/juspay/hyperswitch-client-core/commit/af691a64e1b1cd2dd20198b60ab4b1e888610dee))
+
 ## [1.1.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.2...v1.1.3) (2025-04-29)
 
 
