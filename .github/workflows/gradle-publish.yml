@@ -69,6 +69,7 @@ jobs:
       - name: Dependency Install
         run: |
           # Install dependencies using npm
+          git submodule update --init --recursive
           npm i
           npm run re:start
 
