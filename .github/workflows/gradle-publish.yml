@@ -31,7 +31,7 @@ jobs:
       - name: Checkout Shared Code Repo
         uses: actions/checkout@v4
         with:
-          repository: juspay/shared-code
+          repository: juspay/hyperswitch-sdk-utils
           ref: main
           path: shared-code
 
