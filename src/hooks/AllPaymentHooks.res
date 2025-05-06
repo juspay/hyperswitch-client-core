@@ -266,8 +266,22 @@ let useBrowserHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
-  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
-    BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId, intervalId)
+  (
+    ~clientSecret,
+    ~publishableKey,
+    ~openUrl,
+    ~responseCallback,
+    ~errorCallback,
+    ~processor,
+    ~useEphemeralWebSession=false,
+  ) => {
+    BrowserHook.openUrl(
+      openUrl,
+      Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      intervalId,
+      ~useEphemeralWebSession,
+      ~appearance=nativeProp.configuration.appearance
+    )
     ->Promise.then(res => {
       if res.status === Success {
         retrievePayment(Payment, clientSecret, publishableKey)
@@ -367,7 +381,7 @@ let useBrowserHook = () => {
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
-  let redirectioBrowserHook = useBrowserHook()
+  let redirectToBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
@@ -383,6 +397,7 @@ let useRedirectHook = () => {
     ~paymentMethod,
     ~paymentExperience: option<string>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
+    ~isCardPayment=false,
     (),
   ) => {
     let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
@@ -476,13 +491,14 @@ let useRedirectHook = () => {
               ~paymentMethod,
               (),
             )
-            redirectioBrowserHook(
+            redirectToBrowserHook(
               ~clientSecret,
               ~publishableKey,
               ~openUrl=reUri,
               ~responseCallback,
               ~errorCallback,
               ~processor=body,
+              ~useEphemeralWebSession=isCardPayment,
             )
           }
         | statusVal =>

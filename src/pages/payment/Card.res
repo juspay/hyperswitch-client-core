@@ -127,6 +127,7 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=prop.payment_method_type,
+      ~isCardPayment=true,
       (),
     )
   }

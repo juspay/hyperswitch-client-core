@@ -246,7 +246,7 @@ let make = (
   ) => {
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
+      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
       payment_method,
       payment_method_type,
       payment_experience: payment_experience_type,
@@ -1021,7 +1021,7 @@ let make = (
             <Klarna
               launchKlarna
               processRequest=processRequestPayLater
-              return_url={Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId)}
+              return_url=Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url)
               klarnaSessionTokens=session_token
             />
             <ErrorText text=error />

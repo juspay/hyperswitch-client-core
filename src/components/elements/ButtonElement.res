@@ -144,7 +144,7 @@ let make = (
 
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
+      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
       ?email,
       // customer_id: ?switch nativeProp.configuration.customer {
       // | Some(customer) => customer.id

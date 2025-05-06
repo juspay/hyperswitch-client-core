@@ -1,3 +1,31 @@
+## [1.1.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.3...v1.1.4) (2025-05-02)
+
+
+### Bug Fixes
+
+* redirection issue in ios ([#273](https://github.com/juspay/hyperswitch-client-core/issues/273)) ([af691a6](https://github.com/juspay/hyperswitch-client-core/commit/af691a64e1b1cd2dd20198b60ab4b1e888610dee))
+
+## [1.1.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.2...v1.1.3) (2025-04-29)
+
+
+### Bug Fixes
+
+* state field error msg fix ([#269](https://github.com/juspay/hyperswitch-client-core/issues/269)) ([d8f8bd7](https://github.com/juspay/hyperswitch-client-core/commit/d8f8bd70736a159daa42f9fc4a3dc37db4f7c9ac))
+
+## [1.1.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.1...v1.1.2) (2025-04-29)
+
+
+### Bug Fixes
+
+* remove popup / use ephemeral web session for card payments ([#267](https://github.com/juspay/hyperswitch-client-core/issues/267)) ([848f57d](https://github.com/juspay/hyperswitch-client-core/commit/848f57d088abd2f66f71a6dbc32507d9ce14b5ff))
+
+## [1.1.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.0...v1.1.1) (2025-04-28)
+
+
+### Bug Fixes
+
+* active opacity issue for picker component ([#262](https://github.com/juspay/hyperswitch-client-core/issues/262)) ([423a780](https://github.com/juspay/hyperswitch-client-core/commit/423a780826fac4c271bf9af231541923145ebd64))
+
 # [1.1.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.10...v1.1.0) (2025-03-26)
 
 
