@@ -106,6 +106,13 @@ jobs:
           GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
           SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
           SENTRY_ENV: "production"
+          HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
+          HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
+          HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+          HYPERSWITCH_LOGS_PATH: ${{ secrets.HYPERSWITCH_LOGS_PATH }}
+          PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+          SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+          INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
 
         run: |
           ./build-lib.sh
