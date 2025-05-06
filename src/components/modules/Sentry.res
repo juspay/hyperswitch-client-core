@@ -18,6 +18,8 @@ external newBrowserTracing: newBrowserTracingArg => integration = "BrowserTracin
 
 @new @scope("sentryReactNative")
 external newSentryReplay: unit => integration = "Replay"
+@new @scope("sentryReactNative")
+external reactNativeTracingIntegration: unit => integration = "reactNativeTracingIntegration"
 
 type fallbackArg = {
   error: Exn.t,
@@ -31,6 +33,7 @@ type module_ = {
   init: sentryInitArg => unit,
   \"BrowserTracing": newBrowserTracingArg => integration,
   reactRouterV6Instrumentation: ((unit => option<unit => unit>) => unit) => instrumentation,
+  reactNativeTracingIntegration: unit => integration,
   \"Replay": unit => integration,
   \"ErrorBoundary": option<React.component<props>>,
   wrap: React.element => React.element,
@@ -48,6 +51,7 @@ let sentryReactNative = switch try {
     init: _ => (),
     \"BrowserTracing": _ => (),
     reactRouterV6Instrumentation: _ => (),
+    reactNativeTracingIntegration: _ => (),
     \"Replay": () => (),
     \"ErrorBoundary": None,
     wrap: component => component,
@@ -86,7 +90,7 @@ let initiateSentry = (~dsn: option<string>, ~environment: string) => {
             }),
             newSentryReplay(),
           ]
-        : []
+        : [reactNativeTracingIntegration()]
     switch dsn {
     | Some(dsn) =>
       sentryReactNative.init({
