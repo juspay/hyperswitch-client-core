@@ -92,11 +92,11 @@ jobs:
       - name: Replace the ota endpoint
         working-directory: ./android
         env:
-          PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
-          SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+          PROD_ASSETS_END_POINT_WITH_VERSION: ${{ secrets.PROD_ASSETS_END_POINT_WITH_VERSION }}
+          SANDBOX_ASSETS_END_POINT_WITH_VERSION: ${{ secrets.SANDBOX_ASSETS_END_POINT_WITH_VERSION}}
         run: | 
-          sed -i 's|<string name="hyperOTAEndPoint">.*</string>|<string name="hyperOTAEndPoint">'"$PROD_ASSETS_END_POINT"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
-          sed -i 's|<string name="hyperOTASandBoxEndPoint">.*</string>|<string name="hyperOTASandBoxEndPoint">'"$SANDBOX_ASSETS_END_POINT"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
+          sed -i 's|<string name="hyperOTAEndPoint">.*</string>|<string name="hyperOTAEndPoint">'"$PROD_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
+          sed -i 's|<string name="hyperOTASandBoxEndPoint">.*</string>|<string name="hyperOTASandBoxEndPoint">'"$SANDBOX_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
 
       - name: Build and Publish
         working-directory: ./android
