@@ -40,7 +40,6 @@
   },
   "dependencies": {
     "@sentry/react-native": "^6.13.0",
-    "pako": "^2.1.0",
     "react-native-hyperswitch-netcetera-3ds": "^0.1.3",
     "react-native-hyperswitch-samsung-pay": "^0.1.3",
     "react-native-hyperswitch-scancard": "^0.3.1",

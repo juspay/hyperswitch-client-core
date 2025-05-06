@@ -25,7 +25,7 @@ module WrapperProvider = {
     let countryStateDataHook = S3ApiHook.useFetchDataFromS3WithGZipDecoding()
     let isDataFetched = React.useRef(false)
     let logger = LoggerHook.useLoggerHook()
-    let path = "/location"
+    let path = "/jsons/location"
 
     let fetchCountryStateData = () => {
       if !isDataFetched.current {
