@@ -10791,7 +10791,6 @@ __metadata:
     husky: "npm:^9.0.11"
     jest: "npm:^29.6.3"
     next: "npm:^14.2.25"
-    pako: "npm:^2.1.0"
     patch-package: "npm:^6.5.1"
     prettier: "npm:2.8.8"
     react: "npm:19.0.0"
@@ -14870,13 +14869,6 @@ __metadata:
   bin:
     pacote: bin/index.js
   checksum: 10c0/435c385446ecc81b1eb1584f4fa3cb102e630a22877f39b5c1a92eddfeaf222bd027b205e32632be2801e3bcbe525165cdffb5ceca5c13bbc81f8132fe1ba49e
-  languageName: node
-  linkType: hard
-
-"pako@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "pako@npm:2.1.0"
-  checksum: 10c0/8e8646581410654b50eb22a5dfd71159cae98145bd5086c9a7a816ec0370b5f72b4648d08674624b3870a521e6a3daffd6c2f7bc00fdefc7063c9d8232ff5116
   languageName: node
   linkType: hard
 

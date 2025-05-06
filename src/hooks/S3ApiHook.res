@@ -243,11 +243,7 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         defaultLocale.enterValidDigitsText,
       ),
       digitsText: Utils.getString(res, "digitsText", defaultLocale.digitsText),
-      selectCardBrand: Utils.getString(
-        res,
-        "selectCardBrand",
-        defaultLocale.selectCardBrand,
-      ),
+      selectCardBrand: Utils.getString(res, "selectCardBrand", defaultLocale.selectCardBrand),
       mandatoryFieldText: Utils.getString(
         res,
         "mandatoryFieldText",
@@ -271,8 +267,13 @@ let useFetchDataFromS3WithGZipDecoding = () => {
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetAssetUrlWithVersion()()
 
-  (~s3Path: string, ~decodeJsonToRecord) => {
-    let endpoint = `${baseUrl}${s3Path}`
+  (~s3Path: string, ~decodeJsonToRecord, ~cache=false) => {
+    let endpoint = if cache {
+      `${baseUrl}${s3Path}`
+    } else {
+      let timestamp = Js.Date.now()->Float.toString
+      `${baseUrl}${s3Path}?v=${timestamp}`
+    }
     logger(
       ~logType=INFO,
       ~value=`S3 API called - ${endpoint}`,
@@ -280,8 +281,10 @@ let useFetchDataFromS3WithGZipDecoding = () => {
       ~eventName=S3_API,
       (),
     )
-    apiFunction(~uri=endpoint, ~method_=Get, ~headers=Dict.make(), ~dontUseDefaultHeader=true, ())
-    ->GZipUtils.extractJson
+    let headers = Dict.make()
+    headers->Dict.set("Accept-Encoding", "br, gzip")
+    apiFunction(~uri=endpoint, ~method_=Get, ~headers, ~dontUseDefaultHeader=true, ())
+    ->Promise.then(resp => resp->Fetch.Response.json)
     ->Promise.then(data => {
       let countryStaterecord = decodeJsonToRecord(data)
       Promise.resolve(Some(countryStaterecord))
