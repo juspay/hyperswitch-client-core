@@ -22,9 +22,12 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      - name: Initialize submodules in android repo
-        run: |
-          git submodule update --init --recursive
+      - name: Checkout Shared Code Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
