@@ -17,6 +17,13 @@ jobs:
           path: ios
           fetch-depth: 0
 
+      - name: Checkout Shared Code Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
+
       - name: Initialize submodules in iOS repo
         run: |
           git submodule update --init --recursive
