@@ -1,3 +1,12 @@
+## [1.1.5](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.4...v1.1.5) (2025-05-06)
+
+
+### Bug Fixes
+
+* added reactNativeTracing integration ([#275](https://github.com/juspay/hyperswitch-client-core/issues/275)) ([2f1da0d](https://github.com/juspay/hyperswitch-client-core/commit/2f1da0d9d2cbfbcf2ac2e1fdd2e4fc73736f447c))
+* removed rn cache ([#277](https://github.com/juspay/hyperswitch-client-core/issues/277)) ([dd48887](https://github.com/juspay/hyperswitch-client-core/commit/dd488875a1573ba58af7cb2d105ce7afc8507923))
+* **s3-cache:** removed pako for decompression and removed cache ([#258](https://github.com/juspay/hyperswitch-client-core/issues/258)) ([6a92b6d](https://github.com/juspay/hyperswitch-client-core/commit/6a92b6d34ae52c5701fc237dbcffc9556494c207))
+
 ## [1.1.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.3...v1.1.4) (2025-05-02)
 
 
