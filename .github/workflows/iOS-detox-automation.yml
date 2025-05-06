@@ -17,6 +17,10 @@ jobs:
           path: ios
           fetch-depth: 0
 
+      - name: Initialize submodules in iOS repo
+        run: |
+          git submodule update --init --recursive
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
