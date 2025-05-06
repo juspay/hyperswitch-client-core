@@ -22,6 +22,10 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Initialize submodules in android repo
+        run: |
+          git submodule update --init --recursive
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
