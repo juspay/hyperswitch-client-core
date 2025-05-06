@@ -22,9 +22,24 @@ To install required dependencies:
 yarn install
 ```
 
-### Set Environment Variables
+## Setting Up Environment Variables
+1. Rename the .en file to .env
 
-Rename .en file to .env and input your Hyperswitch API and Publishable Key. Get your Hyperswitch keys from [Hyperswitch dashboard](https://app.hyperswitch.io/dashboard/register)
+2. Add the following environment variables to the .env file:
+
+``` .env
+HYPERSWITCH_PRODUCTION_URL=""
+HYPERSWITCH_INTEG_URL=""
+HYPERSWITCH_SANDBOX_URL=""
+HYPERSWITCH_LOGS_PATH="/logs/sdk"
+PROD_ASSETS_END_POINT=""
+SANDBOX_ASSETS_END_POINT=""
+INTEG_ASSETS_END_POINT=""
+```
+3. Set up SDK environment variables (e.g., Hyperswitch API Key and Publishable Key).
+
+- To obtain these keys, visit the [Hyperswitch dashboard](https://app.hyperswitch.io/dashboard/register).
+
 
 ### Start the server
 
