@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.5...v1.1.6) (2025-05-07)
+
+
+### Bug Fixes
+
+* detox github workflow fix ([#279](https://github.com/juspay/hyperswitch-client-core/issues/279)) ([a2519dd](https://github.com/juspay/hyperswitch-client-core/commit/a2519dd47daa21d4e4d6c3c748859df75833fe33))
+
 ## [1.1.5](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.4...v1.1.5) (2025-05-06)
 
 
