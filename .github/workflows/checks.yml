@@ -10,6 +10,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
 
       - name: Scan for forbidden words
         run: |
@@ -29,6 +33,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
