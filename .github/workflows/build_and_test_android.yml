@@ -1,6 +1,8 @@
-# .github/workflows/e2e-android.yml
-name: e2e-android
-on: push
+name: Test All / build_and_test_android (pull_request)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   e2e-android:
@@ -45,7 +47,7 @@ jobs:
           SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
           GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
           SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
-          SENTRY_ENV: "production"
+          SENTRY_ENV: 'production'
           HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
           HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
           HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}

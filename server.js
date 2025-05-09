@@ -46,7 +46,7 @@ app.get('/create-payment-intent', async (req, res) => {
       amount: 2999,
       currency: 'USD',
       authentication_type: 'no_three_ds',
-      customer_id: 'hyperswitch_demo_id',
+      customer_id: 'hyperswitch_demo_customer_id',
       capture_method: 'automatic',
       email: 'abc@gmail.com',
       billing: {

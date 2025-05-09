@@ -1,6 +1,8 @@
-# .github/workflows/e2e-ios.yml
-name: e2e-ios
-on: push
+name: Test All / build_and_test_ios (pull_request)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 jobs:
   e2e-ios:
@@ -37,15 +39,6 @@ jobs:
           mv package.json.tmp package.json
           npm install
 
-      - name: Create .env file
-        run: |
-          touch .env
-          echo  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
-          echo STATIC_DIR = ./dist >> .env
-          echo HYPERSWITCH_PUBLISHABLE_KEY =  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}>> .env
-          echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
-          echo PROFILE_ID =  ${{ secrets.PROFILE_ID }}>> .env
-
       - name: Generate DS Root Certificate for Netcetera SDK
         run: |
           CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
@@ -59,6 +52,22 @@ jobs:
           echo "Content has been successfully transferred to $OUTPUT_FILE."
 
       - name: Start server
+        env:
+          SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
+          SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
+          GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
+          SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+          SENTRY_ENV: 'production'
+          HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
+          HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
+          HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+          HYPERSWITCH_LOGS_PATH: ${{ secrets.HYPERSWITCH_LOGS_PATH }}
+          PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+          SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+          INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
+          HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+          HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
+          PROFILE_ID: ${{ secrets.PROFILE_ID }}
         run: |
           nohup node server.js &
 

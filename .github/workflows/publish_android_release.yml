@@ -1,4 +1,4 @@
-name: Publish to Maven Central
+name: Publish Android Release
 
 on:
   repository_dispatch:
@@ -88,13 +88,13 @@ jobs:
         working-directory: ./android
         run: |
           sed -i "s/include ':app', ':demo-app', ':hyperswitch-sdk-android-lite'/include ':app', ':hyperswitch-sdk-android-lite'/" settings.gradle
-      
+
       - name: Replace the ota endpoint
         working-directory: ./android
         env:
           PROD_ASSETS_END_POINT_WITH_VERSION: ${{ secrets.PROD_ASSETS_END_POINT_WITH_VERSION }}
           SANDBOX_ASSETS_END_POINT_WITH_VERSION: ${{ secrets.SANDBOX_ASSETS_END_POINT_WITH_VERSION}}
-        run: | 
+        run: |
           sed -i 's|<string name="hyperOTAEndPoint">.*</string>|<string name="hyperOTAEndPoint">'"$PROD_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
           sed -i 's|<string name="hyperOTASandBoxEndPoint">.*</string>|<string name="hyperOTASandBoxEndPoint">'"$SANDBOX_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
 
@@ -105,7 +105,7 @@ jobs:
           SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
           GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
           SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
-          SENTRY_ENV: "production"
+          SENTRY_ENV: 'production'
           HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
           HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
           HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
