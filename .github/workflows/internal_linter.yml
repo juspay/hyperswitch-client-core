@@ -4,13 +4,16 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+
 jobs:
   check-forbidden-words:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Checkout Shared code
         uses: actions/checkout@v4
         with:
@@ -36,7 +39,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+
       - name: Checkout Shared code
         uses: actions/checkout@v4
         with:

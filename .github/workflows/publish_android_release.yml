@@ -4,6 +4,9 @@ on:
   repository_dispatch:
     types: [android_repo_push]
 
+permissions:
+  contents: read
+
 jobs:
   update:
     runs-on: ubuntu-latest
