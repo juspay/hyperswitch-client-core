@@ -8,9 +8,6 @@ jobs:
   e2e-android:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Free Disk Space
         run: |
           sudo rm -rf /opt/hostedtoolcache
@@ -24,6 +21,9 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Checkout Shared Code Repo
         uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           # cache: 'npm'
           # cache-dependency-path: '**/package-lock.json'
 
@@ -95,10 +95,6 @@ jobs:
           path: android
           fetch-depth: 0
 
-      - name: Check Android branch
-        run: |
-          cd android && git branch && cd ..
-
       - name: Generate DS Root Certificate for Netcetera SDK
         run: |
           CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
@@ -114,29 +110,19 @@ jobs:
 
       - name: Generate & Supply JS Bundle to Test APK
         run: |
-          npm run re:start && npm run bundle:android
+          npm run re:start
 
       - name: Start Metro
         run: |
           nohup npm run start &
 
       - name: Detox build
-        run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
-
-      - name: Get device name
-        id: device
-        run: node -e "console.log('AVD_NAME=' + require('./.detoxrc').devices.ciEmulator.device.avdName)" >> $GITHUB_OUTPUT
-
-      - name: Check Android branch
-        run: |
-          cd android && git branch && cd ..
+        run: npx detox build --configuration android.emu.ci.debug
 
       - name: Detox test
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
-          target: default
-          arch: x86_64
+          api-level: 36-ext17
+          arch: arm64-v8a
           profile: pixel
-          avd-name: ${{ steps.device.outputs.AVD_NAME }}
-          script: npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
+          script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
