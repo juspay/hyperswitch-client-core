@@ -1,4 +1,4 @@
-name: PR Checks
+name: Hyperswitch Internal - Linter
 
 on:
   pull_request:
