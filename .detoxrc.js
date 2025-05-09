@@ -20,9 +20,9 @@ module.exports = {
     'ios.release': {
       type: 'ios.app',
       binaryPath:
-        'ios/build/Build/Products/Release-iphonesimulator/YOUR_APP.app',
+        'ios/build/Build/Products/Release-iphonesimulator/HyperSwitch.app',
       build:
-        'xcodebuild -workspace ios/YOUR_APP.xcworkspace -scheme YOUR_APP -configuration Release -sdk iphonesimulator -derivedDataPath ios/build',
+        'xcodebuild -workspace ios/hyperswitch.xcworkspace -scheme hyperswitch -configuration Release -sdk iphonesimulator -derivedDataPath ios/build',
     },
     'android.debug': {
       type: 'android.apk',
@@ -44,7 +44,7 @@ module.exports = {
     simulator: {
       type: 'ios.simulator',
       device: {
-        type: 'iPhone 15',
+        type: 'iPhone 16 Pro Max2',
       },
     },
     attached: {
@@ -56,13 +56,13 @@ module.exports = {
     emulator: {
       type: 'android.emulator',
       device: {
-        avdName: 'Pixel_3a_API_34_extension_level_7_arm64-v8a',
+        avdName: 'Medium_Phone',
       },
     },
     ciEmulator: {
       type: 'android.emulator',
       device: {
-        avdName: 'Pixel_API_29_AOSP',
+        avdName: 'test',
       },
     },
   },
