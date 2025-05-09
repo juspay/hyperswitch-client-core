@@ -4,4 +4,5 @@ import {name as appName, headless} from './app.json';
 import {registerHeadless} from './src/headless/Headless.bs';
 
 AppRegistry.registerComponent(appName, () => NewApp);
+
 registerHeadless(headless);
