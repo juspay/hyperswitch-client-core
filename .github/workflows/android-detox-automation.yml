@@ -39,7 +39,7 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Add .env variables
+      - name: Start server
         env:
           SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
           SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
@@ -56,8 +56,6 @@ jobs:
           HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
           HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
           PROFILE_ID: ${{ secrets.PROFILE_ID }}
-
-      - name: Start server
         run: |
           nohup node server.js &
 
