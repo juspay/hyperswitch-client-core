@@ -10,6 +10,9 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        
+      - name: Checkout Shared code
+        uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-utils
           ref: main
@@ -32,6 +35,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Checkout Shared code
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-utils
