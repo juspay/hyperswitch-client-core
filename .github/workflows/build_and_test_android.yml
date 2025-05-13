@@ -128,4 +128,5 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel
+          avd-name: Pixel_API_29_AOSP
           script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
