@@ -20,6 +20,7 @@ describe('card-flow-e2e-test', () => {
     // await waitForVisibility(element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)))
     await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
     // await waitForVisibility(element(by.text('Test Mode')))
+    await new Promise(resolve => setTimeout(resolve, 10000));
   })
 
   it('should enter details in card form', async () => {
