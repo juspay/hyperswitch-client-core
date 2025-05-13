@@ -17,6 +17,7 @@ describe('card-flow-e2e-test', () => {
   });
 
   it('payment sheet should open', async () => {
+    await waitForVisibility(element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)))
     await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
     await waitForVisibility(element(by.text('Test Mode')))
   })
