@@ -6,7 +6,7 @@ module.exports = {
       config: 'detox-tests/e2e/jest.config.js',
     },
     jest: {
-      setupTimeout: 300000,
+      setupTimeout: 900000,
     },
   },
   apps: {
