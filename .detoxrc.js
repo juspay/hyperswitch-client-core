@@ -58,12 +58,21 @@ module.exports = {
       device: {
         avdName: 'Medium_Phone',
       },
+      headless: false,
+      gpuMode: 'auto',
+      bootArgs: '-no-snapshot -no-snapshot-load -no-snapshot-save -gpu swiftshader_indirect -no-audio -no-boot-anim',
     },
     ciEmulator: {
       type: 'android.emulator',
       device: {
         avdName: 'test',
       },
+      headless: true,
+      gpuMode: 'swiftshader_indirect',
+      bootArgs: '-no-window -no-snapshot -no-snapshot-load -no-snapshot-save -no-audio -no-boot-anim -gpu swiftshader_indirect',
+      utilBinaryPaths: ['platform-tools/adb'],
+      readonly: true,
+      forceAdbInstall: true,
     },
   },
   configurations: {
@@ -90,6 +99,27 @@ module.exports = {
     'android.emu.ci.debug': {
       device: 'ciEmulator',
       app: 'android.debug',
+      artifacts: {
+        // Enable artifacts for better debugging in CI
+        rootDir: './artifacts',
+        plugins: {
+          log: { enabled: true },
+          screenshot: {
+            enabled: true,
+            shouldTakeAutomaticSnapshots: true,
+            keepOnlyFailedTestsArtifacts: false,
+            takeWhen: {
+              testStart: true,
+              testDone: true,
+              appNotReady: true,
+            },
+          },
+          video: {
+            enabled: true,
+            keepOnlyFailedTestsArtifacts: false,
+          },
+        },
+      },
     },
     'android.emu.release': {
       device: 'emulator',

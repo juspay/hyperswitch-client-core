@@ -50,7 +50,7 @@ jobs:
           SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
           GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
           SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
-          SENTRY_ENV: 'production'
+          SENTRY_ENV: "production"
           HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
           HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
           HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
@@ -119,6 +119,18 @@ jobs:
         run: |
           nohup npm run start &
 
+      - name: Make scripts executable
+        run: |
+          chmod +x setup-android-sdk.sh run-android-tests.sh
+
+      - name: Setup Android SDK environment
+        run: |
+          source ./setup-android-sdk.sh
+          echo "Android SDK setup complete at $ANDROID_HOME"
+
+      - name: Create artifacts directory
+        run: mkdir -p ./artifacts
+
       - name: Detox build
         run: npx detox build --configuration android.emu.ci.debug
 
@@ -128,4 +140,38 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel
-          script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
+          avd-name: pixel_API_35
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: |
+            adb devices
+            npm run test:android:ci
+
+      - name: Generate summary of screenshots
+        if: always()
+        run: |
+          echo "## Test Screenshots Summary" > screenshots_summary.md
+          echo "" >> screenshots_summary.md
+          if [ -d "./artifacts" ]; then
+            find ./artifacts -name "*.png" | sort | while read file; do
+              echo "- $(basename $file)" >> screenshots_summary.md
+            done
+          else
+            echo "No screenshots found." >> screenshots_summary.md
+          fi
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: detox-artifacts
+          path: |
+            ./artifacts
+          retention-days: 7
+
+      - name: Upload screenshots summary
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: screenshots-summary
+          path: screenshots_summary.md
+          retention-days: 7
