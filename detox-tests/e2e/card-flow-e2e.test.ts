@@ -6,7 +6,7 @@ describe('card-flow-e2e-test', () => {
   jest.retryTimes(6);
   beforeAll(async () => {
     await device.launchApp({
-      launchArgs: { detoxEnableSynchronization: 0 },
+      launchArgs: { detoxEnableSynchronization: false },
       newInstance: true,
     });
     await device.disableSynchronization();
