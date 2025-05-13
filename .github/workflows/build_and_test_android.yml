@@ -132,6 +132,7 @@ jobs:
           script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
 
       - name: Upload Detox artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: detox-artifacts
