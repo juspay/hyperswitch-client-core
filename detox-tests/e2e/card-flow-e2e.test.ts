@@ -6,10 +6,10 @@ describe('card-flow-e2e-test', () => {
   jest.retryTimes(6);
   beforeAll(async () => {
     await device.launchApp({
-      launchArgs: { detoxEnableSynchronization: 1 },
+      launchArgs: { detoxEnableSynchronization: 0 },
       newInstance: true,
     });
-    await device.enableSynchronization();
+    await device.disableSynchronization();
   });
 
   it('demo app should load successfully', async () => {
@@ -20,7 +20,11 @@ describe('card-flow-e2e-test', () => {
     // await waitForVisibility(element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)))
     await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
     // await waitForVisibility(element(by.text('Test Mode')))
-    await new Promise(resolve => setTimeout(resolve, 10000));
+
+    await waitFor(element(by.text('Test Mode')))
+      .toBeVisible()
+      .withTimeout(60000);
+    // await new Promise(resolve => setTimeout(resolve, 10000));
   })
 
   it('should enter details in card form', async () => {
