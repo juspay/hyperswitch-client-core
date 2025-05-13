@@ -130,3 +130,13 @@ jobs:
           profile: pixel
           avd-name: Pixel_API_29_AOSP
           script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
+
+      - name: Upload Detox artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: detox-artifacts
+          path: |
+            e2e/artifacts/logs
+            e2e/artifacts/screenshots
+            e2e/artifacts/videos
+            e2e/artifacts/viewHierarchy
