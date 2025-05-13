@@ -134,22 +134,73 @@ jobs:
       - name: Detox build
         run: npx detox build --configuration android.emu.ci.debug
 
-      - name: Detox test
+      # Use multiple steps to ensure that even if the emulator/test step fails,
+      # we still capture artifacts
+      - name: Setup and Run Emulator with Tests
+        id: run_tests
+        continue-on-error: true
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
           arch: x86_64
           profile: pixel
-          avd-name: pixel_API_35
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          avd-name: test
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -no-cache
           script: |
             adb devices
-            npm run test:android:ci
+            adb shell settings put global window_animation_scale 0
+            adb shell settings put global transition_animation_scale 0
+            adb shell settings put global animator_duration_scale 0
+
+            # Create a logcat file for debugging
+            adb logcat > ./artifacts/device_logcat.log &
+            LOGCAT_PID=$!
+
+            # Start detox server
+            npx detox server &
+            DETOX_SERVER_PID=$!
+
+            # Wait for server to start
+            sleep 5
+
+            # Run tests
+            mkdir -p ./artifacts/screenshots
+            touch ./artifacts/test_output.log
+            DETOX_DISABLE_REACT_NATIVE_UIMODULE_SYNCHRONIZATION=true DETOX_ARTIFACTS_LOCATION=./artifacts npx detox test --configuration android.emu.ci.debug --loglevel trace --record-logs all --take-screenshots all --debug-synchronization 10000 2>&1 | tee ./artifacts/test_output.log
+
+            # Take a final screenshot regardless of test result
+            adb shell screencap -p /sdcard/final_state.png
+            adb pull /sdcard/final_state.png ./artifacts/final_state.png
+
+            # Kill logcat process
+            kill $LOGCAT_PID
+
+            # Kill detox server
+            kill $DETOX_SERVER_PID
+
+      # Force artifact generation regardless of test outcome
+      - name: Force create screenshot directory
+        if: always()
+        run: |
+          mkdir -p ./artifacts/screenshots
+          echo "Test run time: $(date)" > ./artifacts/run_info.txt
+          echo "Test status: ${{ steps.run_tests.outcome }}" >> ./artifacts/run_info.txt
+
+      - name: Capture device logs as backup
+        if: always()
+        continue-on-error: true
+        run: |
+          adb logcat -d > ./artifacts/final_device_log.log || echo "Could not capture final device log"
+          adb shell dumpsys > ./artifacts/device_dumpsys.log || echo "Could not capture device dumpsys"
 
       - name: Generate summary of screenshots
         if: always()
         run: |
-          echo "## Test Screenshots Summary" > screenshots_summary.md
+          echo "## Test Run Summary" > screenshots_summary.md
+          echo "" >> screenshots_summary.md
+          echo "Test outcome: ${{ steps.run_tests.outcome }}" >> screenshots_summary.md
+          echo "" >> screenshots_summary.md
+          echo "## Test Screenshots" >> screenshots_summary.md
           echo "" >> screenshots_summary.md
           if [ -d "./artifacts" ]; then
             find ./artifacts -name "*.png" | sort | while read file; do
@@ -175,3 +226,8 @@ jobs:
           name: screenshots-summary
           path: screenshots_summary.md
           retention-days: 7
+
+      # Set job status based on test outcome
+      - name: Set job status
+        if: steps.run_tests.outcome == 'failure'
+        run: exit 1
