@@ -1,6 +1,7 @@
 open ReactNative
 open Style
 open SdkTypes
+open LoggerTypes
 
 @react.component
 let make = () => {
@@ -14,21 +15,9 @@ let make = () => {
   let logger = LoggerHook.useLoggerHook()
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
   let showAlert = AlertHook.useAlerts()
-  let {launchGPay} = WebKit.useWebKit()
+  let {launchGPay: webkitLaunchGPay, launchApplePay: webkitLaunchApplePay} = WebKit.useWebKit()
   let localeObj = GetLocale.useGetLocalObj()
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
-
-  let animateFlex = (~flexval, ~value, ~endCallback=() => (), ()) => {
-    Animated.timing(
-      flexval,
-      {
-        toValue: {value->Animated.Value.Timing.fromRawValue},
-        isInteraction: true,
-        useNativeDriver: false,
-        delay: 0.,
-      },
-    )->Animated.start(~endCallback=_ => {endCallback()}, ())
-  }
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
@@ -59,7 +48,7 @@ let make = () => {
   | Some(NONE) | None => ("", NONE)
   }
 
-  let processGpayRequest = (
+  let processExpressCheckoutApiRequest = (
     ~payment_method,
     ~payment_method_data,
     ~payment_method_type,
@@ -70,16 +59,15 @@ let make = () => {
       setConfirm(_ => false)
       logger(
         ~logType=INFO,
-        ~value="",
+        ~value="ECW API Error",
         ~category=USER_EVENT,
         ~eventName=PAYMENT_FAILED,
         ~paymentMethod=payment_method_type,
         (),
       )
 
-      if !closeSDK {
-        setLoading(FillingDetails)
-      }
+      setLoading(FillingDetails)
+
       handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
 
@@ -88,7 +76,7 @@ let make = () => {
 
       logger(
         ~logType=INFO,
-        ~value="",
+        ~value="ECW API Response Data Filled",
         ~category=USER_EVENT,
         ~eventName=PAYMENT_DATA_FILLED,
         ~paymentMethod=payment_method_type,
@@ -96,7 +84,7 @@ let make = () => {
       )
       logger(
         ~logType=INFO,
-        ~value="",
+        ~value="ECW API Attempt",
         ~category=USER_EVENT,
         ~eventName=PAYMENT_ATTEMPT,
         ~paymentMethod=payment_method_type,
@@ -106,14 +94,14 @@ let make = () => {
       | PaymentSuccess => {
           logger(
             ~logType=INFO,
-            ~value="",
+            ~value="ECW API Success",
             ~category=USER_EVENT,
             ~eventName=PAYMENT_SUCCESS,
             ~paymentMethod=payment_method_type,
             (),
           )
           setLoading(PaymentSuccess)
-          animateFlex(
+          AnimationUtils.animateFlex(
             ~flexval=buttomFlex,
             ~value=0.01,
             ~endCallback=() => {
@@ -173,65 +161,45 @@ let make = () => {
     )
   }
 
-  let confirmGPay = var => {
-    let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
-    switch paymentData.error {
-    | "" =>
-      let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj =
-        json
-        ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper(
-          switch countryStateData {
-          | FetchData(data)
-          | Localdata(data) =>
-            data.states
-          | _ => Dict.make()
-          },
-        )
-      let payment_method_data =
-        [
-          (
-            "wallet",
-            [
-              (
-                walletType->SdkTypes.walletTypeToStrMapper,
-                obj.paymentMethodData->Utils.getJsonObjectFromRecord,
-              ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-          (
-            "billing",
-            switch obj.paymentMethodData.info {
-            | Some(info) =>
-              switch info.billing_address {
-              | Some(address) => address->Utils.getJsonObjectFromRecord
-              | None => JSON.Encode.null
-              }
-            | None => JSON.Encode.null
-            },
-          ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-      processGpayRequest(
-        ~payment_method="wallet",
-        ~payment_method_data,
-        ~payment_method_type=walletType->SdkTypes.walletTypeToStrMapper,
-        ~email=?obj.email,
-        (),
-      )
-    | "Cancel" =>
-      setLoading(FillingDetails)
-      showAlert(~errorType="warning", ~message="Payment was Cancelled")
-    | err =>
-      setLoading(FillingDetails)
-      showAlert(~errorType="error", ~message=err)
-    }
+  let handleGPayNativeResponse = var => {
+    WalletPaymentHandlers.confirmGPay(
+      var,
+      ~walletTypeStr=walletType->SdkTypes.walletTypeToStrMapper,
+      ~countryStateData,
+      ~setLoading,
+      ~showAlert,
+      ~processRequestFn=processExpressCheckoutApiRequest,
+      (),
+    )
   }
 
+  let handleApplePayNativeResponse = var => {
+    WalletPaymentHandlers.confirmApplePay(
+      var,
+      ~walletTypeStr=SdkTypes.APPLE_PAY->SdkTypes.walletTypeToStrMapper,
+      ~countryStateData,
+      ~setLoading,
+      ~showAlert,
+      ~processRequestFn=processExpressCheckoutApiRequest,
+      (),
+    )
+  }
+
+  let handleSamsungPayNativeResponse = (
+    statusFromNative,
+    billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
+  ) => {
+    WalletPaymentHandlers.confirmSamsungPay(
+      statusFromNative,
+      billingDetails,
+      ~walletTypeStr=SdkTypes.SAMSUNG_PAY->SdkTypes.walletTypeToStrMapper,
+      ~setLoading,
+      ~showAlert,
+      ~logger,
+      ~processRequestFn=processExpressCheckoutApiRequest,
+      (),
+    )
+  }
   let processSavedExpressCheckoutRequest = tokenToUse => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       setSavedCardCvv(_ => None)
@@ -254,73 +222,26 @@ let make = () => {
       }
     }
 
-    let sessionObject = switch allApiData.sessions {
-    | Some(sessionData) =>
-      sessionData
-      ->Array.find(item => item.wallet_name == walletType)
-      ->Option.getOr(SessionsType.defaultToken)
-    | _ => SessionsType.defaultToken
+    let paymentConfig: PaymentProcessingUtils.paymentInitiationConfig = {
+      activeWalletName: walletType,
+      activePaymentToken: tokenToUse,
+      allApiData,
+      nativeProp,
+      logger,
+      setLoading,
+      showAlert,
+      fetchAndRedirect,
+      webkitLaunchGPay,
+      webkitLaunchApplePay,
+      gPayResponseHandler: handleGPayNativeResponse,
+      applePayResponseHandler: handleApplePayNativeResponse,
+      samsungPayResponseHandler: handleSamsungPayNativeResponse,
+      errorCallback,
+      responseCallback,
+      savedCardCvv,
     }
-
-    switch walletType {
-    | GOOGLE_PAY =>
-      if WebKit.platform === #android {
-        HyperModule.launchGPay(
-          GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-          confirmGPay,
-        )
-      } else {
-        launchGPay(
-          GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-        )
-      }
-    | NONE => {
-        let (body, paymentMethodType) = (
-          PaymentUtils.generateSavedCardConfirmBody(
-            ~nativeProp,
-            ~payment_token=tokenToUse,
-            ~savedCardCvv,
-          ),
-          "card",
-        )
-
-        let paymentBodyWithDynamicFields = body
-
-        fetchAndRedirect(
-          ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
-          ~publishableKey=nativeProp.publishableKey,
-          ~clientSecret=nativeProp.clientSecret,
-          ~errorCallback,
-          ~responseCallback,
-          ~paymentMethod=paymentMethodType,
-          (),
-        )
-      }
-    | _ => {
-        let (body, paymentMethodType) = (
-          PaymentUtils.generateWalletConfirmBody(
-            ~nativeProp,
-            ~payment_method_type=walletType->SdkTypes.walletTypeToStrMapper,
-            ~payment_token=tokenToUse,
-          ),
-          "wallet",
-        )
-
-        let paymentBodyWithDynamicFields = body
-
-        fetchAndRedirect(
-          ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
-          ~publishableKey=nativeProp.publishableKey,
-          ~clientSecret=nativeProp.clientSecret,
-          ~errorCallback,
-          ~responseCallback,
-          ~paymentMethod=paymentMethodType,
-          (),
-        )
-      }
-    }
+    PaymentProcessingUtils.initiatePayment(paymentConfig)
   }
-
   let onPress = () => {
     setLoading(ProcessingPayments(None))
     processSavedExpressCheckoutRequest(pmToken)
@@ -330,12 +251,8 @@ let make = () => {
     if nativeProp.publishableKey == "" {
       setLoading(ProcessingPayments(None))
     }
-    let nativeEventEmitter = NativeEventEmitter.make(
-      Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
-    )
 
-    let eventSubscription = NativeEventEmitter.addListener(nativeEventEmitter, "confirmEC", var => {
-      let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
+    let handleExpressCheckoutConfirm = (responseFromJava: PaymentConfirmTypes.responseFromJava) => {
       setNativeProp({
         ...nativeProp,
         publishableKey: responseFromJava.publishableKey,
@@ -357,23 +274,13 @@ let make = () => {
       if responseFromJava.confirm {
         setConfirm(_ => true)
       }
-    })
-
-    let widgetHeight = {
-      switch firstPaymentMethod {
-      | Some(firstPaymentMethod) => firstPaymentMethod->PaymentUtils.checkIsCVCRequired ? 260 : 150
-      | _ => 150
-      }
     }
-    HyperModule.updateWidgetHeight(widgetHeight)
 
-    HyperModule.sendMessageToNative(`{"isReady": "true", "paymentMethodType": "expressCheckout"}`)
-
-    Some(
-      () => {
-        eventSubscription->EventSubscription.remove
-      },
+    let cleanup = NativeEventListener.setupExpressCheckoutListener(
+      ~onExpressCheckoutConfirm=handleExpressCheckoutConfirm,
     )
+
+    Some(cleanup)
   }, [nativeProp.publishableKey])
 
   React.useEffect1(_ => {
@@ -386,7 +293,7 @@ let make = () => {
   React.useEffect1(_ => {
     let widgetHeight = {
       switch firstPaymentMethod {
-      | Some(firstPaymentMethod) => firstPaymentMethod->PaymentUtils.checkIsCVCRequired ? 300 : 150
+      | Some(pm) => pm->PaymentUtils.checkIsCVCRequired ? 290 : 150
       | _ => 150
       }
     }
@@ -432,8 +339,8 @@ let make = () => {
       }}
     </View>
     {switch firstPaymentMethod {
-    | Some(firstPaymentMethod) =>
-      firstPaymentMethod->PaymentUtils.checkIsCVCRequired
+    | Some(pm) =>
+      pm->PaymentUtils.checkIsCVCRequired
         ? <SaveCardsList.CVVComponent
             savedCardCvv setSavedCardCvv isPaymentMethodSelected={true} cardScheme
           />
