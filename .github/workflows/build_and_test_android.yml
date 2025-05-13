@@ -94,7 +94,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-android
-          ref: main
+          ref: detox-fix
           path: android
           fetch-depth: 0
 
