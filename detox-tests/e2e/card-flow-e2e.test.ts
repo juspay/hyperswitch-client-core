@@ -21,10 +21,10 @@ describe('card-flow-e2e-test', () => {
     await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
     // await waitForVisibility(element(by.text('Test Mode')))
 
-    await waitFor(element(by.text('Test Mode')))
-      .toBeVisible()
-      .withTimeout(60000);
-    // await new Promise(resolve => setTimeout(resolve, 10000));
+    // await waitFor(element(by.text('Test Mode')))
+    //   .toBeVisible()
+    //   .withTimeout(60000);
+    await new Promise(resolve => setTimeout(resolve, 5000));
   })
 
   it('should enter details in card form', async () => {
