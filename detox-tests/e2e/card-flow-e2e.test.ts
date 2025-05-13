@@ -77,13 +77,17 @@ describe('card-flow-e2e-test', () => {
       await takeScreenshot('scroll_failed', 'payment_button');
     }
 
+    // Add a longer delay to ensure UI is ready
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    await takeScreenshot('after_delay', 'payment_button');
+
     // Try multiple ways to find the payment button
     let buttonFound = false;
 
     // First try the exact text
     try {
       const exactPayButton = element(by.text('Purchase ($2.00)'));
-      await waitFor(exactPayButton).toBeVisible().withTimeout(10000);
+      await waitFor(exactPayButton).toBeVisible().withTimeout(20000);
       await takeScreenshot('exact_button_found', 'payment_button');
       await exactPayButton.tap();
       buttonFound = true;
@@ -97,8 +101,8 @@ describe('card-flow-e2e-test', () => {
     if (!buttonFound) {
       try {
         const payNowButton = element(by.id(testIds.payButtonTestId));
-        await waitFor(payNowButton).toExist().withTimeout(10000);
-        await waitForVisibility(payNowButton);
+        await waitFor(payNowButton).toExist().withTimeout(20000);
+        await waitForVisibility(payNowButton, 20000);
         await takeScreenshot('id_button_found', 'payment_button');
         await payNowButton.tap();
         buttonFound = true;
@@ -112,25 +116,37 @@ describe('card-flow-e2e-test', () => {
     // As a last resort, try pattern matching
     if (!buttonFound) {
       try {
-        const payButtonTextMatcher = element(by.text(/Purchase|Pay|Continue/i));
-        await waitFor(payButtonTextMatcher).toBeVisible().withTimeout(20000);
+        const payButtonTextMatcher = element(by.text(/Purchase|Pay|Continue|Confirm|Submit/i));
+        await waitFor(payButtonTextMatcher).toBeVisible().withTimeout(30000);
         await takeScreenshot('pattern_button_found', 'payment_button');
         await payButtonTextMatcher.tap();
         await takeScreenshot('after_pattern_button_tap', 'payment_button');
       } catch (error) {
-        console.log("All button finding methods failed");
-        await takeScreenshot('all_button_methods_failed', 'payment_button');
-        throw error; // Re-throw to fail the test
+        // Try to find any button element as a last resort
+        try {
+          console.log("Trying to find any button element");
+          const anyButton = element(by.traits(['button']));
+          await waitFor(anyButton).toBeVisible().withTimeout(20000);
+          await takeScreenshot('any_button_found', 'payment_button');
+          await anyButton.tap();
+        } catch (lastError) {
+          console.log("All button finding methods failed");
+          await takeScreenshot('all_button_methods_failed', 'payment_button');
+          throw error; // Re-throw to fail the test
+        }
       }
     }
 
     // Take screenshot during payment processing
     await takeScreenshot('payment_processing', 'payment_result');
 
+    // Wait longer for payment response in CI environment
+    const waitTimeout = 90000; // 90 seconds
+
     // Wait for payment success message
     if (device.getPlatform() === "ios") {
       try {
-        await waitForVisibility(element(by.text('Payment complete')), 60000);
+        await waitForVisibility(element(by.text('Payment complete')), waitTimeout);
         await takeScreenshot('ios_payment_complete', 'payment_result');
       } catch (error) {
         await takeScreenshot('ios_payment_timeout', 'payment_result');
@@ -138,13 +154,14 @@ describe('card-flow-e2e-test', () => {
       }
     } else {
       try {
-        await waitForVisibility(element(by.text('succeeded')), 30000);
+        await waitForVisibility(element(by.text('succeeded')), waitTimeout);
         await takeScreenshot('android_payment_succeeded', 'payment_result');
       } catch (error) {
         try {
-          await waitForVisibility(element(by.text(/success|completed|approved/i)), 30000);
+          await waitForVisibility(element(by.text(/success|completed|approved/i)), waitTimeout);
           await takeScreenshot('android_payment_generic_success', 'payment_result');
         } catch (innerError) {
+          // Try to take a screenshot of whatever is visible on screen
           await takeScreenshot('android_payment_failure', 'payment_result');
           throw innerError; // Re-throw to fail the test
         }

@@ -14,4 +14,5 @@ module.exports = {
     // Add a transformer for `.bs.js` files
     '\\.bs\\.js$': 'babel-jest', // or specify a custom transformer if needed
   },
+  setupFilesAfterEnv: ['<rootDir>/e2e/setup.js'],
 };

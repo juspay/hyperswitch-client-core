@@ -99,8 +99,21 @@ module.exports = {
     'android.emu.ci.debug': {
       device: 'ciEmulator',
       app: 'android.debug',
+      behavior: {
+        init: {
+          launchApp: false,
+        },
+        launchApp: 'auto',
+        cleanup: {
+          shutdownDevice: false,
+        },
+      },
+      session: {
+        server: 'ws://localhost:8099',
+        sessionId: 'test',
+        autoStart: true,
+      },
       artifacts: {
-        // Enable artifacts for better debugging in CI
         rootDir: './artifacts',
         plugins: {
           log: { enabled: true },
@@ -112,6 +125,8 @@ module.exports = {
               testStart: true,
               testDone: true,
               appNotReady: true,
+              beforeEach: true,
+              afterEach: true,
             },
           },
           video: {
