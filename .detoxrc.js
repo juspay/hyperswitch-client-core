@@ -56,13 +56,13 @@ module.exports = {
     emulator: {
       type: 'android.emulator',
       device: {
-        avdName: 'Medium_Phone',
+        avdName:'Pixel_3a_API_34_extension_level_7_arm64-v8a,
       },
     },
     ciEmulator: {
       type: 'android.emulator',
       device: {
-        avdName: 'test',
+        avdName:'Pixel_3a_API_34_extension_level_7_arm64-v8a,
       },
     },
   },
