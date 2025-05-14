@@ -18,13 +18,15 @@ describe('card-flow-e2e-test', () => {
 
   it('payment sheet should open', async () => {
     // await waitForVisibility(element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)))
+    await element(by.text("Reload Client Secret")).tap();
+    await new Promise(resolve => setTimeout(resolve, 2000));
     await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
     // await waitForVisibility(element(by.text('Test Mode')))
 
     // await waitFor(element(by.text('Test Mode')))
     //   .toBeVisible()
     //   .withTimeout(60000);
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => setTimeout(resolve, 2000));
   })
 
   it('should enter details in card form', async () => {
