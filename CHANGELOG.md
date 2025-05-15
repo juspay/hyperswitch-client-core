@@ -1,3 +1,10 @@
+## [1.1.7](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.6...v1.1.7) (2025-05-15)
+
+
+### Bug Fixes
+
+* added cache or memo to icon ([#285](https://github.com/juspay/hyperswitch-client-core/issues/285)) ([832231f](https://github.com/juspay/hyperswitch-client-core/commit/832231f920963369afa7267f9894eacb31b2106f))
+
 ## [1.1.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.5...v1.1.6) (2025-05-07)
 
 
