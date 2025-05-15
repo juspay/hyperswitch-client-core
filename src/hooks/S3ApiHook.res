@@ -243,6 +243,7 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         defaultLocale.enterValidDigitsText,
       ),
       digitsText: Utils.getString(res, "digitsText", defaultLocale.digitsText),
+      enterValidIban: Utils.getString(res, "enterValidIban", defaultLocale.enterValidIban),
       selectCardBrand: Utils.getString(res, "selectCardBrand", defaultLocale.selectCardBrand),
       mandatoryFieldText: Utils.getString(
         res,
