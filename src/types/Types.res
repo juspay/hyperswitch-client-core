@@ -109,6 +109,12 @@ let defaultConfig = {
       header: "",
       fields: [],
     },
+    {
+      name: "ach_bank_transfer",
+      text: "ACH Bank Transfer",
+      header: "",
+      fields: [],
+    },
     // {
     //   name: "google_pay",
     //   text: "Google Pay",
