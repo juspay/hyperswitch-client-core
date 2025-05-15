@@ -72,6 +72,7 @@ type localeStrings = {
   deletePaymentMethod?: string,
   enterValidDigitsText: string,
   digitsText: string,
+  enterValidIban : string,
   selectCardBrand: string,
   mandatoryFieldText: string,
 }
@@ -149,6 +150,7 @@ let defaultLocale = {
   deletePaymentMethod: "Delete",
   enterValidDigitsText: "Please enter valid ",
   digitsText: " digits ",
+  enterValidIban: "Please enter valid Iban",
   selectCardBrand: "Select a card brand",
   mandatoryFieldText: "This field is mandatory",
 }
