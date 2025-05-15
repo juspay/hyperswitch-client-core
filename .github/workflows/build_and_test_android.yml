@@ -11,9 +11,6 @@ jobs:
   e2e-android:
     runs-on: ubuntu-latest
     env:
-      SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
-      SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
-      GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
       SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
       SENTRY_ENV: 'production'
       HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
