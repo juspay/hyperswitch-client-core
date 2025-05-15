@@ -26,7 +26,7 @@ type uri = {
 open ReactNative
 open Style
 @react.component
-let make = (
+let make = React.memo((
   ~name,
   ~width=20.,
   ~height=16.,
@@ -115,4 +115,4 @@ let make = (
           style={viewStyle(~height=height->dp, ~width=width->dp, ())} color=fill
         />}
   </View>
-}
+})
