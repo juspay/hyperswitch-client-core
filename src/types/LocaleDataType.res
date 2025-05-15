@@ -74,6 +74,7 @@ type localeStrings = {
   digitsText: string,
   enterValidIban : string,
   selectCardBrand: string,
+  mandatoryFieldText: string,
 }
 let defaultLocale = {
   locale: "en",
@@ -151,4 +152,5 @@ let defaultLocale = {
   digitsText: " digits ",
   enterValidIban: "Please enter valid Iban",
   selectCardBrand: "Select a card brand",
+  mandatoryFieldText: "This field is mandatory",
 }

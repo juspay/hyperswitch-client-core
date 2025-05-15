@@ -246,7 +246,7 @@ let make = (
   ) => {
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
+      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
       payment_method,
       payment_method_type,
       payment_experience: payment_experience_type,
@@ -284,7 +284,6 @@ let make = (
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
               online: {
-                ip_address: ?nativeProp.hyperParams.ip,
                 user_agent: ?nativeProp.hyperParams.userAgent,
               },
             })
@@ -923,7 +922,7 @@ let make = (
 
   //need refactoring
   let handlePressEmail = text => {
-    setIsEmailValid(_ => text->Validation.isValidEmail)
+    setIsEmailValid(_ => text->EmailValidation.isEmailValid)
     setEmail(_ => Some(text))
   }
 
@@ -1022,7 +1021,7 @@ let make = (
             <Klarna
               launchKlarna
               processRequest=processRequestPayLater
-              return_url={Utils.getReturnUrl(nativeProp.hyperParams.appId)}
+              return_url=Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url)
               klarnaSessionTokens=session_token
             />
             <ErrorText text=error />

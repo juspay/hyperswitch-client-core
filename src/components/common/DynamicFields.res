@@ -120,7 +120,7 @@ module RenderField = {
               if isCountryField {
                 let stateKey = getKey(stringFieldPath, "state")
                 switch newData->Dict.get(stateKey) {
-                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, validationErrMsg))
+                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, Some("required")))
                 | None => ()
                 }
               }
@@ -140,7 +140,7 @@ module RenderField = {
                 ? (
                     JSON.Encode.null,
                     isBillingFields
-                      ? Some(localeObject.requiredText)
+                      ? Some(localeObject.mandatoryFieldText)
                       : Some(localeObject.cardHolderNameRequiredText),
                   )
                 : (
@@ -184,7 +184,7 @@ module RenderField = {
     }
     let onChange = text => {
       setVal(prev =>
-        RequiredFieldsTypes.onlyDigits_restrictsChars(
+        RequiredFieldsTypes.allowOnlyDigits(
           ~text,
           ~fieldType=required_fields_type.field_type,
           ~prev,

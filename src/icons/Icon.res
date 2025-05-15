@@ -37,10 +37,12 @@ let make = (
 ) => {
   defaultView->ignore
   let (isLoaded, setIsLoaded) = React.useState(_ => false)
-  let (iconName, setIconName) = React.useState(_ => name->String.toLowerCase)
+  let (iconName, setIconName) = React.useState(_ =>
+    name->String.replaceRegExp(%re("/ /g"), "")->String.toLowerCase
+  )
 
   React.useEffect1(() => {
-    setIconName(_ => name->String.toLowerCase)
+    setIconName(_ => name->String.replaceRegExp(%re("/ /g"), "")->String.toLowerCase)
     None
   }, [name])
 
@@ -63,10 +65,10 @@ let make = (
     | "checkboxclicked" => checkboxclicked
     | "checkboxnotclicked" => checkboxnotclicked
     | "defaulttick" => defaultTick
-    | "google pay" => google_pay
-    | "apple pay" => applePayList
+    | "googlepay" => google_pay
+    | "applepay" => applePayList
     | "samsung_pay" => samsungPay
-    | "becs debit" => becsDebit
+    | "becsdebit" => becsDebit
     | "cartesbancaires" => cartesBancaires
     | "sepa debit" => sepadebit
     | _ => ""

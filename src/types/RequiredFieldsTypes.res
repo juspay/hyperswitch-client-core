@@ -237,7 +237,7 @@ let getErrorMsg = (
   | AddressPincode => localeObject.postalCodeEmptyText
   | Email => localeObject.emailEmptyText
   | Iban => localeObject.enterValidIban
-  | _ => localeObject.requiredText
+  | _ => localeObject.mandatoryFieldText
   }
 }
 let numberOfDigitsValidation = (
@@ -251,10 +251,10 @@ let numberOfDigitsValidation = (
       None
     } else {
       Some(
-        localeObject.enterValidDigitsText ++
+        localeObject.enterValidDigitsText ++ " " ++
         digits->Int.toString ++
-        localeObject.digitsText ++
-        display_name->Option.getOr("")->Utils.toCamelCase,
+        localeObject.digitsText ++ " " ++
+        display_name->Option.getOr("")->Utils.underscoresToSpaces,
       )
     }
   } else {
@@ -274,7 +274,7 @@ let checkIsValid = (
   } else {
     switch field_type {
     | Email =>
-      switch text->Validation.isValidEmail {
+      switch text->EmailValidation.isEmailValid {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
       | None => Some(localeObject.emailEmptyText)
@@ -296,7 +296,7 @@ let checkIsValid = (
   }
 }
 
-let onlyDigits_restrictsChars = (
+let allowOnlyDigits = (
   ~text,
   ~fieldType,
   ~prev,
@@ -328,6 +328,8 @@ let onlyDigits_restrictsChars = (
 let getKeyboardType = (~field_type: paymentMethodsFields) => {
   switch field_type {
   | Email => #"email-address"
+  | AccountNumber => #"number-pad"
+  | BSBNumber => #"number-pad"
   | _ => #default
   }
 }
@@ -389,7 +391,7 @@ let useGetPlaceholder = (
     | AddressState => localeObject.stateLabel
     | AddressCountry(_) => localeObject.countryLabel
     | Currency(_) => localeObject.currencyLabel
-    | InfoElement => localeObject.requiredText
+    | InfoElement => localeObject.mandatoryFieldText
     // | ShippingCountry(_) => localeObject.countryLabel
     // | ShippingAddressLine1 => localeObject.line1Placeholder
     // | ShippingAddressLine2 => localeObject.line2Placeholder

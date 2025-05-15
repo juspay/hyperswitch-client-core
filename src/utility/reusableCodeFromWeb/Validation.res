@@ -146,10 +146,19 @@ let getAllMatchedCardSchemes = cardNumber => {
   })
 }
 
+let isCardSchemeEnabled = (~cardScheme, ~enabledCardSchemes) => {
+  enabledCardSchemes->Array.includes(cardScheme)
+}
+
+let getFirstValidCardScheme = (~cardNumber, ~enabledCardSchemes) => {
+  let allMatchedCards = getAllMatchedCardSchemes(cardNumber->clearSpaces)
+  allMatchedCards
+  ->Array.find(card => isCardSchemeEnabled(~cardScheme=card, ~enabledCardSchemes))
+  ->Option.getOr("")
+}
+
 let getEligibleCoBadgedCardSchemes = (~matchedCardSchemes, ~enabledCardSchemes) => {
-  matchedCardSchemes->Array.filter(ele => 
-    enabledCardSchemes->Array.includes(ele)
-  )
+  matchedCardSchemes->Array.filter(ele => enabledCardSchemes->Array.includes(ele))
 }
 
 let getCardBrand = cardNumber => {
@@ -601,21 +610,6 @@ let checkCardExpiry = expiry => {
 //   countryPostal.regex == "" ? "" : countryPostal.regex
 // }
 
-let isValidEmail = text => {
-  switch text->String.match(
-    %re(
-      "/^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/"
-    ),
-  ) {
-  | Some(_match) => Some(true)
-  | None =>
-    if text->String.length == 0 {
-      None
-    } else {
-      Some(false)
-    }
-  }
-}
 
 let isValidZip = (~zipCode, ~country) => {
   let _ = country
