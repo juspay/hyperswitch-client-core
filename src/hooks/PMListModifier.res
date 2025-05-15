@@ -315,10 +315,9 @@ let useListModifier = () => {
           | SAMSUNG_PAY =>
             exp->Option.isSome &&
             SamsungPayModule.isAvailable &&
-            samsungPayStatus == SamsungPay.Invalid
-              ? None
-              : exp
-
+            samsungPayStatus == SamsungPay.Valid
+              ? exp
+              : None
           | PAYPAL =>
             exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
               ? exp

@@ -1,3 +1,124 @@
+## [1.1.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.5...v1.1.6) (2025-05-07)
+
+
+### Bug Fixes
+
+* detox github workflow fix ([#279](https://github.com/juspay/hyperswitch-client-core/issues/279)) ([a2519dd](https://github.com/juspay/hyperswitch-client-core/commit/a2519dd47daa21d4e4d6c3c748859df75833fe33))
+
+## [1.1.5](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.4...v1.1.5) (2025-05-06)
+
+
+### Bug Fixes
+
+* added reactNativeTracing integration ([#275](https://github.com/juspay/hyperswitch-client-core/issues/275)) ([2f1da0d](https://github.com/juspay/hyperswitch-client-core/commit/2f1da0d9d2cbfbcf2ac2e1fdd2e4fc73736f447c))
+* removed rn cache ([#277](https://github.com/juspay/hyperswitch-client-core/issues/277)) ([dd48887](https://github.com/juspay/hyperswitch-client-core/commit/dd488875a1573ba58af7cb2d105ce7afc8507923))
+* **s3-cache:** removed pako for decompression and removed cache ([#258](https://github.com/juspay/hyperswitch-client-core/issues/258)) ([6a92b6d](https://github.com/juspay/hyperswitch-client-core/commit/6a92b6d34ae52c5701fc237dbcffc9556494c207))
+
+## [1.1.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.3...v1.1.4) (2025-05-02)
+
+
+### Bug Fixes
+
+* redirection issue in ios ([#273](https://github.com/juspay/hyperswitch-client-core/issues/273)) ([af691a6](https://github.com/juspay/hyperswitch-client-core/commit/af691a64e1b1cd2dd20198b60ab4b1e888610dee))
+
+## [1.1.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.2...v1.1.3) (2025-04-29)
+
+
+### Bug Fixes
+
+* state field error msg fix ([#269](https://github.com/juspay/hyperswitch-client-core/issues/269)) ([d8f8bd7](https://github.com/juspay/hyperswitch-client-core/commit/d8f8bd70736a159daa42f9fc4a3dc37db4f7c9ac))
+
+## [1.1.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.1...v1.1.2) (2025-04-29)
+
+
+### Bug Fixes
+
+* remove popup / use ephemeral web session for card payments ([#267](https://github.com/juspay/hyperswitch-client-core/issues/267)) ([848f57d](https://github.com/juspay/hyperswitch-client-core/commit/848f57d088abd2f66f71a6dbc32507d9ce14b5ff))
+
+## [1.1.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.0...v1.1.1) (2025-04-28)
+
+
+### Bug Fixes
+
+* active opacity issue for picker component ([#262](https://github.com/juspay/hyperswitch-client-core/issues/262)) ([423a780](https://github.com/juspay/hyperswitch-client-core/commit/423a780826fac4c271bf9af231541923145ebd64))
+
+# [1.1.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.10...v1.1.0) (2025-03-26)
+
+
+### Features
+
+* **cobadge card, netecetera, hyperota and other changes:** new features ([284e2a0](https://github.com/juspay/hyperswitch-client-core/commit/284e2a08bb0ea905b008a93d0df05e9670dd4ae2))
+
+## [1.0.10](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.9...v1.0.10) (2025-03-24)
+
+
+### Bug Fixes
+
+* conditionally overwrite threeDSAppRequestorURL for Android ([#249](https://github.com/juspay/hyperswitch-client-core/issues/249)) ([e79664b](https://github.com/juspay/hyperswitch-client-core/commit/e79664b23b4567108fcd54378ebb56d051344def))
+
+## [1.0.9](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.8...v1.0.9) (2025-03-21)
+
+
+### Bug Fixes
+
+* blocked logs for on prem merchants ([#204](https://github.com/juspay/hyperswitch-client-core/issues/204)) ([59372db](https://github.com/juspay/hyperswitch-client-core/commit/59372db8e3fc3796c8d21c6fa6daa3006886cfd5))
+
+## [1.0.8](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.7...v1.0.8) (2025-03-21)
+
+
+### Bug Fixes
+
+* sentry ([#250](https://github.com/juspay/hyperswitch-client-core/issues/250)) ([d6f4ac2](https://github.com/juspay/hyperswitch-client-core/commit/d6f4ac253c23d0bfc63df21ddeca15f04bdf37a5))
+
+## [1.0.7](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.6...v1.0.7) (2025-03-21)
+
+
+### Bug Fixes
+
+* sentry dsn ([#240](https://github.com/juspay/hyperswitch-client-core/issues/240)) ([62b280a](https://github.com/juspay/hyperswitch-client-core/commit/62b280ab3221cdd00dacb938ab96a1988efbd813))
+
+## [1.0.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.5...v1.0.6) (2025-03-21)
+
+
+### Bug Fixes
+
+* removed samsung pay dependency ([11784d7](https://github.com/juspay/hyperswitch-client-core/commit/11784d728dd10b1a83eea550d0d92d6a5fb8546a))
+
+## [1.0.5](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.4...v1.0.5) (2025-03-21)
+
+
+### Bug Fixes
+
+* updated the regex for cartes Bancaires ([#241](https://github.com/juspay/hyperswitch-client-core/issues/241)) ([f1d7a5c](https://github.com/juspay/hyperswitch-client-core/commit/f1d7a5c00a33a877a2c32ae7f332fd93c04c3866))
+
+## [1.0.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.3...v1.0.4) (2025-03-21)
+
+
+### Bug Fixes
+
+* oob return url for netcetera android ([#246](https://github.com/juspay/hyperswitch-client-core/issues/246)) ([fef4c8f](https://github.com/juspay/hyperswitch-client-core/commit/fef4c8f5943115488ab70ed6d50c3d16247a0d7f))
+
+## [1.0.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.2...v1.0.3) (2025-03-19)
+
+
+### Bug Fixes
+
+* co-badged card selection when priority scheme disabled ([#237](https://github.com/juspay/hyperswitch-client-core/issues/237)) ([e4bcede](https://github.com/juspay/hyperswitch-client-core/commit/e4bcedef082e890e384ffee887f289a47f0ce35d))
+
+## [1.0.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.1...v1.0.2) (2025-03-17)
+
+
+### Bug Fixes
+
+* fixed card brand validation for mastercard ([#243](https://github.com/juspay/hyperswitch-client-core/issues/243)) ([47cc3ac](https://github.com/juspay/hyperswitch-client-core/commit/47cc3ace5654d89dcf2a0f6aa6195aa6e6ad1ef9))
+
+## [1.0.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.0...v1.0.1) (2025-03-16)
+
+
+### Bug Fixes
+
+* global context hierarchy ([#239](https://github.com/juspay/hyperswitch-client-core/issues/239)) ([a2a80b8](https://github.com/juspay/hyperswitch-client-core/commit/a2a80b82e6c15985be75422e39f79199e361898f))
+
 # 1.0.0 (2025-03-07)
 
 

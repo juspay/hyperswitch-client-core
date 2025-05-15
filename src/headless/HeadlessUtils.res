@@ -5,9 +5,10 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
   | Some(url) => url
   | None =>
     switch env {
-    | PROD => "https://api.hyperswitch.io/logs/sdk"
-    | _ => "https://sandbox.hyperswitch.io/logs/sdk"
-    }
+    | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+    | _ => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+    } ++
+    EnvTypes.process.env["HYPERSWITCH_LOGS_PATH"]
   }
   if WebKit.platform != #next {
     let data = logFile->LoggerUtils.logFileToObj->JSON.stringify
@@ -68,7 +69,7 @@ let logWrapper = (
     timestamp: timestamp->Float.toString,
     sessionId: "",
     version,
-    codePushVersion: LoggerUtils.getCodePushVersionNoFromRef(),
+    codePushVersion: LoggerUtils.getClientCoreVersionNoFromRef(),
     clientCoreVersion: LoggerUtils.getClientCoreVersionNoFromRef(),
     component: MOBILE,
     value: value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
@@ -93,9 +94,9 @@ let getBaseUrl = nativeProp => {
   | Some(url) => url
   | None =>
     switch nativeProp.env {
-    | PROD => "https://api.hyperswitch.io"
-    | SANDBOX => "https://sandbox.hyperswitch.io"
-    | INTEG => "https://integ-api.hyperswitch.io"
+    | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+    | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+    | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
     }
   }
 }

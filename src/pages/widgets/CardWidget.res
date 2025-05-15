@@ -13,7 +13,7 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let retrievePayment = AllPaymentHooks.useRetrieveHook()
-
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let processRequest = (
     prop: PaymentMethodListType.payment_method_types_card,
     clientSecret,
@@ -71,7 +71,10 @@ let make = () => {
 
     let body: PaymentMethodListType.redirectType = {
       client_secret: clientSecret,
-      return_url: ?Utils.getReturnUrl(nativeProp.hyperParams.appId),
+      return_url: ?Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       payment_method: prop.payment_method,
       payment_method_type: prop.payment_method_type,
       connector: switch prop.card_networks {

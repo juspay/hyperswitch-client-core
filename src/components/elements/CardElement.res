@@ -21,8 +21,12 @@ let make = (
     switch (cardNetworks, cardBrand) {
     | (_, "")
     | (None, _) => true
-    | (Some(cardNetwork), cardBrand) =>
-      cardNetwork->Array.some(network => network.card_network == cardBrand)
+    | (Some(cardNetwork), cardBrand) => {
+        let lowerCardBrand = cardBrand->String.toLowerCase
+        cardNetwork->Array.some(network =>
+          network.card_network->String.toLowerCase == lowerCardBrand
+        )
+      }
     }
   }
 
@@ -69,7 +73,9 @@ let make = (
     text,
     expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
-    let cardBrand = getCardBrand(text)
+    let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
+    let validCardBrand = getFirstValidCardScheme(~cardNumber=text, ~enabledCardSchemes)
+    let cardBrand = validCardBrand === "" ? getCardBrand(text) : validCardBrand
     let num = formatCardNumber(text, cardType(cardBrand))
 
     let isthisValid = cardValid(num, cardBrand)

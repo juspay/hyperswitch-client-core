@@ -1,19 +1,22 @@
-name: Publish to Maven Central
+name: Publish Android Release
 
 on:
   repository_dispatch:
     types: [android_repo_push]
 
+permissions:
+  contents: read
+
 jobs:
   update:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
   publish:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
@@ -27,6 +30,13 @@ jobs:
           repository: juspay/hyperswitch-sdk-android
           ref: main
           path: android
+
+      - name: Checkout Shared Code Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
 
       - name: Check android subrepo branch and commit message
         id: extract-libs
@@ -80,7 +90,16 @@ jobs:
       - name: Remove demo-app from settings.gradle
         working-directory: ./android
         run: |
-          sed -i "s/include ':app', ':react-native-code-push', ':demo-app', ':hyperswitch-sdk-android-lite'/include ':app', ':react-native-code-push', ':hyperswitch-sdk-android-lite'/" settings.gradle
+          sed -i "s/include ':app', ':demo-app', ':hyperswitch-sdk-android-lite'/include ':app', ':hyperswitch-sdk-android-lite'/" settings.gradle
+
+      - name: Replace the ota endpoint
+        working-directory: ./android
+        env:
+          PROD_ASSETS_END_POINT_WITH_VERSION: ${{ secrets.PROD_ASSETS_END_POINT_WITH_VERSION }}
+          SANDBOX_ASSETS_END_POINT_WITH_VERSION: ${{ secrets.SANDBOX_ASSETS_END_POINT_WITH_VERSION}}
+        run: |
+          sed -i 's|<string name="hyperOTAEndPoint">.*</string>|<string name="hyperOTAEndPoint">'"$PROD_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
+          sed -i 's|<string name="hyperOTASandBoxEndPoint">.*</string>|<string name="hyperOTASandBoxEndPoint">'"$SANDBOX_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
 
       - name: Build and Publish
         working-directory: ./android
@@ -88,6 +107,15 @@ jobs:
           SONATYPE_TOKEN: ${{ secrets.ANDROID_SONATYPE_AUTH_TOKEN }}
           SELECTED_LIBRARIES: ${{ steps.extract-libs.outputs.libraries }}
           GPG_PASSPHRASE: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
+          SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+          SENTRY_ENV: 'production'
+          HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
+          HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
+          HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+          HYPERSWITCH_LOGS_PATH: ${{ secrets.HYPERSWITCH_LOGS_PATH }}
+          PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+          SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+          INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
 
         run: |
           ./build-lib.sh

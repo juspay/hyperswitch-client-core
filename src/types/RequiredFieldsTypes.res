@@ -2,7 +2,8 @@
 external importStatesAndCountries: string => promise<JSON.t> = "import"
 
 type addressCountry = UseContextData | UseBackEndData(array<string>)
-type payment_method_types_in_bank_debit = BECS | BACS | Other
+
+type payment_method_types_in_bank_debit = BECS | SEPA | BACS | Other
 
 type paymentMethodsFields =
   | Email
@@ -25,6 +26,7 @@ type paymentMethodsFields =
   | AddressCountry(addressCountry)
   | BlikCode
   | Currency(array<string>)
+  | Iban
   | AccountNumber
   | BSBNumber
   | PhoneCountryCode
@@ -69,6 +71,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_bank_account_number" => AccountNumber
   | "user_bsb_number" => BSBNumber
   | "user_bank_sort_code" => SortCode
+  | "user_iban" => Iban
   | var => UnKnownField(var)
   }
 }
@@ -123,8 +126,9 @@ let getFieldType = dict => {
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
   | AccountNumber => 1
-  | BSBNumber => 2
   | SortCode => 3
+  | Iban => 2
+  | BSBNumber => 3
   | FullName | ShippingName | BillingName => 4
   | Email => 5
   | AddressLine1 => 6
@@ -236,7 +240,8 @@ let getErrorMsg = (
   | AddressCity => localeObject.cityEmptyText
   | AddressPincode => localeObject.postalCodeEmptyText
   | Email => localeObject.emailEmptyText
-  | _ => localeObject.requiredText
+  | Iban => localeObject.enterValidIban
+  | _ => localeObject.mandatoryFieldText
   }
 }
 let numberOfDigitsValidation = (
@@ -250,10 +255,10 @@ let numberOfDigitsValidation = (
       None
     } else {
       Some(
-        localeObject.enterValidDigitsText ++
+        localeObject.enterValidDigitsText ++ " " ++
         digits->Int.toString ++
-        localeObject.digitsText ++
-        display_name->Option.getOr("")->Utils.toCamelCase,
+        localeObject.digitsText ++ " " ++
+        display_name->Option.getOr("")->Utils.underscoresToSpaces,
       )
     }
   } else {
@@ -273,7 +278,7 @@ let checkIsValid = (
   } else {
     switch field_type {
     | Email =>
-      switch text->Validation.isValidEmail {
+      switch text->EmailValidation.isEmailValid {
       | Some(false) => Some(localeObject.emailInvalidText)
       | Some(true) => None
       | None => Some(localeObject.emailEmptyText)
@@ -286,12 +291,18 @@ let checkIsValid = (
       }
     | BSBNumber => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
     | SortCode => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
+    | Iban =>
+      if text->Validation.isValidIban {
+        None
+      } else {
+        Some(localeObject.enterValidIban)
+      }
     | _ => None
     }
   }
 }
 
-let validateDigits = (
+let allowOnlyDigits = (
   ~text,
   ~fieldType,
   ~prev,
@@ -329,6 +340,8 @@ let validateDigits = (
 let getKeyboardType = (~field_type: paymentMethodsFields) => {
   switch field_type {
   | Email => #"email-address"
+  | AccountNumber => #"number-pad"
+  | BSBNumber => #"number-pad"
   | _ => #default
   }
 }
@@ -390,7 +403,7 @@ let useGetPlaceholder = (
     | AddressState => localeObject.stateLabel
     | AddressCountry(_) => localeObject.countryLabel
     | Currency(_) => localeObject.currencyLabel
-    | InfoElement => localeObject.requiredText
+    | InfoElement => localeObject.mandatoryFieldText
     // | ShippingCountry(_) => localeObject.countryLabel
     // | ShippingAddressLine1 => localeObject.line1Placeholder
     // | ShippingAddressLine2 => localeObject.line2Placeholder
@@ -406,6 +419,7 @@ let useGetPlaceholder = (
     | StateAndCity
     | CountryAndPincode(_)
     | SortCode
+    | Iban
     | BlikCode =>
       display_name->toCamelCase
     }

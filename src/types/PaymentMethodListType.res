@@ -80,7 +80,6 @@ type payment_method =
   | BANK_DEBIT(payment_method_types_bank_debit)
 
 type online = {
-  ip_address?: string,
   user_agent?: string,
   accept_header?: string,
   language?: SdkTypes.localeTypes,
@@ -100,9 +99,7 @@ type customer_acceptance = {
   online: online,
 }
 
-type mandate_data = {
-  customer_acceptance: customer_acceptance,
-}
+type mandate_data = {customer_acceptance: customer_acceptance}
 type redirectType = {
   client_secret: string,
   return_url?: string,
@@ -277,6 +274,7 @@ let flattenPaymentListArray = (plist, item) => {
         payment_method_type_var: switch dict2->getString("payment_method_type", "") {
         | "becs" => BECS
         | "bacs" => BACS
+        | "sepa" => SEPA
         | _ => Other
         },
         payment_experience: dict2

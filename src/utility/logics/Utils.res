@@ -218,6 +218,10 @@ let getStringFromJson = (json, default) => {
   json->JSON.Decode.string->Option.getOr(default)
 }
 
+let underscoresToSpaces = str => {
+  str->String.replaceAll("_", " ")
+}
+
 let toCamelCase = str => {
   if str->String.includes(":") {
     str
@@ -314,13 +318,34 @@ let getArrofJsonString = (arr: array<string>) => {
   arr->Array.map(item => item->JSON.Encode.string)
 }
 
-let getReturnUrl = appId => {
-  WebKit.platform === #web || WebKit.platform === #iosWebView || WebKit.platform === #androidWebView
-    ? Some(Window.location.href)
-    : switch appId {
-      | Some(id) => Some(id ++ ".hyperswitch://")
-      | None => None
-      }
+let getCustomReturnAppUrl = (~appId) => {
+  switch appId {
+  | Some(id) => Some(id ++ ".hyperswitch://")
+  | None => None
+  }
+}
+
+let getReturnUrlWeb = (~appURL) =>
+  switch appURL {
+  | Some(url) => url->Some
+  | _ => None // Window.location.href->Some
+  }
+
+let getReturnUrl = (~appId, ~appURL: option<string>=None, ~useAppUrl=false) => {
+  switch WebKit.platform {
+  | #android =>
+    switch appURL {
+    | Some(_) => getCustomReturnAppUrl(~appId)
+    | _ => None
+    }
+  | #ios =>
+    switch (appURL, useAppUrl) {
+    | (Some(url), true) => url->Some
+    | (Some(_), false) => getCustomReturnAppUrl(~appId)
+    | _ => None
+    }
+  | _ => getReturnUrlWeb(~appURL)
+  }
 }
 
 let getStringFromRecord = record => record->JSON.stringifyAny->Option.getOr("")

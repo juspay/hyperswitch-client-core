@@ -12,7 +12,7 @@ const PORT = 5252;
 async function createPaymentIntent(request) {
   try {
     const url =
-      process.env.HYPERSWITCH_SERVER_URL || 'https://sandbox.hyperswitch.io';
+      process.env.HYPERSWITCH_SERVER_URL || process.env.HYPERSWITCH_SANDBOX_URL;
     const apiResponse = await fetch(`${url}/payments`, {
       method: 'POST',
       headers: {
@@ -46,7 +46,7 @@ app.get('/create-payment-intent', async (req, res) => {
       amount: 2999,
       currency: 'USD',
       authentication_type: 'no_three_ds',
-      customer_id: 'hyperswitch_demo_id',
+      customer_id: 'hyperswitch_demo_customer_id',
       capture_method: 'automatic',
       email: 'abc@gmail.com',
       billing: {
@@ -57,7 +57,7 @@ app.get('/create-payment-intent', async (req, res) => {
           city: 'San Fransico',
           state: 'California',
           zip: '94122',
-          country: 'PL',
+          country: 'US',
           first_name: 'joseph',
           last_name: 'Doe',
         },
@@ -70,7 +70,7 @@ app.get('/create-payment-intent', async (req, res) => {
           city: 'San Fransico',
           state: 'California',
           zip: '94122',
-          country: 'PL',
+          country: 'US',
           first_name: 'joseph',
           last_name: 'Doe',
         },
@@ -90,7 +90,7 @@ app.get('/create-payment-intent', async (req, res) => {
       clientSecret: paymentIntent.client_secret,
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     return res.status(400).send({
       error: {
@@ -103,7 +103,7 @@ app.get('/create-payment-intent', async (req, res) => {
 app.get('/create-ephemeral-key', async (req, res) => {
   try {
     const response = await fetch(
-      `https://sandbox.hyperswitch.io/ephemeral_keys`,
+      `${process.env.HYPERSWITCH_SANDBOX_URL}/ephemeral_keys`,
       {
         method: 'POST',
         headers: {
@@ -130,7 +130,7 @@ app.get('/create-ephemeral-key', async (req, res) => {
 app.get('/payment_methods', async (req, res) => {
   try {
     const response = await fetch(
-      `https://sandbox.hyperswitch.io/payment_methods`,
+      `${process.env.HYPERSWITCH_SANDBOX_URL}/payment_methods`,
       {
         method: 'POST',
         headers: {
@@ -167,5 +167,5 @@ app.get('/netcetera-sdk-api-key', (req, res) => {
 });
 
 app.listen(PORT, () =>
-  console.log(`Node server listening at http://localhost:${PORT}`),
+  console.info(`Node server listening at http://localhost:${PORT}`),
 );
