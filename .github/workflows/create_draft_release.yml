@@ -64,24 +64,42 @@ jobs:
       - name: Install Dependencies
         run: yarn install
 
+      - name: Capture Initial Version
+        id: initial_version
+        run: |
+          echo "INITIAL_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
+
       - name: Run Semantic Release
+        id: semantic_release
         run: npx semantic-release
 
-      - name: Read Version from package.json
-        id: read_version
+      - name: Check if Version Changed
+        id: version_check
         run: |
-          echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
+          CURRENT_VERSION=$(jq -r .version package.json)
+          echo "VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
+          if [ "${{ env.INITIAL_VERSION }}" = "$CURRENT_VERSION" ]; then
+            echo "RELEASE_PERFORMED=false" >> $GITHUB_ENV
+            echo "No new version was released"
+          else
+            echo "RELEASE_PERFORMED=true" >> $GITHUB_ENV
+            echo "New version $CURRENT_VERSION was released"
+          fi
 
       - name: rescript Build
+        if: ${{ env.RELEASE_PERFORMED == 'true' }}
         run: yarn re:build
 
       - name: Build Android bundle
+        if: ${{ env.RELEASE_PERFORMED == 'true' }}
         run: yarn bundle:android
 
       - name: Build IOS bundle
+        if: ${{ env.RELEASE_PERFORMED == 'true' }}
         run: yarn bundle:ios
 
       - name: Commit Android bundle
+        if: ${{ env.RELEASE_PERFORMED == 'true' }}
         working-directory: ./android
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
@@ -97,6 +115,7 @@ jobs:
           git push origin main
 
       - name: Commit IOS bundle
+        if: ${{ env.RELEASE_PERFORMED == 'true' }}
         working-directory: ./ios
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
