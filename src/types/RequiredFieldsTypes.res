@@ -2,7 +2,8 @@
 external importStatesAndCountries: string => promise<JSON.t> = "import"
 
 type addressCountry = UseContextData | UseBackEndData(array<string>)
-type payment_method_types_in_bank_debit = BECS | SEPA | Other
+
+type payment_method_types_in_bank_debit = BECS | SEPA | BACS | Other
 
 type paymentMethodsFields =
   | Email
@@ -29,6 +30,7 @@ type paymentMethodsFields =
   | AccountNumber
   | BSBNumber
   | PhoneCountryCode
+  | SortCode
 
 type requiredField =
   | StringField(string)
@@ -68,6 +70,7 @@ let getPaymentMethodsFieldTypeFromString = str => {
   | "user_shipping_name" => ShippingName
   | "user_bank_account_number" => AccountNumber
   | "user_bsb_number" => BSBNumber
+  | "user_bank_sort_code" => SortCode
   | "user_iban" => Iban
   | var => UnKnownField(var)
   }
@@ -123,6 +126,7 @@ let getFieldType = dict => {
 let getPaymentMethodsFieldsOrder = paymentMethodField => {
   switch paymentMethodField {
   | AccountNumber => 1
+  | SortCode => 3
   | Iban => 2
   | BSBNumber => 3
   | FullName | ShippingName | BillingName => 4
@@ -282,9 +286,11 @@ let checkIsValid = (
     | AccountNumber =>
       switch paymentMethodType {
       | Some(BECS) => numberOfDigitsValidation(~text, ~localeObject, ~digits=9, ~display_name)
+      | Some(BACS) => numberOfDigitsValidation(~text, ~localeObject, ~digits=8, ~display_name)
       | _ => None
       }
     | BSBNumber => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
+    | SortCode => numberOfDigitsValidation(~text, ~localeObject, ~digits=6, ~display_name)
     | Iban =>
       if text->Validation.isValidIban {
         None
@@ -312,10 +318,16 @@ let allowOnlyDigits = (
       } else {
         prev
       }
+    | Some(BACS) =>
+      if val->String.length <= 8 {
+        Some(val)
+      } else {
+        prev
+      }
     | _ => None
     }
-
-  | BSBNumber =>
+  | BSBNumber
+  | SortCode =>
     if val->String.length <= 6 {
       Some(val)
     } else {
@@ -406,6 +418,7 @@ let useGetPlaceholder = (
     | PhoneNumber
     | StateAndCity
     | CountryAndPincode(_)
+    | SortCode
     | Iban
     | BlikCode =>
       display_name->toCamelCase
