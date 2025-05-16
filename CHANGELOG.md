@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.2.0...v1.3.0) (2025-05-16)
+
+
+### Features
+
+* integrated Bacs Bank Debit ([#214](https://github.com/juspay/hyperswitch-client-core/issues/214)) ([76ee80e](https://github.com/juspay/hyperswitch-client-core/commit/76ee80e4c5266c30c49b76c5ec1b2fa8a56ec024))
+
 # [1.2.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.7...v1.2.0) (2025-05-16)
 
 
