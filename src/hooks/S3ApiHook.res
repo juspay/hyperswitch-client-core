@@ -250,6 +250,31 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "mandatoryFieldText",
         defaultLocale.mandatoryFieldText,
       ),
+      disclaimerTextAchTransfer: Utils.getString(
+        res,
+        "disclaimerTextAchTransfer",
+        defaultLocale.disclaimerTextAchTransfer,
+      ),
+      instructionalTextOfAchTransfer: Utils.getString(
+        res,
+        "instructionalTextOfAchTransfer",
+        defaultLocale.instructionalTextOfAchTransfer,
+      ),
+      accountDetailsText: Utils.getString(
+        res,
+        "accountDetailsText",
+        defaultLocale.accountDetailsText,
+      ),
+      achBankTransferText: Utils.getString(
+        res,
+        "achBankTransferText",
+        defaultLocale.achBankTransferText,
+      ),
+      bankName: Utils.getString(res, "bankName", defaultLocale.bankName),
+      routingNumber: Utils.getString(res, "routingNumber", defaultLocale.routingNumber),
+      swiftCode: Utils.getString(res, "swiftCode", defaultLocale.swiftCode),
+      doneText: Utils.getString(res, "doneText", defaultLocale.doneText),
+      copyToClipboard: Utils.getString(res, "copyToClipboard", defaultLocale.copyToClipboard),
     }
   | None => defaultLocale
   }

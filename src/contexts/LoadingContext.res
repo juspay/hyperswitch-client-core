@@ -4,6 +4,7 @@ type sdkPaymentState =
   | ProcessingPayments(option<processingPayments>)
   | PaymentSuccess
   | PaymentCancelled
+  | BankTransfer
 let defaultSetter = (_: sdkPaymentState) => ()
 let loadingContext = React.createContext((FillingDetails, defaultSetter))
 
