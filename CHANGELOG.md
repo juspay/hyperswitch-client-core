@@ -1,3 +1,17 @@
+# [1.2.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.7...v1.2.0) (2025-05-16)
+
+
+### Features
+
+* added ACH Bank Transfer ([#217](https://github.com/juspay/hyperswitch-client-core/issues/217)) ([6b8d84e](https://github.com/juspay/hyperswitch-client-core/commit/6b8d84e3930e0086ed89acb15793c96fb375e6e6))
+
+## [1.1.7](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.6...v1.1.7) (2025-05-15)
+
+
+### Bug Fixes
+
+* added cache or memo to icon ([#285](https://github.com/juspay/hyperswitch-client-core/issues/285)) ([832231f](https://github.com/juspay/hyperswitch-client-core/commit/832231f920963369afa7267f9894eacb31b2106f))
+
 ## [1.1.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.5...v1.1.6) (2025-05-07)
 
 
