@@ -71,10 +71,10 @@ let make = React.memo((
     | "googlepay" => google_pay
     | "applepay" => applePayList
     | "samsung_pay" => samsungPay
-    | "becs debit"
-    | "bacs debit" => becsDebit
+    | "becsdebit"
+    | "bacsdebit" => becsDebit
     | "cartesbancaires" => cartesBancaires
-    | "sepa debit" => sepadebit
+    | "sepadebit" => sepadebit
     | "achbanktransfer" => achbankdebit
     | "bank" => bankicon
     | "disclaimer" => disclaimericon
