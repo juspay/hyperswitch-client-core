@@ -282,6 +282,7 @@ let flattenPaymentListArray = (plist, item) => {
         payment_method_type: dict2->getString("payment_method_type", ""),
         payment_method_type_var: switch dict2->getString("payment_method_type", "") {
         | "becs" => BECS
+        | "bacs" => BACS
         | "sepa" => SEPA
         | _ => Other
         },

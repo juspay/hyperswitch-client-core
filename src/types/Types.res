@@ -104,6 +104,12 @@ let defaultConfig = {
       fields: [],
     },
     {
+      name: "bacs",
+      text: "BACS Debit",
+      header: "",
+      fields: [],
+    },
+    {
       name: "sepa",
       text: "Sepa Debit",
       header: "",
