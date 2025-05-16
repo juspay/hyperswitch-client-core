@@ -12,7 +12,7 @@
     "bundle": "bundle install && cd ios && bundle exec pod install",
     "ios": "react-native run-ios",
     "run:ios": "bundle && react-native run-ios",
-    "android": "cd android && ./gradlew :demo-app:installDebug && adb shell am start -n io.hyperswitch.demoapp/.MainActivity && yarn run adb",
+    "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
     "web:next": "cd reactNativeWeb && next",
     "bundle:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
     "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
