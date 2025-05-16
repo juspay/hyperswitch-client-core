@@ -29,14 +29,11 @@ let make = (~walletType) => {
         )
       )
     }
-    let nee = NativeEventEmitter.make(
-      Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
-    )
-    let event = NativeEventEmitter.addListener(nee, "widget", var => {
-      let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
+
+    let handleWidgetEvent = (responseFromJava: NativeEventListener.widgetResponse) => {
       if (
         walletType ==
-          switch responseFromJava.paymentMethodType {
+          switch responseFromJava.payment_method_type {
           | "google_pay" => GOOGLE_PAY
           | "paypal" => PAYPAL
           | _ => NONE
@@ -62,17 +59,14 @@ let make = (~walletType) => {
           },
         })
       }
-    })
-    HyperModule.sendMessageToNative(
-      `{"isReady": "true", "paymentMethodType": "${walletType
-        ->SdkTypes.widgetToStrMapper
-        ->String.toLowerCase}"}`,
+    }
+
+    let cleanup = NativeEventListener.setupWidgetEventListener(
+      ~onWidgetEvent=handleWidgetEvent,
+      ~walletType,
     )
-    Some(
-      () => {
-        event->EventSubscription.remove
-      },
-    )
+
+    Some(cleanup)
   }, [allApiData.sessions])
 
   <ErrorBoundary level={FallBackScreen.Widget} rootTag=nativeProp.rootTag>
