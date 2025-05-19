@@ -33,7 +33,7 @@ let make = (~walletType) => {
     let handleWidgetEvent = (responseFromJava: NativeEventListener.widgetResponse) => {
       if (
         walletType ==
-          switch responseFromJava.payment_method_type {
+          switch responseFromJava.paymentMethodType {
           | "google_pay" => GOOGLE_PAY
           | "paypal" => PAYPAL
           | _ => NONE

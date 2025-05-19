@@ -34,7 +34,7 @@ type widgetResponse = {
   clientSecret: string,
   publishableKey: string,
   confirm: bool,
-  payment_method_type: string,
+  paymentMethodType: string,
 }
 let setupWidgetEventListener = (
   ~onWidgetEvent: widgetResponse => unit,
@@ -50,7 +50,7 @@ let setupWidgetEventListener = (
         clientSecret: mapped.clientSecret,
         publishableKey: mapped.publishableKey,
         confirm: mapped.confirm,
-        payment_method_type: mapped.paymentMethodType,
+        paymentMethodType: mapped.paymentMethodType,
       }
     }
     onWidgetEvent(responseFromJava)
