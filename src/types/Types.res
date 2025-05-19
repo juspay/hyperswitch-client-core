@@ -121,6 +121,12 @@ let defaultConfig = {
       header: "",
       fields: [],
     },
+    {
+      name: "ach",
+      text: "ACH Debit",
+      header: "",
+      fields: [],
+    },
     // {
     //   name: "google_pay",
     //   text: "Google Pay",

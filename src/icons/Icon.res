@@ -75,6 +75,7 @@ let make = React.memo((
     | "bacsdebit" => becsDebit
     | "cartesbancaires" => cartesBancaires
     | "sepadebit" => sepadebit
+    | "achdebit"
     | "achbanktransfer" => achbankdebit
     | "bank" => bankicon
     | "disclaimer" => disclaimericon

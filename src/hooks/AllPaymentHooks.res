@@ -273,6 +273,7 @@ let useBrowserHook = () => {
     ~responseCallback,
     ~errorCallback,
     ~processor,
+    ~paymentMethod=?,
     ~useEphemeralWebSession=false,
   ) => {
     BrowserHook.openUrl(
@@ -345,11 +346,23 @@ let useBrowserHook = () => {
             }),
           },
         })
-        errorCallback(
-          ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
-          ~closeSDK={false},
-          (),
-        )
+          if paymentMethod->Option.getOr("") == "ach" {
+          responseCallback(
+            ~paymentStatus=ProcessingPayments(None),
+            ~status={
+              message: "",
+              code: "",
+              type_: "",
+              status: "Pending",
+            },
+          )
+        } else {
+          errorCallback(
+            ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
+            ~closeSDK={false},
+            (),
+          )
+        }
       } else if res.status === Failed {
         setAllApiData({
           ...allApiData,
@@ -516,6 +529,7 @@ let useRedirectHook = () => {
               ~errorCallback,
               ~processor=body,
               ~useEphemeralWebSession=isCardPayment,
+              ~paymentMethod,
             )
           }
         | statusVal =>
