@@ -249,19 +249,28 @@ describe('card-payment-flow', () => {
     let payButtonTapped = false;
 
     try {
-      const savedCardPayButton = element(by.id(testIds.payButtonTestId));
-      await waitFor(savedCardPayButton).toBeVisible().withTimeout(TIMEOUT.STANDARD);
-      await savedCardPayButton.tap();
+      // Try first by the exact text with price
+      const exactPurchaseButton = element(by.text('Purchase ($2.00)'));
+      await waitFor(exactPurchaseButton).toBeVisible().withTimeout(TIMEOUT.STANDARD);
+      await exactPurchaseButton.tap();
       payButtonTapped = true;
     } catch (e) {
-      // Try by purchase text
+      // Fallback to test ID
       try {
-        const purchaseButton = element(by.text('Purchase'));
-        await waitFor(purchaseButton).toBeVisible().withTimeout(TIMEOUT.STANDARD);
-        await purchaseButton.tap();
+        const savedCardPayButton = element(by.id(testIds.payButtonTestId));
+        await waitFor(savedCardPayButton).toBeVisible().withTimeout(TIMEOUT.STANDARD);
+        await savedCardPayButton.tap();
         payButtonTapped = true;
-      } catch (purchaseError) {
-        // Both button finding approaches failed
+      } catch (idError) {
+        // Try by partial text
+        try {
+          const purchaseButton = element(by.text('Purchase'));
+          await waitFor(purchaseButton).toBeVisible().withTimeout(TIMEOUT.STANDARD);
+          await purchaseButton.tap();
+          payButtonTapped = true;
+        } catch (purchaseError) {
+          // All button finding approaches failed
+        }
       }
     }
 
