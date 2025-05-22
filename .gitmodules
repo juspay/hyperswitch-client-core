@@ -6,7 +6,3 @@
 	path = android
 	url = git@github.com:juspay/hyperswitch-sdk-android.git
 	branch = main
-[submodule "hyperswitch-sdk-utils"]
-	path = hyperswitch-sdk-utils
-	url = git@github.com:juspay/hyperswitch-sdk-utils.git
-	branch = main
