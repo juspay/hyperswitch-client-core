@@ -87,7 +87,7 @@ type payment_method =
   | OPEN_BANKING(payment_method_types_open_banking)
   | BANK_DEBIT(payment_method_types_bank_debit)
   | BANK_TRANSFER(payment_method_types_bank_transfer)
-  
+
 type online = {
   user_agent?: string,
   accept_header?: string,
@@ -284,6 +284,7 @@ let flattenPaymentListArray = (plist, item) => {
         | "becs" => BECS
         | "bacs" => BACS
         | "sepa" => SEPA
+        | "ach" => ACH
         | _ => Other
         },
         payment_experience: dict2
