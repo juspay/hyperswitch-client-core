@@ -15,10 +15,6 @@
     {
       "dir": "reactNativeWeb",
       "subdirs": true
-    },
-    {
-      "dir": "hyperswitch-sdk-utils",
-      "subdirs": true
     }
   ],
   "bs-dependencies": [
