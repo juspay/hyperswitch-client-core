@@ -1,3 +1,15 @@
+# [1.4.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.3.0...v1.4.0) (2025-05-22)
+
+
+### Bug Fixes
+
+* modified the android & IOS scripts in package.json ([#282](https://github.com/juspay/hyperswitch-client-core/issues/282)) ([21c5288](https://github.com/juspay/hyperswitch-client-core/commit/21c5288bec7492b98aacf51323d64e9892c20c7f))
+
+
+### Features
+
+* added ACH Bank Debit ([#286](https://github.com/juspay/hyperswitch-client-core/issues/286)) ([5878067](https://github.com/juspay/hyperswitch-client-core/commit/58780679519f69682dfc81624980594166c9bc65))
+
 # [1.3.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.2.0...v1.3.0) (2025-05-16)
 
 
