@@ -37,6 +37,8 @@ type module_ = {
   \"Replay": unit => integration,
   \"ErrorBoundary": option<React.component<props>>,
   wrap: React.element => React.element,
+  flush: unit => Promise.t<unit>,
+  close: unit => Promise.t<unit>,
 }
 
 @val external require: string => module_ = "require"
@@ -55,6 +57,8 @@ let sentryReactNative = switch try {
     \"Replay": () => (),
     \"ErrorBoundary": None,
     wrap: component => component,
+    flush: () => Promise.resolve(),
+    close: () => Promise.resolve(),
   }
 }
 
@@ -104,4 +108,10 @@ let initiateSentry = (~dsn: option<string>, ~environment: string) => {
   } catch {
   | _ => ()
   }
+}
+
+let flushAndCloseSentry = () => {
+  sentryReactNative.flush()->Promise.then(() => {
+    sentryReactNative.close()
+  })
 }
