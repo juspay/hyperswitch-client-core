@@ -1,5 +1,6 @@
 open ReactNative
 open PaymentMethodListType
+open ThreeDsSdkUtils
 
 @react.component
 let make = (
@@ -48,7 +49,14 @@ let make = (
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
 
-  let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
+  let sdkFunctions = ThreeDsSdkUtils.getActiveThreeDsSdkFunctions(
+    ~netceteraSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
+  )
+
+  let initialiseThreeDsHook = ThreeDsHooks.useInitThreeDs(
+    ~initialiseSdkFunc=sdkFunctions.initialiseSdkFunc,
+    ~sdkEventName=sdkFunctions.sdkEventName,
+  )
   let (isInitialised, setIsInitialised) = React.useState(_ => false)
 
   React.useEffect1(() => {
@@ -59,8 +67,8 @@ let make = (
       cardData.cardNumber->String.length > 0
     ) {
       setIsInitialised(_ => true)
-      initialiseNetcetera(
-        ~netceteraSDKApiKey=nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
+      initialiseThreeDsHook(
+        ~sdkApiKey=sdkFunctions.selectedSdkApiKey,
         ~sdkEnvironment=nativeProp.env,
       )
     }

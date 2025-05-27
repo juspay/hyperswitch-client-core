@@ -1,36 +1,45 @@
 open ExternalThreeDsTypes
 open ThreeDsUtils
 open SdkStatusMessages
+open ThreeDsModuleType
+open LoggerTypes
+
 let isInitialisedPromiseRef = ref(None)
 
-let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
+let initialisedSdkOnce = (
+  ~sdkApiKey,
+  ~sdkEnvironment,
+  ~initialiseSdkFunc: (sdkConfig, statusType => unit) => unit,
+) => {
   switch isInitialisedPromiseRef.contents {
   | Some(promiseVal) => promiseVal
   | None => {
       let promiseVal = Promise.make((resolve, _reject) => {
-        Netcetera3dsModule.initialiseNetceteraSDK(
-          netceteraSDKApiKey,
-          sdkEnvironment->sdkEnvironmentToStrMapper,
-          status => resolve(status),
-        )
+        let sdkConfig: sdkConfig = {
+          apiKey: sdkApiKey,
+          environment: sdkEnvironment,
+        }
+        initialiseSdkFunc(sdkConfig, status => resolve(status))
       })
-
       isInitialisedPromiseRef := Some(promiseVal)
       promiseVal
     }
   }
 }
 
-let useInitNetcetera = () => {
+let useInitThreeDs = (
+  ~initialiseSdkFunc: (sdkConfig, statusType => unit) => unit,
+  ~sdkEventName: eventName,
+) => {
   let logger = LoggerHook.useLoggerHook()
-  (~netceteraSDKApiKey, ~sdkEnvironment: GlobalVars.envType) => {
-    initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
+  (~sdkApiKey, ~sdkEnvironment: GlobalVars.envType) => {
+    initialisedSdkOnce(~sdkApiKey, ~sdkEnvironment, ~initialiseSdkFunc)
     ->Promise.then(promiseVal => {
       logger(
         ~logType=INFO,
         ~value=promiseVal->JSON.stringifyAny->Option.getOr(""),
         ~category=USER_EVENT,
-        ~eventName=NETCETERA_SDK,
+        ~eventName=sdkEventName,
         (),
       )
       Promise.resolve(promiseVal)
@@ -50,9 +59,25 @@ let useExternalThreeDs = () => {
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   (
+    ~isSdkAvailableFunc: bool,
+    ~initialiseSdkFunc: (sdkConfig, statusType => unit) => unit,
+    ~generateAReqParamsFunc: (
+      string,
+      string,
+      (statusType, ExternalThreeDsTypes.aReqParams) => unit,
+    ) => unit,
+    ~receiveChallengeParamsFunc: (
+      string,
+      string,
+      string,
+      string,
+      statusType => unit,
+      option<string>,
+    ) => unit,
+    ~generateChallengeFunc: (statusType => unit) => unit,
     ~baseUrl,
     ~appId,
-    ~netceteraSDKApiKey,
+    ~sdkApiKey,
     ~clientSecret,
     ~publishableKey,
     ~nextAction,
@@ -60,6 +85,7 @@ let useExternalThreeDs = () => {
     ~retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
+    ~sdkEventName: eventName,
   ) => {
     let threeDsData =
       nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
@@ -162,7 +188,7 @@ let useExternalThreeDs = () => {
           logError(
             ~statusCode="504",
             ~apiLogType=NoResponse,
-            ~data=err->Utils.getError(`Netcetera Error`),
+            ~data=err->Utils.getError("3DS SDK Error"),
           )
           Promise.resolve()
         })
@@ -265,22 +291,21 @@ let useExternalThreeDs = () => {
           ~url=authorizeUrl,
           ~statusCode="504",
           ~apiLogType=NoResponse,
-          ~data=err->Utils.getError(`Netcetera Error`),
+          ~data=err->Utils.getError("3DS SDK Error"),
           (),
         )
-
         Promise.resolve(true)
       })
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
-      let threeDSRequestorAppURL = Utils.getReturnUrl(
+      let threeDSRequestorAppURLForLog = Utils.getReturnUrl(
         ~appId,
-        ~appURL=challengeParams.threeDSRequestorAppURL ,
-        ~useAppUrl=true
+        ~appURL=challengeParams.threeDSRequestorAppURL,
+        ~useAppUrl=true,
       )
       Promise.make((resolve, reject) => {
-        Netcetera3dsModule.recieveChallengeParamsFromRN(
+        receiveChallengeParamsFunc(
           challengeParams.acsSignedContent,
           challengeParams.acsRefNumber,
           challengeParams.acsTransactionId,
@@ -291,24 +316,28 @@ let useExternalThreeDs = () => {
               ~value={
                 "status": status.status,
                 "message": status.message,
-                "threeDSRequestorAppURL": threeDSRequestorAppURL,
+                "threeDSRequestorAppURL": threeDSRequestorAppURLForLog,
               }
               ->JSON.stringifyAny
               ->Option.getOr(""),
               ~category=USER_EVENT,
-              ~eventName=NETCETERA_SDK,
+              ~eventName=sdkEventName,
               (),
             )
             if status->isStatusSuccess {
-              Netcetera3dsModule.generateChallenge(status => {
+              generateChallengeFunc(status => {
                 logger(
                   ~logType=INFO,
-                  ~value=status->JSON.stringifyAny->Option.getOr(""),
+                  ~value={
+                    "status": status.status,
+                    "message": status.message,
+                  }
+                  ->JSON.stringifyAny
+                  ->Option.getOr(""),
                   ~category=USER_EVENT,
-                  ~eventName=NETCETERA_SDK,
+                  ~eventName=sdkEventName,
                   (),
                 )
-
                 resolve()
               })
             } else {
@@ -316,7 +345,7 @@ let useExternalThreeDs = () => {
               reject()
             }
           },
-          threeDSRequestorAppURL,
+          challengeParams.threeDSRequestorAppURL,
         )
       })
     }
@@ -353,7 +382,6 @@ let useExternalThreeDs = () => {
               (),
             )
             let authResponse = res->authResponseItemToObjMapper
-
             switch authResponse {
             | AUTH_RESPONSE(challengeParams) =>
               logger(
@@ -403,35 +431,46 @@ let useExternalThreeDs = () => {
           ~url=uri,
           ~statusCode="504",
           ~apiLogType=NoResponse,
-          ~data=err->Utils.getError(`Netcetera Error`),
+          ~data=err->Utils.getError("3DS SDK Error"),
           (),
         )
         Promise.resolve(FrictionlessFlow)
       })
     }
 
-    let startNetcetera3DSFlow = () => {
-      initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
+    let startThreeDsFlow = () => {
+      initialisedSdkOnce(~sdkApiKey, ~sdkEnvironment, ~initialiseSdkFunc)
       ->Promise.then(statusInfo => {
+        let isSuccess = statusInfo->isStatusSuccess
+
         logger(
           ~logType=INFO,
-          ~value=statusInfo->JSON.stringifyAny->Option.getOr(""),
+          ~value={
+            "status": statusInfo.status,
+            "message": statusInfo.message,
+          }
+          ->JSON.stringifyAny
+          ->Option.getOr(""),
           ~category=USER_EVENT,
-          ~eventName=NETCETERA_SDK,
+          ~eventName=sdkEventName,
           (),
         )
-
-        if statusInfo->isStatusSuccess {
+        if isSuccess {
           Promise.make((resolve, _reject) => {
-            Netcetera3dsModule.generateAReqParams(
+            generateAReqParamsFunc(
               threeDsData.messageVersion,
               threeDsData.directoryServerId,
               (status, aReqParams) => {
                 logger(
                   ~logType=INFO,
-                  ~value=status->JSON.stringifyAny->Option.getOr(""),
+                  ~value={
+                    "status": status.status,
+                    "message": status.message,
+                  }
+                  ->JSON.stringifyAny
+                  ->Option.getOr(""),
                   ~category=USER_EVENT,
-                  ~eventName=NETCETERA_SDK,
+                  ~eventName=sdkEventName,
                   (),
                 )
                 if status->isStatusSuccess {
@@ -446,7 +485,9 @@ let useExternalThreeDs = () => {
           Promise.resolve(RetrieveAgain)
         }
       })
-      ->Promise.catch(_ => Promise.resolve(RetrieveAgain))
+      ->Promise.catch(_ => {
+        Promise.resolve(RetrieveAgain)
+      })
       ->Promise.then(decision => {
         Promise.make((resolve, reject) => {
           switch decision {
@@ -461,12 +502,12 @@ let useExternalThreeDs = () => {
 
     let checkSDKPresence = () => {
       Promise.make((resolve, reject) => {
-        if !Netcetera3dsModule.isAvailable {
+        if !isSdkAvailableFunc {
           logger(
             ~logType=DEBUG,
-            ~value="Netcetera SDK dependency not added",
+            ~value="3DS SDK dependency not added or not available",
             ~category=USER_EVENT,
-            ~eventName=NETCETERA_SDK,
+            ~eventName=sdkEventName,
             (),
           )
           onFailure(externalThreeDsModuleStatus.errorMsg)
@@ -476,25 +517,22 @@ let useExternalThreeDs = () => {
         }
       })
     }
+
     let handleNativeThreeDs = async () => {
       let isFinalRetrieve = try {
         await checkSDKPresence()
-        let aReqParams = await startNetcetera3DSFlow()
+        let aReqParams = await startThreeDsFlow()
         let authCallDecision = await hsThreeDsAuthCall(aReqParams)
 
         switch authCallDecision {
         | GenerateChallenge({challengeParams}) =>
-          // setLoading(ExternalThreeDSLoading)
           await sendChallengeParamsAndGenerateChallenge(~challengeParams)
-        // setLoading(ProcessingPayments)
-
         | FrictionlessFlow => ()
         }
         await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
       } catch {
       | _ => true
       }
-
       retrieveAndShowStatus(~isFinalRetrieve)
     }
     handleNativeThreeDs()->ignore

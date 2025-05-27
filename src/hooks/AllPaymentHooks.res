@@ -1,4 +1,5 @@
 open PaymentConfirmTypes
+open ThreeDsSdkUtils
 
 type apiLogType = Request | Response | NoResponse | Err
 
@@ -278,10 +279,13 @@ let useBrowserHook = () => {
   ) => {
     BrowserHook.openUrl(
       openUrl,
-      Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       intervalId,
       ~useEphemeralWebSession,
-      ~appearance=nativeProp.configuration.appearance
+      ~appearance=nativeProp.configuration.appearance,
     )
     ->Promise.then(res => {
       if res.status === Success {
@@ -346,7 +350,7 @@ let useBrowserHook = () => {
             }),
           },
         })
-          if paymentMethod->Option.getOr("") == "ach" {
+        if paymentMethod->Option.getOr("") == "ach" {
           responseCallback(
             ~paymentStatus=ProcessingPayments(None),
             ~status={
@@ -401,7 +405,7 @@ let useRedirectHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let executeThreeDsFlow = ThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
 
   (
@@ -421,13 +425,21 @@ let useRedirectHook = () => {
 
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       switch nextAction->PaymentUtils.getActionType {
-      | "three_ds_invoke" => {
-          let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
+      | "three_ds_invoke" =>
+        let activeSdk = ThreeDsSdkUtils.getActiveThreeDsSdkFunctions(
+          ~netceteraSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
+        )
 
-          handleNativeThreeDS(
+        if activeSdk.isSdkAvailableFunc {
+          executeThreeDsFlow(
+            ~isSdkAvailableFunc=activeSdk.isSdkAvailableFunc,
+            ~initialiseSdkFunc=activeSdk.initialiseSdkFunc,
+            ~generateAReqParamsFunc=activeSdk.generateAReqParamsFunc,
+            ~receiveChallengeParamsFunc=activeSdk.receiveChallengeParamsFunc,
+            ~generateChallengeFunc=activeSdk.generateChallengeFunc,
             ~baseUrl,
             ~appId=nativeProp.hyperParams.appId,
-            ~netceteraSDKApiKey,
+            ~sdkApiKey=activeSdk.selectedSdkApiKey,
             ~clientSecret,
             ~publishableKey,
             ~nextAction,
@@ -446,18 +458,29 @@ let useRedirectHook = () => {
                 (),
               )
             },
+            ~sdkEventName=activeSdk.sdkEventName,
+          )
+        } else {
+          errorCallback(
+            ~errorMessage={
+              status: "failed",
+              message: "3DS SDK not configured",
+              type_: "",
+              code: "",
+            },
+            ~closeSDK={true},
+            (),
           )
         }
-      | "third_party_sdk_session_token" => {
-          // TODO: add event loggers for analytics
-          let session_token = Option.getOr(nextAction, defaultNextAction).session_token
-          let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
-          switch session_token {
-          | Some(token) =>
-            Plaid.create({token: token.open_banking_session_token})
-            Plaid.open_(openProps)->ignore
-          | None => ()
-          }
+      | "third_party_sdk_session_token" =>
+        // TODO: add event loggers for analytics
+        let session_token = Option.getOr(nextAction, defaultNextAction).session_token
+        let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
+        switch session_token {
+        | Some(token) =>
+          Plaid.create({token: token.open_banking_session_token})
+          Plaid.open_(openProps)->ignore
+        | None => ()
         }
       | "display_bank_transfer_information" => {
           switch nextAction {
