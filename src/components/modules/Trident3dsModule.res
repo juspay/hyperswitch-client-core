@@ -1,10 +1,14 @@
 open ExternalThreeDsTypes
 open ThreeDsModuleType
 
-type netceteraModule = {
-  initialiseNetceteraSDK: (string, string, statusType => unit) => unit,
-  generateAReqParams: (string, string, (statusType, aReqParams) => unit) => unit,
-  recieveChallengeParamsFromRN: (
+type tridentModule = {
+  initialiseSDK: (string, string, statusType => unit) => unit,
+  generateAReqParams: (
+    string,
+    string,
+    (statusType, ExternalThreeDsTypes.aReqParams) => unit,
+  ) => unit,
+  receiveChallengeParamsFromRN: (
     string,
     string,
     string,
@@ -16,23 +20,23 @@ type netceteraModule = {
   isAvailable: bool,
 }
 
-@val external requireNetcetera: string => netceteraModule = "require"
+@val external requireTrident: string => tridentModule = "require"
 
 let (
-  initialiseNetceteraSDK,
+  initialiseSDK,
   generateAReqParams,
-  recieveChallengeParamsFromRN,
+  receiveChallengeParamsFromRN,
   generateChallenge,
-  isAvailable,
+  sdkIsAvailable,
 ) = switch try {
-  requireNetcetera("react-native-hyperswitch-netcetera-3ds")->Some
+  requireTrident("react-native-hyperswitch-trident-3ds")->Some
 } catch {
 | _ => None
 } {
 | Some(mod) => (
-    mod.initialiseNetceteraSDK,
+    mod.initialiseSDK,
     mod.generateAReqParams,
-    mod.recieveChallengeParamsFromRN,
+    mod.receiveChallengeParamsFromRN,
     mod.generateChallenge,
     mod.isAvailable,
   )
@@ -45,26 +49,26 @@ let (
   )
 }
 
-let isNetceteraAvailable = isAvailable
+let isTridentAvailable = sdkIsAvailable
 
-let initialiseNetcetera = (sdkConfig: sdkConfig, callback: statusType => unit) => {
-  if isAvailable {
-    initialiseNetceteraSDK(
+let initialiseTrident = (sdkConfig: sdkConfig, callback: statusType => unit) => {
+  if sdkIsAvailable {
+    initialiseSDK(
       sdkConfig.apiKey,
       sdkConfig.environment->ThreeDsUtils.sdkEnvironmentToStrMapper,
       callback,
     )
   } else {
-    callback({status: "failure", message: "Netcetera SDK not available"})
+    callback({status: "failure", message: "Trident SDK not available"})
   }
 }
 
-let generateAReqParamsNetcetera = (
+let generateAReqParamsTrident = (
   messageVersion: string,
   directoryServerId: string,
   callback: (statusType, ExternalThreeDsTypes.aReqParams) => unit,
 ) => {
-  if isAvailable {
+  if sdkIsAvailable {
     generateAReqParams(messageVersion, directoryServerId, callback)
   } else {
     let dummyAReqParams: ExternalThreeDsTypes.aReqParams = {
@@ -75,11 +79,11 @@ let generateAReqParamsNetcetera = (
       sdkEphemeralKey: JSON.Encode.null,
       sdkReferenceNo: "",
     }
-    callback({status: "failure", message: "Netcetera SDK not available"}, dummyAReqParams) // Changed callback order
+    callback({status: "failure", message: "Trident SDK not available"}, dummyAReqParams)
   }
 }
 
-let receiveChallengeParamsNetcetera = (
+let receiveChallengeParamsTrident = (
   acsSignedContent: string,
   acsRefNumber: string,
   acsTransactionId: string,
@@ -87,8 +91,8 @@ let receiveChallengeParamsNetcetera = (
   callback: statusType => unit,
   threeDSRequestorAppURL: option<string>,
 ) => {
-  if isAvailable {
-    recieveChallengeParamsFromRN(
+  if sdkIsAvailable {
+    receiveChallengeParamsFromRN(
       acsSignedContent,
       acsRefNumber,
       acsTransactionId,
@@ -97,14 +101,14 @@ let receiveChallengeParamsNetcetera = (
       threeDSRequestorAppURL,
     )
   } else {
-    callback({status: "failure", message: "Netcetera SDK not available"})
+    callback({status: "failure", message: "Trident SDK not available"})
   }
 }
 
-let generateChallengeNetcetera = (callback: statusType => unit) => {
-  if isAvailable {
+let generateChallengeTrident = (callback: statusType => unit) => {
+  if sdkIsAvailable {
     generateChallenge(callback)
   } else {
-    callback({status: "failure", message: "Netcetera SDK not available"})
+    callback({status: "failure", message: "Trident SDK not available"})
   }
 }
