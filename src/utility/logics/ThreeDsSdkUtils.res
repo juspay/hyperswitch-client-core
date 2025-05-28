@@ -7,6 +7,7 @@ type activeSdkFunctions = {
   generateAReqParamsFunc: (
     string,
     string,
+    option<string>, // cardNetworkForTridentOnly
     (statusType, ExternalThreeDsTypes.aReqParams) => unit,
   ) => unit,
   receiveChallengeParamsFunc: (
@@ -37,7 +38,8 @@ let getActiveThreeDsSdkFunctions = (~netceteraSdkApiKey: option<string>) => {
       {
         isSdkAvailableFunc: true,
         initialiseSdkFunc: Netcetera3dsModule.initialiseNetcetera,
-        generateAReqParamsFunc: Netcetera3dsModule.generateAReqParamsNetcetera,
+        generateAReqParamsFunc: (msgVer, dirId, _cardNetworkOpt, cb) =>
+          Netcetera3dsModule.generateAReqParamsNetcetera(msgVer, dirId, cb),
         receiveChallengeParamsFunc: (s1, s2, s3, s4, cb, optVal) =>
           Netcetera3dsModule.receiveChallengeParamsNetcetera(s1, s2, s3, s4, cb, optVal),
         generateChallengeFunc: Netcetera3dsModule.generateChallengeNetcetera,
@@ -50,7 +52,13 @@ let getActiveThreeDsSdkFunctions = (~netceteraSdkApiKey: option<string>) => {
       {
         isSdkAvailableFunc: true,
         initialiseSdkFunc: Trident3dsModule.initialiseTrident,
-        generateAReqParamsFunc: Trident3dsModule.generateAReqParamsTrident,
+        generateAReqParamsFunc: (msgVer, dirId, cardNetworkOpt, cb) =>
+          Trident3dsModule.generateAReqParamsTrident(
+            msgVer,
+            dirId,
+            cardNetworkOpt->Option.getOr(""),
+            cb,
+          ),
         receiveChallengeParamsFunc: Trident3dsModule.receiveChallengeParamsTrident,
         generateChallengeFunc: Trident3dsModule.generateChallengeTrident,
         selectedSdkApiKey: "",
@@ -62,7 +70,7 @@ let getActiveThreeDsSdkFunctions = (~netceteraSdkApiKey: option<string>) => {
       {
         isSdkAvailableFunc: false,
         initialiseSdkFunc: (_cfg, cb) => cb({status: "failure", message: "No 3DS SDK available"}),
-        generateAReqParamsFunc: (_mVer, _dId, cb) =>
+        generateAReqParamsFunc: (_mVer, _dId, _cardNetworkOpt, cb) =>
           cb({status: "failure", message: "No 3DS SDK available"}, createDummyAReqParams()),
         receiveChallengeParamsFunc: (_a, _b, _c, _d, cb, _optE: option<string>) =>
           cb({status: "failure", message: "No 3DS SDK available"}),
