@@ -6,6 +6,7 @@ type tridentModule = {
   generateAReqParams: (
     string,
     string,
+    string,
     (statusType, ExternalThreeDsTypes.aReqParams) => unit,
   ) => unit,
   receiveChallengeParamsFromRN: (
@@ -42,7 +43,7 @@ let (
   )
 | None => (
     (_apiKey, _env, _cb) => (),
-    (_msgVer, _dirId, _cb) => (),
+    (_msgVer, _dirId, _cardNtwk, _cb) => (),
     (_acsSign, _acsRef, _acsTransId, _threeDSServerTransId, _cb, _appUrl) => (),
     _cb => (),
     false,
@@ -66,10 +67,11 @@ let initialiseTrident = (sdkConfig: sdkConfig, callback: statusType => unit) => 
 let generateAReqParamsTrident = (
   messageVersion: string,
   directoryServerId: string,
+  cardNetwork: string,
   callback: (statusType, ExternalThreeDsTypes.aReqParams) => unit,
 ) => {
   if sdkIsAvailable {
-    generateAReqParams(messageVersion, directoryServerId, callback)
+    generateAReqParams(messageVersion, directoryServerId, cardNetwork, callback)
   } else {
     let dummyAReqParams: ExternalThreeDsTypes.aReqParams = {
       deviceData: "",
