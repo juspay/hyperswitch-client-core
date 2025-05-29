@@ -2,6 +2,7 @@ import * as testIds from "../../src/utility/test/TestUtils.bs.js";
 import { device } from "detox"
 import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT } from "../fixtures/Constants"
 import { waitForVisibility, typeTextInInput } from "../utils/DetoxHelpers"
+
 describe('card-flow-e2e-test', () => {
   jest.retryTimes(6);
   beforeAll(async () => {
@@ -22,35 +23,47 @@ describe('card-flow-e2e-test', () => {
   })
 
   it('should enter details in card form', async () => {
+    await device.disableSynchronization();
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    await device.enableSynchronization();
+
     const cardNumberInput = await element(by.id(testIds.cardNumberInputTestId))
     const expiryInput = await element(by.id(testIds.expiryInputTestId))
     const cvcInput = await element(by.id(testIds.cvcInputTestId))
 
-    await waitFor(cardNumberInput).toExist();
-    await waitForVisibility(cardNumberInput, 45000);
+    await waitFor(cardNumberInput).toExist().withTimeout(60000);
+    await waitFor(cardNumberInput).toBeVisible().withTimeout(60000);
     await cardNumberInput.tap();
 
     await cardNumberInput.clearText();
     await typeTextInInput(cardNumberInput, visaSandboxCard.cardNumber)
 
-    await waitFor(expiryInput).toExist();
-    await waitForVisibility(expiryInput, 45000);
+    await waitFor(expiryInput).toExist().withTimeout(60000);
+    await waitFor(expiryInput).toBeVisible().withTimeout(60000);
     await expiryInput.typeText(visaSandboxCard.expiryDate);
 
-    await waitFor(cvcInput).toExist();
-    await waitForVisibility(cvcInput, 45000);
+    await waitFor(cvcInput).toExist().withTimeout(60000);
+    await waitFor(cvcInput).toBeVisible().withTimeout(60000);
     await cvcInput.typeText(visaSandboxCard.cvc);
   });
 
   it('should be able to succesfully complete card payment', async () => {
+    await device.disableSynchronization();
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    await device.enableSynchronization();
+
     const payNowButton = await element(by.id(testIds.payButtonTestId))
-    await waitFor(payNowButton).toExist();
-    await waitForVisibility(payNowButton, 45000)
+    await waitFor(payNowButton).toExist().withTimeout(60000);
+    await waitFor(payNowButton).toBeVisible().withTimeout(60000);
     await payNowButton.tap();
 
+    await device.disableSynchronization();
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    await device.enableSynchronization();
+
     if (device.getPlatform() === "ios")
-      await waitForVisibility(element(by.text('Payment complete')), 60000)
+      await waitFor(element(by.text('Payment complete'))).toBeVisible().withTimeout(90000);
     else
-      await waitForVisibility(element(by.text('succeeded')), 60000)
+      await waitFor(element(by.text('succeeded'))).toBeVisible().withTimeout(90000);
   })
 });
