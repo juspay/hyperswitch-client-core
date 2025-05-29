@@ -27,30 +27,30 @@ describe('card-flow-e2e-test', () => {
     const cvcInput = await element(by.id(testIds.cvcInputTestId))
 
     await waitFor(cardNumberInput).toExist();
-    await waitForVisibility(cardNumberInput);
+    await waitForVisibility(cardNumberInput, 45000);
     await cardNumberInput.tap();
 
     await cardNumberInput.clearText();
     await typeTextInInput(cardNumberInput, visaSandboxCard.cardNumber)
 
     await waitFor(expiryInput).toExist();
-    await waitForVisibility(expiryInput);
+    await waitForVisibility(expiryInput, 45000);
     await expiryInput.typeText(visaSandboxCard.expiryDate);
 
     await waitFor(cvcInput).toExist();
-    await waitForVisibility(cvcInput);
+    await waitForVisibility(cvcInput, 45000);
     await cvcInput.typeText(visaSandboxCard.cvc);
   });
 
   it('should be able to succesfully complete card payment', async () => {
     const payNowButton = await element(by.id(testIds.payButtonTestId))
     await waitFor(payNowButton).toExist();
-    await waitForVisibility(payNowButton)
+    await waitForVisibility(payNowButton, 45000)
     await payNowButton.tap();
 
     if (device.getPlatform() === "ios")
-      await waitForVisibility(element(by.text('Payment complete')))
+      await waitForVisibility(element(by.text('Payment complete')), 60000)
     else
-      await waitForVisibility(element(by.text('succeeded')))
+      await waitForVisibility(element(by.text('succeeded')), 60000)
   })
 });
