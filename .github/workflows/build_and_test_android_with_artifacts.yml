@@ -1,0 +1,147 @@
+name: Test All / build_and_test_android_with_artifacts (pull_request)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-android:
+    runs-on: ubuntu-latest
+    env:
+      SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+      SENTRY_ENV: 'production'
+      HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
+      HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
+      HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+      HYPERSWITCH_LOGS_PATH: ${{ secrets.HYPERSWITCH_LOGS_PATH }}
+      PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+      SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+      INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
+      HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+      HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
+      PROFILE_ID: ${{ secrets.PROFILE_ID }}
+    steps:
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Shared Code Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # cache: 'npm'
+          # cache-dependency-path: '**/package-lock.json'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Start server
+        run: |
+          nohup node server.js &
+
+      - name: Check Server
+        run: |
+          curl http://localhost:5252/create-payment-intent
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          cache: gradle
+          distribution: temurin
+          java-version: 17
+
+      - name: Checkout Android Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-android
+          ref: main
+          path: android
+          fetch-depth: 0
+
+      - name: Generate DS Root Certificate for Netcetera SDK
+        run: |
+          CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
+          OUTPUT_FILE="nca_demo_root.crt"
+          mkdir -p android/demo-app/src/main/assets
+          OUTPUT_PATH="android/demo-app/src/main/assets/$OUTPUT_FILE"
+          {
+            echo "-----BEGIN CERTIFICATE-----"
+            echo "$CERTIFICATE_STRING"
+            echo "-----END CERTIFICATE-----"
+          } > "$OUTPUT_PATH"
+          echo "Content has been successfully transferred to $OUTPUT_FILE."
+
+      - name: Generate & Supply JS Bundle to Test APK
+        run: |
+          npm run re:start
+
+      - name: Start Metro
+        run: |
+          nohup npm run start &
+
+      - name: Detox build
+        run: npx detox build --configuration android.emu.ci.debug
+
+      - name: Detox test
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel
+          script: |
+            adb devices
+            # Run debug test first to get detailed diagnostics
+            npx detox test detox-tests/e2e/card-flow-e2e-debug.test.ts --configuration android.emu.ci.debug --headless --artifacts-location artifacts/ --record-logs all --take-screenshots failing || true
+            # Run alternative test approach
+            npx detox test detox-tests/e2e/card-flow-e2e-alternative.test.ts --configuration android.emu.ci.debug --headless --artifacts-location artifacts/ --record-logs all --take-screenshots failing || true
+            # Run original test
+            npx detox test --configuration android.emu.ci.debug --headless --artifacts-location artifacts/ --record-logs all --take-screenshots failing
+
+      - name: Upload Detox Artifacts
+        uses: actions/upload-artifact@v4
+        if: always() # Upload artifacts whether tests pass or fail
+        with:
+          name: detox-artifacts-${{ github.run_id }}
+          path: |
+            artifacts/
+            detox-tests/artifacts/
+          retention-days: 30
+
+      - name: Upload Test Results Summary
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-summary-${{ github.run_id }}
+          path: |
+            *.log
+            detox-tests/*.log
+          retention-days: 7
+
+      - name: List Artifacts Directory (for debugging)
+        if: always()
+        run: |
+          echo "=== Artifacts Directory Structure ==="
+          find artifacts/ -type f -name "*.png" -o -name "*.log" | head -20 || echo "No artifacts found"
+          echo "=== End Artifacts ==="
