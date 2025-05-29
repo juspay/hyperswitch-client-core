@@ -47,7 +47,44 @@ describe('card-flow-e2e-debug-test', () => {
     // Take screenshot after delay
     await device.takeScreenshot('after-delay');
     
-    console.log('🔍 Looking for card number input...');
+    // FIRST: Look for "Card Details" text as a landmark
+    console.log('🔍 Looking for "Card Details" text...');
+    try {
+      await waitFor(element(by.text('Card Details'))).toBeVisible().withTimeout(15000);
+      console.log('✅ "Card Details" text found');
+      await device.takeScreenshot('card-details-found');
+    } catch (error) {
+      console.log('❌ "Card Details" text not found');
+      await device.takeScreenshot('card-details-not-found');
+      
+      // Try alternative card details text
+      try {
+        await waitFor(element(by.text('Card details'))).toBeVisible().withTimeout(5000);
+        console.log('✅ "Card details" (lowercase) text found');
+      } catch (e) {
+        console.log('❌ No card details text found at all');
+      }
+    }
+    
+    // SECOND: Look for placeholder text "1234 1234 1234 1234"
+    console.log('🔍 Looking for card number placeholder "1234 1234 1234 1234"...');
+    try {
+      const cardPlaceholder = element(by.text('1234 1234 1234 1234'));
+      await waitFor(cardPlaceholder).toBeVisible().withTimeout(15000);
+      console.log('✅ Card number placeholder found');
+      await device.takeScreenshot('placeholder-found');
+      
+      // Try to tap on the placeholder
+      console.log('🔍 Attempting to tap on placeholder...');
+      await cardPlaceholder.tap();
+      await device.takeScreenshot('after-placeholder-tap');
+      
+    } catch (error) {
+      console.log('❌ Card number placeholder not found');
+      await device.takeScreenshot('placeholder-not-found');
+    }
+    
+    console.log('🔍 Looking for card number input by test ID...');
     console.log('Card number test ID:', testIds.cardNumberInputTestId);
     
     try {

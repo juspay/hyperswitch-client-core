@@ -37,6 +37,21 @@ describe('card-flow-e2e-alternative-test', () => {
     // Wait longer for payment sheet to fully render
     await new Promise(resolve => setTimeout(resolve, 8000));
     
+    // FIRST: Look for "Card Details" text as a reliable landmark
+    console.log('🔍 Looking for "Card Details" text...');
+    try {
+      await waitFor(element(by.text('Card Details'))).toBeVisible().withTimeout(30000);
+      console.log('✅ "Card Details" text found');
+    } catch (error) {
+      try {
+        await waitFor(element(by.text('Card details'))).toBeVisible().withTimeout(10000);
+        console.log('✅ "Card details" (lowercase) text found');
+      } catch (e) {
+        console.log('❌ No card details text found');
+        throw new Error('Card Details section not found');
+      }
+    }
+    
     // Try multiple strategies to find card inputs
     let cardNumberInput;
     let expiryInput;
