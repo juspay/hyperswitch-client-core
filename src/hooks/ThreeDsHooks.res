@@ -60,26 +60,9 @@ let useExternalThreeDs = () => {
   let (cardData, _) = React.useContext(CardDataContext.cardDataContext)
 
   (
-    ~isSdkAvailableFunc: bool,
-    ~initialiseSdkFunc: (sdkConfig, statusType => unit) => unit,
-    ~generateAReqParamsFunc: (
-      string,
-      string,
-      option<string>, // cardNetworkForTridentOnly
-      (statusType, ExternalThreeDsTypes.aReqParams) => unit,
-    ) => unit,
-    ~receiveChallengeParamsFunc: (
-      string,
-      string,
-      string,
-      string,
-      statusType => unit,
-      option<string>,
-    ) => unit,
-    ~generateChallengeFunc: (statusType => unit) => unit,
+    ~threeSDKApiKey,
     ~baseUrl,
     ~appId,
-    ~sdkApiKey,
     ~clientSecret,
     ~publishableKey,
     ~nextAction,
@@ -87,8 +70,9 @@ let useExternalThreeDs = () => {
     ~retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
-    ~sdkEventName: eventName,
   ) => {
+    let activeSdk = ThreeDsSdkUtils.getActiveThreeDsSdkFunctions(~threeDsSdkApiKey=threeSDKApiKey)
+
     let threeDsData =
       nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
 
@@ -307,7 +291,7 @@ let useExternalThreeDs = () => {
         ~useAppUrl=true,
       )
       Promise.make((resolve, reject) => {
-        receiveChallengeParamsFunc(
+        activeSdk.receiveChallengeParamsFunc(
           challengeParams.acsSignedContent,
           challengeParams.acsRefNumber,
           challengeParams.acsTransactionId,
@@ -323,11 +307,11 @@ let useExternalThreeDs = () => {
               ->JSON.stringifyAny
               ->Option.getOr(""),
               ~category=USER_EVENT,
-              ~eventName=sdkEventName,
+              ~eventName=activeSdk.sdkEventName,
               (),
             )
             if status->isStatusSuccess {
-              generateChallengeFunc(status => {
+              activeSdk.generateChallengeFunc(status => {
                 logger(
                   ~logType=INFO,
                   ~value={
@@ -337,7 +321,7 @@ let useExternalThreeDs = () => {
                   ->JSON.stringifyAny
                   ->Option.getOr(""),
                   ~category=USER_EVENT,
-                  ~eventName=sdkEventName,
+                  ~eventName=activeSdk.sdkEventName,
                   (),
                 )
                 resolve()
@@ -441,8 +425,13 @@ let useExternalThreeDs = () => {
     }
 
     let startThreeDsFlow = () => {
-      initialisedSdkOnce(~sdkApiKey, ~sdkEnvironment, ~initialiseSdkFunc)
+      initialisedSdkOnce(
+        ~sdkApiKey=activeSdk.selectedSdkApiKey,
+        ~sdkEnvironment,
+        ~initialiseSdkFunc=activeSdk.initialiseSdkFunc,
+      )
       ->Promise.then(statusInfo => {
+        Console.log2("TRIDENTT", statusInfo)
         let isSuccess = statusInfo->isStatusSuccess
 
         logger(
@@ -454,16 +443,16 @@ let useExternalThreeDs = () => {
           ->JSON.stringifyAny
           ->Option.getOr(""),
           ~category=USER_EVENT,
-          ~eventName=sdkEventName,
+          ~eventName=activeSdk.sdkEventName,
           (),
         )
         if isSuccess {
           Promise.make((resolve, _reject) => {
             let cardNetwork = cardData.cardBrand
-            generateAReqParamsFunc(
+            activeSdk.generateAReqParamsFunc(
               threeDsData.messageVersion,
               threeDsData.directoryServerId,
-              sdkEventName == LoggerTypes.TRIDENT_SDK ? Some(cardNetwork) : None,
+              activeSdk.sdkEventName == LoggerTypes.TRIDENT_SDK ? Some(cardNetwork) : None,
               (status, aReqParams) => {
                 logger(
                   ~logType=INFO,
@@ -474,7 +463,7 @@ let useExternalThreeDs = () => {
                   ->JSON.stringifyAny
                   ->Option.getOr(""),
                   ~category=USER_EVENT,
-                  ~eventName=sdkEventName,
+                  ~eventName=activeSdk.sdkEventName,
                   (),
                 )
                 if status->isStatusSuccess {
@@ -506,12 +495,12 @@ let useExternalThreeDs = () => {
 
     let checkSDKPresence = () => {
       Promise.make((resolve, reject) => {
-        if !isSdkAvailableFunc {
+        if !activeSdk.isSdkAvailableFunc {
           logger(
             ~logType=DEBUG,
             ~value="3DS SDK dependency not added or not available",
             ~category=USER_EVENT,
-            ~eventName=sdkEventName,
+            ~eventName=activeSdk.sdkEventName,
             (),
           )
           onFailure(externalThreeDsModuleStatus.errorMsg)

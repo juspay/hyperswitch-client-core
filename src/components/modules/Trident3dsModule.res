@@ -21,9 +21,7 @@ type tridentModule = {
   isAvailable: bool,
 }
 
-@val external requireTrident: string => tridentModule = "require"
-
-let createUnavailableError = () => {status: "failure", message: "Trident SDK not available"}
+@val external require: string => tridentModule = "require"
 
 let (
   initialiseSDK,
@@ -32,7 +30,7 @@ let (
   generateChallenge,
   isSdkAvailable,
 ) = switch try {
-  requireTrident("react-native-hyperswitch-trident-3ds")->Some
+  require("react-native-hyperswitch-trident-3ds")->Some
 } catch {
 | _ => None
 } {
@@ -43,24 +41,8 @@ let (
     mod.generateChallenge,
     mod.isAvailable,
   )
-| None => (
-    (_apiKey, _env, cb) => cb(createUnavailableError()),
-    (_msgVer, _dirId, _cardNtwk, cb) => {
-      let dummyAReqParams: ExternalThreeDsTypes.aReqParams = {
-        deviceData: "",
-        messageVersion: "",
-        sdkTransId: "",
-        sdkAppId: "",
-        sdkEphemeralKey: JSON.Encode.null,
-        sdkReferenceNo: "",
-      }
-      cb(createUnavailableError(), dummyAReqParams)
-    },
-    (_acsSign, _acsRef, _acsTransId, _threeDSServerTransId, cb, _appUrl) =>
-      cb(createUnavailableError()),
-    cb => cb(createUnavailableError()),
-    false,
-  )
+
+| None => ((_, _, _) => (), (_, _, _, _) => (), (_, _, _, _, _, _) => (), _ => (), false)
 }
 
 let initialiseTrident = (sdkConfig: sdkConfig, callback: statusType => unit) => {
