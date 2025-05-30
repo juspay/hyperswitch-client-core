@@ -459,58 +459,31 @@ let useExternalThreeDs = () => {
         )
         if isSuccess {
           Promise.make((resolve, _reject) => {
-            if sdkEventName == LoggerTypes.TRIDENT_SDK {
-              let cardNetwork = cardData.cardBrand
-              generateAReqParamsFunc(
-                threeDsData.messageVersion,
-                threeDsData.directoryServerId,
-                Some(cardNetwork),
-                (status, aReqParams) => {
-                  logger(
-                    ~logType=INFO,
-                    ~value={
-                      "status": status.status,
-                      "message": status.message,
-                    }
-                    ->JSON.stringifyAny
-                    ->Option.getOr(""),
-                    ~category=USER_EVENT,
-                    ~eventName=sdkEventName,
-                    (),
-                  )
-                  if status->isStatusSuccess {
-                    resolve(Make3DsCall(aReqParams))
-                  } else {
-                    resolve(RetrieveAgain)
+            let cardNetwork = cardData.cardBrand
+            generateAReqParamsFunc(
+              threeDsData.messageVersion,
+              threeDsData.directoryServerId,
+              sdkEventName == LoggerTypes.TRIDENT_SDK ? Some(cardNetwork) : None,
+              (status, aReqParams) => {
+                logger(
+                  ~logType=INFO,
+                  ~value={
+                    "status": status.status,
+                    "message": status.message,
                   }
-                },
-              )
-            } else {
-              generateAReqParamsFunc(
-                threeDsData.messageVersion,
-                threeDsData.directoryServerId,
-                None,
-                (status, aReqParams) => {
-                  logger(
-                    ~logType=INFO,
-                    ~value={
-                      "status": status.status,
-                      "message": status.message,
-                    }
-                    ->JSON.stringifyAny
-                    ->Option.getOr(""),
-                    ~category=USER_EVENT,
-                    ~eventName=sdkEventName,
-                    (),
-                  )
-                  if status->isStatusSuccess {
-                    resolve(Make3DsCall(aReqParams))
-                  } else {
-                    resolve(RetrieveAgain)
-                  }
-                },
-              )
-            }
+                  ->JSON.stringifyAny
+                  ->Option.getOr(""),
+                  ~category=USER_EVENT,
+                  ~eventName=sdkEventName,
+                  (),
+                )
+                if status->isStatusSuccess {
+                  resolve(Make3DsCall(aReqParams))
+                } else {
+                  resolve(RetrieveAgain)
+                }
+              },
+            )
           })
         } else {
           Promise.resolve(RetrieveAgain)
