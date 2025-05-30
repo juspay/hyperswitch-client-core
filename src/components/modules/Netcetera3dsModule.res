@@ -16,9 +16,7 @@ type netceteraModule = {
   isAvailable: bool,
 }
 
-@val external requireNetcetera: string => netceteraModule = "require"
-
-let createUnavailableError = () => {status: "failure", message: "Netcetera SDK not available"}
+@val external require: string => netceteraModule = "require"
 
 let (
   initialiseNetceteraSDK,
@@ -27,7 +25,7 @@ let (
   generateChallenge,
   isSdkAvailable,
 ) = switch try {
-  requireNetcetera("react-native-hyperswitch-netcetera-3ds")->Some
+  require("react-native-hyperswitch-netcetera-3ds")->Some
 } catch {
 | _ => None
 } {
@@ -38,24 +36,7 @@ let (
     mod.generateChallenge,
     mod.isAvailable,
   )
-| None => (
-    (_apiKey, _env, cb) => cb(createUnavailableError()),
-    (_msgVer, _dirId, cb) => {
-      let dummyAReqParams: ExternalThreeDsTypes.aReqParams = {
-        deviceData: "",
-        messageVersion: "",
-        sdkTransId: "",
-        sdkAppId: "",
-        sdkEphemeralKey: JSON.Encode.null,
-        sdkReferenceNo: "",
-      }
-      cb(createUnavailableError(), dummyAReqParams)
-    },
-    (_acsSign, _acsRef, _acsTransId, _threeDSServerTransId, cb, _appUrl) =>
-      cb(createUnavailableError()),
-    cb => cb(createUnavailableError()),
-    false,
-  )
+| None => ((_, _, _) => (), (_, _, _) => (), (_, _, _, _, _, _) => (), _ => (), false)
 }
 
 let initialiseNetcetera = (sdkConfig: sdkConfig, callback: statusType => unit) => {

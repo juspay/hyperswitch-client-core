@@ -50,7 +50,7 @@ let make = (
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
 
   let sdkFunctions = ThreeDsSdkUtils.getActiveThreeDsSdkFunctions(
-    ~netceteraSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
+    ~threeDsSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
   )
 
   let initialiseThreeDsHook = ThreeDsHooks.useInitThreeDs(

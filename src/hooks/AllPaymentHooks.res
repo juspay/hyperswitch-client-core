@@ -426,52 +426,29 @@ let useRedirectHook = () => {
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       switch nextAction->PaymentUtils.getActionType {
       | "three_ds_invoke" =>
-        let activeSdk = ThreeDsSdkUtils.getActiveThreeDsSdkFunctions(
-          ~netceteraSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
+        executeThreeDsFlow(
+          ~threeSDKApiKey=nativeProp.configuration.netceteraSDKApiKey,
+          ~baseUrl,
+          ~appId=nativeProp.hyperParams.appId,
+          ~clientSecret,
+          ~publishableKey,
+          ~nextAction,
+          ~retrievePayment,
+          ~sdkEnvironment=nativeProp.env,
+          ~onSuccess=message => {
+            responseCallback(
+              ~paymentStatus=PaymentSuccess,
+              ~status={status: "succeeded", message, code: "", type_: ""},
+            )
+          },
+          ~onFailure=message => {
+            errorCallback(
+              ~errorMessage={status: "failed", message, type_: "", code: ""},
+              ~closeSDK={true},
+              (),
+            )
+          },
         )
-
-        if activeSdk.isSdkAvailableFunc {
-          executeThreeDsFlow(
-            ~isSdkAvailableFunc=activeSdk.isSdkAvailableFunc,
-            ~initialiseSdkFunc=activeSdk.initialiseSdkFunc,
-            ~generateAReqParamsFunc=activeSdk.generateAReqParamsFunc,
-            ~receiveChallengeParamsFunc=activeSdk.receiveChallengeParamsFunc,
-            ~generateChallengeFunc=activeSdk.generateChallengeFunc,
-            ~baseUrl,
-            ~appId=nativeProp.hyperParams.appId,
-            ~sdkApiKey=activeSdk.selectedSdkApiKey,
-            ~clientSecret,
-            ~publishableKey,
-            ~nextAction,
-            ~retrievePayment,
-            ~sdkEnvironment=nativeProp.env,
-            ~onSuccess=message => {
-              responseCallback(
-                ~paymentStatus=PaymentSuccess,
-                ~status={status: "succeeded", message, code: "", type_: ""},
-              )
-            },
-            ~onFailure=message => {
-              errorCallback(
-                ~errorMessage={status: "failed", message, type_: "", code: ""},
-                ~closeSDK={true},
-                (),
-              )
-            },
-            ~sdkEventName=activeSdk.sdkEventName,
-          )
-        } else {
-          errorCallback(
-            ~errorMessage={
-              status: "failed",
-              message: "3DS SDK not configured",
-              type_: "",
-              code: "",
-            },
-            ~closeSDK={true},
-            (),
-          )
-        }
       | "third_party_sdk_session_token" =>
         // TODO: add event loggers for analytics
         let session_token = Option.getOr(nextAction, defaultNextAction).session_token
