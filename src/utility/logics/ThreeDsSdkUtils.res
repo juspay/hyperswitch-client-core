@@ -33,7 +33,7 @@ let createDummyAReqParams = (): ExternalThreeDsTypes.aReqParams => {
 }
 
 let getActiveThreeDsSdkFunctions = (~netceteraSdkApiKey: option<string>) => {
-  if Netcetera3dsModule.isNetceteraAvailable {
+  if Netcetera3dsModule.isSdkAvailable {
     (
       {
         isSdkAvailableFunc: true,
@@ -47,7 +47,7 @@ let getActiveThreeDsSdkFunctions = (~netceteraSdkApiKey: option<string>) => {
         sdkEventName: LoggerTypes.NETCETERA_SDK,
       }: activeSdkFunctions
     )
-  } else if Trident3dsModule.isTridentAvailable {
+  } else if Trident3dsModule.isSdkAvailable {
     (
       {
         isSdkAvailableFunc: true,
