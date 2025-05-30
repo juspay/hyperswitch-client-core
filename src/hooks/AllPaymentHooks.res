@@ -1,5 +1,4 @@
 open PaymentConfirmTypes
-open ThreeDsSdkUtils
 
 type apiLogType = Request | Response | NoResponse | Err
 

@@ -1,6 +1,5 @@
 open ReactNative
 open PaymentMethodListType
-open ThreeDsSdkUtils
 
 @react.component
 let make = (
@@ -49,7 +48,7 @@ let make = (
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
 
-  let sdkFunctions = ThreeDsSdkUtils.getActiveThreeDsSdkFunctions(
+  let sdkFunctions = ThreeDsSdkResolverHooks.useResolveThreeDsSdk(
     ~threeDsSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
   )
 
