@@ -2,6 +2,7 @@ open ExternalThreeDsTypes
 open ThreeDsUtils
 open SdkStatusMessages
 open ThreeDsModuleType
+open ThreeDsSdkResolverHooks
 open LoggerTypes
 
 let isInitialisedPromiseRef = ref(None)
@@ -71,7 +72,7 @@ let useExternalThreeDs = () => {
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {
-    let activeSdk = ThreeDsSdkUtils.getActiveThreeDsSdkFunctions(~threeDsSdkApiKey=threeSDKApiKey)
+    let activeSdk = useResolveThreeDsSdk(~threeDsSdkApiKey=threeSDKApiKey)
 
     let threeDsData =
       nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
