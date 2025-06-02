@@ -1,3 +1,10 @@
+## [1.4.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.0...v1.4.1) (2025-06-02)
+
+
+### Bug Fixes
+
+* detox: Navigation between saved screen and payment sheet ([#293](https://github.com/juspay/hyperswitch-client-core/issues/293)) ([34f8ad5](https://github.com/juspay/hyperswitch-client-core/commit/34f8ad574c0e71907c5a841435a148f19e254ad1))
+
 # [1.4.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.3.0...v1.4.0) (2025-05-22)
 
 
