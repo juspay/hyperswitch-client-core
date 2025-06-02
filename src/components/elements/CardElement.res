@@ -75,7 +75,10 @@ let make = (
   ) => {
     let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
     let validCardBrand = getFirstValidCardScheme(~cardNumber=text, ~enabledCardSchemes)
-    let cardBrand = validCardBrand === "" ? getCardBrand(text) : validCardBrand
+    let cardBrand = switch validCardBrand {
+    | Some(brand) => brand
+    | None => getCardBrand(text)
+    }
     let num = formatCardNumber(text, cardType(cardBrand))
 
     let isthisValid = cardValid(num, cardBrand)

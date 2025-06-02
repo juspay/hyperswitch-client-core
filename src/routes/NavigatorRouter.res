@@ -68,7 +68,7 @@ let make = () => {
       Promise.all3((
         retrievePayment(List, nativeProp.clientSecret, nativeProp.publishableKey),
         savedPaymentMethods(),
-        getSessionToken(),
+        getSessionToken(~wallet=[], ()),
       ))
       ->Promise.then(((paymentMethodListData, customerSavedPMData, sessionTokenData)) => {
         if ErrorUtils.isError(paymentMethodListData) {

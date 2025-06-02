@@ -15,63 +15,27 @@ let retOptionalFloat = x => {
   }
 }
 
-let getOptionString = (dict, key) => {
-  dict->Dict.get(key)->Option.flatMap(JSON.Decode.string)
-}
+// Import shared business logic utilities
+open BusinessLogicUtils
 
-let getOptionFloat = (dict, key) => {
-  dict->Dict.get(key)->retOptionalFloat
-}
-
-let getString = (dict, key, default) => {
-  getOptionString(dict, key)->Option.getOr(default)
-}
-
-let getBool = (dict, key, default) => {
-  dict
-  ->Dict.get(key)
-  ->Option.flatMap(JSON.Decode.bool)
-  ->Option.getOr(default)
-}
-
-let getObj = (dict, key, default) => {
-  dict
-  ->Dict.get(key)
-  ->Option.flatMap(JSON.Decode.object)
-  ->Option.getOr(default)
-}
-
-let getOptionalObj = (dict, key) => {
-  dict
-  ->Dict.get(key)
-  ->Option.flatMap(JSON.Decode.object)
-}
-
-let getOptionalArrayFromDict = (dict, key) => {
-  dict->Dict.get(key)->Option.flatMap(JSON.Decode.array)
-}
-let getArrayFromDict = (dict, key, default) => {
-  dict->getOptionalArrayFromDict(key)->Option.getOr(default)
-}
-
-let getDictFromJson = (json: JSON.t) => {
-  json->JSON.Decode.object->Option.getOr(Dict.make())
-}
-
-let getDictFromJsonKey = (json, key) => {
-  json->Dict.get(key)->Option.getOr(JSON.Encode.null)->getDictFromJson
-}
-
-let getArray = (dict, key) => {
-  dict->getOptionalArrayFromDict(key)->Option.getOr([])
-}
-let getJsonObjectFromDict = (dict, key) => {
-  dict->Dict.get(key)->Option.getOr(JSON.Encode.object(Dict.make()))
-}
-
-let convertToScreamingSnakeCase = text => {
-  text->String.trim->String.replaceRegExp(%re("/ /g"), "_")->String.toUpperCase
-}
+// Re-export essential functions for backward compatibility
+let getObj = getObj
+let getString = getString
+let getDictFromJson = getDictFromJson
+let getJsonObjectFromRecord = getJsonObjectFromRecord
+let getOptionString = getOptionString
+let getOptionFloat = getOptionFloat
+let getOptionalObj = getOptionalObj
+let convertToScreamingSnakeCase = convertToScreamingSnakeCase
+let getBool = getBool
+let getJsonObjectFromDict = getJsonObjectFromDict
+let getArray = getArray
+let getStrArray = getStrArray
+let underscoresToSpaces = underscoresToSpaces
+let getDictFromJsonKey = getDictFromJsonKey
+let getArrayFromDict = getArrayFromDict
+let getStringFromRecord = getStringFromRecord
+let getStringFromJson = getStringFromJson
 
 // TODO subtraction 365 days can be done in exactly one year way
 
@@ -214,44 +178,8 @@ let splitName = (str: option<string>) => {
   }
 }
 
-let getStringFromJson = (json, default) => {
-  json->JSON.Decode.string->Option.getOr(default)
-}
-
-let underscoresToSpaces = str => {
-  str->String.replaceAll("_", " ")
-}
-
-let toCamelCase = str => {
-  if str->String.includes(":") {
-    str
-  } else {
-    str
-    ->String.toLowerCase
-    ->Js.String2.unsafeReplaceBy0(%re(`/([-_][a-z])/g`), (letter, _, _) => {
-      letter->String.toUpperCase
-    })
-    ->String.replaceRegExp(%re(`/[^a-zA-Z]/g`), "")
-  }
-}
-let toSnakeCase = str => {
-  str->Js.String2.unsafeReplaceBy0(%re("/[A-Z]/g"), (letter, _, _) =>
-    `_${letter->String.toLowerCase}`
-  )
-}
-
-let toKebabCase = str => {
-  str
-  ->String.split("")
-  ->Array.mapWithIndex((item, i) => {
-    if item->String.toUpperCase === item {
-      `${i != 0 ? "-" : ""}${item->String.toLowerCase}`
-    } else {
-      item
-    }
-  })
-  ->Array.join("")
-}
+// These functions are now available from BusinessLogicUtils
+// getStringFromJson, underscoresToSpaces, toCamelCase, toSnakeCase, toKebabCase
 
 type case = CamelCase | SnakeCase | KebabCase
 let rec transformKeys = (json: JSON.t, to: case) => {
@@ -300,23 +228,8 @@ let rec transformKeys = (json: JSON.t, to: case) => {
   ->JSON.Encode.object
 }
 
-let getStrArray = (dict, key) => {
-  dict
-  ->getOptionalArrayFromDict(key)
-  ->Option.getOr([])
-  ->Array.map(json => json->getStringFromJson(""))
-}
-let getOptionalStrArray: (Dict.t<JSON.t>, string) => option<array<string>> = (dict, key) => {
-  switch dict->getOptionalArrayFromDict(key) {
-  | Some(val) =>
-    val->Array.length === 0 ? None : Some(val->Array.map(json => json->getStringFromJson("")))
-  | None => None
-  }
-}
-
-let getArrofJsonString = (arr: array<string>) => {
-  arr->Array.map(item => item->JSON.Encode.string)
-}
+// These functions are now available from BusinessLogicUtils
+// getStrArray, getOptionalStrArray, getArrofJsonString
 
 let getCustomReturnAppUrl = (~appId) => {
   switch appId {
@@ -348,9 +261,8 @@ let getReturnUrl = (~appId, ~appURL: option<string>=None, ~useAppUrl=false) => {
   }
 }
 
-let getStringFromRecord = record => record->JSON.stringifyAny->Option.getOr("")
-
-let getJsonObjectFromRecord = record => record->Obj.magic
+// These functions are now available from BusinessLogicUtils
+// getStringFromRecord, getJsonObjectFromRecord
 
 let getError = (err, defaultError) => {
   switch err->Exn.asJsExn {

@@ -1,4 +1,5 @@
 open PaymentConfirmTypes
+open SharedApiAdapter
 
 type apiLogType = Request | Response | NoResponse | Err
 
@@ -78,185 +79,46 @@ let useHandleSuccessFailure = () => {
 let useSessionToken = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
 
   (~wallet=[], ()) => {
-    switch WebKit.platform {
-    | #next => Promise.resolve(Next.sessionsRes)
-    | _ =>
-      let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
-      let uri = `${baseUrl}/payments/session_tokens`
-      let body =
-        [
-          (
-            "payment_id",
-            String.split(nativeProp.clientSecret, "_secret_")
-            ->Array.get(0)
-            ->Option.getOr("")
-            ->JSON.Encode.string,
-          ),
-          ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
-          ("wallets", wallet->JSON.Encode.array),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-        ->JSON.stringify
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName=SESSIONS_CALL_INIT,
-        ~url=uri,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
-      CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
-      ->Promise.then(data => {
-        let statusCode = data->Fetch.Response.status->string_of_int
-        if statusCode->String.charAt(0) === "2" {
-          apiLogWrapper(
-            ~logType=INFO,
-            ~eventName=SESSIONS_CALL,
-            ~url=uri,
-            ~statusCode,
-            ~apiLogType=Response,
-            ~data=JSON.Encode.null,
-            (),
-          )
-          data->Fetch.Response.json
-        } else {
-          data
-          ->Fetch.Response.json
-          ->Promise.then(error => {
-            let value =
-              [
-                ("url", uri->JSON.Encode.string),
-                ("statusCode", statusCode->JSON.Encode.string),
-                ("response", error),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
-            apiLogWrapper(
-              ~logType=ERROR,
-              ~eventName=SESSIONS_CALL,
-              ~url=uri,
-              ~statusCode,
-              ~apiLogType=Err,
-              ~data=value,
-              (),
-            )
-            Promise.resolve(error)
-          })
-        }
-      })
-      ->Promise.catch(err => {
-        apiLogWrapper(
-          ~logType=ERROR,
-          ~eventName=SESSIONS_CALL,
-          ~url=uri,
-          ~statusCode="504",
-          ~apiLogType=NoResponse,
-          ~data=err->Utils.getError(`API call failed: ${uri}`),
-          (),
-        )
-        Promise.resolve(JSON.Encode.null)
-      })
-    }
+    SharedApiAdapter.createSessionTokens(
+      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.publishableKey,
+      ~endpoint=baseUrl,
+      ~wallets=wallet,
+      ~appId=?nativeProp.hyperParams.appId,
+    )
+    ->Promise.then(response => Promise.resolve(response.data))
   }
 }
 
 let useRetrieveHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   (type_, clientSecret, publishableKey, ~isForceSync=false) => {
     switch (WebKit.platform, type_) {
     | (#next, Types.List) => Promise.resolve(Next.listRes)
     | (_, type_) =>
-      let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
-      let (
-        uri,
-        eventName: LoggerTypes.eventName,
-        initEventName: LoggerTypes.eventName,
-      ) = switch type_ {
-      | Payment => (
-          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
-            ->Array.get(0)
-            ->Option.getOr("")}?force_sync=${isForceSync
-              ? "true"
-              : "false"}&client_secret=${clientSecret}`,
-          RETRIEVE_CALL,
-          RETRIEVE_CALL_INIT,
+      switch type_ {
+      | Payment =>
+        SharedApiAdapter.retrievePayment(
+          ~clientSecret,
+          ~publishableKey,
+          ~endpoint=baseUrl,
+          ~isForceSync,
+          ~appId=?nativeProp.hyperParams.appId,
         )
-      | List => (
-          `${baseUrl}/account/payment_methods?client_secret=${clientSecret}`,
-          PAYMENT_METHODS_CALL,
-          PAYMENT_METHODS_CALL_INIT,
+        ->Promise.then(processed => Promise.resolve(processed.rawResponse))
+      | List =>
+        SharedApiAdapter.fetchPaymentMethods(
+          ~clientSecret,
+          ~publishableKey,
+          ~endpoint=baseUrl,
+          ~appId=?nativeProp.hyperParams.appId,
         )
+        ->Promise.then(response => Promise.resolve(response.data))
       }
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName=initEventName,
-        ~url=uri,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
-
-      CommonHooks.fetchApi(~uri, ~method_=Get, ~headers, ())
-      ->Promise.then(data => {
-        let statusCode = data->Fetch.Response.status->string_of_int
-        if statusCode->String.charAt(0) === "2" {
-          apiLogWrapper(
-            ~logType=INFO,
-            ~eventName,
-            ~url=uri,
-            ~statusCode,
-            ~apiLogType=Response,
-            ~data=JSON.Encode.null,
-            (),
-          )
-          data->Fetch.Response.json
-        } else {
-          data
-          ->Fetch.Response.json
-          ->Promise.then(error => {
-            let value =
-              [
-                ("url", uri->JSON.Encode.string),
-                ("statusCode", statusCode->JSON.Encode.string),
-                ("response", error),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
-
-            apiLogWrapper(
-              ~logType=ERROR,
-              ~eventName,
-              ~url=uri,
-              ~statusCode,
-              ~apiLogType=Err,
-              ~data=value,
-              (),
-            )
-            Promise.resolve(error)
-          })
-        }
-      })
-      ->Promise.catch(err => {
-        apiLogWrapper(
-          ~logType=ERROR,
-          ~eventName,
-          ~url=uri,
-          ~statusCode="504",
-          ~apiLogType=NoResponse,
-          ~data=err->Utils.getError(`API call failed: ${uri}`),
-          (),
-        )
-        Promise.resolve(JSON.Encode.null)
-      })
     }
   }
 }
@@ -580,71 +442,19 @@ let useRedirectHook = () => {
           })
           ->ignore
         : {
-            apiLogWrapper(
-              ~logType=INFO,
-              ~eventName=CONFIRM_CALL_INIT,
-              ~url=uri,
-              ~statusCode="",
-              ~apiLogType=Request,
-              ~data=JSON.Encode.null,
-              (),
+            SharedApiAdapter.confirmPayment(
+              ~clientSecret,
+              ~publishableKey,
+              ~body,
+              ~endpoint=baseUrl,
+              ~appId=?nativeProp.hyperParams.appId,
             )
-            CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
-            ->Promise.then(data => {
-              let statusCode = data->Fetch.Response.status->string_of_int
-              if statusCode->String.charAt(0) === "2" {
-                apiLogWrapper(
-                  ~logType=INFO,
-                  ~eventName=CONFIRM_CALL,
-                  ~url=uri,
-                  ~statusCode,
-                  ~apiLogType=Response,
-                  ~data=JSON.Encode.null,
-                  (),
-                )
-                data->Fetch.Response.json
-              } else {
-                data
-                ->Fetch.Response.json
-                ->Promise.then(error => {
-                  let value =
-                    [
-                      ("url", uri->JSON.Encode.string),
-                      ("statusCode", statusCode->JSON.Encode.string),
-                      ("response", error),
-                    ]
-                    ->Dict.fromArray
-                    ->JSON.Encode.object
-
-                  apiLogWrapper(
-                    ~logType=ERROR,
-                    ~eventName=CONFIRM_CALL,
-                    ~url=uri,
-                    ~statusCode,
-                    ~apiLogType=Response,
-                    ~data=value,
-                    (),
-                  )
-                  Promise.resolve(error)
-                })
-              }
-            })
-            ->Promise.then(jsonResponse => {
-              let {nextAction, status, error} = itemToObjMapper(jsonResponse->Utils.getDictFromJson)
-
+            ->Promise.then(processed => {
+              let {nextAction, status, error} = itemToObjMapper(processed.rawResponse->Utils.getDictFromJson)
               handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error)
               Promise.resolve()
             })
-            ->Promise.catch(err => {
-              apiLogWrapper(
-                ~logType=ERROR,
-                ~eventName=CONFIRM_CALL,
-                ~url=uri,
-                ~statusCode="504",
-                ~apiLogType=NoResponse,
-                ~data=err->Utils.getError(`API call failed: ${uri}`),
-                (),
-              )
+            ->Promise.catch(_ => {
               errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
               Promise.resolve()
             })
@@ -652,73 +462,20 @@ let useRedirectHook = () => {
           }
 
     | _ => {
-        apiLogWrapper(
-          ~logType=INFO,
-          ~eventName=CONFIRM_CALL_INIT,
-          ~url=uri,
-          ~statusCode="",
-          ~apiLogType=Request,
-          ~data=JSON.Encode.null,
-          (),
+        SharedApiAdapter.confirmPayment(
+          ~clientSecret,
+          ~publishableKey,
+          ~body,
+          ~endpoint=baseUrl,
+          ~appId=?nativeProp.hyperParams.appId,
         )
-        CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
-        ->Promise.then(data => {
-          let statusCode = data->Fetch.Response.status->string_of_int
-          if statusCode->String.charAt(0) === "2" {
-            apiLogWrapper(
-              ~logType=INFO,
-              ~eventName=CONFIRM_CALL,
-              ~url=uri,
-              ~statusCode,
-              ~apiLogType=Response,
-              ~data=JSON.Encode.null,
-              (),
-            )
-            data->Fetch.Response.json
-          } else {
-            data
-            ->Fetch.Response.json
-            ->Promise.then(error => {
-              let value =
-                [
-                  ("url", uri->JSON.Encode.string),
-                  ("statusCode", statusCode->JSON.Encode.string),
-                  ("response", error),
-                ]
-                ->Dict.fromArray
-                ->JSON.Encode.object
-
-              apiLogWrapper(
-                ~logType=ERROR,
-                ~eventName=CONFIRM_CALL,
-                ~url=uri,
-                ~statusCode,
-                ~apiLogType=Err,
-                ~data=value,
-                (),
-              )
-              Promise.resolve(error)
-            })
-          }
-        })
-        ->Promise.then(jsonResponse => {
-          let confirmResponse = jsonResponse->Utils.getDictFromJson
+        ->Promise.then(processed => {
+          let confirmResponse = processed.rawResponse->Utils.getDictFromJson
           let {nextAction, status, error} = itemToObjMapper(confirmResponse)
-
           handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
-
           Promise.resolve()
         })
-        ->Promise.catch(err => {
-          apiLogWrapper(
-            ~logType=ERROR,
-            ~eventName=CONFIRM_CALL,
-            ~url=uri,
-            ~statusCode="504",
-            ~apiLogType=NoResponse,
-            ~data=err->Utils.getError(`API call failed: ${uri}`),
-            (),
-          )
+        ->Promise.catch(_ => {
           errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
           Promise.resolve()
         })
