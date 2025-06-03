@@ -139,7 +139,10 @@ let make = (
 
     let body: PaymentMethodListType.redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      return_url: ?Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       ?email,
       payment_method,
       payment_method_type,
@@ -526,9 +529,31 @@ let make = (
       //   body,
       //   dynamicFieldsJson,
       // )
+
       let paymentBodyWithDynamicFields = body
 
+      let brand = switch selectedObj.token {
+      | Some(tokenToFind) =>
+        let pmList = savedPaymentMethordContextObj.pmList->Option.getOr([])
+        let foundCardOpt = pmList->Array.find(pm => {
+          switch pm {
+          | SdkTypes.SAVEDLISTCARD(cardDetails) => cardDetails.payment_token == Some(tokenToFind)
+          | _ => false
+          }
+        })
+        switch foundCardOpt {
+        | Some(SdkTypes.SAVEDLISTCARD(cardDetails)) =>
+          switch cardDetails.cardScheme {
+          | Some(actualScheme) => actualScheme
+          | None => ""
+          }
+        | _ => ""
+        }
+      | None => ""
+      }
+
       fetchAndRedirect(
+        ~currentCardBrand=brand,
         ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
         ~publishableKey=nativeProp.publishableKey,
         ~clientSecret=nativeProp.clientSecret,

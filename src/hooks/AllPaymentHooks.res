@@ -408,6 +408,7 @@ let useRedirectHook = () => {
   let getOpenProps = PlaidHelperHook.usePlaidProps()
 
   (
+    ~currentCardBrand: option<string>=?,
     ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
@@ -426,6 +427,7 @@ let useRedirectHook = () => {
       switch nextAction->PaymentUtils.getActionType {
       | "three_ds_invoke" =>
         executeThreeDsFlow(
+          ~cardBrand=currentCardBrand->Option.getOr(""),
           ~threeSDKApiKey=nativeProp.configuration.netceteraSDKApiKey,
           ~baseUrl,
           ~appId=nativeProp.hyperParams.appId,
