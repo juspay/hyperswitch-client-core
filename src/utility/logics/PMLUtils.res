@@ -58,9 +58,19 @@ let handleCustomerPMLResponse = (
           | _ => false
           }
         )
-        filteredSessionSpmData->Array.concat(walletSpmData->Array.concat(cardSpmData))
+        //to maintain the same order of elements dont use concat
+        spmData->Array.filter(data =>
+          filteredSessionSpmData->Array.includes(data) ||
+          walletSpmData->Array.includes(data) ||
+          cardSpmData->Array.includes(data)
+        )
 
-      | _ => isPaymentMethodManagement ? spmData : walletSpmData->Array.concat(cardSpmData)
+      | _ =>
+        isPaymentMethodManagement
+          ? spmData
+          : spmData->Array.filter(data =>
+              walletSpmData->Array.includes(data) || cardSpmData->Array.includes(data)
+            )
       }
 
       let isGuestFromPMList =
