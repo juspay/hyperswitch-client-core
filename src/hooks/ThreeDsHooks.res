@@ -58,9 +58,10 @@ let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (cardData, _) = React.useContext(CardDataContext.cardDataContext)
+  let (cardDataContextValue, _) = React.useContext(CardDataContext.cardDataContext)
 
   (
+    ~cardBrand: string,
     ~threeSDKApiKey,
     ~baseUrl,
     ~appId,
@@ -447,13 +448,15 @@ let useExternalThreeDs = () => {
           ~eventName=activeSdk.sdkEventName,
           (),
         )
+
+        let finalCardBrand = cardBrand != "" ? cardBrand : cardDataContextValue.cardBrand
+
         if isSuccess {
           Promise.make((resolve, _reject) => {
-            let cardNetwork = cardData.cardBrand
             activeSdk.generateAReqParamsFunc(
               threeDsData.messageVersion,
               threeDsData.directoryServerId,
-              activeSdk.sdkEventName == LoggerTypes.TRIDENT_SDK ? Some(cardNetwork) : None,
+              activeSdk.sdkEventName == LoggerTypes.TRIDENT_SDK ? Some(finalCardBrand) : None,
               (status, aReqParams) => {
                 logger(
                   ~logType=INFO,
