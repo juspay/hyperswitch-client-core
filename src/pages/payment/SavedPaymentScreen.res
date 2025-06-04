@@ -65,7 +65,6 @@ let make = (
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
   }
 
-  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   React.useEffect0(() => {
     setPaymentScreenType(SAVEDCARDSCREEN)
@@ -195,14 +194,7 @@ let make = (
       let obj =
         json
         ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper(
-          switch countryStateData {
-          | FetchData(data)
-          | Localdata(data) =>
-            data.states
-          | _ => Dict.make()
-          },
-        )
+        ->GooglePayTypeNew.itemToObjMapper
       let payment_method_data =
         [
           (
@@ -301,15 +293,7 @@ let make = (
             ),
             (
               "billing",
-              switch var->GooglePayTypeNew.getBillingContact(
-                "billing_contact",
-                switch countryStateData {
-                | FetchData(data)
-                | Localdata(data) =>
-                  data.states
-                | _ => Dict.make()
-                },
-              ) {
+              switch var->GooglePayTypeNew.getBillingContact("billing_contact") {
               | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
@@ -321,15 +305,7 @@ let make = (
           ~payment_method="wallet",
           ~payment_method_data,
           ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-          ~email=?switch var->GooglePayTypeNew.getBillingContact(
-            "billing_contact",
-            switch countryStateData {
-            | FetchData(data)
-            | Localdata(data) =>
-              data.states
-            | _ => Dict.make()
-            },
-          ) {
+          ~email=?switch var->GooglePayTypeNew.getBillingContact("billing_contact") {
           | Some(billing) => billing.email
           | None => None
           },

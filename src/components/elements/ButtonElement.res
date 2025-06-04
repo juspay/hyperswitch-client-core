@@ -231,7 +231,6 @@ let make = (
     }
   }
 
-  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -241,14 +240,7 @@ let make = (
       let obj =
         json
         ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper(
-          switch countryStateData {
-          | FetchData(data)
-          | Localdata(data) =>
-            data.states
-          | _ => Dict.make()
-          },
-        )
+        ->GooglePayTypeNew.itemToObjMapper
       let billingAddress = switch obj.paymentMethodData.info {
       | Some(info) => info.billing_address
 
@@ -385,24 +377,8 @@ let make = (
           let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
           let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
-          let billingAddress = var->GooglePayTypeNew.getBillingContact(
-            "billing_contact",
-            switch countryStateData {
-            | FetchData(data)
-            | Localdata(data) =>
-              data.states
-            | _ => Dict.make()
-            },
-          )
-          let shippingAddress = var->GooglePayTypeNew.getBillingContact(
-            "shipping_contact",
-            switch countryStateData {
-            | FetchData(data)
-            | Localdata(data) =>
-              data.states
-            | _ => Dict.make()
-            },
-          )
+          let billingAddress = var->GooglePayTypeNew.getBillingContact("billing_contact")
+          let shippingAddress = var->GooglePayTypeNew.getBillingContact("shippingAddress")
           let paymentData =
             [
               ("payment_data", payment_data),
