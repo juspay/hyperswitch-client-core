@@ -278,10 +278,13 @@ let useBrowserHook = () => {
   ) => {
     BrowserHook.openUrl(
       openUrl,
-      Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       intervalId,
       ~useEphemeralWebSession,
-      ~appearance=nativeProp.configuration.appearance
+      ~appearance=nativeProp.configuration.appearance,
     )
     ->Promise.then(res => {
       if res.status === Success {
@@ -346,7 +349,7 @@ let useBrowserHook = () => {
             }),
           },
         })
-          if paymentMethod->Option.getOr("") == "ach" {
+        if paymentMethod->Option.getOr("") == "ach" {
           responseCallback(
             ~paymentStatus=ProcessingPayments(None),
             ~status={
@@ -401,10 +404,11 @@ let useRedirectHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let executeThreeDsFlow = ThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
 
   (
+    ~currentCardBrand: option<string>=?,
     ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
@@ -421,43 +425,40 @@ let useRedirectHook = () => {
 
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       switch nextAction->PaymentUtils.getActionType {
-      | "three_ds_invoke" => {
-          let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
-
-          handleNativeThreeDS(
-            ~baseUrl,
-            ~appId=nativeProp.hyperParams.appId,
-            ~netceteraSDKApiKey,
-            ~clientSecret,
-            ~publishableKey,
-            ~nextAction,
-            ~retrievePayment,
-            ~sdkEnvironment=nativeProp.env,
-            ~onSuccess=message => {
-              responseCallback(
-                ~paymentStatus=PaymentSuccess,
-                ~status={status: "succeeded", message, code: "", type_: ""},
-              )
-            },
-            ~onFailure=message => {
-              errorCallback(
-                ~errorMessage={status: "failed", message, type_: "", code: ""},
-                ~closeSDK={true},
-                (),
-              )
-            },
-          )
-        }
-      | "third_party_sdk_session_token" => {
-          // TODO: add event loggers for analytics
-          let session_token = Option.getOr(nextAction, defaultNextAction).session_token
-          let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
-          switch session_token {
-          | Some(token) =>
-            Plaid.create({token: token.open_banking_session_token})
-            Plaid.open_(openProps)->ignore
-          | None => ()
-          }
+      | "three_ds_invoke" =>
+        executeThreeDsFlow(
+          ~cardBrand=currentCardBrand->Option.getOr(""),
+          ~threeSDKApiKey=nativeProp.configuration.netceteraSDKApiKey,
+          ~baseUrl,
+          ~appId=nativeProp.hyperParams.appId,
+          ~clientSecret,
+          ~publishableKey,
+          ~nextAction,
+          ~retrievePayment,
+          ~sdkEnvironment=nativeProp.env,
+          ~onSuccess=message => {
+            responseCallback(
+              ~paymentStatus=PaymentSuccess,
+              ~status={status: "succeeded", message, code: "", type_: ""},
+            )
+          },
+          ~onFailure=message => {
+            errorCallback(
+              ~errorMessage={status: "failed", message, type_: "", code: ""},
+              ~closeSDK={true},
+              (),
+            )
+          },
+        )
+      | "third_party_sdk_session_token" =>
+        // TODO: add event loggers for analytics
+        let session_token = Option.getOr(nextAction, defaultNextAction).session_token
+        let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
+        switch session_token {
+        | Some(token) =>
+          Plaid.create({token: token.open_banking_session_token})
+          Plaid.open_(openProps)->ignore
+        | None => ()
         }
       | "display_bank_transfer_information" => {
           switch nextAction {
