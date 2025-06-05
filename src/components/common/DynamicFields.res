@@ -145,7 +145,7 @@ module RenderField = {
                   )
                 : (
                     JSON.Encode.string(firstNameVal),
-                    firstNameVal->Validation.containsDigit
+                    firstNameVal->CardValidations.containsDigit
                       ? Some(localeObject.invalidDigitsCardHolderNameError)
                       : None,
                   )
@@ -154,7 +154,7 @@ module RenderField = {
                 ? (JSON.Encode.null, Some(localeObject.lastNameRequiredText))
                 : (
                     JSON.Encode.string(lastNameVal),
-                    lastNameVal->Validation.containsDigit
+                    lastNameVal->CardValidations.containsDigit
                       ? Some(localeObject.invalidDigitsCardHolderNameError)
                       : None,
                   )
