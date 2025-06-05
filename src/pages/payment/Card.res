@@ -128,6 +128,7 @@ let make = (
       dynamicFieldsJson->Dict.toArray->Array.map(((key, (value, error))) => (key, value, error)),
     )
     fetchAndRedirect(
+      ~currentCardBrand=cardData.cardBrand,
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,

@@ -32,46 +32,47 @@ let createDummyAReqParams = (): ExternalThreeDsTypes.aReqParams => {
   sdkReferenceNo: "",
 }
 
+let makeNetcetra3DsModule = (~threeDsSdkApiKey: option<string>): activeSdkFunctions => {
+  isSdkAvailableFunc: true,
+  initialiseSdkFunc: Netcetera3dsModule.initialiseNetcetera,
+  generateAReqParamsFunc: (msgVer, dirId, _cardNetworkOpt, cb) =>
+    Netcetera3dsModule.generateAReqParamsNetcetera(msgVer, dirId, cb),
+  receiveChallengeParamsFunc: (s1, s2, s3, s4, cb, optVal) =>
+    Netcetera3dsModule.receiveChallengeParamsNetcetera(s1, s2, s3, s4, cb, optVal),
+  generateChallengeFunc: Netcetera3dsModule.generateChallengeNetcetera,
+  selectedSdkApiKey: threeDsSdkApiKey->Option.getOr(""),
+  sdkEventName: LoggerTypes.NETCETERA_SDK,
+}
+
+let makeTrident3DsModule = (): activeSdkFunctions => {
+  isSdkAvailableFunc: true,
+  initialiseSdkFunc: Trident3dsModule.initialiseTrident,
+  generateAReqParamsFunc: (msgVer, dirId, cardNetworkOpt, cb) =>
+    Trident3dsModule.generateAReqParamsTrident(msgVer, dirId, cardNetworkOpt->Option.getOr(""), cb),
+  receiveChallengeParamsFunc: Trident3dsModule.receiveChallengeParamsTrident,
+  generateChallengeFunc: Trident3dsModule.generateChallengeTrident,
+  selectedSdkApiKey: "",
+  sdkEventName: LoggerTypes.TRIDENT_SDK,
+}
+
+let makeDefault3DsModule = (): activeSdkFunctions => {
+  isSdkAvailableFunc: false,
+  initialiseSdkFunc: (_cfg, cb) => cb({status: "failure", message: "No 3DS SDK available"}),
+  generateAReqParamsFunc: (_mVer, _dId, _cardNetworkOpt, cb) =>
+    cb({status: "failure", message: "No 3DS SDK available"}, createDummyAReqParams()),
+  receiveChallengeParamsFunc: (_a, _b, _c, _d, cb, _optE: option<string>) =>
+    cb({status: "failure", message: "No 3DS SDK available"}),
+  generateChallengeFunc: cb => cb({status: "failure", message: "No 3DS SDK available"}),
+  selectedSdkApiKey: "",
+  sdkEventName: LoggerTypes.THREEDS_SDK_PRESENCE_EVENT,
+}
+
 let useResolveThreeDsSdk = (~threeDsSdkApiKey: option<string>): activeSdkFunctions => {
   if Netcetera3dsModule.isSdkAvailable {
-    {
-      isSdkAvailableFunc: true,
-      initialiseSdkFunc: Netcetera3dsModule.initialiseNetcetera,
-      generateAReqParamsFunc: (msgVer, dirId, _cardNetworkOpt, cb) =>
-        Netcetera3dsModule.generateAReqParamsNetcetera(msgVer, dirId, cb),
-      receiveChallengeParamsFunc: (s1, s2, s3, s4, cb, optVal) =>
-        Netcetera3dsModule.receiveChallengeParamsNetcetera(s1, s2, s3, s4, cb, optVal),
-      generateChallengeFunc: Netcetera3dsModule.generateChallengeNetcetera,
-      selectedSdkApiKey: threeDsSdkApiKey->Option.getOr(""),
-      sdkEventName: LoggerTypes.NETCETERA_SDK,
-    }
+    makeNetcetra3DsModule(~threeDsSdkApiKey)
   } else if Trident3dsModule.isSdkAvailable {
-    {
-      isSdkAvailableFunc: true,
-      initialiseSdkFunc: Trident3dsModule.initialiseTrident,
-      generateAReqParamsFunc: (msgVer, dirId, cardNetworkOpt, cb) =>
-        Trident3dsModule.generateAReqParamsTrident(
-          msgVer,
-          dirId,
-          cardNetworkOpt->Option.getOr(""),
-          cb,
-        ),
-      receiveChallengeParamsFunc: Trident3dsModule.receiveChallengeParamsTrident,
-      generateChallengeFunc: Trident3dsModule.generateChallengeTrident,
-      selectedSdkApiKey: "",
-      sdkEventName: LoggerTypes.TRIDENT_SDK,
-    }
+    makeTrident3DsModule()
   } else {
-    {
-      isSdkAvailableFunc: false,
-      initialiseSdkFunc: (_cfg, cb) => cb({status: "failure", message: "No 3DS SDK available"}),
-      generateAReqParamsFunc: (_mVer, _dId, _cardNetworkOpt, cb) =>
-        cb({status: "failure", message: "No 3DS SDK available"}, createDummyAReqParams()),
-      receiveChallengeParamsFunc: (_a, _b, _c, _d, cb, _optE: option<string>) =>
-        cb({status: "failure", message: "No 3DS SDK available"}),
-      generateChallengeFunc: cb => cb({status: "failure", message: "No 3DS SDK available"}),
-      selectedSdkApiKey: "",
-      sdkEventName: LoggerTypes.THREEDS_SDK_PRESENCE_EVENT,
-    }
+    makeDefault3DsModule()
   }
 }
