@@ -58,7 +58,6 @@ let useExternalThreeDs = () => {
   let logger = LoggerHook.useLoggerHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (cardDataContextValue, _) = React.useContext(CardDataContext.cardDataContext)
 
   (
     ~cardBrand: string,
@@ -449,14 +448,12 @@ let useExternalThreeDs = () => {
           (),
         )
 
-        let finalCardBrand = cardBrand != "" ? cardBrand : cardDataContextValue.cardBrand
-
         if isSuccess {
           Promise.make((resolve, _reject) => {
             activeSdk.generateAReqParamsFunc(
               threeDsData.messageVersion,
               threeDsData.directoryServerId,
-              activeSdk.sdkEventName == LoggerTypes.TRIDENT_SDK ? Some(finalCardBrand) : None,
+              activeSdk.sdkEventName == LoggerTypes.TRIDENT_SDK ? Some(cardBrand) : None,
               (status, aReqParams) => {
                 logger(
                   ~logType=INFO,
