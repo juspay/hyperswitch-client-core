@@ -158,7 +158,7 @@ let getBillingContact = (dict, str) => {
         ?line1,
         ?line2,
         zip: ?getOptionString(postalAddress, "postalCode"),
-        state: ?getOptionString(json, "administrativeArea"),
+        state: ?getOptionString(postalAddress, "state"),
       }),
       email: getOptionString(json, "emailAddress"),
       phone: Some({
