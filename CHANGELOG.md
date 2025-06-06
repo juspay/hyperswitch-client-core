@@ -1,3 +1,10 @@
+## [1.4.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.1...v1.4.2) (2025-06-06)
+
+
+### Bug Fixes
+
+* **apay:** fixing the state code mapping ([#300](https://github.com/juspay/hyperswitch-client-core/issues/300)) ([e440545](https://github.com/juspay/hyperswitch-client-core/commit/e440545dfd71697e3d9a8cd2406d899b17ba851d))
+
 ## [1.4.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.0...v1.4.1) (2025-06-02)
 
 
