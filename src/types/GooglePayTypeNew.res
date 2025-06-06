@@ -101,7 +101,7 @@ let getAssuranceDetails = (dict, str) => {
   })
 }
 
-let getBillingAddress = (dict, str, statesList) => {
+let getBillingAddress = (dict, str) => {
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
@@ -120,10 +120,7 @@ let getBillingAddress = (dict, str, statesList) => {
         line1: ?getOptionString(json, "address1"),
         line2: ?getOptionString(json, "address2"),
         zip: ?getOptionString(json, "postalCode"),
-        state: ?switch getOptionString(json, "administrativeArea") {
-        | Some(area) => Some(getStateNameFromStateCodeAndCountry(statesList, area, country))
-        | None => None
-        },
+        state: ?getOptionString(json, "administrativeArea"),
       }),
       email: getOptionString(json, "email"),
       phone: Some({
@@ -133,7 +130,7 @@ let getBillingAddress = (dict, str, statesList) => {
   })
 }
 
-let getBillingContact = (dict, str, statesList) => {
+let getBillingContact = (dict, str) => {
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
@@ -161,10 +158,7 @@ let getBillingContact = (dict, str, statesList) => {
         ?line1,
         ?line2,
         zip: ?getOptionString(postalAddress, "postalCode"),
-        state: ?switch getOptionString(postalAddress, "state") {
-        | Some(area) => Some(getStateNameFromStateCodeAndCountry(statesList, area, country))
-        | None => None
-        },
+        state: ?getOptionString(json, "administrativeArea"),
       }),
       email: getOptionString(json, "emailAddress"),
       phone: Some({
@@ -174,7 +168,7 @@ let getBillingContact = (dict, str, statesList) => {
   })
 }
 
-let getInfo = (str, dict, statesJson) => {
+let getInfo = (str, dict) => {
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
@@ -183,7 +177,7 @@ let getInfo = (str, dict, statesJson) => {
       card_network: getString(json, "cardNetwork", ""),
       card_details: getString(json, "cardDetails", ""),
       assurance_details: ?getAssuranceDetails(json, "assuranceDetails"),
-      billing_address: ?getBillingAddress(json, "billingAddress", statesJson),
+      billing_address: ?getBillingAddress(json, "billingAddress"),
     }
   })
 }
@@ -199,12 +193,12 @@ let getTokenizationData = (str, dict) => {
     }
   })
 }
-let getPaymentMethodData = (str, dict, statesJson) => {
+let getPaymentMethodData = (str, dict) => {
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
   ->Option.map(json => {
-    let info = getInfo("info", json, statesJson)
+    let info = getInfo("info", json)
     {
       description: getString(json, "description", ""),
       tokenization_data: ?getTokenizationData("tokenizationData", json),
@@ -221,10 +215,10 @@ type paymentDataFromGPay = {
   shippingDetails?: addressDetails,
 }
 
-let itemToObjMapper = (dict, statesJson) => {
-  paymentMethodData: getPaymentMethodData("paymentMethodData", dict, statesJson),
+let itemToObjMapper = dict => {
+  paymentMethodData: getPaymentMethodData("paymentMethodData", dict),
   email: ?getOptionString(dict, "email"),
-  shippingDetails: ?getBillingAddress(dict, "shippingAddress", statesJson),
+  shippingDetails: ?getBillingAddress(dict, "shippingAddress"),
 }
 
 let arrayJsonToCamelCase = arr => {
