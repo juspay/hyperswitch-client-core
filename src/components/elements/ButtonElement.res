@@ -243,11 +243,10 @@ let make = (
         ->GooglePayTypeNew.itemToObjMapper
       let billingAddress = switch obj.paymentMethodData.info {
       | Some(info) => info.billing_address
-
       | None => None
       }
       let shippingAddress = obj.shippingDetails
-      let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+      let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
         walletType.required_field,
         ~shippingAddress,
         ~billingAddress,
@@ -291,7 +290,7 @@ let make = (
       let shippingAddress =
         addressFromSPay->SamsungPayType.getAddressObj(SamsungPayType.SHIPPING_ADDRESS)
       let obj = SamsungPayType.itemToObjMapper(response)
-      let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+      let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
         walletType.required_field,
         ~shippingAddress,
         ~billingAddress,
@@ -388,7 +387,7 @@ let make = (
             ->Dict.fromArray
             ->JSON.Encode.object
 
-          let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+          let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
             walletType.required_field,
             ~shippingAddress,
             ~billingAddress,
