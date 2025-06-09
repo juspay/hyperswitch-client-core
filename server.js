@@ -9,11 +9,17 @@ require('dotenv').config({path: './.env'});
 
 const PORT = 5252;
 
+let payloadFromAutomation = null;
+app.post('/automation-create-body', async (req, res) => {
+  console.log(req.body);
+  payloadFromAutomation = req.body;
+  res.send(req.body);
+});
+
 async function createPaymentIntent(request) {
   try {
-    const url =
-      process.env.HYPERSWITCH_SERVER_URL || process.env.HYPERSWITCH_SANDBOX_URL;
-    const apiResponse = await fetch(`${url}/payments`, {
+    const url = 'https://app.hyperswitch.io/api/payments';
+    const apiResponse = await fetch(`${url}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -42,40 +48,45 @@ async function createPaymentIntent(request) {
 
 app.get('/create-payment-intent', async (req, res) => {
   try {
-    const createPaymentBody = {
-      amount: 2999,
-      currency: 'USD',
-      authentication_type: 'no_three_ds',
-      customer_id: 'hyperswitch_demo_customer_id',
-      capture_method: 'automatic',
-      email: 'abc@gmail.com',
-      billing: {
-        address: {
-          line1: '1467',
-          line2: 'Harrison Street',
-          line3: 'Harrison Street',
-          city: 'San Fransico',
-          state: 'California',
-          zip: '94122',
-          country: 'US',
-          first_name: 'joseph',
-          last_name: 'Doe',
-        },
-      },
-      shipping: {
-        address: {
-          line1: '1467',
-          line2: 'Harrison Street',
-          line3: 'Harrison Street',
-          city: 'San Fransico',
-          state: 'California',
-          zip: '94122',
-          country: 'US',
-          first_name: 'joseph',
-          last_name: 'Doe',
-        },
-      },
-    };
+    const createPaymentBody =
+      payloadFromAutomation != null
+        ? payloadFromAutomation
+        : {
+            amount: 2999,
+            currency: 'USD',
+            authentication_type: 'no_three_ds',
+            customer_id: 'hyperswitch_demo_customer_id',
+            capture_method: 'automatic',
+            email: 'abc@gmail.com',
+            billing: {
+              address: {
+                line1: '1467',
+                line2: 'Harrison Street',
+                line3: 'Harrison Street',
+                city: 'San Fransico',
+                state: 'California',
+                zip: '94122',
+                country: 'US',
+                first_name: 'joseph',
+                last_name: 'Doe',
+              },
+            },
+            shipping: {
+              address: {
+                line1: '1467',
+                line2: 'Harrison Street',
+                line3: 'Harrison Street',
+                city: 'San Fransico',
+                state: 'California',
+                zip: '94122',
+                country: 'US',
+                first_name: 'joseph',
+                last_name: 'Doe',
+              },
+            },
+          };
+
+    console.log('create payment body', createPaymentBody);
 
     const profileId = process.env.PROFILE_ID;
     if (profileId) {

@@ -16,7 +16,7 @@ describe('card-flow-e2e-test', () => {
             launchArgs: { detoxEnableSynchronization: 1 },
             newInstance: true,
         });
-        await device.enableSynchronization();
+        // await device.enableSynchronization();
     });
 
     it('demo app should load successfully', async () => {
@@ -59,6 +59,7 @@ describe('card-flow-e2e-test', () => {
         await payNowButton.tap();
 
         const inputType = device.getPlatform() == "android" ? 'android.widget.EditText' : 'UITextField'
+        console.log("MYINPUT--->", inputType)
         const otpInput = await element(by.type(inputType));
         await waitForVisibility(otpInput);
         await typeTextInInput(otpInput, "1234")
