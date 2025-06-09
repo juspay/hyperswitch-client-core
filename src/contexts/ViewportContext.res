@@ -17,8 +17,8 @@ let statusBarHeight = ReactNative.StatusBar.currentHeight
 let navigationBarHeight = if ReactNative.Platform.os !== #android {
   defaultNavbarHeight
 } else {
-  let navigationHeight = screenHeight -. windowHeight -. statusBarHeight
-  Math.min(75., Math.max(0., navigationHeight) +. defaultNavbarHeight)
+  let navigationHeight = Math.max(0., screenHeight -. windowHeight -. statusBarHeight) +. defaultNavbarHeight
+  Math.max(Math.min(75., navigationHeight), 50.)
 }
 
 let maxPaymentSheetHeight = 95. // pct
