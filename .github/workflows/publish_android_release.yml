@@ -8,13 +8,6 @@ permissions:
   contents: read
 
 jobs:
-  update:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v4
-
   publish:
     runs-on: ubuntu-latest
     permissions:
