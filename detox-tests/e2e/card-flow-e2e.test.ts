@@ -8,10 +8,13 @@ import {
   enterCardDetails,
   completePayment
 } from "../utils/DetoxHelpers"
+import { CreateBody, setCreateBodyForTestAutomation } from "../utils/APIUtils";
 
 describe('card-flow-e2e-test', () => {
   jest.retryTimes(6);
   beforeAll(async () => {
+    const createPaymentBody = new CreateBody();
+    await setCreateBodyForTestAutomation(createPaymentBody.get());
     await device.launchApp({
       launchArgs: { detoxEnableSynchronization: 1 },
       newInstance: true,
