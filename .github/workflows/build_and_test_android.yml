@@ -25,6 +25,11 @@ jobs:
       PROFILE_ID: ${{ secrets.PROFILE_ID }}
       NETCETERA_SDK_API_KEY: ${{ secrets.NETCETERA_SDK_API_KEY }}
     steps:
+      - name: Check PK CS
+        run: |
+          echo ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+          echo ${{ secrets.HYPERSWITCH_SECRET_KEY }}
+
       - name: Free Disk Space
         run: |
           sudo rm -rf /opt/hostedtoolcache
