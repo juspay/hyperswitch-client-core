@@ -15,7 +15,7 @@ const createPaymentBody = {
 
             state: 'California',
             zip: '94122',
-            country: 'PL',
+            country: 'US',
             first_name: 'joseph',
             last_name: 'Doe',
         },
@@ -28,7 +28,7 @@ const createPaymentBody = {
             city: 'San Fransico',
             state: 'California',
             zip: '94122',
-            country: 'PL',
+            country: 'US',
             first_name: 'joseph',
             last_name: 'Doe',
         },
@@ -51,7 +51,6 @@ class CreateBody {
     }
     removeShipping() {
         delete this.body["shipping"];
-        console.log("here", this.body)
         return this
     }
     addKey(key, value) {
