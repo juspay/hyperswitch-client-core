@@ -19,6 +19,19 @@ module CardSchemeSelectionPopoverElement = {
   @react.component
   let make = (~eligibleCardSchemes, ~setCardBrand, ~toggleVisibility) => {
     let localeObject = GetLocale.useGetLocalObj()
+    let logger = LoggerHook.useLoggerHook()
+
+    React.useEffect(() => {
+      logger(
+        ~logType=INFO,
+        ~value="CardSchemeMenu expanded",
+        ~category=USER_EVENT,
+        ~eventName=CARD_SCHEME_SELECTION,
+        (),
+      )
+      None
+    }, ())
+
     <>
       <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
       <ScrollView
@@ -45,6 +58,7 @@ module CardSchemeSelectionPopoverElement = {
 @react.component
 let make = (~cardNumber, ~cardNetworks) => {
   let (cardData, setCardData) = React.useContext(CardDataContext.cardDataContext)
+  let logger = LoggerHook.useLoggerHook()
 
   let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
   let validCardBrand = Validation.getFirstValidCardScheme(~cardNumber, ~enabledCardSchemes)
@@ -105,6 +119,17 @@ let make = (~cardNumber, ~cardNetworks) => {
         easing: Easing.linear,
       },
     )->Animated.start()
+
+    if (showCardSchemeDropDown) {
+      logger(
+        ~logType=INFO,
+        ~value="Card detected as co-badged",
+        ~category=USER_EVENT,
+        ~eventName=CARD_SCHEME_SELECTION,
+        (),
+      )
+    }
+
     None
   }, [showCardSchemeDropDown])
 
