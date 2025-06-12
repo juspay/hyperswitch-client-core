@@ -3,6 +3,9 @@ type hoc = {
   componentHoc: (
     ~isScreenFocus: bool,
     ~setConfirmButtonDataRef: React.element => unit,
+    ~setDynamicFieldsState: (
+      DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState
+    ) => unit,
   ) => React.element,
 }
 
@@ -51,8 +54,8 @@ let useListModifier = () => {
         | CARD(cardVal) =>
           Some({
             name: "Card",
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
-              <CardParent cardVal isScreenFocus setConfirmButtonDataRef />,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
+              <CardParent cardVal isScreenFocus setConfirmButtonDataRef setDynamicFieldsState />,
           })
         | PAY_LATER(payLaterVal) =>
           let fields =
@@ -74,7 +77,7 @@ let useListModifier = () => {
           klarnaSDKCheck
             ? Some({
                 name: fields.text,
-                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
                   <Redirect
                     isScreenFocus
                     redirectProp={PAY_LATER(payLaterVal)}
@@ -82,6 +85,7 @@ let useListModifier = () => {
                     isDynamicFields={payLaterVal.payment_method_type !== "klarna"}
                     dynamicFields=payLaterVal.required_field
                     setConfirmButtonDataRef
+                    setDynamicFieldsState
                   />,
               })
             : None
@@ -92,12 +96,13 @@ let useListModifier = () => {
             ->Option.getOr(Types.defaultRedirectType)
           Some({
             name: fields.text,
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
               <Redirect
                 isScreenFocus
                 redirectProp=BANK_REDIRECT(bankRedirectVal)
                 fields
                 setConfirmButtonDataRef
+                setDynamicFieldsState
               />,
           })
         | WALLET(walletVal) =>
@@ -133,12 +138,17 @@ let useListModifier = () => {
 
                   Some({
                     name: fields.text,
-                    componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                    componentHoc: (
+                      ~isScreenFocus,
+                      ~setConfirmButtonDataRef,
+                      ~setDynamicFieldsState,
+                    ) =>
                       <Redirect
                         isScreenFocus
                         redirectProp=WALLET(walletVal)
                         fields
                         setConfirmButtonDataRef
+                        setDynamicFieldsState
                         sessionObject
                       />,
                   })
@@ -151,12 +161,17 @@ let useListModifier = () => {
             PaypalModule.payPalModule->Option.isSome
               ? Some({
                   name: fields.text,
-                  componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                  componentHoc: (
+                    ~isScreenFocus,
+                    ~setConfirmButtonDataRef,
+                    ~setDynamicFieldsState,
+                  ) =>
                     <Redirect
                       isScreenFocus
                       redirectProp=WALLET(walletVal)
                       fields
                       setConfirmButtonDataRef
+                      setDynamicFieldsState
                       sessionObject
                     />,
                 })
@@ -165,9 +180,13 @@ let useListModifier = () => {
               ->Option.isSome
               ? Some({
                 name: fields.text,
-                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
                   <Redirect
-                    isScreenFocus redirectProp=WALLET(walletVal) fields setConfirmButtonDataRef
+                    isScreenFocus
+                    redirectProp=WALLET(walletVal)
+                    fields
+                    setConfirmButtonDataRef
+                    setDynamicFieldsState
                   />,
               })
               : None
@@ -194,12 +213,17 @@ let useListModifier = () => {
                   }
                   Some({
                     name: fields.text,
-                    componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                    componentHoc: (
+                      ~isScreenFocus,
+                      ~setConfirmButtonDataRef,
+                      ~setDynamicFieldsState,
+                    ) =>
                       <Redirect
                         isScreenFocus
                         redirectProp=WALLET(walletVal)
                         fields
                         setConfirmButtonDataRef
+                        setDynamicFieldsState
                         sessionObject
                       />,
                   })
@@ -209,7 +233,7 @@ let useListModifier = () => {
           | _ =>
             Some({
               name: fields.text,
-              componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
                 <Redirect
                   isScreenFocus
                   isDynamicFields=true
@@ -217,6 +241,7 @@ let useListModifier = () => {
                   redirectProp=WALLET(walletVal)
                   fields
                   setConfirmButtonDataRef
+                  setDynamicFieldsState
                 />,
             })
           }
@@ -229,12 +254,13 @@ let useListModifier = () => {
           Plaid.isAvailable
             ? Some({
                 name: fields.text,
-                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+                componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
                   <Redirect
                     isScreenFocus
                     redirectProp=OPEN_BANKING(openBankingVal)
                     fields
                     setConfirmButtonDataRef
+                    setDynamicFieldsState
                   />,
               })
             : None
@@ -246,9 +272,13 @@ let useListModifier = () => {
 
           Some({
             name: fields.text,
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
               <Redirect
-                isScreenFocus redirectProp=CRYPTO(cryptoVal) fields setConfirmButtonDataRef
+                isScreenFocus
+                redirectProp=CRYPTO(cryptoVal)
+                fields
+                setConfirmButtonDataRef
+                setDynamicFieldsState
               />,
           })
         | BANK_DEBIT(bankDebitVal) =>
@@ -258,7 +288,7 @@ let useListModifier = () => {
             ->Option.getOr(Types.defaultRedirectType)
           Some({
             name: fields.text,
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
               <Redirect
                 isScreenFocus
                 isDynamicFields={true}
@@ -266,6 +296,7 @@ let useListModifier = () => {
                 redirectProp=BANK_DEBIT(bankDebitVal)
                 fields
                 setConfirmButtonDataRef
+                setDynamicFieldsState
               />,
           })
         | BANK_TRANSFER(bankTransferVal) =>
@@ -278,7 +309,7 @@ let useListModifier = () => {
 
           Some({
             name: fields.text,
-            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef, ~setDynamicFieldsState) =>
               <Redirect
                 isScreenFocus
                 isDynamicFields={true}
@@ -286,6 +317,7 @@ let useListModifier = () => {
                 redirectProp=BANK_TRANSFER(bankTransferVal)
                 fields
                 setConfirmButtonDataRef
+                setDynamicFieldsState
               />,
           })
         } {

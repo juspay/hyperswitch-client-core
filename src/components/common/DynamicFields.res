@@ -336,8 +336,6 @@ module Fields = {
   }
 }
 
-type fieldType = Other | Billing | Shipping
-
 @react.component
 let make = (
   ~requiredFields: RequiredFieldsTypes.required_fields,
@@ -349,7 +347,7 @@ let make = (
   ~shouldRenderShippingFields=false, //To render shipping fields
   ~displayPreValueFields=false,
   ~paymentMethodType=?,
-  ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
+  ~fieldsOrder: array<DynamicFieldsTypes.fieldType>=[DynamicFieldsTypes.Other, DynamicFieldsTypes.Billing, DynamicFieldsTypes.Shipping],
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
@@ -434,11 +432,11 @@ let make = (
   let getOrderValue = field => {
     let path = field.required_field->RequiredFieldsTypes.getRequiredFieldName->String.split(".")
     let x = if path->Array.includes("billing") {
-      Billing
+      DynamicFieldsTypes.Billing
     } else if path->Array.includes("shipping") {
-      Shipping
+      DynamicFieldsTypes.Shipping
     } else {
-      Other
+      DynamicFieldsTypes.Other
     }
     fieldsOrder->Array.indexOf(x)
   }
