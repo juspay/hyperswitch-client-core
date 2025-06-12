@@ -23,6 +23,8 @@ let make = () => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
 
+  let (dynamicFieldsState, setDynamicFieldsState) = React.useState(_ => DynamicFieldsTypes.defaultDynamicFieldsState)
+
   let enablePartialLoading = nativeProp.configuration.enablePartialLoading
   let canLoadSDK = useSDKLoadCheck(~enablePartialLoading)
 
@@ -43,15 +45,15 @@ let make = () => {
         | (_, None, _)
         | (Loading, _, _) =>
           nativeProp.configuration.defaultView
-            ? <PaymentSheet setConfirmButtonDataRef />
+            ? <PaymentSheet setConfirmButtonDataRef setDynamicFieldsState dynamicFieldsState/>
             : <SdkLoadingScreen />
         | (Some(data), _, _) =>
           paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
           data.pmList->Option.getOr([])->Array.length > 0 &&
           allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
-            ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
-            : <PaymentSheet setConfirmButtonDataRef />
-        | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
+            ? <SavedPaymentScreen setConfirmButtonDataRef setDynamicFieldsState savedPaymentMethordContextObj=data />
+            : <PaymentSheet setConfirmButtonDataRef setDynamicFieldsState dynamicFieldsState/>
+        | (None, _, _) => <PaymentSheet setConfirmButtonDataRef setDynamicFieldsState dynamicFieldsState/>
         }}
         <GlobalConfirmButton confirmButtonDataRef />
         <Space height=15. />

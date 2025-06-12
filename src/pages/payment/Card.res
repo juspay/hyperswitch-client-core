@@ -6,6 +6,7 @@ let make = (
   ~cardVal: PaymentMethodListType.payment_method_types_card,
   ~isScreenFocus,
   ~setConfirmButtonDataRef: React.element => unit,
+  ~setDynamicFieldsState: (DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState) => unit,
 ) => {
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
@@ -148,6 +149,24 @@ let make = (
           loading=false isAllValuesValid=true handlePress paymentMethod="CARD" errorText=error
         />,
       )
+      
+      if cardVal.required_field->Array.length != 0 {
+        setDynamicFieldsState(_ => {
+          requiredFields: requiredFields,
+          setIsAllDynamicFieldValid: setIsAllDynamicFieldValid,
+          setDynamicFieldsJson: setDynamicFieldsJson,
+          isSaveCardsFlow: false,
+          savedCardsData: None,
+          keyToTrigerButtonClickError: keyToTrigerButtonClickError,
+          shouldRenderShippingFields: false,
+          displayPreValueFields: false,
+          paymentMethodType: None,
+          fieldsOrder: [DynamicFieldsTypes.Other, DynamicFieldsTypes.Billing, DynamicFieldsTypes.Shipping],
+          isVisible: true,
+        })
+      } else {
+        setDynamicFieldsState(_ => DynamicFieldsTypes.defaultDynamicFieldsState)
+      }
     }
     None
   }, (
@@ -169,54 +188,41 @@ let make = (
         keyToTrigerButtonClickError
         cardNetworks=cardVal.card_networks
       />
-      {cardVal.required_field->Array.length != 0
-        ? <>
-            <DynamicFields
-              setIsAllDynamicFieldValid
-              setDynamicFieldsJson
-              requiredFields
-              isSaveCardsFlow={false}
-              savedCardsData=None
-              keyToTrigerButtonClickError
-            />
-            <Space height=8. />
-          </>
-        : React.null}
-      {switch (
-        nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-        savedPaymentMethodsData.isGuestCustomer,
-        allApiData.additionalPMLData.mandateType,
-      ) {
-      | (true, false, NEW_MANDATE | NORMAL) =>
-        <>
-          <Space height=8. />
-          <ClickableTextElement
-            disabled={false}
-            initialIconName="checkboxClicked"
-            updateIconName=Some("checkboxNotClicked")
-            text=localeObject.saveCardDetails
-            isSelected=isNicknameSelected
-            setIsSelected=setIsNicknameSelected
-            textType={ModalText}
-            disableScreenSwitch=true
-          />
-        </>
-      | _ => React.null
-      }}
-      {switch (
-        savedPaymentMethodsData.isGuestCustomer,
-        isNicknameSelected,
-        nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-        allApiData.additionalPMLData.mandateType,
-      ) {
-      | (false, _, true, NEW_MANDATE | NORMAL) =>
-        isNicknameSelected
-          ? <NickNameElement nickname setNickname setIsNicknameValid />
-          : React.null
-      | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
-        <NickNameElement nickname setNickname setIsNicknameValid />
-      | _ => React.null
-      }}
+      // {switch (
+      //   nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
+      //   savedPaymentMethodsData.isGuestCustomer,
+      //   allApiData.additionalPMLData.mandateType,
+      // ) {
+      // | (true, false, NEW_MANDATE | NORMAL) =>
+      //   <>
+      //     <Space height=8. />
+      //     <ClickableTextElement
+      //       disabled={false}
+      //       initialIconName="checkboxClicked"
+      //       updateIconName=Some("checkboxNotClicked")
+      //       text=localeObject.saveCardDetails
+      //       isSelected=isNicknameSelected
+      //       setIsSelected=setIsNicknameSelected
+      //       textType={ModalText}
+      //       disableScreenSwitch=true
+      //     />
+      //   </>
+      // | _ => React.null
+      // }}
+      // {switch (
+      //   savedPaymentMethodsData.isGuestCustomer,
+      //   isNicknameSelected,
+      //   nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
+      //   allApiData.additionalPMLData.mandateType,
+      // ) {
+      // | (false, _, true, NEW_MANDATE | NORMAL) =>
+      //   isNicknameSelected
+      //     ? <NickNameElement nickname setNickname setIsNicknameValid />
+      //     : React.null
+      // | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
+      //   <NickNameElement nickname setNickname setIsNicknameValid />
+      // | _ => React.null
+      // }}
     </View>
   </>
 }

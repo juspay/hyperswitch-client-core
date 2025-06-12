@@ -1,5 +1,11 @@
 @react.component
-let make = (~setConfirmButtonDataRef) => {
+let make = (
+  ~setConfirmButtonDataRef,
+  ~setDynamicFieldsState: (
+    DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState
+  ) => unit,
+  ~dynamicFieldsState,
+) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
 
@@ -18,6 +24,13 @@ let make = (~setConfirmButtonDataRef) => {
   })
 
   let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
+  let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
+  let isCardTabSelected =
+    tabArr->Array.length >= 1 &&
+      switch (tabArr->Array.get(0), indexInFocus) {
+      | (Some({name}), 0) => name == "Card"
+      | (_, _) => false
+      }
 
   <>
     <WalletView
@@ -31,7 +44,19 @@ let make = (~setConfirmButtonDataRef) => {
       hocComponentArr=tabArr
       loading={allApiData.sessions == Loading && localeStrings == Loading}
       setConfirmButtonDataRef
+      setDynamicFieldsState
+      indexInFocus
+      setIndexInFocus
     />
+    <GlobalDynamicFields dynamicFieldsState />
+    {if isCardTabSelected {
+      <>
+        <Space height=10. />
+        <SaveCardCheckbox />
+      </>
+    } else {
+      React.null
+    }}
     {PaymentUtils.showUseExisitingSavedCardsBtn(
       ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
       ~pmList=savedPaymentMethodsData.pmList,

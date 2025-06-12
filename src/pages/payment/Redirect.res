@@ -16,6 +16,7 @@ let make = (
   ~isDynamicFields: bool=false,
   ~dynamicFields: required_fields=[],
   ~setConfirmButtonDataRef: React.element => unit,
+  ~setDynamicFieldsState: (DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState) => unit,
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
 ) => {
   let walletType: PaymentMethodListType.payment_method_types_wallet = switch redirectProp {
@@ -1018,6 +1019,24 @@ let make = (
           errorText=error
         />,
       )
+      
+      if isDynamicFields {
+        setDynamicFieldsState(_ => {
+          requiredFields: dynamicFields,
+          setIsAllDynamicFieldValid: setIsAllDynamicFieldValid,
+          setDynamicFieldsJson: setDynamicFieldsJson,
+          isSaveCardsFlow: false,
+          savedCardsData: None,
+          keyToTrigerButtonClickError: keyToTrigerButtonClickError,
+          shouldRenderShippingFields: false,
+          displayPreValueFields: false,
+          paymentMethodType: Some(bankDebitPMType),
+          fieldsOrder: [DynamicFieldsTypes.Other, DynamicFieldsTypes.Billing, DynamicFieldsTypes.Shipping],
+          isVisible: true,
+        })
+      } else {
+        setDynamicFieldsState(_ => DynamicFieldsTypes.defaultDynamicFieldsState)
+      }
     }
     None
   }, (
@@ -1032,6 +1051,9 @@ let make = (
     email,
     country,
     selectedBank,
+    isDynamicFields,
+    dynamicFields,
+    dynamicFieldsJson,
   ))
 
   <>
@@ -1052,14 +1074,7 @@ let make = (
           </>
         : <>
             {if isDynamicFields {
-              <DynamicFields
-                requiredFields=dynamicFields
-                setIsAllDynamicFieldValid
-                setDynamicFieldsJson
-                keyToTrigerButtonClickError
-                savedCardsData=None
-                paymentMethodType={bankDebitPMType}
-              />
+              React.null
             } else {
               fields.fields
               ->Array.mapWithIndex((field, index) =>

@@ -2,7 +2,8 @@ open ReactNative
 
 @react.component
 let make = (
-  ~setConfirmButtonDataRef,
+  ~setConfirmButtonDataRef: React.element => unit,
+  ~setDynamicFieldsState: (DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState) => unit,
   ~savedPaymentMethordContextObj: AllApiDataContext.savedPaymentMethodDataObj,
 ) => {
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
@@ -575,6 +576,8 @@ let make = (
         errorText=error
       />,
     )
+    
+    setDynamicFieldsState(_ => DynamicFieldsTypes.defaultDynamicFieldsState)
     None
   }, (
     savedPaymentMethordContextObj.selectedPaymentMethod,
