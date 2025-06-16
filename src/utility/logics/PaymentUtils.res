@@ -79,7 +79,10 @@ let generateCardConfirmBody = (
   let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
   {
     client_secret: nativeProp.clientSecret,
-    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+    return_url: ?Utils.getReturnUrl(
+      ~appId=nativeProp.hyperParams.appId,
+      ~appURL=allApiData.additionalPMLData.redirect_url,
+    ),
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
     connector: ?switch prop.card_networks {
@@ -155,6 +158,23 @@ let checkIsCVCRequired = (pmObject: SdkTypes.savedDataType) =>
   | SAVEDLISTCARD(obj) => obj.requiresCVV
   | _ => false
   }
+
+let generateSessionsTokenBody = (~clientSecret, ~wallet) => {
+  [
+    (
+      "payment_id",
+      String.split(clientSecret, "_secret_")
+      ->Array.get(0)
+      ->Option.getOr("")
+      ->JSON.Encode.string,
+    ),
+    ("client_secret", clientSecret->JSON.Encode.string),
+    ("wallets", wallet->JSON.Encode.array),
+  ]
+  ->Dict.fromArray
+  ->JSON.Encode.object
+  ->JSON.stringify
+}
 
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,

@@ -12,7 +12,7 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
   }
   if WebKit.platform != #next {
     let data = logFile->LoggerUtils.logFileToObj->JSON.stringify
-    CommonHooks.fetchApi(~uri, ~method_=Post, ~bodyStr=data, ~headers=Dict.make(), ~mode=NoCORS, ())
+    APIUtils.fetchApi(~uri, ~method_=Post, ~bodyStr=data, ~headers=Dict.make(), ~mode=NoCORS, ())
     ->Promise.then(res => res->Fetch.Response.json)
     ->Promise.catch(_ => {
       Promise.resolve(JSON.Encode.null)
@@ -42,12 +42,12 @@ let logWrapper = (
 ) => {
   let (value, internalMetadata) = switch apiLogType {
   | None => ([], [])
-  | Some(AllPaymentHooks.Request) => ([("url", url->JSON.Encode.string)], [])
-  | Some(AllPaymentHooks.Response) => (
+  | Some(LoggerTypes.Request) => ([("url", url->JSON.Encode.string)], [])
+  | Some(LoggerTypes.Response) => (
       [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
       [("response", data)],
     )
-  | Some(AllPaymentHooks.NoResponse) => (
+  | Some(LoggerTypes.NoResponse) => (
       [
         ("url", url->JSON.Encode.string),
         ("statusCode", "504"->JSON.Encode.string),
@@ -55,7 +55,7 @@ let logWrapper = (
       ],
       [("response", data)],
     )
-  | Some(AllPaymentHooks.Err) => (
+  | Some(LoggerTypes.Err) => (
       [
         ("url", url->JSON.Encode.string),
         ("statusCode", statusCode->JSON.Encode.string),
@@ -127,7 +127,7 @@ let savedPaymentMethodAPICall = nativeProp => {
     ~version=nativeProp.hyperParams.sdkVersion,
     (),
   )
-  CommonHooks.fetchApi(
+  APIUtils.fetchApi(
     ~uri,
     ~method_=Get,
     ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
@@ -258,7 +258,7 @@ let sessionAPICall = nativeProp => {
     (),
   )
 
-  CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
+  APIUtils.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
   ->Promise.then(data => {
     let respTimestamp = Date.now()
     let statusCode = data->Fetch.Response.status->string_of_int
@@ -368,7 +368,7 @@ let confirmAPICall = (nativeProp, body) => {
     (),
   )
 
-  CommonHooks.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
+  APIUtils.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
   ->Promise.then(data => {
     let respTimestamp = Date.now()
     let statusCode = data->Fetch.Response.status->string_of_int
