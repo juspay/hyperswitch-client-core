@@ -26,7 +26,7 @@ let logWrapper = (
   ~eventName: LoggerTypes.eventName,
   ~url: string,
   ~statusCode: string,
-  ~apiLogType,
+  ~apiLogType: option<LoggerTypes.apiLogType>,
   ~category,
   ~data: JSON.t,
   ~paymentMethod: option<string>,
@@ -42,12 +42,12 @@ let logWrapper = (
 ) => {
   let (value, internalMetadata) = switch apiLogType {
   | None => ([], [])
-  | Some(LoggerTypes.Request) => ([("url", url->JSON.Encode.string)], [])
-  | Some(LoggerTypes.Response) => (
+  | Some(Request) => ([("url", url->JSON.Encode.string)], [])
+  | Some(Response) => (
       [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
       [("response", data)],
     )
-  | Some(LoggerTypes.NoResponse) => (
+  | Some(NoResponse) => (
       [
         ("url", url->JSON.Encode.string),
         ("statusCode", "504"->JSON.Encode.string),
@@ -55,7 +55,7 @@ let logWrapper = (
       ],
       [("response", data)],
     )
-  | Some(LoggerTypes.Err) => (
+  | Some(Err) => (
       [
         ("url", url->JSON.Encode.string),
         ("statusCode", statusCode->JSON.Encode.string),
