@@ -50,10 +50,21 @@ let make = (
     />
     <GlobalDynamicFields dynamicFieldsState />
     {if isCardTabSelected {
-      <>
-        <Space height=10. />
-        <SaveCardCheckbox />
-      </>
+      switch dynamicFieldsState.saveCardState {
+      | Some(saveCardState) =>
+        <>
+          <Space height=10. />
+          <SaveCardCheckbox
+            isNicknameSelected=saveCardState.isNicknameSelected
+            setIsNicknameSelected=saveCardState.setIsNicknameSelected
+            nickname=saveCardState.nickname
+            setNickname=saveCardState.setNickname
+            isNicknameValid=saveCardState.isNicknameValid
+            setIsNicknameValid=saveCardState.setIsNicknameValid
+          />
+        </>
+      | None => React.null
+      }
     } else {
       React.null
     }}

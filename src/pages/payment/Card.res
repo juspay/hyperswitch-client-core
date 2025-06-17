@@ -149,6 +149,15 @@ let make = (
           loading=false isAllValuesValid=true handlePress paymentMethod="CARD" errorText=error
         />,
       )
+
+      let saveCardState: DynamicFieldsTypes.saveCardState = {
+        isNicknameSelected: isNicknameSelected,
+        setIsNicknameSelected: setIsNicknameSelected,
+        nickname: nickname,
+        setNickname: setNickname,
+        isNicknameValid: isNicknameValid,
+        setIsNicknameValid: setIsNicknameValid,
+      }
       
       if cardVal.required_field->Array.length != 0 {
         setDynamicFieldsState(_ => {
@@ -163,9 +172,13 @@ let make = (
           paymentMethodType: None,
           fieldsOrder: [DynamicFieldsTypes.Other, DynamicFieldsTypes.Billing, DynamicFieldsTypes.Shipping],
           isVisible: true,
+          saveCardState: Some(saveCardState),
         })
       } else {
-        setDynamicFieldsState(_ => DynamicFieldsTypes.defaultDynamicFieldsState)
+        setDynamicFieldsState(_ => {
+          ...DynamicFieldsTypes.defaultDynamicFieldsState,
+          saveCardState: Some(saveCardState),
+        })
       }
     }
     None
@@ -188,41 +201,6 @@ let make = (
         keyToTrigerButtonClickError
         cardNetworks=cardVal.card_networks
       />
-      // {switch (
-      //   nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-      //   savedPaymentMethodsData.isGuestCustomer,
-      //   allApiData.additionalPMLData.mandateType,
-      // ) {
-      // | (true, false, NEW_MANDATE | NORMAL) =>
-      //   <>
-      //     <Space height=8. />
-      //     <ClickableTextElement
-      //       disabled={false}
-      //       initialIconName="checkboxClicked"
-      //       updateIconName=Some("checkboxNotClicked")
-      //       text=localeObject.saveCardDetails
-      //       isSelected=isNicknameSelected
-      //       setIsSelected=setIsNicknameSelected
-      //       textType={ModalText}
-      //       disableScreenSwitch=true
-      //     />
-      //   </>
-      // | _ => React.null
-      // }}
-      // {switch (
-      //   savedPaymentMethodsData.isGuestCustomer,
-      //   isNicknameSelected,
-      //   nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-      //   allApiData.additionalPMLData.mandateType,
-      // ) {
-      // | (false, _, true, NEW_MANDATE | NORMAL) =>
-      //   isNicknameSelected
-      //     ? <NickNameElement nickname setNickname setIsNicknameValid />
-      //     : React.null
-      // | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
-      //   <NickNameElement nickname setNickname setIsNicknameValid />
-      // | _ => React.null
-      // }}
     </View>
   </>
 }

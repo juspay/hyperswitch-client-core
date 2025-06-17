@@ -1033,6 +1033,7 @@ let make = (
           paymentMethodType: Some(bankDebitPMType),
           fieldsOrder: [DynamicFieldsTypes.Other, DynamicFieldsTypes.Billing, DynamicFieldsTypes.Shipping],
           isVisible: true,
+          saveCardState: None,
         })
       } else {
         setDynamicFieldsState(_ => DynamicFieldsTypes.defaultDynamicFieldsState)

@@ -1,7 +1,12 @@
 @react.component
-let make = () => {
-  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
-  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+let make = (
+  ~isNicknameSelected,
+  ~setIsNicknameSelected,
+  ~nickname,
+  ~setNickname,
+  ~isNicknameValid,
+  ~setIsNicknameValid,
+) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
@@ -9,10 +14,7 @@ let make = () => {
   | _ => AllApiDataContext.dafaultsavePMObj
   }
 
-  let isSaveCardCheckboxVisible = nativeProp.configuration.displaySavedPaymentMethodsCheckbox
   let localeObject = GetLocale.useGetLocalObj()
-  let (nickname, setNickname) = React.useState(_ => None)
-  let (isNicknameValid, setIsNicknameValid) = React.useState(_ => true)
   <>
     {switch (
       nativeProp.configuration.displaySavedPaymentMethodsCheckbox,

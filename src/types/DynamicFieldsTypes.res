@@ -2,6 +2,15 @@ open RequiredFieldsTypes
 
 type fieldType = Other | Billing | Shipping
 
+type saveCardState = {
+  isNicknameSelected: bool,
+  setIsNicknameSelected: (bool => bool) => unit,
+  nickname: option<string>,
+  setNickname: (option<string> => option<string>) => unit,
+  isNicknameValid: bool,
+  setIsNicknameValid: (bool => bool) => unit,
+}
+
 type dynamicFieldsState = {
   requiredFields: required_fields,
   setIsAllDynamicFieldValid: (bool => bool) => unit,
@@ -14,6 +23,16 @@ type dynamicFieldsState = {
   paymentMethodType: option<payment_method_types_in_bank_debit>,
   fieldsOrder: array<fieldType>,
   isVisible: bool,
+  saveCardState: option<saveCardState>,
+}
+
+let defaultSaveCardState: saveCardState = {
+  isNicknameSelected: false,
+  setIsNicknameSelected: _ => (),
+  nickname: None,
+  setNickname: _ => (),
+  isNicknameValid: true,
+  setIsNicknameValid: _ => (),
 }
 
 let defaultDynamicFieldsState: dynamicFieldsState = {
@@ -28,4 +47,5 @@ let defaultDynamicFieldsState: dynamicFieldsState = {
   paymentMethodType: None,
   fieldsOrder: [Other, Billing, Shipping],
   isVisible: false,
+  saveCardState: None,
 }
