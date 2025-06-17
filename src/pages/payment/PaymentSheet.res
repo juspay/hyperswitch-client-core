@@ -59,7 +59,6 @@ let make = (
             setIsNicknameSelected=saveCardState.setIsNicknameSelected
             nickname=saveCardState.nickname
             setNickname=saveCardState.setNickname
-            isNicknameValid=saveCardState.isNicknameValid
             setIsNicknameValid=saveCardState.setIsNicknameValid
           />
         </>

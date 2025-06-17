@@ -4,7 +4,6 @@ let make = (
   ~setIsNicknameSelected,
   ~nickname,
   ~setNickname,
-  ~isNicknameValid,
   ~setIsNicknameValid,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
