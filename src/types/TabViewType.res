@@ -8,7 +8,9 @@ type route = {
   componentHoc: (
     ~isScreenFocus: bool,
     ~setConfirmButtonDataRef: React.element => unit,
-    ~setDynamicFieldsState: (DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState) => unit,
+    ~setDynamicFieldsDataRef: (
+      DynamicFieldsTypes.dynamicFieldsDataRef => DynamicFieldsTypes.dynamicFieldsDataRef
+    ) => unit,
   ) => React.element,
 }
 

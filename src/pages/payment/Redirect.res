@@ -16,7 +16,9 @@ let make = (
   ~isDynamicFields: bool=false,
   ~dynamicFields: required_fields=[],
   ~setConfirmButtonDataRef: React.element => unit,
-  ~setDynamicFieldsState: (DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState) => unit,
+  ~setDynamicFieldsDataRef: (
+    DynamicFieldsTypes.dynamicFieldsDataRef => DynamicFieldsTypes.dynamicFieldsDataRef
+  ) => unit,
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
 ) => {
   let walletType: PaymentMethodListType.payment_method_types_wallet = switch redirectProp {
@@ -1021,22 +1023,20 @@ let make = (
       )
       
       if isDynamicFields {
-        setDynamicFieldsState(_ => {
+        setDynamicFieldsDataRef(_ => {
           requiredFields: dynamicFields,
           setIsAllDynamicFieldValid: setIsAllDynamicFieldValid,
           setDynamicFieldsJson: setDynamicFieldsJson,
           isSaveCardsFlow: false,
           savedCardsData: None,
           keyToTrigerButtonClickError: keyToTrigerButtonClickError,
-          shouldRenderShippingFields: false,
           displayPreValueFields: false,
           paymentMethodType: Some(bankDebitPMType),
-          fieldsOrder: [DynamicFieldsTypes.Other, DynamicFieldsTypes.Billing, DynamicFieldsTypes.Shipping],
           isVisible: true,
           saveCardState: None,
         })
       } else {
-        setDynamicFieldsState(_ => DynamicFieldsTypes.defaultDynamicFieldsState)
+        setDynamicFieldsDataRef(_ => DynamicFieldsTypes.defaultDynamicFieldsState)
       }
     }
     None

@@ -6,7 +6,9 @@ let make = (
   ~cardVal: PaymentMethodListType.payment_method_types_card,
   ~isScreenFocus,
   ~setConfirmButtonDataRef: React.element => unit,
-  ~setDynamicFieldsState: (DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState) => unit,
+  ~setDynamicFieldsDataRef: (
+    DynamicFieldsTypes.dynamicFieldsDataRef => DynamicFieldsTypes.dynamicFieldsDataRef
+  ) => unit,
 ) => {
   // Custom Hooks
   let localeObject = GetLocale.useGetLocalObj()
@@ -160,22 +162,20 @@ let make = (
       }
       
       if cardVal.required_field->Array.length != 0 {
-        setDynamicFieldsState(_ => {
+        setDynamicFieldsDataRef(_ => {
           requiredFields: requiredFields,
           setIsAllDynamicFieldValid: setIsAllDynamicFieldValid,
           setDynamicFieldsJson: setDynamicFieldsJson,
           isSaveCardsFlow: false,
           savedCardsData: None,
           keyToTrigerButtonClickError: keyToTrigerButtonClickError,
-          shouldRenderShippingFields: false,
           displayPreValueFields: false,
           paymentMethodType: None,
-          fieldsOrder: [DynamicFieldsTypes.Other, DynamicFieldsTypes.Billing, DynamicFieldsTypes.Shipping],
           isVisible: true,
           saveCardState: Some(saveCardState),
         })
       } else {
-        setDynamicFieldsState(_ => {
+        setDynamicFieldsDataRef(_ => {
           ...DynamicFieldsTypes.defaultDynamicFieldsState,
           saveCardState: Some(saveCardState),
         })

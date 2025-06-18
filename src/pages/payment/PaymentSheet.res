@@ -1,10 +1,10 @@
 @react.component
 let make = (
   ~setConfirmButtonDataRef,
-  ~setDynamicFieldsState: (
-    DynamicFieldsTypes.dynamicFieldsState => DynamicFieldsTypes.dynamicFieldsState
+  ~setDynamicFieldsDataRef: (
+    DynamicFieldsTypes.dynamicFieldsDataRef => DynamicFieldsTypes.dynamicFieldsDataRef
   ) => unit,
-  ~dynamicFieldsState,
+  ~dynamicFieldsDataRef,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
@@ -44,13 +44,13 @@ let make = (
       hocComponentArr=tabArr
       loading={allApiData.sessions == Loading && localeStrings == Loading}
       setConfirmButtonDataRef
-      setDynamicFieldsState
+      setDynamicFieldsDataRef
       indexInFocus
       setIndexInFocus
     />
-    <GlobalDynamicFields dynamicFieldsState />
+    <GlobalDynamicFields dynamicFieldsDataRef />
     {if isCardTabSelected {
-      switch dynamicFieldsState.saveCardState {
+      switch dynamicFieldsDataRef.saveCardState {
       | Some(saveCardState) =>
         <>
           <Space height=10. />

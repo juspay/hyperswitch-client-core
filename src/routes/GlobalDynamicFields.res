@@ -1,17 +1,15 @@
 @react.component
-let make = (~dynamicFieldsState: DynamicFieldsTypes.dynamicFieldsState) => {
-  dynamicFieldsState.isVisible
+let make = (~dynamicFieldsDataRef: DynamicFieldsTypes.dynamicFieldsDataRef) => {
+  dynamicFieldsDataRef.isVisible
     ? <DynamicFields
-        requiredFields=dynamicFieldsState.requiredFields
-        setIsAllDynamicFieldValid=dynamicFieldsState.setIsAllDynamicFieldValid
-        setDynamicFieldsJson=dynamicFieldsState.setDynamicFieldsJson
-        isSaveCardsFlow=dynamicFieldsState.isSaveCardsFlow
-        savedCardsData=dynamicFieldsState.savedCardsData
-        keyToTrigerButtonClickError=dynamicFieldsState.keyToTrigerButtonClickError
-        shouldRenderShippingFields=dynamicFieldsState.shouldRenderShippingFields
-        displayPreValueFields=dynamicFieldsState.displayPreValueFields
-        paymentMethodType=?dynamicFieldsState.paymentMethodType
-        fieldsOrder=dynamicFieldsState.fieldsOrder
+        requiredFields=dynamicFieldsDataRef.requiredFields
+        setIsAllDynamicFieldValid=dynamicFieldsDataRef.setIsAllDynamicFieldValid
+        setDynamicFieldsJson=dynamicFieldsDataRef.setDynamicFieldsJson
+        isSaveCardsFlow=dynamicFieldsDataRef.isSaveCardsFlow
+        savedCardsData=dynamicFieldsDataRef.savedCardsData
+        keyToTrigerButtonClickError=dynamicFieldsDataRef.keyToTrigerButtonClickError
+        displayPreValueFields=dynamicFieldsDataRef.displayPreValueFields
+        paymentMethodType=?dynamicFieldsDataRef.paymentMethodType
       />
     : React.null
 }
