@@ -11,13 +11,16 @@ let make = (
   ~bottomModalWidth=100.->pct,
   (),
 ) => {
+  let (screenType, _) = DimensionHook.useDimension()
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let modalPosStyle = array([
     viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
-    switch modalPosition {
-    | #center => viewStyle(~alignItems=#center, ~justifyContent=#center, ())
-    | #top => viewStyle(~alignItems=#center, ~justifyContent=#"flex-start", ())
-    | #bottom => viewStyle(~alignItems=#center, ~justifyContent=#"flex-end", ())
+    switch (modalPosition, screenType) {
+    | (_, Medium | Large) => viewStyle(~alignItems=#center, ~justifyContent=#center, ())
+    | (#center, _) => viewStyle(~alignItems=#center, ~justifyContent=#center, ())
+    | (#top, _) => viewStyle(~alignItems=#center, ~justifyContent=#"flex-start", ())
+    | (#bottom, _) => viewStyle(~alignItems=#center, ~justifyContent=#"flex-end", ())
     },
   ])
 
@@ -27,11 +30,54 @@ let make = (
   | _ => true
   }
 
+  let sheetStyle = array([
+    viewStyle(
+      ~width=bottomModalWidth,
+      ~borderRadius=15.,
+      ~borderBottomLeftRadius=0.,
+      ~borderBottomRightRadius=0.,
+      ~overflow=#hidden,
+      ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
+      ~alignItems=#center,
+      ~justifyContent=#center,
+      (),
+    ),
+    switch (screenType, nativeProp.configuration.fullScreenModalView) {
+    | (Small, false) => viewStyle(~borderBottomLeftRadius=0., ~borderBottomRightRadius=0., ())
+    | (_, false) =>
+      viewStyle(
+        ~borderBottomLeftRadius=15.,
+        ~borderBottomRightRadius=15.,
+        ~maxWidth=600.->dp,
+        ~maxHeight=95.->pct,
+        (),
+      )
+    | (_, true) =>
+      viewStyle(
+        ~flex=1.,
+        ~borderRadius=0.,
+        ~maxWidth=100.0->pct,
+        ~maxHeight=100.->pct,
+        ~alignContent=#center,
+        (),
+      )
+    },
+  ])
+
+  let customTouchableOpacityStyle = array([
+    viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ()),
+    switch (screenType, nativeProp.configuration.fullScreenModalView) {
+    | (Small, false) => viewStyle()
+    | (_, false) => viewStyle(~position=#absolute, ~top=0.->dp, ~height=100.->pct, ())
+    | (_, true) => viewStyle(~flex=0., ~flexGrow=0., ())
+    },
+  ])
+
   //  let (locationY, setLocationY) = React.useState(_ => 0.)
 
   <View style=modalPosStyle>
     <CustomTouchableOpacity
-      style={viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ())}
+      style={customTouchableOpacityStyle}
       disabled=disableClickOutside
       onPress={_ => {
         if closeOnClickOutSide {
@@ -46,18 +92,7 @@ let make = (
     //       onDismiss()
     //     }
     //   }}>
-    <CustomKeyboardAvoidingView
-      style={viewStyle(
-        ~width=bottomModalWidth,
-        ~borderRadius=15.,
-        ~borderBottomLeftRadius=0.,
-        ~borderBottomRightRadius=0.,
-        ~overflow=#hidden,
-        ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        (),
-      )}>
+    <CustomKeyboardAvoidingView style={sheetStyle}>
       <SafeAreaView />
       {children}
     </CustomKeyboardAvoidingView>

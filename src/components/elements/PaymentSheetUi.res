@@ -19,6 +19,7 @@ let make = (
   ~cardNetworks,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (_, setCard) = React.useContext(CardDataContext.cardDataContext)
   let isCardNumberValid = isCardNumberValid->Option.getOr(true)
   let isExpireDateValid = isExpireDataValid->Option.getOr(true)
   let isCardBrandSupported = isCardBrandSupported->Option.getOr(true)
@@ -70,6 +71,7 @@ let make = (
   }
 
   let scanCardCallback = (scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
+    setCard(cardData => {...cardData, isScanCardOpened: false})
     switch scanCardReturnType {
     | Succeeded(data) => {
         onScanCard(data.pan, `${data.expiryMonth} / ${data.expiryYear}`, expireRef, cvvRef)
@@ -121,6 +123,7 @@ let make = (
                 (),
               )}
               onPress={_pressEvent => {
+                setCard(cardData => {...cardData, isScanCardOpened: true})
                 ScanCardModule.launchScanCard(scanCardCallback)
                 logger(
                   ~logType=INFO,
