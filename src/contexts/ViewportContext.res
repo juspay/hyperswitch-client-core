@@ -7,19 +7,12 @@ type viewPortContants = {
   maxPaymentSheetHeight: float,
 }
 
-let defaultNavbarHeight = 25.
+let defaultNavbarHeight = ReactNative.Platform.os === #ios ? 30. : 20.
 let windowHeight = ReactNative.Dimensions.get(#window).height
 let windowWidth = ReactNative.Dimensions.get(#window).width
 let screenHeight = ReactNative.Dimensions.get(#screen).height
 let screenWidth = ReactNative.Dimensions.get(#screen).width
 let statusBarHeight = ReactNative.StatusBar.currentHeight
-
-let navigationBarHeight = if ReactNative.Platform.os !== #android {
-  defaultNavbarHeight
-} else {
-  let navigationHeight = screenHeight -. windowHeight -. statusBarHeight
-  Math.min(75., Math.max(0., navigationHeight) +. defaultNavbarHeight)
-}
 
 let maxPaymentSheetHeight = 95. // pct
 
@@ -28,7 +21,7 @@ let defaultVal: viewPortContants = {
   windowWidth,
   screenHeight,
   screenWidth,
-  navigationBarHeight,
+  navigationBarHeight: defaultNavbarHeight,
   maxPaymentSheetHeight,
 }
 
@@ -39,7 +32,13 @@ module Provider = {
 }
 @react.component
 let make = (~children) => {
-  let (state, setState) = React.useState(_ => defaultVal)
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+
+  let (state, setState) = React.useState(_ => {
+    ...defaultVal,
+    navigationBarHeight: nativeProp.hyperParams.bottomInset->Option.getOr(0.) +.
+      defaultNavbarHeight,
+  })
 
   let setState = React.useCallback1(val => {
     setState(_ => val)
