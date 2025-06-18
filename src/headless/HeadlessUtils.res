@@ -1,6 +1,6 @@
 open SdkTypes
 
-let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
+let sendLogs = async (logFile, customLogUrl, env: GlobalVars.envType) => {
   let uri = switch customLogUrl {
   | Some(url) => url
   | None =>
@@ -12,12 +12,18 @@ let sendLogs = (logFile, customLogUrl, env: GlobalVars.envType) => {
   }
   if WebKit.platform != #next {
     let data = logFile->LoggerUtils.logFileToObj->JSON.stringify
-    APIUtils.fetchApi(~uri, ~method_=Post, ~bodyStr=data, ~headers=Dict.make(), ~mode=NoCORS, ())
-    ->Promise.then(res => res->Fetch.Response.json)
-    ->Promise.catch(_ => {
-      Promise.resolve(JSON.Encode.null)
-    })
-    ->ignore
+    try {
+      let _ = await APIUtils.fetchApi(
+        ~uri,
+        ~method_=Post,
+        ~bodyStr=data,
+        ~headers=Dict.make(),
+        ~mode=NoCORS,
+        (),
+      )
+    } catch {
+    | _ => ()
+    }
   }
 }
 
@@ -86,7 +92,94 @@ let logWrapper = (
     ?paymentExperience,
     latency: latency->Float.toString,
   }
-  sendLogs(logFile, customLogUrl, env)
+  sendLogs(logFile, customLogUrl, env)->ignore
+}
+
+let apiLogWrapper = (
+  ~nativeProp,
+  ~uri,
+  ~paymentId,
+  ~eventName,
+  ~data=JSON.Encode.null,
+  ~logType: LoggerTypes.logType=INFO,
+  ~statusCode="",
+  ~apiLogType=Some(LoggerTypes.Request),
+) => {
+  let initTimestamp = Date.now()
+  logWrapper(
+    ~logType,
+    ~eventName,
+    ~url=uri,
+    ~customLogUrl=nativeProp.customLogUrl,
+    ~env=nativeProp.env,
+    ~category=API,
+    ~statusCode,
+    ~apiLogType,
+    ~data,
+    ~publishableKey=nativeProp.publishableKey,
+    ~paymentId,
+    ~paymentMethod=None,
+    ~paymentExperience=None,
+    ~timestamp=initTimestamp,
+    ~latency=0.,
+    ~version=nativeProp.hyperParams.sdkVersion,
+    (),
+  )
+}
+
+let handleApiCall = async (
+  ~uri,
+  ~eventName,
+  ~body=?,
+  ~headers,
+  ~nativeProp,
+  ~method,
+  ~processSuccess: Core__JSON.t => 'a,
+  ~processError: Core__JSON.t => 'a,
+  ~processCatch: Core__JSON.t => 'a,
+) => {
+  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+  try {
+    let initEventName = LoggerTypes.getApiInitEvent(eventName)
+    switch initEventName {
+    | Some(eventName) => apiLogWrapper(~eventName, ~uri, ~paymentId, ~nativeProp)
+
+    | _ => ()
+    }
+    let data = await APIUtils.fetchApi(
+      ~uri,
+      ~method_=method,
+      ~headers,
+      ~bodyStr=body->Option.getOr(""),
+      (),
+    )
+
+    let statusCode = data->Fetch.Response.status->string_of_int
+
+    if statusCode->String.charAt(0) === "2" {
+      let json = await data->Fetch.Response.json
+      apiLogWrapper(~eventName, ~uri, ~paymentId, ~nativeProp, ~logType=INFO)
+      processSuccess(json)
+    } else {
+      let error = await data->Fetch.Response.json
+      apiLogWrapper(~eventName, ~uri, ~paymentId, ~nativeProp, ~logType=ERROR, ~statusCode)
+      processError(error)
+    }
+  } catch {
+  | err => {
+      apiLogWrapper(
+        ~eventName,
+        ~uri,
+        ~paymentId,
+        ~nativeProp,
+        ~logType=ERROR,
+        ~statusCode="504",
+        ~data=err->Utils.getError(`API call failed: ${uri}`),
+        ~apiLogType=Some(NoResponse),
+      )
+      processCatch(JSON.Encode.null)
+    }
+  }
 }
 
 let getBaseUrl = nativeProp => {
@@ -102,124 +195,20 @@ let getBaseUrl = nativeProp => {
 }
 
 let savedPaymentMethodAPICall = nativeProp => {
-  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
-
   let uri = `${getBaseUrl(
       nativeProp,
     )}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
-  let initTimestamp = Date.now()
-  logWrapper(
-    ~logType=INFO,
-    ~eventName=CUSTOMER_PAYMENT_METHODS_CALL_INIT,
-    ~url=uri,
-    ~customLogUrl=nativeProp.customLogUrl,
-    ~env=nativeProp.env,
-    ~category=API,
-    ~statusCode="",
-    ~apiLogType=Some(Request),
-    ~data=JSON.Encode.null,
-    ~publishableKey=nativeProp.publishableKey,
-    ~paymentId,
-    ~paymentMethod=None,
-    ~paymentExperience=None,
-    ~timestamp=initTimestamp,
-    ~latency=0.,
-    ~version=nativeProp.hyperParams.sdkVersion,
-    (),
-  )
-  APIUtils.fetchApi(
-    ~uri,
-    ~method_=Get,
-    ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
-    (),
-  )
-  ->Promise.then(data => {
-    let respTimestamp = Date.now()
-    let statusCode = data->Fetch.Response.status->string_of_int
-    if statusCode->String.charAt(0) === "2" {
-      data
-      ->Fetch.Response.json
-      ->Promise.then(data => {
-        logWrapper(
-          ~logType=INFO,
-          ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
-          ~url=uri,
-          ~customLogUrl=nativeProp.customLogUrl,
-          ~env=nativeProp.env,
-          ~category=API,
-          ~statusCode,
-          ~apiLogType=Some(Response),
-          ~data=JSON.Encode.null,
-          ~publishableKey=nativeProp.publishableKey,
-          ~paymentId,
-          ~paymentMethod=None,
-          ~paymentExperience=None,
-          ~timestamp=respTimestamp,
-          ~latency={respTimestamp -. initTimestamp},
-          ~version=nativeProp.hyperParams.sdkVersion,
-          (),
-        )
-        Some(data)->Promise.resolve
-      })
-    } else {
-      data
-      ->Fetch.Response.json
-      ->Promise.then(error => {
-        let value =
-          [
-            ("url", uri->JSON.Encode.string),
-            ("statusCode", statusCode->JSON.Encode.string),
-            ("response", error),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
 
-        logWrapper(
-          ~logType=ERROR,
-          ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
-          ~url=uri,
-          ~customLogUrl=nativeProp.customLogUrl,
-          ~env=nativeProp.env,
-          ~category=API,
-          ~statusCode,
-          ~apiLogType=Some(Err),
-          ~data=value,
-          ~publishableKey=nativeProp.publishableKey,
-          ~paymentId,
-          ~paymentMethod=None,
-          ~paymentExperience=None,
-          ~timestamp=respTimestamp,
-          ~latency={respTimestamp -. initTimestamp},
-          ~version=nativeProp.hyperParams.sdkVersion,
-          (),
-        )
-        Some(error)->Promise.resolve
-      })
-    }
-  })
-  ->Promise.catch(err => {
-    let respTimestamp = Date.now()
-    logWrapper(
-      ~logType=ERROR,
-      ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
-      ~url=uri,
-      ~customLogUrl=nativeProp.customLogUrl,
-      ~env=nativeProp.env,
-      ~category=API,
-      ~statusCode="504",
-      ~apiLogType=Some(NoResponse),
-      ~data=err->Utils.getError(`Headless Error API call failed: ${uri}`),
-      ~publishableKey=nativeProp.publishableKey,
-      ~paymentId,
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=respTimestamp,
-      ~latency={respTimestamp -. initTimestamp},
-      ~version=nativeProp.hyperParams.sdkVersion,
-      (),
-    )
-    None->Promise.resolve
-  })
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
+    ~method=Get,
+    ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+    ~processSuccess=json => Some(json),
+    ~processError=error => Some(error),
+    ~processCatch=_ => Some(JSON.Encode.null),
+  )
 }
 
 let sessionAPICall = nativeProp => {
@@ -237,226 +226,35 @@ let sessionAPICall = nativeProp => {
     ->JSON.Encode.object
     ->JSON.stringify
 
-  let initTimestamp = Date.now()
-  logWrapper(
-    ~logType=INFO,
-    ~eventName=CUSTOMER_PAYMENT_METHODS_CALL_INIT,
-    ~url=uri,
-    ~customLogUrl=nativeProp.customLogUrl,
-    ~env=nativeProp.env,
-    ~category=API,
-    ~statusCode="",
-    ~apiLogType=Some(Request),
-    ~data=JSON.Encode.null,
-    ~publishableKey=nativeProp.publishableKey,
-    ~paymentId,
-    ~paymentMethod=None,
-    ~paymentExperience=None,
-    ~timestamp=initTimestamp,
-    ~latency=0.,
-    ~version=nativeProp.hyperParams.sdkVersion,
-    (),
+  handleApiCall(
+    ~uri,
+    ~method=Post,
+    ~nativeProp,
+    ~eventName=SESSIONS_CALL,
+    ~headers,
+    ~body,
+    ~processSuccess=json => json,
+    ~processError=error => error,
+    ~processCatch=_ => JSON.Encode.null,
   )
-
-  APIUtils.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
-  ->Promise.then(data => {
-    let respTimestamp = Date.now()
-    let statusCode = data->Fetch.Response.status->string_of_int
-    if statusCode->String.charAt(0) === "2" {
-      logWrapper(
-        ~logType=INFO,
-        ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
-        ~url=uri,
-        ~customLogUrl=nativeProp.customLogUrl,
-        ~env=nativeProp.env,
-        ~category=API,
-        ~statusCode,
-        ~apiLogType=Some(Response),
-        ~data=JSON.Encode.null,
-        ~publishableKey=nativeProp.publishableKey,
-        ~paymentId,
-        ~paymentMethod=None,
-        ~paymentExperience=None,
-        ~timestamp=respTimestamp,
-        ~latency={respTimestamp -. initTimestamp},
-        ~version=nativeProp.hyperParams.sdkVersion,
-        (),
-      )
-      data->Fetch.Response.json
-    } else {
-      data
-      ->Fetch.Response.json
-      ->Promise.then(error => {
-        let value =
-          [
-            ("url", uri->JSON.Encode.string),
-            ("statusCode", statusCode->JSON.Encode.string),
-            ("response", error),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        logWrapper(
-          ~logType=ERROR,
-          ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
-          ~url=uri,
-          ~customLogUrl=nativeProp.customLogUrl,
-          ~env=nativeProp.env,
-          ~category=API,
-          ~statusCode,
-          ~apiLogType=Some(Err),
-          ~data=value,
-          ~publishableKey=nativeProp.publishableKey,
-          ~paymentId,
-          ~paymentMethod=None,
-          ~paymentExperience=None,
-          ~timestamp=respTimestamp,
-          ~latency={respTimestamp -. initTimestamp},
-          ~version=nativeProp.hyperParams.sdkVersion,
-          (),
-        )
-        Promise.resolve(error)
-      })
-    }
-  })
-  ->Promise.catch(err => {
-    let respTimestamp = Date.now()
-    logWrapper(
-      ~logType=ERROR,
-      ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
-      ~url=uri,
-      ~customLogUrl=nativeProp.customLogUrl,
-      ~env=nativeProp.env,
-      ~category=API,
-      ~statusCode="504",
-      ~apiLogType=Some(NoResponse),
-      ~data=err->Utils.getError(`Headless Error API call failed: ${uri}`),
-      ~publishableKey=nativeProp.publishableKey,
-      ~paymentId,
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=respTimestamp,
-      ~latency={respTimestamp -. initTimestamp},
-      ~version=nativeProp.hyperParams.sdkVersion,
-      (),
-    )
-    Promise.resolve(JSON.Encode.null)
-  })
 }
 
 let confirmAPICall = (nativeProp, body) => {
   let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
   let uri = `${getBaseUrl(nativeProp)}/payments/${paymentId}/confirm`
   let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
-  let initTimestamp = Date.now()
-  logWrapper(
-    ~logType=INFO,
-    ~eventName=CONFIRM_CALL_INIT,
-    ~url=uri,
-    ~customLogUrl=nativeProp.customLogUrl,
-    ~env=nativeProp.env,
-    ~category=API,
-    ~statusCode="",
-    ~apiLogType=Some(Request),
-    ~data=JSON.Encode.null,
-    ~publishableKey=nativeProp.publishableKey,
-    ~paymentId,
-    ~paymentMethod=None,
-    ~paymentExperience=None,
-    ~timestamp=initTimestamp,
-    ~latency=0.,
-    ~version=nativeProp.hyperParams.sdkVersion,
-    (),
+
+  handleApiCall(
+    ~uri,
+    ~method=Post,
+    ~headers,
+    ~nativeProp,
+    ~eventName=CONFIRM_CALL,
+    ~body,
+    ~processSuccess=json => Some(json),
+    ~processError=error => Some(error),
+    ~processCatch=_ => Some(JSON.Encode.null),
   )
-
-  APIUtils.fetchApi(~uri, ~method_=Post, ~headers, ~bodyStr=body, ())
-  ->Promise.then(data => {
-    let respTimestamp = Date.now()
-    let statusCode = data->Fetch.Response.status->string_of_int
-    if statusCode->String.charAt(0) === "2" {
-      logWrapper(
-        ~logType=INFO,
-        ~eventName=CONFIRM_CALL,
-        ~url=uri,
-        ~customLogUrl=nativeProp.customLogUrl,
-        ~env=nativeProp.env,
-        ~category=API,
-        ~statusCode,
-        ~apiLogType=Some(Response),
-        ~data=JSON.Encode.null,
-        ~publishableKey=nativeProp.publishableKey,
-        ~paymentId,
-        ~paymentMethod=None,
-        ~paymentExperience=None,
-        ~timestamp=respTimestamp,
-        ~latency={respTimestamp -. initTimestamp},
-        ~version=nativeProp.hyperParams.sdkVersion,
-        (),
-      )
-      data->Fetch.Response.json
-    } else {
-      data
-      ->Fetch.Response.json
-      ->Promise.then(error => {
-        let value =
-          [
-            ("url", uri->JSON.Encode.string),
-            ("statusCode", statusCode->JSON.Encode.string),
-            ("response", error),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-
-        logWrapper(
-          ~logType=ERROR,
-          ~eventName=CONFIRM_CALL,
-          ~url=uri,
-          ~customLogUrl=nativeProp.customLogUrl,
-          ~env=nativeProp.env,
-          ~category=API,
-          ~statusCode,
-          ~apiLogType=Some(Err),
-          ~data=value,
-          ~publishableKey=nativeProp.publishableKey,
-          ~paymentId,
-          ~paymentMethod=None,
-          ~paymentExperience=None,
-          ~timestamp=respTimestamp,
-          ~latency={respTimestamp -. initTimestamp},
-          ~version=nativeProp.hyperParams.sdkVersion,
-          (),
-        )
-        Promise.resolve(error)
-      })
-    }
-  })
-  ->Promise.then(jsonResponse => {
-    Promise.resolve(Some(jsonResponse))
-  })
-  ->Promise.catch(err => {
-    let data = err->Utils.getError(`Headless Error API call failed: ${uri}`)
-
-    let respTimestamp = Date.now()
-    logWrapper(
-      ~logType=ERROR,
-      ~eventName=CONFIRM_CALL,
-      ~url=uri,
-      ~customLogUrl=nativeProp.customLogUrl,
-      ~env=nativeProp.env,
-      ~category=API,
-      ~statusCode="504",
-      ~apiLogType=Some(NoResponse),
-      ~data,
-      ~publishableKey=nativeProp.publishableKey,
-      ~paymentId,
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=respTimestamp,
-      ~latency={respTimestamp -. initTimestamp},
-      ~version=nativeProp.hyperParams.sdkVersion,
-      (),
-    )
-    Promise.resolve(None)
-  })
 }
 
 let errorOnApiCalls = (inputKey: ErrorUtils.errorKey, ~dynamicStr="") => {
@@ -540,4 +338,33 @@ let getErrorFromResponse = data => {
     error
   | None => getDefaultError
   }
+}
+
+let generateWalletConfirmBody = (~nativeProp, ~data, ~payment_method_data) => {
+  [
+    ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+    ("payment_method", "wallet"->JSON.Encode.string),
+    ("payment_method_type", data.payment_method_type->Option.getOr("")->JSON.Encode.string),
+    ("payment_method_data", payment_method_data),
+    ("setup_future_usage", "off_session"->JSON.Encode.string),
+    ("payment_type", "new_mandate"->JSON.Encode.string),
+    (
+      "customer_acceptance",
+      [
+        ("acceptance_type", "online"->JSON.Encode.string),
+        ("accepted_at", Date.now()->Date.fromTime->Date.toISOString->JSON.Encode.string),
+        (
+          "online",
+          [("user_agent", nativeProp.hyperParams.userAgent->Option.getOr("")->JSON.Encode.string)]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object,
+    ),
+  ]
+  ->Dict.fromArray
+  ->JSON.Encode.object
+  ->JSON.stringify
 }
