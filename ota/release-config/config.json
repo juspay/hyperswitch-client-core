@@ -1,0 +1,24 @@
+{
+  "version": "1",
+  "config": {
+    "version": "v1",
+    "release_config_timeout": 5000,
+    "boot_timeout": 5000,
+    "properties": {}
+  },
+  "package": {
+    "name": "sdk",
+    "version": "v1.0.0",
+    "properties": {
+      "manifest": {},
+      "manifest_hash": {}
+    },
+    "index": {
+      "url": "",
+      "filePath": "hyperswitch.bundle"
+    },
+    "important": [],
+    "lazy": []
+  },
+  "resources": []
+}

@@ -1,8 +1,8 @@
 {
   "config": {
     "target_platform": "android",
-    "target_version": "1.1.2",
-    "release_tag_version": "v1.0.6",
+    "target_version": "1.1.6",
+    "release_tag_version": "v1.4.2",
     "release_env": "prod"
   }
 }
