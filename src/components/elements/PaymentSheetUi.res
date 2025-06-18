@@ -2,6 +2,25 @@ open ReactNative
 open Style
 open Validation
 
+module CardBrandAndScanCardIcon = {
+  @react.component
+  let make = (
+    ~isScanCardAvailable,
+    ~cardNumber,
+    ~cardNetworks,
+    ~onScanCard,
+    ~expireRef,
+    ~cvvRef,
+  ) => {
+    <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
+      <CardSchemeComponent cardNumber cardNetworks />
+      <UIUtils.RenderIf condition={isScanCardAvailable && cardNumber === ""}>
+        <ScanCardButton onScanCard expireRef cvvRef />
+      </UIUtils.RenderIf>
+    </View>
+  }
+}
+
 @react.component
 let make = (
   ~cardNumber,
@@ -41,20 +60,12 @@ let make = (
     cvvIsFocus ? isCvvValid || !cvcNumberInRange(cvv, getCardBrand(cardNumber)) : isCvvValid
   }
 
-  let {
-    primaryColor,
-    component,
-    dangerColor,
-    borderRadius,
-    borderWidth,
-  } = ThemebasedStyle.useThemeBasedStyle()
+  let {component, dangerColor, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
   let cardRef = React.useRef(Nullable.null)
   let expireRef = React.useRef(Nullable.null)
   let cvvRef = React.useRef(Nullable.null)
   let cardBrand = getCardBrand(cardNumber)
-  let showAlert = AlertHook.useAlerts()
-  let logger = LoggerHook.useLoggerHook()
   let nullRef = React.useRef(Nullable.null)
 
   let errorMsgText = if !isCardNumberValid {
@@ -69,21 +80,6 @@ let make = (
     None
   }
 
-  let scanCardCallback = (scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
-    switch scanCardReturnType {
-    | Succeeded(data) => {
-        onScanCard(data.pan, `${data.expiryMonth} / ${data.expiryYear}`, expireRef, cvvRef)
-        logger(~logType=INFO, ~value="Succeeded", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
-      }
-    | Cancelled =>
-      logger(~logType=WARNING, ~value="Cancelled", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
-    | Failed => {
-        showAlert(~errorType="warning", ~message="Failed to scan card")
-        logger(~logType=ERROR, ~value="Failed", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
-      }
-    | _ => showAlert(~errorType="warning", ~message="Failed to scan card")
-    }
-  }
   React.useEffect1(() => {
     keyToTrigerButtonClickError != 0
       ? {
@@ -94,49 +90,6 @@ let make = (
       : ()
     None
   }, [keyToTrigerButtonClickError])
-
-  let getScanCardComponent = (isScanCardAvailable, cardNumber, cardNetworks) => {
-    CustomInput.CustomIcon(
-      <View style={array([viewStyle(~flexDirection=#row, ~alignItems=#center, ())])}>
-        <CardSchemeComponent cardNumber cardNetworks />
-        <UIUtils.RenderIf condition={isScanCardAvailable && cardNumber === ""}>
-          {<>
-            <View
-              style={viewStyle(
-                ~backgroundColor=component.borderColor,
-                ~marginLeft=10.->dp,
-                ~marginRight=10.->dp,
-                ~height=80.->pct,
-                ~width=1.->dp,
-                (),
-              )}
-            />
-            <CustomTouchableOpacity
-              style={viewStyle(
-                ~height=100.->pct,
-                ~width=27.5->dp,
-                ~display=#flex,
-                ~alignItems=#"flex-start",
-                ~justifyContent=#center,
-                (),
-              )}
-              onPress={_pressEvent => {
-                ScanCardModule.launchScanCard(scanCardCallback)
-                logger(
-                  ~logType=INFO,
-                  ~value="Launch",
-                  ~category=USER_EVENT,
-                  ~eventName=SCAN_CARD,
-                  (),
-                )
-              }}>
-              <Icon name={"CAMERA"} height=25. width=25. fill=primaryColor />
-            </CustomTouchableOpacity>
-          </>}
-        </UIUtils.RenderIf>
-      </View>,
-    )
-  }
 
   <ErrorBoundary level=FallBackScreen.Screen rootTag=nativeProp.rootTag>
     <View style={viewStyle(~width=100.->pct, ~borderRadius, ())}>
@@ -160,7 +113,16 @@ let make = (
           borderBottomRightRadius=0.
           textColor={isCardNumberValid ? component.color : dangerColor}
           enableCrossIcon=false
-          iconRight={getScanCardComponent(ScanCardModule.isAvailable, cardNumber, cardNetworks)}
+          iconRight=CustomInput.CustomIcon(
+            <CardBrandAndScanCardIcon
+              isScanCardAvailable=ScanCardModule.isAvailable
+              cardNumber
+              cardNetworks
+              onScanCard
+              expireRef
+              cvvRef
+            />,
+          )
           onFocus={() => {
             setCardNumberIsFocus(_ => true)
             onChangeCardNumber(cardNumber, nullRef)

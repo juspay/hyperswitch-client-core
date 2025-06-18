@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.2...v1.5.0) (2025-06-18)
+
+
+### Features
+
+* logs for co-badged feature ([#294](https://github.com/juspay/hyperswitch-client-core/issues/294)) ([9d79ae0](https://github.com/juspay/hyperswitch-client-core/commit/9d79ae0b606810f3a50a6f16e5e81a3dc484d727))
+
 ## [1.4.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.1...v1.4.2) (2025-06-06)
 
 
