@@ -392,3 +392,8 @@ let extractPaymentMethodData = (required_field, ~shippingAddress, ~billingAddres
   ->Option.getOr(JSON.Encode.null)
   ->Utils.getDictFromJson
 }
+
+let extractPaymentMethodDataFromWallet = (required_field, ~shippingAddress, ~billingAddress, ~email=None) => {
+  required_field
+  ->getFlattenData(~shippingAddress, ~billingAddress, ~email)
+}

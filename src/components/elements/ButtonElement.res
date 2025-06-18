@@ -17,6 +17,7 @@ let make = (
 ) => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let showAlert = AlertHook.useAlerts()
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -231,6 +232,7 @@ let make = (
     }
   }
 
+  let (_, setMissingFieldsData) = React.useState(_ => [])
 
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -246,6 +248,25 @@ let make = (
       | None => None
       }
       let shippingAddress = obj.shippingDetails
+
+      Console.log2("wallets RF", walletType.required_field)
+      let checkWalletAddress = GooglePayTypeNew.extractPaymentMethodDataFromWallet(
+        walletType.required_field,
+        ~billingAddress,
+        ~shippingAddress,
+      )
+      Console.log2("checkWalletAddress", checkWalletAddress)
+      let missingFields = PaymentUtils.getMissingFieldsForDynamicRendering(
+        ~extractedData=checkWalletAddress,
+        ~requiredFields=walletType.required_field,
+      )
+      Console.log2("missingFields", missingFields)
+      if missingFields->Array.length > 0 {
+        setMissingFieldsData(_ => missingFields)
+        setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields))
+        setLoading(FillingDetails)
+        Console.log2("Switching to WALLET_MISSING_FIELDS view with actual missing fields:", missingFields)
+      } else {
       let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
         walletType.required_field,
         ~shippingAddress,
@@ -265,6 +286,7 @@ let make = (
         ~billing=billingAddress,
         (),
       )
+      }
     | "Cancel" =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
