@@ -1,3 +1,7 @@
+type walletData =
+  | GooglePayData(GooglePayTypeNew.paymentDataFromGPay)
+  | ApplePayData(GooglePayTypeNew.paymentDataFromApplePay)
+
 type paymentScreenType =
   | PAYMENTSHEET
   | SAVEDCARDSCREEN
@@ -5,7 +9,7 @@ type paymentScreenType =
   | WALLET_MISSING_FIELDS(
       RequiredFieldsTypes.required_fields,
       PaymentMethodListType.payment_method_types_wallet,
-      GooglePayTypeNew.paymentDataFromGPay,
+      walletData,
     )
 let dafaultVal = SAVEDCARDSCREEN
 

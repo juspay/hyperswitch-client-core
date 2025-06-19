@@ -4,7 +4,7 @@ open ReactNative
 let make = (
   ~requiredFields,
   ~walletType: PaymentMethodListType.payment_method_types_wallet,
-  ~obj: GooglePayTypeNew.paymentDataFromGPay,
+  ~walletData: PaymentScreenContext.walletData,
 ) => {
   let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => false)
 
@@ -16,6 +16,11 @@ let make = (
   let (keyToTrigerButtonClickError, setKeyToTrigerButtonClickError) = React.useState(_ => 0)
 
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+
+  React.useEffect(() => {
+    setKeyToTrigerButtonClickError(_ => 1)
+    None
+  }, [])
 
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
 
@@ -225,22 +230,51 @@ let make = (
       setLoading(ProcessingPayments(None))
       setKeyToTrigerButtonClickError(prev => prev + 1)
       let payment_method_data = Dict.make()
-      Console.log2("Payment Method Data", payment_method_data)
 
-      let shippingAddress = obj.shippingDetails
+      switch walletData {
+      | GooglePayData(obj) => {
+          let shippingAddress = obj.shippingDetails
 
-      payment_method_data->Dict.set(
-        walletType.payment_method,
-        [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
-        ->Dict.fromArray
-        ->JSON.Encode.object,
-      )
-      processRequest(
-        ~payment_method_data=payment_method_data->JSON.Encode.object,
-        ~email=?obj.email,
-        ~shipping=shippingAddress,
-        (),
-      )
+          payment_method_data->Dict.set(
+            walletType.payment_method,
+            [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          )
+          processRequest(
+            ~payment_method_data=payment_method_data->JSON.Encode.object,
+            ~email=?obj.email,
+            ~shipping=shippingAddress,
+            (),
+          )
+        }
+      | ApplePayData(obj) => {
+          let shippingAddress = obj.shippingAddress
+          let billingAddress = obj.billingContact
+
+          let paymentData =
+            [
+              ("payment_data", obj.paymentData),
+              ("payment_method", obj.paymentMethod),
+              ("transaction_identifier", obj.transactionIdentifier),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object
+          payment_method_data->Dict.set(
+            walletType.payment_method,
+            [(walletType.payment_method_type, paymentData)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          )
+          processRequest(
+            ~payment_method_data=payment_method_data->JSON.Encode.object,
+            ~email=?obj.email,
+            ~shipping=shippingAddress,
+            ~billing=billingAddress,
+            (),
+          )
+        }
+      }
     } else {
       setKeyToTrigerButtonClickError(prev => prev + 1)
     }

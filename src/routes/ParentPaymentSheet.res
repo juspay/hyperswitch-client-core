@@ -33,8 +33,8 @@ let make = () => {
       | Some(data) => <ACHBankDetails data />
       | _ => React.null
       }
-    | WALLET_MISSING_FIELDS(requiredFields: RequiredFieldsTypes.required_fields, walletType, obj) =>
-      <AddressSheet requiredFields walletType obj />
+    | WALLET_MISSING_FIELDS(requiredFields: RequiredFieldsTypes.required_fields, walletType, walletData) =>
+      <AddressSheet requiredFields walletType walletData />
     | _ =>
       <React.Fragment>
         {switch (

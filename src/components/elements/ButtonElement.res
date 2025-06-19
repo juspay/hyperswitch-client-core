@@ -264,7 +264,7 @@ let make = (
       )
       if missingFields->Array.length > 0 {
         setMissingFieldsData(_ => missingFields)
-        setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletType, obj))
+        setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletType, GooglePayData(obj)))
         setLoading(FillingDetails)
       } else {
         let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
@@ -399,38 +399,55 @@ let make = (
           let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
           let billingAddress = var->GooglePayTypeNew.getBillingContact("billing_contact")
-          let shippingAddress = var->GooglePayTypeNew.getBillingContact("shippingAddress")
-          let paymentData =
-            [
-              ("payment_data", payment_data),
-              ("payment_method", payment_method),
-              ("transaction_identifier", transaction_identifier),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
-
-          let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
+          let shippingAddress = var->GooglePayTypeNew.getBillingContact("shipping_contact")
+ 
+         let checkWalletAddress = GooglePayTypeNew.extractPaymentMethodDataFromWallet(
             walletType.required_field,
-            ~shippingAddress,
             ~billingAddress,
+            ~shippingAddress,
           )
-
-          payment_method_data->Dict.set(
-            walletType.payment_method,
-            [(walletType.payment_method_type, paymentData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
+          let missingFields = PaymentUtils.getMissingFieldsForDynamicRendering(
+            ~extractedData=checkWalletAddress,
+            ~requiredFields=walletType.required_field,
           )
+          if missingFields->Array.length > 0 {
+            let applePayObj = var->GooglePayTypeNew.applePayItemToObjMapper
+            setMissingFieldsData(_ => missingFields)
+            setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletType, ApplePayData(applePayObj)))
+            setLoading(FillingDetails)
+          } else {
+            let paymentData =
+              [
+                ("payment_data", payment_data),
+                ("payment_method", payment_method),
+                ("transaction_identifier", transaction_identifier),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object
+           
+            let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
+              walletType.required_field,
+              ~shippingAddress,
+              ~billingAddress,
+            )
 
-          processRequest(
-            ~payment_method_data=payment_method_data->JSON.Encode.object,
-            ~shipping=shippingAddress,
-            ~billing=billingAddress,
-            ~email=?billingAddress
+            payment_method_data->Dict.set(
+              walletType.payment_method,
+              [(walletType.payment_method_type, paymentData)]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            )
+
+            processRequest(
+              ~payment_method_data=payment_method_data->JSON.Encode.object,
+              ~shipping=shippingAddress,
+              ~billing=billingAddress,
+             ~email=?billingAddress
             ->GooglePayTypeNew.getEmailAddress
             ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
-            (),
-          )
+              (),
+            )
+          }
         }
       }
     }

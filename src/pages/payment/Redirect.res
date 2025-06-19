@@ -555,7 +555,7 @@ let make = (
         let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
         let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
         let billingAddress = var->GooglePayTypeNew.getBillingContact("billing_contact")
-        let shippingAddress = var->GooglePayTypeNew.getBillingContact("shippingAddress")
+        let shippingAddress = var->GooglePayTypeNew.getBillingContact("shipping_contact")
         let paymentData =
           [
             ("payment_data", payment_data),

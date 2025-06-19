@@ -215,10 +215,28 @@ type paymentDataFromGPay = {
   shippingDetails?: addressDetails,
 }
 
+type paymentDataFromApplePay = {
+  paymentData: JSON.t,
+  paymentMethod: JSON.t,
+  transactionIdentifier: JSON.t,
+  email?: string,
+  billingContact?: addressDetails,
+  shippingAddress?: addressDetails,
+}
+
 let itemToObjMapper = dict => {
   paymentMethodData: getPaymentMethodData("paymentMethodData", dict),
   email: ?getOptionString(dict, "email"),
   shippingDetails: ?getBillingAddress(dict, "shippingAddress"),
+}
+
+let applePayItemToObjMapper = dict => {
+  paymentData: dict->Dict.get("payment_data")->Option.getOr(JSON.Encode.null),
+  paymentMethod: dict->Dict.get("payment_method")->Option.getOr(JSON.Encode.null),
+  transactionIdentifier: dict->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null),
+  email: ?getOptionString(dict, "email"),
+  billingContact: ?getBillingContact(dict, "billing_contact"),
+  shippingAddress: ?getBillingContact(dict, "shippingAddress"),
 }
 
 let arrayJsonToCamelCase = arr => {
