@@ -1,26 +1,20 @@
-// open ReactNative
-// open Style
-
 @react.component
-let make = (~dynamicFieldsDataRef: DynamicFieldsTypes.dynamicFieldsDataRef) => {
+let make = (~requiredFields) => {
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
 
-  // dynamicFieldsDataRef.isVisible
-  //   ?
   <DynamicFields
     requiredFields={switch paymentScreenType {
     | WALLET_MISSING_FIELDS(requiredFields) => requiredFields
-    | _ => dynamicFieldsDataRef.requiredFields
+    | _ => requiredFields
     }}
-    setIsAllDynamicFieldValid=dynamicFieldsDataRef.setIsAllDynamicFieldValid
-    setDynamicFieldsJson=dynamicFieldsDataRef.setDynamicFieldsJson
-    isSaveCardsFlow=dynamicFieldsDataRef.isSaveCardsFlow
-    savedCardsData=dynamicFieldsDataRef.savedCardsData
-    keyToTrigerButtonClickError=dynamicFieldsDataRef.keyToTrigerButtonClickError
-    displayPreValueFields=dynamicFieldsDataRef.displayPreValueFields
-    paymentMethodType=?dynamicFieldsDataRef.paymentMethodType
+    setIsAllDynamicFieldValid=DynamicFieldsTypes.defaultDynamicFieldsState.setIsAllDynamicFieldValid
+    setDynamicFieldsJson=DynamicFieldsTypes.defaultDynamicFieldsState.setDynamicFieldsJson
+    isSaveCardsFlow=DynamicFieldsTypes.defaultDynamicFieldsState.isSaveCardsFlow
+    savedCardsData=DynamicFieldsTypes.defaultDynamicFieldsState.savedCardsData
+    keyToTrigerButtonClickError=DynamicFieldsTypes.defaultDynamicFieldsState.keyToTrigerButtonClickError
+    displayPreValueFields=DynamicFieldsTypes.defaultDynamicFieldsState.displayPreValueFields
+    paymentMethodType=?DynamicFieldsTypes.defaultDynamicFieldsState.paymentMethodType
   />
-  // : React.null
 
   // let {primaryColor, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
 

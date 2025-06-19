@@ -169,9 +169,19 @@ let make = (
         keyToTrigerButtonClickError
         cardNetworks=cardVal.card_networks
       />
-      <GlobalDynamicFields
-        dynamicFieldsDataRef={...DynamicFieldsTypes.defaultDynamicFieldsState, requiredFields}
-      />
+      {cardVal.required_field->Array.length != 0
+        ? <>
+            <DynamicFields
+              setIsAllDynamicFieldValid
+              setDynamicFieldsJson
+              requiredFields
+              isSaveCardsFlow={false}
+              savedCardsData=None
+              keyToTrigerButtonClickError
+            />
+            <Space height=8. />
+          </>
+        : React.null}
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
         savedPaymentMethodsData.isGuestCustomer,

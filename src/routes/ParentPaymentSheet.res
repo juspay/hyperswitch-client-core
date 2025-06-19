@@ -35,9 +35,7 @@ let make = () => {
       }
     | WALLET_MISSING_FIELDS(requiredFields) =>
       <React.Fragment>
-        <GlobalDynamicFields
-          dynamicFieldsDataRef={...DynamicFieldsTypes.defaultDynamicFieldsState, requiredFields}
-        />
+        <GlobalDynamicFields requiredFields />
         <Space height=15. />
         <GlobalConfirmButton confirmButtonDataRef />
         <Space height=15. />

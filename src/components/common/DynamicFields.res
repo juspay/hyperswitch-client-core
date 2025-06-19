@@ -388,6 +388,7 @@ let make = (
     clientCountry.isoAlpha2,
     shouldRenderShippingFields,
     statesAndCountry,
+    displayPreValueFields,
   ))
 
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
@@ -405,9 +406,14 @@ let make = (
     None
   }, [finalJsonDict])
 
-  let filteredFields = displayPreValueFields
-    ? requiredFields
-    : requiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(initialKeysValDict)
+  let filteredFields =
+    (
+      displayPreValueFields
+        ? requiredFields
+        : requiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(initialKeysValDict)
+    )
+    ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
+    ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
 
   // let (outsideBilling, insideBilling, shippingFields) = React.useMemo(() =>
   //   filteredFields->Array.reduce(([], [], []), ((outside, inside, shipping), item) => {

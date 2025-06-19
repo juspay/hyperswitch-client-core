@@ -18,7 +18,9 @@ let make = () => {
       hocComponentArr=tabArr loading={allApiData.sessions == Loading} setConfirmButtonDataRef
     />
     <Space />
-    <GlobalDynamicFields dynamicFieldsDataRef=DynamicFieldsTypes.defaultDynamicFieldsState />
+    <GlobalDynamicFields
+      requiredFields=DynamicFieldsTypes.defaultDynamicFieldsState.requiredFields
+    />
     {confirmButtonDataRef}
   </View>
 }
