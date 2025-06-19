@@ -226,7 +226,6 @@ let getRequiredFieldsFromDict = dict => {
     arr
     ->mergeNameFields(~fieldType=FullName)
     ->mergeNameFields(~fieldType=FullName, ~displayName="card_holder_name")
-    ->mergeNameFields(~fieldType=Email)
     ->mergeNameFields(~fieldType=BillingName)
     ->mergeNameFields(~fieldType=ShippingName)
 
@@ -417,7 +416,7 @@ let useGetPlaceholder = (
     | Bank => localeObject.bankLabel
     | BillingName => localeObject.fullNamePlaceholder->getName
     | AddressLine1 => localeObject.line1Placeholder
-    | AddressLine2 => localeObject.line2Placeholder
+    | AddressLine2 => localeObject.line2Label
     | AddressCity => localeObject.cityLabel
     | AddressPincode => localeObject.postalCodeLabel
     | AddressState => localeObject.stateLabel

@@ -256,6 +256,7 @@ let make = (
         walletType.required_field,
         ~billingAddress,
         ~shippingAddress,
+        ~email=obj.email,
       )
       let missingFields = PaymentUtils.getMissingFieldsForDynamicRendering(
         ~extractedData=checkWalletAddress,
@@ -263,17 +264,7 @@ let make = (
       )
       if missingFields->Array.length > 0 {
         setMissingFieldsData(_ => missingFields)
-        setPaymentScreenType(
-          WALLET_MISSING_FIELDS(
-            missingFields,
-            walletType.payment_method_type,
-            walletType.payment_experience
-            ->Array.get(0)
-            ->Option.map(paymentExperience =>
-              getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
-            ),
-          ),
-        )
+        setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletType, obj))
         setLoading(FillingDetails)
       } else {
         let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
