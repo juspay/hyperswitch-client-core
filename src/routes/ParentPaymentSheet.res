@@ -33,13 +33,12 @@ let make = () => {
       | Some(data) => <ACHBankDetails data />
       | _ => React.null
       }
-    | WALLET_MISSING_FIELDS(requiredFields) =>
-      <React.Fragment>
-        <GlobalDynamicFields requiredFields />
-        <Space height=15. />
-        <GlobalConfirmButton confirmButtonDataRef />
-        <Space height=15. />
-      </React.Fragment>
+    | WALLET_MISSING_FIELDS(
+        requiredFields: RequiredFieldsTypes.required_fields,
+        paymentMethod,
+        paymentExperience,
+      ) =>
+      <AddressSheet requiredFields paymentMethod paymentExperience />
     | _ =>
       <React.Fragment>
         {switch (

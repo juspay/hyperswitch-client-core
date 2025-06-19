@@ -923,7 +923,9 @@ let make = (
           handlePress
           hasSomeFields
           paymentMethod
-          paymentExperience={getPaymentExperienceType(paymentExperience->Option.getOr(NONE))}
+          paymentExperience={PaymentMethodListType.getPaymentExperienceType(
+            paymentExperience->Option.getOr(NONE),
+          )}
           errorText=error
         />,
       )

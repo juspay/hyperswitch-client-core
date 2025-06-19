@@ -30,7 +30,7 @@ let make = (~onModalClose) => {
       | PaymentScreenContext.SAVEDCARDSCREEN =>
         nativeProp.configuration.savedPaymentScreenHeaderText
       | BANK_TRANSFER(_) => None
-      | WALLET_MISSING_FIELDS(_) => Some("Additional Info Needed")
+      | WALLET_MISSING_FIELDS(_, _, _) => Some("Additional Info Needed")
       } {
       | Some(var) =>
         <View style={viewStyle(~maxWidth=60.->pct, ())}>

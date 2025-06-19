@@ -252,26 +252,29 @@ let make = (
       }
       let shippingAddress = obj.shippingDetails
 
-      Console.log2("wallets RF", walletType.required_field)
       let checkWalletAddress = GooglePayTypeNew.extractPaymentMethodDataFromWallet(
         walletType.required_field,
         ~billingAddress,
         ~shippingAddress,
       )
-      Console.log2("checkWalletAddress", checkWalletAddress)
       let missingFields = PaymentUtils.getMissingFieldsForDynamicRendering(
         ~extractedData=checkWalletAddress,
         ~requiredFields=walletType.required_field,
       )
-      Console.log2("missingFields", missingFields)
       if missingFields->Array.length > 0 {
         setMissingFieldsData(_ => missingFields)
-        setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields))
-        setLoading(FillingDetails)
-        Console.log2(
-          "Switching to WALLET_MISSING_FIELDS view with actual missing fields:",
-          missingFields,
+        setPaymentScreenType(
+          WALLET_MISSING_FIELDS(
+            missingFields,
+            walletType.payment_method_type,
+            walletType.payment_experience
+            ->Array.get(0)
+            ->Option.map(paymentExperience =>
+              getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+            ),
+          ),
         )
+        setLoading(FillingDetails)
       } else {
         let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
           walletType.required_field,
