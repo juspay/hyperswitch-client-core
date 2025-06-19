@@ -431,7 +431,7 @@ let make = (
   // , (filteredFields, renderShippingFields))
 
   //logic to sort the fields based on the fieldsOrder
-let getOrderValue = field => {
+  let getOrderValue = field => {
     let path = field.required_field->RequiredFieldsTypes.getRequiredFieldName->String.split(".")
     let x = if path->Array.includes("billing") {
       Billing

@@ -5,12 +5,8 @@ let make = (
   ~hocComponentArr: array<PMListModifier.hoc>=[],
   ~loading=true,
   ~setConfirmButtonDataRef,
-  ~setDynamicFieldsDataRef: (
-    DynamicFieldsTypes.dynamicFieldsDataRef => DynamicFieldsTypes.dynamicFieldsDataRef
-  ) => unit,
-  ~indexInFocus=0,
-  ~setIndexInFocus: (int => int) => unit,
 ) => {
+  let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
   let setIndexInFocus = React.useCallback1(ind => setIndexInFocus(_ => ind), [setIndexInFocus])
   let sceneMap = Map.make()
 
@@ -20,11 +16,7 @@ let make = (
       ->Array.pushMany([
         {
           name: "loading",
-          componentHoc: (
-            ~isScreenFocus as _,
-            ~setConfirmButtonDataRef as _,
-            ~setDynamicFieldsDataRef as _,
-          ) => <>
+          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) => <>
             <Space height=20. />
             <CustomLoader height="33" />
             <Space height=5. />
@@ -33,11 +25,7 @@ let make = (
         },
         {
           name: "loading",
-          componentHoc: (
-            ~isScreenFocus as _,
-            ~setConfirmButtonDataRef as _,
-            ~setDynamicFieldsDataRef as _,
-          ) => React.null,
+          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) => React.null,
         },
       ])
       ->ignore
@@ -51,11 +39,7 @@ let make = (
     {
       let routes = data->Array.mapWithIndex((hoc, index) => {
         sceneMap->Map.set(index, (~route as _, ~position as _, ~jumpTo as _) =>
-          hoc.componentHoc(
-            ~isScreenFocus=indexInFocus == index,
-            ~setConfirmButtonDataRef,
-            ~setDynamicFieldsDataRef,
-          )
+          hoc.componentHoc(~isScreenFocus=indexInFocus == index, ~setConfirmButtonDataRef)
         )
 
         let route: TabViewType.route = {

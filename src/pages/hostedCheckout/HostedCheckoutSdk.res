@@ -7,26 +7,18 @@ let make = () => {
   let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
-  let (dynamicFieldsDataRef, setDynamicFieldsDataRef) = React.useState(_ =>
-    DynamicFieldsTypes.defaultDynamicFieldsState
-  )
+
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let {tabArr, elementArr} = PMListModifier.useListModifier()
-  let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
 
   <View style={viewStyle(~maxWidth=450.->dp, ~alignSelf=#center, ~width=100.->pct, ())}>
     <Space height=20. />
     <WalletView elementArr />
     <CustomTabView
-      hocComponentArr=tabArr
-      loading={allApiData.sessions == Loading}
-      setConfirmButtonDataRef
-      setDynamicFieldsDataRef
-      indexInFocus
-      setIndexInFocus
+      hocComponentArr=tabArr loading={allApiData.sessions == Loading} setConfirmButtonDataRef
     />
     <Space />
-    <GlobalDynamicFields dynamicFieldsDataRef />
+    <GlobalDynamicFields dynamicFieldsDataRef=DynamicFieldsTypes.defaultDynamicFieldsState />
     {confirmButtonDataRef}
   </View>
 }

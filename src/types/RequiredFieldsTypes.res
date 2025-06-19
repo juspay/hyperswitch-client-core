@@ -3,7 +3,7 @@ external importStatesAndCountries: string => promise<JSON.t> = "import"
 
 type addressCountry = UseContextData | UseBackEndData(array<string>)
 
-type payment_method_types_in_bank_debit = BECS | SEPA | BACS | ACH |Other
+type payment_method_types_in_bank_debit = BECS | SEPA | BACS | ACH | Other
 
 type paymentMethodsFields =
   | Email
@@ -258,9 +258,11 @@ let numberOfDigitsValidation = (
       None
     } else {
       Some(
-        localeObject.enterValidDigitsText ++ " " ++
+        localeObject.enterValidDigitsText ++
+        " " ++
         digits->Int.toString ++
-        localeObject.digitsText ++ " " ++
+        localeObject.digitsText ++
+        " " ++
         display_name->Option.getOr("")->Utils.underscoresToSpaces,
       )
     }

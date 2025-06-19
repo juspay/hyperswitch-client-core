@@ -145,7 +145,10 @@ let make = (
 
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      return_url: ?Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       ?email,
       // customer_id: ?switch nativeProp.configuration.customer {
       // | Some(customer) => customer.id
@@ -265,27 +268,30 @@ let make = (
         setMissingFieldsData(_ => missingFields)
         setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields))
         setLoading(FillingDetails)
-        Console.log2("Switching to WALLET_MISSING_FIELDS view with actual missing fields:", missingFields)
+        Console.log2(
+          "Switching to WALLET_MISSING_FIELDS view with actual missing fields:",
+          missingFields,
+        )
       } else {
-      let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
-        walletType.required_field,
-        ~shippingAddress,
-        ~billingAddress,
-        ~email=obj.email,
-      )
-      payment_method_data->Dict.set(
-        walletType.payment_method,
-        [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
-        ->Dict.fromArray
-        ->JSON.Encode.object,
-      )
-      processRequest(
-        ~payment_method_data=payment_method_data->JSON.Encode.object,
-        ~email=?obj.email,
-        ~shipping=shippingAddress,
-        ~billing=billingAddress,
-        (),
-      )
+        let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
+          walletType.required_field,
+          ~shippingAddress,
+          ~billingAddress,
+          ~email=obj.email,
+        )
+        payment_method_data->Dict.set(
+          walletType.payment_method,
+          [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        )
+        processRequest(
+          ~payment_method_data=payment_method_data->JSON.Encode.object,
+          ~email=?obj.email,
+          ~shipping=shippingAddress,
+          ~billing=billingAddress,
+          (),
+        )
       }
     | "Cancel" =>
       setLoading(FillingDetails)

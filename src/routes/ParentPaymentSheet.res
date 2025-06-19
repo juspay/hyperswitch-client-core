@@ -23,10 +23,6 @@ let make = () => {
     setConfirmButtonDataRef(_ => confirmButtonDataRef)
   }, [setConfirmButtonDataRef])
 
-  let (dynamicFieldsDataRef, setDynamicFieldsDataRef) = React.useState(_ =>
-    DynamicFieldsTypes.defaultDynamicFieldsState
-  )
-
   let enablePartialLoading = nativeProp.configuration.enablePartialLoading
   let canLoadSDK = useSDKLoadCheck(~enablePartialLoading)
 
@@ -37,6 +33,15 @@ let make = () => {
       | Some(data) => <ACHBankDetails data />
       | _ => React.null
       }
+    | WALLET_MISSING_FIELDS(requiredFields) =>
+      <React.Fragment>
+        <GlobalDynamicFields
+          dynamicFieldsDataRef={...DynamicFieldsTypes.defaultDynamicFieldsState, requiredFields}
+        />
+        <Space height=15. />
+        <GlobalConfirmButton confirmButtonDataRef />
+        <Space height=15. />
+      </React.Fragment>
     | _ =>
       <React.Fragment>
         {switch (
@@ -47,18 +52,15 @@ let make = () => {
         | (_, None, _)
         | (Loading, _, _) =>
           nativeProp.configuration.defaultView
-            ? <PaymentSheet setConfirmButtonDataRef setDynamicFieldsDataRef dynamicFieldsDataRef />
+            ? <PaymentSheet setConfirmButtonDataRef />
             : <SdkLoadingScreen />
         | (Some(data), _, _) =>
           paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
           data.pmList->Option.getOr([])->Array.length > 0 &&
           allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
-            ? <SavedPaymentScreen
-                setConfirmButtonDataRef savedPaymentMethordContextObj=data
-              />
-            : <PaymentSheet setConfirmButtonDataRef setDynamicFieldsDataRef dynamicFieldsDataRef />
-        | (None, _, _) =>
-          <PaymentSheet setConfirmButtonDataRef setDynamicFieldsDataRef dynamicFieldsDataRef />
+            ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
+            : <PaymentSheet setConfirmButtonDataRef />
+        | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
         }}
         <GlobalConfirmButton confirmButtonDataRef />
         <Space height=15. />
