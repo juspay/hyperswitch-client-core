@@ -79,8 +79,6 @@ let useListModifier = () => {
                     isScreenFocus
                     redirectProp={PAY_LATER(payLaterVal)}
                     fields
-                    isDynamicFields={payLaterVal.payment_method_type !== "klarna"}
-                    dynamicFields=payLaterVal.required_field
                     setConfirmButtonDataRef
                   />,
               })
@@ -211,12 +209,7 @@ let useListModifier = () => {
               name: fields.text,
               componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
                 <Redirect
-                  isScreenFocus
-                  isDynamicFields=true
-                  dynamicFields=walletVal.required_field
-                  redirectProp=WALLET(walletVal)
-                  fields
-                  setConfirmButtonDataRef
+                  isScreenFocus redirectProp=WALLET(walletVal) fields setConfirmButtonDataRef
                 />,
             })
           }
@@ -260,12 +253,7 @@ let useListModifier = () => {
             name: fields.text,
             componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
               <Redirect
-                isScreenFocus
-                isDynamicFields={true}
-                dynamicFields={bankDebitVal.required_field}
-                redirectProp=BANK_DEBIT(bankDebitVal)
-                fields
-                setConfirmButtonDataRef
+                isScreenFocus redirectProp=BANK_DEBIT(bankDebitVal) fields setConfirmButtonDataRef
               />,
           })
         | BANK_TRANSFER(bankTransferVal) =>
@@ -281,8 +269,6 @@ let useListModifier = () => {
             componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
               <Redirect
                 isScreenFocus
-                isDynamicFields={true}
-                dynamicFields={bankTransferVal.required_field}
                 redirectProp=BANK_TRANSFER(bankTransferVal)
                 fields
                 setConfirmButtonDataRef
