@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.0...v1.6.1) (2025-06-20)
+
+
+### Bug Fixes
+
+* state field empty fix ([62f714e](https://github.com/juspay/hyperswitch-client-core/commit/62f714e8e416eb036b1b7cc90135ab113fa7e19a))
+
 # [1.6.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.5.0...v1.6.0) (2025-06-20)
 
 
