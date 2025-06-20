@@ -236,7 +236,7 @@ let applePayItemToObjMapper = dict => {
   transactionIdentifier: dict->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null),
   email: ?getOptionString(dict, "email"),
   billingContact: ?getBillingContact(dict, "billing_contact"),
-  shippingAddress: ?getBillingContact(dict, "shippingAddress"),
+  shippingAddress: ?getBillingContact(dict, "shipping_contact"),
 }
 
 let arrayJsonToCamelCase = arr => {
@@ -377,17 +377,19 @@ let getFlattenData = (
         } else {
           shippingAddress
         }
-        (
+        let val1 =
           primaryAddress
           ->getFirstName
           ->Option.orElse(fallbackAddress->getFirstName)
           ->Option.getOr("")
-          ->JSON.Encode.string,
+        let val2 =
           primaryAddress
           ->getLastName
           ->Option.orElse(fallbackAddress->getLastName)
           ->Option.getOr("")
-          ->JSON.Encode.string,
+        (
+          val1 === "" ? JSON.Encode.null : val1->JSON.Encode.string,
+          val2 === "" ? JSON.Encode.null : val2->JSON.Encode.string,
         )
       }
       if firstName != JSON.Encode.null {

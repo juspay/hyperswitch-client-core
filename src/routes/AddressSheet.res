@@ -302,7 +302,7 @@ let make = (
     )
 
     None
-  }, (isAllDynamicFieldValid, walletType, error))
+  }, (isAllDynamicFieldValid, walletType, error, dynamicFieldsJson))
 
   <React.Fragment>
     <DynamicFields

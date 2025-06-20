@@ -66,7 +66,6 @@ let make = (
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
   }
 
-
   React.useEffect0(() => {
     setPaymentScreenType(SAVEDCARDSCREEN)
 
@@ -139,7 +138,10 @@ let make = (
 
     let body: PaymentMethodListType.redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      return_url: ?Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       ?email,
       payment_method,
       payment_method_type,
@@ -202,15 +204,16 @@ let make = (
       }
       let shippingAddress = obj.shippingDetails
 
-      let walletType = allApiData.paymentList
-        ->Array.find(pm => 
+      let walletType =
+        allApiData.paymentList
+        ->Array.find(pm =>
           switch pm {
-          | WALLET(walletData) => 
+          | WALLET(walletData) =>
             walletData.payment_method_type == selectedObj.walletName->SdkTypes.walletTypeToStrMapper
           | _ => false
           }
         )
-        ->Option.flatMap(pm => 
+        ->Option.flatMap(pm =>
           switch pm {
           | WALLET(walletData) => Some(walletData)
           | _ => None
@@ -229,9 +232,16 @@ let make = (
             ~extractedData=checkWalletAddress,
             ~requiredFields=walletTypeData.required_field,
           )
-          if missingFields->Array.length > 0 {
+
+          if (
+            missingFields
+            ->Array.filter(x => x.value == "")
+            ->Array.length > 0
+          ) {
             setMissingFieldsData(_ => missingFields)
-            setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletTypeData, GooglePayData(obj)))
+            setPaymentScreenType(
+              WALLET_MISSING_FIELDS(missingFields, walletTypeData, GooglePayData(obj)),
+            )
             setLoading(FillingDetails)
           } else {
             let payment_method_data =
@@ -316,15 +326,17 @@ let make = (
         let billingAddress = var->GooglePayTypeNew.getBillingContact("billing_contact")
         let shippingAddress = var->GooglePayTypeNew.getBillingContact("shipping_contact")
 
-        let walletType = allApiData.paymentList
-          ->Array.find(pm => 
+        let walletType =
+          allApiData.paymentList
+          ->Array.find(pm =>
             switch pm {
-            | WALLET(walletData) => 
-              walletData.payment_method_type == selectedObj.walletName->SdkTypes.walletTypeToStrMapper
+            | WALLET(walletData) =>
+              walletData.payment_method_type ==
+                selectedObj.walletName->SdkTypes.walletTypeToStrMapper
             | _ => false
             }
           )
-          ->Option.flatMap(pm => 
+          ->Option.flatMap(pm =>
             switch pm {
             | WALLET(walletData) => Some(walletData)
             | _ => None
@@ -342,10 +354,17 @@ let make = (
               ~extractedData=checkWalletAddress,
               ~requiredFields=walletTypeData.required_field,
             )
-            if missingFields->Array.length > 0 {
+
+            if (
+              missingFields
+              ->Array.filter(x => x.value == "")
+              ->Array.length > 0
+            ) {
               let applePayObj = var->GooglePayTypeNew.applePayItemToObjMapper
               setMissingFieldsData(_ => missingFields)
-              setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletTypeData, ApplePayData(applePayObj)))
+              setPaymentScreenType(
+                WALLET_MISSING_FIELDS(missingFields, walletTypeData, ApplePayData(applePayObj)),
+              )
               setLoading(FillingDetails)
             } else {
               let paymentData =

@@ -79,7 +79,10 @@ let generateCardConfirmBody = (
   let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
   {
     client_secret: nativeProp.clientSecret,
-    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+    return_url: ?Utils.getReturnUrl(
+      ~appId=nativeProp.hyperParams.appId,
+      ~appURL=allApiData.additionalPMLData.redirect_url,
+    ),
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
     connector: ?switch prop.card_networks {
@@ -194,6 +197,56 @@ let getMissingFieldsForDynamicRendering = (
   ~extractedData: Dict.t<JSON.t>,
   ~requiredFields: RequiredFieldsTypes.required_fields,
 ) => {
+  // let fieldsToProcess = collectBillingFromWallets
+  //   ? requiredFields
+  //   : {
+  //       let hasAnyBillingFieldWithNullValue = requiredFields->Array.reduce(false, (acc, field) => {
+  //         let isBillingField = RequiredFieldsTypes.getIsBillingFieldByPath(field)
+  //         let hasNullOrEmptyValue = field.value === "" || field.value === "null"
+  //         acc || (isBillingField && hasNullOrEmptyValue)
+  //       })
+
+  //       if hasAnyBillingFieldWithNullValue {
+  //         let filteredFields = requiredFields->Array.filter(field => {
+  //           RequiredFieldsTypes.getIsBillingFieldByPath(field)
+  //         })
+  //         filteredFields
+  //       } else {
+  //         []
+  //       }
+  //     }
+
+  // let result =
+  //   fieldsToProcess
+  //   ->Array.map(field => {
+  //     let existingValue = collectBillingFromWallets
+  //       ? switch field.required_field {
+  //         | StringField(path) =>
+  //           extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+  //         | FullNameField(firstName, lastName) => {
+  //             let firstVal =
+  //               extractedData
+  //               ->Dict.get(firstName)
+  //               ->Option.flatMap(JSON.Decode.string)
+  //               ->Option.getOr("")
+  //             let lastVal =
+  //               extractedData
+  //               ->Dict.get(lastName)
+  //               ->Option.flatMap(JSON.Decode.string)
+  //               ->Option.getOr("")
+  //             [firstVal, lastVal]->Array.filter(name => name !== "")->Array.join(" ")
+  //           }
+  //         }
+  //       : field.value
+
+  //     {...field, value: existingValue}
+  //   })
+  //   ->Array.filter(field => {
+  //     let isEmpty = field.value === "" || field.value === "null"
+  //     isEmpty
+  //   })
+  // result
+
   requiredFields
   // ->Array.filter(field => {
   //   switch field.required_field {
@@ -221,3 +274,23 @@ let getMissingFieldsForDynamicRendering = (
     {...field, value: existingValue}
   })
 }
+
+// let checkNoOfMissingFields = (
+//   ~extractedData: Dict.t<JSON.t>,
+//   ~requiredFields: RequiredFieldsTypes.required_fields,
+//   ~collectBillingFromWallets: bool,
+// ) => {
+//   requiredFields->Array.filter(field => {
+//     switch field.required_field {
+//     | StringField(path) =>
+//       extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("") === ""
+//     | FullNameField(firstName, lastName) => {
+//         let firstVal =
+//           extractedData->Dict.get(firstName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+//         let lastVal =
+//           extractedData->Dict.get(lastName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+//         firstVal === "" || lastVal === ""
+//       }
+//     }
+//   })
+// }

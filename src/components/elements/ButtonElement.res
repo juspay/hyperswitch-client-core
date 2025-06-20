@@ -262,7 +262,11 @@ let make = (
         ~extractedData=checkWalletAddress,
         ~requiredFields=walletType.required_field,
       )
-      if missingFields->Array.length > 0 {
+      if (
+        missingFields
+        ->Array.filter(x => x.value == "")
+        ->Array.length > 0
+      ) {
         setMissingFieldsData(_ => missingFields)
         setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletType, GooglePayData(obj)))
         setLoading(FillingDetails)
@@ -400,8 +404,7 @@ let make = (
 
           let billingAddress = var->GooglePayTypeNew.getBillingContact("billing_contact")
           let shippingAddress = var->GooglePayTypeNew.getBillingContact("shipping_contact")
- 
-         let checkWalletAddress = GooglePayTypeNew.extractPaymentMethodDataFromWallet(
+          let checkWalletAddress = GooglePayTypeNew.extractPaymentMethodDataFromWallet(
             walletType.required_field,
             ~billingAddress,
             ~shippingAddress,
@@ -410,10 +413,17 @@ let make = (
             ~extractedData=checkWalletAddress,
             ~requiredFields=walletType.required_field,
           )
-          if missingFields->Array.length > 0 {
+
+          if (
+            missingFields
+            ->Array.filter(x => x.value == "")
+            ->Array.length > 0
+          ) {
             let applePayObj = var->GooglePayTypeNew.applePayItemToObjMapper
             setMissingFieldsData(_ => missingFields)
-            setPaymentScreenType(WALLET_MISSING_FIELDS(missingFields, walletType, ApplePayData(applePayObj)))
+            setPaymentScreenType(
+              WALLET_MISSING_FIELDS(missingFields, walletType, ApplePayData(applePayObj)),
+            )
             setLoading(FillingDetails)
           } else {
             let paymentData =
@@ -424,7 +434,7 @@ let make = (
               ]
               ->Dict.fromArray
               ->JSON.Encode.object
-           
+
             let payment_method_data = GooglePayTypeNew.extractPaymentMethodData(
               walletType.required_field,
               ~shippingAddress,
@@ -442,9 +452,9 @@ let make = (
               ~payment_method_data=payment_method_data->JSON.Encode.object,
               ~shipping=shippingAddress,
               ~billing=billingAddress,
-             ~email=?billingAddress
-            ->GooglePayTypeNew.getEmailAddress
-            ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
+              ~email=?billingAddress
+              ->GooglePayTypeNew.getEmailAddress
+              ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
               (),
             )
           }
