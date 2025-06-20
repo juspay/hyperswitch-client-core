@@ -261,6 +261,7 @@ let make = (
       let missingFields = PaymentUtils.getMissingFieldsForDynamicRendering(
         ~extractedData=checkWalletAddress,
         ~requiredFields=walletType.required_field,
+        ~collectBillingFromWallets=allApiData.additionalPMLData.collect_billing_details_from_wallets,
       )
       if (
         missingFields
@@ -412,6 +413,7 @@ let make = (
           let missingFields = PaymentUtils.getMissingFieldsForDynamicRendering(
             ~extractedData=checkWalletAddress,
             ~requiredFields=walletType.required_field,
+            ~collectBillingFromWallets=allApiData.additionalPMLData.collect_billing_details_from_wallets,
           )
 
           if (

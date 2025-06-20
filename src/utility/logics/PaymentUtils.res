@@ -196,81 +196,29 @@ let getCardNetworks = cardNetworks => {
 let getMissingFieldsForDynamicRendering = (
   ~extractedData: Dict.t<JSON.t>,
   ~requiredFields: RequiredFieldsTypes.required_fields,
+  ~collectBillingFromWallets: bool,
 ) => {
-  // let fieldsToProcess = collectBillingFromWallets
-  //   ? requiredFields
-  //   : {
-  //       let hasAnyBillingFieldWithNullValue = requiredFields->Array.reduce(false, (acc, field) => {
-  //         let isBillingField = RequiredFieldsTypes.getIsBillingFieldByPath(field)
-  //         let hasNullOrEmptyValue = field.value === "" || field.value === "null"
-  //         acc || (isBillingField && hasNullOrEmptyValue)
-  //       })
+  requiredFields->Array.map(field => {
+    let existingValue = collectBillingFromWallets
+      ? switch field.required_field {
+        | StringField(path) =>
+          extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+        | FullNameField(firstName, lastName) => {
+            let firstVal =
+              extractedData
+              ->Dict.get(firstName)
+              ->Option.flatMap(JSON.Decode.string)
+              ->Option.getOr("")
+            let lastVal =
+              extractedData
+              ->Dict.get(lastName)
+              ->Option.flatMap(JSON.Decode.string)
+              ->Option.getOr("")
+            [firstVal, lastVal]->Array.filter(name => name !== "")->Array.join(" ")
+          }
+        }
+      : field.value
 
-  //       if hasAnyBillingFieldWithNullValue {
-  //         let filteredFields = requiredFields->Array.filter(field => {
-  //           RequiredFieldsTypes.getIsBillingFieldByPath(field)
-  //         })
-  //         filteredFields
-  //       } else {
-  //         []
-  //       }
-  //     }
-
-  // let result =
-  //   fieldsToProcess
-  //   ->Array.map(field => {
-  //     let existingValue = collectBillingFromWallets
-  //       ? switch field.required_field {
-  //         | StringField(path) =>
-  //           extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-  //         | FullNameField(firstName, lastName) => {
-  //             let firstVal =
-  //               extractedData
-  //               ->Dict.get(firstName)
-  //               ->Option.flatMap(JSON.Decode.string)
-  //               ->Option.getOr("")
-  //             let lastVal =
-  //               extractedData
-  //               ->Dict.get(lastName)
-  //               ->Option.flatMap(JSON.Decode.string)
-  //               ->Option.getOr("")
-  //             [firstVal, lastVal]->Array.filter(name => name !== "")->Array.join(" ")
-  //           }
-  //         }
-  //       : field.value
-
-  //     {...field, value: existingValue}
-  //   })
-  //   ->Array.filter(field => {
-  //     let isEmpty = field.value === "" || field.value === "null"
-  //     isEmpty
-  //   })
-  // result
-
-  requiredFields
-  // ->Array.filter(field => {
-  //   switch field.required_field {
-  //   | StringField(path) =>
-  //       extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("") === ""
-  //   | FullNameField(firstName, lastName) => {
-  //       let firstVal = extractedData->Dict.get(firstName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-  //       let lastVal = extractedData->Dict.get(lastName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-  //       firstVal === "" || lastVal === ""
-  //     }
-  //   }
-  // })
-  ->Array.map(field => {
-    let existingValue = switch field.required_field {
-    | StringField(path) =>
-      extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-    | FullNameField(firstName, lastName) => {
-        let firstVal =
-          extractedData->Dict.get(firstName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-        let lastVal =
-          extractedData->Dict.get(lastName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-        [firstVal, lastVal]->Array.filter(name => name !== "")->Array.join(" ")
-      }
-    }
     {...field, value: existingValue}
   })
 }

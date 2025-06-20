@@ -559,6 +559,12 @@ let getIsBillingField = requiredFieldType => {
   }
 }
 
+let getIsBillingFieldByPath = (requiredField: required_fields_type) => {
+  requiredField.required_field
+  ->getRequiredFieldName
+  ->String.includes("billing")
+}
+
 let getIsAnyBillingDetailEmpty = (requiredFields: array<required_fields_type>) => {
   requiredFields->Array.reduce(false, (acc, requiredField) => {
     if getIsBillingField(requiredField.field_type) {
