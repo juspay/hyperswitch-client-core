@@ -20,8 +20,8 @@ let make = (
   ~isValid=true,
   ~isLoading=false,
   ~isCountryStateFields=false,
-  ~showIcon=false,
   ~style=?,
+  ~showValue=false,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -54,7 +54,7 @@ let make = (
       disabled activeOpacity=1. onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
         state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
-        | Some(y) => showIcon ? y.icon->Option.getOr("") : y.label
+        | Some(y) => showValue ? y.value : y.label
         | _ => value->Option.getOr("")
         }}
         setState={_ => ()}

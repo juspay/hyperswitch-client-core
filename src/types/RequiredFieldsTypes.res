@@ -4,15 +4,7 @@ external importStatesAndCountries: string => promise<JSON.t> = "import"
 type addressCountry = UseContextData | UseBackEndData(array<string>)
 
 type payment_method_types_in_bank_debit = BECS | SEPA | BACS | ACH | Other
-type phoneCountryCode = {
-  country_code: string,
-  country_name: string,
-  country_flag?: string,
-  phone_number_code: string,
-  validation_regex?: string,
-  format_example?: string,
-  format_regex?: string,
-}
+
 type paymentMethodsFields =
   | Email
   | FullName
@@ -797,7 +789,7 @@ let getKeysValArray = (
   isSaveCardsFlow,
   clientCountry,
   countries,
-  countryCodes: array<phoneCountryCode>,
+  countryCodes: CountryStateDataHookTypes.phoneCountryCodes,
 ) => {
   requiredFields->Array.reduce(Dict.make(), (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
@@ -855,7 +847,7 @@ let getKeysValArray = (
         let (phoneVal, isPhoneValid) =
           phoneVal === ""
             ? (JSON.Encode.null, Some("Enter Valid Phone Number"))
-            : (JSON.Encode.string(codeValue ++ " " ++ phoneVal), None)
+            : (JSON.Encode.string(phoneVal), None)
         acc->Dict.set(code, (codeValue->JSON.Encode.string, isCodeValid))
         acc->Dict.set(phone, (phoneVal, isPhoneValid))
       | _ => ()

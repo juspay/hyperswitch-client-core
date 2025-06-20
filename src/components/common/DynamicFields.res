@@ -78,13 +78,18 @@ module RenderField = {
       | (_, Some(lastName)) => lastName
       | _ => ""
       }
-    | PhoneField(_, phoneNumber) =>
+    | PhoneField(phoneCode, phoneNumber) =>
+      let phoneCodeValue =
+        finalJsonDict
+        ->Dict.get(phoneCode)
+        ->Option.map(((value, _)) => value->JSON.Decode.string)
+        ->Option.getOr(None)
       let phoneNumberValue =
         finalJsonDict
         ->Dict.get(phoneNumber)
         ->Option.map(((value, _)) => value->JSON.Decode.string)
         ->Option.getOr(None)
-      phoneNumberValue->Option.getOr("")
+      phoneCodeValue->Option.getOr("") ++ " " ++ phoneNumberValue->Option.getOr("")
     }
 
     let initialValue = switch value {
@@ -183,7 +188,7 @@ module RenderField = {
 
           | PhoneField(phoneCodePath, phoneNumberPath) =>
             let phoneCodeVal = text->RequiredFieldsTypes.getFirstValue->JSON.Encode.string
-            let phoneNumberVal = text->RequiredFieldsTypes.getLastValue->Validation.clearSpaces
+            let phoneNumberVal = text->RequiredFieldsTypes.getLastValue
 
             let errorMessage = RequiredFieldsTypes.checkIsValid(
               ~text=phoneNumberVal,
@@ -196,7 +201,7 @@ module RenderField = {
             setFinalJsonDict(prev => {
               let newData = Dict.assign(Dict.make(), prev)
               newData->Dict.set(phoneCodePath, (phoneCodeVal, None))
-              newData->Dict.set(phoneNumberPath, (text->JSON.Encode.string, errorMessage))
+              newData->Dict.set(phoneNumberPath, (phoneNumberVal->JSON.Encode.string, errorMessage))
               newData
             })
           }
@@ -220,13 +225,11 @@ module RenderField = {
       )
     }
     let onChangePhone = text => {
-      let phone = text->RequiredFieldsTypes.getLastValue
-
       setVal(prev => Some(
         prev->Option.getOr("")->RequiredFieldsTypes.getFirstValue ++
         " " ++
         RequiredFieldsTypes.allowOnlyDigits(
-          ~text=Some(phone),
+          ~text=Some(text),
           ~fieldType=required_fields_type.field_type,
           ~prev,
           ~paymentMethodType,
@@ -370,11 +373,11 @@ module RenderField = {
             | Loading => true
             | _ => false
             }}
-            showIcon=true
+            showValue=true
             style={viewStyle(~flex=1., ())}
           />
           <CustomInput
-            state={val->Option.getOr("")}
+            state={val->Option.getOr("")->RequiredFieldsTypes.getLastValue}
             setState=onChangePhone
             placeholder={placeholder()}
             keyboardType={RequiredFieldsTypes.getKeyboardType(
@@ -461,7 +464,6 @@ let make = (
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
   let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
-  let (countryCodes, setCountryCodes) = React.useState(_ => [])
 
   let clientCountry = Utils.getClientCountry(
     switch statesAndCountry {
@@ -473,8 +475,7 @@ let make = (
 
   let initialKeysValDict = React.useMemo(() => {
     switch statesAndCountry {
-    | FetchData(statesAndCountryData)
-    | Localdata(statesAndCountryData) =>
+    | FetchData(statesAndCountryData) | Localdata(statesAndCountryData) =>
       requiredFields
       ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
       ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
@@ -482,18 +483,13 @@ let make = (
         isSaveCardsFlow,
         clientCountry.isoAlpha2,
         statesAndCountryData.countries->Array.map(item => {item.isoAlpha2}),
-        countryCodes,
+        statesAndCountryData.phoneCountryCodes,
       )
     | _ =>
       requiredFields
       ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
       ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
-      ->RequiredFieldsTypes.getKeysValArray(
-        isSaveCardsFlow,
-        clientCountry.isoAlpha2,
-        [],
-        countryCodes,
-      )
+      ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2, [], [])
     }
   }, (
     requiredFields,
@@ -503,8 +499,9 @@ let make = (
     shouldRenderShippingFields,
     statesAndCountry,
     displayPreValueFields,
-    countryCodes,
   ))
+
+  Console.log2("initialKeysValDict", initialKeysValDict)
 
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
 
@@ -608,49 +605,6 @@ let make = (
   //   }
   //   None
   // }, [statesAndCountry])
-  React.useEffect0(() => {
-    RequiredFieldsTypes.importStatesAndCountries(
-      "./../../utility/reusableCodeFromWeb/Phone_number.json",
-    )
-    ->Promise.then(async json => {
-      switch json->Js.Json.decodeObject {
-      | Some(res) =>
-        res
-        ->Js.Dict.get("countries")
-        ->Option.getOr([]->Js.Json.Array)
-        ->Js.Json.decodeArray
-        ->Option.getOr([])
-        ->Array.map(
-          item => {
-            switch item->Js.Json.decodeObject {
-            | Some(res) => {
-                phone_number_code: Utils.getString(res, "phone_number_code", ""),
-                country_name: Utils.getString(res, "country_name", ""),
-                country_code: Utils.getString(res, "country_code", ""),
-
-                // phone_number_code: Utils.getString(res, "phone_number_code", ""),
-                // validation_regex: Utils.getString(res, "validation_regex", ""),
-                // format_example: Utils.getString(res, "format_example", ""),
-                // format_regex: Utils.getString(res, "format_regex", ""),
-              }
-            | None => {
-                phone_number_code: "+1",
-                country_name: "United States",
-                country_code: "US",
-              }
-            }
-          },
-        )
-      | None => []
-      }
-    })
-    ->Promise.thenResolve(v => {
-      setCountryCodes(_ => v)
-    })
-    ->ignore
-
-    None
-  })
 
   let isAddressCountryField = fieldType =>
     switch fieldType.field_type {
@@ -686,11 +640,15 @@ let make = (
     }
     None
   }, (statesAndCountry, clientCountry.isoAlpha2))
-  let mappedCountryCodes = countryCodes->Array.map((countryCode): CustomPicker.customPickerType => {
-    label: countryCode.country_name ++ " " ++ countryCode.phone_number_code,
-    value: countryCode.phone_number_code,
-    icon: Utils.getCountryFlags(countryCode.country_code),
-  })
+  let mappedCountryCodes = switch statesAndCountry {
+  | FetchData(statesAndCountry) | Localdata(statesAndCountry) =>
+    statesAndCountry.phoneCountryCodes->Array.map((countryCode): CustomPicker.customPickerType => {
+      label: countryCode.country_name ++ " " ++ countryCode.phone_number_code,
+      value: countryCode.phone_number_code,
+      icon: Utils.getCountryFlags(countryCode.country_code),
+    })
+  | Loading => []
+  }
 
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
