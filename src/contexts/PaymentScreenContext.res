@@ -1,5 +1,16 @@
+type walletData =
+  | GooglePayData(GooglePayTypeNew.paymentDataFromGPay)
+  | ApplePayData(GooglePayTypeNew.paymentDataFromApplePay)
+
 type paymentScreenType =
-  PAYMENTSHEET | SAVEDCARDSCREEN | BANK_TRANSFER(option<PaymentConfirmTypes.ach_credit_transfer>)
+  | PAYMENTSHEET
+  | SAVEDCARDSCREEN
+  | BANK_TRANSFER(option<PaymentConfirmTypes.ach_credit_transfer>)
+  | WALLET_MISSING_FIELDS(
+      RequiredFieldsTypes.required_fields,
+      PaymentMethodListType.payment_method_types_wallet,
+      walletData,
+    )
 let dafaultVal = SAVEDCARDSCREEN
 
 let paymentScreenTypeContext = React.createContext((dafaultVal, (_: paymentScreenType) => ()))

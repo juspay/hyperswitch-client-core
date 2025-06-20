@@ -79,7 +79,10 @@ let generateCardConfirmBody = (
   let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
   {
     client_secret: nativeProp.clientSecret,
-    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+    return_url: ?Utils.getReturnUrl(
+      ~appId=nativeProp.hyperParams.appId,
+      ~appURL=allApiData.additionalPMLData.redirect_url,
+    ),
     payment_method: prop.payment_method,
     payment_method_type: ?Some(prop.payment_method_type),
     connector: ?switch prop.card_networks {
@@ -189,3 +192,53 @@ let getCardNetworks = cardNetworks => {
   | None => []
   }
 }
+
+let getMissingFieldsForDynamicRendering = (
+  ~extractedData: Dict.t<JSON.t>,
+  ~requiredFields: RequiredFieldsTypes.required_fields,
+  ~collectBillingFromWallets: bool,
+) => {
+  requiredFields->Array.map(field => {
+    let existingValue = collectBillingFromWallets
+      ? switch field.required_field {
+        | StringField(path) | EmailField(path) =>
+          extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+        | FullNameField(firstName, lastName) | PhoneField(firstName, lastName) => {
+            let firstVal =
+              extractedData
+              ->Dict.get(firstName)
+              ->Option.flatMap(JSON.Decode.string)
+              ->Option.getOr("")
+            let lastVal =
+              extractedData
+              ->Dict.get(lastName)
+              ->Option.flatMap(JSON.Decode.string)
+              ->Option.getOr("")
+            [firstVal, lastVal]->Array.filter(name => name !== "")->Array.join(" ")
+          }
+        }
+      : field.value
+
+    {...field, value: existingValue}
+  })
+}
+
+// let checkNoOfMissingFields = (
+//   ~extractedData: Dict.t<JSON.t>,
+//   ~requiredFields: RequiredFieldsTypes.required_fields,
+//   ~collectBillingFromWallets: bool,
+// ) => {
+//   requiredFields->Array.filter(field => {
+//     switch field.required_field {
+//     | StringField(path) =>
+//       extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("") === ""
+//     | FullNameField(firstName, lastName) => {
+//         let firstVal =
+//           extractedData->Dict.get(firstName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+//         let lastVal =
+//           extractedData->Dict.get(lastName)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+//         firstVal === "" || lastVal === ""
+//       }
+//     }
+//   })
+// }
