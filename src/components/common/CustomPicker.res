@@ -20,6 +20,8 @@ let make = (
   ~isValid=true,
   ~isLoading=false,
   ~isCountryStateFields=false,
+  ~showIcon=false,
+  ~style=?,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -47,11 +49,12 @@ let make = (
     setSearchInput(_ => None)
     None
   }, [isModalVisible])
-  <View>
-    <CustomTouchableOpacity disabled activeOpacity=1. onPress={_ => setIsModalVisible(prev => !prev)}>
+  <View ?style>
+    <CustomTouchableOpacity
+      disabled activeOpacity=1. onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
         state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
-        | Some(y) => y.label
+        | Some(y) => showIcon ? y.icon->Option.getOr("") : y.label
         | _ => value->Option.getOr("")
         }}
         setState={_ => ()}
@@ -81,7 +84,7 @@ let make = (
       animationType=#slide
       onShow={() => {
         let _ = setTimeout(() => {
-          switch searchInputRef.current->Nullable.toOption{
+          switch searchInputRef.current->Nullable.toOption {
           | Some(input) => input->TextInputElement.focus
           | None => ()
           }

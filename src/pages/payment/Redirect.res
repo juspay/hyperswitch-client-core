@@ -976,8 +976,8 @@ let make = (
               keyToTrigerButtonClickError
               savedCardsData=None
               paymentMethodType={bankDebitPMType}
-            /> // TO DO: Add Blik Payment Method
-            <Space />
+            />
+            <Space height=25. />
             <RedirectionText />
           </>}
     </ErrorBoundary>

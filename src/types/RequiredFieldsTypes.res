@@ -4,7 +4,15 @@ external importStatesAndCountries: string => promise<JSON.t> = "import"
 type addressCountry = UseContextData | UseBackEndData(array<string>)
 
 type payment_method_types_in_bank_debit = BECS | SEPA | BACS | ACH | Other
-
+type phoneCountryCode = {
+  country_code: string,
+  country_name: string,
+  country_flag?: string,
+  phone_number_code: string,
+  validation_regex?: string,
+  format_example?: string,
+  format_regex?: string,
+}
 type paymentMethodsFields =
   | Email
   | FullName
@@ -35,7 +43,9 @@ type paymentMethodsFields =
 
 type requiredField =
   | StringField(string)
+  | EmailField(string)
   | FullNameField(string, string)
+  | PhoneField(string, string)
 
 type required_fields_type = {
   required_field: requiredField,
@@ -48,8 +58,10 @@ type required_fields = array<required_fields_type>
 
 let getRequiredFieldName = (requiredField: requiredField) => {
   switch requiredField {
-  | StringField(name) => name
+  | StringField(name)
+  | EmailField(name) => name
   | FullNameField(firstName, _lastName) => firstName
+  | PhoneField(_code, phone) => phone
   }
 }
 
@@ -205,6 +217,84 @@ let mergeNameFields = (arr, ~fieldType, ~displayName=?) => {
   }
 }
 
+let mergeEmailFields = arr => {
+  let emailFields = arr->Array.filter(requiredField => {
+    requiredField.field_type === Email
+  })
+
+  switch emailFields[0] {
+  | Some(email) =>
+    arr->Array.filterMap(x => {
+      if x.field_type !== Email || x === email {
+        {
+          ...x,
+          required_field: EmailField(x.required_field->getRequiredFieldName),
+          value: x.value,
+        }->Some
+      } else {
+        None
+      }
+    })
+  | None => arr
+  }
+}
+
+let getFirstValue = (text, ~delimiter=" ") => {
+  if text !== "" {
+    text->String.split(delimiter)->Array.get(0)->Option.getOr("")
+  } else {
+    text
+  }
+}
+
+let getLastValue = (text, ~delimiter=" ") => {
+  if text !== "" {
+    text->String.split(delimiter)->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
+  } else {
+    text
+  }
+}
+
+let mergePhoneCodeWithNumber = (arr, ~fieldType) => {
+  let phoneNumberFields = arr->Array.find(requiredField => {
+    requiredField.required_field->getRequiredFieldName->String.includes(fieldType) &&
+      requiredField.field_type === PhoneNumber
+  })
+
+  let phoneCountryCodeFields = arr->Array.find(requiredField => {
+    requiredField.required_field->getRequiredFieldName->String.includes(fieldType) &&
+      requiredField.field_type === PhoneCountryCode
+  })
+
+  switch (phoneCountryCodeFields, phoneNumberFields) {
+  | (Some(phoneCountryCodeField), Some(phoneNumberField)) =>
+    let value = switch (phoneCountryCodeField.value, phoneNumberField.value) {
+    | (phoneCountryCodeValue, "") => phoneCountryCodeValue
+    | ("", phoneNumberValue) => phoneNumberValue
+    | (phoneCountryCodeValue, phoneNumberValue) =>
+      [phoneCountryCodeValue, phoneNumberValue]->Array.join(" ")
+    }
+
+    arr->Array.filterMap(x => {
+      if x === phoneNumberField {
+        {
+          ...x,
+          required_field: PhoneField(
+            phoneCountryCodeField.required_field->getRequiredFieldName,
+            phoneNumberField.required_field->getRequiredFieldName,
+          ),
+          value,
+        }->Some
+      } else if x === phoneCountryCodeField {
+        None
+      } else {
+        Some(x)
+      }
+    })
+  | _ => arr
+  }
+}
+
 let getRequiredFieldsFromDict = dict => {
   let requiredFields = dict->Dict.get("required_fields")->Option.flatMap(JSON.Decode.object)
   switch requiredFields {
@@ -224,11 +314,13 @@ let getRequiredFieldsFromDict = dict => {
       ->Belt.SortArray.stableSortBy(sortRequirFields)
 
     arr
+    ->mergeEmailFields
+    ->mergePhoneCodeWithNumber(~fieldType="shipping")
+    ->mergePhoneCodeWithNumber(~fieldType="billing")
     ->mergeNameFields(~fieldType=FullName)
     ->mergeNameFields(~fieldType=FullName, ~displayName="card_holder_name")
     ->mergeNameFields(~fieldType=BillingName)
     ->mergeNameFields(~fieldType=ShippingName)
-
   | _ => []
   }
 }
@@ -254,6 +346,29 @@ let numberOfDigitsValidation = (
 ) => {
   if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
     if text->String.length == digits {
+      None
+    } else {
+      Some(
+        localeObject.enterValidDigitsText ++
+        " " ++
+        digits->Int.toString ++
+        localeObject.digitsText ++
+        " " ++
+        display_name->Option.getOr("")->Utils.underscoresToSpaces,
+      )
+    }
+  } else {
+    Some(localeObject.enterValidDetailsText)
+  }
+}
+let maxDigitValidataion = (
+  ~text,
+  ~localeObject: LocaleDataType.localeStrings,
+  ~digits,
+  ~display_name,
+) => {
+  if text->Validation.clearSpaces->String.length > 0 {
+    if text->String.length <= digits {
       None
     } else {
       Some(
@@ -303,6 +418,7 @@ let checkIsValid = (
         Some(localeObject.enterValidIban)
       }
     | RoutingNumber => numberOfDigitsValidation(~text, ~localeObject, ~digits=9, ~display_name)
+    | PhoneNumber => maxDigitValidataion(~text, ~localeObject, ~digits=15, ~display_name)
     | _ => None
     }
   }
@@ -351,6 +467,7 @@ let allowOnlyDigits = (
     } else {
       prev
     }
+  | PhoneNumber => Some(text->Option.getOr("")->Validation.clearAlphas)
   | _ => text
   }
 }
@@ -358,9 +475,11 @@ let allowOnlyDigits = (
 let getKeyboardType = (~field_type: paymentMethodsFields) => {
   switch field_type {
   | Email => #"email-address"
-  | AccountNumber => #"number-pad"
-  | BSBNumber => #"number-pad"
-  | RoutingNumber => #"number-pad"
+  | PhoneNumber
+  | AccountNumber
+  | BSBNumber
+  | RoutingNumber =>
+    #"number-pad"
   | _ => #default
   }
 }
@@ -584,8 +703,8 @@ let filterDynamicFieldsFromRendering = (
     let isShowBillingField = getIsBillingField(requiredField.field_type) && isAnyBillingDetailEmpty
 
     let isRenderRequiredField = switch requiredField.required_field {
-    | StringField(_) => requiredField.value === ""
-    | FullNameField(firstNameVal, lastNameVal) =>
+    | StringField(_) | EmailField(_) => requiredField.value === ""
+    | FullNameField(firstNameVal, lastNameVal) | PhoneField(firstNameVal, lastNameVal) =>
       switch (finalJson->Dict.get(firstNameVal), finalJson->Dict.get(lastNameVal)) {
       | (Some((_, Some(_))), Some((_, Some(_))))
       | (Some((_, Some(_))), _)
@@ -663,7 +782,23 @@ let getKey = (path, value) => {
   }
 }
 
-let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry, countries) => {
+let getPhoneNumber = text => {
+  let firstVal = text->getFirstValue
+  let lastVal = text->getLastValue
+  if firstVal->String.includes("+") && firstVal->String.length < 5 {
+    (firstVal, lastVal)
+  } else {
+    (lastVal, firstVal)
+  }
+}
+
+let getKeysValArray = (
+  requiredFields,
+  isSaveCardsFlow,
+  clientCountry,
+  countries,
+  countryCodes: array<phoneCountryCode>,
+) => {
   requiredFields->Array.reduce(Dict.make(), (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
     | ("", AddressCountry(values)) => {
@@ -688,7 +823,7 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry, countries
     let requiredFieldPath = getRequiredFieldPath(~isSaveCardsFlow, ~requiredField)
 
     switch requiredFieldPath {
-    | StringField(fieldPath) => acc->Dict.set(fieldPath, (value, isValid))
+    | StringField(fieldPath) | EmailField(fieldPath) => acc->Dict.set(fieldPath, (value, isValid))
 
     | FullNameField(firstName, lastName) =>
       let arr = requiredField.value->String.split(" ")
@@ -706,6 +841,25 @@ let getKeysValArray = (requiredFields, isSaveCardsFlow, clientCountry, countries
 
       acc->Dict.set(firstName, (firstNameVal, isFirstNameValid))
       acc->Dict.set(lastName, (lastNameVal, isLastNameValid))
+
+    | PhoneField(code, phone) =>
+      switch requiredField.field_type {
+      | PhoneCountryCode | PhoneNumber =>
+        let (codeVal, phoneVal) = getPhoneNumber(requiredField.value)
+        let countryCode = switch countryCodes->Array.find(v => v.country_code === clientCountry) {
+        | Some(data) => data.phone_number_code
+        | None => "+1"
+        }
+
+        let (codeValue, isCodeValid) = codeVal === "" ? (countryCode, None) : (codeVal, None)
+        let (phoneVal, isPhoneValid) =
+          phoneVal === ""
+            ? (JSON.Encode.null, Some("Enter Valid Phone Number"))
+            : (JSON.Encode.string(codeValue ++ " " ++ phoneVal), None)
+        acc->Dict.set(code, (codeValue->JSON.Encode.string, isCodeValid))
+        acc->Dict.set(phone, (phoneVal, isPhoneValid))
+      | _ => ()
+      }
     }
 
     acc

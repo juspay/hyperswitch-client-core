@@ -201,9 +201,9 @@ let getMissingFieldsForDynamicRendering = (
   requiredFields->Array.map(field => {
     let existingValue = collectBillingFromWallets
       ? switch field.required_field {
-        | StringField(path) =>
+        | StringField(path) | EmailField(path) =>
           extractedData->Dict.get(path)->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-        | FullNameField(firstName, lastName) => {
+        | FullNameField(firstName, lastName) | PhoneField(firstName, lastName) => {
             let firstVal =
               extractedData
               ->Dict.get(firstName)

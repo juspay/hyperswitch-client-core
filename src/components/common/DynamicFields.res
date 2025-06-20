@@ -49,12 +49,13 @@ module RenderField = {
     ~statesAndCountry: CountryStateDataContext.data,
     ~keyToTrigerButtonClickError,
     ~paymentMethodType: option<RequiredFieldsTypes.payment_method_types_in_bank_debit>,
+    ~countryCodes,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
     let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
     let value = switch required_fields_type.required_field {
-    | StringField(x) =>
+    | StringField(x) | EmailField(x) =>
       finalJsonDict
       ->Dict.get(x)
       ->Option.map(((value, _)) => value->JSON.Decode.string->Option.getOr(""))
@@ -77,6 +78,13 @@ module RenderField = {
       | (_, Some(lastName)) => lastName
       | _ => ""
       }
+    | PhoneField(_, phoneNumber) =>
+      let phoneNumberValue =
+        finalJsonDict
+        ->Dict.get(phoneNumber)
+        ->Option.map(((value, _)) => value->JSON.Decode.string)
+        ->Option.getOr(None)
+      phoneNumberValue->Option.getOr("")
     }
 
     let initialValue = switch value {
@@ -101,7 +109,7 @@ module RenderField = {
             ~requiredField={required_fields_type},
           )
           switch requiredFieldPath {
-          | StringField(stringFieldPath) =>
+          | StringField(stringFieldPath) | EmailField(stringFieldPath) =>
             let validationErrMsg = RequiredFieldsTypes.checkIsValid(
               ~text,
               ~field_type=required_fields_type.field_type,
@@ -172,6 +180,25 @@ module RenderField = {
               newData->Dict.set(lastNameFieldPath, (lastNameVal, lastNameErrorMessage))
               newData
             })
+
+          | PhoneField(phoneCodePath, phoneNumberPath) =>
+            let phoneCodeVal = text->RequiredFieldsTypes.getFirstValue->JSON.Encode.string
+            let phoneNumberVal = text->RequiredFieldsTypes.getLastValue->Validation.clearSpaces
+
+            let errorMessage = RequiredFieldsTypes.checkIsValid(
+              ~text=phoneNumberVal,
+              ~field_type=required_fields_type.field_type,
+              ~localeObject,
+              ~display_name=required_fields_type.display_name,
+              ~paymentMethodType,
+            )
+            setErrorMesage(_ => errorMessage)
+            setFinalJsonDict(prev => {
+              let newData = Dict.assign(Dict.make(), prev)
+              newData->Dict.set(phoneCodePath, (phoneCodeVal, None))
+              newData->Dict.set(phoneNumberPath, (text->JSON.Encode.string, errorMessage))
+              newData
+            })
           }
         }
       | None => ()
@@ -192,6 +219,30 @@ module RenderField = {
         )
       )
     }
+    let onChangePhone = text => {
+      let phone = text->RequiredFieldsTypes.getLastValue
+
+      setVal(prev => Some(
+        prev->Option.getOr("")->RequiredFieldsTypes.getFirstValue ++
+        " " ++
+        RequiredFieldsTypes.allowOnlyDigits(
+          ~text=Some(phone),
+          ~fieldType=required_fields_type.field_type,
+          ~prev,
+          ~paymentMethodType,
+        )->Option.getOr(""),
+      ))
+    }
+    let onChangePhoneCode: (option<string> => option<string>) => unit = (
+      value: option<string> => option<string>,
+    ) => {
+      setVal(prev => Some(
+        value(prev)->Option.getOr("") ++
+        " " ++
+        prev->Option.getOr("")->RequiredFieldsTypes.getLastValue,
+      ))
+    }
+
     React.useEffect1(() => {
       keyToTrigerButtonClickError != 0
         ? {
@@ -215,85 +266,139 @@ module RenderField = {
     <>
       // <TextWrapper text={placeholder()} textType=SubheadingBold />
       // <Space height=5. />
-      {switch required_fields_type.field_type {
-      | AddressCountry(countryArr) =>
-        <CustomPicker
-          value=val
-          setValue=onChangeCountry
-          isCountryStateFields=true
-          borderBottomLeftRadius=borderRadius
-          borderBottomRightRadius=borderRadius
-          borderBottomWidth=borderWidth
-          items={switch countryStateData {
-          | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
-            switch countryArr {
-            | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
-            | UseBackEndData(data) => data
-            }->getCountryData(res.countries)
-          | _ => []
-          }}
-          placeholderText={placeholder()}
-          isValid
-          isLoading={switch statesAndCountry {
-          | Loading => true
-          | _ => false
-          }}
-        />
-      | AddressState =>
-        <CustomPicker
-          value=val
-          isCountryStateFields=true
-          setValue=onChangeCountry
-          borderBottomLeftRadius=borderRadius
-          borderBottomRightRadius=borderRadius
-          borderBottomWidth=borderWidth
-          items={switch statesAndCountry {
-          | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
-            getStateData(
-              statesAndCountryVal.states,
-              getCountryValueOfRelativePath(
-                switch required_fields_type.required_field {
-                | StringField(x) => x
-                | _ => ""
-                },
-                finalJsonDict,
-              ),
-            )
-          | _ => []
-          }}
-          placeholderText={placeholder()}
-          isValid
-          isLoading={switch statesAndCountry {
-          | Loading => true
-          | _ => false
-          }}
-        />
+      {switch required_fields_type.required_field {
+      | StringField(_) | EmailField(_) | FullNameField(_, _) =>
+        switch required_fields_type.field_type {
+        | AddressCountry(countryArr) =>
+          <CustomPicker
+            value=val
+            setValue=onChangeCountry
+            isCountryStateFields=true
+            borderBottomLeftRadius=borderRadius
+            borderBottomRightRadius=borderRadius
+            borderBottomWidth=borderWidth
+            items={switch countryStateData {
+            | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
+              switch countryArr {
+              | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
+              | UseBackEndData(data) => data
+              }->getCountryData(res.countries)
+            | _ => []
+            }}
+            placeholderText={placeholder()}
+            isValid
+            isLoading={switch statesAndCountry {
+            | Loading => true
+            | _ => false
+            }}
+          />
+        | AddressState =>
+          <CustomPicker
+            value=val
+            isCountryStateFields=true
+            setValue=onChangeCountry
+            borderBottomLeftRadius=borderRadius
+            borderBottomRightRadius=borderRadius
+            borderBottomWidth=borderWidth
+            items={switch statesAndCountry {
+            | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
+              getStateData(
+                statesAndCountryVal.states,
+                getCountryValueOfRelativePath(
+                  switch required_fields_type.required_field {
+                  | StringField(x) => x
+                  | _ => ""
+                  },
+                  finalJsonDict,
+                ),
+              )
+            | _ => []
+            }}
+            placeholderText={placeholder()}
+            isValid
+            isLoading={switch statesAndCountry {
+            | Loading => true
+            | _ => false
+            }}
+          />
 
-      | _ =>
-        <CustomInput
-          state={val->Option.getOr("")}
-          setState={text => onChange(Some(text))}
-          placeholder={placeholder()}
-          keyboardType={RequiredFieldsTypes.getKeyboardType(
-            ~field_type=required_fields_type.field_type,
-          )}
-          enableCrossIcon=false
-          isValid=isValidForFocus
-          onFocus={_ => {
-            setisFocus(_ => true)
-            val->Option.isNone ? setVal(_ => Some("")) : ()
-          }}
-          onBlur={_ => {
-            setisFocus(_ => false)
-          }}
-          textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
-          borderTopLeftRadius=borderRadius
-          borderTopRightRadius=borderRadius
-          borderBottomWidth=borderWidth
-          borderLeftWidth=borderWidth
-          borderRightWidth=borderWidth
-          borderTopWidth=borderWidth
-        />
+        | _ =>
+          <CustomInput
+            state={val->Option.getOr("")}
+            setState={text => onChange(Some(text))}
+            placeholder={placeholder()}
+            keyboardType={RequiredFieldsTypes.getKeyboardType(
+              ~field_type=required_fields_type.field_type,
+            )}
+            enableCrossIcon=false
+            isValid=isValidForFocus
+            onFocus={_ => {
+              setisFocus(_ => true)
+              val->Option.isNone ? setVal(_ => Some("")) : ()
+            }}
+            onBlur={_ => {
+              setisFocus(_ => false)
+            }}
+            textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
+            borderTopLeftRadius=borderRadius
+            borderTopRightRadius=borderRadius
+            borderBottomWidth=borderWidth
+            borderLeftWidth=borderWidth
+            borderRightWidth=borderWidth
+            borderTopWidth=borderWidth
+          />
+        }
+      | PhoneField(_, _) =>
+        <View
+          style={viewStyle(
+            ~display=#flex,
+            ~flexDirection=#row,
+            ~justifyContent=#"space-between",
+            ~gap=8.,
+            (),
+          )}>
+          <CustomPicker
+            value={Some(val->Option.getOr("")->RequiredFieldsTypes.getFirstValue)}
+            setValue=onChangePhoneCode
+            borderBottomLeftRadius=borderRadius
+            borderBottomRightRadius=borderRadius
+            borderBottomWidth=borderWidth
+            items={countryCodes}
+            placeholderText={"Code"}
+            isValid
+            isLoading={switch statesAndCountry {
+            | Loading => true
+            | _ => false
+            }}
+            showIcon=true
+            style={viewStyle(~flex=1., ())}
+          />
+          <CustomInput
+            state={val->Option.getOr("")}
+            setState=onChangePhone
+            placeholder={placeholder()}
+            keyboardType={RequiredFieldsTypes.getKeyboardType(
+              ~field_type=required_fields_type.field_type,
+            )}
+            enableCrossIcon=false
+            isValid=isValidForFocus
+            onFocus={_ => {
+              setisFocus(_ => true)
+              val->Option.isNone ? setVal(_ => Some("")) : ()
+            }}
+            onBlur={_ => {
+              setisFocus(_ => false)
+            }}
+            textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
+            borderTopLeftRadius=borderRadius
+            borderTopRightRadius=borderRadius
+            borderBottomWidth=borderWidth
+            borderLeftWidth=borderWidth
+            borderRightWidth=borderWidth
+            borderTopWidth=borderWidth
+            style={viewStyle(~flex=3., ())}
+          />
+        </View>
       }}
       {if isFocus {
         React.null
@@ -315,6 +420,7 @@ module Fields = {
     ~statesAndCountry: CountryStateDataContext.data,
     ~keyToTrigerButtonClickError,
     ~paymentMethodType,
+    ~countryCodes,
   ) => {
     fields
     ->Array.mapWithIndex((item, index) =>
@@ -329,6 +435,7 @@ module Fields = {
           setFinalJsonDict
           keyToTrigerButtonClickError
           paymentMethodType
+          countryCodes
         />
       </React.Fragment>
     )
@@ -354,6 +461,7 @@ let make = (
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
   let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
+  let (countryCodes, setCountryCodes) = React.useState(_ => [])
 
   let clientCountry = Utils.getClientCountry(
     switch statesAndCountry {
@@ -374,12 +482,18 @@ let make = (
         isSaveCardsFlow,
         clientCountry.isoAlpha2,
         statesAndCountryData.countries->Array.map(item => {item.isoAlpha2}),
+        countryCodes,
       )
     | _ =>
       requiredFields
       ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
       ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
-      ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2, [])
+      ->RequiredFieldsTypes.getKeysValArray(
+        isSaveCardsFlow,
+        clientCountry.isoAlpha2,
+        [],
+        countryCodes,
+      )
     }
   }, (
     requiredFields,
@@ -389,6 +503,7 @@ let make = (
     shouldRenderShippingFields,
     statesAndCountry,
     displayPreValueFields,
+    countryCodes,
   ))
 
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
@@ -493,6 +608,49 @@ let make = (
   //   }
   //   None
   // }, [statesAndCountry])
+  React.useEffect0(() => {
+    RequiredFieldsTypes.importStatesAndCountries(
+      "./../../utility/reusableCodeFromWeb/Phone_number.json",
+    )
+    ->Promise.then(async json => {
+      switch json->Js.Json.decodeObject {
+      | Some(res) =>
+        res
+        ->Js.Dict.get("countries")
+        ->Option.getOr([]->Js.Json.Array)
+        ->Js.Json.decodeArray
+        ->Option.getOr([])
+        ->Array.map(
+          item => {
+            switch item->Js.Json.decodeObject {
+            | Some(res) => {
+                phone_number_code: Utils.getString(res, "phone_number_code", ""),
+                country_name: Utils.getString(res, "country_name", ""),
+                country_code: Utils.getString(res, "country_code", ""),
+
+                // phone_number_code: Utils.getString(res, "phone_number_code", ""),
+                // validation_regex: Utils.getString(res, "validation_regex", ""),
+                // format_example: Utils.getString(res, "format_example", ""),
+                // format_regex: Utils.getString(res, "format_regex", ""),
+              }
+            | None => {
+                phone_number_code: "+1",
+                country_name: "United States",
+                country_code: "US",
+              }
+            }
+          },
+        )
+      | None => []
+      }
+    })
+    ->Promise.thenResolve(v => {
+      setCountryCodes(_ => v)
+    })
+    ->ignore
+
+    None
+  })
 
   let isAddressCountryField = fieldType =>
     switch fieldType.field_type {
@@ -528,6 +686,11 @@ let make = (
     }
     None
   }, (statesAndCountry, clientCountry.isoAlpha2))
+  let mappedCountryCodes = countryCodes->Array.map((countryCode): CustomPicker.customPickerType => {
+    label: countryCode.country_name ++ " " ++ countryCode.phone_number_code,
+    value: countryCode.phone_number_code,
+    icon: Utils.getCountryFlags(countryCode.country_code),
+  })
 
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
@@ -535,6 +698,7 @@ let make = (
           {extraSpacing ? <Space height=24. /> : React.null}
           <Fields
             fields
+            countryCodes=mappedCountryCodes
             finalJsonDict
             setFinalJsonDict
             isSaveCardsFlow

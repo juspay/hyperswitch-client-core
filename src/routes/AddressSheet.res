@@ -206,6 +206,7 @@ let make = (
       body,
       dynamicFieldsJson->Dict.toArray->Array.map(((key, (value, error))) => (key, value, error)),
     )
+    Console.log2(payment_method_data, dynamicFieldsJson)
 
     fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
@@ -306,10 +307,11 @@ let make = (
 
   <React.Fragment>
     <DynamicFields
-      requiredFields
+      requiredFields={requiredFields}
       setIsAllDynamicFieldValid
       setDynamicFieldsJson
       keyToTrigerButtonClickError
+      displayPreValueFields=true
       savedCardsData=None
     />
     <Space height=15. />

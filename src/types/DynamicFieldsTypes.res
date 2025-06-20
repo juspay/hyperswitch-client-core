@@ -1,6 +1,5 @@
 open RequiredFieldsTypes
 
-
 type saveCardState = {
   isNicknameSelected: bool,
   setIsNicknameSelected: (bool => bool) => unit,
