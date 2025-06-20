@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.5.0...v1.6.0) (2025-06-20)
+
+
+### Features
+
+* wallet missing field collection ([1dfef7f](https://github.com/juspay/hyperswitch-client-core/commit/1dfef7f9e2e3a4f9f45b81354fb7ce8a9af6ed99))
+
 # [1.5.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.2...v1.5.0) (2025-06-18)
 
 
