@@ -217,12 +217,14 @@ let mergeEmailFields = arr => {
   switch emailFields[0] {
   | Some(email) =>
     arr->Array.filterMap(x => {
-      if x.field_type !== Email || x === email {
+      if x === email {
         {
           ...x,
           required_field: EmailField(x.required_field->getRequiredFieldName),
           value: x.value,
         }->Some
+      } else if x.field_type !== Email {
+        Some(x)
       } else {
         None
       }
