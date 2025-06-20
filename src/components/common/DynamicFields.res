@@ -501,8 +501,6 @@ let make = (
     displayPreValueFields,
   ))
 
-  Console.log2("initialKeysValDict", initialKeysValDict)
-
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
 
   React.useEffect1(() => {
