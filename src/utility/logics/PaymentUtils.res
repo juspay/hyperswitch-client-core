@@ -159,6 +159,23 @@ let checkIsCVCRequired = (pmObject: SdkTypes.savedDataType) =>
   | _ => false
   }
 
+let generateSessionsTokenBody = (~clientSecret, ~wallet) => {
+  [
+    (
+      "payment_id",
+      String.split(clientSecret, "_secret_")
+      ->Array.get(0)
+      ->Option.getOr("")
+      ->JSON.Encode.string,
+    ),
+    ("client_secret", clientSecret->JSON.Encode.string),
+    ("wallets", wallet->JSON.Encode.array),
+  ]
+  ->Dict.fromArray
+  ->JSON.Encode.object
+  ->JSON.stringify
+}
+
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,

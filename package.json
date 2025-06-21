@@ -109,7 +109,7 @@
     "react-native-dotenv": "^3.4.11",
     "react-native-web": "^0.20.0",
     "react-test-renderer": "19.0.0",
-    "rescript": "11",
+    "rescript": "^11.1.0",
     "rescript-react-native": "^0.73.1",
     "semantic-release": "^22.0.7",
     "supports-color": "^9.4.0",

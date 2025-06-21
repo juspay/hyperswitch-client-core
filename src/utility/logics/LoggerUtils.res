@@ -76,7 +76,7 @@ let sendLogs = (logFile, uri: option<string>, publishableKey, appId) => {
     | Some("") | None => ()
     | Some(uri) =>
       let data = logFile->logFileToObj->JSON.stringify
-      CommonHooks.fetchApi(
+      APIUtils.fetchApi(
         ~uri,
         ~method_=Post,
         ~bodyStr=data,
