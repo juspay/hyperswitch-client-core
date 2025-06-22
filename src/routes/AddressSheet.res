@@ -274,6 +274,24 @@ let make = (
             (),
           )
         }
+      | SamsungPayData(obj, billingAddress, shippingAddress) => {
+          payment_method_data->Dict.set(
+            walletType.payment_method,
+            [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          )
+          processRequest(
+            ~payment_method_data=payment_method_data->JSON.Encode.object,
+            ~email=?switch billingAddress {
+            | Some(address) => address.email
+            | None => None
+            },
+            ~billing=billingAddress,
+            ~shipping=shippingAddress,
+            (),
+          )
+        }
       }
     } else {
       setKeyToTrigerButtonClickError(prev => prev + 1)

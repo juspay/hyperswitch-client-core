@@ -487,152 +487,7 @@ let make = (
     }
   }
 
-  let confirmGPay = var => {
-    let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
-    switch paymentData.error {
-    | "" =>
-      let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj =
-        json
-        ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper
-
-      let payment_method_data =
-        [
-          (
-            walletType.payment_method,
-            [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-      processRequest(
-        ~payment_method=walletType.payment_method,
-        ~payment_method_data,
-        ~payment_method_type=paymentMethod,
-        ~payment_experience_type=?walletType.payment_experience
-        ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type),
-        ~eligible_connectors=?walletType.payment_experience
-        ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.eligible_connectors),
-        (),
-      )
-    | "Cancel" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Payment was Cancelled"))
-    | err =>
-      setLoading(FillingDetails)
-      setError(_ => Some(err))
-    }
-  }
-
-  let confirmApplePay = var => {
-    switch var
-    ->Dict.get("status")
-    ->Option.getOr(JSON.Encode.null)
-    ->JSON.Decode.string
-    ->Option.getOr("") {
-    | "Cancelled" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Cancelled"))
-    | "Failed" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Failed"))
-    | "Error" =>
-      setLoading(FillingDetails)
-      setError(_ => Some("Error"))
-    | _ =>
-      let transaction_identifier =
-        var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
-
-      if transaction_identifier->JSON.stringify == "Simulated Identifier" {
-        setLoading(FillingDetails)
-        setError(_ => Some("Apple Pay is not supported in Simulated Environment"))
-      } else {
-        let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
-        let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
-        let billingAddress = var->GooglePayTypeNew.getBillingContact("billing_contact")
-        let shippingAddress = var->GooglePayTypeNew.getBillingContact("shipping_contact")
-        let paymentData =
-          [
-            ("payment_data", payment_data),
-            ("payment_method", payment_method),
-            ("transaction_identifier", transaction_identifier),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        let payment_method_data =
-          walletType.required_field
-          ->GooglePayTypeNew.getFlattenData(~shippingAddress, ~billingAddress)
-          ->JSON.Encode.object
-          ->RequiredFieldsTypes.unflattenObject
-          ->Dict.get("payment_method_data")
-          ->Option.getOr(JSON.Encode.null)
-          ->Utils.getDictFromJson
-        payment_method_data->Dict.set(
-          walletType.payment_method,
-          [(walletType.payment_method_type, paymentData)]
-          ->Dict.fromArray
-          ->JSON.Encode.object,
-        )
-
-        processRequest(
-          ~payment_method=walletType.payment_method,
-          ~payment_method_data=payment_method_data->JSON.Encode.object,
-          ~payment_method_type=paymentMethod,
-          ~payment_experience_type=?walletType.payment_experience
-          ->Array.get(0)
-          ->Option.map(paymentExperience => paymentExperience.payment_experience_type),
-          ~eligible_connectors=?walletType.payment_experience
-          ->Array.get(0)
-          ->Option.map(paymentExperience => paymentExperience.eligible_connectors),
-          (),
-        )
-      }
-    }
-  }
-
   let processRequestWallet = (walletType: payment_method_types_wallet) => {
-    // let payment_method_data =
-    //   [
-    //     (
-    //       prop.payment_method,
-    //       [
-    //         (
-    //           prop.payment_method_type ++ "_redirect",
-    //           [
-    //             //Telephone number is for MB Way
-    //             // (
-    //             //   "telephone_number",
-    //             //   phoneNumber
-    //             //   ->Option.getOr("")
-    //             //   ->String.replaceString(" ", "")
-    //             //   ->JSON.Encode.string,
-    //             // ),
-    //           ]
-    //           ->Dict.fromArray
-    //           ->JSON.Encode.object,
-    //         ),
-    //       ]
-    //       ->Dict.fromArray
-    //       ->JSON.Encode.object,
-    //     ),
-    //   ]
-    //   ->Dict.fromArray
-    //   ->JSON.Encode.object
-
-    // processRequest(
-    //   ~payment_method_data,
-    //   ~payment_method=prop.payment_method,
-    //   ~payment_method_type=prop.payment_method_type,
-    //   // connector: prop.bank_namesArray.get(0).eligible_connectors,
-    //   // setup_future_usage:"off_session",
-    //   (),
-    // )
-
     setLoading(ProcessingPayments(None))
     logger(
       ~logType=INFO,
@@ -653,11 +508,6 @@ let make = (
       ->Option.isSome
     ) {
       switch walletType.payment_method_type_wallet {
-      | GOOGLE_PAY =>
-        HyperModule.launchGPay(
-          GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-          confirmGPay,
-        )
       | PAYPAL =>
         if (
           sessionObject.session_token !== "" &&
@@ -710,51 +560,7 @@ let make = (
             (),
           )
         }
-      | APPLE_PAY =>
-        if (
-          sessionObject.session_token_data == JSON.Encode.null ||
-            sessionObject.payment_request_data == JSON.Encode.null
-        ) {
-          setLoading(FillingDetails)
-          setError(_ => Some("Waiting for Sessions API"))
-        } else {
-          let timerId = setTimeout(() => {
-            setLoading(FillingDetails)
-            setError(_ => Some("Apple Pay Error, Please try again"))
-            logger(
-              ~logType=DEBUG,
-              ~value="apple_pay",
-              ~category=USER_EVENT,
-              ~paymentMethod="apple_pay",
-              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-              (),
-            )
-          }, 5000)
-          HyperModule.launchApplePay(
-            [
-              ("session_token_data", sessionObject.session_token_data),
-              ("payment_request_data", sessionObject.payment_request_data),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
-            ->JSON.stringify,
-            confirmApplePay,
-            _ => {
-              logger(
-                ~logType=DEBUG,
-                ~value="apple_pay",
-                ~category=USER_EVENT,
-                ~paymentMethod="apple_pay",
-                ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                (),
-              )
-            },
-            _ => {
-              clearTimeout(timerId)
-            },
-          )
-        }
-      | _ => setLoading(FillingDetails)
+      | _ => ()
       }
     } else if (
       walletType.payment_experience
