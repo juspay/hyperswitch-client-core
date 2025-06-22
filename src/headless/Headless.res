@@ -39,7 +39,7 @@ let registerHeadless = headless => {
       let obj =
         json
         ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper
+        ->WalletType.itemToObjMapper
 
       let payment_method_data =
         [
@@ -113,7 +113,7 @@ let registerHeadless = headless => {
     }
   }
 
-  let confirmApplePay = (var,data, nativeProp) => {
+  let confirmApplePay = (var, data, nativeProp) => {
     switch var
     ->Dict.get("status")
     ->Option.getOr(JSON.Encode.null)
@@ -168,7 +168,7 @@ let registerHeadless = headless => {
             ),
             (
               "billing",
-              switch var->GooglePayTypeNew.getBillingContact("billing_contact") {
+              switch var->WalletType.getBillingContact("billing_contact") {
               | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
@@ -251,7 +251,7 @@ let registerHeadless = headless => {
       switch data.walletType->Option.getOr("")->walletNameToTypeMapper {
       | GOOGLE_PAY =>
         HyperModule.launchGPay(
-          GooglePayTypeNew.getGpayTokenStringified(
+          WalletType.getGpayTokenStringified(
             ~obj=session,
             ~appEnv=nativeProp.env,
             ~requiredFields=[],

@@ -127,17 +127,5 @@ let defaultConfig = {
       header: "",
       fields: [],
     },
-    // {
-    //   name: "google_pay",
-    //   text: "Google Pay",
-    //   header: "",
-    //   fields: ["name"],
-    // },
-    // {
-    //   name: "apple_pay",
-    //   text: "Apple Pay",
-    //   header: "",
-    //   fields: ["name"],
-    // },
   ],
 }

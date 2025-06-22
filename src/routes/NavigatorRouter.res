@@ -23,7 +23,8 @@ let make = () => {
       paymentType,
       merchantName,
       requestExternalThreeDsAuthentication,
-      collect_billing_details_from_wallets,
+      collectBillingDetailsFromWallets,
+      collectShippingDetailsFromWallets,
     } = PaymentMethodListType.jsonToMandateData(retrieve)
     let redirect_url = PaymentMethodListType.jsonToRedirectUrlType(retrieve)
 
@@ -34,7 +35,8 @@ let make = () => {
       paymentType,
       merchantName,
       requestExternalThreeDsAuthentication,
-      collect_billing_details_from_wallets,
+      collectBillingDetailsFromWallets,
+      collectShippingDetailsFromWallets,
     }
   }
 

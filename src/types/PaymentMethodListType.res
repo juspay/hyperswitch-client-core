@@ -393,7 +393,8 @@ type jsonToMandateData = {
   paymentType: option<string>,
   merchantName: option<string>,
   requestExternalThreeDsAuthentication: option<bool>,
-  collect_billing_details_from_wallets: bool,
+  collectBillingDetailsFromWallets: bool,
+  collectShippingDetailsFromWallets: bool,
 }
 
 let jsonToMandateData: JSON.t => jsonToMandateData = res => {
@@ -419,9 +420,15 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
       ->Dict.get("request_external_three_ds_authentication")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.bool,
-      collect_billing_details_from_wallets: res
+      collectBillingDetailsFromWallets: res
       ->getDictFromJson
       ->Dict.get("collect_billing_details_from_wallets")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.bool
+      ->Option.getOr(true),
+      collectShippingDetailsFromWallets: res
+      ->getDictFromJson
+      ->Dict.get("collect_shipping_details_from_wallets")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.bool
       ->Option.getOr(true),
@@ -431,7 +438,8 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
       paymentType: None,
       merchantName: None,
       requestExternalThreeDsAuthentication: None,
-      collect_billing_details_from_wallets: true,
+      collectBillingDetailsFromWallets: false,
+      collectShippingDetailsFromWallets: false,
     }
   }
 }

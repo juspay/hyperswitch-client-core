@@ -1,6 +1,11 @@
 type walletData =
-  | GooglePayData(GooglePayTypeNew.paymentDataFromGPay)
-  | ApplePayData(GooglePayTypeNew.paymentDataFromApplePay)
+  | GooglePayData(WalletType.paymentDataFromGPay)
+  | ApplePayData(WalletType.paymentDataFromApplePay)
+  | SamsungPayData(
+      SamsungPayType.paymentMethodData,
+      option<SdkTypes.addressDetails>,
+      option<SdkTypes.addressDetails>,
+    )
 
 type paymentScreenType =
   | PAYMENTSHEET
