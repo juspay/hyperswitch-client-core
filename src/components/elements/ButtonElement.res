@@ -13,6 +13,7 @@ type item = {
 let make = (
   ~walletType: PaymentMethodListType.payment_method_types_wallet,
   ~sessionObject,
+  ~isWidget=false,
   ~confirm=false,
 ) => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -261,8 +262,7 @@ let make = (
         ~email=paymentDataFromGPay.email,
         ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
       )
-
-      hasMissingFields
+      hasMissingFields && !isWidget
         ? {
             setPaymentScreenType(
               WALLET_MISSING_FIELDS(
@@ -330,7 +330,7 @@ let make = (
         ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
       )
 
-      hasMissingFields
+      hasMissingFields && !isWidget
         ? {
             setPaymentScreenType(
               WALLET_MISSING_FIELDS(
@@ -438,7 +438,7 @@ let make = (
             ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
           )
 
-          hasMissingFields
+          hasMissingFields && !isWidget
             ? {
                 let paymentDataFromApplePay = var->WalletType.applePayItemToObjMapper
                 setPaymentScreenType(
