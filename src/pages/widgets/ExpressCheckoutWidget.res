@@ -17,16 +17,41 @@ let make = () => {
   let showAlert = AlertHook.useAlerts()
   let {launchGPay: webkitLaunchGPay, launchApplePay: webkitLaunchApplePay} = WebKit.useWebKit()
   let localeObj = GetLocale.useGetLocalObj()
-  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+  let (_, setMissingFieldsData) = React.useState(_ => [])
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
   | _ => AllApiDataContext.dafaultsavePMObj
   }
 
-  let firstPaymentMethod = switch savedPaymentMethodsData.pmList->Option.getOr([]) {
-  | [] => None
-  | pmList => pmList->Belt.Array.get(0)
+  let firstPaymentMethod = {
+    let pmList = savedPaymentMethodsData.pmList->Option.getOr([])
+    let platform = ReactNative.Platform.os
+
+    if pmList->Belt.Array.length == 0 {
+      None
+    } else {
+      let first = pmList->Belt.Array.get(0)
+
+      let shouldUseNext = switch (platform, first) {
+      | (#android, Some(SdkTypes.SAVEDLISTWALLET(wallet))) =>
+        let currentWalletPmType =
+          wallet.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
+        currentWalletPmType == SdkTypes.APPLE_PAY
+      | (#ios, Some(SdkTypes.SAVEDLISTWALLET(wallet))) =>
+        let currentWalletPmType =
+          wallet.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
+        currentWalletPmType == SdkTypes.GOOGLE_PAY
+      | _ => false
+      }
+
+      if shouldUseNext && pmList->Belt.Array.length > 1 {
+        pmList->Belt.Array.get(1)
+      } else {
+        first
+      }
+    }
   }
 
   let cardScheme = switch firstPaymentMethod {
@@ -46,6 +71,11 @@ let make = () => {
       obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper,
     )
   | Some(NONE) | None => ("", NONE)
+  }
+
+  let selectedObj = {
+    AllApiDataContext.walletName: walletType,
+    token: Some(pmToken),
   }
 
   let processExpressCheckoutApiRequest = (
@@ -165,10 +195,12 @@ let make = () => {
     WalletPaymentHandlers.confirmGPay(
       var,
       ~walletTypeStr=walletType->SdkTypes.walletTypeToStrMapper,
-      ~countryStateData,
       ~setLoading,
       ~showAlert,
       ~processRequestFn=processExpressCheckoutApiRequest,
+      ~allApiData,
+      ~setPaymentScreenType,
+      ~selectedObj,
       (),
     )
   }
@@ -177,10 +209,13 @@ let make = () => {
     WalletPaymentHandlers.confirmApplePay(
       var,
       ~walletTypeStr=SdkTypes.APPLE_PAY->SdkTypes.walletTypeToStrMapper,
-      ~countryStateData,
       ~setLoading,
       ~showAlert,
       ~processRequestFn=processExpressCheckoutApiRequest,
+      ~allApiData,
+      ~setPaymentScreenType,
+      ~selectedObj,
+      ~setMissingFieldsData,
       (),
     )
   }
@@ -197,6 +232,10 @@ let make = () => {
       ~showAlert,
       ~logger,
       ~processRequestFn=processExpressCheckoutApiRequest,
+      ~allApiData,
+      ~setPaymentScreenType,
+      ~selectedObj,
+      ~setMissingFieldsData,
       (),
     )
   }
@@ -335,7 +374,9 @@ let make = () => {
           text={localeObj.cardExpiresText ++ " " ++ obj.expiry_date->Option.getOr("")}
           textType={ModalTextLight}
         />
-      | Some(SAVEDLISTWALLET(_)) | Some(NONE) | None => React.null
+      | Some(SAVEDLISTWALLET(obj)) =>
+        <TextWrapper text={obj.walletType->Option.getOr("")} textType={ModalTextLight} />
+      | Some(NONE) | None => React.null
       }}
     </View>
     {switch firstPaymentMethod {

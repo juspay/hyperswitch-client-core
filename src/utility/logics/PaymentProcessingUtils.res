@@ -54,12 +54,12 @@ type paymentInitiationConfig = {
 let initiateGooglePay = (config: paymentInitiationConfig, sessionObject: SessionsType.sessions) => {
   if WebKit.platform === #android {
     HyperModule.launchGPay(
-      GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=config.nativeProp.env),
+      WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=config.nativeProp.env),
       config.gPayResponseHandler,
     )
   } else {
     config.webkitLaunchGPay(
-      GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=config.nativeProp.env),
+      WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=config.nativeProp.env),
     )
   }
 }
