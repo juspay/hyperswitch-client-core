@@ -10,6 +10,8 @@ type additionalPMLData = {
   paymentType: option<string>,
   merchantName: option<string>,
   requestExternalThreeDsAuthentication: option<bool>,
+  collectBillingDetailsFromWallets: bool,
+  collectShippingDetailsFromWallets: bool,
 }
 let additionalPMLData = {
   retryEnabled: None,
@@ -18,6 +20,8 @@ let additionalPMLData = {
   paymentType: None,
   merchantName: None,
   requestExternalThreeDsAuthentication: None,
+  collectBillingDetailsFromWallets: false,
+  collectShippingDetailsFromWallets: false,
 }
 
 type paymentList = array<PaymentMethodListType.payment_method>

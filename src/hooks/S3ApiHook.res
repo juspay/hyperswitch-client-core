@@ -54,11 +54,13 @@ let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
       {
         countries: decodeCountryArray(countryArr),
         states: decodeStateJson(statesDict),
+        phoneCountryCodes: [],
       }
     }
   | None => {
       countries: [],
       states: Js.Dict.empty(),
+      phoneCountryCodes: [],
     }
   }
 }
@@ -243,12 +245,38 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         defaultLocale.enterValidDigitsText,
       ),
       digitsText: Utils.getString(res, "digitsText", defaultLocale.digitsText),
+      enterValidIban: Utils.getString(res, "enterValidIban", defaultLocale.enterValidIban),
       selectCardBrand: Utils.getString(res, "selectCardBrand", defaultLocale.selectCardBrand),
       mandatoryFieldText: Utils.getString(
         res,
         "mandatoryFieldText",
         defaultLocale.mandatoryFieldText,
       ),
+      disclaimerTextAchTransfer: Utils.getString(
+        res,
+        "disclaimerTextAchTransfer",
+        defaultLocale.disclaimerTextAchTransfer,
+      ),
+      instructionalTextOfAchTransfer: Utils.getString(
+        res,
+        "instructionalTextOfAchTransfer",
+        defaultLocale.instructionalTextOfAchTransfer,
+      ),
+      accountDetailsText: Utils.getString(
+        res,
+        "accountDetailsText",
+        defaultLocale.accountDetailsText,
+      ),
+      achBankTransferText: Utils.getString(
+        res,
+        "achBankTransferText",
+        defaultLocale.achBankTransferText,
+      ),
+      bankName: Utils.getString(res, "bankName", defaultLocale.bankName),
+      routingNumber: Utils.getString(res, "routingNumber", defaultLocale.routingNumber),
+      swiftCode: Utils.getString(res, "swiftCode", defaultLocale.swiftCode),
+      doneText: Utils.getString(res, "doneText", defaultLocale.doneText),
+      copyToClipboard: Utils.getString(res, "copyToClipboard", defaultLocale.copyToClipboard),
     }
   | None => defaultLocale
   }
@@ -299,5 +327,36 @@ let useFetchDataFromS3WithGZipDecoding = () => {
       )
       Promise.resolve(None)
     })
+  }
+}
+
+let decodeJsonToPhoneCountryCodeData = json => {
+  switch json->Js.Json.decodeObject {
+  | Some(res) =>
+    res
+    ->Js.Dict.get("countries")
+    ->Option.getOr([]->Js.Json.Array)
+    ->Js.Json.decodeArray
+    ->Option.getOr([])
+    ->Array.map(item => {
+      switch item->Js.Json.decodeObject {
+      | Some(res) => {
+          phone_number_code: Utils.getString(res, "phone_number_code", ""),
+          country_name: Utils.getString(res, "country_name", ""),
+          country_code: Utils.getString(res, "country_code", ""),
+
+          // phone_number_code: Utils.getString(res, "phone_number_code", ""),
+          // validation_regex: Utils.getString(res, "validation_regex", ""),
+          // format_example: Utils.getString(res, "format_example", ""),
+          // format_regex: Utils.getString(res, "format_regex", ""),
+        }
+      | None => {
+          phone_number_code: "+1",
+          country_name: "United States",
+          country_code: "US",
+        }
+      }
+    })
+  | None => []
   }
 }

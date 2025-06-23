@@ -103,17 +103,29 @@ let defaultConfig = {
       header: "",
       fields: [],
     },
-    // {
-    //   name: "google_pay",
-    //   text: "Google Pay",
-    //   header: "",
-    //   fields: ["name"],
-    // },
-    // {
-    //   name: "apple_pay",
-    //   text: "Apple Pay",
-    //   header: "",
-    //   fields: ["name"],
-    // },
+    {
+      name: "bacs",
+      text: "BACS Debit",
+      header: "",
+      fields: [],
+    },
+    {
+      name: "sepa",
+      text: "Sepa Debit",
+      header: "",
+      fields: [],
+    },
+    {
+      name: "ach_bank_transfer",
+      text: "ACH Bank Transfer",
+      header: "",
+      fields: [],
+    },
+    {
+      name: "ach",
+      text: "ACH Debit",
+      header: "",
+      fields: [],
+    },
   ],
 }

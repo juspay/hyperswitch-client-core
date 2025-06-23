@@ -35,6 +35,9 @@ type localeTypes =
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
 type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE | KLARNA
+
+type payment_method_type_bank_transfer = ACH | NONE
+
 let walletNameMapper = str => {
   switch str {
   | "google_pay" => "Google Pay"
@@ -309,6 +312,7 @@ type hyperParams = {
   os_type: option<string>,
   os_version: option<string>,
   deviceBrand: option<string>,
+  bottomInset: option<float>,
 }
 
 type nativeProp = {
@@ -978,6 +982,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       os_type: getOptionString(hyperParams, "os_type"),
       os_version: getOptionString(hyperParams, "os_version"),
       deviceBrand: getOptionString(hyperParams, "deviceBrand"),
+      bottomInset: getOptionFloat(hyperParams, "bottomInset"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }

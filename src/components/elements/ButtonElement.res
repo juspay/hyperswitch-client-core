@@ -17,6 +17,7 @@ let make = (
 ) => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let showAlert = AlertHook.useAlerts()
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -144,7 +145,10 @@ let make = (
 
     let body: redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      return_url: ?Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       ?email,
       // customer_id: ?switch nativeProp.configuration.customer {
       // | Some(customer) => customer.id
@@ -231,49 +235,64 @@ let make = (
     }
   }
 
-  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
-
   let confirmGPay = var => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj =
+      let paymentDataFromGPay =
         json
         ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper(
-          switch countryStateData {
-          | FetchData(data)
-          | Localdata(data) =>
-            data.states
-          | _ => Dict.make()
-          },
-        )
-      let billingAddress = switch obj.paymentMethodData.info {
+        ->WalletType.itemToObjMapper
+      let billingAddress = switch paymentDataFromGPay.paymentMethodData.info {
       | Some(info) => info.billing_address
-
       | None => None
       }
-      let shippingAddress = obj.shippingDetails
-      let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+      let shippingAddress = paymentDataFromGPay.shippingDetails
+
+      let (
+        hasMissingFields,
+        updatedRequiredFields,
+        paymentMethodData,
+      ) = WalletType.getMissingFieldsAndPaymentMethodData(
         walletType.required_field,
-        ~shippingAddress,
         ~billingAddress,
-        ~email=obj.email,
+        ~shippingAddress,
+        ~email=paymentDataFromGPay.email,
+        ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
       )
-      payment_method_data->Dict.set(
-        walletType.payment_method,
-        [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
-        ->Dict.fromArray
-        ->JSON.Encode.object,
-      )
-      processRequest(
-        ~payment_method_data=payment_method_data->JSON.Encode.object,
-        ~email=?obj.email,
-        ~shipping=shippingAddress,
-        ~billing=billingAddress,
-        (),
-      )
+
+      hasMissingFields
+        ? {
+            setPaymentScreenType(
+              WALLET_MISSING_FIELDS(
+                updatedRequiredFields,
+                walletType,
+                GooglePayData(paymentDataFromGPay),
+              ),
+            )
+            setLoading(FillingDetails)
+          }
+        : {
+            paymentMethodData->Dict.set(
+              walletType.payment_method,
+              [
+                (
+                  walletType.payment_method_type,
+                  paymentDataFromGPay.paymentMethodData->Utils.getJsonObjectFromRecord,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            )
+            processRequest(
+              ~payment_method_data=paymentMethodData->JSON.Encode.object,
+              ~email=?paymentDataFromGPay.email,
+              ~shipping=shippingAddress,
+              ~billing=billingAddress,
+              (),
+            )
+          }
     | "Cancel" =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
@@ -298,28 +317,48 @@ let make = (
         addressFromSPay->SamsungPayType.getAddressObj(SamsungPayType.BILLING_ADDRESS)
       let shippingAddress =
         addressFromSPay->SamsungPayType.getAddressObj(SamsungPayType.SHIPPING_ADDRESS)
-      let obj = SamsungPayType.itemToObjMapper(response)
-      let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+      let samsungPayData = SamsungPayType.itemToObjMapper(response)
+
+      let (
+        hasMissingFields,
+        updatedRequiredFields,
+        paymentMethodData,
+      ) = WalletType.getMissingFieldsAndPaymentMethodData(
         walletType.required_field,
-        ~shippingAddress,
         ~billingAddress,
-      )
-      payment_method_data->Dict.set(
-        walletType.payment_method,
-        [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
-        ->Dict.fromArray
-        ->JSON.Encode.object,
+        ~shippingAddress,
+        ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
       )
 
-      processRequest(
-        ~payment_method_data=payment_method_data->JSON.Encode.object,
-        ~shipping=shippingAddress,
-        ~billing=billingAddress,
-        ~email=?billingAddress
-        ->GooglePayTypeNew.getEmailAddress
-        ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
-        (),
-      )
+      hasMissingFields
+        ? {
+            setPaymentScreenType(
+              WALLET_MISSING_FIELDS(
+                updatedRequiredFields,
+                walletType,
+                SamsungPayData(samsungPayData, billingAddress, shippingAddress),
+              ),
+            )
+            setLoading(FillingDetails)
+          }
+        : {
+            paymentMethodData->Dict.set(
+              walletType.payment_method,
+              [(walletType.payment_method_type, samsungPayData->Utils.getJsonObjectFromRecord)]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            )
+
+            processRequest(
+              ~payment_method_data=paymentMethodData->JSON.Encode.object,
+              ~shipping=shippingAddress,
+              ~billing=billingAddress,
+              ~email=?billingAddress
+              ->WalletType.getEmailAddress
+              ->Option.orElse(shippingAddress->WalletType.getEmailAddress),
+              (),
+            )
+          }
     } else {
       setLoading(FillingDetails)
       showAlert(
@@ -385,55 +424,59 @@ let make = (
           let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
           let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
-          let billingAddress = var->GooglePayTypeNew.getBillingContact(
-            "billing_contact",
-            switch countryStateData {
-            | FetchData(data)
-            | Localdata(data) =>
-              data.states
-            | _ => Dict.make()
-            },
-          )
-          let shippingAddress = var->GooglePayTypeNew.getBillingContact(
-            "shipping_contact",
-            switch countryStateData {
-            | FetchData(data)
-            | Localdata(data) =>
-              data.states
-            | _ => Dict.make()
-            },
-          )
-          let paymentData =
-            [
-              ("payment_data", payment_data),
-              ("payment_method", payment_method),
-              ("transaction_identifier", transaction_identifier),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
+          let billingAddress = var->WalletType.getBillingContact("billing_contact")
+          let shippingAddress = var->WalletType.getBillingContact("shipping_contact")
 
-          let payment_method_data = GooglePayTypeNew.getPaymentMethodData(
+          let (
+            hasMissingFields,
+            updatedRequiredFields,
+            paymentMethodData,
+          ) = WalletType.getMissingFieldsAndPaymentMethodData(
             walletType.required_field,
-            ~shippingAddress,
             ~billingAddress,
+            ~shippingAddress,
+            ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
           )
 
-          payment_method_data->Dict.set(
-            walletType.payment_method,
-            [(walletType.payment_method_type, paymentData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          )
+          hasMissingFields
+            ? {
+                let paymentDataFromApplePay = var->WalletType.applePayItemToObjMapper
+                setPaymentScreenType(
+                  WALLET_MISSING_FIELDS(
+                    updatedRequiredFields,
+                    walletType,
+                    ApplePayData(paymentDataFromApplePay),
+                  ),
+                )
+                setLoading(FillingDetails)
+              }
+            : {
+                let paymentData =
+                  [
+                    ("payment_data", payment_data),
+                    ("payment_method", payment_method),
+                    ("transaction_identifier", transaction_identifier),
+                  ]
+                  ->Dict.fromArray
+                  ->JSON.Encode.object
 
-          processRequest(
-            ~payment_method_data=payment_method_data->JSON.Encode.object,
-            ~shipping=shippingAddress,
-            ~billing=billingAddress,
-            ~email=?billingAddress
-            ->GooglePayTypeNew.getEmailAddress
-            ->Option.orElse(shippingAddress->GooglePayTypeNew.getEmailAddress),
-            (),
-          )
+                paymentMethodData->Dict.set(
+                  walletType.payment_method,
+                  [(walletType.payment_method_type, paymentData)]
+                  ->Dict.fromArray
+                  ->JSON.Encode.object,
+                )
+
+                processRequest(
+                  ~payment_method_data=paymentMethodData->JSON.Encode.object,
+                  ~shipping=shippingAddress,
+                  ~billing=billingAddress,
+                  ~email=?billingAddress
+                  ->WalletType.getEmailAddress
+                  ->Option.orElse(shippingAddress->WalletType.getEmailAddress),
+                  (),
+                )
+              }
         }
       }
     }
@@ -473,7 +516,7 @@ let make = (
         switch walletType.payment_method_type_wallet {
         | GOOGLE_PAY =>
           HyperModule.launchGPay(
-            GooglePayTypeNew.getGpayTokenStringified(
+            WalletType.getGpayTokenStringified(
               ~obj=sessionObject,
               ~appEnv=nativeProp.env,
               ~requiredFields=walletType.required_field,
@@ -716,7 +759,7 @@ let make = (
       | GOOGLE_PAY =>
         Some(
           <GooglePayButtonView
-            allowedPaymentMethods={GooglePayTypeNew.getAllowedPaymentMethods(
+            allowedPaymentMethods={WalletType.getAllowedPaymentMethods(
               ~obj=sessionObject,
               ~requiredFields=walletType.required_field,
             )}

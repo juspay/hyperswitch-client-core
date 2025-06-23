@@ -273,6 +273,7 @@ let useBrowserHook = () => {
     ~responseCallback,
     ~errorCallback,
     ~processor,
+    ~paymentMethod=?,
     ~useEphemeralWebSession=false,
   ) => {
     BrowserHook.openUrl(
@@ -345,11 +346,23 @@ let useBrowserHook = () => {
             }),
           },
         })
-        errorCallback(
-          ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
-          ~closeSDK={false},
-          (),
-        )
+          if paymentMethod->Option.getOr("") == "ach" {
+          responseCallback(
+            ~paymentStatus=ProcessingPayments(None),
+            ~status={
+              message: "",
+              code: "",
+              type_: "",
+              status: "Pending",
+            },
+          )
+        } else {
+          errorCallback(
+            ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
+            ~closeSDK={false},
+            (),
+          )
+        }
       } else if res.status === Failed {
         setAllApiData({
           ...allApiData,
@@ -381,6 +394,8 @@ let useBrowserHook = () => {
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectToBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
@@ -444,6 +459,21 @@ let useRedirectHook = () => {
           | None => ()
           }
         }
+      | "display_bank_transfer_information" => {
+          switch nextAction {
+          | None => ()
+          | Some(data) =>
+            setLoading(BankTransfer)
+            setPaymentScreenType(
+              BANK_TRANSFER(
+                Some(
+                  data.bank_transfer_steps_and_charges_detail->getACH_bank_transfer->getACH_details,
+                ),
+              ),
+            )
+          }
+          ()
+        }
       | _ =>
         switch status {
         | "succeeded" =>
@@ -499,6 +529,7 @@ let useRedirectHook = () => {
               ~errorCallback,
               ~processor=body,
               ~useEphemeralWebSession=isCardPayment,
+              ~paymentMethod,
             )
           }
         | statusVal =>
