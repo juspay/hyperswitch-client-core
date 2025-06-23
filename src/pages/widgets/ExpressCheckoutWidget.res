@@ -374,9 +374,7 @@ let make = () => {
           text={localeObj.cardExpiresText ++ " " ++ obj.expiry_date->Option.getOr("")}
           textType={ModalTextLight}
         />
-      | Some(SAVEDLISTWALLET(obj)) =>
-        <TextWrapper text={obj.walletType->Option.getOr("")} textType={ModalTextLight} />
-      | Some(NONE) | None => React.null
+      | Some(SAVEDLISTWALLET(_)) | Some(NONE) | None => React.null
       }}
     </View>
     {switch firstPaymentMethod {
