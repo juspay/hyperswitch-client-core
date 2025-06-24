@@ -31,14 +31,28 @@ let useSamsungPayValidityHook = () => {
     )
   }
 
-  let isSamsungPayPresentInPML = allApiData.paymentList->Array.reduce(false, (acc, item) => {
-    let isSamsungPayPresent = switch item {
-    | WALLET(walletVal) => walletVal.payment_method_type_wallet == SAMSUNG_PAY
+  let isSamsungPayPresentInPML = {
+    let isPresentInAccPML = allApiData.paymentList->Array.reduce(false, (acc, item) => {
+      let isSamsungPayPresent = switch item {
+      | WALLET(walletVal) => walletVal.payment_method_type_wallet == SAMSUNG_PAY
+      | _ => false
+      }
+      acc || isSamsungPayPresent
+    })
+    let isPresentInCustPML = switch allApiData.savedPaymentMethods {
+    | Some({pmList: Some(pmList)}) =>
+      pmList->Array.reduce(false, (acc, item) => {
+        let isSamsungPayPresent = switch item {
+        | SAVEDLISTWALLET(val) =>
+          val.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper == SAMSUNG_PAY
+        | _ => false
+        }
+        acc || isSamsungPayPresent
+      })
     | _ => false
     }
-    acc || isSamsungPayPresent
-  })
-
+    isPresentInCustPML || isPresentInAccPML
+  }
   let isSamsungDevice = nativeProp.hyperParams.deviceBrand->Option.getOr("") == "samsung"
 
   let handleSPay = async () => {

@@ -84,46 +84,41 @@ let useExitPaymentsheet = () => {
   let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
-    logger(
-      ~logType=INFO,
-      ~value=nativeProp.hyperParams.appId->Option.getOr(""),
-      ~category=USER_EVENT,
-      ~eventName=SDK_CLOSED,
-      (),
-    )
-    //setSdkState(SdkTypes.NoView)
-    // switch ref {
-    // | None => ()
-    // | Some(fun) => fun(JSON.Encode.null)
-    // }
-    ReactNative.Platform.os == #web
-      ? // BrowserHook.href(
-        //     BrowserHook.location,
-        //     `${allApiData.redirect_url->Option.getOr("")}?status=${apiResStatus.status->Option.getOr(
-        //         "failed",
-        //       )}&payment_intent_client_secret=${nativeProp.clientSecret}&amount=6541`,
-        //   )
-        exitPaymentSheet(apiResStatus->stringifiedResStatus)
-      : switch nativeProp.sdkState {
-        | WidgetPaymentSheet =>
-          hyperModule.exitWidgetPaymentsheet(
-            nativeProp.rootTag,
-            apiResStatus->stringifiedResStatus,
-            reset,
-          )
-        | PaymentMethodsManagement =>
-          hyperModule.exitPaymentMethodManagement(
-            nativeProp.rootTag,
-            apiResStatus->stringifiedResStatus,
-            reset,
-          )
-        | _ =>
-          hyperModule.exitPaymentsheet(
-            nativeProp.rootTag,
-            apiResStatus->stringifiedResStatus,
-            reset,
-          )
-        }
+    Sentry.flushAndCloseSentry()
+    ->Promise.then(() => {
+      logger(
+        ~logType=INFO,
+        ~value=nativeProp.hyperParams.appId->Option.getOr(""),
+        ~category=USER_EVENT,
+        ~eventName=SDK_CLOSED,
+        (),
+      )
+      ReactNative.Platform.os == #web
+        ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
+        : switch nativeProp.sdkState {
+          | WidgetPaymentSheet =>
+            hyperModule.exitWidgetPaymentsheet(
+              nativeProp.rootTag,
+              apiResStatus->stringifiedResStatus,
+              reset,
+            )
+          | PaymentMethodsManagement =>
+            hyperModule.exitPaymentMethodManagement(
+              nativeProp.rootTag,
+              apiResStatus->stringifiedResStatus,
+              reset,
+            )
+          | _ =>
+            hyperModule.exitPaymentsheet(
+              nativeProp.rootTag,
+              apiResStatus->stringifiedResStatus,
+              reset,
+            )
+          }
+
+      Promise.resolve()
+    })
+    ->ignore
   }
 
   let simplyExit = (apiResStatus, rootTag, reset) => {

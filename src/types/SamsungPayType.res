@@ -5,24 +5,16 @@ type payment3DS = {
   data: string,
 }
 
-type paymentShippingAddress = {
-  shipping: Js.Json.t, // Assuming this is a complex object, we use Js.Json.t for now
-  email: string,
-}
-type billingCollectedFromSpay = {billingDetails: string}
+type addressType = BILLING_ADDRESS | SHIPPING_ADDRESS
+
+type addressCollectedFromSpay = {billingDetails?: string, shippingDetails?: string}
 
 type paymentCredential = {
   \"3_d_s": payment3DS,
   card_brand: string,
-  // payment_currency_type: string,
-  // payment_last4_dpan: string,
-  // payment_last4_fpan: string,
   card_last4digits: string,
-  // merchant_ref: string,
   method: string,
   recurring_payment: bool,
-  // payment_shipping_address: paymentShippingAddress,
-  // payment_shipping_method: string,
 }
 type paymentMethodData = {payment_credential: paymentCredential}
 
@@ -82,7 +74,7 @@ let getSamsungPaySessionObject = (sessionData: AllApiDataContext.sessions) => {
   sessionObject
 }
 
-let getBillingDetails = dict => {
+let getAddressFromDict = dict => {
   switch dict {
   | Some(dict) =>
     let addressDetails: SdkTypes.addressDetails = {
@@ -106,56 +98,24 @@ let getBillingDetails = dict => {
   }
 }
 
-let getBillingAddressFromJson = billingDetails => {
-  switch billingDetails {
-  | Some(details) =>
-    details.billingDetails
+let getAddress = address => {
+  switch address {
+  | Some(address) =>
+    address
     ->JSON.parseExn
     ->JSON.Decode.object
-    ->getBillingDetails
+    ->getAddressFromDict
   | None => None
   }
 }
 
-/*
-let getShippingDetails = (dict): SdkTypes.addressDetails => {
-  let dict =
-    dict
-    ->Dict.get("payment_shipping_address")
-    ->Option.flatMap(JSON.Decode.object)
-    ->Option.getOr(Dict.make())
-
-  let email = dict->getOptionString("email")
-  let phoneNumber = dict->getString("phoneNumber", "")
-
-  let shippingDict =
-    dict
-    ->Dict.get("shipping")
-    ->Option.flatMap(JSON.Decode.object)
-    ->Option.getOr(Dict.make())
-
-  let fullName = getString(shippingDict, "addressee", "")
-
-  let nameArr = String.split(fullName, " ")
-  let firstName = nameArr[0]->Option.getOr("")
-  let lastName = nameArr[1]->Option.getOr("")
-
-  {
-    address: Some({
-      first_name: firstName,
-      last_name: lastName,
-      city: getString(shippingDict, "city", ""),
-      country: "IN",
-      line1: getString(shippingDict, "addressLine1", ""),
-      line2: getString(shippingDict, "addressLine2", ""),
-      zip: getString(shippingDict, "postalCode", ""),
-      state: getString(shippingDict, "state", ""),
-    }),
-    email,
-    phone: Some({number: phoneNumber}),
+let getAddressObj = (addressDetails, addressType: addressType) => {
+  switch addressDetails {
+  | Some(details) => {
+      let address =
+        addressType == BILLING_ADDRESS ? details.billingDetails : details.shippingDetails
+      getAddress(address)
+    }
+  | None => None
   }
 }
-let getShippingAddressFromJson = sPayResponse => {
-  sPayResponse->getShippingDetails
-}
-*/
