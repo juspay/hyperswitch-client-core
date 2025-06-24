@@ -54,8 +54,6 @@ let make = (
   | _ => AllApiDataContext.dafaultsavePMObj
   }
 
-  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
-
   React.useEffect0(() => {
     setPaymentScreenType(SAVEDCARDSCREEN)
 
