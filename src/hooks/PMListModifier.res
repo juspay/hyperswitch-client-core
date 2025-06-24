@@ -79,8 +79,6 @@ let useListModifier = () => {
                     isScreenFocus
                     redirectProp={PAY_LATER(payLaterVal)}
                     fields
-                    isDynamicFields={payLaterVal.payment_method_type !== "klarna"}
-                    dynamicFields=payLaterVal.required_field
                     setConfirmButtonDataRef
                   />,
               })
@@ -211,12 +209,7 @@ let useListModifier = () => {
               name: fields.text,
               componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
                 <Redirect
-                  isScreenFocus
-                  isDynamicFields=true
-                  dynamicFields=walletVal.required_field
-                  redirectProp=WALLET(walletVal)
-                  fields
-                  setConfirmButtonDataRef
+                  isScreenFocus redirectProp=WALLET(walletVal) fields setConfirmButtonDataRef
                 />,
             })
           }
@@ -260,10 +253,23 @@ let useListModifier = () => {
             name: fields.text,
             componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
               <Redirect
+                isScreenFocus redirectProp=BANK_DEBIT(bankDebitVal) fields setConfirmButtonDataRef
+              />,
+          })
+        | BANK_TRANSFER(bankTransferVal) =>
+          let fields =
+            redirectionList
+            ->Array.find(l => {
+              l.name === bankTransferVal.payment_method_type ++ "_bank_transfer"
+            })
+            ->Option.getOr(Types.defaultRedirectType)
+
+          Some({
+            name: fields.text,
+            componentHoc: (~isScreenFocus, ~setConfirmButtonDataRef) =>
+              <Redirect
                 isScreenFocus
-                isDynamicFields={true}
-                dynamicFields={bankDebitVal.required_field}
-                redirectProp=BANK_DEBIT(bankDebitVal)
+                redirectProp=BANK_TRANSFER(bankTransferVal)
                 fields
                 setConfirmButtonDataRef
               />,
@@ -315,10 +321,9 @@ let useListModifier = () => {
           | SAMSUNG_PAY =>
             exp->Option.isSome &&
             SamsungPayModule.isAvailable &&
-            samsungPayStatus == SamsungPay.Invalid
-              ? None
-              : exp
-
+            samsungPayStatus == SamsungPay.Valid
+              ? exp
+              : None
           | PAYPAL =>
             exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
               ? exp

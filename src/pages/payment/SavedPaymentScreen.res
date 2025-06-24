@@ -13,6 +13,7 @@ let make = (
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
+  let (_, setMissingFieldsData) = React.useState(_ => [])
 
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
 
@@ -64,8 +65,6 @@ let make = (
       },
     )->Animated.start(~endCallback=_ => {endCallback()}, ())
   }
-
-  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   React.useEffect0(() => {
     setPaymentScreenType(SAVEDCARDSCREEN)
@@ -139,7 +138,10 @@ let make = (
 
     let body: PaymentMethodListType.redirectType = {
       client_secret: nativeProp.clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
+      return_url: ?Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       ?email,
       payment_method,
       payment_method_type,
@@ -156,7 +158,6 @@ let make = (
             acceptance_type: "online",
             accepted_at: Date.now()->Date.fromTime->Date.toISOString,
             online: {
-              ip_address: ?nativeProp.hyperParams.ip,
               user_agent: ?nativeProp.hyperParams.userAgent,
             },
           })
@@ -193,51 +194,81 @@ let make = (
     switch paymentData.error {
     | "" =>
       let json = paymentData.paymentMethodData->JSON.parseExn
-      let obj =
+      let paymentDataFromGPay =
         json
         ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper(
-          switch countryStateData {
-          | FetchData(data)
-          | Localdata(data) =>
-            data.states
-          | _ => Dict.make()
-          },
+        ->WalletType.itemToObjMapper
+      let billingAddress = switch paymentDataFromGPay.paymentMethodData.info {
+      | Some(info) => info.billing_address
+      | None => None
+      }
+      let shippingAddress = paymentDataFromGPay.shippingDetails
+
+      let walletType =
+        allApiData.paymentList
+        ->Array.find(pm =>
+          switch pm {
+          | WALLET(walletData) =>
+            walletData.payment_method_type == selectedObj.walletName->SdkTypes.walletTypeToStrMapper
+          | _ => false
+          }
         )
-      let payment_method_data =
-        [
-          (
-            "wallet",
-            [
-              (
-                selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-                obj.paymentMethodData->Utils.getJsonObjectFromRecord,
-              ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-          (
-            "billing",
-            switch obj.paymentMethodData.info {
-            | Some(info) =>
-              switch info.billing_address {
-              | Some(address) => address->Utils.getJsonObjectFromRecord
-              | None => JSON.Encode.null
+        ->Option.flatMap(pm =>
+          switch pm {
+          | WALLET(walletData) => Some(walletData)
+          | _ => None
+          }
+        )
+
+      switch walletType {
+      | Some(walletTypeData) => {
+          let (
+            hasMissingFields,
+            updatedRequiredFields,
+            paymentMethodData,
+          ) = WalletType.getMissingFieldsAndPaymentMethodData(
+            walletTypeData.required_field,
+            ~billingAddress,
+            ~shippingAddress,
+            ~email=paymentDataFromGPay.email,
+            ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
+          )
+
+          hasMissingFields
+            ? {
+                setPaymentScreenType(
+                  WALLET_MISSING_FIELDS(
+                    updatedRequiredFields,
+                    walletTypeData,
+                    GooglePayData(paymentDataFromGPay),
+                  ),
+                )
+                setLoading(FillingDetails)
               }
-            | None => JSON.Encode.null
-            },
-          ),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-      processRequest(
-        ~payment_method="wallet",
-        ~payment_method_data,
-        ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-        ~email=?obj.email,
-        (),
-      )
+            : {
+                paymentMethodData->Dict.set(
+                  "wallet",
+                  [
+                    (
+                      selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+                      paymentDataFromGPay.paymentMethodData->Utils.getJsonObjectFromRecord,
+                    ),
+                  ]
+                  ->Dict.fromArray
+                  ->JSON.Encode.object,
+                )
+
+                processRequest(
+                  ~payment_method="wallet",
+                  ~payment_method_data=paymentMethodData->JSON.Encode.object,
+                  ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+                  ~email=?paymentDataFromGPay.email,
+                  (),
+                )
+              }
+        }
+      | None => ()
+      }
     | "Cancel" =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
@@ -283,63 +314,184 @@ let make = (
           )
         }, 2000)->ignore
       } else {
-        let paymentData =
-          [
-            ("payment_data", payment_data),
-            ("payment_method", payment_method),
-            ("transaction_identifier", transaction_identifier),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
+        let billingAddress = var->WalletType.getBillingContact("billing_contact")
+        let shippingAddress = var->WalletType.getBillingContact("shipping_contact")
 
-        let payment_method_data =
-          [
-            (
-              "wallet",
-              [(selectedObj.walletName->SdkTypes.walletTypeToStrMapper, paymentData)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-            (
-              "billing",
-              switch var->GooglePayTypeNew.getBillingContact(
-                "billing_contact",
-                switch countryStateData {
-                | FetchData(data)
-                | Localdata(data) =>
-                  data.states
-                | _ => Dict.make()
-                },
-              ) {
-              | Some(billing) => billing->Utils.getJsonObjectFromRecord
-              | None => JSON.Encode.null
-              },
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        processRequest(
-          ~payment_method="wallet",
-          ~payment_method_data,
-          ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-          ~email=?switch var->GooglePayTypeNew.getBillingContact(
-            "billing_contact",
-            switch countryStateData {
-            | FetchData(data)
-            | Localdata(data) =>
-              data.states
-            | _ => Dict.make()
-            },
-          ) {
-          | Some(billing) => billing.email
-          | None => None
-          },
-          (),
-        )
+        let walletType =
+          allApiData.paymentList
+          ->Array.find(pm =>
+            switch pm {
+            | WALLET(walletData) =>
+              walletData.payment_method_type ==
+                selectedObj.walletName->SdkTypes.walletTypeToStrMapper
+            | _ => false
+            }
+          )
+          ->Option.flatMap(pm =>
+            switch pm {
+            | WALLET(walletData) => Some(walletData)
+            | _ => None
+            }
+          )
+
+        switch walletType {
+        | Some(walletTypeData) => {
+            let (
+              hasMissingFields,
+              updatedRequiredFields,
+              paymentMethodData,
+            ) = WalletType.getMissingFieldsAndPaymentMethodData(
+              walletTypeData.required_field,
+              ~billingAddress,
+              ~shippingAddress,
+              ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
+            )
+
+            hasMissingFields
+              ? {
+                  let paymentDataFromApplePay = var->WalletType.applePayItemToObjMapper
+                  setMissingFieldsData(_ => updatedRequiredFields)
+                  setPaymentScreenType(
+                    WALLET_MISSING_FIELDS(
+                      updatedRequiredFields,
+                      walletTypeData,
+                      ApplePayData(paymentDataFromApplePay),
+                    ),
+                  )
+                  setLoading(FillingDetails)
+                }
+              : {
+                  let paymentData =
+                    [
+                      ("payment_data", payment_data),
+                      ("payment_method", payment_method),
+                      ("transaction_identifier", transaction_identifier),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+
+                  paymentMethodData->Dict.set(
+                    "wallet",
+                    [(selectedObj.walletName->SdkTypes.walletTypeToStrMapper, paymentData)]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object,
+                  )
+
+                  processRequest(
+                    ~payment_method="wallet",
+                    ~payment_method_data=paymentMethodData->JSON.Encode.object,
+                    ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+                    ~email=?switch billingAddress {
+                    | Some(billing) => billing.email
+                    | None => None
+                    },
+                    (),
+                  )
+                }
+          }
+        | None => ()
+        }
       }
     }
   }
 
+  let confirmSamsungPay = (
+    status,
+    billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
+  ) => {
+    if status->ThreeDsUtils.isStatusSuccess {
+      let response =
+        status.message
+        ->JSON.parseExn
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+
+      let billingAddress = billingDetails->SamsungPayType.getAddressObj(BILLING_ADDRESS)
+      let shippingAddress = billingDetails->SamsungPayType.getAddressObj(SHIPPING_ADDRESS)
+      let samsungPayData = SamsungPayType.itemToObjMapper(response)
+
+      let walletType =
+        allApiData.paymentList
+        ->Array.find(pm =>
+          switch pm {
+          | WALLET(walletData) =>
+            walletData.payment_method_type == selectedObj.walletName->SdkTypes.walletTypeToStrMapper
+          | _ => false
+          }
+        )
+        ->Option.flatMap(pm =>
+          switch pm {
+          | WALLET(walletData) => Some(walletData)
+          | _ => None
+          }
+        )
+
+      switch walletType {
+      | Some(walletTypeData) =>
+        let (
+          hasMissingFields,
+          updatedRequiredFields,
+          paymentMethodData,
+        ) = WalletType.getMissingFieldsAndPaymentMethodData(
+          walletTypeData.required_field,
+          ~billingAddress,
+          ~shippingAddress,
+          ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
+        )
+
+        hasMissingFields
+          ? {
+              setMissingFieldsData(_ => updatedRequiredFields)
+              setPaymentScreenType(
+                WALLET_MISSING_FIELDS(
+                  updatedRequiredFields,
+                  walletTypeData,
+                  SamsungPayData(samsungPayData, billingAddress, shippingAddress),
+                ),
+              )
+              setLoading(FillingDetails)
+            }
+          : {
+              paymentMethodData->Dict.set(
+                "wallet",
+                [
+                  (
+                    selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+                    samsungPayData->Utils.getJsonObjectFromRecord,
+                  ),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object,
+              )
+
+              processRequest(
+                ~payment_method="wallet",
+                ~payment_method_data=paymentMethodData->JSON.Encode.object,
+                ~payment_method_type=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+                ~email=?switch billingAddress {
+                | Some(address) => address.email
+                | None => None
+                },
+                (),
+              )
+            }
+      | None => ()
+      }
+    } else {
+      setLoading(FillingDetails)
+      showAlert(
+        ~errorType="warning",
+        ~message=`Samsung Pay Error, Please try again ${status.message}`,
+      )
+    }
+    logger(
+      ~logType=INFO,
+      ~value=`SPAY result from native ${status.status->JSON.stringifyAny->Option.getOr("")}`,
+      ~category=USER_EVENT,
+      ~eventName=SAMSUNG_PAY,
+      (),
+    )
+  }
   React.useEffect1(() => {
     switch selectedObj.walletName {
     | APPLE_PAY => Window.registerEventListener("applePayData", confirmApplePay)
@@ -385,13 +537,11 @@ let make = (
     | GOOGLE_PAY =>
       if WebKit.platform === #android {
         HyperModule.launchGPay(
-          GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+          WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
           confirmGPay,
         )
       } else {
-        launchGPay(
-          GooglePayTypeNew.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-        )
+        launchGPay(WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env))
       }
     | APPLE_PAY =>
       if WebKit.platform === #ios {
@@ -440,6 +590,16 @@ let make = (
           ->JSON.Encode.object
           ->JSON.stringify,
         )
+      }
+    | SAMSUNG_PAY => {
+        logger(
+          ~logType=INFO,
+          ~value="Samsung Pay Button Clicked",
+          ~category=USER_EVENT,
+          ~eventName=SAMSUNG_PAY,
+          (),
+        )
+        SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
       }
     | NONE =>
       let (body, paymentMethodType) = (

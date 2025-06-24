@@ -1,10 +1,28 @@
-# .github/workflows/e2e-ios.yml
-name: e2e-ios
-on: push
+name: Test All / build_and_test_ios (pull_request)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
 
 jobs:
   e2e-ios:
-    runs-on: macos-14
+    runs-on: macos-latest
+    env:
+      SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+      SENTRY_ENV: 'production'
+      HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
+      HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
+      HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+      HYPERSWITCH_LOGS_PATH: ${{ secrets.HYPERSWITCH_LOGS_PATH }}
+      PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+      SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+      INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
+      HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+      HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
+      PROFILE_ID: ${{ secrets.PROFILE_ID }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,27 +35,20 @@ jobs:
           path: ios
           fetch-depth: 0
 
+      - name: Checkout Shared Code Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
 
       - name: Dependency Install
-        run: |
-          jq 'del(.resolutions) | 
-          del(.dependencies["react-native-hyperswitch-netcetera-3ds"]) | 
-          del(.dependencies["react-native-hyperswitch-scancard"])' package.json > package.json.tmp && 
-          mv package.json.tmp package.json
-          npm install
-
-      - name: Create .env file
-        run: |
-          touch .env
-          echo  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
-          echo STATIC_DIR = ./dist >> .env
-          echo HYPERSWITCH_PUBLISHABLE_KEY =  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}>> .env
-          echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
-          echo PROFILE_ID =  ${{ secrets.PROFILE_ID }}>> .env
+        run: npm install
 
       - name: Generate DS Root Certificate for Netcetera SDK
         run: |
@@ -81,12 +92,7 @@ jobs:
 
       - name: Install CocoaPods
         run: |
-          ls
-          cd ios
-          ls
-          pod setup --verbose
-          sudo gem install cocoapods
-          pod install
+          npm run bundle
           cd ..
 
       - name: Detox rebuild framework cache
@@ -113,4 +119,4 @@ jobs:
         run: npx detox build --configuration ios.sim.debug
 
       - name: Detox test
-        run: npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all
+        run: applesimutils -l && npx detox test --configuration ios.sim.debug # --loglevel trace --record-logs all

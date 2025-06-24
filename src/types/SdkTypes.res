@@ -35,11 +35,15 @@ type localeTypes =
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
 type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE | KLARNA
+
+type payment_method_type_bank_transfer = ACH | NONE
+
 let walletNameMapper = str => {
   switch str {
   | "google_pay" => "Google Pay"
   | "apple_pay" => "Apple Pay"
   | "paypal" => "Paypal"
+  | "samsung_pay" => "Samsung Pay"
   | _ => ""
   }
 }
@@ -49,6 +53,7 @@ let walletNameToTypeMapper = str => {
   | "Google Pay" => GOOGLE_PAY
   | "Apple Pay" => APPLE_PAY
   | "Paypal" => PAYPAL
+  | "Samsung Pay" => SAMSUNG_PAY
   | _ => NONE
   }
 }
@@ -301,7 +306,6 @@ type hyperParams = {
   appId?: string,
   country: string,
   disableBranding: bool,
-  ip: option<string>,
   userAgent: option<string>,
   launchTime?: float,
   sdkVersion: string,
@@ -309,6 +313,7 @@ type hyperParams = {
   os_type: option<string>,
   os_version: option<string>,
   deviceBrand: option<string>,
+  bottomInset: option<float>,
 }
 
 type nativeProp = {
@@ -785,6 +790,16 @@ let getAppearanceObj = (
   }
 }
 
+let getPrimaryColor = (colors, ~theme=Default) =>
+  switch colors {
+  | Colors(c) => c.primary
+  | DefaultColors(df) =>
+    switch theme {
+    | Dark => df.dark->Option.flatMap(d => d.primary)
+    | _ => df.light->Option.flatMap(l => l.primary)
+    }
+  }
+
 let parseConfigurationDict = (configObj, from) => {
   let shippingDetailsDict =
     configObj->Dict.get("shippingDetails")->Option.flatMap(JSON.Decode.object)
@@ -961,7 +976,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       appId: ?getOptionString(hyperParams, "appId"),
       country: getString(hyperParams, "country", ""),
       disableBranding: getBool(hyperParams, "disableBranding", true),
-      ip: getOptionString(hyperParams, "ip"),
       userAgent: getOptionString(hyperParams, "user-agent"),
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),
@@ -970,6 +984,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       os_type: getOptionString(hyperParams, "os_type"),
       os_version: getOptionString(hyperParams, "os_version"),
       deviceBrand: getOptionString(hyperParams, "deviceBrand"),
+      bottomInset: getOptionFloat(hyperParams, "bottomInset"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }

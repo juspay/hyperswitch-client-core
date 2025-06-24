@@ -28,22 +28,38 @@ let make = () => {
   let canLoadSDK = useSDKLoadCheck(~enablePartialLoading)
 
   <FullScreenSheetWrapper>
-    {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
-    | (_, _, false) => <SdkLoadingScreen />
-    | (Loading, _, _) =>
-      nativeProp.configuration.defaultView
-        ? <PaymentSheet setConfirmButtonDataRef />
-        : <SdkLoadingScreen />
-    | (Some(data), _, _) =>
-      paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
-      data.pmList->Option.getOr([])->Array.length > 0 &&
-      allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
-        ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
-        : <PaymentSheet setConfirmButtonDataRef />
-    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
+    {switch paymentScreenType {
+    | BANK_TRANSFER(data) =>
+      switch data {
+      | Some(data) => <ACHBankDetails data />
+      | _ => React.null
+      }
+    | WALLET_MISSING_FIELDS(requiredFields: RequiredFieldsTypes.required_fields, walletType, walletData) =>
+      <AddressSheet requiredFields walletType walletData />
+    | _ =>
+      <React.Fragment>
+        {switch (
+          allApiData.savedPaymentMethods,
+          allApiData.additionalPMLData.paymentType,
+          canLoadSDK,
+        ) {
+        | (_, None, _)
+        | (Loading, _, _) =>
+          nativeProp.configuration.defaultView
+            ? <PaymentSheet setConfirmButtonDataRef />
+            : <SdkLoadingScreen />
+        | (Some(data), _, _) =>
+          paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
+          data.pmList->Option.getOr([])->Array.length > 0 &&
+          allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
+            ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
+            : <PaymentSheet setConfirmButtonDataRef />
+        | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
+        }}
+        <GlobalConfirmButton confirmButtonDataRef />
+        <Space height=15. />
+      </React.Fragment>
     }}
-    <GlobalConfirmButton confirmButtonDataRef />
-    <Space height=15. />
     {nativeProp.configuration.showVersionInfo
       ? <TextWrapper
           textType=TextWrapper.SubheadingBold

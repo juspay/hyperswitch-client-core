@@ -70,6 +70,14 @@ type payment_method_types_bank_debit = {
   required_field: RequiredFieldsTypes.required_fields,
 }
 
+type payment_method_types_bank_transfer = {
+  payment_method: string,
+  payment_method_type: string,
+  payment_method_type_bank_transfer: SdkTypes.payment_method_type_bank_transfer,
+  payment_experience: array<payment_experience>,
+  required_field: RequiredFieldsTypes.required_fields,
+}
+
 type payment_method =
   | CARD(payment_method_types_card)
   | WALLET(payment_method_types_wallet)
@@ -78,9 +86,9 @@ type payment_method =
   | CRYPTO(payment_method_types_pay_later)
   | OPEN_BANKING(payment_method_types_open_banking)
   | BANK_DEBIT(payment_method_types_bank_debit)
+  | BANK_TRANSFER(payment_method_types_bank_transfer)
 
 type online = {
-  ip_address?: string,
   user_agent?: string,
   accept_header?: string,
   language?: SdkTypes.localeTypes,
@@ -100,9 +108,7 @@ type customer_acceptance = {
   online: online,
 }
 
-type mandate_data = {
-  customer_acceptance: customer_acceptance,
-}
+type mandate_data = {customer_acceptance: customer_acceptance}
 type redirectType = {
   client_secret: string,
   return_url?: string,
@@ -276,7 +282,36 @@ let flattenPaymentListArray = (plist, item) => {
         payment_method_type: dict2->getString("payment_method_type", ""),
         payment_method_type_var: switch dict2->getString("payment_method_type", "") {
         | "becs" => BECS
+        | "bacs" => BACS
+        | "sepa" => SEPA
+        | "ach" => ACH
         | _ => Other
+        },
+        payment_experience: dict2
+        ->getArray("payment_experience")
+        ->Array.map(item3 => {
+          let dict3 = item3->getDictFromJson
+          {
+            payment_experience_type: dict3->getString("payment_experience_type", ""),
+            payment_experience_type_decode: switch dict3->getString("payment_experience_type", "") {
+            | "redirect_to_url" => REDIRECT_TO_URL
+            | _ => NONE
+            },
+            eligible_connectors: dict3->getArray("eligible_connectors"),
+          }
+        }),
+        required_field: dict2->RequiredFieldsTypes.getRequiredFieldsFromDict,
+      })->Js.Array.push(plist)
+    })
+  | "bank_transfer" =>
+    payment_method_types_array->Array.map(item2 => {
+      let dict2 = item2->getDictFromJson
+      BANK_TRANSFER({
+        payment_method: "bank_transfer",
+        payment_method_type: dict2->getString("payment_method_type", ""),
+        payment_method_type_bank_transfer: switch dict2->getString("payment_method_type", "") {
+        | "ach" => ACH
+        | _ => NONE
         },
         payment_experience: dict2
         ->getArray("payment_experience")
@@ -309,6 +344,7 @@ let getPaymentMethodType = pm => {
   | CRYPTO(payment_method_type) => payment_method_type.payment_method_type
   | OPEN_BANKING(payment_method_type) => payment_method_type.payment_method_type
   | BANK_DEBIT(payment_method_type) => payment_method_type.payment_method_type
+  | BANK_TRANSFER(payment_method_type) => payment_method_type.payment_method_type
   }
 }
 
@@ -357,6 +393,8 @@ type jsonToMandateData = {
   paymentType: option<string>,
   merchantName: option<string>,
   requestExternalThreeDsAuthentication: option<bool>,
+  collectBillingDetailsFromWallets: bool,
+  collectShippingDetailsFromWallets: bool,
 }
 
 let jsonToMandateData: JSON.t => jsonToMandateData = res => {
@@ -382,12 +420,26 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
       ->Dict.get("request_external_three_ds_authentication")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.bool,
+      collectBillingDetailsFromWallets: res
+      ->getDictFromJson
+      ->Dict.get("collect_billing_details_from_wallets")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.bool
+      ->Option.getOr(true),
+      collectShippingDetailsFromWallets: res
+      ->getDictFromJson
+      ->Dict.get("collect_shipping_details_from_wallets")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.bool
+      ->Option.getOr(true),
     }
   | None => {
       mandateType: NORMAL,
       paymentType: None,
       merchantName: None,
       requestExternalThreeDsAuthentication: None,
+      collectBillingDetailsFromWallets: false,
+      collectShippingDetailsFromWallets: false,
     }
   }
 }

@@ -266,8 +266,23 @@ let useBrowserHook = () => {
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
-  (~clientSecret, ~publishableKey, ~openUrl, ~responseCallback, ~errorCallback, ~processor) => {
-    BrowserHook.openUrl(openUrl, nativeProp.hyperParams.appId, intervalId)
+  (
+    ~clientSecret,
+    ~publishableKey,
+    ~openUrl,
+    ~responseCallback,
+    ~errorCallback,
+    ~processor,
+    ~paymentMethod=?,
+    ~useEphemeralWebSession=false,
+  ) => {
+    BrowserHook.openUrl(
+      openUrl,
+      Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL=allApiData.additionalPMLData.redirect_url),
+      intervalId,
+      ~useEphemeralWebSession,
+      ~appearance=nativeProp.configuration.appearance
+    )
     ->Promise.then(res => {
       if res.status === Success {
         retrievePayment(Payment, clientSecret, publishableKey)
@@ -331,11 +346,23 @@ let useBrowserHook = () => {
             }),
           },
         })
-        errorCallback(
-          ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
-          ~closeSDK={false},
-          (),
-        )
+          if paymentMethod->Option.getOr("") == "ach" {
+          responseCallback(
+            ~paymentStatus=ProcessingPayments(None),
+            ~status={
+              message: "",
+              code: "",
+              type_: "",
+              status: "Pending",
+            },
+          )
+        } else {
+          errorCallback(
+            ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
+            ~closeSDK={false},
+            (),
+          )
+        }
       } else if res.status === Failed {
         setAllApiData({
           ...allApiData,
@@ -367,7 +394,9 @@ let useBrowserHook = () => {
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
-  let redirectioBrowserHook = useBrowserHook()
+  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let redirectToBrowserHook = useBrowserHook()
   let retrievePayment = useRetrieveHook()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let logger = LoggerHook.useLoggerHook()
@@ -383,6 +412,7 @@ let useRedirectHook = () => {
     ~paymentMethod,
     ~paymentExperience: option<string>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
+    ~isCardPayment=false,
     (),
   ) => {
     let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
@@ -428,6 +458,21 @@ let useRedirectHook = () => {
             Plaid.open_(openProps)->ignore
           | None => ()
           }
+        }
+      | "display_bank_transfer_information" => {
+          switch nextAction {
+          | None => ()
+          | Some(data) =>
+            setLoading(BankTransfer)
+            setPaymentScreenType(
+              BANK_TRANSFER(
+                Some(
+                  data.bank_transfer_steps_and_charges_detail->getACH_bank_transfer->getACH_details,
+                ),
+              ),
+            )
+          }
+          ()
         }
       | _ =>
         switch status {
@@ -476,13 +521,15 @@ let useRedirectHook = () => {
               ~paymentMethod,
               (),
             )
-            redirectioBrowserHook(
+            redirectToBrowserHook(
               ~clientSecret,
               ~publishableKey,
               ~openUrl=reUri,
               ~responseCallback,
               ~errorCallback,
               ~processor=body,
+              ~useEphemeralWebSession=isCardPayment,
+              ~paymentMethod,
             )
           }
         | statusVal =>

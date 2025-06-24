@@ -1,3 +1,115 @@
+## [1.6.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.0...v1.6.1) (2025-06-20)
+
+
+### Bug Fixes
+
+* state field empty fix ([62f714e](https://github.com/juspay/hyperswitch-client-core/commit/62f714e8e416eb036b1b7cc90135ab113fa7e19a))
+
+# [1.6.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.5.0...v1.6.0) (2025-06-20)
+
+
+### Features
+
+* wallet missing field collection ([1dfef7f](https://github.com/juspay/hyperswitch-client-core/commit/1dfef7f9e2e3a4f9f45b81354fb7ce8a9af6ed99))
+
+# [1.5.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.2...v1.5.0) (2025-06-18)
+
+
+### Features
+
+* logs for co-badged feature ([#294](https://github.com/juspay/hyperswitch-client-core/issues/294)) ([9d79ae0](https://github.com/juspay/hyperswitch-client-core/commit/9d79ae0b606810f3a50a6f16e5e81a3dc484d727))
+
+## [1.4.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.1...v1.4.2) (2025-06-06)
+
+
+### Bug Fixes
+
+* **apay:** fixing the state code mapping ([#300](https://github.com/juspay/hyperswitch-client-core/issues/300)) ([e440545](https://github.com/juspay/hyperswitch-client-core/commit/e440545dfd71697e3d9a8cd2406d899b17ba851d))
+
+## [1.4.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.0...v1.4.1) (2025-06-02)
+
+
+### Bug Fixes
+
+* detox: Navigation between saved screen and payment sheet ([#293](https://github.com/juspay/hyperswitch-client-core/issues/293)) ([34f8ad5](https://github.com/juspay/hyperswitch-client-core/commit/34f8ad574c0e71907c5a841435a148f19e254ad1))
+
+# [1.4.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.3.0...v1.4.0) (2025-05-22)
+
+
+### Bug Fixes
+
+* modified the android & IOS scripts in package.json ([#282](https://github.com/juspay/hyperswitch-client-core/issues/282)) ([21c5288](https://github.com/juspay/hyperswitch-client-core/commit/21c5288bec7492b98aacf51323d64e9892c20c7f))
+
+
+### Features
+
+* added ACH Bank Debit ([#286](https://github.com/juspay/hyperswitch-client-core/issues/286)) ([5878067](https://github.com/juspay/hyperswitch-client-core/commit/58780679519f69682dfc81624980594166c9bc65))
+
+# [1.3.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.2.0...v1.3.0) (2025-05-16)
+
+
+### Features
+
+* integrated Bacs Bank Debit ([#214](https://github.com/juspay/hyperswitch-client-core/issues/214)) ([76ee80e](https://github.com/juspay/hyperswitch-client-core/commit/76ee80e4c5266c30c49b76c5ec1b2fa8a56ec024))
+
+# [1.2.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.7...v1.2.0) (2025-05-16)
+
+
+### Features
+
+* added ACH Bank Transfer ([#217](https://github.com/juspay/hyperswitch-client-core/issues/217)) ([6b8d84e](https://github.com/juspay/hyperswitch-client-core/commit/6b8d84e3930e0086ed89acb15793c96fb375e6e6))
+
+## [1.1.7](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.6...v1.1.7) (2025-05-15)
+
+
+### Bug Fixes
+
+* added cache or memo to icon ([#285](https://github.com/juspay/hyperswitch-client-core/issues/285)) ([832231f](https://github.com/juspay/hyperswitch-client-core/commit/832231f920963369afa7267f9894eacb31b2106f))
+
+## [1.1.6](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.5...v1.1.6) (2025-05-07)
+
+
+### Bug Fixes
+
+* detox github workflow fix ([#279](https://github.com/juspay/hyperswitch-client-core/issues/279)) ([a2519dd](https://github.com/juspay/hyperswitch-client-core/commit/a2519dd47daa21d4e4d6c3c748859df75833fe33))
+
+## [1.1.5](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.4...v1.1.5) (2025-05-06)
+
+
+### Bug Fixes
+
+* added reactNativeTracing integration ([#275](https://github.com/juspay/hyperswitch-client-core/issues/275)) ([2f1da0d](https://github.com/juspay/hyperswitch-client-core/commit/2f1da0d9d2cbfbcf2ac2e1fdd2e4fc73736f447c))
+* removed rn cache ([#277](https://github.com/juspay/hyperswitch-client-core/issues/277)) ([dd48887](https://github.com/juspay/hyperswitch-client-core/commit/dd488875a1573ba58af7cb2d105ce7afc8507923))
+* **s3-cache:** removed pako for decompression and removed cache ([#258](https://github.com/juspay/hyperswitch-client-core/issues/258)) ([6a92b6d](https://github.com/juspay/hyperswitch-client-core/commit/6a92b6d34ae52c5701fc237dbcffc9556494c207))
+
+## [1.1.4](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.3...v1.1.4) (2025-05-02)
+
+
+### Bug Fixes
+
+* redirection issue in ios ([#273](https://github.com/juspay/hyperswitch-client-core/issues/273)) ([af691a6](https://github.com/juspay/hyperswitch-client-core/commit/af691a64e1b1cd2dd20198b60ab4b1e888610dee))
+
+## [1.1.3](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.2...v1.1.3) (2025-04-29)
+
+
+### Bug Fixes
+
+* state field error msg fix ([#269](https://github.com/juspay/hyperswitch-client-core/issues/269)) ([d8f8bd7](https://github.com/juspay/hyperswitch-client-core/commit/d8f8bd70736a159daa42f9fc4a3dc37db4f7c9ac))
+
+## [1.1.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.1...v1.1.2) (2025-04-29)
+
+
+### Bug Fixes
+
+* remove popup / use ephemeral web session for card payments ([#267](https://github.com/juspay/hyperswitch-client-core/issues/267)) ([848f57d](https://github.com/juspay/hyperswitch-client-core/commit/848f57d088abd2f66f71a6dbc32507d9ce14b5ff))
+
+## [1.1.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.1.0...v1.1.1) (2025-04-28)
+
+
+### Bug Fixes
+
+* active opacity issue for picker component ([#262](https://github.com/juspay/hyperswitch-client-core/issues/262)) ([423a780](https://github.com/juspay/hyperswitch-client-core/commit/423a780826fac4c271bf9af231541923145ebd64))
+
 # [1.1.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.0.10...v1.1.0) (2025-03-26)
 
 

@@ -29,6 +29,8 @@ let make = (~onModalClose) => {
       | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
       | PaymentScreenContext.SAVEDCARDSCREEN =>
         nativeProp.configuration.savedPaymentScreenHeaderText
+      | BANK_TRANSFER(_) => None
+      | WALLET_MISSING_FIELDS(_, _, _) => Some("Billing Address")
       } {
       | Some(var) =>
         <View style={viewStyle(~maxWidth=60.->pct, ())}>
@@ -64,9 +66,13 @@ let make = (~onModalClose) => {
                     overrideStyle=Some(textStyle(~color="black", ()))
                   />
                 </View>}
-            <CustomTouchableOpacity onPress={_ => onModalClose()}>
-              <Icon name="close" width=16. height=16. fill=iconColor />
-            </CustomTouchableOpacity>
+            {switch paymentScreenType {
+            | BANK_TRANSFER(_) => React.null
+            | _ =>
+              <CustomTouchableOpacity onPress={_ => onModalClose()}>
+                <Icon name="close" width=16. height=16. fill=iconColor />
+              </CustomTouchableOpacity>
+            }}
           </>}
     </View>
   </View>
