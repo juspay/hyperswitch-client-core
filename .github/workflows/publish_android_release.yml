@@ -73,7 +73,10 @@ jobs:
         run: |
           # Install dependencies using npm
           npm i
-          npm run re:start
+          npm run re:build
+          # Get bundle from hyperswitch-client-core repo
+          rm -rf android/app/src/main/assets/hyperswitch.bundle
+          curl -o android/app/src/main/assets/hyperswitch.bundle -L https://raw.githubusercontent.com/juspay/hyperswitch-client-core/main/bundles/android/hyperswitch.bundle
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
