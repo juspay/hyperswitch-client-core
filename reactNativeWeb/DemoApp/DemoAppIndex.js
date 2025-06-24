@@ -54,7 +54,12 @@ let defaultProps = {
   },
   country: 'US',
   type: 'payment',
-};const TRUSTED_ORIGINS = ['http://localhost:8081', 'https://your-production-url.com']; // Add trusted origins
+};
+const TRUSTED_ORIGINS = [
+  'http://127.0.0.1:8082',
+  'http://localhost:8083',
+  'https://your-production-url.com',
+]; // Add trusted origins
 
 const initReactNativeWeb = async () => {
   const createProps = async () => {
@@ -71,8 +76,8 @@ const initReactNativeWeb = async () => {
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage(
-          JSON.stringify({ initialProps: { props: defaultProps } }),
-          TRUSTED_ORIGINS[0]
+          JSON.stringify({initialProps: {props: defaultProps}}),
+          TRUSTED_ORIGINS[0],
         );
       } else {
         console.error('Iframe not found or inaccessible.');
@@ -82,15 +87,17 @@ const initReactNativeWeb = async () => {
     }
   };
 
-  const handleMessage = (event) => {
+  const handleMessage = event => {
     if (!TRUSTED_ORIGINS.includes(event.origin)) {
       console.warn(`Blocked message from untrusted origin: ${event.origin}`);
+      return;
+    } else if (event.data.source === 'react-devtools-content-script') {
       return;
     }
 
     try {
       let data = JSON.parse(event.data);
-      
+
       if (data.sdkLoaded) {
         createProps();
       }
@@ -100,7 +107,9 @@ const initReactNativeWeb = async () => {
 
         const statusElement = document.getElementById('status');
         if (statusElement) {
-          statusElement.textContent = `Status: ${data.status} ${data.message ? 'Message: ' + data.message : ''}`;
+          statusElement.textContent = `Status: ${data.status} ${
+            data.message ? 'Message: ' + data.message : ''
+          }`;
         } else {
           console.error('Status element not found.');
         }

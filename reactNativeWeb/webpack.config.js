@@ -34,6 +34,7 @@ const compileNodeModules = [
   'react-content-loader',
   'react-native-hyperswitch-netcetera-3ds',
   'react-native-scan-card',
+  '@react-native-clipboard/clipboard',
 ].map(moduleName =>
   path.resolve(appDirectory, `../node_modules/${moduleName}`),
 );
@@ -91,7 +92,7 @@ module.exports = {
   devtool: 'source-map',
   devServer: {
     hot: true,
-    port: 8081,
+    port: 8082,
   },
   resolve: {
     extensions: [
@@ -113,6 +114,8 @@ module.exports = {
       'react-native-hyperswitch-kount': 'react-native-web',
       'react-native-hyperswitch-netcetera-3ds': 'react-native-web',
       'react-native-plaid-link-sdk': 'react-native-web',
+      '@react-native-clipboard/clipboard':
+        'react-native-web/dist/exports/Clipboard',
     },
   },
   optimization: {
