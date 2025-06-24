@@ -8,14 +8,17 @@ let make = (
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-
   let (error, setError) = React.useState(_ => None)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let (_, setMissingFieldsData) = React.useState(_ => [])
-
   let {launchApplePay: webkitLaunchApplePay, launchGPay: webkitLaunchGPay} = WebKit.useWebKit()
+
+  let selectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
+    walletName: NONE,
+    token: Some(""),
+  })
 
   // let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
   // let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
@@ -172,37 +175,23 @@ let make = (
     )
   }
 
-  let selectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
-    walletName: NONE,
-    token: Some(""),
-  })
+  let (
+    handleGooglePayPayment,
+    handleApplePayPayment,
+    handleSamsungPayPayment,
+  ) = WalletHooks.useWallet(~selectedObj, ~setMissingFieldsData, ~processRequestFn=processRequest)
 
   let handleGPayResponse = var => {
-    WalletPaymentHandlers.confirmGPay(
+    handleGooglePayPayment(
       var,
       ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-      ~setLoading,
-      ~showAlert,
-      ~processRequestFn=processRequest,
-      ~allApiData,
-      ~setPaymentScreenType,
-      ~selectedObj,
-      (),
     )
   }
 
   let handleApplePayResponse = var => {
-    WalletPaymentHandlers.confirmApplePay(
+    handleApplePayPayment(
       var,
       ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-      ~setLoading,
-      ~showAlert,
-      ~processRequestFn=processRequest,
-      ~allApiData,
-      ~setPaymentScreenType,
-      ~selectedObj,
-      ~setMissingFieldsData,
-      (),
     )
   }
 
@@ -210,19 +199,10 @@ let make = (
     status,
     billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
   ) => {
-    WalletPaymentHandlers.confirmSamsungPay(
+    handleSamsungPayPayment(
       status,
       billingDetails,
       ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-      ~setLoading,
-      ~showAlert,
-      ~logger,
-      ~processRequestFn=processRequest,
-      ~allApiData,
-      ~setPaymentScreenType,
-      ~selectedObj,
-      ~setMissingFieldsData,
-      (),
     )
   }
 

@@ -17,7 +17,6 @@ let make = () => {
   let showAlert = AlertHook.useAlerts()
   let {launchGPay: webkitLaunchGPay, launchApplePay: webkitLaunchApplePay} = WebKit.useWebKit()
   let localeObj = GetLocale.useGetLocalObj()
-  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (_, setMissingFieldsData) = React.useState(_ => [])
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
@@ -190,33 +189,28 @@ let make = () => {
       (),
     )
   }
+  let (
+    handleGooglePayPayment,
+    handleApplePayPayment,
+    handleSamsungPayPayment,
+  ) = WalletHooks.useWallet(
+    ~selectedObj,
+    ~setMissingFieldsData,
+    ~processRequestFn=processExpressCheckoutApiRequest,
+    ~isWidget=true,
+  )
 
   let handleGPayNativeResponse = var => {
-    WalletPaymentHandlers.confirmGPay(
+    handleGooglePayPayment(
       var,
-      ~walletTypeStr=walletType->SdkTypes.walletTypeToStrMapper,
-      ~setLoading,
-      ~showAlert,
-      ~processRequestFn=processExpressCheckoutApiRequest,
-      ~allApiData,
-      ~setPaymentScreenType,
-      ~selectedObj,
-      (),
+      ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
     )
   }
 
   let handleApplePayNativeResponse = var => {
-    WalletPaymentHandlers.confirmApplePay(
+    handleApplePayPayment(
       var,
-      ~walletTypeStr=SdkTypes.APPLE_PAY->SdkTypes.walletTypeToStrMapper,
-      ~setLoading,
-      ~showAlert,
-      ~processRequestFn=processExpressCheckoutApiRequest,
-      ~allApiData,
-      ~setPaymentScreenType,
-      ~selectedObj,
-      ~setMissingFieldsData,
-      (),
+      ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
     )
   }
 
@@ -224,19 +218,10 @@ let make = () => {
     statusFromNative,
     billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
   ) => {
-    WalletPaymentHandlers.confirmSamsungPay(
+    handleSamsungPayPayment(
       statusFromNative,
       billingDetails,
-      ~walletTypeStr=SdkTypes.SAMSUNG_PAY->SdkTypes.walletTypeToStrMapper,
-      ~setLoading,
-      ~showAlert,
-      ~logger,
-      ~processRequestFn=processExpressCheckoutApiRequest,
-      ~allApiData,
-      ~setPaymentScreenType,
-      ~selectedObj,
-      ~setMissingFieldsData,
-      (),
+      ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
     )
   }
   let processSavedExpressCheckoutRequest = tokenToUse => {
