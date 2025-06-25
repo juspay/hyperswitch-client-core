@@ -13,6 +13,7 @@ type item = {
 let make = (
   ~walletType: PaymentMethodListType.payment_method_types_wallet,
   ~sessionObject,
+  ~isWidget=false,
   ~confirm=false,
 ) => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -261,8 +262,7 @@ let make = (
         ~email=paymentDataFromGPay.email,
         ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
       )
-
-      hasMissingFields
+      hasMissingFields && !isWidget
         ? {
             setPaymentScreenType(
               WALLET_MISSING_FIELDS(
@@ -330,7 +330,7 @@ let make = (
         ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
       )
 
-      hasMissingFields
+      hasMissingFields && !isWidget
         ? {
             setPaymentScreenType(
               WALLET_MISSING_FIELDS(
@@ -438,7 +438,7 @@ let make = (
             ~collectBillingDetailsFromWallets=allApiData.additionalPMLData.collectBillingDetailsFromWallets,
           )
 
-          hasMissingFields
+          hasMissingFields && !isWidget
             ? {
                 let paymentDataFromApplePay = var->WalletType.applePayItemToObjMapper
                 setPaymentScreenType(
@@ -563,6 +563,20 @@ let make = (
             }
             // when session token for paypal is absent, switch to redirect flow
             processRequest(~payment_method_data, ~walletTypeAlt, ())
+          } else {
+            let redirectData = []->Dict.fromArray->JSON.Encode.object
+            let payment_method_data =
+              [
+                (
+                  walletType.payment_method,
+                  [(walletType.payment_method_type ++ "_redirect", redirectData)]
+                  ->Dict.fromArray
+                  ->JSON.Encode.object,
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object
+            processRequest(~payment_method_data, ())
           }
         | APPLE_PAY =>
           if (
