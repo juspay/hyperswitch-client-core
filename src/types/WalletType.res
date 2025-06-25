@@ -215,10 +215,28 @@ type paymentDataFromGPay = {
   shippingDetails?: addressDetails,
 }
 
+type paymentDataFromApplePay = {
+  paymentData: JSON.t,
+  paymentMethod: JSON.t,
+  transactionIdentifier: JSON.t,
+  email?: string,
+  billingContact?: addressDetails,
+  shippingAddress?: addressDetails,
+}
+
 let itemToObjMapper = dict => {
   paymentMethodData: getPaymentMethodData("paymentMethodData", dict),
   email: ?getOptionString(dict, "email"),
   shippingDetails: ?getBillingAddress(dict, "shippingAddress"),
+}
+
+let applePayItemToObjMapper = dict => {
+  paymentData: dict->Dict.get("payment_data")->Option.getOr(JSON.Encode.null),
+  paymentMethod: dict->Dict.get("payment_method")->Option.getOr(JSON.Encode.null),
+  transactionIdentifier: dict->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null),
+  email: ?getOptionString(dict, "email"),
+  billingContact: ?getBillingContact(dict, "billing_contact"),
+  shippingAddress: ?getBillingContact(dict, "shipping_contact"),
 }
 
 let arrayJsonToCamelCase = arr => {
@@ -297,98 +315,124 @@ let getAddressPincode = getAddressField(address => address.zip)
 let getFirstName = getAddressField(address => address.first_name)
 let getLastName = getAddressField(address => address.last_name)
 
-let getFlattenData = (
-  required_fields: RequiredFieldsTypes.required_fields,
-  ~billingAddress: option<SdkTypes.addressDetails>,
-  ~shippingAddress: option<SdkTypes.addressDetails>,
-  ~email=None,
-  ~phoneNumber=None,
-) => {
-  let flattenedData = Dict.make()
-  required_fields->Array.forEach(required_field => {
-    switch required_field.required_field {
-    | StringField(path) =>
-      let isShippingField = path->String.includes("shipping")
-      let address = if isShippingField {
-        shippingAddress
-      } else {
-        billingAddress
-      }
-      let value = switch required_field.field_type {
-      | PhoneNumber =>
-        phoneNumber
-        ->Option.orElse(billingAddress->getPhoneNumber)
-        ->Option.orElse(shippingAddress->getPhoneNumber)
-      | Email =>
-        email
-        ->Option.orElse(billingAddress->getEmailAddress)
-        ->Option.orElse(shippingAddress->getEmailAddress)
-      | AddressLine1 => address->getAddressLine1
-      | AddressLine2 => address->getAddressLine2
-      | AddressCity => address->getAddressCity
-      | AddressPincode => address->getAddressPincode
-      | AddressState => address->getAddressState
-      | Country
-      | AddressCountry(_) =>
-        address->getAddressCountry
-      | PhoneCountryCode => address->getPhoneCountryCode
-      | _ => None
-      }
-      if value !== None {
-        flattenedData->Dict.set(path, value->Option.getOr("")->JSON.Encode.string)
-      }
-    | FullNameField(first_name, last_name) =>
-      let (firstName, lastName) = if required_field.field_type == Email {
-        let value =
-          email
-          ->Option.orElse(billingAddress->getEmailAddress)
-          ->Option.orElse(shippingAddress->getEmailAddress)
-          ->Option.getOr("")
-          ->JSON.Encode.string
-        (value, value)
-      } else {
-        let isShippingField = first_name->String.includes("shipping")
-
-        let primaryAddress = if isShippingField {
-          shippingAddress
-        } else {
-          billingAddress
-        }
-        let fallbackAddress = if isShippingField {
-          billingAddress
-        } else {
-          shippingAddress
-        }
-        (
-          primaryAddress
-          ->getFirstName
-          ->Option.orElse(fallbackAddress->getFirstName)
-          ->Option.getOr("")
-          ->JSON.Encode.string,
-          primaryAddress
-          ->getLastName
-          ->Option.orElse(fallbackAddress->getLastName)
-          ->Option.getOr("")
-          ->JSON.Encode.string,
-        )
-      }
-      if firstName != JSON.Encode.null {
-        flattenedData->Dict.set(first_name, firstName)
-      }
-      if lastName !== JSON.Encode.null {
-        flattenedData->Dict.set(last_name, lastName)
-      }
-    }
-  })
-  flattenedData
+let getAddressForField = (path, ~shippingAddress, ~billingAddress) => {
+  path->String.includes("shipping") ? shippingAddress : billingAddress
+}
+let getFallbackAddress = (path, ~shippingAddress, ~billingAddress) => {
+  path->String.includes("shipping") ? billingAddress : shippingAddress
 }
 
-let extractPaymentMethodData = (required_field, ~shippingAddress, ~billingAddress, ~email=None) => {
-  required_field
-  ->getFlattenData(~shippingAddress, ~billingAddress, ~email)
-  ->JSON.Encode.object
-  ->RequiredFieldsTypes.unflattenObject
-  ->Dict.get("payment_method_data")
-  ->Option.getOr(JSON.Encode.null)
-  ->Utils.getDictFromJson
+let setIfPresent = (dict, key, value) => {
+  switch value {
+  | Some(v) if v !== "" => dict->Dict.set(key, v->JSON.Encode.string)
+  | _ => ()
+  }
+}
+
+let getMissingFieldsAndPaymentMethodData = (
+  required_fields: RequiredFieldsTypes.required_fields,
+  ~shippingAddress,
+  ~billingAddress,
+  ~email=None,
+  ~collectBillingDetailsFromWallets: bool,
+) => {
+  let flattenedData = Dict.make()
+
+  let updatedRequiredFields = required_fields->Array.map(required_field => {
+    let value: string = switch required_field.required_field {
+    | StringField(path) | EmailField(path) =>
+      collectBillingDetailsFromWallets
+        ? {
+            let address = getAddressForField(path, ~shippingAddress, ~billingAddress)
+            let value = switch required_field.field_type {
+            | Email =>
+              email
+              ->Option.orElse(billingAddress->getEmailAddress)
+              ->Option.orElse(shippingAddress->getEmailAddress)
+            | AddressLine1 => address->getAddressLine1
+            | AddressLine2 => address->getAddressLine2
+            | AddressCity => address->getAddressCity
+            | AddressPincode => address->getAddressPincode
+            | AddressState => address->getAddressState
+            | Country | AddressCountry(_) => address->getAddressCountry
+            | _ => None
+            }
+            setIfPresent(flattenedData, path, value)
+            value->Option.getOr("")
+          }
+        : {
+            flattenedData->Dict.set(path, required_field.value->JSON.Encode.string)
+            required_field.value
+          }
+
+    | FullNameField(first_name, last_name) =>
+      collectBillingDetailsFromWallets
+        ? {
+            let primaryAddress = getAddressForField(first_name, ~shippingAddress, ~billingAddress)
+            let fallbackAddress = getFallbackAddress(first_name, ~shippingAddress, ~billingAddress)
+
+            let firstName =
+              primaryAddress->getFirstName->Option.orElse(fallbackAddress->getFirstName)
+            let lastName = primaryAddress->getLastName->Option.orElse(fallbackAddress->getLastName)
+
+            setIfPresent(flattenedData, first_name, firstName)
+            setIfPresent(flattenedData, last_name, lastName)
+
+            [firstName->Option.getOr(""), lastName->Option.getOr("")]
+            ->Array.filter(name => name !== "")
+            ->Array.join(" ")
+          }
+        : {
+            flattenedData->Dict.set(
+              first_name,
+              required_field.value->RequiredFieldsTypes.getFirstValue->JSON.Encode.string,
+            )
+            flattenedData->Dict.set(
+              last_name,
+              required_field.value->RequiredFieldsTypes.getLastValue->JSON.Encode.string,
+            )
+            required_field.value
+          }
+
+    | PhoneField(code, phone) =>
+      collectBillingDetailsFromWallets
+        ? {
+            let primaryAddress = getAddressForField(code, ~shippingAddress, ~billingAddress)
+            let fallbackAddress = getFallbackAddress(code, ~shippingAddress, ~billingAddress)
+
+            let phoneCode =
+              primaryAddress
+              ->getPhoneCountryCode
+              ->Option.orElse(fallbackAddress->getPhoneCountryCode)
+            let phoneNumber =
+              primaryAddress->getPhoneNumber->Option.orElse(fallbackAddress->getPhoneNumber)
+
+            setIfPresent(flattenedData, code, phoneCode)
+            setIfPresent(flattenedData, phone, phoneNumber)
+
+            [phoneCode->Option.getOr(""), phoneNumber->Option.getOr("")]
+            ->Array.filter(name => name !== "")
+            ->Array.join(" ")
+          }
+        : {
+            let (phoneCode, phoneNumber) = RequiredFieldsTypes.getPhoneNumber(required_field.value)
+            flattenedData->Dict.set(code, phoneCode->JSON.Encode.string)
+            flattenedData->Dict.set(phone, phoneNumber->JSON.Encode.string)
+
+            required_field.value
+          }
+    }
+    {...required_field, value}
+  })
+
+  let hasMissingFields = updatedRequiredFields->Array.some(field => field.value == "")
+  let paymentMethodData =
+    flattenedData
+    ->JSON.Encode.object
+    ->RequiredFieldsTypes.unflattenObject
+    ->Dict.get("payment_method_data")
+    ->Option.getOr(JSON.Encode.null)
+    ->Utils.getDictFromJson
+
+  (hasMissingFields, updatedRequiredFields, paymentMethodData)
 }

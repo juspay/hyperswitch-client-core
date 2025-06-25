@@ -1,3 +1,24 @@
+# [1.7.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.1...v1.7.0) (2025-06-25)
+
+
+### Features
+
+* added expressCheckoutWidget for android ([#271](https://github.com/juspay/hyperswitch-client-core/issues/271)) ([dcfab2d](https://github.com/juspay/hyperswitch-client-core/commit/dcfab2dd3bd1803ca24e5870e71c904d2ff191b3))
+
+## [1.6.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.0...v1.6.1) (2025-06-20)
+
+
+### Bug Fixes
+
+* state field empty fix ([62f714e](https://github.com/juspay/hyperswitch-client-core/commit/62f714e8e416eb036b1b7cc90135ab113fa7e19a))
+
+# [1.6.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.5.0...v1.6.0) (2025-06-20)
+
+
+### Features
+
+* wallet missing field collection ([1dfef7f](https://github.com/juspay/hyperswitch-client-core/commit/1dfef7f9e2e3a4f9f45b81354fb7ce8a9af6ed99))
+
 # [1.5.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.2...v1.5.0) (2025-06-18)
 
 

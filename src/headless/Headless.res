@@ -36,7 +36,7 @@ let registerHeadless = headless => {
       let obj =
         json
         ->Utils.getDictFromJson
-        ->GooglePayTypeNew.itemToObjMapper
+        ->WalletType.itemToObjMapper
 
       let payment_method_data =
         [
@@ -136,7 +136,7 @@ let registerHeadless = headless => {
             ),
             (
               "billing",
-              switch var->GooglePayTypeNew.getBillingContact("billing_contact") {
+              switch var->WalletType.getBillingContact("billing_contact") {
               | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
