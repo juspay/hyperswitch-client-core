@@ -291,7 +291,7 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
 
 //-
 let useFetchDataFromS3WithGZipDecoding = () => {
-  let apiFunction = CommonHooks.fetchApi
+  let apiFunction = APIUtils.fetchApi
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetAssetUrlWithVersion()()
 
