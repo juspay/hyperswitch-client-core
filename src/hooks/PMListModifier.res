@@ -449,6 +449,7 @@ let widgetModifier = (
                   }
                   sessionObject
                   confirm
+                  isWidget=true
                 />,
               )
               ->ignore
