@@ -2,7 +2,7 @@
   "config": {
     "target_platform": "android",
     "target_version": "1.1.7",
-    "release_tag_version": "v1.7.0",
-    "release_env": "integ"
+    "release_tag_version": "v0.0.1-beta",
+    "test": true
   }
 }
