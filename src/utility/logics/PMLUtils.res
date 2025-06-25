@@ -59,11 +59,8 @@ let handleCustomerPMLResponse = (
           }
         )
         //to maintain the same order of elements dont use concat
-        spmData->Array.filter(data =>
-          filteredSessionSpmData->Array.includes(data) ||
-          walletSpmData->Array.includes(data) ||
-          cardSpmData->Array.includes(data)
-        )
+        let lookupSet = [...filteredSessionSpmData, ...walletSpmData, ...cardSpmData]->Set.fromArray
+        spmData->Array.filter(Set.has(lookupSet, _))
 
       | _ =>
         isPaymentMethodManagement

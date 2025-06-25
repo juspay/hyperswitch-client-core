@@ -14,10 +14,31 @@ let make = () => {
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let logger = LoggerHook.useLoggerHook()
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
-  let showAlert = AlertHook.useAlerts()
-  let {launchGPay: webkitLaunchGPay, launchApplePay: webkitLaunchApplePay} = WebKit.useWebKit()
   let localeObj = GetLocale.useGetLocalObj()
   let (_, setMissingFieldsData) = React.useState(_ => [])
+
+  let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+    setSavedCardCvv(_ => None)
+    setConfirm(_ => false)
+    setLoading(FillingDetails)
+    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+  }
+
+  let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+    setSavedCardCvv(_ => None)
+    setConfirm(_ => false)
+    switch paymentStatus {
+    | PaymentSuccess => {
+        setLoading(PaymentSuccess)
+        setTimeout(() => {
+          handleSuccessFailure(~apiResStatus=status, ())
+        }, 300)->ignore
+      }
+    | _ => handleSuccessFailure(~apiResStatus=status, ())
+    }
+  }
+
+  let initiatePayment = PaymentHook.usePayment(~errorCallback, ~responseCallback, ~savedCardCvv)
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
@@ -225,46 +246,14 @@ let make = () => {
     )
   }
   let processSavedExpressCheckoutRequest = tokenToUse => {
-    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
-      setSavedCardCvv(_ => None)
-      setConfirm(_ => false)
-      setLoading(FillingDetails)
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-    }
-
-    let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
-      setSavedCardCvv(_ => None)
-      setConfirm(_ => false)
-      switch paymentStatus {
-      | PaymentSuccess => {
-          setLoading(PaymentSuccess)
-          setTimeout(() => {
-            handleSuccessFailure(~apiResStatus=status, ())
-          }, 300)->ignore
-        }
-      | _ => handleSuccessFailure(~apiResStatus=status, ())
-      }
-    }
-
-    let paymentConfig: PaymentProcessingUtils.paymentInitiationConfig = {
-      activeWalletName: walletType,
-      activePaymentToken: tokenToUse,
-      allApiData,
-      nativeProp,
-      logger,
-      setLoading,
-      showAlert,
-      fetchAndRedirect,
-      webkitLaunchGPay,
-      webkitLaunchApplePay,
-      gPayResponseHandler: handleGPayNativeResponse,
-      applePayResponseHandler: handleApplePayNativeResponse,
-      samsungPayResponseHandler: handleSamsungPayNativeResponse,
-      errorCallback,
-      responseCallback,
-      savedCardCvv,
-    }
-    PaymentProcessingUtils.initiatePayment(paymentConfig)
+    initiatePayment(
+      ~activeWalletName=walletType,
+      ~activePaymentToken=tokenToUse,
+      ~gPayResponseHandler=handleGPayNativeResponse,
+      ~applePayResponseHandler=handleApplePayNativeResponse,
+      ~samsungPayResponseHandler=handleSamsungPayNativeResponse,
+      (),
+    )
   }
   let onPress = () => {
     setLoading(ProcessingPayments(None))
