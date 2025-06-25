@@ -1,8 +1,8 @@
 {
   "config": {
     "target_platform": "ios",
-    "target_version": "0.2.7",
-    "release_tag_version": "v1.4.2",
-    "release_env": "prod"
+    "target_version": "0.2.8",
+    "release_tag_version": "v1.6.0",
+    "release_env": "integ"
   }
 }
