@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.1...v1.7.0) (2025-06-25)
+
+
+### Features
+
+* added expressCheckoutWidget for android ([#271](https://github.com/juspay/hyperswitch-client-core/issues/271)) ([dcfab2d](https://github.com/juspay/hyperswitch-client-core/commit/dcfab2dd3bd1803ca24e5870e71c904d2ff191b3))
+
 ## [1.6.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.0...v1.6.1) (2025-06-20)
 
 
