@@ -200,7 +200,7 @@ let registerHeadless = headless => {
             }
           }
           HyperModule.launchGPay(
-            GooglePayTypeNew.getGpayTokenStringified(
+            WalletType.getGpayTokenStringified(
               ~obj=session,
               ~appEnv=nativeProp.env,
               ~requiredFields=[],
