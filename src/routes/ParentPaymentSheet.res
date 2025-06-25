@@ -56,6 +56,7 @@ let make = () => {
         | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
         }}
         <GlobalConfirmButton confirmButtonDataRef />
+        <TextWrapper text={"OTA updated sheet"}  textType={CardText}/>
         <Space height=15. />
       </React.Fragment>
     }}
