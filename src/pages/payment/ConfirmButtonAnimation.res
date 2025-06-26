@@ -36,7 +36,7 @@ let make = (
     None
   }, (isAllValuesValid, hasSomeFields))
 
-  <View style={viewStyle(~alignItems=#center, ())}>
+  <View style={s({alignItems: #center})}>
     <Space height=10. />
     <CustomButton
       borderWidth=buttonBorderWidth

@@ -11,6 +11,7 @@ type hyperModule = {
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
+  updateWidgetHeight: int => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -49,6 +50,7 @@ let hyperModule = {
     _,
     _,
   ) => ()),
+  updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
 }
 
 let sendMessageToNative = str => {
@@ -161,4 +163,8 @@ let launchGPay = (requestObj: string, callback) => {
 
 let launchWidgetPaymentSheet = (requestObj: string, callback) => {
   hyperModule.launchWidgetPaymentSheet(requestObj, callback)
+}
+
+let updateWidgetHeight = (height: int) => {
+  hyperModule.updateWidgetHeight(height)
 }

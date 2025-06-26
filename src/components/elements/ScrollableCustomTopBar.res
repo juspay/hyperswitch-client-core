@@ -25,34 +25,26 @@ module BottomTabList = {
     } = ThemebasedStyle.useThemeBasedStyle()
     let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
 
-    <View
-      style={viewStyle(
-        ~flex=1.,
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        ~marginRight=13.->dp,
-        (),
-      )}>
+    <View style={s({flex: 1., alignItems: #center, justifyContent: #center, marginRight: 13.->dp})}>
       <CustomTouchableOpacity
         onPress={_ => setIndexToScrollParentFlatList(index)}
         accessibilityRole=#button
-        accessibilityState={Accessibility.state(~selected=isFocused, ())}
+        accessibilityState={selected: isFocused}
         accessibilityLabel=routeName
         testID=routeName
         activeOpacity=1.
         style={array([
           bgColor,
           getShadowStyle,
-          viewStyle(
+          s({
             // ~backgroundColor={isFocused ? component.background : "transparent"},
-            ~backgroundColor={component.background},
-            ~borderWidth=isFocused ? borderWidth +. 1.5 : borderWidth,
-            ~borderColor=isFocused ? primaryColor : component.borderColor,
-            ~minWidth=115.->dp,
-            ~padding=10.->dp,
-            ~borderRadius,
-            (),
-          ),
+            backgroundColor: component.background,
+            borderWidth: isFocused ? borderWidth +. 1.5 : borderWidth,
+            borderColor: isFocused ? primaryColor : component.borderColor,
+            minWidth: 115.->dp,
+            padding: 10.->dp,
+            borderRadius,
+          }),
           // bgColor,
         ])}>
         {isLoading
@@ -121,12 +113,12 @@ let make = (
 
   <>
     <Space height=15. />
-    <View style={viewStyle(~height, ~paddingHorizontal=10.->dp, ())}>
+    <View style={s({height, paddingHorizontal: 10.->dp})}>
       <FlatList
         ref={flatlistRef->ReactNative.Ref.value}
         keyboardShouldPersistTaps={#handled}
         data=hocComponentArr
-        style={viewStyle(~flex=1., ~width=100.->pct, ())}
+        style={s({flex: 1., width: 100.->pct})}
         showsHorizontalScrollIndicator=false
         keyExtractor={(_, i) => i->Int.toString}
         horizontal=true

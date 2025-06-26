@@ -10,8 +10,6 @@ let make = (~borderRadius: float, ~style: Style.t) => {
           }
         `)}
     </style>
-    <CustomLoader
-      style={ReactNative.Style.viewStyle(~position=#absolute, ~zIndex=-1, ~borderRadius, ())}
-    />
+    <CustomLoader style={ReactNative.Style.s({position: #absolute, zIndex: -1, borderRadius})} />
   </View>
 }

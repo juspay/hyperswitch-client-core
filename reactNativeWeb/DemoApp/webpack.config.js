@@ -15,7 +15,7 @@ module.exports = {
   devtool: 'source-map',
   devServer: {
     open: true,
-    port: 8082, // Specify the port here
+    port: 8083,
   },
   resolve: {
     extensions: [
@@ -31,7 +31,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template : path.join(__dirname, "DemoAppIndex.html")
+      template: path.join(__dirname, 'DemoAppIndex.html'),
     }),
-  ]
+  ],
 };
