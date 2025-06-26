@@ -1,0 +1,10 @@
+echo "🔍 Scanning for secrets with GitLeaks..."
+
+if ! command -v gitleaks &> /dev/null; then
+    echo "gitleaks not found. Installing via brew..."
+    brew install gitleaks
+else
+    echo "gitleaks is already installed."
+fi
+
+gitleaks detect --source . --verbose
