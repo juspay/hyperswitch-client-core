@@ -58,8 +58,8 @@ let make = (
           }
 
       <TabView
-        sceneContainerStyle={viewStyle(~padding=10.->dp, ())}
-        style={viewStyle(~marginHorizontal=-10.->dp, ())}
+        sceneContainerStyle={s({padding: 10.->dp})}
+        style={s({marginHorizontal: -10.->dp})}
         indexInFocus
         routes
         onIndexChange=setIndexInFocus

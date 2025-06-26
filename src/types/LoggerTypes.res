@@ -56,6 +56,7 @@ type eventName =
   | ADD_PAYMENT_METHOD_CALL_INIT
   | ADD_PAYMENT_METHOD_CALL
   | SAMSUNG_PAY
+  | CARD_SCHEME_SELECTION
 
 type logFile = {
   timestamp: string,
@@ -79,4 +80,20 @@ type logFile = {
   paymentMethod?: string,
   paymentExperience?: string,
   source: string,
+}
+let getApiInitEvent = (event: eventName): option<eventName> => {
+  switch event {
+  | RETRIEVE_CALL => Some(RETRIEVE_CALL_INIT)
+  | CONFIRM_CALL => Some(CONFIRM_CALL_INIT)
+  | SESSIONS_CALL => Some(SESSIONS_CALL_INIT)
+  | PAYMENT_METHODS_CALL => Some(PAYMENT_METHODS_CALL_INIT)
+  | CUSTOMER_PAYMENT_METHODS_CALL => Some(CUSTOMER_PAYMENT_METHODS_CALL_INIT)
+  | CONFIG_CALL => Some(CONFIG_CALL_INIT)
+  | AUTHENTICATION_CALL => Some(AUTHENTICATION_CALL_INIT)
+  | AUTHORIZE_CALL => Some(AUTHORIZE_CALL_INIT)
+  | POLL_STATUS_CALL => Some(POLL_STATUS_CALL_INIT)
+  | DELETE_PAYMENT_METHODS_CALL => Some(DELETE_PAYMENT_METHODS_CALL_INIT)
+  | ADD_PAYMENT_METHOD_CALL => Some(ADD_PAYMENT_METHOD_CALL_INIT)
+  | _ => None
+  }
 }

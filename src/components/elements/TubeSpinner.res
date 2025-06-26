@@ -38,12 +38,12 @@ let make = (~loaderColor=?, ~size=?) => {
           easing: Easing.linear,
         },
       ),
-    )->Animated.start()
+    )->Animated.start
     None
   }, [rotateSpin])
   <View>
     <Animated.View
-      style={viewStyle(~transform=[rotate(~rotate=angleSpinValue->Animated.StyleProp.angle)], ())}>
+      style={s({transform: [rotate(~rotate=angleSpinValue->Animated.StyleProp.angle)]})}>
       <Svg width=size height=size viewBox="0 0 200 200">
         <Defs>
           <RadialGradient

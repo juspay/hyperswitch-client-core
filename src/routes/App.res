@@ -29,7 +29,7 @@ module ContextWrapper = {
 module App = {
   @react.component
   let make = () => {
-    <View style={viewStyle(~flex=1., ())}>
+    <View style={s({flex: 1.})}>
       {WebKit.platform === #android
         ? <StatusBar translucent=true backgroundColor="transparent" />
         : React.null}

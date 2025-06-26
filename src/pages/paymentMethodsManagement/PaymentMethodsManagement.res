@@ -88,18 +88,17 @@ let make = () => {
 
   isLoading
     ? <View
-        style={viewStyle(
-          ~backgroundColor=component.background,
-          ~width=100.->pct,
-          ~flex=1.,
-          ~justifyContent=#center,
-          ~alignItems=#center,
-          (),
-        )}>
+        style={s({
+          backgroundColor: component.background,
+          width: 100.->pct,
+          flex: 1.,
+          justifyContent: #center,
+          alignItems: #center,
+        })}>
         <TextWrapper text={"Loading ..."} textType={CardText} />
       </View>
     : savedMethods->Array.length > 0
-    ? <View style={viewStyle(~backgroundColor=component.background, ~height=100.->pct, ())}>
+    ? <View style={s({backgroundColor: component.background, height: 100.->pct})}>
       <ScrollView keyboardShouldPersistTaps=#handled>
         {savedMethods
         ->Array.mapWithIndex((item, i) => {
@@ -114,16 +113,15 @@ let make = () => {
     </View>
     : <>
         <View
-          style={viewStyle(
-            ~width=100.->pct,
-            ~paddingVertical=24.->dp,
-            ~paddingHorizontal=24.->dp,
-            ~borderBottomWidth=0.8,
-            ~borderBottomColor=component.borderColor,
-            ~backgroundColor=component.background,
-            ~alignItems=#center,
-            (),
-          )}>
+          style={s({
+            width: 100.->pct,
+            paddingVertical: 24.->dp,
+            paddingHorizontal: 24.->dp,
+            borderBottomWidth: 0.8,
+            borderBottomColor: component.borderColor,
+            backgroundColor: component.background,
+            alignItems: #center,
+          })}>
           <TextWrapper text={"No saved payment methods available."} textType={ModalTextLight} />
         </View>
         <PaymentMethodListItem.AddPaymentMethodButton />

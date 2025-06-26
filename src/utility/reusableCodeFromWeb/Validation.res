@@ -44,6 +44,9 @@ let getobjFromCardPattern = cardBrand => {
 let clearSpaces = value => {
   value->String.replaceRegExp(%re("/\D+/g"), "")
 }
+let clearAlphas = value => {
+  value->String.replaceRegExp(%re("/[^\d\s]+/g"), "")
+}
 
 let slice = (val, start: int, end: int) => {
   val->String.slice(~start, ~end)
@@ -351,15 +354,15 @@ let cvcNumberEqualsMaxLength = (val, cardBrand) => {
 //       Belt.Int.toString(number)
 //     }
 //   }
-// } 
+// }
 // let clearOnlySpaces = (value: string): string => {
 //   value->Js.String2.replaceByRe(%re("/\s/g"), "")
 // }
 // let validateIBAN = (iban: string): bool => {
 //  let cleanIban = iban->clearOnlySpaces->Js.String2.toUpperCase
 
-//   let rearrangedIBAN = 
-//     cleanIban->Js.String2.sliceToEnd(~from=4) ++ 
+//   let rearrangedIBAN =
+//     cleanIban->Js.String2.sliceToEnd(~from=4) ++
 //     cleanIban->Js.String2.slice(~from=0, ~to_=4)
 
 //   let convertedIBAN =
@@ -389,17 +392,17 @@ let cvcNumberEqualsMaxLength = (val, cardBrand) => {
 
 let isValidIban = text => {
   let trimmedText = text->String.trim
-//   let lengthValid = switch trimmedText->String.match(%re("/[a-zA-Z0-9]/g")) {
-//   | Some(_) => trimmedText->String.length > 15 && trimmedText->String.length <= 34
-//   | None => false
-//   }
-//   let firstTwoAlphabetsAndDigits = switch trimmedText->String.match(%re("/^[A-Z]{2}\s*[0-9]{2}/")) {
-//   | Some(_) => true
-//   | None => false
-// }
+  //   let lengthValid = switch trimmedText->String.match(%re("/[a-zA-Z0-9]/g")) {
+  //   | Some(_) => trimmedText->String.length > 15 && trimmedText->String.length <= 34
+  //   | None => false
+  //   }
+  //   let firstTwoAlphabetsAndDigits = switch trimmedText->String.match(%re("/^[A-Z]{2}\s*[0-9]{2}/")) {
+  //   | Some(_) => true
+  //   | None => false
+  // }
   let isIbanEmpty = trimmedText->String.length != 0
-     isIbanEmpty
-//   && lengthValid && firstTwoAlphabetsAndDigits
+  isIbanEmpty
+  //   && lengthValid && firstTwoAlphabetsAndDigits
 }
 // let genreateFontsLink = (fonts: array<CardThemeType.fonts>) => {
 //   if fonts->Array.length > 0 {
@@ -602,7 +605,6 @@ let checkCardExpiry = expiry => {
 //   let countryPostal = Utils.getCountryPostal(clientCountry.isoAlpha2, postalCodes)
 //   countryPostal.regex == "" ? "" : countryPostal.regex
 // }
-
 
 let isValidZip = (~zipCode, ~country) => {
   let _ = country

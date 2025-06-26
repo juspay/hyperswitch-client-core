@@ -16,6 +16,7 @@ module WrapperProvider = {
     ~initialData: CountryStateDataHookTypes.countryStateData={
       countries: [],
       states: Dict.make(),
+      phoneCountryCodes: [],
     },
   ) => {
     let (state, setState) = React.useState(_ => Localdata(initialData))
@@ -41,7 +42,10 @@ module WrapperProvider = {
           if fetchedData.countries->Js.Array2.length == 0 {
             Promise.reject(Exn.raiseError("API call failed"))
           } else {
-            setState(_ => FetchData(fetchedData))
+            setState(_ => FetchData({
+              ...fetchedData,
+              phoneCountryCodes: initialData.phoneCountryCodes,
+            }))
             Promise.resolve()
           }
         })
@@ -55,7 +59,9 @@ module WrapperProvider = {
             if fetchedData.countries->Js.Array2.length == 0 {
               Promise.reject(Exn.raiseError("Api call failed again"))
             } else {
-              setState(_ => FetchData(fetchedData))
+              setState(
+                _ => FetchData({...fetchedData, phoneCountryCodes: initialData.phoneCountryCodes}),
+              )
               Promise.resolve()
             }
           })
@@ -80,18 +86,29 @@ module WrapperProvider = {
   }
 }
 
-type temp = option<CountryStateDataHookTypes.countryStateData>
 @react.component
 let make = (~children) => {
-  let (state: temp, setState) = React.useState(_ => None)
+  let (state, setState) = React.useState(_ => None)
   React.useEffect0(() => {
     RequiredFieldsTypes.importStatesAndCountries(
       "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
     )
     ->Promise.then(res => {
       let initialData = S3ApiHook.decodeJsonTocountryStateData(res)
-      setState(_ => Some(initialData))
-      Promise.resolve()
+
+      RequiredFieldsTypes.importStatesAndCountries(
+        "./../utility/reusableCodeFromWeb/Phone_number.json",
+      )
+      ->Promise.then(
+        async json => {
+          S3ApiHook.decodeJsonToPhoneCountryCodeData(json)
+        },
+      )
+      ->Promise.thenResolve(
+        v => {
+          setState(_ => Some({...initialData, phoneCountryCodes: v}))
+        },
+      )
     })
     ->Promise.catch(_ => Promise.resolve())
     ->ignore

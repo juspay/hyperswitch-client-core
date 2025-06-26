@@ -60,9 +60,7 @@ let make = (~children) => {
   })
 
   <PortalContext value={mount, update, unmount}>
-    <View style={Style.viewStyle(~flex=1., ())} collapsable=false pointerEvents=#"box-none">
-      children
-    </View>
+    <View style={Style.s({flex: 1.})} collapsable=false pointerEvents=#"box-none"> children </View>
     <PortalManager ref={managerRef} />
   </PortalContext>
 }

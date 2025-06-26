@@ -20,9 +20,8 @@ let make = () => {
     publishableKey,
   ) => {
     let errorCallback = (~errorMessage, ~closeSDK, ()) => {
-      if !closeSDK {
-        setLoading(FillingDetails)
-      }
+      setLoading(FillingDetails)
+
       handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (
@@ -127,32 +126,15 @@ let make = () => {
     })
     ->ignore
   }
-
   React.useEffect5(() => {
-    let nee = NativeEventEmitter.make(
-      Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
-    )
-    let event = NativeEventEmitter.addListener(nee, "confirm", var => {
-      let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
-      handlePress(responseFromJava.clientSecret, responseFromJava.publishableKey)
-    })
-    HyperModule.sendMessageToNative(`{"isReady": "true", "paymentMethodType": "card"}`)
-    Some(
-      () => {
-        event->EventSubscription.remove
-      },
-    )
+    let cleanup = NativeEventListener.setupPaymentConfirmListener(~onConfirm=handlePress) // handlePress already takes clientSecret and publishableKey
+
+    Some(cleanup)
   }, (cardNumber, cvv, expireDate, zip, isCardValuesValid))
 
   <View
     style={array([
-      viewStyle(
-        ~flex=1.,
-        ~justifyContent=#center,
-        ~alignItems=#center,
-        ~backgroundColor="transparent",
-        (),
-      ),
+      s({flex: 1., justifyContent: #center, alignItems: #center, backgroundColor: "transparent"}),
     ])}>
     <CardElement
       setIsAllValid=setIsCardValuesValid viewType=CardElement.CardForm({isZipAvailable: true}) reset
