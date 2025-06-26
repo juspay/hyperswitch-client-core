@@ -51,5 +51,6 @@ let make = (~setConfirmButtonDataRef) => {
           <Space height=12. />
         </>
       : React.null}
+    <TextWrapper text={"Additional surge charges may be added to final amount"} textType={ModalTextLight} overrideStyle=Some(ReactNative.Style.s({fontSize: 12.0})) />
   </>
 }
