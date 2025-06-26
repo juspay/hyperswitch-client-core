@@ -137,7 +137,7 @@ let make = (
           AnimationUtils.animateFlex(
             ~flexval=buttomFlex,
             ~value=0.01,
-            ~endCallback=() => {
+            ~endCallback=_ => {
               setTimeout(() => {
                 handleSuccessFailure(~apiResStatus=status, ())
               }, 600)->ignore

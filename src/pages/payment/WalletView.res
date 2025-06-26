@@ -8,15 +8,14 @@ module WalletDisclaimer = {
     <>
       <Space height=10. />
       <View
-        style={viewStyle(
-          ~display=#flex,
-          ~justifyContent=#center,
-          ~alignContent=#center,
-          ~flexDirection=#row,
-          ~alignItems=#center,
-          (),
-        )}>
-        <Icon name="lock" fill="#767676" style={viewStyle(~marginEnd=5.->dp, ())} />
+        style={s({
+          display: #flex,
+          justifyContent: #center,
+          alignContent: #center,
+          flexDirection: #row,
+          alignItems: #center,
+        })}>
+        <Icon name="lock" fill="#767676" style={s({marginEnd: 5.->dp})} />
         <TextWrapper text={localeObject.walletDisclaimer} textType={ModalText} />
       </View>
     </>

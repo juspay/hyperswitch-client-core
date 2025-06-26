@@ -58,25 +58,23 @@ let make = (
   }
   let (bgColor1, _) = backColor
 
-  let fillStyle = viewStyle(
-    ~position=#absolute,
-    ~top=0.->dp,
-    ~bottom=0.->dp,
-    ~right=0.->dp,
-    ~opacity=0.4,
-    ~backgroundColor={component.background},
-    (),
-  )
-  let widthStyle = viewStyle(
-    ~width=Animated.Interpolation.interpolate(
+  let fillStyle = s({
+    position: #absolute,
+    top: 0.->dp,
+    bottom: 0.->dp,
+    right: 0.->dp,
+    opacity: 0.4,
+    backgroundColor: {component.background},
+  })
+  let widthStyle = s({
+    width: Animated.Interpolation.interpolate(
       fillAnimation,
       {
         inputRange: [0.0, 1.0],
         outputRange: ["95%", "0%"]->Animated.Interpolation.fromStringArray,
       },
     )->Animated.StyleProp.size,
-    (),
-  )
+  })
 
   let fillButton = () => {
     Animated.timing(
@@ -86,38 +84,36 @@ let make = (
         duration: 1800.0,
         useNativeDriver: false,
       },
-    )->Animated.start()
+    )->Animated.start
   }
 
   <View
     style={array([
       getShadowStyle,
-      viewStyle(
-        ~height=primaryButtonHeight->dp,
-        ~width=100.->pct,
-        ~justifyContent=#center,
-        ~alignItems=#center,
-        ~borderRadius,
-        ~borderWidth,
-        ~borderColor,
-        ~backgroundColor=bgColor1,
-        (),
-      ),
+      s({
+        height: primaryButtonHeight->dp,
+        width: 100.->pct,
+        justifyContent: #center,
+        alignItems: #center,
+        borderRadius,
+        borderWidth,
+        borderColor,
+        backgroundColor: bgColor1,
+      }),
     ])}>
     <CustomTouchableOpacity
       disabled
       testID={testID->Option.getOr("")}
       style={array([
-        viewStyle(
-          ~height=100.->pct,
-          ~width=100.->pct,
-          ~borderRadius,
-          ~flex=1.,
-          ~flexDirection=#row,
-          ~justifyContent=#center,
-          ~alignItems=#center,
-          (),
-        ),
+        s({
+          height: 100.->pct,
+          width: 100.->pct,
+          borderRadius,
+          flex: 1.,
+          flexDirection: #row,
+          justifyContent: #center,
+          alignItems: #center,
+        }),
       ])}
       onPress={ev => {
         Keyboard.dismiss()
@@ -139,7 +135,7 @@ let make = (
           }}
           {switch text {
           | Some(textStr) if textStr !== "" =>
-            <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
+            <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
               <TextWrapper
                 text={switch buttonState {
                 | LoadingButton => loadingText

@@ -52,29 +52,27 @@ let make = (
         useNativeDriver: false,
         delay: 0.,
       },
-    )->Animated.start()
+    )->Animated.start
   }
   <ErrorBoundary level=FallBackScreen.Widget rootTag=nativeProp.rootTag>
     <View
-      style={viewStyle(
-        ~flex=1.,
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        ~flexDirection=localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
-        (),
-      )}>
+      style={s({
+        flex: 1.,
+        alignItems: #center,
+        justifyContent: #center,
+        flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
+      })}>
       <View
         style={array([
-          viewStyle(
-            ~borderRadius=5.,
-            ~overflow=#hidden,
-            ~paddingHorizontal=5.->dp,
-            ~flex=1.,
-            ~alignItems=#center,
-            ~justifyContent=#center,
-            ~flexDirection=localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
-            (),
-          ),
+          s({
+            borderRadius: 5.,
+            overflow: #hidden,
+            paddingHorizontal: 5.->dp,
+            flex: 1.,
+            alignItems: #center,
+            justifyContent: #center,
+            flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
+          }),
           bgColor,
         ])}>
         {String.length(cardNumber) !== 0
@@ -87,7 +85,7 @@ let make = (
               : <Icon name="cvvempty" height=35. width=35. fill="black" />
           : <Icon name={"waitcard"} height=35. width=35. fill="black" />}
         // <Icon name={isCardNumberValid ? "cvvimage" : "error-card"} height=45. width=45. />
-        <Animated.View style={viewStyle(~flex={cardNumInputFlex->Animated.StyleProp.float}, ())}>
+        <Animated.View style={s({flex: {cardNumInputFlex->Animated.StyleProp.float}})}>
           <CustomInput
             fontSize=13.
             enableShadow=false
@@ -135,7 +133,7 @@ let make = (
             }}
           />
         </Animated.View>
-        <Animated.View style={viewStyle(~flex={expireInputFlex->Animated.StyleProp.float}, ())}>
+        <Animated.View style={s({flex: {expireInputFlex->Animated.StyleProp.float}})}>
           <CustomInput
             enableShadow=false
             fontSize=12.
@@ -170,7 +168,7 @@ let make = (
             }}
           />
         </Animated.View>
-        <Animated.View style={viewStyle(~flex={cvvInputFlex->Animated.StyleProp.float}, ())}>
+        <Animated.View style={s({flex: {cvvInputFlex->Animated.StyleProp.float}})}>
           <CustomInput
             fontSize=13.
             enableShadow=false
@@ -208,7 +206,7 @@ let make = (
           />
         </Animated.View>
         {isZipAvailable
-          ? <Animated.View style={viewStyle(~flex={zipInputFlex->Animated.StyleProp.float}, ())}>
+          ? <Animated.View style={s({flex: {zipInputFlex->Animated.StyleProp.float}})}>
               <CustomInput
                 enableShadow=false
                 fontSize=13.
@@ -247,23 +245,18 @@ let make = (
         <LoadingOverlay />
         {switch loading {
         | PaymentSuccess =>
-          <View style={viewStyle(~width=100.->pct, ~position=#absolute, ~opacity=0.7, ())}>
+          <View style={s({width: 100.->pct, position: #absolute, opacity: 0.7})}>
             <Animated.View
-              style={viewStyle(
-                ~backgroundColor="mediumseagreen",
-                ~flex=1.,
-                ~alignItems=#center,
-                ~justifyContent=#center,
-                ~flexDirection=#row,
-                ~height=100.->pct,
-                (),
-              )}>
+              style={s({
+                backgroundColor: "mediumseagreen",
+                flex: 1.,
+                alignItems: #center,
+                justifyContent: #center,
+                flexDirection: #row,
+                height: 100.->pct,
+              })}>
               <Animated.View
-                style={viewStyle(
-                  ~flex={buttomFlex->Animated.StyleProp.float},
-                  ~height=100.->dp,
-                  (),
-                )}
+                style={s({flex: {buttomFlex->Animated.StyleProp.float}, height: 100.->dp})}
               />
               <Icon name="completepayment" width=40. height=20. />
             </Animated.View>

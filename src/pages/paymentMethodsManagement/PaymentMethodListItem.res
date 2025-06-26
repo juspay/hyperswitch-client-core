@@ -8,31 +8,21 @@ module AddPaymentMethodButton = {
     let localeObject = GetLocale.useGetLocalObj()
 
     <CustomTouchableOpacity
-      onPress={_ => (
-        HyperModule.hyperModule.onAddPaymentMethod("")
-      )}
-      style={viewStyle(
-        ~paddingVertical=16.->dp,
-        ~paddingHorizontal=24.->dp,
-        ~borderBottomWidth=0.8,
-        ~borderBottomColor=component.borderColor,
-        ~flexDirection=#row,
-        ~flexWrap=#nowrap,
-        (),
-      )}>
-      <View
-        style={viewStyle(
-          ~flexDirection=#row,
-          ~flexWrap=#nowrap,
-          ~alignItems=#center,
-          ~flex=1.,
-          (),
-        )}>
+      onPress={_ => HyperModule.hyperModule.onAddPaymentMethod("")}
+      style={s({
+        paddingVertical: 16.->dp,
+        paddingHorizontal: 24.->dp,
+        borderBottomWidth: 0.8,
+        borderBottomColor: component.borderColor,
+        flexDirection: #row,
+        flexWrap: #nowrap,
+      })}>
+      <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center, flex: 1.})}>
         <Icon
           name={"addwithcircle"}
           height=16.
           width=16.
-          style={viewStyle(~marginEnd=20.->dp, ~marginStart=5.->dp, ~marginVertical=10.->dp, ())}
+          style={s({marginEnd: 20.->dp, marginStart: 5.->dp, marginVertical: 10.->dp})}
         />
         <Space />
         <TextWrapper text={localeObject.addPaymentMethodLabel} textType=LinkText />
@@ -49,7 +39,7 @@ module PaymentMethodTitle = {
     | _ => None
     }
 
-    <View style={viewStyle(~flex=1., ())}>
+    <View style={s({flex: 1.})}>
       {switch nickName {
       | Some(val) =>
         val != ""
@@ -91,19 +81,17 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
   }
   <CustomTouchableOpacity
     onPress={_ => handleDelete(paymentMethodId->Option.getOr(""))}
-    style={viewStyle(
-      ~padding=16.->dp,
-      ~borderBottomWidth=0.8,
-      ~borderBottomColor=component.borderColor,
-      ~flexDirection=#row,
-      ~flexWrap=#nowrap,
-      ~alignItems=#center,
-      ~justifyContent=#"space-between",
-      ~flex=1.,
-      (),
-    )}>
-    <View
-      style={viewStyle(~flexDirection=#row, ~flexWrap=#nowrap, ~alignItems=#center, ~flex=4., ())}>
+    style={s({
+      padding: 16.->dp,
+      borderBottomWidth: 0.8,
+      borderBottomColor: component.borderColor,
+      flexDirection: #row,
+      flexWrap: #nowrap,
+      alignItems: #center,
+      justifyContent: #"space-between",
+      flex: 1.,
+    })}>
+    <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center, flex: 4.})}>
       <Icon
         name={switch pmDetails {
         | SAVEDLISTCARD(obj) => obj.cardScheme
@@ -112,19 +100,18 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
         }->Option.getOr("")}
         height=36.
         width=36.
-        style={viewStyle(~marginEnd=5.->dp, ())}
+        style={s({marginEnd: 5.->dp})}
       />
       <Space />
       <PaymentMethodTitle pmDetails />
     </View>
     <View
-      style={viewStyle(
-        ~flexDirection=#"row-reverse",
-        ~flexWrap=#nowrap,
-        ~alignItems=#center,
-        ~flex=1.,
-        (),
-      )}>
+      style={s({
+        flexDirection: #"row-reverse",
+        flexWrap: #nowrap,
+        alignItems: #center,
+        flex: 1.,
+      })}>
       <TextWrapper
         text={localeObject.deletePaymentMethod->Option.getOr("Delete")} textType=LinkText
       />

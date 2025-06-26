@@ -8,7 +8,5 @@ let make = (~iconColor=?, ~size=ActivityIndicator.Small) => {
   | Some(color) => color
   | None => component.color
   }
-  <ActivityIndicator
-    animating={true} size color=loderColor style={viewStyle(~marginEnd=10.->dp, ())}
-  />
+  <ActivityIndicator animating={true} size color=loderColor style={s({marginEnd: 10.->dp})} />
 }

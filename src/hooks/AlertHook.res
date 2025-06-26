@@ -20,7 +20,7 @@ let useAlerts = () => {
     | ("error", _) => handleSuccessFailure(~apiResStatus, ())
 
     | ("warning", #android) => ToastAndroid.show(message, ToastAndroid.long)
-    | ("warning", #ios) => Alert.alert(~title="Warning", ~message, ())
+    | ("warning", #ios) => Alert.alert(~title="Warning", ~message)
     | ("warning", #web) => alert(message)
     | _ => Console.error(message)
     }

@@ -87,7 +87,7 @@ let make = (~children, ~style, ~keyboardVerticalOffset=48.) => {
 
   let style =
     frame.current->Option.isSome && bottom > 0.
-      ? array([style, viewStyle(~paddingBottom=bottom->dp, ())])
+      ? array([style, s({paddingBottom: bottom->dp})])
       : style
 
   <View onLayout=onLayoutChange style> {children} </View>
