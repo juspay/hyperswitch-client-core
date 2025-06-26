@@ -48,6 +48,7 @@ let make = (
   ~animate=true,
   ~animateLabel=?,
   ~name="",
+  ~style=?,
 ) => {
   let {
     placeholderColor,
@@ -92,7 +93,7 @@ let make = (
     None
   }, (isFocused, state))
 
-  <View style={viewStyle(~width=100.->pct, ())}>
+  <View style={style->Option.getOr(viewStyle(~width=100.->pct, ()))}>
     {heading != ""
       ? <TextWrapper textType={PlaceholderText}>
           {React.string(heading)}

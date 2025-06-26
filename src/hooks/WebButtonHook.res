@@ -73,15 +73,11 @@ let usePayButton = () => {
   let addGooglePay = (~sessionObject, ~requiredFields) => {
     let status = Window.useScript("https://pay.google.com/gp/p/js/pay.js")
 
-    let token = GooglePayTypeNew.getGpayToken(
-      ~obj=sessionObject,
-      ~appEnv=nativeProp.env,
-      ~requiredFields,
-    )
+    let token = WalletType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env, ~requiredFields)
 
     let onGooglePayButtonClick = () => {
       launchGPay(
-        GooglePayTypeNew.getGpayTokenStringified(
+        WalletType.getGpayTokenStringified(
           ~obj=sessionObject,
           ~appEnv=nativeProp.env,
           ~requiredFields,

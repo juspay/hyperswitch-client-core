@@ -1,3 +1,45 @@
+# [1.7.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.1...v1.7.0) (2025-06-25)
+
+
+### Features
+
+* added expressCheckoutWidget for android ([#271](https://github.com/juspay/hyperswitch-client-core/issues/271)) ([dcfab2d](https://github.com/juspay/hyperswitch-client-core/commit/dcfab2dd3bd1803ca24e5870e71c904d2ff191b3))
+
+## [1.6.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.0...v1.6.1) (2025-06-20)
+
+
+### Bug Fixes
+
+* state field empty fix ([62f714e](https://github.com/juspay/hyperswitch-client-core/commit/62f714e8e416eb036b1b7cc90135ab113fa7e19a))
+
+# [1.6.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.5.0...v1.6.0) (2025-06-20)
+
+
+### Features
+
+* wallet missing field collection ([1dfef7f](https://github.com/juspay/hyperswitch-client-core/commit/1dfef7f9e2e3a4f9f45b81354fb7ce8a9af6ed99))
+
+# [1.5.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.2...v1.5.0) (2025-06-18)
+
+
+### Features
+
+* logs for co-badged feature ([#294](https://github.com/juspay/hyperswitch-client-core/issues/294)) ([9d79ae0](https://github.com/juspay/hyperswitch-client-core/commit/9d79ae0b606810f3a50a6f16e5e81a3dc484d727))
+
+## [1.4.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.1...v1.4.2) (2025-06-06)
+
+
+### Bug Fixes
+
+* **apay:** fixing the state code mapping ([#300](https://github.com/juspay/hyperswitch-client-core/issues/300)) ([e440545](https://github.com/juspay/hyperswitch-client-core/commit/e440545dfd71697e3d9a8cd2406d899b17ba851d))
+
+## [1.4.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.4.0...v1.4.1) (2025-06-02)
+
+
+### Bug Fixes
+
+* detox: Navigation between saved screen and payment sheet ([#293](https://github.com/juspay/hyperswitch-client-core/issues/293)) ([34f8ad5](https://github.com/juspay/hyperswitch-client-core/commit/34f8ad574c0e71907c5a841435a148f19e254ad1))
+
 # [1.4.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.3.0...v1.4.0) (2025-05-22)
 
 

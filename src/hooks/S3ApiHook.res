@@ -54,11 +54,13 @@ let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
       {
         countries: decodeCountryArray(countryArr),
         states: decodeStateJson(statesDict),
+        phoneCountryCodes: [],
       }
     }
   | None => {
       countries: [],
       states: Js.Dict.empty(),
+      phoneCountryCodes: [],
     }
   }
 }
@@ -289,7 +291,7 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
 
 //-
 let useFetchDataFromS3WithGZipDecoding = () => {
-  let apiFunction = CommonHooks.fetchApi
+  let apiFunction = APIUtils.fetchApi
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetAssetUrlWithVersion()()
 
@@ -325,5 +327,36 @@ let useFetchDataFromS3WithGZipDecoding = () => {
       )
       Promise.resolve(None)
     })
+  }
+}
+
+let decodeJsonToPhoneCountryCodeData = json => {
+  switch json->Js.Json.decodeObject {
+  | Some(res) =>
+    res
+    ->Js.Dict.get("countries")
+    ->Option.getOr([]->Js.Json.Array)
+    ->Js.Json.decodeArray
+    ->Option.getOr([])
+    ->Array.map(item => {
+      switch item->Js.Json.decodeObject {
+      | Some(res) => {
+          phone_number_code: Utils.getString(res, "phone_number_code", ""),
+          country_name: Utils.getString(res, "country_name", ""),
+          country_code: Utils.getString(res, "country_code", ""),
+
+          // phone_number_code: Utils.getString(res, "phone_number_code", ""),
+          // validation_regex: Utils.getString(res, "validation_regex", ""),
+          // format_example: Utils.getString(res, "format_example", ""),
+          // format_regex: Utils.getString(res, "format_regex", ""),
+        }
+      | None => {
+          phone_number_code: "+1",
+          country_name: "United States",
+          country_code: "US",
+        }
+      }
+    })
+  | None => []
   }
 }
