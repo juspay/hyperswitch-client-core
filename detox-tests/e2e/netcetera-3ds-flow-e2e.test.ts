@@ -1,7 +1,7 @@
 import * as testIds from "../../src/utility/test/TestUtils.bs.js";
 import { device } from "detox"
 import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT, netceteraTestCard, TIMEOUT_CONFIG } from "../fixtures/Constants"
-import { waitForVisibility, typeTextInInput, ensureNormalPaymentSheet } from "../utils/DetoxHelpers"
+import { waitForVisibility, typeTextInInput, ensureNormalPaymentSheet, waitForUIStabilization } from "../utils/DetoxHelpers"
 import { CreateBody, setCreateBodyForTestAutomation } from "../utils/APIUtils";
 describe('card-flow-e2e-test', () => {
     jest.retryTimes(6);
@@ -57,6 +57,8 @@ describe('card-flow-e2e-test', () => {
         await waitFor(payNowButton).toExist();
         await waitForVisibility(payNowButton)
         await payNowButton.tap();
+
+        await waitForUIStabilization(30000);
 
         const inputType = device.getPlatform() == "android" ? 'android.widget.EditText' : 'UITextField'
         const otpInput = await element(by.type(inputType));
