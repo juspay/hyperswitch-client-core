@@ -11,7 +11,6 @@ const PORT = 5252;
 
 let payloadFromAutomation = null;
 app.post('/automation-create-body', async (req, res) => {
-  console.log(req.body);
   payloadFromAutomation = req.body;
   res.send(req.body);
 });
@@ -86,16 +85,12 @@ app.get('/create-payment-intent', async (req, res) => {
             },
           };
 
-    console.log('create payment body', createPaymentBody);
-
     const profileId = process.env.PROFILE_ID;
     if (profileId) {
       createPaymentBody.profile_id = profileId;
     }
 
     var paymentIntent = await createPaymentIntent(createPaymentBody);
-
-    // Send publishable key and PaymentIntent details to client
     res.send({
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: paymentIntent.client_secret,
