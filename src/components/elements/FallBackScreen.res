@@ -9,24 +9,23 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
 
   switch level {
   | Top =>
-    <SafeAreaView style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#"flex-end", ())}>
+    <SafeAreaView style={s({flex: 1., alignItems: #center, justifyContent: #"flex-end"})}>
       <View
-        style={viewStyle(
-          ~width=100.->pct,
-          ~alignItems=#center,
-          ~backgroundColor="white",
-          ~padding=20.->dp,
-          (),
-        )}>
-        <View style={viewStyle(~alignItems=#"flex-end", ~width=100.->pct, ())}>
+        style={s({
+          width: 100.->pct,
+          alignItems: #center,
+          backgroundColor: "white",
+          padding: 20.->dp,
+        })}>
+        <View style={s({alignItems: #"flex-end", width: 100.->pct})}>
           <CustomTouchableOpacity
             onPress={_ => simplyExit(PaymentConfirmTypes.defaultCancelError, rootTag, false)}>
             <Icon name="close" fill="black" height=20. width=20. />
           </CustomTouchableOpacity>
         </View>
-        <View style={viewStyle(~flexDirection=#row, ~padding=20.->dp, ())}>
+        <View style={s({flexDirection: #row, padding: 20.->dp})}>
           <Icon name="errorIcon" fill="black" height=60. width=60. />
-          <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
+          <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
             <TextWrapper textType={ErrorTextBold}>
               {"Oops, something went wrong!"->React.string}
             </TextWrapper>
@@ -44,16 +43,15 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
     </SafeAreaView>
   | Screen =>
     <View
-      style={viewStyle(
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        ~width=100.->pct,
-        ~padding=20.->dp,
-        (),
-      )}>
-      <View style={viewStyle(~flexDirection=#row, ~backgroundColor="white", ())}>
+      style={s({
+        alignItems: #center,
+        justifyContent: #center,
+        width: 100.->pct,
+        padding: 20.->dp,
+      })}>
+      <View style={s({flexDirection: #row, backgroundColor: "white"})}>
         <Icon name="errorIcon" fill="black" height=60. width=60. />
-        <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
+        <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
           <TextWrapper textType={ErrorTextBold}>
             {"Oops, something went wrong!"->React.string}
           </TextWrapper>
@@ -65,17 +63,16 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
     </View>
   | Widget =>
     <View
-      style={viewStyle(
-        ~flex=1.,
-        ~backgroundColor="white",
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        ~paddingHorizontal=40.->dp,
-        (),
-      )}>
-      <View style={viewStyle(~flexDirection=#row, ~backgroundColor="white", ())}>
+      style={s({
+        flex: 1.,
+        backgroundColor: "white",
+        alignItems: #center,
+        justifyContent: #center,
+        paddingHorizontal: 40.->dp,
+      })}>
+      <View style={s({flexDirection: #row, backgroundColor: "white"})}>
         <Icon name="errorIcon" fill="black" height=32. width=32. />
-        <View style={viewStyle(~flex=1., ~alignItems=#center, ~justifyContent=#center, ())}>
+        <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
           <TextWrapper textType={ErrorTextBold}>
             {"Oops, something went wrong!"->React.string}
           </TextWrapper>

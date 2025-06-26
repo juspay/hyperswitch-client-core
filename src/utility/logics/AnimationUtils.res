@@ -1,6 +1,6 @@
 open ReactNative
 
-let animateFlex = (~flexval, ~value, ~endCallback=() => (), ()) => {
+let animateFlex = (~flexval, ~value, ~endCallback=_ => (), ()) => {
   Animated.timing(
     flexval,
     {
@@ -9,5 +9,5 @@ let animateFlex = (~flexval, ~value, ~endCallback=() => (), ()) => {
       useNativeDriver: false,
       delay: 0.,
     },
-  )->Animated.start(~endCallback=_ => {endCallback()}, ())
+  )->Animated.start(~endCallback)
 }

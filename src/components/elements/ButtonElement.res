@@ -51,7 +51,7 @@ let make = (
         useNativeDriver: false,
         delay: 0.,
       },
-    )->Animated.start(~endCallback=_ => {endCallback()}, ())
+    )->Animated.start(~endCallback=_ => {endCallback()})
   }
 
   let processRequest = (
@@ -735,22 +735,21 @@ let make = (
       | SAMSUNG_PAY =>
         Some(
           <View
-            style={viewStyle(
-              ~display=#flex,
-              ~flexDirection=#row,
-              ~alignItems=#center,
-              ~justifyContent=#center,
-              ~width=100.->pct,
-              ~height=100.->pct,
-              (),
-            )}>
+            style={s({
+              display: #flex,
+              flexDirection: #row,
+              alignItems: #center,
+              justifyContent: #center,
+              width: 100.->pct,
+              height: 100.->pct,
+            })}>
             <Icon name=walletType.payment_method_type width=240. height=60. />
           </View>,
         )
       | APPLE_PAY =>
         Some(
           <ApplePayButtonView
-            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+            style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
             cornerRadius=buttonBorderRadius
             buttonType=nativeProp.configuration.appearance.applePay.buttonType
             buttonStyle=applePayButtonColor
@@ -763,7 +762,7 @@ let make = (
               ~obj=sessionObject,
               ~requiredFields=walletType.required_field,
             )}
-            style={viewStyle(~height=primaryButtonHeight->dp, ~width=100.->pct, ())}
+            style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
             buttonType=nativeProp.configuration.appearance.googlePay.buttonType
             buttonStyle=googlePayButtonColor
             borderRadius={buttonBorderRadius}
@@ -771,13 +770,7 @@ let make = (
         )
       | PAYPAL =>
         Some(
-          <View
-            style={viewStyle(
-              ~flexDirection=#row,
-              ~alignItems=#center,
-              ~justifyContent=#center,
-              (),
-            )}>
+          <View style={s({flexDirection: #row, alignItems: #center, justifyContent: #center})}>
             <Icon name=walletType.payment_method_type width=22. height=28. />
             <Space width=10. />
             <Icon name={walletType.payment_method_type ++ "2"} width=90. height=28. />

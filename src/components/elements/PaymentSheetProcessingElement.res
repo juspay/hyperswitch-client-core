@@ -27,20 +27,19 @@ let make = () => {
 
   <View
     style={array([
-      viewStyle(
-        ~alignItems=#center,
-        ~backgroundColor=component.background,
-        ~justifyContent=#center,
-        ~height=100.->pct,
-        ~width=100.->pct,
-        (),
-      ),
+      s({
+        alignItems: #center,
+        backgroundColor: component.background,
+        justifyContent: #center,
+        height: 100.->pct,
+        width: 100.->pct,
+      }),
     ])}>
     <TubeSpinner size=60. />
     <Space />
-    <View style={viewStyle(~display=#flex, ~flexDirection=#row, ())}>
+    <View style={s({display: #flex, flexDirection: #row})}>
       <TextWrapper text={"Processing Your Payment"} textType={HeadingBold} />
-      <View style={viewStyle(~marginLeft=2.->dp, ~width=20.->dp, ())}>
+      <View style={s({marginLeft: 2.->dp, width: 20.->dp})}>
         <TextWrapper text={paymentProcessingText} textType={HeadingBold} />
       </View>
     </View>

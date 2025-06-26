@@ -29,15 +29,14 @@ module CVVComponent = {
       isPaymentMethodSelected
         ? <>
             <View
-              style={viewStyle(
-                ~display=#flex,
-                ~flexDirection=#row,
-                ~alignItems=#center,
-                ~paddingHorizontal=40.->dp,
-                ~marginTop=10.->dp,
-                (),
-              )}>
-              <View style={viewStyle(~width={50.->dp}, ())}>
+              style={s({
+                display: #flex,
+                flexDirection: #row,
+                alignItems: #center,
+                paddingHorizontal: 40.->dp,
+                marginTop: 10.->dp,
+              })}>
+              <View style={s({width: {50.->dp}})}>
                 <TextWrapper text="CVC:" textType={ModalText} />
               </View>
               <CustomInput
@@ -88,11 +87,11 @@ module PMWithNickNameComponent = {
     | NONE => Some(false)
     }->Option.getOr(false)
 
-    <View style={viewStyle(~display=#flex, ~flexDirection=#column, ())}>
+    <View style={s({display: #flex, flexDirection: #column})}>
       {switch nickName {
       | Some(val) =>
         val != ""
-          ? <View style={viewStyle(~display=#flex, ~flexDirection=#row, ~alignItems=#center, ())}>
+          ? <View style={s({display: #flex, flexDirection: #row, alignItems: #center})}>
               <TextWrapper
                 text={val->String.length > 15
                   ? val->String.slice(~start=0, ~end=13)->String.concat("..")
@@ -107,7 +106,7 @@ module PMWithNickNameComponent = {
           : React.null
       | None => React.null
       }}
-      <View style={viewStyle(~display=#flex, ~flexDirection=#row, ~alignItems=#center, ())}>
+      <View style={s({display: #flex, flexDirection: #row, alignItems: #center})}>
         <Icon
           name={switch pmDetails {
           | SAVEDLISTCARD(obj) => obj.cardScheme
@@ -116,7 +115,7 @@ module PMWithNickNameComponent = {
           }->Option.getOr("")}
           height=25.
           width=24.
-          style={viewStyle(~marginEnd=5.->dp, ())}
+          style={s({marginEnd: 5.->dp})}
         />
         <TextWrapper
           text={switch pmDetails {
@@ -244,24 +243,22 @@ module PaymentMethodListView = {
       onPress={_ => {
         onPress()
       }}
-      style={viewStyle(
-        ~minHeight=60.->dp,
-        ~paddingVertical=16.->dp,
-        ~borderBottomWidth={isButtomBorder ? 1.0 : 0.},
-        ~borderBottomColor=component.borderColor,
-        ~justifyContent=#center,
-        (),
-      )}
+      style={s({
+        minHeight: 60.->dp,
+        paddingVertical: 16.->dp,
+        borderBottomWidth: {isButtomBorder ? 1.0 : 0.},
+        borderBottomColor: component.borderColor,
+        justifyContent: #center,
+      })}
       activeOpacity=1.>
       <View
-        style={viewStyle(
-          ~flexDirection=#row,
-          ~flexWrap=#wrap,
-          ~alignItems=#center,
-          ~justifyContent=#"space-between",
-          (),
-        )}>
-        <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ~maxWidth=60.->pct, ())}>
+        style={s({
+          flexDirection: #row,
+          flexWrap: #wrap,
+          alignItems: #center,
+          justifyContent: #"space-between",
+        })}>
+        <View style={s({flexDirection: #row, alignItems: #center, maxWidth: 60.->pct})}>
           <CustomRadioButton
             size=20.5
             selected=isPaymentMethodSelected

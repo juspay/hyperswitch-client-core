@@ -23,15 +23,14 @@ let make = (
     <View
       style={array([
         getShadowStyle,
-        viewStyle(
-          ~paddingHorizontal=24.->dp,
-          ~paddingVertical=5.->dp,
-          ~borderRadius,
-          ~borderWidth=0.0,
-          ~borderColor=component.borderColor,
-          ~backgroundColor=component.background,
-          (),
-        ),
+        s({
+          paddingHorizontal: 24.->dp,
+          paddingVertical: 5.->dp,
+          borderRadius,
+          borderWidth: 0.0,
+          borderColor: component.borderColor,
+          backgroundColor: component.background,
+        }),
       ])}>
       <SavedPMListWithLoader
         listArr={savedPaymentMethodsData} savedCardCvv setSavedCardCvv setIsCvcValid

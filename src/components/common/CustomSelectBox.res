@@ -12,14 +12,14 @@ let make = (~initialIconName, ~updateIconName, ~isSelected, ~fillIcon) => {
         height=18.
         width=18.
         ?fill
-        style={ReactNative.Style.viewStyle(~display=isSelected ? #flex : #none, ())}
+        style={ReactNative.Style.s({display: isSelected ? #flex : #none})}
       />
       <Icon
         name={updateIconName}
         height=18.
         width=18.
         ?fill
-        style={ReactNative.Style.viewStyle(~display=isSelected ? #none : #flex, ())}
+        style={ReactNative.Style.s({display: isSelected ? #none : #flex})}
       />
     </>
   }

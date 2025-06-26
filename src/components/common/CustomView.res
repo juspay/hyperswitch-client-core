@@ -13,11 +13,11 @@ let make = (
 ) => {
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let modalPosStyle = array([
-    viewStyle(~flex=1., ~width=100.->pct, ~height=100.->pct, ~alignItems=#center, ()),
+    s({flex: 1., width: 100.->pct, height: 100.->pct, alignItems: #center}),
     switch modalPosition {
-    | #center => viewStyle(~alignItems=#center, ~justifyContent=#center, ())
-    | #top => viewStyle(~alignItems=#center, ~justifyContent=#"flex-start", ())
-    | #bottom => viewStyle(~alignItems=#center, ~justifyContent=#"flex-end", ())
+    | #center => s({alignItems: #center, justifyContent: #center})
+    | #top => s({alignItems: #center, justifyContent: #"flex-start"})
+    | #bottom => s({alignItems: #center, justifyContent: #"flex-end"})
     },
   ])
 
@@ -31,7 +31,7 @@ let make = (
 
   <View style=modalPosStyle>
     <CustomTouchableOpacity
-      style={viewStyle(~flex=1., ~width=100.->pct, ~flexGrow=1., ())}
+      style={s({flex: 1., width: 100.->pct, flexGrow: 1.})}
       disabled=disableClickOutside
       onPress={_ => {
         if closeOnClickOutSide {
@@ -47,17 +47,16 @@ let make = (
     //     }
     //   }}>
     <CustomKeyboardAvoidingView
-      style={viewStyle(
-        ~width=bottomModalWidth,
-        ~borderRadius=15.,
-        ~borderBottomLeftRadius=0.,
-        ~borderBottomRightRadius=0.,
-        ~overflow=#hidden,
-        ~maxHeight=viewPortContants.maxPaymentSheetHeight->pct,
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        (),
-      )}>
+      style={s({
+        width: bottomModalWidth,
+        borderRadius: 15.,
+        borderBottomLeftRadius: 0.,
+        borderBottomRightRadius: 0.,
+        overflow: #hidden,
+        maxHeight: viewPortContants.maxPaymentSheetHeight->pct,
+        alignItems: #center,
+        justifyContent: #center,
+      })}>
       <SafeAreaView />
       {children}
     </CustomKeyboardAvoidingView>
@@ -72,15 +71,14 @@ module Wrapper = {
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
     <ScrollView
-      contentContainerStyle={viewStyle(
-        ~minHeight=250.->dp,
-        ~paddingHorizontal=sheetContentPadding->dp,
-        ~paddingTop=sheetContentPadding->dp,
-        ~paddingBottom=viewPortContants.navigationBarHeight->dp,
-        (),
-      )}
+      contentContainerStyle={s({
+        minHeight: 250.->dp,
+        paddingHorizontal: sheetContentPadding->dp,
+        paddingTop: sheetContentPadding->dp,
+        paddingBottom: viewPortContants.navigationBarHeight->dp,
+      })}
       keyboardShouldPersistTaps={#handled}
-      style={array([viewStyle(~flexGrow=1., ~width, ()), bgColor])}>
+      style={array([s({flexGrow: 1., width}), bgColor])}>
       <ModalHeader onModalClose />
       children
     </ScrollView>

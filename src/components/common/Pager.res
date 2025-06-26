@@ -40,7 +40,7 @@ let make = (
     ~indexInFocus: int,
     ~routes: array<TabViewType.route>,
   ) => React.element,
-  ~style=viewStyle(),
+  ~style=empty,
   ~animationEnabled=false,
   ~layoutDirection: TabViewType.localeDirection=#ltr,
 ) => {
@@ -85,7 +85,7 @@ let make = (
           onIndexChangeRef.current(index)
           pendingIndexRef.current = None
         }
-      }, ())
+      })
       pendingIndexRef.current = Some(index)
     } else {
       panX->Animated.Value.setValue(offset)
@@ -150,7 +150,7 @@ let make = (
       Keyboard.dismiss()
     }
 
-    panX->Animated.Value.stopAnimation()
+    panX->Animated.Value.stopAnimation
     panX->Animated.Value.setOffset(panX->getValue)
   }
 
@@ -289,17 +289,18 @@ let make = (
   children(~indexInFocus, ~routes, ~position, ~addEnterListener, ~jumpTo, ~render=children => {
     <Animated.View
       style={array([
-        viewStyle(
-          ~flex=1.,
-          ~flexDirection=#row,
-          ~alignItems=#stretch,
-          ~transform=[Style.translateX(~translateX=translateX->Animated.StyleProp.float)],
-          ~maxWidth=?WebKit.platform === #next ? 0.->dp->Some : None,
-          ~width=?layout.width != 0.
-            ? (routes->Array.length->Int.toFloat *. layout.width)->dp->Some
-            : None,
-          (),
-        ),
+        s({
+          flex: 1.,
+          flexDirection: #row,
+          alignItems: #stretch,
+          transform: [Style.translateX(~translateX=translateX->Animated.StyleProp.size)],
+          maxWidth: ?(WebKit.platform === #next ? 0.->dp->Some : None),
+          width: ?(
+            layout.width != 0.
+              ? (routes->Array.length->Int.toFloat *. layout.width)->dp->Some
+              : None
+          ),
+        }),
         style,
       ])}
       onMoveShouldSetResponder={panHandlers->PanResponder.onMoveShouldSetResponder}
@@ -321,7 +322,7 @@ let make = (
           <View
             key={route.title ++ route.key->Int.toString}
             style=?{if layout.width != 0. {
-              Some(viewStyle(~width=layout.width->dp, ~height=height->dp, ()))
+              Some(s({width: layout.width->dp, height: height->dp}))
             } else if focused {
               Some(StyleSheet.absoluteFill)
             } else {

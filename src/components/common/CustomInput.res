@@ -72,7 +72,7 @@ let make = (
   // let errorTextInputColor = "rgba(218, 14, 15, 1)"
   // let normalTextInputBoderColor = "rgba(204, 210, 226, 0.75)"
   // let _ = state != "" && secureTextEntry == false && enableCrossIcon
-  let shadowStyle = enableShadow ? getShadowStyle : viewStyle()
+  let shadowStyle = enableShadow ? getShadowStyle : empty
 
   let animatedValue = React.useRef(Animated.Value.create(state != "" ? 1. : 0.)).current
 
@@ -88,12 +88,12 @@ let make = (
         duration: 200.,
         useNativeDriver: false,
       },
-    )->Animated.start()
+    )->Animated.start
 
     None
   }, (isFocused, state))
 
-  <View style={style->Option.getOr(viewStyle(~width=100.->pct, ()))}>
+  <View style={style->Option.getOr(s({width: 100.->pct}))}>
     {heading != ""
       ? <TextWrapper textType={PlaceholderText}>
           {React.string(heading)}
@@ -105,69 +105,60 @@ let make = (
     <View
       style={array([
         bgColor,
-        viewStyle(
-          ~backgroundColor=component.background,
-          ~borderTopWidth,
-          ~borderBottomWidth,
-          ~borderLeftWidth,
-          ~borderRightWidth,
-          ~borderTopLeftRadius,
-          ~borderTopRightRadius,
-          ~borderBottomLeftRadius,
-          ~borderBottomRightRadius,
-          ~height=height->dp,
-          ~flexDirection=#row,
-          ~borderColor=isValid
+        s({
+          backgroundColor: component.background,
+          borderTopWidth,
+          borderBottomWidth,
+          borderLeftWidth,
+          borderRightWidth,
+          borderTopLeftRadius,
+          borderTopRightRadius,
+          borderBottomLeftRadius,
+          borderBottomRightRadius,
+          height: height->dp,
+          flexDirection: #row,
+          borderColor: isValid
             ? isFocused ? primaryColor : normalTextInputBoderColor
             : errorTextInputColor,
-          ~width,
-          ~paddingHorizontal=13.->dp,
-          ~alignItems=#center,
-          ~justifyContent=#center,
-          (),
-        ),
+          width,
+          paddingHorizontal: 13.->dp,
+          alignItems: #center,
+          justifyContent: #center,
+        }),
         shadowStyle,
         // bgColor,
       ])}>
       {switch iconLeft {
-      | CustomIcon(element) => <View style={viewStyle(~paddingRight=10.->dp, ())}> element </View>
+      | CustomIcon(element) => <View style={s({paddingRight: 10.->dp})}> element </View>
       | NoIcon => React.null
       }}
       <View
-        style={viewStyle(
-          ~flex=1.,
-          ~position=#relative,
-          ~height=100.->pct,
-          ~justifyContent={
-            animate ? #"flex-end" : #center
-          },
-          (),
-        )}>
+        style={s({
+          flex: 1.,
+          position: #relative,
+          height: 100.->pct,
+          justifyContent: animate ? #"flex-end" : #center,
+        })}>
         {animate
           ? <Animated.View
               pointerEvents=#none
-              style={viewStyle(
-                ~top=0.->dp,
-                ~position=#absolute,
-                ~height=animatedValue
+              style={s({
+                top: 0.->dp,
+                position: #absolute,
+                height: animatedValue
                 ->Animated.Interpolation.interpolate({
                   inputRange: [0., 1.],
                   outputRange: ["100%", "40%"]->Animated.Interpolation.fromStringArray,
                 })
                 ->Animated.StyleProp.size,
-                ~justifyContent=#center,
-                (),
-              )}>
+                justifyContent: #center,
+              })}>
               <Animated.Text
                 style={array([
-                  textStyle(
-                    ~fontFamily,
-                    ~fontWeight=if isFocused || state != "" {
-                      #500
-                    } else {
-                      #normal
-                    },
-                    ~fontSize=animatedValue
+                  s({
+                    fontFamily,
+                    fontWeight: isFocused || state != "" ? #500 : #normal,
+                    fontSize: animatedValue
                     ->Animated.Interpolation.interpolate({
                       inputRange: [0., 1.],
                       outputRange: [
@@ -176,9 +167,8 @@ let make = (
                       ]->Animated.Interpolation.fromFloatArray,
                     })
                     ->Animated.StyleProp.float,
-                    ~color=placeholderTextColor->Option.getOr(placeholderColor),
-                    (),
-                  ),
+                    color: placeholderTextColor->Option.getOr(placeholderColor),
+                  }),
                 ])}>
                 {React.string({
                   if isFocused || state != "" {
@@ -196,15 +186,14 @@ let make = (
           | None => None
           }}
           style={array([
-            textStyle(
-              ~fontStyle=#normal,
-              ~color=textColor,
-              ~fontFamily,
-              ~fontSize={fontSize +. placeholderTextSizeAdjust},
-              ~textAlign?,
-              (),
-            ),
-            viewStyle(~padding=0.->dp, ~height=(height -. 10.)->dp, ~width=100.->pct, ()),
+            s({
+              fontStyle: #normal,
+              color: textColor,
+              fontFamily,
+              fontSize: fontSize +. placeholderTextSizeAdjust,
+              ?textAlign,
+            }),
+            s({padding: 0.->dp, height: (height -. 10.)->dp, width: 100.->pct}),
           ])}
           testID=name
           secureTextEntry=showPass
@@ -242,15 +231,13 @@ let make = (
         {switch iconRight {
         | NoIcon => React.null
         | CustomIcon(element) =>
-          <View style={viewStyle(~flexDirection=#row, ~alignContent=#"space-around", ())}>
-            element
-          </View>
+          <View style={s({flexDirection: #row, alignContent: #"space-around"})}> element </View>
         }}
       </CustomTouchableOpacity>
       {secureTextEntry && showEyeIconaftersecureTextEntry
         ? {
             <CustomTouchableOpacity
-              style={viewStyle(~height=100.->pct, ~justifyContent=#center, ~paddingLeft=5.->dp, ())}
+              style={s({height: 100.->pct, justifyContent: #center, paddingLeft: 5.->dp})}
               onPress={_ => {setShowPass(prev => !prev)}}>
               <TextWrapper textType={PlaceholderText}> {"eye"->React.string} </TextWrapper>
             </CustomTouchableOpacity>

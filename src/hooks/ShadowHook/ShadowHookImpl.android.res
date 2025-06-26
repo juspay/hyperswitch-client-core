@@ -1,3 +1,3 @@
 let useGetShadowStyle = (~shadowIntensity, ()) => {
-  ReactNative.Style.viewStyle(~elevation=shadowIntensity, ())
+  ReactNative.Style.s({elevation: shadowIntensity})
 }

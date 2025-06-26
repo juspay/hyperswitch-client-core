@@ -12,7 +12,7 @@ module CardBrandAndScanCardIcon = {
     ~expireRef,
     ~cvvRef,
   ) => {
-    <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
+    <View style={s({flexDirection: #row, alignItems: #center})}>
       <CardSchemeComponent cardNumber cardNetworks />
       <UIUtils.RenderIf condition={isScanCardAvailable && cardNumber === ""}>
         <ScanCardButton onScanCard expireRef cvvRef />
@@ -92,8 +92,8 @@ let make = (
   }, [keyToTrigerButtonClickError])
 
   <ErrorBoundary level=FallBackScreen.Screen rootTag=nativeProp.rootTag>
-    <View style={viewStyle(~width=100.->pct, ~borderRadius, ())}>
-      <View style={viewStyle(~width=100.->pct, ())}>
+    <View style={s({width: 100.->pct, borderRadius})}>
+      <View style={s({width: 100.->pct})}>
         <CustomInput
           name={TestUtils.cardNumberInputTestId}
           reference={None} // previously Some(cardRef->toInputRef)
@@ -142,12 +142,11 @@ let make = (
         />
       </View>
       <View
-        style={viewStyle(
-          ~width=100.->pct,
-          ~flexDirection=localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
-          (),
-        )}>
-        <View style={viewStyle(~width=50.->pct, ())}>
+        style={s({
+          width: 100.->pct,
+          flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
+        })}>
+        <View style={s({width: 50.->pct})}>
           <CustomInput
             name={TestUtils.expiryInputTestId}
             reference={Some(expireRef)}
@@ -184,7 +183,7 @@ let make = (
             animateLabel=localeObject.validThruText
           />
         </View>
-        <View style={viewStyle(~width=50.->pct, ())}>
+        <View style={s({width: 50.->pct})}>
           <CustomInput
             name={TestUtils.cvcInputTestId}
             reference={Some(cvvRef)}

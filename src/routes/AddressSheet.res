@@ -50,7 +50,7 @@ let make = (
         useNativeDriver: false,
         delay: 0.,
       },
-    )->Animated.start(~endCallback=_ => {endCallback()}, ())
+    )->Animated.start(~endCallback=_ => {endCallback()})
   }
 
   let processRequest = (

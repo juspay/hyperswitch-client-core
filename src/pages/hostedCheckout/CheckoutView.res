@@ -3,7 +3,7 @@ open Style
 module TermsView = {
   @react.component
   let make = () => {
-    <View style={viewStyle(~flexDirection=#row, ~width=100.->pct, ())}>
+    <View style={s({flexDirection: #row, width: 100.->pct})}>
       <TextWrapper text="Powerd by Hyperswitch" textType={ModalText} />
       <Space />
       <TextWrapper text="|" textType={ModalText} />
@@ -23,17 +23,16 @@ module CheckoutHeader = {
 
     <View
       style={array([
-        viewStyle(
-          ~flexDirection=#row,
-          ~alignItems=#center,
-          ~padding=16.->dp,
-          ~justifyContent=#"space-between",
-          (),
-        ),
+        s({
+          flexDirection: #row,
+          alignItems: #center,
+          padding: 16.->dp,
+          justifyContent: #"space-between",
+        }),
         bgColor,
       ])}>
-      <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
-        // <CustomTouchableOpacity style={viewStyle(~padding=16.->dp, ())}>
+      <View style={s({flexDirection: #row, alignItems: #center})}>
+        // <CustomTouchableOpacity style={s(~padding=16.->dp, ())}>
         //   <Icon name="back" height=24. width=20. fill="black" />
         // </CustomTouchableOpacity>
         <ReImage
@@ -43,21 +42,19 @@ module CheckoutHeader = {
         <TextWrapper text="Powdur" textType={CardText} />
         <Space width=10. />
         <View
-          style={viewStyle(
-            ~backgroundColor="#ffdd93",
-            ~paddingHorizontal=5.->dp,
-            ~paddingVertical=2.->dp,
-            ~borderRadius=3.,
-            (),
-          )}>
+          style={s({
+            backgroundColor: "#ffdd93",
+            paddingHorizontal: 5.->dp,
+            paddingVertical: 2.->dp,
+            borderRadius: 3.,
+          })}>
           <TextWrapper textType={ModalTextBold}> {"TEST MODE"->React.string} </TextWrapper>
         </View>
       </View>
       {useMediaView == Mobile
-        ? <View style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
+        ? <View style={s({flexDirection: #row, alignItems: #center})}>
             <CustomTouchableOpacity
-              onPress={_ => toggleModal()}
-              style={viewStyle(~flexDirection=#row, ~alignItems=#center, ())}>
+              onPress={_ => toggleModal()} style={s({flexDirection: #row, alignItems: #center})}>
               <TextWrapper text="Details" textType={ModalText} />
               <Space width=10. />
               <ChevronIcon width=15. height=15. fill="hsla(0,0%, 10% , 0.5 )" />
@@ -72,15 +69,14 @@ module Cart = {
   @react.component
   let make = () => {
     <View
-      style={viewStyle(
-        ~flexDirection=#row,
-        ~paddingHorizontal=18.->dp,
-        ~justifyContent=#"space-between",
-        (),
-      )}>
-      <View style={viewStyle(~flexDirection=#row, ())}>
+      style={s({
+        flexDirection: #row,
+        paddingHorizontal: 18.->dp,
+        justifyContent: #"space-between",
+      })}>
+      <View style={s({flexDirection: #row})}>
         <ReImage
-          style={viewStyle(~width=50.->dp, ~height=50.->dp, ~borderRadius=8., ())}
+          style={s({width: 50.->dp, height: 50.->dp, borderRadius: 8.})}
           uri="https://stripe-camo.global.ssl.fastly.net/c25a949b6f1ffabee9af1a5696d7f152325bdce2d1b926456d42994c3d91ad78/68747470733a2f2f66696c65732e7374726970652e636f6d2f6c696e6b732f666c5f746573745f67625631776635726a4c64725a635858647032346d643649"
         />
         <Space />
@@ -98,23 +94,22 @@ module CartView = {
   let make = (~slideAnimation) => {
     let isMobileView = WindowDimension.useIsMobileView()
     let style = isMobileView
-      ? viewStyle(~transform=Animated.ValueXY.getTranslateTransform(slideAnimation), ())
-      : viewStyle()
+      ? s({transform: Animated.ValueXY.getTranslateTransform(slideAnimation)})
+      : empty
     let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
 
-    <Animated.View style={array([style, bgColor, viewStyle(~elevation=10., ())])}>
+    <Animated.View style={array([style, bgColor, s({elevation: 10.})])}>
       <Space />
       <Cart />
       <Space />
       <Cart />
       <Space />
       <View
-        style={viewStyle(
-          ~flexDirection=#row,
-          ~justifyContent=#"space-between",
-          ~paddingHorizontal=20.->dp,
-          (),
-        )}>
+        style={s({
+          flexDirection: #row,
+          justifyContent: #"space-between",
+          paddingHorizontal: 20.->dp,
+        })}>
         <TextWrapper text="Total" textType={ModalText} />
         <TextWrapper text="US$129.00" textType={CardText} />
       </View>
@@ -139,7 +134,7 @@ let make = () => {
           useNativeDriver: false,
         },
       )
-      ->Animated.start(~endCallback=_ => setModalKey(_ => false), ())
+      ->Animated.start(~endCallback=_ => setModalKey(_ => false))
       ->ignore
     } else {
       setModalKey(_ => true)
@@ -151,15 +146,15 @@ let make = () => {
           useNativeDriver: false,
         },
       )
-      ->Animated.start()
+      ->Animated.start
       ->ignore
     }
   }
 
-  <View style={viewStyle(~width=100.->pct, ())}>
+  <View style={s({width: 100.->pct})}>
     <CheckoutHeader toggleModal />
     <Space height=30. />
-    <View style={isMobileView ? viewStyle() : viewStyle()}>
+    <View style={isMobileView ? empty : empty}>
       <CheckoutDetails toggleModal />
       {isMobileView
         ? <Modal
@@ -168,11 +163,9 @@ let make = () => {
             presentationStyle={#overFullScreen}
             transparent=true
             supportedOrientations=[#"portrait-upside-down"]>
-            <View style={viewStyle(~backgroundColor="rgba(0,0,0,0.2)", ~flex=1., ())}>
+            <View style={s({backgroundColor: "rgba(0,0,0,0.2)", flex: 1.})}>
               <CartView slideAnimation />
-              <CustomTouchableOpacity
-                style={viewStyle(~flex=1., ())} onPress={_ => toggleModal()}
-              />
+              <CustomTouchableOpacity style={s({flex: 1.})} onPress={_ => toggleModal()} />
             </View>
           </Modal>
         : <CartView slideAnimation />}
