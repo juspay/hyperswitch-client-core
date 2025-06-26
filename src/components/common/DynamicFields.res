@@ -374,6 +374,7 @@ module RenderField = {
             }}
             showValue=true
             style={s({flex: 1.})}
+            isCountryStateFields=true
           />
           <CustomInput
             state={val->Option.getOr("")->RequiredFieldsTypes.getLastValue}
