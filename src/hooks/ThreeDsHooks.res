@@ -432,7 +432,6 @@ let useExternalThreeDs = () => {
         ~initialiseSdkFunc=activeSdk.initialiseSdkFunc,
       )
       ->Promise.then(statusInfo => {
-        Console.log2("TRIDENTT", statusInfo)
         let isSuccess = statusInfo->isStatusSuccess
 
         logger(
