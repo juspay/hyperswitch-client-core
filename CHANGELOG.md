@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.1...v1.8.0) (2025-06-26)
+
+
+### Features
+
+* test case: saved payment flow ([#315](https://github.com/juspay/hyperswitch-client-core/issues/315)) ([593d669](https://github.com/juspay/hyperswitch-client-core/commit/593d6699c020bfd3ce6c5f2786e9e05784683706))
+
 ## [1.7.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.0...v1.7.1) (2025-06-26)
 
 
