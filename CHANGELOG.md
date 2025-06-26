@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.0...v1.7.1) (2025-06-26)
+
+
+### Bug Fixes
+
+* added locale to browser info at missing places ([#311](https://github.com/juspay/hyperswitch-client-core/issues/311)) ([83206f8](https://github.com/juspay/hyperswitch-client-core/commit/83206f87fa4da45ca0d85f6177a9c1dea8fe6cf1))
+
 # [1.7.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.6.1...v1.7.0) (2025-06-25)
 
 
