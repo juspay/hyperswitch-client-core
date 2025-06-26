@@ -1,6 +1,6 @@
 import * as testIds from "../../src/utility/test/TestUtils.bs.js";
 import { device } from "detox"
-import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT, netceteraTestCard } from "../fixtures/Constants"
+import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT, netceteraTestCard, TIMEOUT_CONFIG } from "../fixtures/Constants"
 import { waitForVisibility, typeTextInInput, ensureNormalPaymentSheet } from "../utils/DetoxHelpers"
 import { CreateBody, setCreateBodyForTestAutomation } from "../utils/APIUtils";
 describe('card-flow-e2e-test', () => {
@@ -60,7 +60,7 @@ describe('card-flow-e2e-test', () => {
 
         const inputType = device.getPlatform() == "android" ? 'android.widget.EditText' : 'UITextField'
         const otpInput = await element(by.type(inputType));
-        await waitForVisibility(otpInput);
+        await waitForVisibility(otpInput, TIMEOUT_CONFIG.BASE.LONG);
         await typeTextInInput(otpInput, "1234")
 
         const submitButton = await element(by.text('Submit'))
