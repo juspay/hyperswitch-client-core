@@ -4,11 +4,11 @@ open Style
 module LoadingListItem = {
   @react.component
   let make = () => {
-    <View style={viewStyle(~display=#flex, ~flexDirection=#row, ~alignItems=#center, ())}>
-      <View style={viewStyle(~marginRight=10.->dp, ())}>
+    <View style={s({display: #flex, flexDirection: #row, alignItems: #center})}>
+      <View style={s({marginRight: 10.->dp})}>
         <CustomLoader width="30" height="25" />
       </View>
-      // <View style={viewStyle(~marginLeft=30.->dp,~backgroundColor="green", ())}>
+      // <View style={s({marginLeft:30.->dp, backgroundColor:"green"})}>
       <CustomLoader height="30" />
       // </View>
     </View>

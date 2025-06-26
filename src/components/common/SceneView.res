@@ -65,8 +65,8 @@ let make = (
     accessibilityElementsHidden={!focused}
     importantForAccessibility={focused ? #auto : #"no-hide-descendants"}
     style={switch style {
-    | Some(style) => array([viewStyle(~overflow=#hidden, ~width=layout.width->dp, ()), style])
-    | None => viewStyle(~overflow=#hidden, ~width=layout.width->dp, ())
+    | Some(style) => array([s({overflow: #hidden, width: layout.width->dp}), style])
+    | None => s({overflow: #hidden, width: layout.width->dp})
     }}>
     {focused || layout.width != 0. ? children(~loading=false) : React.null}
   </View>

@@ -353,13 +353,12 @@ module RenderField = {
         }
       | PhoneField(_, _) =>
         <View
-          style={viewStyle(
-            ~display=#flex,
-            ~flexDirection=#row,
-            ~justifyContent=#"space-between",
-            ~gap=8.,
-            (),
-          )}>
+          style={s({
+            display: #flex,
+            flexDirection: #row,
+            justifyContent: #"space-between",
+            gap: 8.->dp,
+          })}>
           <CustomPicker
             value={Some(val->Option.getOr("")->RequiredFieldsTypes.getFirstValue)}
             setValue=onChangePhoneCode
@@ -374,7 +373,7 @@ module RenderField = {
             | _ => false
             }}
             showValue=true
-            style={viewStyle(~flex=1., ())}
+            style={s({flex: 1.})}
           />
           <CustomInput
             state={val->Option.getOr("")->RequiredFieldsTypes.getLastValue}
@@ -399,7 +398,7 @@ module RenderField = {
             borderLeftWidth=borderWidth
             borderRightWidth=borderWidth
             borderTopWidth=borderWidth
-            style={viewStyle(~flex=3., ())}
+            style={s({flex: 3.})}
           />
         </View>
       }}
@@ -667,12 +666,12 @@ let make = (
 
   // let renderSectionTitle = (title, show) =>
   //   show
-  //     ? <Text style={textStyle(~color=component.color, ~fontSize=16., ~marginVertical=10.->dp, ())}>
+  //     ? <Text style={s({color:component.color, fontSize:16., marginVertical:10.->dp})}>
   //         {title->React.string}
   //       </Text>
   //     : React.null
 
-  <View style={viewStyle()}>
+  <View style={empty}>
     {renderFields(fields, true)}
     // <Space height=10. />
     // {renderSectionTitle("Billing", insideBilling->Array.length > 0)}

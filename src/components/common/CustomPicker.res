@@ -43,7 +43,7 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
   let (nativeProps, _) = React.useContext(NativePropContext.nativePropContext)
   let {bgTransparentColor} = ThemebasedStyle.useThemeBasedStyle()
-  let transparentBG = nativeProps.sdkState == PaymentSheet ? bgTransparentColor : viewStyle()
+  let transparentBG = nativeProps.sdkState == PaymentSheet ? bgTransparentColor : empty
 
   React.useEffect1(() => {
     setSearchInput(_ => None)
@@ -91,34 +91,31 @@ let make = (
         }, 300)
       }}>
       <SafeAreaView />
-      <View style={array([viewStyle(~flex=1., ~paddingTop=24.->dp, ()), transparentBG])}>
+      <View style={array([s({flex: 1., paddingTop: 24.->dp}), transparentBG])}>
         <View
           style={array([
-            viewStyle(
-              ~flex=1.,
-              ~width=100.->pct,
-              ~backgroundColor=component.background,
-              ~justifyContent=#center,
-              ~alignItems=#center,
-              ~borderRadius=10.,
-              ~padding=15.->dp,
-              ~paddingHorizontal=20.->dp,
-              (),
-            ),
+            s({
+              flex: 1.,
+              width: 100.->pct,
+              backgroundColor: component.background,
+              justifyContent: #center,
+              alignItems: #center,
+              borderRadius: 10.,
+              padding: 15.->dp,
+              paddingHorizontal: 20.->dp,
+            }),
             bgColor,
           ])}>
           <View
-            style={viewStyle(
-              ~flexDirection=#row,
-              ~width=100.->pct,
-              ~alignItems=#center,
-              ~justifyContent=#"space-between",
-              (),
-            )}>
+            style={s({
+              flexDirection: #row,
+              width: 100.->pct,
+              alignItems: #center,
+              justifyContent: #"space-between",
+            })}>
             <TextWrapper text=placeholderText textType={HeadingBold} />
             <CustomTouchableOpacity
-              onPress={_ => setIsModalVisible(prev => !prev)}
-              style={viewStyle(~padding=14.->dp, ())}>
+              onPress={_ => setIsModalVisible(prev => !prev)} style={s({padding: 14.->dp})}>
               <Icon name="close" width=20. height=20. fill=iconColor />
             </CustomTouchableOpacity>
           </View>
@@ -145,7 +142,7 @@ let make = (
             ? <ActivityIndicator
                 size={Large}
                 color=iconColor
-                style={viewStyle(~flex=1., ~width=100.->pct, ~paddingHorizontal=10.->dp, ())}
+                style={s({flex: 1., width: 100.->pct, paddingHorizontal: 10.->dp})}
               />
             : <FlatList
                 ref={pickerRef->ReactNative.Ref.value}
@@ -155,14 +152,14 @@ let make = (
                   ->String.toLowerCase
                   ->String.includes(searchInput->Option.getOr("")->String.toLowerCase)
                 )}
-                style={viewStyle(~flex=1., ~width=100.->pct, ~paddingHorizontal=10.->dp, ())}
+                style={s({flex: 1., width: 100.->pct, paddingHorizontal: 10.->dp})}
                 showsHorizontalScrollIndicator=false
                 keyExtractor={(_, i) => i->Int.toString}
                 horizontal=false
                 renderItem={({item, index}) =>
                   <CustomTouchableOpacity
                     key={index->Int.toString}
-                    style={viewStyle(~height=32.->dp, ~margin=1.->dp, ~justifyContent=#center, ())}
+                    style={s({height: 32.->dp, margin: 1.->dp, justifyContent: #center})}
                     onPress={_ => {
                       setValue(_ => Some(item.value))
                       setIsModalVisible(_ => false)
@@ -177,14 +174,13 @@ let make = (
     </Modal>
     {isLoading
       ? <View
-          style={viewStyle(
-            ~overflow=#hidden,
-            ~position=#absolute,
-            ~opacity=0.6,
-            ~width=100.->pct,
-            ~height=100.->pct,
-            (),
-          )}>
+          style={s({
+            overflow: #hidden,
+            position: #absolute,
+            opacity: 0.6,
+            width: 100.->pct,
+            height: 100.->pct,
+          })}>
           <CustomLoader />
         </View>
       : React.null}

@@ -25,24 +25,22 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
 
   <>
     <View
-      style={viewStyle(
-        ~backgroundColor=component.borderColor,
-        ~marginLeft=10.->dp,
-        ~marginRight=10.->dp,
-        ~height=80.->pct,
-        ~width=1.->dp,
-        (),
-      )}
+      style={s({
+        backgroundColor: component.borderColor,
+        marginLeft: 10.->dp,
+        marginRight: 10.->dp,
+        height: 80.->pct,
+        width: 1.->dp,
+      })}
     />
     <CustomTouchableOpacity
-      style={viewStyle(
-        ~height=100.->pct,
-        ~width=27.5->dp,
-        ~display=#flex,
-        ~alignItems=#"flex-start",
-        ~justifyContent=#center,
-        (),
-      )}
+      style={s({
+        height: 100.->pct,
+        width: 27.5->dp,
+        display: #flex,
+        alignItems: #"flex-start",
+        justifyContent: #center,
+      })}
       onPress={_pressEvent => {
         ScanCardModule.launchScanCard(scanCardCallback)
         logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())

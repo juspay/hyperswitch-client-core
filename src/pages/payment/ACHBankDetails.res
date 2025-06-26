@@ -5,11 +5,21 @@ open ThemebasedStyle
 module DetailsView = {
   @react.component
   let make = (~title, ~value) => {
-    <View style={viewStyle(~flexDirection=#row, ~gap=5., ~alignItems=#center, ())}>
-      <Text style={textStyle(~fontSize=10., ~fontWeight=#400, ~color=useThemeBasedStyle().detailsViewTextKeyColor, ())}>
+    <View style={s({flexDirection: #row, gap: 5.->dp, alignItems: #center})}>
+      <Text
+        style={s({
+          fontSize: 10.,
+          fontWeight: #400,
+          color: useThemeBasedStyle().detailsViewTextKeyColor,
+        })}>
         {React.string(title ++ ":")}
       </Text>
-      <Text style={textStyle(~fontSize=12., ~fontWeight=#400, ~color=useThemeBasedStyle().detailsViewTextValueColor, ())}>
+      <Text
+        style={s({
+          fontSize: 12.,
+          fontWeight: #400,
+          color: useThemeBasedStyle().detailsViewTextValueColor,
+        })}>
         {React.string(value)}
       </Text>
     </View>
@@ -22,40 +32,45 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let localeObject = GetLocale.useGetLocalObj()
   <View>
-    <View style={array([viewStyle(~flexDirection=#row, ~gap=8., ~alignItems=#center, ())])}>
+    <View style={s({flexDirection: #row, gap: 8.->dp, alignItems: #center})}>
       <Icon name={"ach bank transfer"} height=20. width=20. />
       <TextWrapper
         textType={HeadingBold}
         text=localeObject.achBankTransferText
-        overrideStyle=Some(Style.textStyle(~fontSize=16.0, ~fontWeight=#600, ()))
+        overrideStyle=Some(Style.s({fontSize: 16.0, fontWeight: #600}))
       />
     </View>
     <Space height=20.0 />
-    <View style={array([viewStyle(~flexDirection=#row, ~gap=4., ~alignItems=#center, ())])}>
+    <View style={s({flexDirection: #row, gap: 4.->dp, alignItems: #center})}>
       <Icon name={"bank"} height=20. width=20. />
       <TextWrapper
         textType={HeadingBold}
         text=localeObject.accountDetailsText
-        overrideStyle=Some(Style.textStyle(~fontSize=14.0, ~fontWeight=#600, ()))
+        overrideStyle=Some(Style.s({fontSize: 14.0, fontWeight: #600}))
       />
     </View>
     <Space height=6.0 />
     <TextWrapper
       textType={CardText}
       text=localeObject.instructionalTextOfAchTransfer
-      overrideStyle=Some(Style.textStyle(~fontSize=12.0, ~fontWeight=#400, ~color=useThemeBasedStyle().instructionalTextColor, ()))
+      overrideStyle=Some(
+        Style.s({
+          fontSize: 12.0,
+          fontWeight: #400,
+          color: useThemeBasedStyle().instructionalTextColor,
+        }),
+      )
     />
     <Space height=12.0 />
     <View
-      style={viewStyle(
-        ~paddingVertical=16.->dp,
-        ~paddingHorizontal=14.->dp,
-        ~borderRadius=8.,
-        ~borderWidth=0.5,
-        ~borderColor=useThemeBasedStyle().silverBorderColor,
-        ~gap=12.,
-        (),
-      )}>
+      style={s({
+        paddingVertical: 16.->dp,
+        paddingHorizontal: 14.->dp,
+        borderRadius: 8.,
+        borderWidth: 0.5,
+        borderColor: useThemeBasedStyle().silverBorderColor,
+        gap: 12.->dp,
+      })}>
       <DetailsView title=localeObject.accountNumberText value={data.account_number} />
       <DetailsView title=localeObject.bankName value={data.bank_name} />
       <DetailsView title=localeObject.routingNumber value={data.routing_number} />
@@ -63,18 +78,22 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
     </View>
     <Space height=18.0 />
     <View
-      style={viewStyle(
-        ~flexDirection=#row,
-        ~gap=4.,
-        ~paddingVertical=10.->dp,
-        ~paddingHorizontal=12.->dp,
-        ~borderRadius=8.,
-        ~backgroundColor=useThemeBasedStyle().disclaimerBackgroundColor,
-        (),
-      )}>
+      style={s({
+        flexDirection: #row,
+        gap: 4.->dp,
+        paddingVertical: 10.->dp,
+        paddingHorizontal: 12.->dp,
+        borderRadius: 8.,
+        backgroundColor: useThemeBasedStyle().disclaimerBackgroundColor,
+      })}>
       <Icon name={"disclaimer"} height=20. width=20. />
       <Text
-        style={textStyle(~fontSize=12., ~fontWeight=#400, ~lineHeight=18., ~color=useThemeBasedStyle().disclaimerTextColor, ())}>
+        style={s({
+          fontSize: 12.,
+          fontWeight: #400,
+          lineHeight: 18.,
+          color: useThemeBasedStyle().disclaimerTextColor,
+        })}>
         {React.string(localeObject.disclaimerTextAchTransfer)}
       </Text>
     </View>
@@ -117,17 +136,16 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
     />
     <Space height=14.0 />
     <View
-      style={viewStyle(
-        ~flexDirection=#row,
-        ~alignItems=#center,
-        ~justifyContent=#center,
-        ~gap=4.,
-        (),
-      )}>
+      style={s({flexDirection: #row, alignItems: #center, justifyContent: #center, gap: 4.->dp})}>
       <TextWrapper
         textType={Heading}
         overrideStyle={Some(
-          textStyle(~fontSize=10., ~fontWeight=#400, ~lineHeight=12., ~color=useThemeBasedStyle().poweredByTextColor, ()),
+          s({
+            fontSize: 10.,
+            fontWeight: #400,
+            lineHeight: 12.,
+            color: useThemeBasedStyle().poweredByTextColor,
+          }),
         )}>
         {localeObject.poweredBy->React.string}
       </TextWrapper>

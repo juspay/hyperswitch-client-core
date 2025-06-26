@@ -73,7 +73,7 @@ let make = (
   <ScrollView
     keyboardShouldPersistTaps=#handled
     pointerEvents=#none
-    style={Style.viewStyle(~height=220.->Style.dp, ~borderRadius=15., ())}>
+    style={Style.s({height: 220.->Style.dp, borderRadius: 15.})}>
     {React.array(
       Array.map(paymentMethods, paymentMethod => {
         <KlarnaModule paymentMethod reference={refs} onInitialized onLoaded onAuthorized />

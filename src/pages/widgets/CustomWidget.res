@@ -71,13 +71,7 @@ let make = (~walletType) => {
 
   <ErrorBoundary level={FallBackScreen.Widget} rootTag=nativeProp.rootTag>
     <View
-      style={viewStyle(
-        ~flex=1.,
-        ~width=100.->pct,
-        ~maxHeight=45.->dp,
-        ~backgroundColor="transparent",
-        (),
-      )}>
+      style={s({flex: 1., width: 100.->pct, maxHeight: 45.->dp, backgroundColor: "transparent"})}>
       {switch button {
       | Some(component) => component === React.null ? <WidgetError /> : component
       | None => <LoadingOverlay />
