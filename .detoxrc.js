@@ -9,6 +9,33 @@ module.exports = {
       setupTimeout: 120000,
     },
   },
+   artifacts: {
+    rootDir: './artifacts',
+    plugins: {
+      log: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: false,
+      },
+      screenshot: {
+        enabled: true,
+        shouldTakeAutomaticSnapshots: true,
+        keepOnlyFailedTestsArtifacts: false,
+        takeWhen: {
+          testStart: true,
+          testDone: true,
+          testFailure: true,
+        },
+      },
+      video: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: false,
+      },
+      uiHierarchy: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: false,
+      },
+    },
+  },
   apps: {
     'ios.debug': {
       type: 'ios.app',
@@ -56,7 +83,7 @@ module.exports = {
     emulator: {
       type: 'android.emulator',
       device: {
-        avdName: 'Medium_Phone',
+        avdName: 'Pixel_9_Pro',
       },
     },
     ciEmulator: {

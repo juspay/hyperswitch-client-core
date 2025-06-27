@@ -125,4 +125,39 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel
-          script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless # --loglevel trace --record-logs all
+          avd-name: test
+          script: |
+            adb devices
+            npx detox test --configuration android.emu.ci.debug --loglevel trace --record-logs all --take-screenshots all --record-videos all
+        continue-on-error: true
+
+      - name: Upload Detox Artifacts (Screenshots & Logs)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: detox-artifacts-android
+          path: |
+            artifacts/
+            **/*.png
+            **/*.log
+            **/*.mp4
+          retention-days: 7
+
+      - name: Upload Test Results Summary
+        if: always()
+        run: |
+          echo "## 📱 Android Detox Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d "artifacts" ]; then
+            echo "### 📊 Test Artifacts Generated:" >> $GITHUB_STEP_SUMMARY
+            find artifacts -name "*.png" -o -name "*.log" -o -name "*.mp4" | head -20 | while read file; do
+              echo "- \`$file\`" >> $GITHUB_STEP_SUMMARY
+            done
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 🖼️ Screenshots:" >> $GITHUB_STEP_SUMMARY
+            find artifacts -name "*.png" | head -10 | while read screenshot; do
+              echo "![Screenshot]($screenshot)" >> $GITHUB_STEP_SUMMARY
+            done
+          else
+            echo "❌ No artifacts directory found" >> $GITHUB_STEP_SUMMARY
+          fi
