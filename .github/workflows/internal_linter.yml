@@ -8,8 +8,78 @@ permissions:
   contents: read
 
 jobs:
+  validate-pr-commits:
+    runs-on: ubuntu-latest
+    name: Validate Single Commit Rule
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history to check commits
+
+      - name: Check single commit requirement
+        run: |
+          commit_count=$(git rev-list --count HEAD ^${{ github.event.pull_request.base.sha }})
+          echo "Number of commits in PR: $commit_count"
+
+          if [ "$commit_count" -gt 1 ]; then
+            echo "❌ PR contains $commit_count commits. Please squash into a single commit."
+            echo "💡 To squash commits, run:"
+            echo "   git rebase -i HEAD~$commit_count"
+            echo "   # Change 'pick' to 'squash' for all commits except the first one"
+            echo "   # Then force push: git push --force-with-lease"
+            exit 1
+          else
+            echo "✅ PR contains exactly 1 commit - requirement satisfied!"
+          fi
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Scan with GitLeaks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch full history for better secret detection
+
+      - name: Checkout Shared code
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
+
+      - name: Run GitLeaks on main repository
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      - name: Scan shared-code for secrets
+        run: |
+          echo "🔍 Scanning shared-code for secrets..."
+          if [ -d "shared-code" ]; then
+            cd shared-code
+            # Install gitleaks for additional scanning
+            wget -O gitleaks.tar.gz https://github.com/zricethezav/gitleaks/releases/latest/download/gitleaks_8.18.4_linux_x64.tar.gz
+            tar -xzf gitleaks.tar.gz
+            chmod +x gitleaks
+            
+            if ./gitleaks detect --source . --no-banner --no-git; then
+              echo "✅ Shared-code: No secrets found"
+            else
+              echo "❌ Shared-code: Secrets detected!"
+              ./gitleaks detect --source . --verbose --no-banner --no-git
+              exit 1
+            fi
+            cd ..
+          else
+            echo "⚠️ shared-code directory not found, skipping..."
+          fi
+
   check-forbidden-words:
     runs-on: ubuntu-latest
+    name: Forbidden Words Check
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -23,19 +93,40 @@ jobs:
 
       - name: Scan for forbidden words
         run: |
+          echo "🔍 Scanning for forbidden words..."
           forbidden_words=("Console.log" "mutable" "%identity")
           excluded_files=("prepareS3.js" "server.js" "src/utility/logics/Window.res")
-          find . -type f \( ! -path "*/.git/*" ! -path "*/node_modules/*" ! -path "*/build/*" ! -path "*/dist/*" ! -path "*/.github/*" ! -path "*/.yarn/*" \) | grep -v -E "$(IFS='|'; echo "${excluded_files[*]}")" | while read -r file; do
+
+          # Create regex pattern for excluded files
+          excluded_pattern=$(IFS='|'; echo "${excluded_files[*]}")
+
+          violations_found=false
+
+          # Find files and check for forbidden words
+          find . -type f \( ! -path "*/.git/*" ! -path "*/node_modules/*" ! -path "*/build/*" ! -path "*/dist/*" ! -path "*/.github/*" ! -path "*/.yarn/*" ! -path "*/target/*" \) -print0 | while IFS= read -r -d '' file; do
+            # Skip excluded files
+            if echo "$file" | grep -qE "$excluded_pattern"; then
+              continue
+            fi
+            
             for word in "${forbidden_words[@]}"; do
-              if grep -Hn "$word" "$file"; then
-                echo "❌ Forbidden word '$word' found in $file!"
-                exit 1
+              if grep -Hn "$word" "$file" 2>/dev/null; then
+                echo "❌ Forbidden word '$word' found in $file"
+                violations_found=true
               fi
             done
           done
 
+          if [ "$violations_found" = true ]; then
+            echo "❌ Forbidden words detected! Please remove them before merging."
+            exit 1
+          else
+            echo "✅ No forbidden words found"
+          fi
+
   compile-rescript:
     runs-on: ubuntu-latest
+    name: ReScript Compilation
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -51,15 +142,48 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
 
       - name: Compile ReScript and fail on warnings
         run: |
+          echo "🔧 Compiling ReScript..."
           if npm run re:check; then
             echo "✅ ReScript compilation successful!"
           else
             echo "❌ ReScript compilation failed with warnings!"
+            echo "💡 Please fix all ReScript warnings before merging."
+            exit 1
+          fi
+
+  all-checks-passed:
+    runs-on: ubuntu-latest
+    name: All Checks Summary
+    needs:
+      [
+        validate-pr-commits,
+        security-scan,
+        check-forbidden-words,
+        compile-rescript,
+      ]
+    if: always()
+    steps:
+      - name: Check all jobs status
+        run: |
+          if [[ "${{ needs.validate-pr-commits.result }}" == "success" && 
+                "${{ needs.security-scan.result }}" == "success" && 
+                "${{ needs.check-forbidden-words.result }}" == "success" && 
+                "${{ needs.compile-rescript.result }}" == "success" ]]; then
+            echo "🎉 All checks passed successfully!"
+          else
+            echo "❌ Some checks failed:"
+            echo "  - Single commit validation: ${{ needs.validate-pr-commits.result }}"
+            echo "  - Security scan: ${{ needs.security-scan.result }}"
+            echo "  - Forbidden words check: ${{ needs.check-forbidden-words.result }}"
+            echo "  - ReScript compilation: ${{ needs.compile-rescript.result }}"
             exit 1
           fi
