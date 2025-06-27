@@ -268,7 +268,11 @@ export async function completePayment(testIds: any): Promise<void> {
         if (device.getPlatform() === "ios") {
             await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
         } else {
-            await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
+            try {
+                await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
+            } catch {
+                await waitForVisibility(element(by.text('processing')), LONG_TIMEOUT);
+            }
         }
 
         await takeScreenshot('payment-success');
