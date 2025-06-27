@@ -331,13 +331,14 @@ export async function completePayment(testIds: any): Promise<void> {
 
   if (device.getPlatform() === 'ios') {
     await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
-  } else {
-    try {
-      await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
-    } catch {
-      await waitForVisibility(element(by.text('processing')), LONG_TIMEOUT);
-    }
-  }
+        } else {
+            try {
+                await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
+            } catch {
+                await waitForVisibility(element(by.text('processing')), LONG_TIMEOUT);
+                console.log("✓ Payment status: processing");
+            }
+        }
 
   console.log('✓ Payment completed successfully');
 }
