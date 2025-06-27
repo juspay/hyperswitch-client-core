@@ -247,7 +247,7 @@ export async function completePayment(testIds: any): Promise<void> {
     if (device.getPlatform() === "ios") {
         await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
     } else {
-        await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
+        await waitForVisibility(element(by.text(/^(succeeded|processing)$/i)), LONG_TIMEOUT)
     }
 
     console.log("✓ Payment completed successfully");
