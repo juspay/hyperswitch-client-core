@@ -1,5 +1,14 @@
 import { SAVED_PAYMENT_SHEET_INDICATORS, NORMAL_PAYMENT_SHEET_INDICATORS, TIMEOUT_CONFIG } from "../fixtures/Constants";
 
+export async function takeScreenshot(name: string): Promise<void> {
+    try {
+        await device.takeScreenshot(name);
+        console.log(`📸 Screenshot taken: ${name}`);
+    } catch (error) {
+        console.log(`❌ Failed to take screenshot ${name}:`, error.message);
+    }
+}
+
 const DEFAULT_TIMEOUT = TIMEOUT_CONFIG.get('DEFAULT');
 const LONG_TIMEOUT = TIMEOUT_CONFIG.get('LONG');
 const NAVIGATION_WAIT = TIMEOUT_CONFIG.get('NAVIGATION_WAIT');
@@ -234,23 +243,43 @@ export async function completePayment(testIds: any): Promise<void> {
     console.log(`Starting payment completion${TIMEOUT_CONFIG.IS_CI ? ' (CI environment)' : ''}...`);
 
     await waitForUIStabilization();
+    await takeScreenshot('pay-button-search-start');
 
-    const payNowButton = element(by.id(testIds.payButtonTestId));
-    await waitFor(payNowButton).toExist().withTimeout(DEFAULT_TIMEOUT);
-    await waitForVisibility(payNowButton, DEFAULT_TIMEOUT);
-    await payNowButton.tap();
+    try {
+        console.log(`Looking for pay button with testID: ${testIds.payButtonTestId}`);
+        const payNowButton = element(by.id(testIds.payButtonTestId));
+        
+        console.log("Waiting for pay button to exist...");
+        await waitFor(payNowButton).toExist().withTimeout(DEFAULT_TIMEOUT);
+        
+        console.log("Waiting for pay button to be visible...");
+        await waitForVisibility(payNowButton, DEFAULT_TIMEOUT);
+        
+        await takeScreenshot('pay-button-found');
+        console.log("✓ Pay button found, attempting to tap...");
+        await payNowButton.tap();
+        await takeScreenshot('pay-button-tapped');
 
-    console.log("Waiting for payment processing...");
-    const processingWait = TIMEOUT_CONFIG.get('PAYMENT_PROCESSING');
-    await waitForUIStabilization(processingWait);
+        console.log("Waiting for payment processing...");
+        const processingWait = TIMEOUT_CONFIG.get('PAYMENT_PROCESSING');
+        await waitForUIStabilization(processingWait);
+        await takeScreenshot('payment-processing');
 
-    if (device.getPlatform() === "ios") {
-        await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
-    } else {
-        await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
+        if (device.getPlatform() === "ios") {
+            await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
+        } else {
+            await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
+        }
+
+        await takeScreenshot('payment-success');
+        console.log("✓ Payment completed successfully");
+    } catch (error) {
+        await takeScreenshot('pay-button-error');
+        console.error(`❌ Payment completion failed: ${error.message}`);
+        console.error(`Platform: ${device.getPlatform()}`);
+        console.error(`TestID being searched: ${testIds.payButtonTestId}`);
+        throw error;
     }
-
-    console.log("✓ Payment completed successfully");
 }
 
 export async function ensureNormalPaymentSheet(): Promise<'saved' | 'normal'> {
