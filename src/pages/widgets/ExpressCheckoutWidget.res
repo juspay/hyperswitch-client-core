@@ -38,15 +38,7 @@ let make = () => {
     }
   }
 
-  let initiatePayment = PaymentHook.usePayment(
-    ~errorCallback,
-    ~responseCallback,
-    ~savedCardCvv,
-    ~savedPaymentMethordContextObj=switch allApiData.savedPaymentMethods {
-    | Some(data) => data
-    | _ => AllApiDataContext.dafaultsavePMObj
-    },
-  )
+  let initiatePayment = PaymentHook.usePayment(~errorCallback, ~responseCallback, ~savedCardCvv)
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
@@ -162,7 +154,7 @@ let make = () => {
           AnimationUtils.animateFlex(
             ~flexval=buttomFlex,
             ~value=0.01,
-            ~endCallback=() => {
+            ~endCallback=_ => {
               setTimeout(() => {
                 handleSuccessFailure(~apiResStatus=status, ())
               }, 600)->ignore
@@ -323,29 +315,27 @@ let make = () => {
   }, [firstPaymentMethod])
 
   <View
-    style={viewStyle(
-      ~flex=1.,
-      ~backgroundColor="white",
-      ~flexDirection=#column,
-      ~justifyContent=#"space-between",
-      ~alignItems=#center,
-      ~borderRadius=5.,
-      ~paddingHorizontal=5.->dp,
-      ~paddingVertical=3.->dp,
-      (),
-    )}>
+    style={s({
+      flex: 1.,
+      backgroundColor: "white",
+      flexDirection: #column,
+      justifyContent: #"space-between",
+      alignItems: #center,
+      borderRadius: 5.,
+      paddingHorizontal: 5.->dp,
+      paddingVertical: 3.->dp,
+    })}>
     <LoadingOverlay />
     <View
-      style={viewStyle(
-        ~flex=1.,
-        ~flexDirection=#row,
-        ~flexWrap=#wrap,
-        ~width=100.->pct,
-        ~paddingHorizontal=15.->dp,
-        ~alignItems=#center,
-        ~justifyContent=#"space-between",
-        (),
-      )}>
+      style={s({
+        flex: 1.,
+        flexDirection: #row,
+        flexWrap: #wrap,
+        width: 100.->pct,
+        paddingHorizontal: 15.->dp,
+        alignItems: #center,
+        justifyContent: #"space-between",
+      })}>
       {switch firstPaymentMethod {
       | Some(pmDetails) => <SaveCardsList.PMWithNickNameComponent pmDetails={pmDetails} />
       | None => React.null

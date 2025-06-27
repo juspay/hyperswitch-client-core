@@ -134,13 +134,7 @@ let make = () => {
 
   <View
     style={array([
-      viewStyle(
-        ~flex=1.,
-        ~justifyContent=#center,
-        ~alignItems=#center,
-        ~backgroundColor="transparent",
-        (),
-      ),
+      s({flex: 1., justifyContent: #center, alignItems: #center, backgroundColor: "transparent"}),
     ])}>
     <CardElement
       setIsAllValid=setIsCardValuesValid viewType=CardElement.CardForm({isZipAvailable: true}) reset

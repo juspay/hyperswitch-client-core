@@ -3,5 +3,5 @@ open Style
 
 @react.component
 let make = (~width=15., ~height=15.) => {
-  <View style={viewStyle(~height=height->dp, ~width=width->dp, ())} />
+  <View style={s({height: height->dp, width: width->dp})} />
 }

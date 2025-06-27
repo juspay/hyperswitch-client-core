@@ -28,7 +28,7 @@ let make = (~children) => {
         isInteraction: true,
         useNativeDriver: false,
       },
-    )->Animated.start()
+    )->Animated.start
     None
   })
 
@@ -47,26 +47,24 @@ let make = (~children) => {
           duration: 300.,
           easing: Easing.linear,
         },
-      )->Animated.start()
+      )->Animated.start
     }
     None
   }, [loading])
 
   <View
-    style={viewStyle(
-      ~flex=1.,
-      ~alignContent=#"flex-end",
-      ~backgroundColor=paymentSheetOverlay,
-      ~justifyContent=#"flex-end",
-      ~paddingTop=48.->dp,
-      (),
-    )}>
+    style={s({
+      flex: 1.,
+      alignContent: #"flex-end",
+      backgroundColor: paymentSheetOverlay,
+      justifyContent: #"flex-end",
+      paddingTop: 48.->dp,
+    })}>
     <Animated.View
-      style={viewStyle(
-        ~transform=[translateY(~translateY=heightPosition->Animated.StyleProp.float)],
-        ~flexGrow={sheetFlex->Animated.StyleProp.float},
-        (),
-      )}>
+      style={s({
+        transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
+        flexGrow: {sheetFlex->Animated.StyleProp.float},
+      })}>
       <CustomView onDismiss=onModalClose>
         <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
       </CustomView>

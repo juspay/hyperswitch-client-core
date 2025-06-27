@@ -11,7 +11,7 @@ let make = () => {
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let {tabArr, elementArr} = PMListModifier.useListModifier()
 
-  <View style={viewStyle(~maxWidth=450.->dp, ~alignSelf=#center, ~width=100.->pct, ())}>
+  <View style={s({maxWidth: 450.->dp, alignSelf: #center, width: 100.->pct})}>
     <Space height=20. />
     <WalletView elementArr />
     <CustomTabView

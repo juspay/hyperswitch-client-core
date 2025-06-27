@@ -37,7 +37,7 @@ let make = React.memo((
   ~height=16.,
   ~fill="#ffffff",
   ~defaultView: option<React.element>=?,
-  ~style=viewStyle(),
+  ~style=empty,
   ~fallbackIcon: option<string>=?,
 ) => {
   defaultView->ignore
@@ -93,7 +93,7 @@ let make = React.memo((
       : {uri: localName, local: true}
   }, [iconName])
 
-  <View style={array([viewStyle(~height=height->dp, ~width=width->dp, ()), style])}>
+  <View style={array([s({height: height->dp, width: width->dp}), style])}>
     {uri.local
       ? <ReactNativeSvg.SvgCss
           onError={() => {
@@ -123,8 +123,6 @@ let make = React.memo((
         />}
     {isLoaded || uri.local
       ? React.null
-      : <ActivityIndicator
-          style={viewStyle(~height=height->dp, ~width=width->dp, ())} color=fill
-        />}
+      : <ActivityIndicator style={s({height: height->dp, width: width->dp})} color=fill />}
   </View>
 })

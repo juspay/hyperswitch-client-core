@@ -72,12 +72,7 @@ let make = (
     }
   }
 
-  let initiatePayment = PaymentHook.usePayment(
-    ~errorCallback,
-    ~responseCallback,
-    ~savedCardCvv,
-    ~savedPaymentMethordContextObj,
-  )
+  let initiatePayment = PaymentHook.usePayment(~errorCallback, ~responseCallback, ~savedCardCvv)
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
@@ -142,7 +137,7 @@ let make = (
           AnimationUtils.animateFlex(
             ~flexval=buttomFlex,
             ~value=0.01,
-            ~endCallback=() => {
+            ~endCallback=_ => {
               setTimeout(() => {
                 handleSuccessFailure(~apiResStatus=status, ())
               }, 600)->ignore

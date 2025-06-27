@@ -69,16 +69,16 @@ let make = (
 
   let getPositionStyle = (position: option<TooltipTypes.tooltipPosition>) => {
     switch position {
-    | None => viewStyle()
+    | None => empty
     | Some(pos) => {
         let xStyle = switch pos.x {
-        | Left(x) => viewStyle(~left=x->dp, ())
-        | Right(x) => viewStyle(~right=x->dp, ())
+        | Left(x) => s({left: x->dp})
+        | Right(x) => s({right: x->dp})
         }
 
         let yStyle = switch pos.y {
-        | Top(y) => viewStyle(~top=y->dp, ())
-        | Bottom(y) => viewStyle(~bottom=y->dp, ())
+        | Top(y) => s({top: y->dp})
+        | Bottom(y) => s({bottom: y->dp})
         }
 
         StyleSheet.flatten([xStyle, yStyle])
@@ -87,17 +87,16 @@ let make = (
   }
 
   let tooltipBaseStyle = {
-    let baseStyle = viewStyle(
-      ~position=#absolute,
-      ~paddingHorizontal=20.->dp,
-      ~paddingVertical=10.->dp,
-      ~maxWidth=maxWidth->dp,
-      ~maxHeight=maxHeight->dp,
-      ~backgroundColor=backgroundColor->Option.getOr(component.background),
-      ~borderRadius,
-      ~borderWidth,
-      (),
-    )
+    let baseStyle = s({
+      position: #absolute,
+      paddingHorizontal: 20.->dp,
+      paddingVertical: 10.->dp,
+      maxWidth: maxWidth->dp,
+      maxHeight: maxHeight->dp,
+      backgroundColor: backgroundColor->Option.getOr(component.background),
+      borderRadius,
+      borderWidth,
+    })
     StyleSheet.flatten([baseStyle, boxBorderColor, shadowStyle, getPositionStyle(tooltipPosition)])
   }
 
@@ -113,7 +112,7 @@ let make = (
     <UIUtils.RenderIf condition={isVisible && tooltipPosition->Option.isSome}>
       <Portal>
         <CustomTouchableOpacity
-          activeOpacity=1. onPress={_ => toggleVisibility()} style={viewStyle(~flex=1., ())}>
+          activeOpacity=1. onPress={_ => toggleVisibility()} style={s({flex: 1.})}>
           <View style={tooltipStyle}> {renderContent(toggleVisibility)} </View>
         </CustomTouchableOpacity>
       </Portal>

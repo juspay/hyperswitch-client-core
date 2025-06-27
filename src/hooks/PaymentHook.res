@@ -7,7 +7,6 @@ let usePayment = (
     ~status: PaymentConfirmTypes.error,
   ) => unit,
   ~savedCardCvv: option<string>,
-  ~savedPaymentMethordContextObj: AllApiDataContext.savedPaymentMethodDataObj,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -16,11 +15,6 @@ let usePayment = (
   let showAlert = AlertHook.useAlerts()
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let {launchGPay: webkitLaunchGPay, launchApplePay: webkitLaunchApplePay} = WebKit.useWebKit()
-
-  let selectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
-    walletName: NONE,
-    token: Some(""),
-  })
 
   let initiateGooglePay = (
     ~sessionObject: SessionsType.sessions,
@@ -122,28 +116,7 @@ let usePayment = (
 
     let paymentBodyWithDynamicFields = body
 
-    let brand = switch selectedObj.token {
-    | Some(tokenToFind) =>
-      let pmList = savedPaymentMethordContextObj.pmList->Option.getOr([])
-      let foundCardOpt = pmList->Array.find(pm => {
-        switch pm {
-        | SdkTypes.SAVEDLISTCARD(cardDetails) => cardDetails.payment_token == Some(tokenToFind)
-        | _ => false
-        }
-      })
-      switch foundCardOpt {
-      | Some(SdkTypes.SAVEDLISTCARD(cardDetails)) =>
-        switch cardDetails.cardScheme {
-        | Some(actualScheme) => actualScheme
-        | None => ""
-        }
-      | _ => ""
-      }
-    | None => ""
-    }
-
     fetchAndRedirect(
-      ~currentCardBrand=brand,
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,

@@ -50,93 +50,64 @@ let make = (
 
   let renderStyle = switch textType {
   | Heading =>
-    array([
-      textSecondaryBold,
-      textStyle(~fontSize=17. +. headingTextSizeAdjust, ~letterSpacing=0.3, ()),
-    ])
+    array([textSecondaryBold, s({fontSize: 17. +. headingTextSizeAdjust, letterSpacing: 0.3})])
   | HeadingBold =>
     array([
       textSecondaryBold,
-      textStyle(~fontSize=17. +. headingTextSizeAdjust, ~fontWeight=#600, ~letterSpacing=0.3, ()),
+      s({fontSize: 17. +. headingTextSizeAdjust, fontWeight: #600, letterSpacing: 0.3}),
     ])
-  | Subheading =>
-    array([textSecondaryBold, textStyle(~fontSize=15. +. subHeadingTextSizeAdjust, ())])
+  | Subheading => array([textSecondaryBold, s({fontSize: 15. +. subHeadingTextSizeAdjust})])
   | SubheadingBold =>
-    array([
-      textSecondary,
-      textStyle(~fontSize=15. +. subHeadingTextSizeAdjust, ~fontWeight=#500, ()),
-    ])
+    array([textSecondary, s({fontSize: 15. +. subHeadingTextSizeAdjust, fontWeight: #500})])
   | ModalTextLight =>
-    array([textStyle(~fontSize=14. +. modalTextSizeAdjust, ~fontWeight=#500, ()), textSecondary])
-  | ModalText => array([textStyle(~fontSize=14. +. modalTextSizeAdjust, ()), textSecondaryBold])
+    array([s({fontSize: 14. +. modalTextSizeAdjust, fontWeight: #500}), textSecondary])
+  | ModalText => array([s({fontSize: 14. +. modalTextSizeAdjust}), textSecondaryBold])
   | ModalTextBold =>
-    array([
-      textStyle(~fontSize=14. +. modalTextSizeAdjust, ~fontWeight=#500, ()),
-      textSecondaryBold,
-    ])
+    array([s({fontSize: 14. +. modalTextSizeAdjust, fontWeight: #500}), textSecondaryBold])
   | PlaceholderText =>
     array([
-      textStyle(
-        ~fontStyle=#normal,
-        ~fontSize=12. +. placeholderTextSizeAdjust,
-        ~marginBottom=2.5->pct,
-        (),
-      ),
+      s({fontStyle: #normal, fontSize: 12. +. placeholderTextSizeAdjust, marginBottom: 2.5->pct}),
       textPrimary,
     ])
   | PlaceholderTextBold =>
     array([
-      textStyle(
-        ~fontStyle=#normal,
-        ~fontSize=12. +. placeholderTextSizeAdjust,
-        ~fontWeight=#500,
-        ~marginBottom=2.5->pct,
-        (),
-      ),
+      s({
+        fontStyle: #normal,
+        fontSize: 12. +. placeholderTextSizeAdjust,
+        fontWeight: #500,
+        marginBottom: 2.5->pct,
+      }),
       textPrimary,
     ])
   | ErrorText =>
     array([
-      textStyle(
-        ~color={errorTextInputColor},
-        ~fontFamily,
-        ~fontSize=12. +. errorTextSizeAdjust,
-        ~marginTop=errorMessageSpacing->dp,
-        (),
-      ),
+      s({
+        color: errorTextInputColor,
+        fontFamily,
+        fontSize: 12. +. errorTextSizeAdjust,
+        marginTop: errorMessageSpacing->dp,
+      }),
     ])
   | ErrorTextBold =>
     array([
-      textStyle(
-        ~color={errorTextInputColor},
-        ~fontFamily,
-        ~fontSize=12. +. errorTextSizeAdjust,
-        ~fontWeight=#500,
-        (),
-      ),
+      s({
+        color: errorTextInputColor,
+        fontFamily,
+        fontSize: 12. +. errorTextSizeAdjust,
+        fontWeight: #500,
+      }),
     ])
-  | ButtonText =>
-    array([textStyle(~color=payNowButtonTextColor, ~fontSize=17. +. buttonTextSizeAdjust, ())])
+  | ButtonText => array([s({color: payNowButtonTextColor, fontSize: 17. +. buttonTextSizeAdjust})])
   | ButtonTextBold =>
     array([
-      textStyle(
-        ~color=payNowButtonTextColor,
-        ~fontSize=17. +. buttonTextSizeAdjust,
-        ~fontWeight=#600,
-        (),
-      ),
+      s({color: payNowButtonTextColor, fontSize: 17. +. buttonTextSizeAdjust, fontWeight: #600}),
     ])
-  | LinkText => array([textStyle(~fontSize=14. +. linkTextSizeAdjust, ()), textPrimary])
-  | LinkTextBold =>
-    array([textStyle(~fontSize=14. +. linkTextSizeAdjust, ~fontWeight=#500, ()), textPrimary])
+  | LinkText => array([s({fontSize: 14. +. linkTextSizeAdjust}), textPrimary])
+  | LinkTextBold => array([s({fontSize: 14. +. linkTextSizeAdjust, fontWeight: #500}), textPrimary])
   | CardTextBold =>
-    array([
-      textStyle(~fontSize=14. +. cardTextSizeAdjust, ~fontWeight=#600, ~color=component.color, ()),
-    ])
+    array([s({fontSize: 14. +. cardTextSizeAdjust, fontWeight: #600, color: component.color})])
   | CardText =>
-    array([
-      textStyle(~fontSize=12. +. cardTextSizeAdjust, ~fontWeight=#400, ~color=component.color, ()),
-    ])
+    array([s({fontSize: 12. +. cardTextSizeAdjust, fontWeight: #400, color: component.color})])
   }
   // let textTypeString = switch textType {
   // | HeadingBold => "SmallHeadingBold"
@@ -150,10 +121,10 @@ let make = (
   // }
   let overrideStyle = switch overrideStyle {
   | Some(val) => val
-  | None => viewStyle()
+  | None => empty
   }
   <Text
-    style={array([textStyle(~fontFamily, ()), renderStyle, overrideStyle])}
+    style={array([s({fontFamily: fontFamily}), renderStyle, overrideStyle])}
     ellipsizeMode
     numberOfLines>
     {switch text {
