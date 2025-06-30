@@ -8,7 +8,6 @@ describe('card-flow-e2e-test', () => {
     beforeAll(async () => {
         const createPaymentBody = new CreateBody()
         createPaymentBody.addKey("request_external_three_ds_authentication", true)
-        createPaymentBody.addKey("profile_id", "pro_ihVPK2u35TOUOp6ipPjF")
         createPaymentBody.addKey("authentication_type", 'three_ds')
         await setCreateBodyForTestAutomation(createPaymentBody.get())
 

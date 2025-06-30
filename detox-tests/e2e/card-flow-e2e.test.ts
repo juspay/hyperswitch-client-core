@@ -14,7 +14,6 @@ describe('card-flow-e2e-test', () => {
   jest.retryTimes(6);
   beforeAll(async () => {
     const createPaymentBody = new CreateBody();
-    createPaymentBody.addKey("profile_id", "pro_ihVPK2u35TOUOp6ipPjF")
     createPaymentBody.addKey("request_external_three_ds_authentication", false)
     await setCreateBodyForTestAutomation(createPaymentBody.get());
     await device.launchApp({
