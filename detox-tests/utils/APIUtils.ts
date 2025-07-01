@@ -65,7 +65,7 @@ class CreateBody {
 }
 
 const setCreateBodyForTestAutomation = async (body) => {
-    await fetch("http://localhost:5252/automation-create-body", {
+    await fetch("http://localhost:5252/create-payment-intent", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

@@ -9,16 +9,11 @@ require('dotenv').config({path: './.env'});
 
 const PORT = 5252;
 
-let payloadFromAutomation = null;
-app.post('/automation-create-body', async (req, res) => {
-  payloadFromAutomation = req.body;
-  res.send(req.body);
-});
-
 async function createPaymentIntent(request) {
   try {
-    const url = 'https://app.hyperswitch.io/api/payments';
-    const apiResponse = await fetch(`${url}`, {
+    const url =
+      process.env.HYPERSWITCH_SERVER_URL || process.env.HYPERSWITCH_SANDBOX_URL;
+    const apiResponse = await fetch(`${url}/payments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,65 +40,65 @@ async function createPaymentIntent(request) {
   }
 }
 
-app.get('/create-payment-intent', async (req, res) => {
+async function createPaymentHandler(res, createPaymentBody) {
   try {
-    const createPaymentBody =
-      payloadFromAutomation != null
-        ? payloadFromAutomation
-        : {
-            amount: 2999,
-            currency: 'USD',
-            authentication_type: 'no_three_ds',
-            customer_id: 'hyperswitch_demo_customer_id',
-            capture_method: 'automatic',
-            email: 'abc@gmail.com',
-            billing: {
-              address: {
-                line1: '1467',
-                line2: 'Harrison Street',
-                line3: 'Harrison Street',
-                city: 'San Fransico',
-                state: 'California',
-                zip: '94122',
-                country: 'US',
-                first_name: 'joseph',
-                last_name: 'Doe',
-              },
-            },
-            shipping: {
-              address: {
-                line1: '1467',
-                line2: 'Harrison Street',
-                line3: 'Harrison Street',
-                city: 'San Fransico',
-                state: 'California',
-                zip: '94122',
-                country: 'US',
-                first_name: 'joseph',
-                last_name: 'Doe',
-              },
-            },
-          };
-
     const profileId = process.env.PROFILE_ID;
-    if (profileId) {
-      createPaymentBody.profile_id = profileId;
-    }
+    if (profileId) createPaymentBody.profile_id = profileId;
 
-    var paymentIntent = await createPaymentIntent(createPaymentBody);
-    res.send({
+    const paymentIntent = await createPaymentIntent(createPaymentBody);
+
+    return res.json({
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: paymentIntent.client_secret,
     });
   } catch (err) {
     console.error(err);
-
-    return res.status(400).send({
-      error: {
-        message: err.message,
-      },
-    });
+    return res.status(400).json({error: {message: err.message}});
   }
+}
+
+app.get('/create-payment-intent', async (req, res) => {
+  const createPaymentBody = {
+    amount: 2999,
+    currency: 'USD',
+    authentication_type: 'no_three_ds',
+    customer_id: 'hyperswitch_demo_customer_id',
+    capture_method: 'automatic',
+    email: 'abc@gmail.com',
+    billing: {
+      address: {
+        line1: '1467',
+        line2: 'Harrison Street',
+        line3: 'Harrison Street',
+        city: 'San Fransico',
+        state: 'California',
+        zip: '94122',
+        country: 'US',
+        first_name: 'joseph',
+        last_name: 'Doe',
+      },
+    },
+    shipping: {
+      address: {
+        line1: '1467',
+        line2: 'Harrison Street',
+        line3: 'Harrison Street',
+        city: 'San Fransico',
+        state: 'California',
+        zip: '94122',
+        country: 'US',
+        first_name: 'joseph',
+        last_name: 'Doe',
+      },
+    },
+  };
+
+  createPaymentHandler(res, createPaymentBody);
+});
+
+app.post('/create-payment-intent', async (req, res) => {
+  const createPaymentBody = req.body;
+  createPaymentHandler(res, createPaymentBody);
 });
 
 app.get('/create-ephemeral-key', async (req, res) => {
