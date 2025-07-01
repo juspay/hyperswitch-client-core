@@ -147,7 +147,7 @@ jobs:
       - name: Install dependencies
         run: |
           echo "📦 Installing dependencies..."
-          npm ci
+          npm install
 
       - name: Compile ReScript and fail on warnings
         run: |
