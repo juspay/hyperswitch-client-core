@@ -2,46 +2,79 @@ open ReactNative
 open Style
 open RequiredFieldsTypes
 
-module RenderField = {
-  let getStateData = (states, country) => {
-    states
-    ->Utils.getStateNames(country)
-    ->Array.map((item): CustomPicker.customPickerType => {
-      {
-        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
-        value: item.code,
-      }
-    })
-  }
+let updateDictImmutable = (dict, key, value) => {
+  let newDict = Dict.fromArray(dict->Dict.toArray)
+  newDict->Dict.set(key, value)
+  newDict
+}
 
-  let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.countries) => {
-    contextCountryData
-    ->Array.filter(item => {
-      countryArr->Array.includes(item.isoAlpha2)
-    })
-    ->Array.map((item): CustomPicker.customPickerType => {
-      {
-        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
-        value: item.isoAlpha2,
-        icon: Utils.getCountryFlags(item.isoAlpha2),
-      }
-    })
-  }
+let updateMultipleDictEntries = (dict, entries) => {
+  let newDict = Dict.fromArray(dict->Dict.toArray)
+  entries->Array.forEach(((key, value)) => {
+    newDict->Dict.set(key, value)
+  })
+  newDict
+}
 
-  let getCountryValueOfRelativePath = (path, finalJsonDict) => {
-    if path->String.length != 0 {
-      let key = getKey(path, "country")
-      let value = finalJsonDict->Dict.get(key)
-      value
-      ->Option.map(((value, _)) => value->JSON.Decode.string->Option.getOr(""))
-      ->Option.getOr("")
-    } else {
-      ""
+let getFieldValueOptimized = (finalJsonDict, requiredField) => {
+  switch requiredField {
+  | StringField(x) | EmailField(x) =>
+    finalJsonDict
+    ->Dict.get(x)
+    ->Option.map(((value, _)) => value->JSON.Decode.string->Option.getOr(""))
+    ->Option.getOr("")
+  | FullNameField(firstName, lastName) =>
+    let firstNameValue = finalJsonDict->Dict.get(firstName)
+    let lastNameValue = finalJsonDict->Dict.get(lastName)
+    
+    switch (firstNameValue, lastNameValue) {
+    | (Some((firstVal, _)), Some((lastVal, _))) => {
+        let first = firstVal->JSON.Decode.string->Option.getOr("")
+        let last = lastVal->JSON.Decode.string->Option.getOr("")
+        switch (first, last) {
+        | ("", "") => ""
+        | (f, "") => f
+        | ("", l) => l
+        | (f, l) => f ++ " " ++ l
+        }
+      }
+    | (Some((firstVal, _)), None) => firstVal->JSON.Decode.string->Option.getOr("")
+    | (None, Some((lastVal, _))) => lastVal->JSON.Decode.string->Option.getOr("")
+    | _ => ""
     }
+  | PhoneField(phoneCode, phoneNumber) =>
+    let phoneCodeValue = finalJsonDict->Dict.get(phoneCode)->Option.flatMap(((value, _)) => value->JSON.Decode.string)
+    let phoneNumberValue = finalJsonDict->Dict.get(phoneNumber)->Option.flatMap(((value, _)) => value->JSON.Decode.string)
+    phoneCodeValue->Option.getOr("") ++ " " ++ phoneNumberValue->Option.getOr("")
   }
+}
 
+let processCountryData = (countryArr, contextCountryData) => {
+  contextCountryData
+  ->Array.filter((item: CountryStateDataHookTypes.country) => countryArr->Array.includes(item.isoAlpha2))
+  ->Array.map((item: CountryStateDataHookTypes.country): CustomPicker.customPickerType => {
+    {
+      label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
+      value: item.isoAlpha2,
+      icon: Utils.getCountryFlags(item.isoAlpha2),
+    }
+  })
+}
+
+let processStateData = (states, country) => {
+  states
+  ->Utils.getStateNames(country)
+  ->Array.map((item): CustomPicker.customPickerType => {
+    {
+      label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
+      value: item.code,
+    }
+  })
+}
+
+module OptimizedRenderField = {
   @react.component
-  let make = (
+  let make = React.memo((
     ~required_fields_type: RequiredFieldsTypes.required_fields_type,
     ~setFinalJsonDict,
     ~finalJsonDict,
@@ -52,179 +85,167 @@ module RenderField = {
     ~countryCodes,
   ) => {
     let localeObject = GetLocale.useGetLocalObj()
-    let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+    let {component, dangerColor, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
 
-    let value = switch required_fields_type.required_field {
-    | StringField(x) | EmailField(x) =>
-      finalJsonDict
-      ->Dict.get(x)
-      ->Option.map(((value, _)) => value->JSON.Decode.string->Option.getOr(""))
-      ->Option.getOr("")
-    | FullNameField(firstName, lastName) =>
-      let firstNameValue =
-        finalJsonDict
-        ->Dict.get(firstName)
-        ->Option.map(((value, _)) => value->JSON.Decode.string)
-        ->Option.getOr(None)
-
-      let lastNameValue =
-        finalJsonDict
-        ->Dict.get(lastName)
-        ->Option.map(((value, _)) => value->JSON.Decode.string)
-        ->Option.getOr(None)
-      switch (firstNameValue, lastNameValue) {
-      | (Some(firstName), Some(lastName)) => [firstName, lastName]->Array.join(" ")
-      | (Some(firstName), _) => firstName
-      | (_, Some(lastName)) => lastName
-      | _ => ""
-      }
-    | PhoneField(phoneCode, phoneNumber) =>
-      let phoneCodeValue =
-        finalJsonDict
-        ->Dict.get(phoneCode)
-        ->Option.map(((value, _)) => value->JSON.Decode.string)
-        ->Option.getOr(None)
-      let phoneNumberValue =
-        finalJsonDict
-        ->Dict.get(phoneNumber)
-        ->Option.map(((value, _)) => value->JSON.Decode.string)
-        ->Option.getOr(None)
-      phoneCodeValue->Option.getOr("") ++ " " ++ phoneNumberValue->Option.getOr("")
-    }
-
-    let initialValue = switch value {
-    | "" => None
-    | value => Some(value)
-    }
+    let value = getFieldValueOptimized(finalJsonDict, required_fields_type.required_field)
+    let initialValue = value === "" ? None : Some(value)
+    
     let (val, setVal) = React.useState(_ => initialValue)
+    let (errorMessage, setErrorMessage) = React.useState(_ => None)
+    let (isFocus, setIsFocus) = React.useState(_ => false)
 
-    React.useEffect(() => {
-      setVal(_ => initialValue)
-      None
-    }, (required_fields_type, isSaveCardsFlow, initialValue))
+    let placeholder = RequiredFieldsTypes.useGetPlaceholder(
+      ~field_type=required_fields_type.field_type,
+      ~display_name=required_fields_type.display_name,
+      ~required_field=required_fields_type.required_field,
+    )()
 
-    let (errorMessage, setErrorMesage) = React.useState(_ => None)
+    let isValid = React.useMemo1(() => errorMessage->Option.isNone, [errorMessage])
+    let isValidForFocus = React.useMemo2(() => isFocus || isValid, (isFocus, isValid))
 
-    let (isFocus, setisFocus) = React.useState(_ => false)
-    React.useEffect1(() => {
-      switch val {
-      | Some(text) => {
-          let requiredFieldPath = RequiredFieldsTypes.getRequiredFieldPath(
-            ~isSaveCardsFlow,
-            ~requiredField={required_fields_type},
-          )
-          switch requiredFieldPath {
-          | StringField(stringFieldPath) | EmailField(stringFieldPath) =>
-            let validationErrMsg = RequiredFieldsTypes.checkIsValid(
-              ~text,
-              ~field_type=required_fields_type.field_type,
-              ~localeObject,
-              ~display_name=required_fields_type.display_name,
-              ~paymentMethodType,
-            )
-            let isCountryField = switch required_fields_type.field_type {
-            | AddressCountry(_) => true
-            | _ => false
-            }
-
-            setErrorMesage(_ => validationErrMsg)
-            setFinalJsonDict(prev => {
-              let newData = Dict.assign(Dict.make(), prev)
-              if isCountryField {
-                let stateKey = getKey(stringFieldPath, "state")
-                switch newData->Dict.get(stateKey) {
-                | Some(_) => newData->Dict.set(stateKey, (JSON.Encode.null, Some("required")))
-                | None => ()
-                }
-              }
-              newData->Dict.set(stringFieldPath, (text->JSON.Encode.string, validationErrMsg))
-              newData
-            })
-          | FullNameField(firstNameFieldPath, lastNameFieldPath) =>
-            let arr = text->String.split(" ")
-
-            let firstNameVal = arr->Array.get(0)->Option.getOr("")
-            let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
-            let isBillingFields =
-              required_fields_type.field_type === BillingName ||
-                required_fields_type.field_type === ShippingName
-            let (firstNameVal, firstNameErrorMessage) =
-              firstNameVal === ""
-                ? (
-                    JSON.Encode.null,
-                    isBillingFields
-                      ? Some(localeObject.mandatoryFieldText)
-                      : Some(localeObject.cardHolderNameRequiredText),
-                  )
-                : (
-                    JSON.Encode.string(firstNameVal),
-                    firstNameVal->Validation.containsDigit
-                      ? Some(localeObject.invalidDigitsCardHolderNameError)
-                      : None,
-                  )
-            let (lastNameVal, lastNameErrorMessage) =
-              lastNameVal === ""
-                ? (JSON.Encode.null, Some(localeObject.lastNameRequiredText))
-                : (
-                    JSON.Encode.string(lastNameVal),
-                    lastNameVal->Validation.containsDigit
-                      ? Some(localeObject.invalidDigitsCardHolderNameError)
-                      : None,
-                  )
-
-            setErrorMesage(_ =>
-              switch firstNameErrorMessage {
-              | Some(_) => firstNameErrorMessage
-              | None => lastNameErrorMessage
-              }
-            )
-
-            setFinalJsonDict(prev => {
-              let newData = Dict.assign(Dict.make(), prev)
-              newData->Dict.set(firstNameFieldPath, (firstNameVal, firstNameErrorMessage))
-              newData->Dict.set(lastNameFieldPath, (lastNameVal, lastNameErrorMessage))
-              newData
-            })
-
-          | PhoneField(phoneCodePath, phoneNumberPath) =>
-            let phoneCodeVal = text->RequiredFieldsTypes.getFirstValue->JSON.Encode.string
-            let phoneNumberVal = text->RequiredFieldsTypes.getLastValue
-
-            let errorMessage = RequiredFieldsTypes.checkIsValid(
-              ~text=phoneNumberVal,
-              ~field_type=required_fields_type.field_type,
-              ~localeObject,
-              ~display_name=required_fields_type.display_name,
-              ~paymentMethodType,
-            )
-            setErrorMesage(_ => errorMessage)
-            setFinalJsonDict(prev => {
-              let newData = Dict.assign(Dict.make(), prev)
-              newData->Dict.set(phoneCodePath, (phoneCodeVal, None))
-              newData->Dict.set(phoneNumberPath, (phoneNumberVal->JSON.Encode.string, errorMessage))
-              newData
-            })
+    let countryItems = React.useMemo2(() => {
+      switch required_fields_type.field_type {
+      | AddressCountry(countryArr) =>
+        switch statesAndCountry {
+        | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
+          let countries = switch countryArr {
+          | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
+          | UseBackEndData(data) => data
           }
+          processCountryData(countries, res.countries)
+        | _ => []
         }
-      | None => ()
+      | _ => []
       }
-      None
-    }, [val])
+    }, (required_fields_type.field_type, statesAndCountry))
 
-    let onChangeCountry = val => {
-      setVal(val)
-    }
-    let onChange = text => {
-      setVal(prev =>
-        RequiredFieldsTypes.allowOnlyDigits(
-          ~text,
-          ~fieldType=required_fields_type.field_type,
-          ~prev,
+    let stateItems = React.useMemo2(() => {
+      switch required_fields_type.field_type {
+      | AddressState =>
+        switch statesAndCountry {
+        | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
+          let country = switch required_fields_type.required_field {
+          | StringField(x) => 
+            finalJsonDict
+            ->Dict.get(getKey(x, "country"))
+            ->Option.map(((value, _)) => value->JSON.Decode.string->Option.getOr(""))
+            ->Option.getOr("")
+          | _ => ""
+          }
+          processStateData(statesAndCountryVal.states, country)
+        | _ => []
+        }
+      | _ => []
+      }
+    }, (required_fields_type.field_type, finalJsonDict))
+
+    let isLoading = React.useMemo1(() => {
+      switch statesAndCountry {
+      | Loading => true
+      | _ => false
+      }
+    }, [statesAndCountry])
+
+    let validateAndUpdate = React.useCallback1((newValue) => {
+      let requiredFieldPath = RequiredFieldsTypes.getRequiredFieldPath(
+        ~isSaveCardsFlow,
+        ~requiredField=required_fields_type,
+      )
+      
+      switch requiredFieldPath {
+      | StringField(stringFieldPath) | EmailField(stringFieldPath) =>
+        let validationErrMsg = RequiredFieldsTypes.checkIsValid(
+          ~text=newValue,
+          ~field_type=required_fields_type.field_type,
+          ~localeObject,
+          ~display_name=required_fields_type.display_name,
           ~paymentMethodType,
         )
+        let isCountryField = switch required_fields_type.field_type {
+        | AddressCountry(_) => true
+        | _ => false
+        }
+
+        setErrorMessage(_ => validationErrMsg)
+        setFinalJsonDict(prev => {
+          let newData = updateDictImmutable(prev, stringFieldPath, (newValue->JSON.Encode.string, validationErrMsg))
+          if isCountryField {
+            let stateKey = getKey(stringFieldPath, "state")
+            switch prev->Dict.get(stateKey) {
+            | Some(_) => updateDictImmutable(newData, stateKey, (JSON.Encode.null, Some("required")))
+            | None => newData
+            }
+          } else {
+            newData
+          }
+        })
+        
+      | FullNameField(firstNameFieldPath, lastNameFieldPath) =>
+        let arr = newValue->String.split(" ")
+        let firstNameVal = arr->Array.get(0)->Option.getOr("")
+        let lastNameVal = arr->Array.filterWithIndex((_, index) => index !== 0)->Array.join(" ")
+        let isBillingFields = required_fields_type.field_type === BillingName || required_fields_type.field_type === ShippingName
+        
+        let (firstNameVal, firstNameErrorMessage) =
+          firstNameVal === ""
+            ? (JSON.Encode.null, isBillingFields ? Some(localeObject.mandatoryFieldText) : Some(localeObject.cardHolderNameRequiredText))
+            : (JSON.Encode.string(firstNameVal), firstNameVal->Validation.containsDigit ? Some(localeObject.invalidDigitsCardHolderNameError) : None)
+            
+        let (lastNameVal, lastNameErrorMessage) =
+          lastNameVal === ""
+            ? (JSON.Encode.null, Some(localeObject.lastNameRequiredText))
+            : (JSON.Encode.string(lastNameVal), lastNameVal->Validation.containsDigit ? Some(localeObject.invalidDigitsCardHolderNameError) : None)
+
+        setErrorMessage(_ =>
+          switch firstNameErrorMessage {
+          | Some(_) => firstNameErrorMessage
+          | None => lastNameErrorMessage
+          }
+        )
+
+        setFinalJsonDict(prev => {
+          updateMultipleDictEntries(prev, [
+            (firstNameFieldPath, (firstNameVal, firstNameErrorMessage)),
+            (lastNameFieldPath, (lastNameVal, lastNameErrorMessage))
+          ])
+        })
+
+      | PhoneField(phoneCodePath, phoneNumberPath) =>
+        let phoneCodeVal = newValue->RequiredFieldsTypes.getFirstValue->JSON.Encode.string
+        let phoneNumberVal = newValue->RequiredFieldsTypes.getLastValue
+
+        let errorMessage = RequiredFieldsTypes.checkIsValid(
+          ~text=phoneNumberVal,
+          ~field_type=required_fields_type.field_type,
+          ~localeObject,
+          ~display_name=required_fields_type.display_name,
+          ~paymentMethodType,
+        )
+        setErrorMessage(_ => errorMessage)
+        setFinalJsonDict(prev => {
+          updateMultipleDictEntries(prev, [
+            (phoneCodePath, (phoneCodeVal, None)),
+            (phoneNumberPath, (phoneNumberVal->JSON.Encode.string, errorMessage))
+          ])
+        })
+      }
+    }, [setFinalJsonDict])
+
+    let onChange = React.useCallback1((text) => {
+      let processedText = RequiredFieldsTypes.allowOnlyDigits(
+        ~text=Some(text),
+        ~fieldType=required_fields_type.field_type,
+        ~prev=val,
+        ~paymentMethodType,
       )
-    }
-    let onChangePhone = text => {
+      setVal(_ => processedText)
+    }, [setVal])
+
+    let onChangeCountry = React.useCallback1((func) => {
+      setVal(func)
+    }, [setVal])
+
+    let onChangePhone = React.useCallback1((text) => {
       setVal(prev => Some(
         prev->Option.getOr("")->RequiredFieldsTypes.getFirstValue ++
         " " ++
@@ -235,44 +256,51 @@ module RenderField = {
           ~paymentMethodType,
         )->Option.getOr(""),
       ))
-    }
-    let onChangePhoneCode: (option<string> => option<string>) => unit = (
-      value: option<string> => option<string>,
-    ) => {
+    }, [setVal])
+
+    let onChangePhoneCode = React.useCallback1((value) => {
       setVal(prev => Some(
         value(prev)->Option.getOr("") ++
         " " ++
         prev->Option.getOr("")->RequiredFieldsTypes.getLastValue,
       ))
-    }
+    }, [setVal])
+
+    let onFocus = React.useCallback0(() => {
+      setIsFocus(_ => true)
+    })
+
+    let onBlur = React.useCallback0(() => {
+      setIsFocus(_ => false)
+    })
+
+    React.useEffect1(() => {
+      switch val {
+      | Some(text) => validateAndUpdate(text)
+      | None => ()
+      }
+      None
+    }, [val])
+
+    React.useEffect2(() => {
+      if !isFocus {
+        setVal(_ => initialValue)
+      }
+      None
+    }, (initialValue, isFocus))
 
     React.useEffect1(() => {
       keyToTrigerButtonClickError != 0
-        ? {
-            setVal(prev => prev->Option.isNone ? Some("") : prev)
-          }
+        ? setVal(prev => prev->Option.isNone ? Some("") : prev)
         : ()
       None
     }, [keyToTrigerButtonClickError])
 
-    let isValid = errorMessage->Option.isNone
-    let isValidForFocus = isFocus || isValid
-
-    let {borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
-
-    let placeholder = RequiredFieldsTypes.useGetPlaceholder(
-      ~field_type=required_fields_type.field_type,
-      ~display_name=required_fields_type.display_name,
-      ~required_field=required_fields_type.required_field,
-    )
-    let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
     <>
-      // <TextWrapper text={placeholder()} textType=SubheadingBold />
-      // <Space height=5. />
       {switch required_fields_type.required_field {
       | StringField(_) | EmailField(_) | FullNameField(_, _) =>
         switch required_fields_type.field_type {
-        | AddressCountry(countryArr) =>
+        | AddressCountry(_) =>
           <CustomPicker
             value=val
             setValue=onChangeCountry
@@ -280,20 +308,10 @@ module RenderField = {
             borderBottomLeftRadius=borderRadius
             borderBottomRightRadius=borderRadius
             borderBottomWidth=borderWidth
-            items={switch countryStateData {
-            | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
-              switch countryArr {
-              | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
-              | UseBackEndData(data) => data
-              }->getCountryData(res.countries)
-            | _ => []
-            }}
-            placeholderText={placeholder()}
+            items=countryItems
+            placeholderText=placeholder
             isValid
-            isLoading={switch statesAndCountry {
-            | Loading => true
-            | _ => false
-            }}
+            isLoading
           />
         | AddressState =>
           <CustomPicker
@@ -303,46 +321,22 @@ module RenderField = {
             borderBottomLeftRadius=borderRadius
             borderBottomRightRadius=borderRadius
             borderBottomWidth=borderWidth
-            items={switch statesAndCountry {
-            | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
-              getStateData(
-                statesAndCountryVal.states,
-                getCountryValueOfRelativePath(
-                  switch required_fields_type.required_field {
-                  | StringField(x) => x
-                  | _ => ""
-                  },
-                  finalJsonDict,
-                ),
-              )
-            | _ => []
-            }}
-            placeholderText={placeholder()}
+            items=stateItems
+            placeholderText=placeholder
             isValid
-            isLoading={switch statesAndCountry {
-            | Loading => true
-            | _ => false
-            }}
+            isLoading
           />
-
         | _ =>
           <CustomInput
             state={val->Option.getOr("")}
-            setState={text => onChange(Some(text))}
-            placeholder={placeholder()}
-            keyboardType={RequiredFieldsTypes.getKeyboardType(
-              ~field_type=required_fields_type.field_type,
-            )}
+            setState=onChange
+            placeholder
+            keyboardType={RequiredFieldsTypes.getKeyboardType(~field_type=required_fields_type.field_type)}
             enableCrossIcon=false
             isValid=isValidForFocus
-            onFocus={_ => {
-              setisFocus(_ => true)
-              val->Option.isNone ? setVal(_ => Some("")) : ()
-            }}
-            onBlur={_ => {
-              setisFocus(_ => false)
-            }}
-            textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
+            onFocus={_ => onFocus()}
+            onBlur={_ => onBlur()}
+            textColor={isFocus || isValid ? component.color : dangerColor}
             borderTopLeftRadius=borderRadius
             borderTopRightRadius=borderRadius
             borderBottomWidth=borderWidth
@@ -365,13 +359,10 @@ module RenderField = {
             borderBottomLeftRadius=borderRadius
             borderBottomRightRadius=borderRadius
             borderBottomWidth=borderWidth
-            items={countryCodes}
-            placeholderText={"Code"}
+            items=countryCodes
+            placeholderText="Code"
             isValid
-            isLoading={switch statesAndCountry {
-            | Loading => true
-            | _ => false
-            }}
+            isLoading
             showValue=true
             style={s({flex: 1.})}
             isCountryStateFields=true
@@ -379,20 +370,13 @@ module RenderField = {
           <CustomInput
             state={val->Option.getOr("")->RequiredFieldsTypes.getLastValue}
             setState=onChangePhone
-            placeholder={placeholder()}
-            keyboardType={RequiredFieldsTypes.getKeyboardType(
-              ~field_type=required_fields_type.field_type,
-            )}
+            placeholder
+            keyboardType={RequiredFieldsTypes.getKeyboardType(~field_type=required_fields_type.field_type)}
             enableCrossIcon=false
             isValid=isValidForFocus
-            onFocus={_ => {
-              setisFocus(_ => true)
-              val->Option.isNone ? setVal(_ => Some("")) : ()
-            }}
-            onBlur={_ => {
-              setisFocus(_ => false)
-            }}
-            textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}
+            onFocus={_ => onFocus()}
+            onBlur={_ => onBlur()}
+            textColor={isFocus || isValid ? component.color : dangerColor}
             borderTopLeftRadius=borderRadius
             borderTopRightRadius=borderRadius
             borderBottomWidth=borderWidth
@@ -408,14 +392,13 @@ module RenderField = {
       } else {
         <ErrorText text=errorMessage />
       }}
-      //    <Space />
     </>
-  }
+  })
 }
 
-module Fields = {
+module OptimizedFields = {
   @react.component
-  let make = (
+  let make = React.memo((
     ~fields: array<RequiredFieldsTypes.required_fields_type>,
     ~finalJsonDict,
     ~setFinalJsonDict,
@@ -425,25 +408,29 @@ module Fields = {
     ~paymentMethodType,
     ~countryCodes,
   ) => {
-    fields
-    ->Array.mapWithIndex((item, index) =>
-      <React.Fragment key={index->Int.toString}>
-        {index == 0 ? React.null : <Space height=18. />}
-        <RenderField
-          required_fields_type=item
-          key={index->Int.toString}
-          isSaveCardsFlow
-          statesAndCountry
-          finalJsonDict
-          setFinalJsonDict
-          keyToTrigerButtonClickError
-          paymentMethodType
-          countryCodes
-        />
-      </React.Fragment>
-    )
-    ->React.array
-  }
+    let renderedFields = React.useMemo1(() => {
+      fields
+      ->Array.mapWithIndex((item, index) =>
+        <React.Fragment key={index->Int.toString}>
+          {index == 0 ? React.null : <Space height=18. />}
+          <OptimizedRenderField
+            required_fields_type=item
+            key={index->Int.toString}
+            isSaveCardsFlow
+            statesAndCountry
+            finalJsonDict
+            setFinalJsonDict
+            keyToTrigerButtonClickError
+            paymentMethodType
+            countryCodes
+          />
+        </React.Fragment>
+      )
+      ->React.array
+    }, [fields])
+
+    renderedFields
+  })
 }
 
 type fieldType = Other | Billing | Shipping
@@ -456,24 +443,25 @@ let make = (
   ~isSaveCardsFlow=false,
   ~savedCardsData: option<SdkTypes.savedDataType>,
   ~keyToTrigerButtonClickError,
-  ~shouldRenderShippingFields=false, //To render shipping fields
+  ~shouldRenderShippingFields=false,
   ~displayPreValueFields=false,
   ~paymentMethodType=?,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
 ) => {
-  // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
   let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
-  let clientCountry = Utils.getClientCountry(
-    switch statesAndCountry {
-    | FetchData(data) | Localdata(data) => data.countries
-    | _ => []
-    },
-    clientTimeZone,
-  )
+  let clientCountry = React.useMemo1(() => {
+    Utils.getClientCountry(
+      switch statesAndCountry {
+      | FetchData(data) | Localdata(data) => data.countries
+      | _ => []
+      },
+      clientTimeZone,
+    )
+  }, [statesAndCountry])
 
-  let initialKeysValDict = React.useMemo(() => {
+  let initialKeysValDict = React.useMemo7(() => {
     switch statesAndCountry {
     | FetchData(statesAndCountryData) | Localdata(statesAndCountryData) =>
       requiredFields
@@ -501,6 +489,56 @@ let make = (
     displayPreValueFields,
   ))
 
+  let filteredFields = React.useMemo6(() => {
+    let fields = displayPreValueFields
+      ? requiredFields
+      : requiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(initialKeysValDict)
+    
+    fields
+    ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
+    ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
+  }, (
+    requiredFields,
+    isSaveCardsFlow,
+    savedCardsData,
+    shouldRenderShippingFields,
+    displayPreValueFields,
+    initialKeysValDict,
+  ))
+
+  let fields = React.useMemo2(() => {
+    let getOrderValue = field => {
+      let path = field.required_field->RequiredFieldsTypes.getRequiredFieldName->String.split(".")
+      let x = if path->Array.includes("billing") {
+        Billing
+      } else if path->Array.includes("shipping") {
+        Shipping
+      } else {
+        Other
+      }
+      fieldsOrder->Array.indexOf(x)
+    }
+
+    filteredFields->Array.sort((a, b) => {
+      let aPath = getOrderValue(a)
+      let bPath = getOrderValue(b)
+      float(aPath - bPath)
+    })
+    filteredFields
+  }, (filteredFields, fieldsOrder))
+
+  let mappedCountryCodes = React.useMemo1(() => {
+    switch statesAndCountry {
+    | FetchData(statesAndCountry) | Localdata(statesAndCountry) =>
+      statesAndCountry.phoneCountryCodes->Array.map((countryCode): CustomPicker.customPickerType => {
+        label: countryCode.country_name ++ " " ++ countryCode.phone_number_code,
+        value: countryCode.phone_number_code,
+        icon: Utils.getCountryFlags(countryCode.country_code),
+      })
+    | Loading => []
+    }
+  }, [statesAndCountry])
+
   let (finalJsonDict, setFinalJsonDict) = React.useState(_ => initialKeysValDict)
 
   React.useEffect1(() => {
@@ -516,121 +554,25 @@ let make = (
     None
   }, [finalJsonDict])
 
-  let filteredFields =
-    (
-      displayPreValueFields
-        ? requiredFields
-        : requiredFields->RequiredFieldsTypes.filterDynamicFieldsFromRendering(initialKeysValDict)
-    )
-    ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
-    ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
-
-  // let (outsideBilling, insideBilling, shippingFields) = React.useMemo(() =>
-  //   filteredFields->Array.reduce(([], [], []), ((outside, inside, shipping), item) => {
-  //     let isBillingField =
-  //       item.required_field
-  //       ->RequiredFieldsTypes.getRequiredFieldName
-  //       ->String.split(".")
-  //       ->Array.includes("billing")
-  //     let isShippingField =
-  //       item.required_field
-  //       ->RequiredFieldsTypes.getRequiredFieldName
-  //       ->String.split(".")
-  //       ->Array.includes("shipping")
-  //     switch (isBillingField, isShippingField, renderShippingFields) {
-  //     | (true, _, _) => (outside, inside->Array.concat([item]), shipping)
-  //     | (_, true, true) => (outside, inside, shipping->Array.concat([item]))
-  //     | (_, true, false) => (outside, inside, shipping)
-  //     | _ => (outside->Array.concat([item]), inside, shipping)
-  //     }
-  //   })
-  // , (filteredFields, renderShippingFields))
-
-  //logic to sort the fields based on the fieldsOrder
-  let getOrderValue = field => {
-    let path = field.required_field->RequiredFieldsTypes.getRequiredFieldName->String.split(".")
-    let x = if path->Array.includes("billing") {
-      Billing
-    } else if path->Array.includes("shipping") {
-      Shipping
-    } else {
-      Other
-    }
-    fieldsOrder->Array.indexOf(x)
-  }
-
-  let fields = React.useMemo(() => {
-    filteredFields->Array.sort((a, b) => {
-      let aPath = getOrderValue(a)
-      let bPath = getOrderValue(b)
-      float(aPath - bPath)
-    })
-    filteredFields
-  }, (
-    requiredFields,
-    isSaveCardsFlow,
-    savedCardsData,
-    clientCountry.isoAlpha2,
-    fieldsOrder,
-    displayPreValueFields,
-    shouldRenderShippingFields,
-  ))
-
-  // React.useEffect1(() => {
-  //   switch statesAndCountry {
-  //   | Some(_) => {
-  //       switch requiredFields->Array.find(required_fields_type => {
-  //         switch required_fields_type.field_type {
-  //         | AddressCountry(_) => true
-  //         | _ => false
-  //         }
-  //       }) {
-  //       | Some(required) =>
-  //         switch required.required_field {
-  //         | StringField(path) =>
-  //           setFinalJsonDict(prev => {
-  //             let newData = Dict.assign(Dict.make(), prev)
-  //             newData->Dict.set(path, (clientCountry.isoAlpha2->JSON.Encode.string, None))
-  //             newData
-  //           })
-  //         | _ => ()
-  //         }
-  //       | _ => ()
-  //       }
-  //       ()
-  //     }
-  //   | _ => ()
-  //   }
-  //   None
-  // }, [statesAndCountry])
-
-  let isAddressCountryField = fieldType =>
-    switch fieldType.field_type {
-    | AddressCountry(_) => true
-    | _ => false
-    }
-
-  let updateDictWithCountry = (dict, path, countryCode) => {
-    let newDict = Dict.assign(Dict.make(), dict)
-    newDict->Dict.set(path, (countryCode->JSON.Encode.string, None))
-    newDict
-  }
-
-  let handleStringField = (path, prevDict, countryCode) =>
-    switch prevDict->Dict.get(path) {
-    | Some((key, _)) if key->JSON.Decode.string->Option.getOr("") != "" => prevDict
-    | _ => updateDictWithCountry(prevDict, path, countryCode)
-    }
-
   React.useEffect2(() => {
     switch statesAndCountry {
     | FetchData(_) | Localdata(_) =>
       requiredFields
-      ->Array.find(isAddressCountryField)
+      ->Array.find(required => {
+        switch required.field_type {
+        | AddressCountry(_) => true
+        | _ => false
+        }
+      })
       ->Option.forEach(required => {
         switch required.required_field {
         | StringField(path) =>
-          setFinalJsonDict(prev => handleStringField(path, prev, clientCountry.isoAlpha2))
+          setFinalJsonDict(prev => {
+            switch prev->Dict.get(path) {
+            | Some((key, _)) if key->JSON.Decode.string->Option.getOr("") != "" => prev
+            | _ => updateDictImmutable(prev, path, (clientCountry.isoAlpha2->JSON.Encode.string, None))
+            }
+          })
         | _ => ()
         }
       })
@@ -638,21 +580,12 @@ let make = (
     }
     None
   }, (statesAndCountry, clientCountry.isoAlpha2))
-  let mappedCountryCodes = switch statesAndCountry {
-  | FetchData(statesAndCountry) | Localdata(statesAndCountry) =>
-    statesAndCountry.phoneCountryCodes->Array.map((countryCode): CustomPicker.customPickerType => {
-      label: countryCode.country_name ++ " " ++ countryCode.phone_number_code,
-      value: countryCode.phone_number_code,
-      icon: Utils.getCountryFlags(countryCode.country_code),
-    })
-  | Loading => []
-  }
 
-  let renderFields = (fields, extraSpacing) =>
-    fields->Array.length > 0
+  <View style=empty>
+    {fields->Array.length > 0
       ? <>
-          {extraSpacing ? <Space height=24. /> : React.null}
-          <Fields
+          <Space height=24. />
+          <OptimizedFields
             fields
             countryCodes=mappedCountryCodes
             finalJsonDict
@@ -663,22 +596,6 @@ let make = (
             keyToTrigerButtonClickError
           />
         </>
-      : React.null
-
-  // let renderSectionTitle = (title, show) =>
-  //   show
-  //     ? <Text style={s({color:component.color, fontSize:16., marginVertical:10.->dp})}>
-  //         {title->React.string}
-  //       </Text>
-  //     : React.null
-
-  <View style={empty}>
-    {renderFields(fields, true)}
-    // <Space height=10. />
-    // {renderSectionTitle("Billing", insideBilling->Array.length > 0)}
-    // {renderFields(insideBilling, false)}
-    // <Space height=10. />
-    // {renderSectionTitle("Shipping", renderShippingFields && shippingFields->Array.length > 0)}
-    // {renderFields(shippingFields, false)}
+      : React.null}
   </View>
 }
