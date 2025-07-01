@@ -8,6 +8,7 @@ app.use(express.json());
 require('dotenv').config({path: './.env'});
 
 const PORT = 5252;
+let cachedResponseForAutomation = null;
 
 async function createPaymentIntent(request) {
   try {
@@ -40,17 +41,24 @@ async function createPaymentIntent(request) {
   }
 }
 
-async function createPaymentHandler(res, createPaymentBody) {
+async function createPaymentHandler(req, res, createPaymentBody) {
+  if (req.method === 'GET' && cachedResponseForAutomation) {
+    return res.json(cachedResponseForAutomation);
+  }
   try {
     const profileId = process.env.PROFILE_ID;
     if (profileId) createPaymentBody.profile_id = profileId;
 
     const paymentIntent = await createPaymentIntent(createPaymentBody);
 
-    return res.json({
+    let payload = {
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: paymentIntent.client_secret,
-    });
+    };
+
+    if (req.method === 'POST') cachedResponseForAutomation = payload;
+
+    return res.json(payload);
   } catch (err) {
     console.error(err);
     return res.status(400).json({error: {message: err.message}});
@@ -93,12 +101,12 @@ app.get('/create-payment-intent', async (req, res) => {
     },
   };
 
-  createPaymentHandler(res, createPaymentBody);
+  createPaymentHandler(req, res, createPaymentBody);
 });
 
 app.post('/create-payment-intent', async (req, res) => {
   const createPaymentBody = req.body;
-  createPaymentHandler(res, createPaymentBody);
+  createPaymentHandler(req, res, createPaymentBody);
 });
 
 app.get('/create-ephemeral-key', async (req, res) => {
