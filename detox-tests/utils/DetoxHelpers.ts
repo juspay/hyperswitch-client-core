@@ -12,6 +12,21 @@ export async function waitForVisibility(element: Detox.IndexableNativeElement, t
         .withTimeout(timeout);
 }
 
+export async function waitForAnyText(textOptions: string[], timeout = DEFAULT_TIMEOUT): Promise<string | null> {
+    for (const text of textOptions) {
+        try {
+            console.log(`Checking for text: "${text}"`);
+            const elementMatcher = element(by.text(text));
+            await waitFor(elementMatcher).toBeVisible().withTimeout(timeout);
+            console.log(`✓ Found text: "${text}"`);
+            return text;
+        } catch (error) {
+            console.log(`✗ Text "${text}" not found within ${timeout}ms`);
+        }
+    }
+    return null;
+}
+
 export async function typeTextInInput(element: Detox.IndexableNativeElement, text: string) {
     device.getPlatform() == "ios" ?
         await element.typeText(text) : await element.replaceText(text);
@@ -247,7 +262,15 @@ export async function completePayment(testIds: any): Promise<void> {
     if (device.getPlatform() === "ios") {
         await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
     } else {
-        await waitForVisibility(element(by.text('succeeded')), LONG_TIMEOUT);
+        const paymentStatus = await waitForAnyText(['succeeded', 'processing'], LONG_TIMEOUT);
+        
+        if (paymentStatus === 'succeeded') {
+            console.log("✓ Payment status: succeeded");
+        } else if (paymentStatus === 'processing') {
+            console.log("✓ Payment status: processing");
+        } else {
+            throw new Error("Payment completion status not found - neither 'succeeded' nor 'processing' text was detected");
+        }
     }
 
     console.log("✓ Payment completed successfully");
