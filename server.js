@@ -8,6 +8,7 @@ app.use(express.json());
 require('dotenv').config({path: './.env'});
 
 const PORT = 5252;
+let cachedResponseForAutomation = null;
 
 async function createPaymentIntent(request) {
   try {
@@ -40,64 +41,72 @@ async function createPaymentIntent(request) {
   }
 }
 
-app.get('/create-payment-intent', async (req, res) => {
+async function createPaymentHandler(req, res, createPaymentBody) {
+  if (req.method === 'GET' && cachedResponseForAutomation) {
+    return res.json(cachedResponseForAutomation);
+  }
   try {
-    const createPaymentBody = {
-      amount: 2999,
-      currency: 'USD',
-      authentication_type: 'no_three_ds',
-      customer_id: 'hyperswitch_demo_customer_id',
-      capture_method: 'automatic',
-      email: 'abc@gmail.com',
-      billing: {
-        address: {
-          line1: '1467',
-          line2: 'Harrison Street',
-          line3: 'Harrison Street',
-          city: 'San Fransico',
-          state: 'California',
-          zip: '94122',
-          country: 'US',
-          first_name: 'joseph',
-          last_name: 'Doe',
-        },
-      },
-      shipping: {
-        address: {
-          line1: '1467',
-          line2: 'Harrison Street',
-          line3: 'Harrison Street',
-          city: 'San Fransico',
-          state: 'California',
-          zip: '94122',
-          country: 'US',
-          first_name: 'joseph',
-          last_name: 'Doe',
-        },
-      },
-    };
-
     const profileId = process.env.PROFILE_ID;
-    if (profileId) {
-      createPaymentBody.profile_id = profileId;
-    }
+    if (profileId) createPaymentBody.profile_id = profileId;
 
-    var paymentIntent = await createPaymentIntent(createPaymentBody);
+    const paymentIntent = await createPaymentIntent(createPaymentBody);
 
-    // Send publishable key and PaymentIntent details to client
-    res.send({
+    let payload = {
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: paymentIntent.client_secret,
-    });
+    };
+
+    if (req.method === 'POST') cachedResponseForAutomation = payload;
+
+    return res.json(payload);
   } catch (err) {
     console.error(err);
-
-    return res.status(400).send({
-      error: {
-        message: err.message,
-      },
-    });
+    return res.status(400).json({error: {message: err.message}});
   }
+}
+
+app.get('/create-payment-intent', async (req, res) => {
+  const createPaymentBody = {
+    amount: 2999,
+    currency: 'USD',
+    authentication_type: 'no_three_ds',
+    customer_id: 'hyperswitch_demo_customer_id',
+    capture_method: 'automatic',
+    email: 'abc@gmail.com',
+    billing: {
+      address: {
+        line1: '1467',
+        line2: 'Harrison Street',
+        line3: 'Harrison Street',
+        city: 'San Fransico',
+        state: 'California',
+        zip: '94122',
+        country: 'US',
+        first_name: 'joseph',
+        last_name: 'Doe',
+      },
+    },
+    shipping: {
+      address: {
+        line1: '1467',
+        line2: 'Harrison Street',
+        line3: 'Harrison Street',
+        city: 'San Fransico',
+        state: 'California',
+        zip: '94122',
+        country: 'US',
+        first_name: 'joseph',
+        last_name: 'Doe',
+      },
+    },
+  };
+
+  createPaymentHandler(req, res, createPaymentBody);
+});
+
+app.post('/create-payment-intent', async (req, res) => {
+  const createPaymentBody = req.body;
+  createPaymentHandler(req, res, createPaymentBody);
 });
 
 app.get('/create-ephemeral-key', async (req, res) => {

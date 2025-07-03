@@ -23,6 +23,7 @@ jobs:
       HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
       HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
       PROFILE_ID: ${{ secrets.PROFILE_ID }}
+      NETCETERA_SDK_API_KEY: ${{ secrets.NETCETERA_SDK_API_KEY }}
     steps:
       - name: Free Disk Space
         run: |
