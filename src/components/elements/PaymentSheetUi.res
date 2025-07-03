@@ -1,6 +1,6 @@
 open ReactNative
 open Style
-open Validation
+open CardValidations
 
 module CardBrandAndScanCardIcon = {
   @react.component

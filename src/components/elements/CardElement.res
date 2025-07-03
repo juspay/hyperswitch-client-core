@@ -1,4 +1,4 @@
-open Validation
+open CardValidations
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 
@@ -138,7 +138,7 @@ let make = (
   }
 
   let onChangeZip = (text, zipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
-    let isthisValid = Validation.isValidZip(~zipCode=text, ~country="United States")
+    let isthisValid = CardValidations.isValidZip(~zipCode=text, ~country="United States")
     if isthisValid {
       switch zipRef.current->Nullable.toOption {
       | None => ()
