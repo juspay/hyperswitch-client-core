@@ -28,49 +28,36 @@ module WrapperProvider = {
     let logger = LoggerHook.useLoggerHook()
     let path = "/jsons/location"
 
-    let fetchCountryStateData = () => {
+    let loadData = async () => {
       if !isDataFetched.current {
         ///do not change the ordering of the code below
         isDataFetched.current = true
         setState(_ => Loading)
-        countryStateDataHook(
-          ~decodeJsonToRecord=S3ApiHook.decodeJsonTocountryStateData,
-          ~s3Path=`${path}/${SdkTypes.localeTypeToString(locale)}`,
-        )
-        ->Promise.then(res => {
-          let fetchedData = res->Option.getExn
-          if fetchedData.countries->Js.Array2.length == 0 {
-            Promise.reject(Exn.raiseError("API call failed"))
-          } else {
+
+        let fetchDataAndSetState = async () => {
+          let res = await countryStateDataHook(
+            ~decodeJsonToRecord=S3ApiHook.decodeJsonTocountryStateData,
+            ~s3Path=`${path}/${SdkTypes.localeTypeToString(locale)}`,
+          )
+          let fetchedData = res->Option.getOr({
+            countries: [],
+            states: Dict.make(),
+            phoneCountryCodes: [],
+          })
+          if fetchedData.countries->Js.Array2.length > 0 {
             setState(_ => FetchData({
               ...fetchedData,
               phoneCountryCodes: initialData.phoneCountryCodes,
             }))
-            Promise.resolve()
           }
-        })
-        ->Promise.catch(_ => {
-          countryStateDataHook(
-            ~decodeJsonToRecord=S3ApiHook.decodeJsonTocountryStateData,
-            ~s3Path=`${path}/${SdkTypes.localeTypeToString(Some(En))}`,
-          )
-          ->Promise.then(res => {
-            let fetchedData = res->Option.getExn
-            if fetchedData.countries->Js.Array2.length == 0 {
-              Promise.reject(Exn.raiseError("Api call failed again"))
-            } else {
-              setState(
-                _ => FetchData({...fetchedData, phoneCountryCodes: initialData.phoneCountryCodes}),
-              )
-              Promise.resolve()
-            }
-          })
-          ->Promise.catch(_ => {
-            setState(_ => Localdata(initialData))
-            Promise.resolve()
-          })
-        })
-        ->ignore
+        }
+
+        try {
+          let promiseVal = await PromiseUtils.autoRetryPromise(fetchDataAndSetState(), 2)
+          await promiseVal
+        } catch {
+        | _ => setState(_ => Localdata(initialData))
+        }
       } else {
         logger(
           ~logType=INFO,
@@ -82,6 +69,9 @@ module WrapperProvider = {
       }
     }
 
+    let fetchCountryStateData = () => {
+      loadData()->ignore
+    }
     <Provider value=(state, fetchCountryStateData)> children </Provider>
   }
 }
@@ -90,28 +80,25 @@ module WrapperProvider = {
 let make = (~children) => {
   let (state, setState) = React.useState(_ => None)
   React.useEffect0(() => {
-    RequiredFieldsTypes.importStatesAndCountries(
-      "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
-    )
-    ->Promise.then(res => {
-      let initialData = S3ApiHook.decodeJsonTocountryStateData(res)
+    let loadData = async () => {
+      try {
+        let stateAndCountryJson = await RequiredFieldsTypes.importStatesAndCountries(
+          "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
+        )
 
-      RequiredFieldsTypes.importStatesAndCountries(
-        "./../utility/reusableCodeFromWeb/Phone_number.json",
-      )
-      ->Promise.then(
-        async json => {
-          S3ApiHook.decodeJsonToPhoneCountryCodeData(json)
-        },
-      )
-      ->Promise.thenResolve(
-        v => {
-          setState(_ => Some({...initialData, phoneCountryCodes: v}))
-        },
-      )
-    })
-    ->Promise.catch(_ => Promise.resolve())
-    ->ignore
+        let initialData = S3ApiHook.decodeJsonTocountryStateData(stateAndCountryJson)
+        let phoneNoJson = await RequiredFieldsTypes.importStatesAndCountries(
+          "./../utility/reusableCodeFromWeb/Phone_number.json",
+        )
+
+        let phoneCountryCodes = S3ApiHook.decodeJsonToPhoneCountryCodeData(phoneNoJson)
+        setState(_ => Some({...initialData, phoneCountryCodes}))
+      } catch {
+      | _ => ()
+      }
+    }
+
+    loadData()->ignore
     None
   })
   switch state {
