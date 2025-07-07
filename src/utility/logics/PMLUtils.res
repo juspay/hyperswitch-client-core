@@ -2,10 +2,12 @@ let handleCustomerPMLResponse = (
   ~customerSavedPMData,
   ~sessions: AllApiDataContext.sessions,
   ~isPaymentMethodManagement,
+  ~nativeProp: SdkTypes.nativeProp,
 ) => {
   switch customerSavedPMData {
   | Some(obj) => {
       let spmData = obj->PaymentMethodListType.jsonToSavedPMObj
+      let isSamsungDevice = nativeProp.hyperParams.deviceBrand->Option.getOr("") == "samsung"
 
       let sessionSpmData = spmData->Array.filter(data => {
         switch data {
@@ -16,6 +18,9 @@ let handleCustomerPMLResponse = (
           | (GOOGLE_PAY, #androidWebView)
           | (APPLE_PAY, #ios)
           | (APPLE_PAY, #iosWebView) => true
+          | (SAMSUNG_PAY, #android)
+          | (SAMSUNG_PAY, #androidWebView) =>
+            isSamsungDevice && WebKit.platform === #android
           | _ => false
           }
         | _ => false
@@ -27,7 +32,7 @@ let handleCustomerPMLResponse = (
         | SAVEDLISTWALLET(val) =>
           let walletType = val.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
           switch walletType {
-          | GOOGLE_PAY | APPLE_PAY => false
+          | GOOGLE_PAY | APPLE_PAY | SAMSUNG_PAY => false
           | _ => true
           }
         | _ => false
@@ -53,9 +58,16 @@ let handleCustomerPMLResponse = (
           | _ => false
           }
         )
-        filteredSessionSpmData->Array.concat(walletSpmData->Array.concat(cardSpmData))
+        //to maintain the same order of elements dont use concat
+        let lookupSet = [...filteredSessionSpmData, ...walletSpmData, ...cardSpmData]->Set.fromArray
+        spmData->Array.filter(Set.has(lookupSet, _))
 
-      | _ => isPaymentMethodManagement ? spmData : walletSpmData->Array.concat(cardSpmData)
+      | _ =>
+        isPaymentMethodManagement
+          ? spmData
+          : spmData->Array.filter(data =>
+              walletSpmData->Array.includes(data) || cardSpmData->Array.includes(data)
+            )
       }
 
       let isGuestFromPMList =

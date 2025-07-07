@@ -108,7 +108,7 @@ let useExternalThreeDs = () => {
         }
 
         let headers = getAuthCallHeaders(publishableKey)
-        CommonHooks.fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
+        APIUtils.fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
         ->Promise.then(data => {
           let statusCode = data->Fetch.Response.status->string_of_int
           if statusCode->String.charAt(0) === "2" {
@@ -227,7 +227,7 @@ let useExternalThreeDs = () => {
         (),
       )
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
-      CommonHooks.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
+      APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
       ->Promise.then(async data => {
         setLoading(ProcessingPayments(None))
         let statusCode = data->Fetch.Response.status->string_of_int
@@ -275,11 +275,9 @@ let useExternalThreeDs = () => {
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
       let threeDSRequestorAppURL = Utils.getReturnUrl(
-        ~appURL=switch challengeParams.threeDSRequestorAppURL {
-        | Some(url) => Value(url)
-        | None => Null
-        },
         ~appId,
+        ~appURL=challengeParams.threeDSRequestorAppURL,
+        ~useAppUrl=true,
       )
       Promise.make((resolve, reject) => {
         Netcetera3dsModule.recieveChallengeParamsFromRN(
@@ -338,7 +336,7 @@ let useExternalThreeDs = () => {
         (),
       )
 
-      CommonHooks.fetchApi(~uri, ~bodyStr, ~headers, ~method_=Post, ())
+      APIUtils.fetchApi(~uri, ~bodyStr, ~headers, ~method_=Post, ())
       ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {

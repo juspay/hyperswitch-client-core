@@ -14,14 +14,13 @@ let make = (~onModalClose) => {
   }
 
   <View
-    style={viewStyle(
-      ~display=#flex,
-      ~flexGrow=?{ReactNative.Platform.os !== #web ? Some(1.) : None},
-      ~flexDirection=#row,
-      ~alignItems=#center,
-      ~justifyContent=#"space-between",
-      (),
-    )}>
+    style={s({
+      display: #flex,
+      flexGrow: ?(ReactNative.Platform.os !== #web ? Some(1.) : None),
+      flexDirection: #row,
+      alignItems: #center,
+      justifyContent: #"space-between",
+    })}>
     {if isLoadingScreenActive {
       <View />
     } else {
@@ -29,44 +28,43 @@ let make = (~onModalClose) => {
       | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
       | PaymentScreenContext.SAVEDCARDSCREEN =>
         nativeProp.configuration.savedPaymentScreenHeaderText
+      | BANK_TRANSFER(_) => None
+      | WALLET_MISSING_FIELDS(_, _, _) => Some("Billing Address")
       } {
       | Some(var) =>
-        <View style={viewStyle(~maxWidth=60.->pct, ())}>
+        <View style={s({maxWidth: 60.->pct})}>
           <TextWrapper text={var} textType={HeadingBold} />
         </View>
       | _ => <View />
       }
     }}
     <View
-      style={viewStyle(
-        ~flexDirection=#row,
-        ~flexWrap=#wrap,
-        ~alignItems=#center,
-        ~maxWidth=40.->pct,
-        (),
-      )}>
+      style={s({flexDirection: #row, flexWrap: #wrap, alignItems: #center, maxWidth: 40.->pct})}>
       {isLoadingScreenActive
         ? React.null
         : <>
             {nativeProp.env === GlobalVars.PROD
               ? React.null
               : <View
-                  style={viewStyle(
-                    ~backgroundColor="#ffdd93",
-                    ~marginHorizontal=5.->dp,
-                    ~padding=5.->dp,
-                    ~borderRadius=5.,
-                    (),
-                  )}>
+                  style={s({
+                    backgroundColor: "#ffdd93",
+                    marginHorizontal: 5.->dp,
+                    padding: 5.->dp,
+                    borderRadius: 5.,
+                  })}>
                   <TextWrapper
                     textType={ModalTextBold}
                     text="Test Mode"
-                    overrideStyle=Some(textStyle(~color="black", ()))
+                    overrideStyle=Some(s({color: "black"}))
                   />
                 </View>}
-            <CustomTouchableOpacity onPress={_ => onModalClose()}>
-              <Icon name="close" width=16. height=16. fill=iconColor />
-            </CustomTouchableOpacity>
+            {switch paymentScreenType {
+            | BANK_TRANSFER(_) => React.null
+            | _ =>
+              <CustomTouchableOpacity onPress={_ => onModalClose()}>
+                <Icon name="close" width=16. height=16. fill=iconColor />
+              </CustomTouchableOpacity>
+            }}
           </>}
     </View>
   </View>

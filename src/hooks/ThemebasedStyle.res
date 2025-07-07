@@ -65,47 +65,38 @@ let status_color = {
 }
 let styles = {
   StyleSheet.create({
-    "light_bgColor": viewStyle(~backgroundColor="#ffffff", ()),
-    "dark_bgColor": viewStyle(~backgroundColor="#2e2e2e", ()),
-    "flatMinimal_bgColor": viewStyle(~backgroundColor="rgba(107, 114, 128, 1)", ()),
-    "minimal_bgColor": viewStyle(~backgroundColor="#ffffff", ()),
-    "light_bgTransparentColor": viewStyle(
-      ~backgroundColor=Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2),
-      (),
-    ),
-    "dark_bgTransparentColor": viewStyle(~backgroundColor=Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2), ()),
-    "flatMinimal_bgTransparentColor": viewStyle(
-      ~backgroundColor=Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2),
-      (),
-    ),
-    "minimal_bgTransparentColor": viewStyle(
-      ~backgroundColor=Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2),
-      (),
-    ),
-    "light_textPrimary": textStyle(~color="#0570de", ()),
-    "dark_textPrimary": textStyle(~color="#FFFFFF", ()),
-    "flatMinimal_textPrimary": textStyle(~color="#e0e0e0", ()),
-    "minimal_textPrimary": textStyle(~color="black", ()),
-    "light_textSecondary": textStyle(~color="#767676", ()),
-    "dark_textSecondary": textStyle(~color="#F6F8F9", ()),
-    "flatMinimal_textSeconadry": textStyle(~color="#F6F8FA", ()),
-    "minimal_textSeconadry": textStyle(~color="blue", ()),
-    "light_textSecondary_Bold": textStyle(~color="#000000", ()),
-    "dark_textSecondaryBold": textStyle(~color="#F6F8F9", ()),
-    "flatMinimal_textSeconadryBold": textStyle(~color="#F6F8FA", ()),
-    "minimal_textSeconadryBold": textStyle(~color="blue", ()),
-    "light_textInputBg": viewStyle(~backgroundColor="#ffffff", ()),
-    "dark_textInputBg": viewStyle(~backgroundColor="#444444", ()),
-    "flatMinimal_textInputBg": viewStyle(~backgroundColor="black", ()),
-    "minimal_textInputBg": viewStyle(~backgroundColor="white", ()),
-    "light_boxColor": viewStyle(~backgroundColor="#FFFFFF", ()),
-    "dark_boxColor": viewStyle(~backgroundColor="#191A1A", ()),
-    "flatMinimal_boxColor": viewStyle(~backgroundColor="#191A1A", ()),
-    "minimal_boxColor": viewStyle(~backgroundColor="#191A1A", ()),
-    "light_boxBorderColor": viewStyle(~borderColor="#e4e4e5", ()),
-    "dark_boxBorderColor": viewStyle(~borderColor="#79787d", ()),
-    "flatMinimal_boxBorderColor": viewStyle(~borderColor="#3541ff", ()),
-    "minimal_boxBorderColor": viewStyle(~borderColor="#e4e4e5", ()),
+    "light_bgColor": s({backgroundColor: "#ffffff"}),
+    "dark_bgColor": s({backgroundColor: "#2e2e2e"}),
+    "flatMinimal_bgColor": s({backgroundColor: "rgba(107, 114, 128, 1)"}),
+    "minimal_bgColor": s({backgroundColor: "#ffffff"}),
+    "light_bgTransparentColor": s({backgroundColor: Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2)}),
+    "dark_bgTransparentColor": s({backgroundColor: Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2)}),
+    "flatMinimal_bgTransparentColor": s({backgroundColor: Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2)}),
+    "minimal_bgTransparentColor": s({backgroundColor: Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.2)}),
+    "light_textPrimary": s({color: "#0570de"}),
+    "dark_textPrimary": s({color: "#FFFFFF"}),
+    "flatMinimal_textPrimary": s({color: "#e0e0e0"}),
+    "minimal_textPrimary": s({color: "black"}),
+    "light_textSecondary": s({color: "#767676"}),
+    "dark_textSecondary": s({color: "#F6F8F9"}),
+    "flatMinimal_textSeconadry": s({color: "#F6F8FA"}),
+    "minimal_textSeconadry": s({color: "blue"}),
+    "light_textSecondary_Bold": s({color: "#000000"}),
+    "dark_textSecondaryBold": s({color: "#F6F8F9"}),
+    "flatMinimal_textSeconadryBold": s({color: "#F6F8FA"}),
+    "minimal_textSeconadryBold": s({color: "blue"}),
+    "light_textInputBg": s({backgroundColor: "#ffffff"}),
+    "dark_textInputBg": s({backgroundColor: "#444444"}),
+    "flatMinimal_textInputBg": s({backgroundColor: "black"}),
+    "minimal_textInputBg": s({backgroundColor: "white"}),
+    "light_boxColor": s({backgroundColor: "#FFFFFF"}),
+    "dark_boxColor": s({backgroundColor: "#191A1A"}),
+    "flatMinimal_boxColor": s({backgroundColor: "#191A1A"}),
+    "minimal_boxColor": s({backgroundColor: "#191A1A"}),
+    "light_boxBorderColor": s({borderColor: "#e4e4e5"}),
+    "dark_boxBorderColor": s({borderColor: "#79787d"}),
+    "flatMinimal_boxBorderColor": s({borderColor: "#3541ff"}),
+    "minimal_boxBorderColor": s({borderColor: "#e4e4e5"}),
   })
 }
 
@@ -173,6 +164,13 @@ type themeBasedStyleObj = {
   shadowColor: string,
   shadowIntensity: float,
   primaryButtonHeight: float,
+  disclaimerBackgroundColor: string,
+  disclaimerTextColor: string,
+  instructionalTextColor: string,
+  poweredByTextColor: string,
+  detailsViewTextKeyColor: string,
+  detailsViewTextValueColor: string,
+  silverBorderColor: string,
   sheetContentPadding: float,
   errorMessageSpacing: float,
 }
@@ -253,6 +251,13 @@ let darkRecord = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 2.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor: "#CCCCCC",
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
 }
@@ -332,6 +337,13 @@ let lightRecord = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 2.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor: "#CCCCCC",
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
 }
@@ -414,6 +426,13 @@ let minimal = {
   shadowIntensity: 3.,
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor: "#CCCCCC",
 }
 
 let flatMinimal = {
@@ -492,6 +511,13 @@ let flatMinimal = {
   normalTextInputBoderColor: "rgba(204, 210, 226, 0.75)",
   shadowColor: "black",
   shadowIntensity: 3.,
+  disclaimerBackgroundColor: "#FDF3E0",
+  disclaimerTextColor: "#D57F0C",
+  instructionalTextColor: "#999999",
+  poweredByTextColor: "#111111",
+  detailsViewTextKeyColor: "#999999",
+  detailsViewTextValueColor: "#333333",
+  silverBorderColor: "#CCCCCC",
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
 }
@@ -548,7 +574,7 @@ let itemToObj = (
       | Some(obj) => obj.background
       | _ => None
       },
-      ~fn=val => viewStyle(~backgroundColor=val, ()),
+      ~fn=val => s({backgroundColor: val}),
       ~default=themeObj.bgColor,
     ),
     loadingBgColor: getStrProp(
@@ -571,7 +597,7 @@ let itemToObj = (
       | Some(obj) => obj.primaryText
       | _ => None
       },
-      ~fn=val => textStyle(~color=val, ()),
+      ~fn=val => s({color: val}),
       ~default=themeObj.textPrimary,
     ),
     textSecondary: getStyleProp(
@@ -579,7 +605,7 @@ let itemToObj = (
       | Some(obj) => obj.secondaryText
       | _ => None
       },
-      ~fn=val => textStyle(~color=val, ()),
+      ~fn=val => s({color: val}),
       ~default=themeObj.textSecondary,
     ),
     textSecondaryBold: getStyleProp(
@@ -587,7 +613,7 @@ let itemToObj = (
       | Some(obj) => obj.secondaryText
       | _ => None
       },
-      ~fn=val => textStyle(~color=val, ()),
+      ~fn=val => s({color: val}),
       ~default=themeObj.textSecondaryBold,
     ),
     placeholderColor: getStrProp(
@@ -880,6 +906,13 @@ let itemToObj = (
       ~defaultProp=themeObj.shadowIntensity,
     ),
     paymentSheetOverlay: themeObj.paymentSheetOverlay,
+    disclaimerBackgroundColor: themeObj.disclaimerBackgroundColor,
+    disclaimerTextColor: themeObj.disclaimerTextColor,
+    instructionalTextColor: themeObj.instructionalTextColor,
+    poweredByTextColor: themeObj.poweredByTextColor,
+    detailsViewTextKeyColor: themeObj.detailsViewTextKeyColor,
+    detailsViewTextValueColor: themeObj.detailsViewTextValueColor,
+    silverBorderColor: themeObj.silverBorderColor,
     sheetContentPadding: themeObj.sheetContentPadding,
     errorMessageSpacing: themeObj.errorMessageSpacing,
   }

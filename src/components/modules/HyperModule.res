@@ -11,6 +11,7 @@ type hyperModule = {
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
+  updateWidgetHeight: int => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -49,6 +50,7 @@ let hyperModule = {
     _,
     _,
   ) => ()),
+  updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
 }
 
 let sendMessageToNative = str => {
@@ -84,46 +86,41 @@ let useExitPaymentsheet = () => {
   let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
-    logger(
-      ~logType=INFO,
-      ~value=nativeProp.hyperParams.appId->Option.getOr(""),
-      ~category=USER_EVENT,
-      ~eventName=SDK_CLOSED,
-      (),
-    )
-    //setSdkState(SdkTypes.NoView)
-    // switch ref {
-    // | None => ()
-    // | Some(fun) => fun(JSON.Encode.null)
-    // }
-    ReactNative.Platform.os == #web
-      ? // BrowserHook.href(
-        //     BrowserHook.location,
-        //     `${allApiData.redirect_url->Option.getOr("")}?status=${apiResStatus.status->Option.getOr(
-        //         "failed",
-        //       )}&payment_intent_client_secret=${nativeProp.clientSecret}&amount=6541`,
-        //   )
-        exitPaymentSheet(apiResStatus->stringifiedResStatus)
-      : switch nativeProp.sdkState {
-        | WidgetPaymentSheet =>
-          hyperModule.exitWidgetPaymentsheet(
-            nativeProp.rootTag,
-            apiResStatus->stringifiedResStatus,
-            reset,
-          )
-        | PaymentMethodsManagement =>
-          hyperModule.exitPaymentMethodManagement(
-            nativeProp.rootTag,
-            apiResStatus->stringifiedResStatus,
-            reset,
-          )
-        | _ =>
-          hyperModule.exitPaymentsheet(
-            nativeProp.rootTag,
-            apiResStatus->stringifiedResStatus,
-            reset,
-          )
-        }
+    Sentry.flushAndCloseSentry()
+    ->Promise.then(() => {
+      logger(
+        ~logType=INFO,
+        ~value=nativeProp.hyperParams.appId->Option.getOr(""),
+        ~category=USER_EVENT,
+        ~eventName=SDK_CLOSED,
+        (),
+      )
+      ReactNative.Platform.os == #web
+        ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
+        : switch nativeProp.sdkState {
+          | WidgetPaymentSheet =>
+            hyperModule.exitWidgetPaymentsheet(
+              nativeProp.rootTag,
+              apiResStatus->stringifiedResStatus,
+              reset,
+            )
+          | PaymentMethodsManagement =>
+            hyperModule.exitPaymentMethodManagement(
+              nativeProp.rootTag,
+              apiResStatus->stringifiedResStatus,
+              reset,
+            )
+          | _ =>
+            hyperModule.exitPaymentsheet(
+              nativeProp.rootTag,
+              apiResStatus->stringifiedResStatus,
+              reset,
+            )
+          }
+
+      Promise.resolve()
+    })
+    ->ignore
   }
 
   let simplyExit = (apiResStatus, rootTag, reset) => {
@@ -166,4 +163,8 @@ let launchGPay = (requestObj: string, callback) => {
 
 let launchWidgetPaymentSheet = (requestObj: string, callback) => {
   hyperModule.launchWidgetPaymentSheet(requestObj, callback)
+}
+
+let updateWidgetHeight = (height: int) => {
+  hyperModule.updateWidgetHeight(height)
 }

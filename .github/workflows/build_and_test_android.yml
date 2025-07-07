@@ -1,14 +1,30 @@
-# .github/workflows/e2e-android.yml
-name: e2e-android
-on: push
+name: Test All / build_and_test_android (pull_request)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
 
 jobs:
   e2e-android:
     runs-on: ubuntu-latest
+    env:
+      SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+      SENTRY_ENV: 'production'
+      HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
+      HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
+      HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+      HYPERSWITCH_LOGS_PATH: ${{ secrets.HYPERSWITCH_LOGS_PATH }}
+      PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
+      SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+      INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
+      HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+      HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
+      PROFILE_ID: ${{ secrets.PROFILE_ID }}
+      NETCETERA_SDK_API_KEY: ${{ secrets.NETCETERA_SDK_API_KEY }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
       - name: Free Disk Space
         run: |
           sudo rm -rf /opt/hostedtoolcache
@@ -22,24 +38,25 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Shared Code Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           # cache: 'npm'
           # cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
         run: npm install
-
-      - name: Create .env file
-        run: |
-          touch .env
-          echo  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
-          echo STATIC_DIR = ./dist >> .env
-          echo HYPERSWITCH_PUBLISHABLE_KEY =  ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}>> .env
-          echo HYPERSWITCH_SECRET_KEY =  ${{ secrets.HYPERSWITCH_SECRET_KEY }}>> .env
-          echo PROFILE_ID =  ${{ secrets.PROFILE_ID }}>> .env
 
       - name: Start server
         run: |
@@ -75,13 +92,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-android
-          ref: detox-poc
+          ref: main
           path: android
           fetch-depth: 0
-
-      - name: Check Android branch
-        run: |
-          cd android && git branch && cd ..
 
       - name: Generate DS Root Certificate for Netcetera SDK
         run: |
@@ -98,29 +111,19 @@ jobs:
 
       - name: Generate & Supply JS Bundle to Test APK
         run: |
-          npm run re:start && npm run bundle:android
+          npm run re:start
 
       - name: Start Metro
         run: |
           nohup npm run start &
 
       - name: Detox build
-        run: cd android && ls && cd .. && npx detox build --configuration android.emu.ci.debug
-
-      - name: Get device name
-        id: device
-        run: node -e "console.log('AVD_NAME=' + require('./.detoxrc').devices.ciEmulator.device.avdName)" >> $GITHUB_OUTPUT
-
-      - name: Check Android branch
-        run: |
-          cd android && git branch && cd ..
+        run: npx detox build --configuration android.emu.ci.debug
 
       - name: Detox test
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
-          target: default
+          api-level: 35
           arch: x86_64
           profile: pixel
-          avd-name: ${{ steps.device.outputs.AVD_NAME }}
-          script: npx detox test --configuration android.emu.ci.debug  --headless --loglevel trace --record-logs all
+          script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless # --loglevel trace --record-logs all

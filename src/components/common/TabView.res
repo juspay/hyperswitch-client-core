@@ -63,8 +63,8 @@ let make = (
   <View
     onLayout={handleLayout}
     style={switch style {
-    | Some(style) => array([viewStyle(~flex=1., ~overflow=#hidden, ()), style])
-    | None => viewStyle(~flex=1., ~overflow=#hidden, ())
+    | Some(style) => array([s({flex: 1., overflow: #hidden}), style])
+    | None => s({flex: 1., overflow: #hidden})
     }}>
     <Pager
       layout

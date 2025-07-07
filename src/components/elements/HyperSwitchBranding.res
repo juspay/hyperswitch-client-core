@@ -5,15 +5,14 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   <UIUtils.RenderIf condition={!nativeProp.hyperParams.disableBranding}>
     <Space />
-    <View style={viewStyle(~alignItems=#center, ())}>
+    <View style={s({alignItems: #center})}>
       <View
-        style={viewStyle(
-          ~flexDirection=#row,
-          ~display={#flex},
-          ~alignItems=#center,
-          ~justifyContent=#center,
-          (),
-        )}>
+        style={s({
+          flexDirection: #row,
+          display: {#flex},
+          alignItems: #center,
+          justifyContent: #center,
+        })}>
         <TextWrapper textType={Heading}> {"powered by "->React.string} </TextWrapper>
         <TextWrapper textType={HeadingBold}> {"Hyperswitch"->React.string} </TextWrapper>
       </View>

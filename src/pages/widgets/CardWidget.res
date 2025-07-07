@@ -13,16 +13,15 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let retrievePayment = AllPaymentHooks.useRetrieveHook()
-
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let processRequest = (
     prop: PaymentMethodListType.payment_method_types_card,
     clientSecret,
     publishableKey,
   ) => {
     let errorCallback = (~errorMessage, ~closeSDK, ()) => {
-      if !closeSDK {
-        setLoading(FillingDetails)
-      }
+      setLoading(FillingDetails)
+
       handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
     let responseCallback = (
@@ -71,7 +70,10 @@ let make = () => {
 
     let body: PaymentMethodListType.redirectType = {
       client_secret: clientSecret,
-      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
+      return_url: ?Utils.getReturnUrl(
+        ~appId=nativeProp.hyperParams.appId,
+        ~appURL=allApiData.additionalPMLData.redirect_url,
+      ),
       payment_method: prop.payment_method,
       payment_method_type: prop.payment_method_type,
       connector: switch prop.card_networks {
@@ -124,32 +126,15 @@ let make = () => {
     })
     ->ignore
   }
-
   React.useEffect5(() => {
-    let nee = NativeEventEmitter.make(
-      Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
-    )
-    let event = NativeEventEmitter.addListener(nee, "confirm", var => {
-      let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
-      handlePress(responseFromJava.clientSecret, responseFromJava.publishableKey)
-    })
-    HyperModule.sendMessageToNative(`{"isReady": "true", "paymentMethodType": "card"}`)
-    Some(
-      () => {
-        event->EventSubscription.remove
-      },
-    )
+    let cleanup = NativeEventListener.setupPaymentConfirmListener(~onConfirm=handlePress) // handlePress already takes clientSecret and publishableKey
+
+    Some(cleanup)
   }, (cardNumber, cvv, expireDate, zip, isCardValuesValid))
 
   <View
     style={array([
-      viewStyle(
-        ~flex=1.,
-        ~justifyContent=#center,
-        ~alignItems=#center,
-        ~backgroundColor="transparent",
-        (),
-      ),
+      s({flex: 1., justifyContent: #center, alignItems: #center, backgroundColor: "transparent"}),
     ])}>
     <CardElement
       setIsAllValid=setIsCardValuesValid viewType=CardElement.CardForm({isZipAvailable: true}) reset
