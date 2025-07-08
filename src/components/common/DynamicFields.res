@@ -101,7 +101,7 @@ module RenderField = {
     React.useEffect(() => {
       setVal(_ => initialValue)
       None
-    }, (required_fields_type, isSaveCardsFlow, initialValue))
+    }, (required_fields_type, isSaveCardsFlow))
 
     let (errorMessage, setErrorMesage) = React.useState(_ => None)
 
