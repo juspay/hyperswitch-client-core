@@ -42,23 +42,23 @@ let make = (
   // let (blikCode, setBlikCode) = React.useState(_ => None)
   let showAlert = AlertHook.useAlerts()
 
-  // let bankName = switch redirectProp {
-  // | BANK_REDIRECT(prop) => prop.bank_names
-  // | _ => []
-  // }
+  let bankName = switch redirectProp {
+  | BANK_REDIRECT(prop) => prop.bank_names
+  | _ => []
+  }
 
-  // let getBankNames = bankNames => {
-  //   bankNames
-  //   ->Array.map(x => {
-  //     x.bank_name
-  //   })
-  //   ->Array.reduce([], (acc, item) => {
-  //     acc->Array.concat(item)
-  //   })
-  //   ->Array.map(x => {
-  //     x->JSON.parseExn->JSON.Decode.string->Option.getOr("")
-  //   })
-  // }
+  let getBankNames = bankNames => {
+    bankNames
+    ->Array.map(x => {
+      x.bank_name
+    })
+    ->Array.reduce([], (acc, item) => {
+      acc->Array.concat(item)
+    })
+    ->Array.map(x => {
+      x->JSON.parseExn->JSON.Decode.string->Option.getOr("")
+    })
+  }
   let paymentMethod = switch redirectProp {
   | CARD(prop) => prop.payment_method_type
   | WALLET(prop) => prop.payment_method_type
@@ -104,24 +104,24 @@ let make = (
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   }
-  // let paymentMethodType = switch redirectProp {
-  // | BANK_REDIRECT(prop) => prop.payment_method_type
-  // | _ => ""
-  // }
-  // let bankList = switch paymentMethodType {
-  // | "ideal" => getBankNames(bankName)->Js.Array.sortInPlace
-  // | "eps" => getBankNames(bankName)->Js.Array.sortInPlace
-  // | _ => []
-  // }
+  let paymentMethodType = switch redirectProp {
+  | BANK_REDIRECT(prop) => prop.payment_method_type
+  | _ => ""
+  }
+  let bankList = switch paymentMethodType {
+  | "ideal" => getBankNames(bankName)->Js.Array.sortInPlace
+  | "eps" => getBankNames(bankName)->Js.Array.sortInPlace
+  | _ => []
+  }
 
-  // let bankItems = Bank.bankNameConverter(bankList)
+  let bankItems = Bank.bankNameConverter(bankList)
 
-  // let bankData: array<customPickerType> = bankItems->Array.map(item => {
-  //   {
-  //     label: item.displayName,
-  //     value: item.hyperSwitch,
-  //   }
-  // })
+  let bankData: array<CustomPicker.customPickerType> = bankItems->Array.map((item: Bank.bank) => {
+    {
+      CustomPicker.label: item.displayName,
+      value: item.hyperSwitch,
+    }
+  })
   // let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   // let countryData: array<customPickerType> = switch statesAndCountry {
@@ -136,18 +136,18 @@ let make = (
   // | _ => []
   // }
 
-  // let (selectedBank, setSelectedBank) = React.useState(_ => Some(
-  //   switch bankItems->Array.get(0) {
-  //   | Some(x) => x.hyperSwitch
-  //   | _ => ""
-  //   },
-  // ))
+  let (selectedBank, setSelectedBank) = React.useState(_ => Some(
+    switch bankItems->Array.get(0) {
+    | Some(x) => x.hyperSwitch
+    | _ => ""
+    },
+  ))
 
   let logger = LoggerHook.useLoggerHook()
 
-  // let onChangeBank = val => {
-  //   setSelectedBank(val)
-  // }
+  let onChangeBank = val => {
+    setSelectedBank(val)
+  }
 
   // let onChangeBlikCode = (val: string) => {
   //   let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
@@ -417,6 +417,11 @@ let make = (
       acc->Dict.set(key, val)
       acc
     })
+    switch selectedBank {
+    | Some(bank) when bank !== "" =>
+      dynamicFieldsJsonDict->Dict.set("payment_method_data.bank_redirect." ++ prop.payment_method_type ++ ".bank", bank->JSON.Encode.string)
+    | _ => ()
+    }
 
     let payment_method_data =
       dynamicFieldsJsonDict
@@ -766,6 +771,19 @@ let make = (
             <ErrorText text=error />
           </>
         : <>
+            {switch (redirectProp, bankData->Array.length > 0) {
+            | (BANK_REDIRECT(_), true) =>
+              <>
+                <CustomPicker
+                  value=selectedBank
+                  setValue=onChangeBank
+                  items=bankData
+                  placeholderText="Select Bank"
+                />
+                <Space height=15. />
+              </>
+            | _ => React.null
+            }}
             <DynamicFields
               requiredFields={switch redirectProp {
               | PAY_LATER(prop) => prop.required_field
