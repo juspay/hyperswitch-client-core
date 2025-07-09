@@ -8,7 +8,7 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
   let onChange = text => {
     setNickname(_ => text == "" || String.trim(text) == "" ? None : Some(text))
 
-    switch text->Validation.containsMoreThanTwoDigits {
+    switch text->CardValidations.containsMoreThanTwoDigits {
     | true => {
         setErrorMesage(_ => Some(localeObject.invalidDigitsNickNameError))
         setIsNicknameValid(_ => false)
