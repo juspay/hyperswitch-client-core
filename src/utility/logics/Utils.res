@@ -327,8 +327,8 @@ let getCustomReturnAppUrl = (~appId) => {
 
 let getReturnUrlWeb = (~appURL) =>
   switch appURL {
-  | Some(url) => url->Some
-  | _ => None // Window.location.href->Some
+  | Some(_url) => (Window.location.href ++ "redirect")->Some // url->Some
+  | _ => None
   }
 
 let getReturnUrl = (~appId, ~appURL: option<string>=None, ~useAppUrl=false) => {

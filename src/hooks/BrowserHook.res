@@ -55,17 +55,20 @@ let openUrl = (
   returnUrl,
   intervalId: React.ref<RescriptCore.Nullable.t<intervalId>>,
   ~useEphemeralWebSession=false,
-  ~appearance:SdkTypes.appearance,
+  ~appearance: SdkTypes.appearance,
 ) => {
   {
     ReactNative.Platform.os === #web
       ? Promise.make((resolve, _reject) => {
           let newTab = Window.open_(url)
+          Console.log2("url", url)
+
           intervalId.current = setInterval(() => {
               try {
                 switch newTab->Nullable.toOption {
                 | Some(tab) =>
                   let currentUrl = tab.location.href
+                  Console.log2("currentUrl", currentUrl)
                   resolve({message: currentUrl, url: None, \"type": ""})
                   switch intervalId.current->Nullable.toOption {
                   | Some(id) => clearInterval(id)
