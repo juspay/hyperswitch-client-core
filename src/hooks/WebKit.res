@@ -66,7 +66,7 @@ let useWebKit = () => {
   }
   let launchApplePay = str => {
     switch platform {
-    | #iosWebView | #web =>
+    | #iosWebView =>
       switch messageHandlers {
       | Some(messageHandlers) =>
         switch messageHandlers.launchApplePay {
@@ -79,8 +79,9 @@ let useWebKit = () => {
     }
   }
   let launchGPay = str => {
+    Console.log(str)
     switch platform {
-    | #androidWebView | #web =>
+    | #androidWebView =>
       switch Window.androidInterface->Nullable.toOption {
       | Some(interface) => interface.launchGPay(str)
       | None => ()

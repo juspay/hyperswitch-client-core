@@ -36,8 +36,9 @@ let make = (~children) => {
 
   let (state, setState) = React.useState(_ => {
     ...defaultVal,
-    navigationBarHeight: nativeProp.hyperParams.bottomInset->Option.getOr(0.) +.
-      defaultNavbarHeight,
+    navigationBarHeight: WebKit.platform === #androidWebView
+      ? 30.
+      : nativeProp.hyperParams.bottomInset->Option.getOr(0.) +. defaultNavbarHeight,
   })
 
   let setState = React.useCallback1(val => {
