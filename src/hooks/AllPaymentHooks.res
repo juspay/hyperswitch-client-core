@@ -99,7 +99,7 @@ let useBrowserHook = () => {
     ~paymentMethod: option<string>=?,
     ~useEphemeralWebSession=false,
   ) => {
-    let res = await BrowserHook.openUrl(
+    let res = await InAppBrowser.openUrl(
       openUrl,
       Utils.getReturnUrl(
         ~appId=nativeProp.hyperParams.appId,

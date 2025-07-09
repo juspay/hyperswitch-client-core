@@ -17,41 +17,31 @@ let make = (~children) => {
   //getLocaleStringsFromJson
   let path = "/jsons/locales"
   React.useEffect0(() => {
-    fetchDataFromS3WithGZipDecoding(
-      ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
-      ~s3Path=`${path}/${SdkTypes.localeTypeToString(locale)}`,
-    )
-    ->Promise.then(res => {
-      switch res {
-      | Some(data) =>
-        setState(_ => Some(data))
-        Promise.resolve()
-      | _ => Promise.reject(Exn.raiseError("API Failed"))
-      }
-    })
-    ->Promise.catch(_ => {
-      fetchDataFromS3WithGZipDecoding(
-        ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
-        ~s3Path=`${path}/${SdkTypes.localeTypeToString(Some(En))}`,
-      )
-      ->Promise.then(
-        res => {
+    let loadData = async () => {
+      let fetchDataAndSetState = async () => {
+        try {
+          let res = await fetchDataFromS3WithGZipDecoding(
+            ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
+            ~s3Path=`${path}/${SdkTypes.localeTypeToString(locale)}`,
+          )
           switch res {
-          | Some(data) =>
-            setState(_ => Some(data))
-            Promise.resolve()
-          | _ => Promise.reject(Exn.raiseError("API Failed"))
+          | Some(data) => setState(_ => Some(data))
+          | _ => raise(Exn.raiseError("API failed"))
           }
-        },
-      )
-      ->Promise.catch(
-        _ => {
-          setState(_ => Some(LocaleDataType.defaultLocale))
-          Promise.resolve()
-        },
-      )
-    })
-    ->ignore
+        } catch {
+        | _ => ()
+        }
+      }
+
+      try {
+        let promiseVal = await PromiseUtils.autoRetryPromise(fetchDataAndSetState(), 2)
+        await promiseVal
+      } catch {
+      | _ => setState(_ => Some(LocaleDataType.defaultLocale))
+      }
+    }
+
+    loadData()->ignore
     None
   })
 
