@@ -93,6 +93,12 @@ module.exports = {
   devServer: {
     hot: true,
     port: 8082,
+    historyApiFallback: {
+      rewrites: [
+        {from: /^\/redirect/, to: '/redirect.html'},
+        {from: /./, to: '/index.html'},
+      ],
+    },
   },
   resolve: {
     extensions: [
@@ -132,6 +138,13 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: path.join(__dirname, 'index.html'),
+      filename: 'index.html',
+      chunks: ['app'],
+    }),
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, 'redirect.html'),
+      filename: 'redirect.html',
+      chunks: [],
     }),
     new webpack.HotModuleReplacementPlugin(),
     isDevelopment && new ReactRefreshWebpackPlugin(),

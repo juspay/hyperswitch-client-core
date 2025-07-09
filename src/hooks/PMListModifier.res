@@ -310,6 +310,7 @@ let useListModifier = () => {
             WebKit.platform !== #iosWebView &&
             WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
+            exp->Option.isSome &&
             sessionObject.connector !== "trustpay"
               ? {
                   if ReactNative.Platform.os === #web {
