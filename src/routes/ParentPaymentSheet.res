@@ -1,17 +1,5 @@
 open SDKLoadCheckHook
-module SdkLoadingScreen = {
-  @react.component
-  let make = () => {
-    <>
-      <Space height=20. />
-      <CustomLoader height="38" />
-      <Space height=8. />
-      <CustomLoader height="38" />
-      <Space height=50. />
-      <CustomLoader height="38" />
-    </>
-  }
-}
+open PaymentSheetViewWrappers
 
 @react.component
 let make = () => {
@@ -25,22 +13,16 @@ let make = () => {
 
   let enablePartialLoading = nativeProp.configuration.enablePartialLoading
   let canLoadSDK = useSDKLoadCheck(~enablePartialLoading)
+  let isDefaultView = nativeProp.configuration.defaultView
+  let mandateType = allApiData.additionalPMLData.mandateType
 
   <FullScreenSheetWrapper>
     {switch paymentScreenType {
-    | BANK_TRANSFER(data) =>
-      switch data {
-      | Some(data) => <ACHBankDetails data />
-      | _ => React.null
-      }
-    | WALLET_MISSING_FIELDS(
-        requiredFields: RequiredFieldsTypes.required_fields,
-        walletType,
-        walletData,
-      ) =>
-      <AddressSheet requiredFields walletType walletData />
+    | BANK_TRANSFER(_)
+    | WALLET_MISSING_FIELDS(_, _, _) =>
+      <FullSheetPaymentMethodWrapper paymentScreenType />
     | _ =>
-      <React.Fragment>
+      <>
         {switch (
           allApiData.savedPaymentMethods,
           allApiData.additionalPMLData.paymentType,
@@ -48,20 +30,19 @@ let make = () => {
         ) {
         | (_, None, _)
         | (Loading, _, _) =>
-          nativeProp.configuration.defaultView
-            ? <PaymentSheet setConfirmButtonDataRef />
-            : <SdkLoadingScreen />
+          <SDKLoadingStateWrapper isDefaultView setConfirmButtonDataRef />
         | (Some(data), _, _) =>
-          paymentScreenType == PaymentScreenContext.SAVEDCARDSCREEN &&
-          data.pmList->Option.getOr([])->Array.length > 0 &&
-          allApiData.additionalPMLData.mandateType !== SETUP_MANDATE
-            ? <SavedPaymentScreen setConfirmButtonDataRef savedPaymentMethordContextObj=data />
-            : <PaymentSheet setConfirmButtonDataRef />
+          <SDKEntryPointWrapper
+            setConfirmButtonDataRef
+            mandateType
+            isSavedPaymentMethodsAvailable={data.pmList->Option.getOr([])->Array.length > 0}
+            paymentScreenType
+          />
         | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
         }}
         <GlobalConfirmButton confirmButtonDataRef />
         <Space height=15. />
-      </React.Fragment>
+      </>
     }}
   </FullScreenSheetWrapper>
 }

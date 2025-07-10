@@ -465,11 +465,11 @@ let jsonToSavedPMObj = data => {
     data->Utils.getDictFromJson->Utils.getArrayFromDict("customer_payment_methods", [])
 
   customerSavedPMs->Array.reduce([], (acc, obj) => {
-    let savedPMData = obj->Utils.getDictFromJson
-    let cardData = savedPMData->Dict.get("card")->Option.flatMap(JSON.Decode.object)
+    let selectedSavedPM = obj->Utils.getDictFromJson
+    let cardData = selectedSavedPM->Dict.get("card")->Option.flatMap(JSON.Decode.object)
 
     let paymentMethodType =
-      savedPMData
+      selectedSavedPM
       ->Dict.get("payment_method")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.string
@@ -488,13 +488,16 @@ let jsonToSavedPMObj = data => {
             expiry_date: card->Utils.getString("expiry_month", "") ++
             "/" ++
             card->Utils.getString("expiry_year", "")->String.sliceToEnd(~start=-2),
-            payment_token: savedPMData->Utils.getString("payment_token", ""),
-            paymentMethodId: savedPMData->Utils.getString("payment_method_id", ""),
+            payment_token: selectedSavedPM->Utils.getString("payment_token", ""),
+            paymentMethodId: selectedSavedPM->Utils.getString("payment_method_id", ""),
             nick_name: card->Utils.getString("nick_name", ""),
-            isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
-            requiresCVV: savedPMData->Utils.getBool("requires_cvv", false),
-            created: savedPMData->Utils.getString("created", ""),
-            lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
+            isDefaultPaymentMethod: selectedSavedPM->Utils.getBool(
+              "default_payment_method_set",
+              false,
+            ),
+            requiresCVV: selectedSavedPM->Utils.getBool("requires_cvv", false),
+            created: selectedSavedPM->Utils.getString("created", ""),
+            lastUsedAt: selectedSavedPM->Utils.getString("last_used_at", ""),
           }),
         )
       | None => ()
@@ -502,15 +505,18 @@ let jsonToSavedPMObj = data => {
     | "wallet" =>
       acc->Array.push(
         SdkTypes.SAVEDLISTWALLET({
-          payment_method_type: savedPMData->Utils.getString("payment_method_type", ""),
-          walletType: savedPMData
+          payment_method_type: selectedSavedPM->Utils.getString("payment_method_type", ""),
+          walletType: selectedSavedPM
           ->Utils.getString("payment_method_type", "")
           ->SdkTypes.walletNameMapper,
-          payment_token: savedPMData->Utils.getString("payment_token", ""),
-          paymentMethodId: savedPMData->Utils.getString("payment_method_id", ""),
-          isDefaultPaymentMethod: savedPMData->Utils.getBool("default_payment_method_set", false),
-          created: savedPMData->Utils.getString("created", ""),
-          lastUsedAt: savedPMData->Utils.getString("last_used_at", ""),
+          payment_token: selectedSavedPM->Utils.getString("payment_token", ""),
+          paymentMethodId: selectedSavedPM->Utils.getString("payment_method_id", ""),
+          isDefaultPaymentMethod: selectedSavedPM->Utils.getBool(
+            "default_payment_method_set",
+            false,
+          ),
+          created: selectedSavedPM->Utils.getString("created", ""),
+          lastUsedAt: selectedSavedPM->Utils.getString("last_used_at", ""),
         }),
       )
     // | TODO: add suport for "bank_debit"

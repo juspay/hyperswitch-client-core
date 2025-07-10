@@ -8,7 +8,7 @@ type samsungPayStatus = {
 }
 
 let useWallet = (
-  ~selectedObj: AllApiDataContext.selectedPMObject,
+  ~selectedObj: SavedPaymentMethodContext.selectedPMObject,
   ~setMissingFieldsData,
   ~processRequestFn,
   ~isWidget=false,

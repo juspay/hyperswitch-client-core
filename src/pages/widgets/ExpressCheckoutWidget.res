@@ -94,7 +94,7 @@ let make = () => {
   }
 
   let selectedObj = {
-    AllApiDataContext.walletName: walletType,
+    SavedPaymentMethodContext.walletName: walletType,
     token: Some(pmToken),
   }
 

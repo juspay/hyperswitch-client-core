@@ -38,22 +38,13 @@ let paymentList = [
 type sessions = Some(array<SessionsType.sessions>) | Loading | None
 let sessions = Loading
 
-// type paymentMethodSelected= CARD|WALLET|NONE
-type selectedPMObject = {
-  walletName: SdkTypes.payment_method_type_wallet,
-  token: option<string>,
-}
-
 type savedPaymentMethodDataObj = {
   pmList: option<array<SdkTypes.savedDataType>>,
   isGuestCustomer: bool,
-  selectedPaymentMethod: option<selectedPMObject>,
 }
-
 type savedPaymentMethods = Loading | Some(savedPaymentMethodDataObj) | None
-
 let savedPaymentMethods: savedPaymentMethods = Loading
-let dafaultsavePMObj = {pmList: None, isGuestCustomer: false, selectedPaymentMethod: None}
+let dafaultsavePMObj = {pmList: None, isGuestCustomer: false}
 
 type allApiData = {
   additionalPMLData: additionalPMLData,

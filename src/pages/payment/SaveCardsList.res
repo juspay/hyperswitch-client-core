@@ -146,46 +146,33 @@ module PaymentMethodListView = {
   ) => {
     //~hashedCardNumber, ~expDate, ~selectedx
     let localeObj = GetLocale.useGetLocalObj()
-    let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
-    let savedPaymentMethordContextObj = switch allApiData.savedPaymentMethods {
-    | Some(data) => data
-    | _ => AllApiDataContext.dafaultsavePMObj
-    }
+
+    let (selectedSavedPM, setSelectedSavedPM) = React.useContext(
+      SavedPaymentMethodContext.savedPaymentMethodDataContext,
+    )
 
     let checkAndProcessIfWallet = (~newToken) => {
       switch newToken {
       | None =>
-        setAllApiData({
-          ...allApiData,
-          savedPaymentMethods: Some({
-            ...savedPaymentMethordContextObj,
-            selectedPaymentMethod: None,
-          }),
+        setSelectedSavedPM({
+          None
         })
       | Some(_) =>
         switch pmObject {
         | SdkTypes.SAVEDLISTCARD(_) =>
-          setAllApiData({
-            ...allApiData,
-            savedPaymentMethods: Some({
-              ...savedPaymentMethordContextObj,
-              selectedPaymentMethod: Some({
-                walletName: NONE,
-                token: newToken,
-              }),
-            }),
+          setSelectedSavedPM({
+            Some({
+              walletName: NONE,
+              token: newToken,
+            })
           })
         | SdkTypes.SAVEDLISTWALLET(obj) => {
             let walletType = obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-            setAllApiData({
-              ...allApiData,
-              savedPaymentMethods: Some({
-                ...savedPaymentMethordContextObj,
-                selectedPaymentMethod: Some({
-                  walletName: walletType,
-                  token: newToken,
-                }),
-              }),
+            setSelectedSavedPM({
+              Some({
+                walletName: walletType,
+                token: newToken,
+              })
             })
           }
         | _ => ()
@@ -208,7 +195,7 @@ module PaymentMethodListView = {
       checkAndProcessIfWallet(~newToken={Some(pmToken)})
     }
 
-    let preSelectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
+    let preSelectedObj = selectedSavedPM->Option.getOr({
       walletName: NONE,
       token: None,
     })

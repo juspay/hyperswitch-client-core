@@ -55,11 +55,10 @@ let make = (
   ~setIsCvcValid,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
-  let savedPaymentMethodContextObj = switch allApiData.savedPaymentMethods {
-  | Some(data) => data
-  | _ => AllApiDataContext.dafaultsavePMObj
-  }
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (_, setSelectedSavedPM) = React.useContext(
+    SavedPaymentMethodContext.savedPaymentMethodDataContext,
+  )
 
   let listArr = nativeProp.configuration.displayDefaultSavedPaymentIcon
     ? listArr->placeDefaultPMAtTopOfArr
@@ -70,27 +69,19 @@ let make = (
     | Some(obj) =>
       switch obj {
       | SdkTypes.SAVEDLISTCARD(obj) =>
-        setAllApiData({
-          ...allApiData,
-          savedPaymentMethods: Some({
-            ...savedPaymentMethodContextObj,
-            selectedPaymentMethod: Some({
-              walletName: NONE,
-              token: obj.payment_token,
-            }),
-          }),
+        setSelectedSavedPM({
+          Some({
+            walletName: NONE,
+            token: obj.payment_token,
+          })
         })
       | SAVEDLISTWALLET(obj) =>
         let walletType = obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-        setAllApiData({
-          ...allApiData,
-          savedPaymentMethods: Some({
-            ...savedPaymentMethodContextObj,
-            selectedPaymentMethod: Some({
-              walletName: walletType,
-              token: obj.payment_token,
-            }),
-          }),
+        setSelectedSavedPM({
+          Some({
+            walletName: walletType,
+            token: obj.payment_token,
+          })
         })
       | _ => ()
       }
