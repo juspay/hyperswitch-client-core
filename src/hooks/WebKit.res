@@ -79,7 +79,6 @@ let useWebKit = () => {
     }
   }
   let launchGPay = str => {
-    Console.log(str)
     switch platform {
     | #androidWebView =>
       switch Window.androidInterface->Nullable.toOption {
