@@ -5,6 +5,15 @@
 
 * ref updated ([3d48515](https://github.com/juspay/hyperswitch-client-core/commit/3d48515627aa666c0b1a5e99949887e401e2991e))
 * scrollbar fix in lite ([#338](https://github.com/juspay/hyperswitch-client-core/issues/338)) ([b83f5b0](https://github.com/juspay/hyperswitch-client-core/commit/b83f5b041c0018caa4df070290d5eb93b7faba18))
+* staged lite sdk for release 1.7.2 ([18fcc91](https://github.com/juspay/hyperswitch-client-core/commit/18fcc91f930d83560ec093743519e4bd7a4eb9b3))
+
+## [1.7.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.0...v1.7.1) (2025-07-11)
+
+
+### Bug Fixes
+
+* ref updated ([3d48515](https://github.com/juspay/hyperswitch-client-core/commit/3d48515627aa666c0b1a5e99949887e401e2991e))
+* scrollbar fix in lite ([#338](https://github.com/juspay/hyperswitch-client-core/issues/338)) ([b83f5b0](https://github.com/juspay/hyperswitch-client-core/commit/b83f5b041c0018caa4df070290d5eb93b7faba18))
 
 ## [1.7.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.0...v1.7.1) (2025-07-11)
 
