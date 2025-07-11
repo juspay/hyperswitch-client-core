@@ -58,7 +58,7 @@ let make = (~children) => {
       alignContent: #"flex-end",
       backgroundColor: paymentSheetOverlay,
       justifyContent: #"flex-end",
-      paddingTop: 48.->dp,
+      paddingTop: (ReactNative.Platform.os === #web ? 0. : 75.)->dp,
     })}>
     <Animated.View
       style={s({

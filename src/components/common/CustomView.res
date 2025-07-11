@@ -11,7 +11,6 @@ let make = (
   ~bottomModalWidth=100.->pct,
   (),
 ) => {
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let modalPosStyle = array([
     s({flex: 1., width: 100.->pct, height: 100.->pct, alignItems: #center}),
     switch modalPosition {
@@ -31,7 +30,12 @@ let make = (
 
   <View style=modalPosStyle>
     <CustomTouchableOpacity
-      style={s({flex: 1., width: 100.->pct, flexGrow: 1.})}
+      style={s({
+        flex: 1.,
+        width: 100.->pct,
+        flexGrow: 1.,
+        minHeight: 75.->dp,
+      })}
       disabled=disableClickOutside
       onPress={_ => {
         if closeOnClickOutSide {
@@ -53,7 +57,7 @@ let make = (
         borderBottomLeftRadius: 0.,
         borderBottomRightRadius: 0.,
         overflow: #hidden,
-        maxHeight: viewPortContants.maxPaymentSheetHeight->pct,
+        maxHeight: 100.->pct,
         alignItems: #center,
         justifyContent: #center,
       })}>
@@ -70,7 +74,7 @@ module Wrapper = {
     let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-    <ScrollView
+    <CustomScrollView
       contentContainerStyle={s({
         minHeight: 250.->dp,
         paddingHorizontal: sheetContentPadding->dp,
@@ -81,6 +85,6 @@ module Wrapper = {
       style={array([s({flexGrow: 1., width}), bgColor])}>
       <ModalHeader onModalClose />
       children
-    </ScrollView>
+    </CustomScrollView>
   }
 }
