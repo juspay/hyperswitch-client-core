@@ -61,7 +61,6 @@ let make = (
         alignItems: #center,
         justifyContent: #center,
       })}>
-      <SafeAreaView />
       {children}
     </CustomKeyboardAvoidingView>
     // </TouchableWithoutFeedback>
@@ -74,7 +73,7 @@ module Wrapper = {
     let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-    <CustomScrollView
+    <ScrollView
       contentContainerStyle={s({
         minHeight: 250.->dp,
         paddingHorizontal: sheetContentPadding->dp,
@@ -82,9 +81,10 @@ module Wrapper = {
         paddingBottom: viewPortContants.navigationBarHeight->dp,
       })}
       keyboardShouldPersistTaps={#handled}
+      showsVerticalScrollIndicator=false
       style={array([s({flexGrow: 1., width}), bgColor])}>
       <ModalHeader onModalClose />
       children
-    </CustomScrollView>
+    </ScrollView>
   }
 }
