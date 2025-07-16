@@ -14,18 +14,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch full history to check commits
 
       - name: Check single commit requirement
+        env:
+          PR_COMMIT_COUNT: ${{ github.event.pull_request.commits }}
         run: |
-          commit_count=$(git rev-list --count HEAD ^${{ github.event.pull_request.base.sha }})
-          echo "Number of commits in PR: $commit_count"
+          echo "Number of commits in PR: $PR_COMMIT_COUNT"
 
-          if [ "$commit_count" -gt 1 ]; then
-            echo "❌ PR contains $commit_count commits. Please squash into a single commit."
+          if [ "$PR_COMMIT_COUNT" -gt 1 ]; then
+            echo "❌ PR contains $PR_COMMIT_COUNT commits. Please squash into a single commit."
             echo "💡 To squash commits, run:"
-            echo "   git rebase -i HEAD~$commit_count"
+            echo "   git rebase -i HEAD~$PR_COMMIT_COUNT"
             echo "   # Change 'pick' to 'squash' for all commits except the first one"
             echo "   # Then force push: git push --force-with-lease"
             exit 1
@@ -54,6 +53,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+          GITLEAKS_VERSION: '8.27.2'
 
       - name: Scan shared-code for secrets
         run: |
