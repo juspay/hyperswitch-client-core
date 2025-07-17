@@ -43,20 +43,17 @@ let make = (
   let showAlert = AlertHook.useAlerts()
 
   let bankName = switch redirectProp {
-  | BANK_REDIRECT(prop) => prop.bank_names
-  | _ => []
+  | BANK_REDIRECT(prop) => Some(prop.bank_names)
+  | _ => None
   }
 
   let getBankNames = bankNames => {
     bankNames
-    ->Array.map(x => {
+    ->Array.flatMap(x => {
       x.bank_name
     })
-    ->Array.reduce([], (acc, item) => {
-      acc->Array.concat(item)
-    })
     ->Array.map(x => {
-      x->JSON.parseExn->JSON.Decode.string->Option.getOr("")
+      x->JSON.parseExn->JSON.Decode.string->Option.getOr("")  // Bank names come as stringified JSON like "\"erste_bank_und_sparkassen\""
     })
   }
   let paymentMethod = switch redirectProp {
@@ -108,9 +105,9 @@ let make = (
   | BANK_REDIRECT(prop) => prop.payment_method_type
   | _ => ""
   }
-  let bankList = switch paymentMethodType {
-  | "ideal" => getBankNames(bankName)->Js.Array.sortInPlace
-  | "eps" => getBankNames(bankName)->Js.Array.sortInPlace
+  let bankList = switch (paymentMethodType, bankName) {
+  | ("ideal"
+  | "eps", Some(names)) => getBankNames(names)->Js.Array.sortInPlace
   | _ => []
   }
 
@@ -119,7 +116,7 @@ let make = (
   let bankData: array<CustomPicker.customPickerType> = bankItems->Array.map((item: Bank.bank) => {
     {
       CustomPicker.label: item.displayName,
-      value: item.hyperSwitch,
+      value: item.bankValue,
       iconComponent: <Icon name="bank" width=16. height=16./>,
     }
   })
@@ -139,7 +136,7 @@ let make = (
 
   let (selectedBank, setSelectedBank) = React.useState(_ => Some(
     switch bankItems->Array.get(0) {
-    | Some(x) => x.hyperSwitch
+    | Some(x) => x.bankValue
     | _ => ""
     },
   ))
@@ -779,7 +776,7 @@ let make = (
                   value=selectedBank
                   setValue=onChangeBank
                   items=bankData
-                  placeholderText="Select Bank"
+                  placeholderText="Bank"
                 />
                 <Space height=15. />
               </>
