@@ -132,13 +132,7 @@ let make = (
           </View>
           <CustomInput
             reference={Some(searchInputRef)}
-            placeholder={
-              if placeholderText->String.includes("Select Bank") {
-                "Search Bank"
-              } else {
-                "Search " ++ placeholderText // MARK: add Search to locale
-              }
-            }
+            placeholder={"Search " ++ placeholderText} // MARK: add Search to local
             state={searchInput->Option.getOr("")}
             setState={val => {
               setSearchInput(_ => Some(val))
