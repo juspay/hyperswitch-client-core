@@ -4,6 +4,7 @@ type instrumentation = unit
 type sentryInitArg = {
   dsn: string,
   environment: string,
+  release?: string,
   integrations?: array<integration>,
   tracesSampleRate: float,
   tracePropagationTargets?: array<string>,
@@ -42,6 +43,9 @@ type module_ = {
 }
 
 @val external require: string => module_ = "require"
+
+type dataModule = {version: string}
+@val external importPackageJson: string => dataModule = "require"
 
 let sentryReactNative = switch try {
   require("@sentry/react-native")->Some
@@ -84,6 +88,8 @@ module ErrorBoundary = {
 
 let initiateSentry = (~dsn: option<string>, ~environment: string) => {
   try {
+    let clientCoreVersion = importPackageJson("./../../../package.json").version
+
     let integrations =
       ReactNative.Platform.os === #web
         ? [
@@ -99,6 +105,7 @@ let initiateSentry = (~dsn: option<string>, ~environment: string) => {
     | Some(dsn) =>
       sentryReactNative.init({
         dsn,
+        release: clientCoreVersion,
         environment,
         integrations,
         tracesSampleRate: 1.0,
