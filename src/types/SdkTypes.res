@@ -602,7 +602,11 @@ let getAppearanceObj = (
       | None =>
         switch WebKit.platform {
         | #ios => DefaultIOS
-        | #iosWebView => DefaultIOS
+        | #iosWebView =>
+          switch retOptionalStr(getProp(keys.family, getObj(fontDict, "lite", Dict.make()))) {
+          | Some(str2) => CustomFont(str2)
+          | None => DefaultIOS
+          }
         | #android => DefaultAndroid
         | #androidWebView => DefaultAndroid
         | #web | #next => DefaultWeb
