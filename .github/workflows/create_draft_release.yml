@@ -1,9 +1,25 @@
 name: Create Draft Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      versioning_type:
+        description: 'Versioning Type'
+        required: true
+        default: 'auto'
+        type: choice
+        options:
+          - auto
+          - custom
+      custom_version:
+        description: 'Custom Version (e.g., 1.2.3) - Only used when versioning_type is custom'
+        required: false
+        type: string
+      generate_release_notes:
+        description: 'Generate release notes for custom version'
+        required: false
+        default: true
+        type: boolean
 
 permissions:
   contents: write
@@ -23,34 +39,35 @@ jobs:
       INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
       
     steps:
+      - name: Check Admin Permission
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const actor = context.actor;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            try {
+              const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner,
+                repo,
+                username: actor
+              });
+              
+              if (permission.permission !== 'admin') {
+                core.setFailed(`User ${actor} does not have admin permission. Only repository admins can run this workflow.`);
+              } else {
+                console.log(`User ${actor} has admin permission. Proceeding with workflow.`);
+              }
+            } catch (error) {
+              core.setFailed(`Failed to check permissions: ${error.message}`);
+            }
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.AUTORELEASE_PAT || github.token }}
-
-      - name: Checkout Android Repository
-        uses: actions/checkout@v4
-        with:
-          repository: juspay/hyperswitch-sdk-android
-          ref: main
-          path: android
-          token: ${{ secrets.AUTORELEASE_PAT || github.token }}
-
-      - name: Checkout IOS Repo
-        uses: actions/checkout@v4
-        with:
-          repository: juspay/hyperswitch-sdk-ios
-          ref: main
-          path: ios
-          token: ${{ secrets.AUTORELEASE_PAT || github.token }}
-
-      - name: Checkout Shared Code Repo
-        uses: actions/checkout@v4
-        with:
-          repository: juspay/hyperswitch-sdk-utils
-          ref: main
-          path: shared-code
 
       - name: Setup Node.js & Yarn
         uses: actions/setup-node@v4
@@ -61,19 +78,59 @@ jobs:
         run: corepack enable
 
       - name: Install Dependencies
-        run: yarn install
+        run: yarn install --immutable
+
+      - name: Validate Custom Version Input
+        if: github.event.inputs.versioning_type == 'custom'
+        run: |
+          VERSION_INPUT="${{ github.event.inputs.custom_version }}"
+          if [ -z "$VERSION_INPUT" ]; then
+            echo "Error: Custom version is required when using custom versioning type"
+            exit 1
+          fi
+          # Validate semantic version format (X.Y.Z) with optional pre-release identifiers
+          # Supports formats like: 1.2.3, 1.2.3-alpha, 1.2.3-beta.1, 1.2.3-rc.2, etc.
+          if ! echo "$VERSION_INPUT" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$' > /dev/null; then
+            echo "Error: Invalid version format. Please use semantic versioning."
+            echo "Valid formats:"
+            echo "  - 1.2.3"
+            echo "  - 1.2.3-alpha"
+            echo "  - 1.2.3-alpha.1"
+            echo "  - 1.2.3-beta"
+            echo "  - 1.2.3-beta.2"
+            echo "  - 1.2.3-rc.1"
+            echo "  - 1.2.3-dev.20250119"
+            exit 1
+          fi
 
       - name: Capture Initial Version
-        id: initial_version
-        run: |
-          echo "INITIAL_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
+        run: echo "INITIAL_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
 
-      - name: Run Semantic Release
-        id: semantic_release
+      - name: Run Semantic Release (Auto Versioning)
+        if: github.event.inputs.versioning_type == 'auto'
         run: npx semantic-release
 
+      - name: Apply Custom Version
+        if: github.event.inputs.versioning_type == 'custom'
+        run: |
+          CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
+          echo "Applying custom version: $CUSTOM_VERSION"
+          
+          # Update package.json version
+          jq --arg version "$CUSTOM_VERSION" '.version = $version' package.json > package.json.tmp
+          mv package.json.tmp package.json
+          
+          # Commit version changes
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore(release): v$CUSTOM_VERSION [skip ci]" || echo "No changes to commit"
+          
+          # Create and push tag
+          git tag "v$CUSTOM_VERSION" -m "Release v$CUSTOM_VERSION"
+          git push origin main --follow-tags
+
       - name: Check if Version Changed
-        id: version_check
         run: |
           CURRENT_VERSION=$(jq -r .version package.json)
           echo "VERSION=$CURRENT_VERSION" >> $GITHUB_ENV
@@ -85,46 +142,122 @@ jobs:
             echo "New version $CURRENT_VERSION was released"
           fi
 
-      - name: rescript Build
-        if: ${{ env.RELEASE_PERFORMED == 'true' }}
-        run: yarn re:build
+      - name: Generate Release Notes
+        if: env.RELEASE_PERFORMED == 'true' && (github.event.inputs.versioning_type == 'auto' || github.event.inputs.generate_release_notes == 'true')
+        id: generate_notes
+        run: |
+          # Get the latest tag before the current one
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          CURRENT_VERSION="${{ env.VERSION }}"
+          
+          echo "## Release Notes for v$CURRENT_VERSION" > release_notes.md
+          echo "" >> release_notes.md
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "### What's Changed" >> release_notes.md
+            echo "" >> release_notes.md
+            
+            # Generate commit list since last tag
+            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> release_notes.md
+            echo "" >> release_notes.md
+            echo "" >> release_notes.md
+            
+            # Generate contributor list
+            echo "### Contributors" >> release_notes.md
+            git log --pretty=format:"- @%an" $PREVIOUS_TAG..HEAD | sort -u >> release_notes.md
+            echo "" >> release_notes.md
+            
+            # Statistics
+            echo "### Statistics" >> release_notes.md
+            echo "- Commits: $(git rev-list --count $PREVIOUS_TAG..HEAD)" >> release_notes.md
+            echo "- Changed files: $(git diff --name-only $PREVIOUS_TAG..HEAD | wc -l)" >> release_notes.md
+            
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...v$CURRENT_VERSION" >> release_notes.md
+          else
+            echo "Initial release" >> release_notes.md
+          fi
+          
+          # Save release notes to environment
+          {
+            echo 'RELEASE_NOTES<<EOF'
+            cat release_notes.md
+            echo 'EOF'
+          } >> $GITHUB_ENV
 
-      - name: Build Android bundle
-        if: ${{ env.RELEASE_PERFORMED == 'true' }}
-        run: yarn bundle:android
+      - name: Checkout Android Repository
+        if: env.RELEASE_PERFORMED == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-android
+          ref: main
+          path: android
+          token: ${{ secrets.AUTORELEASE_PAT || github.token }}
 
-      - name: Build IOS bundle
-        if: ${{ env.RELEASE_PERFORMED == 'true' }}
-        run: yarn bundle:ios
+      - name: Checkout IOS Repo
+        if: env.RELEASE_PERFORMED == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-ios
+          ref: main
+          path: ios
+          token: ${{ secrets.AUTORELEASE_PAT || github.token }}
 
-      - name: Commit Android bundle
-        if: ${{ env.RELEASE_PERFORMED == 'true' }}
-        working-directory: ./android
+      - name: Checkout Shared Code Repo
+        if: env.RELEASE_PERFORMED == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
+
+      - name: Build and Update Bundles
+        if: env.RELEASE_PERFORMED == 'true'
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
+          # Build bundles in parallel
+          yarn re:build
+          yarn bundle:android &
+          yarn bundle:ios &
+          wait
+          
+          # Update Android bundle only
+          cd android
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add ./app/src/main/assets/hyperswitch.bundle
-          git commit -m "chore(release): v${{ env.VERSION }} bundle update [skip ci]"
-          git branch --set-upstream-to=origin/main main
-          git push origin main
-
-      - name: Commit IOS bundle
-        if: ${{ env.RELEASE_PERFORMED == 'true' }}
-        working-directory: ./ios
-        env:
-          GIT_AUTHOR_NAME: github-actions[bot]
-          GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
-          GIT_COMMITTER_NAME: github-actions[bot]
-          GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
-        run: |
+          
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(release): v${{ env.VERSION }} Android Bundle update [skip ci]"
+            git push origin main
+          fi
+          cd ..
+          
+          # Update iOS bundle only
+          cd ios
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          
           git add ./hyperswitchSDK/Core/Resources/hyperswitch.bundle
-          git commit -m "chore(release): v${{ env.VERSION }} bundle update [skip ci]"
-          git branch --set-upstream-to=origin/main main
-          git push origin main
+          
+          if ! git diff --staged --quiet; then
+            git commit -m "chore(release): v${{ env.VERSION }} iOS Bundle update [skip ci]"
+            git push origin main
+          fi
+
+      # - name: Create GitHub Release
+      #   if: env.RELEASE_PERFORMED == 'true' && github.event.inputs.versioning_type == 'custom'
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: v${{ env.VERSION }}
+      #     release_name: Release v${{ env.VERSION }}
+      #     body: |
+      #       ${{ env.RELEASE_NOTES || format('## Release v{0}\n\nThis release was created using custom versioning.\n\n### What''s Changed\n- Updated Android bundle to v{0}\n- Updated iOS bundle to v{0}\n\nFor more details, please check the commit history.', env.VERSION) }}
+      #     draft: true
+      #     prerelease: ${{ contains(env.VERSION, '-alpha') || contains(env.VERSION, '-beta') || contains(env.VERSION, '-rc') || contains(env.VERSION, '-dev') }}
