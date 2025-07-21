@@ -74,12 +74,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
-      - name: Enable Corepack
-        run: corepack enable
-
+          
       - name: Install Dependencies
-        run: yarn install --immutable
+        run: | 
+          corepack enable
+          yarn install
 
       - name: Validate Custom Version Input
         if: github.event.inputs.versioning_type == 'custom'
