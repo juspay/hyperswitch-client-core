@@ -597,21 +597,18 @@ let getAppearanceObj = (
       })
     },
     font: Some({
-      family: switch retOptionalStr(getProp(keys.family, fontDict)) {
-      | Some(str) => Some(CustomFont(str))
+      family: switch switch ReactNative.Platform.os {
+      | #ios | #android => retOptionalStr(getProp(keys.family, fontDict))
+      | _ => retOptionalStr(getProp("family", fontDict))
+      } {
+      | Some(str) => CustomFont(str)
       | None =>
-        switch WebKit.platform {
+        switch ReactNative.Platform.os {
         | #ios => DefaultIOS
-        | #iosWebView =>
-          switch retOptionalStr(getProp(keys.family, getObj(fontDict, "lite", Dict.make()))) {
-          | Some(str2) => CustomFont(str2)
-          | None => DefaultIOS
-          }
         | #android => DefaultAndroid
-        | #androidWebView => DefaultAndroid
-        | #web | #next => DefaultWeb
-        }->Some
-      },
+        | _ => DefaultWeb
+        }
+      }->Some,
       scale: retOptionalFloat(getProp(keys.scale, fontDict)),
       // headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust, fontDict)),
       // subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust, fontDict)),
