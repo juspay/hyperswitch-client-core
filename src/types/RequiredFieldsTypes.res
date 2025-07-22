@@ -32,6 +32,7 @@ type paymentMethodsFields =
   | PhoneCountryCode
   | SortCode
   | RoutingNumber
+  | BankOptions(array<string>)
 
 type requiredField =
   | StringField(string)
@@ -98,25 +99,29 @@ let getPaymentMethodsFieldTypeFromDict = (dict: Dict.t<JSON.t>) => {
     dict->Dict.get("user_address_country"),
     dict->Dict.get("user_country"),
     dict->Dict.get("user_shipping_address_country"),
+    dict->Dict.get("user_bank_options"),
   ) {
-  | (Some(user_currency), _, _, _) =>
+  | (Some(user_currency), _, _, _, _) =>
     let options = user_currency->getArrayValFromJsonDict("options")
     Currency(options)
-  | (_, Some(user_address_country), _, _)
-  | (_, _, Some(user_address_country), _) =>
+  | (_, Some(user_address_country), _, _, _)
+  | (_, _, Some(user_address_country), _, _) =>
     let options = user_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
     | "" => UnKnownField("empty_list")
     | "ALL" => AddressCountry(UseContextData)
     | _ => AddressCountry(UseBackEndData(options))
     }
-  | (_, _, _, Some(user_shipping_address_country)) =>
+  | (_, _, _, Some(user_shipping_address_country), _) =>
     let options = user_shipping_address_country->getArrayValFromJsonDict("options")
     switch options->Array.get(0)->Option.getOr("") {
     | "" => UnKnownField("empty_list")
     | "ALL" => AddressCountry(UseContextData)
     | _ => AddressCountry(UseBackEndData(options))
     }
+  | (_, _, _, _, Some(user_bank_options)) =>
+    let options = user_bank_options->getArrayValFromJsonDict("options")
+    BankOptions(options)
   | _ => UnKnownField("empty_list")
   }
 }
@@ -542,6 +547,7 @@ let useGetPlaceholder = (
     // | ShippingAddressCity => localeObject.cityLabel
     // | ShippingAddressPincode => localeObject.postalCodeLabel
     // | ShippingAddressState => localeObject.stateLabel
+    | BankOptions(_)
     | PhoneCountryCode
     | SpecialField(_)
     | AccountNumber
