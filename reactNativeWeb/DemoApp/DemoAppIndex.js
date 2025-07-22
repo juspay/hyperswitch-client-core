@@ -40,7 +40,7 @@ let defaultProps = {
       // }}
       // locale: "en"
       typography: {
-        fontResId: 'montserrat',
+        family: 'bitcount single',
       },
     },
   },
@@ -91,7 +91,10 @@ const initReactNativeWeb = async () => {
     if (!TRUSTED_ORIGINS.includes(event.origin)) {
       console.warn(`Blocked message from untrusted origin: ${event.origin}`);
       return;
-    } else if (event.data.source === 'react-devtools-content-script') {
+    } else if (
+      event.data.type === 'webpackOk' ||
+      event.data.source === 'react-devtools-content-script'
+    ) {
       return;
     }
 

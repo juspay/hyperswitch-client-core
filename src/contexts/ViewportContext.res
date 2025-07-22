@@ -7,7 +7,8 @@ type viewPortContants = {
   maxPaymentSheetHeight: float,
 }
 
-let defaultNavbarHeight = ReactNative.Platform.os === #ios ? 30. : 20.
+let defaultNavbarHeight =
+  ReactNative.Platform.os === #ios || WebKit.platform === #iosWebView ? 0. : 20.
 let windowHeight = ReactNative.Dimensions.get(#window).height
 let windowWidth = ReactNative.Dimensions.get(#window).width
 let screenHeight = ReactNative.Dimensions.get(#screen).height
@@ -36,8 +37,12 @@ let make = (~children) => {
 
   let (state, setState) = React.useState(_ => {
     ...defaultVal,
-    navigationBarHeight: nativeProp.hyperParams.bottomInset->Option.getOr(0.) +.
-      defaultNavbarHeight,
+    navigationBarHeight: (
+      WebKit.platform === #androidWebView
+        ? 0.
+        : nativeProp.hyperParams.bottomInset->Option.getOr(20.)
+    ) +.
+    defaultNavbarHeight,
   })
 
   let setState = React.useCallback1(val => {

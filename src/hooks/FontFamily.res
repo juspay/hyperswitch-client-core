@@ -1,19 +1,20 @@
 let convertFontToGoogleFontURL = fontName => {
   let normalizedFontName =
     fontName
-    ->String.splitByRegExp("/[_\s]+/"->RegExp.fromString)
+    ->String.splitByRegExp(%re("/[_\s]+/"))
     ->Array.map(word =>
       switch word {
       | Some(word) =>
         word->String.charAt(0)->String.toUpperCase ++
-          word->String.slice(~start=1, ~end=word->String.length)->String.toLowerCase
+          word->String.sliceToEnd(~start=1)->String.toLowerCase
       | None => ""
       }
     )
-    ->Array.join("+")
 
-  Window.useLink(`https://fonts.googleapis.com/css2?family=${normalizedFontName}`)->ignore
-  normalizedFontName
+  Window.useLink(
+    `https://fonts.googleapis.com/css2?family=${normalizedFontName->Array.join("+")}`,
+  )->ignore
+  normalizedFontName->Array.join(" ")
 }
 
 let useCustomFontFamily = () => {
