@@ -361,7 +361,7 @@ let maxDigitValidataion = (
   ~digits,
   ~display_name,
 ) => {
-  if text->Validation.clearSpaces->String.length > 0 {
+  if text->CardValidations.clearSpaces->String.length > 0 {
     if text->String.length <= digits {
       None
     } else {
@@ -461,7 +461,7 @@ let allowOnlyDigits = (
     } else {
       prev
     }
-  | PhoneNumber => Some(text->Option.getOr("")->Validation.clearAlphas)
+  | PhoneNumber => Some(text->Option.getOr("")->CardValidations.clearAlphas)
   | _ => text
   }
 }
