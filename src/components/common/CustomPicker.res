@@ -5,6 +5,7 @@ type customPickerType = {
   label: string,
   value: string,
   icon?: string,
+  iconComponent?: React.element,
 }
 
 @react.component
@@ -131,7 +132,7 @@ let make = (
           </View>
           <CustomInput
             reference={Some(searchInputRef)}
-            placeholder={"Search " ++ placeholderText} // MARK: add Search to locale
+            placeholder={"Search " ++ placeholderText} // MARK: add Search to local
             state={searchInput->Option.getOr("")}
             setState={val => {
               setSearchInput(_ => Some(val))
@@ -174,9 +175,18 @@ let make = (
                       setValue(_ => Some(item.value))
                       setIsModalVisible(_ => false)
                     }}>
-                    <TextWrapper
-                      text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
-                    />
+                    {switch item.iconComponent {
+                    | Some(iconComponent) =>
+                      <View style={s({flexDirection: #row, alignItems: #center})}>
+                        {iconComponent}
+                        <Space width=8. />
+                        <TextWrapper text={item.label} textType=ModalText />
+                      </View>
+                    | None =>
+                      <TextWrapper
+                        text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
+                      />
+                    }}
                   </CustomTouchableOpacity>}
               />}
         </View>

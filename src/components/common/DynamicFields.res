@@ -28,6 +28,17 @@ module RenderField = {
     })
   }
 
+  let getBankData = (bankOptions: array<string>) => {
+    let bankItems = Bank.bankNameConverter(bankOptions)
+    bankItems->Array.map((item: Bank.bank) => {
+      {
+        CustomPicker.label: item.displayName,
+        value: item.bankValue,
+        iconComponent: <Icon name="bank" width=16. height=16./>,
+      }
+    })
+  }
+
   let getCountryValueOfRelativePath = (path, finalJsonDict) => {
     if path->String.length != 0 {
       let key = getKey(path, "country")
@@ -211,9 +222,10 @@ module RenderField = {
       None
     }, [val])
 
-    let onChangeCountry = val => {
+    let onChangeValue = val => {
       setVal(val)
     }
+    
     let onChange = text => {
       setVal(prev =>
         RequiredFieldsTypes.allowOnlyDigits(
@@ -275,7 +287,7 @@ module RenderField = {
         | AddressCountry(countryArr) =>
           <CustomPicker
             value=val
-            setValue=onChangeCountry
+            setValue=onChangeValue
             isCountryStateFields=true
             borderBottomLeftRadius=borderRadius
             borderBottomRightRadius=borderRadius
@@ -299,7 +311,7 @@ module RenderField = {
           <CustomPicker
             value=val
             isCountryStateFields=true
-            setValue=onChangeCountry
+            setValue=onChangeValue
             borderBottomLeftRadius=borderRadius
             borderBottomRightRadius=borderRadius
             borderBottomWidth=borderWidth
@@ -323,6 +335,18 @@ module RenderField = {
             | Loading => true
             | _ => false
             }}
+          />
+        | BankOptions(bankOptions) =>
+          <CustomPicker
+            value=val
+            setValue=onChangeValue
+            borderBottomLeftRadius=borderRadius
+            borderBottomRightRadius=borderRadius
+            borderBottomWidth=borderWidth
+            items={getBankData(bankOptions)}
+            placeholderText="Bank"
+            isValid
+            isLoading=false
           />
 
         | _ =>
