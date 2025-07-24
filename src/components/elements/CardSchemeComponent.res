@@ -66,7 +66,7 @@ let make = (~cardNumber, ~cardNetworks) => {
   )
   let (dropDownIconWidth, _) = React.useState(_ => Animated.Value.create(0.))
 
-  let matchedCardSchemes = cardNumber->Validation.clearSpaces->Validation.getAllMatchedCardSchemes
+  let matchedCardSchemes = cardNumber->CardValidations.clearSpaces->CardValidations.getAllMatchedCardSchemes
   let eligibleCardSchemes = Validation.getEligibleCoBadgedCardSchemes(
     ~matchedCardSchemes,
     ~enabledCardSchemes,
@@ -82,7 +82,7 @@ let make = (~cardNumber, ~cardNetworks) => {
 
   let isCardCoBadged = eligibleCardSchemes->Array.length > 1
   let showCardSchemeDropDown =
-    isCardCoBadged && cardNumber->Validation.clearSpaces->String.length >= 16
+    isCardCoBadged && cardNumber->CardValidations.clearSpaces->String.length >= 16
 
   let selectedCardBrand =
     eligibleCardSchemes->Array.includes(cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand))

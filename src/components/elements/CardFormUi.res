@@ -24,7 +24,7 @@ let make = (
   let isCvvValid = isCvvValid->Option.getOr(true)
   let isZipValid = isZipValid->Option.getOr(true)
   let isMaxCardLength =
-    cardNumber->clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
+    cardNumber->CardValidations.clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
   let (cardNumberIsFocus, setCardNumberIsFocus) = React.useState(_ => false)
   let isCardNumberValid = {
     cardNumberIsFocus ? isCardNumberValid || !isMaxCardLength : isCardNumberValid
