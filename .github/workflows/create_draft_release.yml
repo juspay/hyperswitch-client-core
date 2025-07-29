@@ -158,7 +158,7 @@ jobs:
             echo "" >> release_notes.md
             
             # Generate commit list since last tag
-            git log --pretty=format:"- %s (%h)" $PREVIOUS_TAG..HEAD >> release_notes.md
+            git log --pretty=format:"- %s (%h)" --no-merges --invert-grep --grep="\[skip ci\]" $PREVIOUS_TAG..HEAD >> release_notes.md
             echo "" >> release_notes.md
             echo "" >> release_notes.md
             
