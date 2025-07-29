@@ -2739,6 +2739,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@juspay-tech/react-native-hyperswitch-trident-3ds@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@juspay-tech/react-native-hyperswitch-trident-3ds@npm:0.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 850b3469543e95239aa3a212ffead7ed99da8a39932a2ce9e09b4419b2e9a49ef4b438d388156117e518baa831a8d3f14e18ea689d1d0d629771ef780f441439
+  languageName: node
+  linkType: hard
+
 "@leichtgewicht/ip-codec@npm:^2.0.1":
   version: 2.0.5
   resolution: "@leichtgewicht/ip-codec@npm:2.0.5"
@@ -11728,6 +11738,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@commitlint/cli": ^17.0.3
     "@commitlint/config-conventional": ^17.0.3
+    "@juspay-tech/react-native-hyperswitch-trident-3ds": ^0.1.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
     "@react-native-community/cli": 18.0.0
     "@react-native-community/cli-platform-android": 18.0.0
