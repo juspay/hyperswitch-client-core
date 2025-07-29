@@ -204,9 +204,8 @@ jobs:
         run: |
           # Build bundles in parallel
           yarn re:build
-          yarn bundle:android &
-          yarn bundle:ios &
-          wait
+          yarn bundle:android &&
+          yarn bundle:ios
           
           # Update Android bundle only
           cd android
