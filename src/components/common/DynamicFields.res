@@ -337,17 +337,26 @@ module RenderField = {
             }}
           />
         | BankOptions(bankOptions) =>
-          <CustomPicker
-            value=val
-            setValue=onChangeValue
-            borderBottomLeftRadius=borderRadius
-            borderBottomRightRadius=borderRadius
-            borderBottomWidth=borderWidth
-            items={getBankData(bankOptions)}
-            placeholderText="Bank"
-            isValid
-            isLoading=false
-          />
+          <>
+            <TextWrapper 
+              text={localeObject.bankLabel} 
+              textType=SubheadingBold 
+              overrideStyle=Some(Style.s({color: "#333333", fontWeight: #500}))
+            />
+            <Space height=5. />
+            <CustomPicker
+              value=val
+              setValue=onChangeValue
+              borderBottomLeftRadius=borderRadius
+              borderBottomRightRadius=borderRadius
+              borderBottomWidth=borderWidth
+              items={getBankData(bankOptions)}
+              placeholderText="Select your preferred bank"
+              isValid
+              isLoading=false
+              fontSize=13.
+            />
+          </>
 
         | _ =>
           <CustomInput

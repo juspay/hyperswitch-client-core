@@ -6,6 +6,17 @@ let make = (~setConfirmButtonDataRef) => {
   //getting payment list data here
   let {tabArr, elementArr} = PMListModifier.useListModifier()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  
+  // Check if single payment method
+  let isSinglePaymentMethod = tabArr->Array.length == 1
+  let singlePaymentMethodName = switch isSinglePaymentMethod {
+  | true => 
+    switch tabArr->Array.get(0) {
+    | Some(hoc) => Some(hoc.name)
+    | None => None
+    }
+  | false => None
+  }
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
   | Some(data) => data
@@ -20,13 +31,18 @@ let make = (~setConfirmButtonDataRef) => {
   let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
 
   <>
-    <WalletView
-      loading={nativeProp.sdkState !== CardWidget &&
-      allApiData.sessions == Loading &&
-      localeStrings == Loading}
-      elementArr
-      showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
-    />
+    {switch (isSinglePaymentMethod, singlePaymentMethodName) {
+    | (true, Some(paymentMethodName)) => 
+      <SinglePaymentMethodHeader paymentMethodName />
+    | _ => 
+      <WalletView
+        loading={nativeProp.sdkState !== CardWidget &&
+        allApiData.sessions == Loading &&
+        localeStrings == Loading}
+        elementArr
+        showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
+      />
+    }}
     <CustomTabView
       hocComponentArr=tabArr
       loading={allApiData.sessions == Loading && localeStrings == Loading}

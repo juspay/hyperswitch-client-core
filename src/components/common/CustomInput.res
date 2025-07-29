@@ -52,7 +52,6 @@ let make = (
 ) => {
   let {
     placeholderColor,
-    bgColor,
     primaryColor,
     errorTextInputColor,
     normalTextInputBoderColor,
@@ -104,7 +103,6 @@ let make = (
       : React.null}
     <View
       style={array([
-        bgColor,
         s({
           backgroundColor: component.background,
           borderTopWidth,
@@ -126,7 +124,6 @@ let make = (
           justifyContent: #center,
         }),
         shadowStyle,
-        // bgColor,
       ])}>
       {switch iconLeft {
       | CustomIcon(element) => <View style={s({paddingRight: 10.->dp})}> element </View>

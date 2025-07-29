@@ -180,10 +180,13 @@ let useRedirectHook = () => {
         ~retrievePayment,
         ~sdkEnvironment=nativeProp.env,
         ~onSuccess=message => {
+        setLoading(PaymentSuccess)
+        setTimeout(() => {
           responseCallback(
             ~paymentStatus=PaymentSuccess,
             ~status={status: "succeeded", message, code: "", type_: ""},
           )
+        }, 2500)->ignore
         },
         ~onFailure=message => {
           errorCallback(

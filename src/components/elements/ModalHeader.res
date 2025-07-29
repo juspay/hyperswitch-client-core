@@ -13,6 +13,10 @@ let make = (~onModalClose) => {
   | _ => false
   }
 
+  // Check if single payment method to hide header text and test mode
+  let {tabArr, elementArr: _} = PMListModifier.useListModifier()
+  let isSinglePaymentMethod = tabArr->Array.length == 1
+
   <View
     style={s({
       display: #flex,
@@ -21,7 +25,7 @@ let make = (~onModalClose) => {
       alignItems: #center,
       justifyContent: #"space-between",
     })}>
-    {if isLoadingScreenActive {
+    {if isLoadingScreenActive || isSinglePaymentMethod {
       <View />
     } else {
       switch switch paymentScreenType {
@@ -40,7 +44,7 @@ let make = (~onModalClose) => {
     }}
     <View
       style={s({flexDirection: #row, flexWrap: #wrap, alignItems: #center, maxWidth: 40.->pct})}>
-      {isLoadingScreenActive
+      {isLoadingScreenActive || isSinglePaymentMethod
         ? React.null
         : <>
             {nativeProp.env === GlobalVars.PROD
@@ -66,6 +70,15 @@ let make = (~onModalClose) => {
               </CustomTouchableOpacity>
             }}
           </>}
+      {isSinglePaymentMethod && !isLoadingScreenActive
+        ? switch paymentScreenType {
+          | BANK_TRANSFER(_) => React.null
+          | _ =>
+            <CustomTouchableOpacity onPress={_ => onModalClose()}>
+              <Icon name="close" width=16. height=16. fill=iconColor />
+            </CustomTouchableOpacity>
+          }
+        : React.null}
     </View>
   </View>
 }

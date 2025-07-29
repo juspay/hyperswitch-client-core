@@ -50,12 +50,7 @@ let make = (
         route
       })
 
-      let isScrollBarOnlyCards =
-        data->Array.length == 1 &&
-          switch data->Array.get(0) {
-          | Some({name}) => name == "Card"
-          | None => true
-          }
+      let isSinglePaymentMethod = data->Array.length == 1
 
       <TabView
         sceneContainerStyle={s({padding: 10.->dp})}
@@ -64,7 +59,7 @@ let make = (
         routes
         onIndexChange=setIndexInFocus
         renderTabBar={(~indexInFocus, ~routes as _, ~position as _, ~layout as _, ~jumpTo) => {
-          isScrollBarOnlyCards
+          isSinglePaymentMethod
             ? React.null
             : <ScrollableCustomTopBar
                 hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo}

@@ -23,6 +23,7 @@ let make = (
   ~isCountryStateFields=false,
   ~style=?,
   ~showValue=false,
+  ~fontSize=16.,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -36,7 +37,6 @@ let make = (
   let pickerRef = React.useRef(Nullable.null)
   let searchInputRef = React.useRef(Nullable.null)
   let {
-    bgColor,
     component,
     iconColor,
     borderRadius,
@@ -68,9 +68,15 @@ let make = (
         borderRightWidth=borderWidth
         borderTopLeftRadius=borderRadius
         borderTopRightRadius=borderRadius
-        placeholder=placeholderText
+        placeholder={switch value {
+        | Some(val) when val != "" => ""
+        | _ => placeholderText
+        }}
         editable=false
         textColor=component.color
+        enableShadow=false
+        animate=false
+        fontSize
         iconRight=CustomIcon(
           <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
             <ChevronIcon width=13. height=13. fill=iconColor />
@@ -104,19 +110,16 @@ let make = (
           transparentBG,
         ])}>
         <View
-          style={array([
-            s({
-              flex: 1.,
-              width: 100.->pct,
-              backgroundColor: component.background,
-              justifyContent: #center,
-              alignItems: #center,
-              borderRadius: 10.,
-              padding: 15.->dp,
-              paddingHorizontal: 20.->dp,
-            }),
-            bgColor,
-          ])}>
+          style={s({
+            flex: 1.,
+            width: 100.->pct,
+            backgroundColor: component.background,
+            justifyContent: #center,
+            alignItems: #center,
+            borderRadius: 10.,
+            padding: 15.->dp,
+            paddingHorizontal: 20.->dp,
+          })}>
           <View
             style={s({
               flexDirection: #row,
@@ -124,7 +127,11 @@ let make = (
               alignItems: #center,
               justifyContent: #"space-between",
             })}>
-            <TextWrapper text=placeholderText textType={HeadingBold} />
+            <TextWrapper 
+              text=placeholderText 
+              textType={HeadingBold} 
+              overrideStyle=Some(s({color: component.color}))
+            />
             <CustomTouchableOpacity
               onPress={_ => setIsModalVisible(prev => !prev)} style={s({padding: 14.->dp})}>
               <Icon name="close" width=20. height=20. fill=iconColor />
@@ -180,11 +187,17 @@ let make = (
                       <View style={s({flexDirection: #row, alignItems: #center})}>
                         {iconComponent}
                         <Space width=8. />
-                        <TextWrapper text={item.label} textType=ModalText />
+                        <TextWrapper 
+                          text={item.label} 
+                          textType=ModalText 
+                          overrideStyle=Some(s({color: component.color}))
+                        />
                       </View>
                     | None =>
                       <TextWrapper
-                        text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
+                        text={item.icon->Option.getOr("") ++ item.label} 
+                        textType=ModalText
+                        overrideStyle=Some(s({color: component.color}))
                       />
                     }}
                   </CustomTouchableOpacity>}

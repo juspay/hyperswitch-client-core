@@ -144,8 +144,13 @@ let make = (
       | Some(message) => setError(_ => Some(message))
       | None => ()
       }
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    } else {
+      setLoading(PaymentFailed)
+      setTimeout(() => {
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      }, 2500)->ignore
     }
-    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
   }
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
     switch paymentStatus {
@@ -153,7 +158,7 @@ let make = (
         setLoading(PaymentSuccess)
         setTimeout(() => {
           handleSuccessFailure(~apiResStatus=status, ())
-        }, 300)->ignore
+        }, 2500)->ignore
       }
     | _ => handleSuccessFailure(~apiResStatus=status, ())
     }
@@ -738,10 +743,10 @@ let make = (
               savedCardsData=None
               paymentMethodType={bankDebitPMType}
             />
-            <Space height=25. />
+            <Space height=10. />
             <RedirectionText />
           </>}
     </ErrorBoundary>
-    <Space height=5. />
+    <Space height=100. />
   </>
 }
