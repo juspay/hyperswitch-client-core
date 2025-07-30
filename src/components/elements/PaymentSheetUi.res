@@ -43,7 +43,7 @@ let make = (
   let isCardBrandSupported = isCardBrandSupported->Option.getOr(true)
   let isCvvValid = isCvvValid->Option.getOr(true)
   let isMaxCardLength =
-    cardNumber->clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
+    cardNumber->CardValidations.clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
   let (cardNumberIsFocus, setCardNumberIsFocus) = React.useState(_ => false)
   let (expireDateIsFocus, setExpireDateIsFocus) = React.useState(_ => false)
   let (cvvIsFocus, setCvvIsFocus) = React.useState(_ => false)

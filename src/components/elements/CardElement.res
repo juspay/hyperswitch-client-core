@@ -110,7 +110,7 @@ let make = (
     }
   }
   let onChangeCardExpire = (text, cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
-    let dateExpire = formatCardExpiryNumber(text)
+    let dateExpire = CardValidations.formatCardExpiryNumber(text)
     let isthisValid = checkCardExpiry(dateExpire)
     if isthisValid {
       switch cvvRef.current->Nullable.toOption {
@@ -122,7 +122,7 @@ let make = (
     setCardData(prev => {...prev, expireDate: dateExpire, isExpireDataValid: Some(isthisValid)})
   }
   let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
-    let cvvData = formatCVCNumber(text, getCardBrand(cardData.cardNumber))
+    let cvvData = CardValidations.formatCVCNumber(text, getCardBrand(cardData.cardNumber))
     let isValidCvv = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
     let shouldShiftFocusToNextField = checkMaxCardCvv(cvvData, getCardBrand(cardData.cardNumber))
     if isValidCvv && shouldShiftFocusToNextField {
@@ -157,7 +157,7 @@ let make = (
     let cardBrand = getCardBrand(pan)
     let cardNumber = formatCardNumber(pan, cardType(cardBrand))
     let isCardValid = cardValid(cardNumber, cardBrand)
-    let expireDate = formatCardExpiryNumber(expiry)
+    let expireDate = CardValidations.formatCardExpiryNumber(expiry)
     let isExpiryValid = checkCardExpiry(expireDate)
     let isExpireDataValid = expireDate->Js.String2.length > 0 ? Some(isExpiryValid) : None
     setCardData(prev => {
