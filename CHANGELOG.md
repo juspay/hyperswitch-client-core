@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.1...v1.7.2) (2025-07-30)
+
+
+### Bug Fixes
+
+* cvc/expiry removed on brand change from none to something ([#348](https://github.com/juspay/hyperswitch-client-core/issues/348)) ([5764bca](https://github.com/juspay/hyperswitch-client-core/commit/5764bca78c44f6ebf09ca03a23cbfffe8dce8099))
+
 ## [1.7.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.0...v1.7.1) (2025-07-11)
 
 
