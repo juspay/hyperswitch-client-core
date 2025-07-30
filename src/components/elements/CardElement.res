@@ -87,7 +87,7 @@ let make = (
 
     let shouldShiftFocusToNextField = isCardNumberEqualsMax(num, cardBrand)
 
-    let isCardBrandChanged = cardData.cardBrand !== cardBrand && cardData.cardBrand != ""
+    let isCardBrandChanged = cardData.cardBrand !== cardBrand
 
     setCardData(prev => {
       ...prev,
