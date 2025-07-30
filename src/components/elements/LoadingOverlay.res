@@ -6,6 +6,7 @@ switch UIManager.setLayoutAnimationEnabledExperimental {
 | Some(setEnabled) => setEnabled(true)
 }
 
+
 @react.component
 let make = () => {
   let {bgColor, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
@@ -65,10 +66,22 @@ let make = () => {
     switch nativeProps.sdkState {
     | PaymentSheet =>
       <Portal>
-        //<SuccessScreen />
-        <View style={array([s({flex: 1., opacity: 0.}), bgColor])}>
+        <View style={array([s({flex: 1., opacity: 1.0}), bgColor])}>
           <View style={s({flex: 1., justifyContent: #center, alignItems: #center})}>
-            // <HyperLoaderAnimation />
+            <PaymentFeedbackScreen isSuccess=true />
+          </View>
+        </View>
+      </Portal>
+    | _ => React.null
+    }
+
+  | PaymentFailed =>
+    switch nativeProps.sdkState {
+    | PaymentSheet =>
+      <Portal>
+        <View style={array([s({flex: 1., opacity: 1.0}), bgColor])}>
+          <View style={s({flex: 1., justifyContent: #center, alignItems: #center})}>
+            <PaymentFeedbackScreen isSuccess=false />
           </View>
         </View>
       </Portal>

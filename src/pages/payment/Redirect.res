@@ -42,23 +42,6 @@ let make = (
   // let (blikCode, setBlikCode) = React.useState(_ => None)
   let showAlert = AlertHook.useAlerts()
 
-  // let bankName = switch redirectProp {
-  // | BANK_REDIRECT(prop) => prop.bank_names
-  // | _ => []
-  // }
-
-  // let getBankNames = bankNames => {
-  //   bankNames
-  //   ->Array.map(x => {
-  //     x.bank_name
-  //   })
-  //   ->Array.reduce([], (acc, item) => {
-  //     acc->Array.concat(item)
-  //   })
-  //   ->Array.map(x => {
-  //     x->JSON.parseExn->JSON.Decode.string->Option.getOr("")
-  //   })
-  // }
   let paymentMethod = switch redirectProp {
   | CARD(prop) => prop.payment_method_type
   | WALLET(prop) => prop.payment_method_type
@@ -104,25 +87,7 @@ let make = (
     ->Array.get(0)
     ->Option.map(paymentExperience => paymentExperience.payment_experience_type_decode)
   }
-  // let paymentMethodType = switch redirectProp {
-  // | BANK_REDIRECT(prop) => prop.payment_method_type
-  // | _ => ""
-  // }
-  // let bankList = switch paymentMethodType {
-  // | "ideal" => getBankNames(bankName)->Js.Array.sortInPlace
-  // | "eps" => getBankNames(bankName)->Js.Array.sortInPlace
-  // | _ => []
-  // }
-
-  // let bankItems = Bank.bankNameConverter(bankList)
-
-  // let bankData: array<customPickerType> = bankItems->Array.map(item => {
-  //   {
-  //     label: item.displayName,
-  //     value: item.hyperSwitch,
-  //   }
-  // })
-  // let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
+// let (statesAndCountry, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
 
   // let countryData: array<customPickerType> = switch statesAndCountry {
   // | Localdata(data) | FetchData(data) =>
@@ -136,18 +101,8 @@ let make = (
   // | _ => []
   // }
 
-  // let (selectedBank, setSelectedBank) = React.useState(_ => Some(
-  //   switch bankItems->Array.get(0) {
-  //   | Some(x) => x.hyperSwitch
-  //   | _ => ""
-  //   },
-  // ))
 
   let logger = LoggerHook.useLoggerHook()
-
-  // let onChangeBank = val => {
-  //   setSelectedBank(val)
-  // }
 
   // let onChangeBlikCode = (val: string) => {
   //   let onlyNumerics = val->String.replaceRegExp(%re("/\D+/g"), "")
@@ -189,8 +144,13 @@ let make = (
       | Some(message) => setError(_ => Some(message))
       | None => ()
       }
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    } else {
+      setLoading(PaymentFailed)
+      setTimeout(() => {
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+      }, 2500)->ignore
     }
-    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
   }
   let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
     switch paymentStatus {
@@ -198,7 +158,7 @@ let make = (
         setLoading(PaymentSuccess)
         setTimeout(() => {
           handleSuccessFailure(~apiResStatus=status, ())
-        }, 300)->ignore
+        }, 2500)->ignore
       }
     | _ => handleSuccessFailure(~apiResStatus=status, ())
     }
@@ -783,10 +743,10 @@ let make = (
               savedCardsData=None
               paymentMethodType={bankDebitPMType}
             />
-            <Space height=25. />
+            <Space height=10. />
             <RedirectionText />
           </>}
     </ErrorBoundary>
-    <Space height=5. />
+    <Space height=100. />
   </>
 }

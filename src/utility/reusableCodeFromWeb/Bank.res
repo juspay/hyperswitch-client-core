@@ -1,6 +1,6 @@
 type bank = {
   displayName: string,
-  hyperSwitch: string,
+  bankValue: string,
 }
 
 let bankNameConverter = (var: array<string>) => {
@@ -14,7 +14,7 @@ let bankNameConverter = (var: array<string>) => {
     let data = x->Array.join(" ")
     {
       displayName: data,
-      hyperSwitch: item,
+      bankValue: item,
     }
   })
 
