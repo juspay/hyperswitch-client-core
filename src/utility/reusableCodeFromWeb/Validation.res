@@ -614,7 +614,7 @@ let isValidZip = (~zipCode, ~country) => {
   // ->Option.getOr(Country.defaultTimeZone)
   let postalCode =
     PostalCodes.postalCode
-    ->Array.find(item => item.iso == countryObj.isoAlpha2)
+    ->Array.find(item => item.iso == countryObj.country_code)
     ->Option.getOr(PostalCodes.defaultPostalCode)
 
   let isZipCodeValid = RegExp.test(postalCode.regex->Js.Re.fromString, zipCode)

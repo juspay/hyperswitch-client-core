@@ -190,14 +190,7 @@ let registerHeadless = headless => {
       switch data.walletType->Option.getOr("")->walletNameToTypeMapper {
       | GOOGLE_PAY => {
           let gPayCallback = async var => {
-            try {
-              let _ = await RequiredFieldsTypes.importStatesAndCountries(
-                "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
-              )
-              confirmGPay(var, data, nativeProp)
-            } catch {
-            | _ => confirmGPay(var, data, nativeProp)
-            }
+            confirmGPay(var, data, nativeProp)
           }
           HyperModule.launchGPay(
             WalletType.getGpayTokenStringified(
@@ -234,14 +227,7 @@ let registerHeadless = headless => {
           headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
         }, 5000)
         let applePayCallback = async var => {
-          try {
-            let _ = await RequiredFieldsTypes.importStatesAndCountries(
-              "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
-            )
-            confirmApplePay(var, data, nativeProp)
-          } catch {
-          | _ => confirmApplePay(var, data, nativeProp)
-          }
+          confirmApplePay(var, data, nativeProp)
         }
         HyperModule.launchApplePay(
           [

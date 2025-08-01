@@ -17,13 +17,13 @@ module RenderField = {
   let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.countries) => {
     contextCountryData
     ->Array.filter(item => {
-      countryArr->Array.includes(item.isoAlpha2)
+      countryArr->Array.includes(item.country_code)
     })
     ->Array.map((item): CustomPicker.customPickerType => {
       {
-        label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
-        value: item.isoAlpha2,
-        icon: Utils.getCountryFlags(item.isoAlpha2),
+        label: item.country_name,
+        value: item.country_code,
+        icon: Utils.getCountryFlags(item.country_code),
       }
     })
   }
@@ -283,7 +283,7 @@ module RenderField = {
             items={switch countryStateData {
             | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
               switch countryArr {
-              | UseContextData => res.countries->Array.map(item => item.isoAlpha2)
+              | UseContextData => res.countries->Array.map(item => item.country_code)
               | UseBackEndData(data) => data
               }->getCountryData(res.countries)
             | _ => []
@@ -481,21 +481,20 @@ let make = (
       ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
       ->RequiredFieldsTypes.getKeysValArray(
         isSaveCardsFlow,
-        clientCountry.isoAlpha2,
-        statesAndCountryData.countries->Array.map(item => {item.isoAlpha2}),
-        statesAndCountryData.phoneCountryCodes,
+        clientCountry.country_code,
+        statesAndCountryData.countries,
       )
     | _ =>
       requiredFields
       ->RequiredFieldsTypes.filterRequiredFields(isSaveCardsFlow, savedCardsData)
       ->RequiredFieldsTypes.filterRequiredFieldsForShipping(shouldRenderShippingFields)
-      ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.isoAlpha2, [], [])
+      ->RequiredFieldsTypes.getKeysValArray(isSaveCardsFlow, clientCountry.country_code, [])
     }
   }, (
     requiredFields,
     isSaveCardsFlow,
     savedCardsData,
-    clientCountry.isoAlpha2,
+    clientCountry.country_code,
     shouldRenderShippingFields,
     statesAndCountry,
     displayPreValueFields,
@@ -570,7 +569,7 @@ let make = (
     requiredFields,
     isSaveCardsFlow,
     savedCardsData,
-    clientCountry.isoAlpha2,
+    clientCountry.country_code,
     fieldsOrder,
     displayPreValueFields,
     shouldRenderShippingFields,
@@ -630,20 +629,20 @@ let make = (
       ->Option.forEach(required => {
         switch required.required_field {
         | StringField(path) =>
-          setFinalJsonDict(prev => handleStringField(path, prev, clientCountry.isoAlpha2))
+          setFinalJsonDict(prev => handleStringField(path, prev, clientCountry.country_code))
         | _ => ()
         }
       })
     | _ => ()
     }
     None
-  }, (statesAndCountry, clientCountry.isoAlpha2))
+  }, (statesAndCountry, clientCountry.country_code))
   let mappedCountryCodes = switch statesAndCountry {
   | FetchData(statesAndCountry) | Localdata(statesAndCountry) =>
-    statesAndCountry.phoneCountryCodes->Array.map((countryCode): CustomPicker.customPickerType => {
-      label: countryCode.country_name ++ " " ++ countryCode.phone_number_code,
-      value: countryCode.phone_number_code,
-      icon: Utils.getCountryFlags(countryCode.country_code),
+    statesAndCountry.countries->Array.map((country): CustomPicker.customPickerType => {
+      label: country.country_name ++ " " ++ country.phone_number_code,
+      value: country.phone_number_code,
+      icon: Utils.getCountryFlags(country.country_code),
     })
   | Loading => []
   }

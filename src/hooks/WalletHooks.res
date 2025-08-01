@@ -24,6 +24,8 @@ let useWallet = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+  let getMissingFieldsAndPaymentMethodData = WalletMissingFieldsHook.useGetMissingFields()
+
   let showAlert = AlertHook.useAlerts()
   let logger = LoggerHook.useLoggerHook()
 
@@ -61,7 +63,7 @@ let useWallet = (
           hasMissingFields,
           updatedRequiredFields,
           paymentMethodData,
-        ) = WalletType.getMissingFieldsAndPaymentMethodData(
+        ) = getMissingFieldsAndPaymentMethodData(
           walletTypeData.required_field,
           ~billingAddress,
           ~shippingAddress,
@@ -170,7 +172,7 @@ let useWallet = (
             hasMissingFields,
             updatedRequiredFields,
             paymentMethodData,
-          ) = WalletType.getMissingFieldsAndPaymentMethodData(
+          ) = getMissingFieldsAndPaymentMethodData(
             walletTypeData.required_field,
             ~billingAddress,
             ~shippingAddress,
@@ -252,7 +254,7 @@ let useWallet = (
           hasMissingFields,
           updatedRequiredFields,
           paymentMethodData,
-        ) = WalletType.getMissingFieldsAndPaymentMethodData(
+        ) = getMissingFieldsAndPaymentMethodData(
           walletTypeData.required_field,
           ~billingAddress,
           ~shippingAddress,

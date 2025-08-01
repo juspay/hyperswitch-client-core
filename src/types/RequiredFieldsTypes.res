@@ -412,7 +412,7 @@ let checkIsValid = (
         Some(localeObject.enterValidIban)
       }
     | RoutingNumber => numberOfDigitsValidation(~text, ~localeObject, ~digits=9, ~display_name)
-    | PhoneNumber => maxDigitValidataion(~text, ~localeObject, ~digits=15, ~display_name)
+    | PhoneNumber => maxDigitValidataion(~text, ~localeObject, ~digits=17, ~display_name)
     | _ => None
     }
   }
@@ -776,28 +776,17 @@ let getKey = (path, value) => {
   }
 }
 
-let getPhoneNumber = text => {
-  let firstVal = text->getFirstValue
-  let lastVal = text->getLastValue
-  if firstVal->String.includes("+") && firstVal->String.length < 5 {
-    (firstVal, lastVal)
-  } else {
-    (lastVal, firstVal)
-  }
-}
-
 let getKeysValArray = (
   requiredFields,
   isSaveCardsFlow,
   clientCountry,
-  countries,
-  countryCodes: CountryStateDataHookTypes.phoneCountryCodes,
+  countries: array<CountryStateDataHookTypes.country>,
 ) => {
   requiredFields->Array.reduce(Dict.make(), (acc, requiredField) => {
     let (value, isValid) = switch (requiredField.value, requiredField.field_type) {
     | ("", AddressCountry(values)) => {
         let values = switch values {
-        | UseContextData => countries
+        | UseContextData => countries->Array.map(item => {item.country_code})
         | UseBackEndData(a) => a
         }
         (
@@ -839,8 +828,11 @@ let getKeysValArray = (
     | PhoneField(code, phone) =>
       switch requiredField.field_type {
       | PhoneCountryCode | PhoneNumber =>
-        let (codeVal, phoneVal) = getPhoneNumber(requiredField.value)
-        let countryCode = switch countryCodes->Array.find(v => v.country_code === clientCountry) {
+        let (codeVal, phoneVal) = PhoneNumberValidation.formatPhoneNumber(
+          requiredField.value,
+          countries,
+        )
+        let countryCode = switch countries->Array.find(v => v.country_code === clientCountry) {
         | Some(data) => data.phone_number_code
         | None => "+1"
         }

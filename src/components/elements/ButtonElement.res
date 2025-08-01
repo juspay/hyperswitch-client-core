@@ -19,6 +19,8 @@ let make = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+  let getMissingFieldsAndPaymentMethodData = WalletMissingFieldsHook.useGetMissingFields()
+
   let showAlert = AlertHook.useAlerts()
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -255,7 +257,7 @@ let make = (
         hasMissingFields,
         updatedRequiredFields,
         paymentMethodData,
-      ) = WalletType.getMissingFieldsAndPaymentMethodData(
+      ) = getMissingFieldsAndPaymentMethodData(
         walletType.required_field,
         ~billingAddress,
         ~shippingAddress,
@@ -323,7 +325,7 @@ let make = (
         hasMissingFields,
         updatedRequiredFields,
         paymentMethodData,
-      ) = WalletType.getMissingFieldsAndPaymentMethodData(
+      ) = getMissingFieldsAndPaymentMethodData(
         walletType.required_field,
         ~billingAddress,
         ~shippingAddress,
@@ -354,8 +356,8 @@ let make = (
               ~shipping=shippingAddress,
               ~billing=billingAddress,
               ~email=?billingAddress
-              ->WalletType.getEmailAddress
-              ->Option.orElse(shippingAddress->WalletType.getEmailAddress),
+              ->WalletMissingFieldsHook.getEmailAddress
+              ->Option.orElse(shippingAddress->WalletMissingFieldsHook.getEmailAddress),
               (),
             )
           }
@@ -431,7 +433,7 @@ let make = (
             hasMissingFields,
             updatedRequiredFields,
             paymentMethodData,
-          ) = WalletType.getMissingFieldsAndPaymentMethodData(
+          ) = getMissingFieldsAndPaymentMethodData(
             walletType.required_field,
             ~billingAddress,
             ~shippingAddress,
@@ -472,8 +474,8 @@ let make = (
                   ~shipping=shippingAddress,
                   ~billing=billingAddress,
                   ~email=?billingAddress
-                  ->WalletType.getEmailAddress
-                  ->Option.orElse(shippingAddress->WalletType.getEmailAddress),
+                  ->WalletMissingFieldsHook.getEmailAddress
+                  ->Option.orElse(shippingAddress->WalletMissingFieldsHook.getEmailAddress),
                   (),
                 )
               }

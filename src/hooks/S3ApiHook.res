@@ -4,10 +4,14 @@ let decodeCountryArray: array<Js.Json.t> => array<country> = data => {
   data->Array.map(item => {
     switch item->Js.Json.decodeObject {
     | Some(res) => {
-        isoAlpha2: Utils.getString(res, "isoAlpha2", ""),
+        country_code: Utils.getString(res, "country_code", ""),
+        country_name: Utils.getString(res, "country_name", ""),
+        country_flag: ?Utils.getOptionString(res, "country_flag"),
+        phone_number_code: Utils.getString(res, "phone_number_code", ""),
+        validation_regex: ?Utils.getOptionString(res, "validation_regex"),
+        format_example: ?Utils.getOptionString(res, "format_example"),
+        format_regex: ?Utils.getOptionString(res, "format_regex"),
         timeZones: Utils.getStrArray(res, "timeZones"),
-        value: Utils.getString(res, "value", ""),
-        label: Utils.getString(res, "label", ""),
       }
     | None => defaultTimeZone
     }
@@ -54,13 +58,11 @@ let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
       {
         countries: decodeCountryArray(countryArr),
         states: decodeStateJson(statesDict),
-        phoneCountryCodes: [],
       }
     }
   | None => {
       countries: [],
       states: Js.Dict.empty(),
-      phoneCountryCodes: [],
     }
   }
 }
@@ -327,36 +329,5 @@ let useFetchDataFromS3WithGZipDecoding = () => {
       )
       Promise.resolve(None)
     })
-  }
-}
-
-let decodeJsonToPhoneCountryCodeData = json => {
-  switch json->Js.Json.decodeObject {
-  | Some(res) =>
-    res
-    ->Js.Dict.get("countries")
-    ->Option.getOr([]->Js.Json.Array)
-    ->Js.Json.decodeArray
-    ->Option.getOr([])
-    ->Array.map(item => {
-      switch item->Js.Json.decodeObject {
-      | Some(res) => {
-          phone_number_code: Utils.getString(res, "phone_number_code", ""),
-          country_name: Utils.getString(res, "country_name", ""),
-          country_code: Utils.getString(res, "country_code", ""),
-
-          // phone_number_code: Utils.getString(res, "phone_number_code", ""),
-          // validation_regex: Utils.getString(res, "validation_regex", ""),
-          // format_example: Utils.getString(res, "format_example", ""),
-          // format_regex: Utils.getString(res, "format_regex", ""),
-        }
-      | None => {
-          phone_number_code: "+1",
-          country_name: "United States",
-          country_code: "US",
-        }
-      }
-    })
-  | None => []
   }
 }

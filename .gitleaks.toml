@@ -16,3 +16,11 @@ paths = [
     "ios/build/Build/Products/Debug-iphonesimulator/XCFrameworkIntermediates/react-native-hyperswitch-netcetera-3ds/ThreeDS_SDK.framework"
 ]
 regexes = ["(^|/).*\\.p12$"]
+
+[[allowlists]]
+description = "Ignore .bundle files in iOS"
+paths = [
+    "hyperswitchSDK/Core/Resources",
+    "hyperswitch/hyperWrapper/Resources",
+]
+regexes = ["hyperswitch.bundle"]
