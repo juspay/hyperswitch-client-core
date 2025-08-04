@@ -56,13 +56,13 @@ module.exports = {
     emulator: {
       type: 'android.emulator',
       device: {
-        avdName: 'Medium_Phone',
+        avdName: 'medium_phone',
       },
     },
     ciEmulator: {
       type: 'android.emulator',
       device: {
-        avdName: 'test',
+        avdName: 'medium_phone',
       },
     },
   },

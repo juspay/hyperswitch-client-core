@@ -125,7 +125,7 @@ jobs:
         with:
           api-level: 35
           arch: x86_64
-          profile: pixel
+          profile: medium_phone
           script: adb devices && npx detox test --configuration android.emu.ci.debug --record-videos failing --take-screenshots failing --headless # --loglevel trace --record-logs all
 
       - name: Upload Test Artifact - GitHub Action
