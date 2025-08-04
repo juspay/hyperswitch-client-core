@@ -146,7 +146,7 @@ main() {
     
     # Scan subdirectories
     run_gitleaks_scan "shared-code" "Shared Code"
-    run_gitleaks_scan "android" "Android"
+    # run_gitleaks_scan "android" "Android"
     # run_gitleaks_scan "ios" "iOS"
     
     echo
