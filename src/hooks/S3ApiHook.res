@@ -291,11 +291,10 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
 
 //-
 let useFetchDataFromS3WithGZipDecoding = () => {
-  let apiFunction = APIUtils.fetchApi
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetAssetUrlWithVersion()()
 
-  (~s3Path: string, ~decodeJsonToRecord, ~cache=false) => {
+  async (~s3Path: string, ~decodeJsonToRecord, ~cache=false) => {
     let endpoint = if cache {
       `${baseUrl}${s3Path}`
     } else {
@@ -311,22 +310,29 @@ let useFetchDataFromS3WithGZipDecoding = () => {
     )
     let headers = Dict.make()
     headers->Dict.set("Accept-Encoding", "br, gzip")
-    apiFunction(~uri=endpoint, ~method_=Get, ~headers, ~dontUseDefaultHeader=true, ())
-    ->Promise.then(resp => resp->Fetch.Response.json)
-    ->Promise.then(data => {
-      let countryStaterecord = decodeJsonToRecord(data)
-      Promise.resolve(Some(countryStaterecord))
-    })
-    ->Promise.catch(_ => {
-      logger(
-        ~logType=ERROR,
-        ~value=`S3 API failed - ${endpoint}`,
-        ~category=API,
-        ~eventName=S3_API,
+    try {
+      let resp = await APIUtils.fetchApi(
+        ~uri=endpoint,
+        ~method_=Get,
+        ~headers,
+        ~dontUseDefaultHeader=true,
         (),
       )
-      Promise.resolve(None)
-    })
+      let data = await resp->Fetch.Response.json
+      let countryStaterecord = decodeJsonToRecord(data)
+      Some(countryStaterecord)
+    } catch {
+    | _ => {
+        logger(
+          ~logType=ERROR,
+          ~value=`S3 API failed - ${endpoint}`,
+          ~category=API,
+          ~eventName=S3_API,
+          (),
+        )
+        raise(Exn.raiseError("S3 API failed"))
+      }
+    }
   }
 }
 
