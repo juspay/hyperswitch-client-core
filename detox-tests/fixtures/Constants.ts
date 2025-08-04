@@ -27,6 +27,7 @@ export const TIMEOUT_CONFIG = {
     BASE: {
         DEFAULT: 15000,
         LONG: 30000,
+        SHORT: 1000,
         NAVIGATION_WAIT: 5000,
         UI_STABILIZATION: 3000,
         ELEMENT_SEARCH: 8000,

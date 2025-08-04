@@ -2,6 +2,7 @@ import { SAVED_PAYMENT_SHEET_INDICATORS, NORMAL_PAYMENT_SHEET_INDICATORS, TIMEOU
 
 const DEFAULT_TIMEOUT = TIMEOUT_CONFIG.get('DEFAULT');
 const LONG_TIMEOUT = TIMEOUT_CONFIG.get('LONG');
+const SHORT_TIMEOUT = TIMEOUT_CONFIG.get('SHORT');
 const NAVIGATION_WAIT = TIMEOUT_CONFIG.get('NAVIGATION_WAIT');
 const UI_STABILIZATION_WAIT = TIMEOUT_CONFIG.get('UI_STABILIZATION');
 
@@ -18,7 +19,7 @@ export async function waitForVisibility(element: Detox.IndexableNativeElement, t
 
 export async function isElementVisible(element: Detox.IndexableNativeElement): Promise<boolean> {
   try {
-    await waitFor(element).toBeVisible().withTimeout(1000);
+    await waitFor(element).toBeVisible().withTimeout(device.getPlatform() == "ios" ? SHORT_TIMEOUT : DEFAULT_TIMEOUT);
     return true;
   } catch (e) {
     return false;
@@ -85,7 +86,6 @@ export function createTestLogger(): TestLogger {
 }
 
 export async function navigateToNormalPaymentSheet(): Promise<void> {
-  await waitForUIStabilization(UI_STABILIZATION_WAIT)
   const isSavedSheet = await isElementVisible(element(by.text(SAVED_PAYMENT_SHEET_INDICATORS.ADD_NEW_PAYMENT_METHOD_TEXT)));
   if (isSavedSheet) {
     console.log("Detected Saved Payment Sheet", "Navigating to Normal Payment Sheet...");
