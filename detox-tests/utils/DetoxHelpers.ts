@@ -85,7 +85,7 @@ export function createTestLogger(): TestLogger {
 }
 
 export async function navigateToNormalPaymentSheet(): Promise<void> {
-
+  waitForUIStabilization(UI_STABILIZATION_WAIT)
   const isSavedSheet = await isElementVisible(element(by.text(SAVED_PAYMENT_SHEET_INDICATORS.ADD_NEW_PAYMENT_METHOD_TEXT)));
   if (isSavedSheet) {
     console.log("Detected Saved Payment Sheet", "Navigating to Normal Payment Sheet...");
