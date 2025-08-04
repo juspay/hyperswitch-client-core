@@ -119,4 +119,11 @@ jobs:
         run: npx detox build --configuration ios.sim.debug
 
       - name: Detox test
-        run: applesimutils -l && npx detox test --configuration ios.sim.debug # --loglevel trace --record-logs all
+        run: applesimutils -l && npx detox test --configuration ios.sim.debug --record-videos failing --take-screenshots failing --headless # --loglevel trace --record-logs all
+
+      - name: Upload Test Artifact - GitHub Action
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: artifacts
+          path: artifacts
