@@ -20,7 +20,7 @@ let generatePaymentMethodData = (
   ~cardHolderName: option<'a>,
   ~nickname: option<'a>,
 ) => {
-  let (month, year) = Validation.getExpiryDates(cardData.expireDate)
+  let (month, year) = CardValidations.getExpiryDates(cardData.expireDate)
 
   [
     (

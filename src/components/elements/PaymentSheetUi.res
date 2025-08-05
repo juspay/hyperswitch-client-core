@@ -1,6 +1,5 @@
 open ReactNative
 open Style
-open Validation
 
 module CardBrandAndScanCardIcon = {
   @react.component
@@ -43,7 +42,7 @@ let make = (
   let isCardBrandSupported = isCardBrandSupported->Option.getOr(true)
   let isCvvValid = isCvvValid->Option.getOr(true)
   let isMaxCardLength =
-    cardNumber->CardValidations.clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
+    cardNumber->CardValidations.clearSpaces->String.length == CardValidations.maxCardLength(CardValidations.getCardBrand(cardNumber))
   let (cardNumberIsFocus, setCardNumberIsFocus) = React.useState(_ => false)
   let (expireDateIsFocus, setExpireDateIsFocus) = React.useState(_ => false)
   let (cvvIsFocus, setCvvIsFocus) = React.useState(_ => false)
@@ -57,7 +56,7 @@ let make = (
     expireDateIsFocus ? isExpireDateValid || expireDate->String.length < 7 : isExpireDateValid
   }
   let isCvvValid = {
-    cvvIsFocus ? isCvvValid || !cvcNumberInRange(cvv, getCardBrand(cardNumber)) : isCvvValid
+    cvvIsFocus ? isCvvValid || !CardValidations.checkCardCVC(cvv, CardValidations.getCardBrand(cardNumber)) : isCvvValid
   }
 
   let {component, dangerColor, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
@@ -65,7 +64,7 @@ let make = (
   let cardRef = React.useRef(Nullable.null)
   let expireRef = React.useRef(Nullable.null)
   let cvvRef = React.useRef(Nullable.null)
-  let cardBrand = getCardBrand(cardNumber)
+  let cardBrand = CardValidations.getCardBrand(cardNumber)
   let nullRef = React.useRef(Nullable.null)
 
   let errorMsgText = if !isCardNumberValid {
@@ -211,7 +210,7 @@ let make = (
             }}
             textColor={isCvvValid ? component.color : dangerColor}
             iconRight=CustomIcon({
-              checkCardCVC(cvv, cardBrand)
+              CardValidations.checkCardCVC(cvv, cardBrand)
                 ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
                 : <Icon name="cvvempty" height=35. width=35. fill="black" />
             })

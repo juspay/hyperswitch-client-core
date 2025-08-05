@@ -1,4 +1,6 @@
 open Validation
+open CardValidations
+
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 
@@ -76,7 +78,7 @@ let make = (
     let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
     let validCardBrand = getFirstValidCardScheme(~cardNumber=text, ~enabledCardSchemes)
     let cardBrand = validCardBrand === "" ? getCardBrand(text) : validCardBrand
-    let num = formatCardNumber(text, cardType(cardBrand))
+    let num = formatCardNumber(text, cardBrand)
 
     let isthisValid = cardValid(num, cardBrand)
 
@@ -110,7 +112,7 @@ let make = (
     }
   }
   let onChangeCardExpire = (text, cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
-    let dateExpire = CardValidations.formatCardExpiryNumber(text)
+    let dateExpire = formatCardExpiryNumber(text)
     let isthisValid = checkCardExpiry(dateExpire)
     if isthisValid {
       switch cvvRef.current->Nullable.toOption {
@@ -122,7 +124,7 @@ let make = (
     setCardData(prev => {...prev, expireDate: dateExpire, isExpireDataValid: Some(isthisValid)})
   }
   let onChangeCvv = (text, cvvOrZipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>) => {
-    let cvvData = CardValidations.formatCVCNumber(text, getCardBrand(cardData.cardNumber))
+    let cvvData = formatCVCNumber(text, getCardBrand(cardData.cardNumber))
     let isValidCvv = checkCardCVC(cvvData, getCardBrand(cardData.cardNumber))
     let shouldShiftFocusToNextField = checkMaxCardCvv(cvvData, getCardBrand(cardData.cardNumber))
     if isValidCvv && shouldShiftFocusToNextField {
@@ -155,9 +157,9 @@ let make = (
     cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
   ) => {
     let cardBrand = getCardBrand(pan)
-    let cardNumber = formatCardNumber(pan, cardType(cardBrand))
+    let cardNumber = formatCardNumber(pan, cardBrand)
     let isCardValid = cardValid(cardNumber, cardBrand)
-    let expireDate = CardValidations.formatCardExpiryNumber(expiry)
+    let expireDate = formatCardExpiryNumber(expiry)
     let isExpiryValid = checkCardExpiry(expireDate)
     let isExpireDataValid = expireDate->Js.String2.length > 0 ? Some(isExpiryValid) : None
     setCardData(prev => {
