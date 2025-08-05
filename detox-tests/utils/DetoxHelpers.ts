@@ -60,10 +60,10 @@ export async function completePayment(testIds: any): Promise<void> {
   // await submitButton.tap()
 
   if (device.getPlatform() === "ios") {
-    await waitForVisibility(element(by.text(/.*(Payment complete|payment failed|This payment method is blocked|Missing required param: browser_info.accept_header).*/i)), LONG_TIMEOUT);
+    await waitForVisibility(element(by.text(/.*(Payment complete|Somthing went wrong|payment failed|This payment method is blocked|Missing required param: browser_info.accept_header).*/i)), LONG_TIMEOUT);
     // await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
   } else {
-    await waitForVisibility(element(by.text(/^(succeeded|processing|payment failed|This payment method is blocked|Missing required param: browser_info.accept_header)$/i)), LONG_TIMEOUT)
+    await waitForVisibility(element(by.text(/^(succeeded|processing|Somthing went wrong|payment failed|This payment method is blocked|Missing required param: browser_info.accept_header)$/i)), LONG_TIMEOUT)
     // await waitForVisibility(element(by.text(/^(succeeded|processing)$/i)), LONG_TIMEOUT)
   }
 }
