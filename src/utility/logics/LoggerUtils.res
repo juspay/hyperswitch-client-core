@@ -92,33 +92,3 @@ let sendLogs = (logFile, uri: option<string>, publishableKey, appId) => {
     }
   }
 }
-
-type dataModule = {version: string}
-
-@val
-external importStates: string => promise<dataModule> = "import"
-
-let getClientCoreVersion = () => {
-  if sdkVersionRef.contents == PACKAGE_JSON_NOT_STARTED {
-    sdkVersionRef := PACKAGE_JSON_LOADING
-
-    importStates("./../../../package.json")
-    ->Promise.then(res => {
-      sdkVersionRef := PACKAGE_JSON_LOADED(res.version)
-      Promise.resolve()
-    })
-    ->Promise.catch(_ => {
-      sdkVersionRef := PACKAGE_JSON_REFERENCE_ERROR
-      Promise.resolve()
-    })
-    ->ignore
-  }
-}
-
-let getClientCoreVersionNoFromRef = () => {
-  switch sdkVersionRef.contents {
-  | PACKAGE_JSON_LOADED(version) => version
-  | PACKAGE_JSON_REFERENCE_ERROR => "reference_error"
-  | _ => "loading"
-  }
-}

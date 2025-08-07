@@ -14,18 +14,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Fetch full history to check commits
 
       - name: Check single commit requirement
+        env:
+          PR_COMMIT_COUNT: ${{ github.event.pull_request.commits }}
         run: |
-          commit_count=$(git rev-list --count HEAD ^${{ github.event.pull_request.base.sha }})
-          echo "Number of commits in PR: $commit_count"
+          echo "Number of commits in PR: $PR_COMMIT_COUNT"
 
-          if [ "$commit_count" -gt 1 ]; then
-            echo "❌ PR contains $commit_count commits. Please squash into a single commit."
+          if [ "$PR_COMMIT_COUNT" -gt 1 ]; then
+            echo "❌ PR contains $PR_COMMIT_COUNT commits. Please squash into a single commit."
             echo "💡 To squash commits, run:"
-            echo "   git rebase -i HEAD~$commit_count"
+            echo "   git rebase -i HEAD~$PR_COMMIT_COUNT"
             echo "   # Change 'pick' to 'squash' for all commits except the first one"
             echo "   # Then force push: git push --force-with-lease"
             exit 1
@@ -40,7 +39,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fetch full history for better secret detection
+          fetch-depth: 0
 
       - name: Checkout Shared code
         uses: actions/checkout@v4
@@ -54,28 +53,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-
-      - name: Scan shared-code for secrets
-        run: |
-          echo "🔍 Scanning shared-code for secrets..."
-          if [ -d "shared-code" ]; then
-            cd shared-code
-            # Install gitleaks for additional scanning
-            wget -O gitleaks.tar.gz https://github.com/zricethezav/gitleaks/releases/latest/download/gitleaks_8.18.4_linux_x64.tar.gz
-            tar -xzf gitleaks.tar.gz
-            chmod +x gitleaks
-            
-            if ./gitleaks detect --source . --no-banner --no-git; then
-              echo "✅ Shared-code: No secrets found"
-            else
-              echo "❌ Shared-code: Secrets detected!"
-              ./gitleaks detect --source . --verbose --no-banner --no-git
-              exit 1
-            fi
-            cd ..
-          else
-            echo "⚠️ shared-code directory not found, skipping..."
-          fi
 
   check-forbidden-words:
     runs-on: ubuntu-latest

@@ -1,12 +1,22 @@
 import * as testIds from "../../src/utility/test/TestUtils.bs.js";
 import { device } from "detox"
-import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT, netceteraTestCard, TIMEOUT_CONFIG } from "../fixtures/Constants"
-import { waitForVisibility, typeTextInInput, ensureNormalPaymentSheet, waitForUIStabilization } from "../utils/DetoxHelpers"
+import { profileId, LAUNCH_PAYMENT_SHEET_BTN_TEXT, netceteraTestCard } from "../fixtures/Constants"
+import { createTestLogger, waitForDemoAppLoad, launchPaymentSheet, navigateToNormalPaymentSheet, enterCardDetails, completePayment } from "../utils/DetoxHelpers"
 import { CreateBody, setCreateBodyForTestAutomation } from "../utils/APIUtils";
-describe('card-flow-e2e-test', () => {
-    jest.retryTimes(6);
+
+const logger = createTestLogger();
+let globalStartTime = Date.now();
+let testStartTime = globalStartTime;
+
+logger.log("Card Flow E2E Test Starting at:", globalStartTime);
+
+describe('Netcetera 3DS E2E Test', () => {
     beforeAll(async () => {
+        testStartTime = Date.now();
+        logger.log("CPI & Device Sync Starting at:", testStartTime);
+
         const createPaymentBody = new CreateBody()
+        createPaymentBody.addKey("profile_id", profileId)
         createPaymentBody.addKey("request_external_three_ds_authentication", true)
         createPaymentBody.addKey("authentication_type", 'three_ds')
         await setCreateBodyForTestAutomation(createPaymentBody.get())
@@ -15,63 +25,59 @@ describe('card-flow-e2e-test', () => {
             launchArgs: { detoxEnableSynchronization: 1 },
             newInstance: true,
         });
-        // await device.enableSynchronization();
+        await device.enableSynchronization();
+
+        logger.log("CPI & Device Sync finished in:", testStartTime, Date.now());
     });
 
-    it('demo app should load successfully', async () => {
-        await waitForVisibility(element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)))
+    it('should load demo app successfully', async () => {
+        testStartTime = Date.now();
+        logger.log("Test starting at:", testStartTime);
+
+        await waitForDemoAppLoad(LAUNCH_PAYMENT_SHEET_BTN_TEXT);
+
+        logger.log("Test finished in:", testStartTime, Date.now());
     });
 
-    it('payment sheet should open', async () => {
-        await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
-        await waitForVisibility(element(by.text('Test Mode')))
-        const initialSheetType = await ensureNormalPaymentSheet();
-        console.log(`Initial payment sheet type detected: ${initialSheetType}`);
-    })
+    it('should open payment sheet', async () => {
+        testStartTime = Date.now();
+        logger.log("Test starting at:", testStartTime);
 
-    it('should enter details in card form', async () => {
-        const cardNumberInput = await element(by.id(testIds.cardNumberInputTestId))
-        const expiryInput = await element(by.id(testIds.expiryInputTestId))
-        const cvcInput = await element(by.id(testIds.cvcInputTestId))
+        await launchPaymentSheet(LAUNCH_PAYMENT_SHEET_BTN_TEXT);
 
-        await waitFor(cardNumberInput).toExist();
-        await waitForVisibility(cardNumberInput);
-        await cardNumberInput.tap();
-
-        await cardNumberInput.clearText();
-        await typeTextInInput(cardNumberInput, netceteraTestCard.cardNumber)
-
-        await waitFor(expiryInput).toExist();
-        await waitForVisibility(expiryInput);
-        await expiryInput.typeText(netceteraTestCard.expiryDate);
-
-        await waitFor(cvcInput).toExist();
-        await waitForVisibility(cvcInput);
-        await cvcInput.typeText(netceteraTestCard.cvc);
+        logger.log("Test finished in:", testStartTime, Date.now());
     });
 
-    it('Netcetera SDK Challenge should open', async () => {
+    it('should navigate to normal payment sheet if needed', async () => {
+        testStartTime = Date.now();
+        logger.log("Test starting at:", testStartTime);
 
-        const payNowButton = await element(by.id(testIds.payButtonTestId))
-        await waitFor(payNowButton).toExist();
-        await waitForVisibility(payNowButton)
-        await payNowButton.tap();
+        await navigateToNormalPaymentSheet();
 
-        await waitForUIStabilization(30000);
+        logger.log("Test finished in:", testStartTime, Date.now());
+    });
 
-        const inputType = device.getPlatform() == "android" ? 'android.widget.EditText' : 'UITextField'
-        const otpInput = await element(by.type(inputType));
-        await waitForVisibility(otpInput, TIMEOUT_CONFIG.BASE.LONG);
-        await typeTextInInput(otpInput, "1234")
+    it('should enter card details in form', async () => {
+        testStartTime = Date.now();
+        logger.log("Test starting at:", testStartTime);
 
-        const submitButton = await element(by.text('Submit'))
-        await submitButton.tap()
-    })
+        await enterCardDetails(
+            netceteraTestCard.cardNumber,
+            netceteraTestCard.expiryDate,
+            netceteraTestCard.cvc,
+            testIds
+        );
 
-    it('should be able to succesfully external 3DS card payment using Netcetera', async () => {
-        if (device.getPlatform() === "ios")
-            await waitForVisibility(element(by.text('Payment complete')))
-        else
-            await waitForVisibility(element(by.text('succeeded')))
-    })
+        logger.log("Test finished in:", testStartTime, Date.now());
+    });
+
+    it('should complete card payment successfully', async () => {
+        testStartTime = Date.now();
+        logger.log("Test starting at:", testStartTime);
+
+        await completePayment(testIds);
+
+        logger.log("Test finished in:", testStartTime, Date.now());
+        logger.log("Card Flow E2E Test finished in:", globalStartTime, Date.now());
+    });
 });

@@ -4,6 +4,7 @@ type instrumentation = unit
 type sentryInitArg = {
   dsn: string,
   environment: string,
+  release?: string,
   integrations?: array<integration>,
   tracesSampleRate: float,
   tracePropagationTargets?: array<string>,
@@ -99,6 +100,7 @@ let initiateSentry = (~dsn: option<string>, ~environment: string) => {
     | Some(dsn) =>
       sentryReactNative.init({
         dsn,
+        release: VersionInfo.version,
         environment,
         integrations,
         tracesSampleRate: 1.0,

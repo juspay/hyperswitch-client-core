@@ -40,7 +40,7 @@ let defaultProps = {
       // }}
       // locale: "en"
       typography: {
-        fontResId: 'montserrat',
+        family: 'bitcount single',
       },
     },
   },

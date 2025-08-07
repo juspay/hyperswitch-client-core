@@ -21,7 +21,7 @@ let setHref = url => {
   setHref(location, url)
 }
 
-type tab = {location: location, close: unit => unit}
+type tab = {location: location, close: unit => unit, closed: bool}
 
 @val @scope("window") external open_: string => Nullable.t<tab> = "open"
 

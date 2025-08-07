@@ -63,21 +63,30 @@ let openUrl = (
           let newTab = Window.open_(url)
 
           intervalId.current = setInterval(() => {
-              try {
-                switch newTab->Nullable.toOption {
-                | Some(tab) =>
-                  let currentUrl = tab.location.href
-                  resolve({message: currentUrl, url: None, \"type": ""})
+              switch newTab->Nullable.toOption {
+              | Some(tab) =>
+                if tab.closed {
                   switch intervalId.current->Nullable.toOption {
                   | Some(id) => clearInterval(id)
                   | None => ()
                   }
-                  tab.close()
-
-                | None => ()
+                  resolve({message: "", url: None, \"type": "cancel"})
+                } else {
+                  try {
+                    let currentUrl = tab.location.href
+                    if currentUrl->String.includes("status=") {
+                      resolve({message: currentUrl, url: None, \"type": ""})
+                      switch intervalId.current->Nullable.toOption {
+                      | Some(id) => clearInterval(id)
+                      | None => ()
+                      }
+                      tab.close()
+                    }
+                  } catch {
+                  | _ => ()
+                  }
                 }
-              } catch {
-              | _ => ()
+              | None => ()
               }
             }, 1000)->Nullable.Value
 

@@ -52,8 +52,8 @@ let inactiveScreenApiCall = (
     timestamp: timestamp->Float.toString,
     sessionId: session_id,
     version: nativeProp.hyperParams.sdkVersion,
-    codePushVersion: getClientCoreVersionNoFromRef(),
-    clientCoreVersion: getClientCoreVersionNoFromRef(),
+    codePushVersion: VersionInfo.version,
+    clientCoreVersion: VersionInfo.version,
     component: MOBILE,
     value: "Inactive Screen",
     internalMetadata: "",
@@ -108,7 +108,6 @@ let useLoggerHook = () => {
   let (events, setEvents) = React.useContext(LoggerContext.loggingContext)
   let calculateLatency = useCalculateLatency()
   let getLoggingEndpointHook = GlobalHooks.useGetLoggingUrl()
-  getClientCoreVersion()
   (
     ~logType,
     ~value,
@@ -134,8 +133,8 @@ let useLoggerHook = () => {
       timestamp: timestamp->Float.toString,
       sessionId: nativeProp.sessionId,
       version: nativeProp.hyperParams.sdkVersion,
-      codePushVersion: getClientCoreVersionNoFromRef(),
-      clientCoreVersion: getClientCoreVersionNoFromRef(),
+      codePushVersion: VersionInfo.version,
+      clientCoreVersion: VersionInfo.version,
       component: MOBILE,
       value,
       internalMetadata: internalMetadata->Option.getOr(""),

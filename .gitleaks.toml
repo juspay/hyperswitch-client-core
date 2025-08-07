@@ -16,3 +16,16 @@ paths = [
     "ios/build/Build/Products/Debug-iphonesimulator/XCFrameworkIntermediates/react-native-hyperswitch-netcetera-3ds/ThreeDS_SDK.framework"
 ]
 regexes = ["(^|/).*\\.p12$"]
+
+[[allowlists]]
+description = "Ignore Cardinal JFrog in Android"
+commits = ["00210e92b02c166825ceae8882dad79dc0149b2b"]
+regexes = ["/.*DAUQKXLDPDx6NYRkqrgFLRc3qDrayg6rrCb.*/"]
+
+[[allowlists]]
+description = "Ignore .bundle files in iOS"
+paths = [
+    "hyperswitchSDK/Core/Resources",
+    "hyperswitch/hyperWrapper/Resources",
+]
+regexes = ["hyperswitch.bundle"]

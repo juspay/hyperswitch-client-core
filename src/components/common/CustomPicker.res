@@ -90,8 +90,18 @@ let make = (
           }
         }, 300)
       }}>
-      <SafeAreaView />
-      <View style={array([s({flex: 1., paddingTop: 24.->dp}), transparentBG])}>
+      <View
+        style={array([
+          s({
+            flex: 1.,
+            paddingTop: (
+              WebKit.platform === #androidWebView
+                ? 75.
+                : nativeProps.hyperParams.topInset->Option.getOr(75.)
+            )->dp,
+          }),
+          transparentBG,
+        ])}>
         <View
           style={array([
             s({

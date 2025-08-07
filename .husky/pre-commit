@@ -78,21 +78,24 @@ run_gitleaks_scan() {
     local directory=$1
     local name=$2
     local current_dir=$(pwd)
-    
+    local config_file=""
     print_info "Scanning $name for secrets..."
     
     if [[ -d "$directory" ]]; then
+        if [[ "$directory" != "." ]]; then
+            config_file="--config=$current_dir/.gitleaks.toml"
+        fi
         cd "$directory" || {
             print_error "Failed to change to directory: $directory"
             exit 1
         }
         
-        if gitleaks detect --source . --no-banner 2>/dev/null; then
+        if gitleaks detect --source . --no-banner $config_file 2>/dev/null; then
             print_success "$name: No secrets found"
         else
             print_error "$name: Secrets detected!"
             print_info "Running verbose scan for details..."
-            gitleaks detect --source . --verbose --no-banner
+            gitleaks detect --source . --verbose --no-banner $config_file
             cd "$current_dir"
             exit 1
         fi
@@ -147,7 +150,7 @@ main() {
     # Scan subdirectories
     run_gitleaks_scan "shared-code" "Shared Code"
     run_gitleaks_scan "android" "Android"
-    # run_gitleaks_scan "ios" "iOS"
+    run_gitleaks_scan "ios" "iOS"
     
     echo
     print_success "All checks completed successfully! 🎉"
