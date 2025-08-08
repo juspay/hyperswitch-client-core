@@ -60,7 +60,7 @@ let make = (~cardNumber, ~cardNetworks) => {
 
   let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
   let validCardBrand = Validation.getFirstValidCardScheme(~cardNumber, ~enabledCardSchemes)
-  let cardBrand = validCardBrand === "" ? Validation.getCardBrand(cardNumber) : validCardBrand
+  let cardBrand = validCardBrand === "" ? CardValidations.getCardBrand(cardNumber) : validCardBrand
   let (cardBrandIcon, setCardBrandIcon) = React.useState(_ =>
     cardBrand === "" ? "waitcard" : cardBrand
   )

@@ -40,8 +40,8 @@ let make = () => {
       | _ => handleSuccessFailure(~apiResStatus=status, ())
       }
     }
-    let (month, year) = Validation.getExpiryDates(expireDate)
-    let cardBrand = Validation.getCardBrand(cardNumber)
+    let (month, year) = CardValidations.getExpiryDates(expireDate)
+    let cardBrand = CardValidations.getCardBrand(cardNumber)
 
     let payment_method_data =
       [

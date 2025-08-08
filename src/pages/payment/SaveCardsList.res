@@ -17,7 +17,7 @@ module CVVComponent = {
       isCvcFocus || savedCardCvv->Option.isNone
         ? true
         : savedCardCvv->Option.getOr("")->String.length > 0 &&
-            Validation.cvcNumberInRange(savedCardCvv->Option.getOr(""), cardScheme)
+            CardValidations.cvcNumberInRange(savedCardCvv->Option.getOr(""), cardScheme)->Array.includes(true)
 
     let localeObject = GetLocale.useGetLocalObj()
 
@@ -59,7 +59,7 @@ module CVVComponent = {
                 secureTextEntry=true
                 textColor={isCvcValid ? component.color : dangerColor}
                 iconRight=CustomIcon({
-                  Validation.checkCardCVC(savedCardCvv->Option.getOr(""), cardScheme)
+                  CardValidations.checkCardCVC(savedCardCvv->Option.getOr(""), cardScheme)
                     ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
                     : <Icon name="cvvempty" height=35. width=35. fill="black" />
                 })
@@ -217,7 +217,7 @@ module PaymentMethodListView = {
           | "NotCard" => true
           | _ =>
             switch savedCardCvv {
-            | Some(cvv) => cvv->String.length > 0 && Validation.cvcNumberInRange(cvv, cardScheme)
+            | Some(cvv) => cvv->String.length > 0 && CardValidations.cvcNumberInRange(cvv, cardScheme)->Array.includes(true)
             | None => !(pmObject->PaymentUtils.checkIsCVCRequired)
             }
           }
