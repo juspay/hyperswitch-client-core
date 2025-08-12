@@ -66,3 +66,9 @@ let setupExpressCheckoutListener = (
     onExpressCheckoutConfirm(responseFromJava)
   })
 }
+
+let setupGooglePayInitListener = (~onGooglePayInit: dict<JSON.t> => unit) => {
+  setupNativeEventListener("googlePayInit", event => {
+    onGooglePayInit(event)
+  })
+}
