@@ -1,5 +1,3 @@
-open NativeModulesType
-
 // Feature flag for turbo modules
 @val @scope("global") external turboModuleProxy: Nullable.t<'a> = "__turboModuleProxy"
 
@@ -25,9 +23,9 @@ let useExitPaymentsheet = () => {
 
 let useExitCard = () =>
   if isTurboModuleEnabled() {
-    TurboModulesHyper.useExitCard
+    TurboModulesHyper.useExitCard()
   } else {
-    NativeModulesHyper.useExitCard
+    NativeModulesHyper.useExitCard()
   }
 
 let useExitWidget = () =>
@@ -62,4 +60,18 @@ let updateWidgetHeight = if isTurboModuleEnabled() {
   TurboModulesHyper.updateWidgetHeight
 } else {
   NativeModulesHyper.updateWidgetHeight
+}
+
+// Export the hyperModule object
+let hyperModule = if isTurboModuleEnabled() {
+  TurboModulesHyper.hyperTurboModule
+} else {
+  NativeModulesHyper.hyperModule
+}
+
+// Export stringifiedResStatus function
+let stringifiedResStatus = if isTurboModuleEnabled() {
+  TurboModulesHyper.stringifiedResStatus
+} else {
+  NativeModulesHyper.stringifiedResStatus
 }
