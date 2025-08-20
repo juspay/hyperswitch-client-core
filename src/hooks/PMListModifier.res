@@ -21,6 +21,8 @@ let useListModifier = () => {
   let (addApplePay, addGooglePay) = WebButtonHook.usePayButton()
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
+  let (googlePayAvailability, setGooglePayAvailability) = React.useState(_ => None)
+
   // React.useMemo2(() => {
   if allApiData.paymentList->Array.length == 0 {
     handleSuccessFailure(
@@ -316,7 +318,12 @@ let useListModifier = () => {
                   if ReactNative.Platform.os === #web {
                     addGooglePay(~sessionObject, ~requiredFields=walletVal.required_field)
                   }
-                  exp
+
+                  switch googlePayAvailability {
+                  | None => exp
+                  | Some(true) => exp
+                  | Some(false) => None
+                  }
                 }
               : None
           | SAMSUNG_PAY =>
@@ -376,10 +383,15 @@ let useListModifier = () => {
                   walletType=walletProp.walletType
                   sessionObject={walletProp.sessionObject}
                 />
-              : <ButtonElement
+              : <WalletAvailabilityChecker
                   key=walletProp.walletType.payment_method_type
                   walletType=walletProp.walletType
                   sessionObject={walletProp.sessionObject}
+                  onAvailabilityResult={isAvailable => {
+                    if walletProp.walletType.payment_method_type_wallet == GOOGLE_PAY {
+                      setGooglePayAvailability(_ => Some(isAvailable))
+                    }
+                  }}
                 />,
           )
           ->ignore
