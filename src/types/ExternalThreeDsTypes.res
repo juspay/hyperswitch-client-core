@@ -82,3 +82,14 @@ let pollResponseItemToObjMapper = (dict): pollCallResponse => {
     status: dict->Utils.getString("status", ""),
   }
 }
+
+let aReqParamsToJson = (aReqParams: aReqParams): Js.Json.t => {
+  let dict = Dict.make()
+  dict->Dict.set("deviceData", JSON.Encode.string(aReqParams.deviceData))
+  dict->Dict.set("messageVersion", JSON.Encode.string(aReqParams.messageVersion))
+  dict->Dict.set("sdkTransId", JSON.Encode.string(aReqParams.sdkTransId))
+  dict->Dict.set("sdkAppId", JSON.Encode.string(aReqParams.sdkAppId))
+  dict->Dict.set("sdkEphemeralKey", aReqParams.sdkEphemeralKey)
+  dict->Dict.set("sdkReferenceNo", JSON.Encode.string(aReqParams.sdkReferenceNo))
+  JSON.Encode.object(dict)
+}

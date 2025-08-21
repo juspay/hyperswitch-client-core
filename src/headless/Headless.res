@@ -1,8 +1,21 @@
 open SdkTypes
 open HeadlessUtils
 open HeadlessNative
+open ReactNative
 
 let reRegisterCallback = ref(() => ())
+
+let setupNativeEventListenerForHeadless = (eventName, handler) => {
+  let nativeEventEmitter = NativeEventEmitter.make(
+    Dict.get(NativeModules.nativeModules, "HyperHeadless"),
+  )
+
+  let eventSubscription = NativeEventEmitter.addListener(nativeEventEmitter, eventName, handler)
+
+  () => {
+    eventSubscription->EventSubscription.remove
+  }
+}
 
 let registerHeadless = headless => {
   let headlessModule = initialise(headless)
@@ -456,6 +469,130 @@ let registerHeadless = headless => {
     | None => customerSavedPMData->getErrorFromResponse->getDefaultPaymentSession
     }
   }
+
+  let setupThreeDsModuleListener = _ => {
+    // Resolve 3DS SDK directly (not using hook since we're not in React context)
+    let sdkFunctions = if Netcetera3dsModule.isSdkAvailable {
+      Console.log("-- Netcetera 3DS SDK is available")
+      ThreeDsSdkResolverHooks.makeNetcetra3DsModule(~threeDsSdkApiKey=None)
+    } else if Trident3dsModule.isSdkAvailable {
+      Console.log("-- Trident 3DS SDK is available")
+      ThreeDsSdkResolverHooks.makeTrident3DsModule()
+    } else {
+      Console.log("-- Default 3DS SDK block")
+      ThreeDsSdkResolverHooks.makeDefault3DsModule()
+    }
+
+    let _cleanupA = setupNativeEventListenerForHeadless("init3ds", var => {
+      Console.log2("-- Received init3ds event from native with data: ", var)
+
+      // let responseFromNative = var->PaymentConfirmTypes.itemToObjMapperJava
+
+      // Extract threeDsSdkApiKey from the native response
+      // let threeDsSdkApiKey = switch responseFromNative.paymentMethodData->JSON.parseExn->Utils.getDictFromJson->Dict.get("threeDsSdkApiKey") {
+      // | Some(apiKey) => apiKey->JSON.Decode.string
+      // | None => None
+      // }
+
+      // Extract environment from response or use default
+      // let sdkEnvironment = switch responseFromNative.paymentMethodData->JSON.parseExn->Utils.getDictFromJson->Dict.get("environment") {
+      // | Some(env) => {
+      //     let envStr = env->JSON.Decode.string->Option.getOr("sandbox")->String.toUpperCase
+      //     switch envStr {
+      //     | "PROD" | "PRODUCTION" => GlobalVars.PROD
+      //     | "INTEG" | "INTEGRATION" => GlobalVars.INTEG
+      //     | _ => GlobalVars.SANDBOX
+      //     }
+      //   }
+      // | None => GlobalVars.SANDBOX
+      // }
+
+      // Initialize the 3DS SDK directly
+      let sdkConfig: ThreeDsModuleType.sdkConfig = {
+        apiKey: "",
+        environment: SANDBOX,
+      }
+
+      sdkFunctions.initialiseSdkFunc(sdkConfig, status => {
+        // Log the initialization result
+        Console.log("-- 3DS SDK Initialization: " ++ status.status ++ " - " ++ status.message)
+      })
+    })
+
+    let _cleanUpB = setupNativeEventListenerForHeadless("generateAReqParams", var => {
+      Console.log2("-- Received generateAReqParams event from native with data: ", var)
+
+      let params = var->Utils.getDictFromJson
+      let msgVer = params->Utils.getString("messageVersion", "")
+      let dirId = params->Utils.getString("directoryServerId", "")
+      let cardNetworkOpt = params->Utils.getOptionString("cardNetwork")
+
+      sdkFunctions.generateAReqParamsFunc(msgVer, dirId, cardNetworkOpt, (
+        status,
+        aReqParams,
+      ) => {
+        Console.log2("-- Generated AReq Params: ", aReqParams)
+        let responseDict = Dict.make()
+        responseDict->Dict.set("status", JSON.Encode.string(status.status))
+        responseDict->Dict.set("message", JSON.Encode.string(status.message))
+        responseDict->Dict.set("aReqParams", aReqParams->ExternalThreeDsTypes.aReqParamsToJson)
+
+        // Send response back to native using sendMessageToNative
+        headlessModule.sendMessageToNative(JSON.Encode.object(responseDict)->JSON.stringify)
+        Console.log("-- Successfully sent responseDict with aReqParams to native via sendMessageToNative")
+      })
+    })
+
+    let _cleanUpC = setupNativeEventListenerForHeadless("receiveChallengeParams", var => {
+      Console.log2("-- Received receiveChallengeParams event from native with data: ", var)
+
+      // Extract challenge parameters from the native response
+      let challengeDict = var->Utils.getDictFromJson
+      let acsSignedContent = challengeDict->Utils.getString("acsSignedContent", "")
+      let acsTransactionId = challengeDict->Utils.getString("acsTransactionId", "")
+      let acsRefNumber = challengeDict->Utils.getString("acsRefNumber", "")
+      let threeDSServerTransId = challengeDict->Utils.getString("threeDSServerTransId", "")
+      let threeDSRequestorAppURL = challengeDict->Utils.getOptionString("threeDSRequestorAppURL")
+
+      sdkFunctions.receiveChallengeParamsFunc(
+        acsSignedContent,
+        acsTransactionId,
+        acsRefNumber,
+        threeDSServerTransId,
+        status => {
+          Console.log2("-- receiveChallengeParams result: ", status)
+          let responseDict = Dict.make()
+          responseDict->Dict.set("status", JSON.Encode.string(status.status))
+          responseDict->Dict.set("message", JSON.Encode.string(status.message))
+          responseDict->Dict.set("challengeResult", JSON.Encode.object(Dict.make()))
+
+          // Send response back to native using sendMessageToNative
+          headlessModule.sendMessageToNative(JSON.Encode.object(responseDict)->JSON.stringify)
+          Console.log("-- Successfully sent responseDict with challengeResult to native via sendMessageToNative")
+        },
+        threeDSRequestorAppURL,
+      )
+    })
+
+    let _cleanUpD = setupNativeEventListenerForHeadless("doChallenge", var => {
+      Console.log2("-- Received doChallenge event from native with data: ", var)
+
+      sdkFunctions.generateChallengeFunc(status => {
+        Console.log2("-- doChallenge result: ", status)
+        let responseDict = Dict.make()
+        responseDict->Dict.set("status", JSON.Encode.string(status.status))
+        responseDict->Dict.set("message", JSON.Encode.string(status.message))
+        responseDict->Dict.set("doChallengeResult", JSON.Encode.object(Dict.make()))
+
+        // Send response back to native using sendMessageToNative
+        headlessModule.sendMessageToNative(JSON.Encode.object(responseDict)->JSON.stringify)
+        Console.log("-- Successfully sent responseDict with doChallengeResult to native via sendMessageToNative")
+      })
+    })
+
+    [_cleanupA, _cleanUpB, _cleanUpC, _cleanUpD]
+  }
+
   let getNativePropCallback = response => {
     let nativeProp = nativeJsonToRecord(response, 0)
 
@@ -467,6 +604,7 @@ let registerHeadless = headless => {
     )
 
     if isPublishableKeyValid && isClientSecretValid {
+      let _cleanUp = setupThreeDsModuleListener()
       apiHandler(nativeProp)->ignore
     } else if !isPublishableKeyValid {
       errorOnApiCalls(INVALID_PK(Error, Static("")))->getDefaultPaymentSession
@@ -476,4 +614,5 @@ let registerHeadless = headless => {
   }
 
   headlessModule.initialisePaymentSession(getNativePropCallback)
+  headlessModule.initialiseAuthSession(getNativePropCallback)
 }
