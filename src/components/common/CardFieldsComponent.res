@@ -3,82 +3,6 @@ open Style
 open SuperpositionHelper
 open ReactFinalForm
 
-
-
-let findCvvField = (fields: array<fieldConfig>): option<fieldConfig> => {
-  fields->Array.find(field => 
-    field.outputPath->String.endsWith("card_cvc") || 
-    field.outputPath->String.endsWith("cvv") ||
-    field.fieldType == "cvv_input"
-  )
-}
-
-let validateCardNumberAdapter = (value: option<string>, _formObject: JSON.t, _fieldConfig: fieldConfig) => {
-  let cardNumber = value->Option.getOr("")->CardValidations.clearSpaces
-  let cardBrand = Validation.getCardBrand(cardNumber)
-  
-  if cardNumber->String.length == 0 {
-    None 
-  } else if !Validation.cardValid(cardNumber, cardBrand) {
-    Some("Please enter a valid card number")
-  } else {
-    None
-  }
-}
-
-let validateExpiryAdapter = (value: option<string>, _formObject: JSON.t, _fieldConfig: fieldConfig) => {
-  let expiry = value->Option.getOr("")
-  
-  if expiry->String.length == 0 {
-    None // Skip required validation at field level
-  } else if !Validation.checkCardExpiry(expiry) {
-    Some("Please enter a valid expiry date")
-  } else {
-    None
-  }
-}
-
-let validateCvvAdapter = (value: option<string>, formObject: JSON.t, _fieldConfig: fieldConfig) => {
-  let cvv = value->Option.getOr("")
-  
-  if cvv->String.length == 0 {
-    None 
-  } else {
-    let cardBrand = try {
-      let formValues = formObject->JSON.Decode.object->Option.getOr(Dict.make())
-      let cardNumberField = formValues->Dict.toArray->Array.find(((key, _)) => 
-        key->String.includes("card_number")
-      )
-      switch cardNumberField {
-      | Some((_, cardNumberValue)) => 
-        let cardNumber = cardNumberValue->JSON.Decode.string->Option.getOr("")
-        Validation.getCardBrand(cardNumber)
-      | None => ""
-      }
-    } catch {
-    | _ => ""
-    }
-    
-    if !Validation.checkCardCVC(cvv, cardBrand) {
-      Some("Please enter a valid CVV")
-    } else {
-      None
-    }
-  }
-}
-
-let getCardValidationFunction = (field: fieldConfig) => {
-  if field.outputPath->String.endsWith("card_number") {
-    Some(validateCardNumberAdapter)
-  } else if field.outputPath->String.endsWith("card_exp_month") || field.outputPath->String.endsWith("card_exp_year") {
-    Some(validateExpiryAdapter)
-  } else if field.outputPath->String.endsWith("card_cvc") || field.outputPath->String.endsWith("cvv") || field.fieldType == "cvv_input" {
-    Some(validateCvvAdapter)
-  } else {
-    None
-  }
-}
-
 @react.component
 let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactEvent.Form.t) => {
   let cardRef = React.useRef(Nullable.null)
@@ -107,7 +31,11 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
   let cardNetworkField = fields->Array.find(field => field.outputPath->String.endsWith("card_network"))
   let expiryMonthField = fields->Array.find(field => field.outputPath->String.endsWith("card_exp_month"))
   let expiryYearField = fields->Array.find(field => field.outputPath->String.endsWith("card_exp_year"))
-  let cvvField = findCvvField(fields)
+  let cvvField = fields->Array.find(field => 
+    field.outputPath->String.endsWith("card_cvc")
+    // field.outputPath->String.endsWith("cvv") ||
+    // field.fieldType == "cvv_input"
+  )
 
   <View>
     <View style={Style.s({marginBottom: 12.->Style.dp})}>
@@ -120,45 +48,69 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
       | (Some(cardField), Some(networkField), Some(monthField), Some(yearField), Some(cvv)) =>
         <ReactFinalForm.Field
           name={cardField.name}
-          validate={
-            switch getCardValidationFunction(cardField) {
-            | Some(validationFn) => (value, formObject) => {
-                let error = validationFn(value, formObject, cardField)
-                Promise.resolve(error->Nullable.fromOption)
-              }
-            | None => (_, _) => Promise.resolve(Nullable.null)
+          validate={(value, _) => {
+            let cardNumber = value->Option.getOr("")->CardValidations.clearSpaces
+            let cardBrand = Validation.getCardBrand(cardNumber)
+            
+            if cardNumber->String.length == 0 {
+              Promise.resolve(Nullable.null)
+            } else if !Validation.cardValid(cardNumber, cardBrand) {
+              Promise.resolve(Nullable.make("Please enter a valid card number"))
+            } else {
+              Promise.resolve(Nullable.null)
             }
-          }
+          }}
           render={({input: cardInput, meta: cardMeta}) => {
             <ReactFinalForm.Field
               name={networkField.name}
               render={({input: networkInput, meta: _}) => {
                 <ReactFinalForm.Field
                   name={monthField.name}
-                  validate={
-                    switch getCardValidationFunction(monthField) {
-                    | Some(validationFn) => (value, formObject) => {
-                        let error = validationFn(value, formObject, monthField)
-                        Promise.resolve(error->Nullable.fromOption)
-                      }
-                    | None => (_, _) => Promise.resolve(Nullable.null)
+                  validate={(value, _) => {
+                    let expiry = value->Option.getOr("")
+                    
+                    if expiry->String.length == 0 {
+                      Promise.resolve(Nullable.null)
+                    } else if !Validation.checkCardExpiry(expiry) {
+                      Promise.resolve(Nullable.make("Please enter a valid expiry date"))
+                    } else {
+                      Promise.resolve(Nullable.null)
                     }
-                  }
+                  }}
                   render={({input: expiryInput, meta: expiryMeta}) => {
                     <ReactFinalForm.Field
                       name={yearField.name}
                       render={({input: yearInput, meta: _}) => {
                         <ReactFinalForm.Field
                           name={cvv.name}
-                          validate={
-                            switch getCardValidationFunction(cvv) {
-                            | Some(validationFn) => (value, formObject) => {
-                                let error = validationFn(value, formObject, cvv)
-                                Promise.resolve(error->Nullable.fromOption)
+                          validate={(value, formObject) => {
+                            let cvv = value->Option.getOr("")
+                            
+                            if cvv->String.length == 0 {
+                              Promise.resolve(Nullable.null)
+                            } else {
+                              let cardBrand = try {
+                                let formValues = formObject->JSON.Decode.object->Option.getOr(Dict.make())
+                                let cardNumberField = formValues->Dict.toArray->Array.find(((key, _)) => 
+                                  key->String.includes("card_number")
+                                )
+                                switch cardNumberField {
+                                | Some((_, cardNumberValue)) => 
+                                  let cardNumber = cardNumberValue->JSON.Decode.string->Option.getOr("")
+                                  Validation.getCardBrand(cardNumber)
+                                | None => ""
+                                }
+                              } catch {
+                              | _ => ""
                               }
-                            | None => (_, _) => Promise.resolve(Nullable.null)
+                              
+                              if !Validation.checkCardCVC(cvv, cardBrand) {
+                                Promise.resolve(Nullable.make("Please enter a valid CVV"))
+                              } else {
+                                Promise.resolve(Nullable.null)
+                              }
                             }
-                          }
+                          }}
                           render={({input: cvvInput, meta: cvvMeta}) => {
                             let cardNumber = cardInput.value->JSON.Decode.string->Option.getOr("")
                             let expireDate = expiryInput.value->JSON.Decode.string->Option.getOr("")
