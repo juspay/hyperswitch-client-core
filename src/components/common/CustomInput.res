@@ -49,6 +49,7 @@ let make = (
   ~animateLabel=?,
   ~name="",
   ~style=?,
+  ~onChange=?,
 ) => {
   let {
     placeholderColor,
@@ -206,7 +207,16 @@ let make = (
           placeholderTextColor={placeholderTextColor->Option.getOr(placeholderColor)}
           value={state}
           ?onKeyPress
-          onChangeText={text => setState(text)}
+          onChangeText={text => {
+            setState(text)
+            switch onChange {
+            | Some(onChangeFn) => {
+                let syntheticEvent = %raw(`{target: {value: text}}`)
+                onChangeFn(syntheticEvent)
+              }
+            | None => ()
+            }
+          }}
           keyboardType
           autoFocus
           autoComplete={#off}

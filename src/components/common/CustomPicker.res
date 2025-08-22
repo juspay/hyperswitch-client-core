@@ -22,6 +22,7 @@ let make = (
   ~isCountryStateFields=false,
   ~style=?,
   ~showValue=false,
+  ~onChange=?,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -172,6 +173,13 @@ let make = (
                     style={s({height: 32.->dp, margin: 1.->dp, justifyContent: #center})}
                     onPress={_ => {
                       setValue(_ => Some(item.value))
+                      switch onChange {
+                      | Some(onChangeFn) => {
+                          let syntheticEvent = %raw(`{target: {value: item.value}}`)
+                          onChangeFn(syntheticEvent)
+                        }
+                      | None => ()
+                      }
                       setIsModalVisible(_ => false)
                     }}>
                     <TextWrapper

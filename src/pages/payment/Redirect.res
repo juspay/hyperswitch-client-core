@@ -766,7 +766,7 @@ let make = (
             <ErrorText text=error />
           </>
         : <>
-            <DynamicFields
+            <DynamicFieldWrapper
               requiredFields={switch redirectProp {
               | PAY_LATER(prop) => prop.required_field
               | BANK_REDIRECT(prop) => prop.required_field

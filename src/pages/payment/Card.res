@@ -171,7 +171,7 @@ let make = (
       />
       {cardVal.required_field->Array.length != 0
         ? <>
-            <DynamicFields
+            <DynamicFieldWrapper
               setIsAllDynamicFieldValid
               setDynamicFieldsJson
               requiredFields

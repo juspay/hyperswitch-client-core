@@ -323,7 +323,7 @@ let make = (
   }, (isAllDynamicFieldValid, walletType, error, dynamicFieldsJson))
 
   <React.Fragment>
-    <DynamicFields
+    <DynamicFieldWrapper
       requiredFields={requiredFields}
       setIsAllDynamicFieldValid
       setDynamicFieldsJson
