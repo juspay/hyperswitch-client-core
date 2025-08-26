@@ -30,7 +30,7 @@ let (
   generateChallenge,
   isSdkAvailable,
 ) = switch try {
-  require("react-native-hyperswitch-trident-3ds")->Some
+  require("@juspay-tech/react-native-hyperswitch-trident-3ds")->Some
 } catch {
 | _ => None
 } {
