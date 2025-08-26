@@ -149,6 +149,9 @@ let generateCardConfirmBody = (
       device_model: ?nativeProp.hyperParams.device_model,
       os_type: ?nativeProp.hyperParams.os_type,
       os_version: ?nativeProp.hyperParams.os_version,
+      accept_header: "application/json",
+      language: ?nativeProp.configuration.appearance.locale,
+      
     },
   }
 }
@@ -185,6 +188,14 @@ let generateSavedCardConfirmBody = (
   payment_method: "card",
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
+  browser_info : {
+    user_agent: ?nativeProp.hyperParams.userAgent,
+    device_model: ?nativeProp.hyperParams.device_model,
+    os_type: ?nativeProp.hyperParams.os_type,
+    os_version: ?nativeProp.hyperParams.os_version,
+    accept_header: "application/json",
+    language: ?nativeProp.configuration.appearance.locale,
+  }
 }
 let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
@@ -195,6 +206,14 @@ let generateWalletConfirmBody = (
   payment_token,
   payment_method: "wallet",
   payment_method_type,
+    browser_info : {
+    user_agent: ?nativeProp.hyperParams.userAgent,
+    device_model: ?nativeProp.hyperParams.device_model,
+    os_type: ?nativeProp.hyperParams.os_type,
+    os_version: ?nativeProp.hyperParams.os_version,
+    accept_header: "application/json",
+    language: ?nativeProp.configuration.appearance.locale,
+  }
 }
 
 let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {

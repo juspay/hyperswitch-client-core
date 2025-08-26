@@ -13,3 +13,8 @@ type hyperModule = {
   exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
 }
+
+type useExitPaymentsheetReturnType = {
+  exit: (PaymentConfirmTypes.error, bool) => unit,
+  simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
+}

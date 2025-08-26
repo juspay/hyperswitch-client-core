@@ -197,6 +197,8 @@ let make = () => {
         device_model: ?nativeProp.hyperParams.device_model,
         os_type: ?nativeProp.hyperParams.os_type,
         os_version: ?nativeProp.hyperParams.os_version,
+        accept_header: "application/json",
+        language: ?nativeProp.configuration.appearance.locale,
       },
     }
 

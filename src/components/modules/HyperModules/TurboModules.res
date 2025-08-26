@@ -1,5 +1,5 @@
 // TurboModule interface definition using external bindings
-@module("./spec/modules") external sendMessageToNativeTurbo: string => unit = "sendMessageToNative"
+@module("./spec/modules") @val external sendMessageToNativeTurbo: string => unit = "sendMessageToNative"
 @module("./spec/modules")
 external launchApplePayTurbo: (string, JSON.t => unit) => unit = "launchApplePay"
 @module("./spec/modules")

@@ -61,12 +61,7 @@ let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
   ->JSON.stringify
 }
 
-type useExitPaymentsheetReturnType = {
-  exit: (PaymentConfirmTypes.error, bool) => unit,
-  simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
-}
-
-let useExitPaymentsheet = () => {
+let useExitPaymentsheet = () : useExitPaymentsheetReturnType  => {
   let logger = LoggerHook.useLoggerHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {exitPaymentSheet} = WebKit.useWebKit()
