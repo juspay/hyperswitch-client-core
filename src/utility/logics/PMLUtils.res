@@ -80,7 +80,6 @@ let handleCustomerPMLResponse = (
       let savedPaymentMethods: AllApiDataContext.savedPaymentMethods = Some({
         pmList: Some(filteredSpmData),
         isGuestCustomer: isGuestFromPMList,
-        selectedPaymentMethod: None,
       })
       savedPaymentMethods
     }

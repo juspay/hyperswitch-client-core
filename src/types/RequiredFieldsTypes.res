@@ -338,7 +338,7 @@ let numberOfDigitsValidation = (
   ~digits,
   ~display_name,
 ) => {
-  if text->Validation.containsOnlyDigits && text->Validation.clearSpaces->String.length > 0 {
+  if text->Validation.containsOnlyDigits && text->CardValidations.clearSpaces->String.length > 0 {
     if text->String.length == digits {
       None
     } else {
@@ -361,7 +361,7 @@ let maxDigitValidataion = (
   ~digits,
   ~display_name,
 ) => {
-  if text->Validation.clearSpaces->String.length > 0 {
+  if text->CardValidations.clearSpaces->String.length > 0 {
     if text->String.length <= digits {
       None
     } else {
@@ -424,7 +424,7 @@ let allowOnlyDigits = (
   ~prev,
   ~paymentMethodType: option<payment_method_types_in_bank_debit>,
 ) => {
-  let val = text->Option.getOr("")->Validation.clearSpaces
+  let val = text->Option.getOr("")->CardValidations.clearSpaces
   switch fieldType {
   | AccountNumber =>
     switch paymentMethodType {

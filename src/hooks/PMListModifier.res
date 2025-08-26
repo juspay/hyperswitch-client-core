@@ -125,9 +125,9 @@ let useListModifier = () => {
             sessionObject.wallet_name !== NONE &&
             allApiData.additionalPMLData.mandateType != NORMAL
               ? {
-                  if ReactNative.Platform.os === #web {
-                    addGooglePay(~sessionObject, ~requiredFields=walletVal.required_field)
-                  }
+                  // if ReactNative.Platform.os === #web {
+                  //   addGooglePay(~sessionObject, ~requiredFields=walletVal.required_field)
+                  // }
 
                   Some({
                     name: fields.text,
@@ -310,6 +310,7 @@ let useListModifier = () => {
             WebKit.platform !== #iosWebView &&
             WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
+            exp->Option.isSome &&
             sessionObject.connector !== "trustpay"
               ? {
                   if ReactNative.Platform.os === #web {

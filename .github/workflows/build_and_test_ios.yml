@@ -11,7 +11,7 @@ jobs:
   e2e-ios:
     runs-on: macos-latest
     env:
-      SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+      SENTRY_DSN: ${{ secrets.DETOX_SENTRY_DSN }}
       SENTRY_ENV: 'production'
       HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
       HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
@@ -119,4 +119,11 @@ jobs:
         run: npx detox build --configuration ios.sim.debug
 
       - name: Detox test
-        run: applesimutils -l && npx detox test --configuration ios.sim.debug # --loglevel trace --record-logs all
+        run: applesimutils -l && npx detox test --configuration ios.sim.debug --record-videos failing --take-screenshots failing --headless # --loglevel trace --record-logs all
+
+      - name: Upload Test Artifact - GitHub Action
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts

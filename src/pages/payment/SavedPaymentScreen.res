@@ -1,23 +1,27 @@
 open ReactNative
 
 @react.component
-let make = (
-  ~setConfirmButtonDataRef,
-  ~savedPaymentMethordContextObj: AllApiDataContext.savedPaymentMethodDataObj,
-) => {
+let make = (~setConfirmButtonDataRef) => {
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (error, setError) = React.useState(_ => None)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (selectedSavedPM, _) = React.useContext(
+    SavedPaymentMethodContext.savedPaymentMethodDataContext,
+  )
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let (_, setMissingFieldsData) = React.useState(_ => [])
 
-  let selectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
+  let selectedObj = selectedSavedPM->Option.getOr({
     walletName: NONE,
     token: Some(""),
   })
+  let customerPmList = switch allApiData.savedPaymentMethods {
+  | Some(data) => data.pmList
+  | _ => None
+  }
 
   // let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
   // let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
@@ -42,7 +46,7 @@ let make = (
   let (showSavePMCheckbox, setShowSavePMCheckbox) = React.useState(_ =>
     allApiData.additionalPMLData.mandateType == NEW_MANDATE &&
     nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
-    isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
+    isCVVRequiredByAnyPm(customerPmList)
   )
   let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
   let (isCvcValid, setIsCvcValid) = React.useState(_ => false)
@@ -258,10 +262,10 @@ let make = (
     setShowSavePMCheckbox(_ =>
       allApiData.additionalPMLData.mandateType == NEW_MANDATE &&
       nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
-      isCVVRequiredByAnyPm(savedPaymentMethordContextObj.pmList)
+      isCVVRequiredByAnyPm(customerPmList)
     )
 
-    let selectedObj = savedPaymentMethordContextObj.selectedPaymentMethod->Option.getOr({
+    let selectedObj = selectedSavedPM->Option.getOr({
       walletName: NONE,
       token: Some(""),
     })
@@ -273,7 +277,7 @@ let make = (
     setConfirmButtonDataRef(
       <ConfirmButton
         loading=false
-        isAllValuesValid={savedPaymentMethordContextObj.selectedPaymentMethod->Option.isSome &&
+        isAllValuesValid={selectedSavedPM->Option.isSome &&
         allApiData.additionalPMLData.paymentType->Option.isSome &&
         isCvcValid}
         handlePress
@@ -283,16 +287,10 @@ let make = (
       />,
     )
     None
-  }, (
-    savedPaymentMethordContextObj.selectedPaymentMethod,
-    allApiData,
-    isSaveCardCheckboxSelected,
-    error,
-    isCvcValid,
-  ))
+  }, (selectedSavedPM, allApiData, isSaveCardCheckboxSelected, error, isCvcValid))
 
   <SavedPaymentScreenChild
-    savedPaymentMethodsData={savedPaymentMethordContextObj.pmList->Option.getOr([])}
+    savedPaymentMethodsData={customerPmList->Option.getOr([])}
     isSaveCardCheckboxSelected
     setSaveCardChecboxSelected
     showSavePMCheckbox

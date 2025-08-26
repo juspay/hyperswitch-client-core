@@ -248,7 +248,7 @@ index ffcf76a..1a45de2 100644
  
    private fun checkJvmVersion(project: Project) {
 diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
-index 36cc66c..0501d30 100644
+index 36cc66c..f3fb02a 100644
 --- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
 +++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
 @@ -48,8 +48,9 @@ abstract class GeneratePackageListTask : DefaultTask() {
@@ -298,7 +298,7 @@ index 36cc66c..0501d30 100644
 @@ -189,10 +203,31 @@ abstract class GeneratePackageListTask : DefaultTask() {
                  return this.getApplication().getApplicationContext();
                }
-               
+             
 +              private ReactPackage getPackage(String packageImport) {
 +                try {
 +                  Class<?> packageClass = Class.forName(packageImport);
@@ -330,7 +330,7 @@ index 36cc66c..0501d30 100644
              }
              """
 diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
-index d9cc0f7..904ba45 100644
+index beee98a..bb736e3 100644
 --- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
 +++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
 @@ -32,8 +32,11 @@ internal object DependencyUtils {

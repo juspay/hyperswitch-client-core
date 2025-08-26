@@ -48,7 +48,7 @@ let make = () => {
         (
           prop.payment_method,
           [
-            ("card_number", cardNumber->Validation.clearSpaces->JSON.Encode.string),
+            ("card_number", cardNumber->CardValidations.clearSpaces->JSON.Encode.string),
             ("card_exp_month", month->JSON.Encode.string),
             ("card_exp_year", year->JSON.Encode.string),
             ("card_holder_name", ""->JSON.Encode.string),

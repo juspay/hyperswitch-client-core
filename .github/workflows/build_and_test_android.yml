@@ -11,7 +11,7 @@ jobs:
   e2e-android:
     runs-on: ubuntu-latest
     env:
-      SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
+      SENTRY_DSN: ${{ secrets.DETOX_SENTRY_DSN }}
       SENTRY_ENV: 'production'
       HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
       HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
@@ -23,6 +23,7 @@ jobs:
       HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
       HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
       PROFILE_ID: ${{ secrets.PROFILE_ID }}
+      NETCETERA_SDK_API_KEY: ${{ secrets.NETCETERA_SDK_API_KEY }}
     steps:
       - name: Free Disk Space
         run: |
@@ -124,5 +125,12 @@ jobs:
         with:
           api-level: 35
           arch: x86_64
-          profile: pixel
-          script: adb devices && npx detox test --configuration android.emu.ci.debug  --headless # --loglevel trace --record-logs all
+          profile: medium_phone
+          script: adb devices && npx detox test --configuration android.emu.ci.debug --record-videos failing --take-screenshots failing --headless # --loglevel trace --record-logs all
+
+      - name: Upload Test Artifact - GitHub Action
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: artifacts

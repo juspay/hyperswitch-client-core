@@ -26,7 +26,7 @@ let generatePaymentMethodData = (
     (
       prop.payment_method,
       [
-        ("card_number", cardData.cardNumber->Validation.clearSpaces->JSON.Encode.string),
+        ("card_number", cardData.cardNumber->CardValidations.clearSpaces->JSON.Encode.string),
         ("card_exp_month", month->JSON.Encode.string),
         ("card_exp_year", year->JSON.Encode.string),
         (

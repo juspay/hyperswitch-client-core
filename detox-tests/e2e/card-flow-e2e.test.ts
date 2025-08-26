@@ -1,60 +1,89 @@
 import * as testIds from "../../src/utility/test/TestUtils.bs.js";
-import { device } from "detox"
-import { visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT } from "../fixtures/Constants"
-import {
-  waitForVisibility,
-  waitForUIStabilization,
-  ensureNormalPaymentSheet,
-  enterCardDetails,
+import { device } from "detox";
+import { profileId, visaSandboxCard, LAUNCH_PAYMENT_SHEET_BTN_TEXT } from "../fixtures/Constants";
+import { 
+  createTestLogger, 
+  waitForDemoAppLoad, 
+  launchPaymentSheet, 
+  navigateToNormalPaymentSheet, 
+  enterCardDetails, 
   completePayment
-} from "../utils/DetoxHelpers"
+} from "../utils/DetoxHelpers";
+import { CreateBody, setCreateBodyForTestAutomation } from "../utils/APIUtils";
 
-describe('card-flow-e2e-test', () => {
-  jest.retryTimes(6);
+const logger = createTestLogger();
+let globalStartTime = Date.now();
+let testStartTime = globalStartTime;
+
+logger.log("Card Flow E2E Test Starting at:", globalStartTime);
+
+describe('Card Flow E2E Test', () => {
   beforeAll(async () => {
+    testStartTime = Date.now();
+    logger.log("CPI & Device Sync Starting at:", testStartTime);
+    
+    const createPaymentBody = new CreateBody();
+    createPaymentBody.addKey("profile_id", profileId);
+    createPaymentBody.addKey("request_external_three_ds_authentication", false);
+    
+    await setCreateBodyForTestAutomation(createPaymentBody.get());
     await device.launchApp({
       launchArgs: { detoxEnableSynchronization: 1 },
       newInstance: true,
     });
     await device.enableSynchronization();
+    
+    logger.log("CPI & Device Sync finished in:", testStartTime, Date.now());
   });
 
-  it('demo app should load successfully', async () => {
-    console.log("Waiting for demo app to load...");
-    await waitForUIStabilization(2000);
-    await waitForVisibility(element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)), 20000);
+  it('should load demo app successfully', async () => {
+    testStartTime = Date.now();
+    logger.log("Test starting at:", testStartTime);
+    
+    await waitForDemoAppLoad(LAUNCH_PAYMENT_SHEET_BTN_TEXT);
+    
+    logger.log("Test finished in:", testStartTime, Date.now());
   });
 
-  it('payment sheet should open', async () => {
-    console.log("Opening payment sheet...");
-    await element(by.text(LAUNCH_PAYMENT_SHEET_BTN_TEXT)).tap();
-    console.log("Waiting for payment sheet to load...");
-    await waitForUIStabilization(3000);
-    await waitForVisibility(element(by.text('Test Mode')), 40000);
-    await waitForUIStabilization(3000);
-  });
-  it('should detect payment sheet type and navigate to normal payment sheet if needed', async () => {
-    console.log("Starting payment sheet detection and navigation...");
-    const initialSheetType = await ensureNormalPaymentSheet();
-    console.log(`Initial payment sheet type detected: ${initialSheetType}`);
-    await waitForUIStabilization(2000);
-    console.log("Payment sheet detection and navigation completed successfully");
+  it('should open payment sheet', async () => {
+    testStartTime = Date.now();
+    logger.log("Test starting at:", testStartTime);
+
+    await launchPaymentSheet(LAUNCH_PAYMENT_SHEET_BTN_TEXT);
+
+    logger.log("Test finished in:", testStartTime, Date.now());
   });
 
-  it('should enter details in card form', async () => {
-    console.log("Starting card details entry...");
+  it('should navigate to normal payment sheet if needed', async () => {
+    testStartTime = Date.now();
+    logger.log("Test starting at:", testStartTime);
+
+    await navigateToNormalPaymentSheet();
+
+    logger.log("Test finished in:", testStartTime, Date.now());
+  });
+
+  it('should enter card details in form', async () => {
+    testStartTime = Date.now();
+    logger.log("Test starting at:", testStartTime);
+
     await enterCardDetails(
       visaSandboxCard.cardNumber,
       visaSandboxCard.expiryDate,
       visaSandboxCard.cvc,
       testIds
     );
-    console.log("Card details entry completed successfully");
+    
+    logger.log("Test finished in:", testStartTime, Date.now());
   });
 
-  it('should be able to successfully complete card payment', async () => {
-    console.log("Starting payment completion...");
+  it('should complete card payment successfully', async () => {
+    testStartTime = Date.now();
+    logger.log("Test starting at:", testStartTime);
+
     await completePayment(testIds);
-    console.log("Payment completion test finished successfully");
+    
+    logger.log("Test finished in:", testStartTime, Date.now());
+    logger.log("Card Flow E2E Test finished in:", globalStartTime, Date.now());
   });
 });
