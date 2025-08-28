@@ -2,7 +2,7 @@ open ExternalThreeDsTypes
 open ThreeDsUtils
 open SdkStatusMessages
 open ThreeDsModuleType
-open ThreeDsSdkResolverHooks
+open ThreeDsSdkResolver
 open LoggerTypes
 
 let isInitialisedPromiseRef = ref(None)
@@ -72,7 +72,7 @@ let useExternalThreeDs = () => {
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {
-    let activeSdk = useResolveThreeDsSdk(~threeDsSdkApiKey=threeSDKApiKey)
+    let activeSdk = resolveThreeDsSdk(~threeDsSdkApiKey=threeSDKApiKey)
 
     let threeDsData =
       nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
@@ -286,7 +286,7 @@ let useExternalThreeDs = () => {
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
-      let threeDSRequestorAppURLForLog = Utils.getReturnUrl(
+      let threeDSRequestorAppURL = Utils.getReturnUrl(
         ~appId,
         ~appURL=challengeParams.threeDSRequestorAppURL,
         ~useAppUrl=true,
@@ -303,7 +303,7 @@ let useExternalThreeDs = () => {
               ~value={
                 "status": status.status,
                 "message": status.message,
-                "threeDSRequestorAppURL": threeDSRequestorAppURLForLog,
+                "threeDSRequestorAppURL": threeDSRequestorAppURL,
               }
               ->JSON.stringifyAny
               ->Option.getOr(""),
@@ -315,10 +315,7 @@ let useExternalThreeDs = () => {
               activeSdk.generateChallengeFunc(status => {
                 logger(
                   ~logType=INFO,
-                  ~value={
-                    "status": status.status,
-                    "message": status.message,
-                  }
+                  ~value=status
                   ->JSON.stringifyAny
                   ->Option.getOr(""),
                   ~category=USER_EVENT,
@@ -332,7 +329,7 @@ let useExternalThreeDs = () => {
               reject()
             }
           },
-          challengeParams.threeDSRequestorAppURL,
+          threeDSRequestorAppURL,
         )
       })
     }
@@ -431,15 +428,12 @@ let useExternalThreeDs = () => {
         ~sdkEnvironment,
         ~initialiseSdkFunc=activeSdk.initialiseSdkFunc,
       )
-      ->Promise.then(statusInfo => {
-        let isSuccess = statusInfo->isStatusSuccess
+      ->Promise.then(status => {
+        let isSuccess = status->isStatusSuccess
 
         logger(
           ~logType=INFO,
-          ~value={
-            "status": statusInfo.status,
-            "message": statusInfo.message,
-          }
+          ~value=status
           ->JSON.stringifyAny
           ->Option.getOr(""),
           ~category=USER_EVENT,
@@ -456,10 +450,7 @@ let useExternalThreeDs = () => {
               (status, aReqParams) => {
                 logger(
                   ~logType=INFO,
-                  ~value={
-                    "status": status.status,
-                    "message": status.message,
-                  }
+                  ~value=status
                   ->JSON.stringifyAny
                   ->Option.getOr(""),
                   ~category=USER_EVENT,

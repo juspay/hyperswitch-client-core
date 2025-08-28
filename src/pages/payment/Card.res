@@ -48,7 +48,7 @@ let make = (
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
 
-  let sdkFunctions = ThreeDsSdkResolverHooks.useResolveThreeDsSdk(
+  let sdkFunctions = ThreeDsSdkResolver.resolveThreeDsSdk(
     ~threeDsSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
   )
 

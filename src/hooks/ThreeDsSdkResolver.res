@@ -67,7 +67,7 @@ let makeDefault3DsModule = (): activeSdkFunctions => {
   sdkEventName: LoggerTypes.THREEDS_SDK_PRESENCE_EVENT,
 }
 
-let useResolveThreeDsSdk = (~threeDsSdkApiKey: option<string>): activeSdkFunctions => {
+let resolveThreeDsSdk = (~threeDsSdkApiKey: option<string>): activeSdkFunctions => {
   if Netcetera3dsModule.isSdkAvailable {
     makeNetcetra3DsModule(~threeDsSdkApiKey)
   } else if Trident3dsModule.isSdkAvailable {
