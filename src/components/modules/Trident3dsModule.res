@@ -1,10 +1,15 @@
 open ExternalThreeDsTypes
 open ThreeDsModuleType
 
-type netceteraModule = {
-  initialiseNetceteraSDK: (string, string, statusType => unit) => unit,
-  generateAReqParams: (string, string, (statusType, aReqParams) => unit) => unit,
-  recieveChallengeParamsFromRN: (
+type tridentModule = {
+  initialiseSDK: (string, string, statusType => unit) => unit,
+  generateAReqParams: (
+    string,
+    string,
+    string,
+    (statusType, ExternalThreeDsTypes.aReqParams) => unit,
+  ) => unit,
+  receiveChallengeParamsFromRN: (
     string,
     string,
     string,
@@ -16,46 +21,48 @@ type netceteraModule = {
   isAvailable: bool,
 }
 
-@val external require: string => netceteraModule = "require"
+@val external require: string => tridentModule = "require"
 
 let (
-  initialiseNetceteraSDK,
+  initialiseSDK,
   generateAReqParams,
-  recieveChallengeParamsFromRN,
+  receiveChallengeParamsFromRN,
   generateChallenge,
   isSdkAvailable,
 ) = switch try {
-  require("react-native-hyperswitch-netcetera-3ds")->Some
+  require("@juspay-tech/react-native-hyperswitch-trident-3ds")->Some
 } catch {
 | _ => None
 } {
 | Some(mod) => (
-    mod.initialiseNetceteraSDK,
+    mod.initialiseSDK,
     mod.generateAReqParams,
-    mod.recieveChallengeParamsFromRN,
+    mod.receiveChallengeParamsFromRN,
     mod.generateChallenge,
     mod.isAvailable,
   )
-| None => ((_, _, _) => (), (_, _, _) => (), (_, _, _, _, _, _) => (), _ => (), false)
+
+| None => ((_, _, _) => (), (_, _, _, _) => (), (_, _, _, _, _, _) => (), _ => (), false)
 }
 
-let initialiseNetcetera = (sdkConfig: sdkConfig, callback: statusType => unit) => {
-  initialiseNetceteraSDK(
+let initialiseTrident = (sdkConfig: sdkConfig, callback: statusType => unit) => {
+  initialiseSDK(
     sdkConfig.apiKey,
     sdkConfig.environment->ThreeDsUtils.sdkEnvironmentToStrMapper,
     callback,
   )
 }
 
-let generateAReqParamsNetcetera = (
+let generateAReqParamsTrident = (
   messageVersion: string,
   directoryServerId: string,
+  cardNetwork: string,
   callback: (statusType, ExternalThreeDsTypes.aReqParams) => unit,
 ) => {
-  generateAReqParams(messageVersion, directoryServerId, callback)
+  generateAReqParams(messageVersion, directoryServerId, cardNetwork, callback)
 }
 
-let receiveChallengeParamsNetcetera = (
+let receiveChallengeParamsTrident = (
   acsSignedContent: string,
   acsRefNumber: string,
   acsTransactionId: string,
@@ -63,7 +70,7 @@ let receiveChallengeParamsNetcetera = (
   callback: statusType => unit,
   threeDSRequestorAppURL: option<string>,
 ) => {
-  recieveChallengeParamsFromRN(
+  receiveChallengeParamsFromRN(
     acsSignedContent,
     acsRefNumber,
     acsTransactionId,
@@ -73,6 +80,6 @@ let receiveChallengeParamsNetcetera = (
   )
 }
 
-let generateChallengeNetcetera = (callback: statusType => unit) => {
+let generateChallengeTrident = (callback: statusType => unit) => {
   generateChallenge(callback)
 }

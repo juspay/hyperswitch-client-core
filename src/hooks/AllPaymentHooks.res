@@ -149,11 +149,12 @@ let useRedirectHook = () => {
   let retrievePayment = useRetrieveHook()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let executeThreeDsFlow = ThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
   let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
 
   (
+    ~currentCardBrand: option<string>=?,
     ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
@@ -169,11 +170,11 @@ let useRedirectHook = () => {
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
     let handleInvokeThreeDSFlow = (~nextAction) => {
-      let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
-      handleNativeThreeDS(
+      executeThreeDsFlow(
+        ~cardBrand=currentCardBrand->Option.getOr(""),
+        ~threeSDKApiKey=nativeProp.configuration.netceteraSDKApiKey,
         ~baseUrl,
         ~appId=nativeProp.hyperParams.appId,
-        ~netceteraSDKApiKey,
         ~clientSecret,
         ~publishableKey,
         ~nextAction,

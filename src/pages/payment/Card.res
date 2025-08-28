@@ -48,7 +48,14 @@ let make = (
 
   let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
 
-  let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
+  let sdkFunctions = ThreeDsSdkResolver.resolveThreeDsSdk(
+    ~threeDsSdkApiKey=nativeProp.configuration.netceteraSDKApiKey,
+  )
+
+  let initialiseThreeDsHook = ThreeDsHooks.useInitThreeDs(
+    ~initialiseSdkFunc=sdkFunctions.initialiseSdkFunc,
+    ~sdkEventName=sdkFunctions.sdkEventName,
+  )
   let (isInitialised, setIsInitialised) = React.useState(_ => false)
 
   React.useEffect1(() => {
@@ -59,8 +66,8 @@ let make = (
       cardData.cardNumber->String.length > 0
     ) {
       setIsInitialised(_ => true)
-      initialiseNetcetera(
-        ~netceteraSDKApiKey=nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
+      initialiseThreeDsHook(
+        ~sdkApiKey=sdkFunctions.selectedSdkApiKey,
         ~sdkEnvironment=nativeProp.env,
       )
     }
@@ -121,6 +128,7 @@ let make = (
       dynamicFieldsJson->Dict.toArray->Array.map(((key, (value, error))) => (key, value, error)),
     )
     fetchAndRedirect(
+      ~currentCardBrand=cardData.cardBrand,
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,
