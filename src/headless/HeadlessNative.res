@@ -1,7 +1,11 @@
 open ReactNative
 
 type headlessModule = {
+  sendMessageToNative: string => unit,
   initialisePaymentSession: (JSON.t => unit) => unit,
+  initialiseAuthSession: (JSON.t => unit) => unit,
+  getAuthRequestParams: (JSON.t => unit) => unit,
+  sendAReqAndReceiveChallengeParams: (JSON.t, JSON.t => unit) => unit,
   getPaymentSession: (JSON.t, JSON.t, JSON.t, JSON.t => unit) => unit,
   exitHeadless: string => unit,
 }
@@ -32,10 +36,24 @@ let initialise = headless => {
     ->Option.getOr(Dict.make())
 
   {
+    sendMessageToNative: getFunctionFromModule(hyperSwitchHeadlessDict, "sendMessageToNative", _ =>
+      ()
+    ),
     initialisePaymentSession: getFunctionFromModule(
       hyperSwitchHeadlessDict,
       "initialisePaymentSession",
       _ => (),
+    ),
+    initialiseAuthSession: getFunctionFromModule(
+      hyperSwitchHeadlessDict,
+      "initialiseAuthSession",
+      _ => (),
+    ),
+    getAuthRequestParams: getFunctionFromModule(hyperSwitchHeadlessDict, "getAuthRequestParams", _ => ()),
+    sendAReqAndReceiveChallengeParams: getFunctionFromModule(
+      hyperSwitchHeadlessDict,
+      "sendAReqAndReceiveChallengeParams",
+      (_, _) => (),
     ),
     getPaymentSession: getFunctionFromModule(hyperSwitchHeadlessDict, "getPaymentSession", (
       _,

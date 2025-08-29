@@ -380,6 +380,7 @@ let registerHeadless = headless => {
   let apiHandler = async nativeProp => {
     //customerSavedPMData
     let customerSavedPMData = await savedPaymentMethodAPICall(nativeProp)
+
     switch customerSavedPMData {
     | Some(obj) =>
       let spmData = obj->PaymentMethodListType.jsonToSavedPMObj
@@ -456,7 +457,94 @@ let registerHeadless = headless => {
     | None => customerSavedPMData->getErrorFromResponse->getDefaultPaymentSession
     }
   }
+  
+  let sdkFunctions = ThreeDsSdkResolver.resolveThreeDsSdk(~threeDsSdkApiKey=None)
+
+  let sendResponseToNative = (~status: bool, ~data: option<JSON.t>=?, ~error: option<JSON.t>=?) => {
+    let response = Dict.make()
+
+    response->Dict.set("status", JSON.Encode.bool(status))
+    
+    switch (data, error) {
+    | (Some(successData), None) when status => 
+      response->Dict.set("data", successData)
+    | (None, Some(errorData)) when !status => 
+      response->Dict.set("error", errorData)
+    | _ => ()
+    }
+    
+    headlessModule.sendMessageToNative(JSON.Encode.object(response)->JSON.stringify)
+  }
+
+  let handleChallengeParamsResponse = response => {
+    let responseDict = response->Utils.getDictFromJson
+    let acsSignedContent = responseDict->Utils.getString("acsSignedContent", "")
+    let acsTransactionId = responseDict->Utils.getString("acsTransactionId", "")
+    let acsRefNumber = responseDict->Utils.getString("acsRefNumber", "")
+    let threeDSServerTransId = responseDict->Utils.getString("threeDSServerTransId", "")
+    let threeDSRequestorAppURL = responseDict->Utils.getOptionString("threeDSRequestorAppURL")
+
+    sdkFunctions.receiveChallengeParamsFunc(
+      acsSignedContent,
+      acsTransactionId,
+      acsRefNumber,
+      threeDSServerTransId,
+      status => {
+        let responseDict = Dict.make()
+        responseDict->Dict.set("status", JSON.Encode.string(status.status))
+        responseDict->Dict.set("message", JSON.Encode.string(status.message))
+
+        if status->ThreeDsUtils.isStatusSuccess {
+          sdkFunctions.generateChallengeFunc(status => {
+            let doChallengeResult = Dict.make()
+            doChallengeResult->Dict.set("status", JSON.Encode.string(status.status))
+            doChallengeResult->Dict.set("message", JSON.Encode.string(status.message))
+            responseDict->Dict.set("doChallengeResult", JSON.Encode.object(doChallengeResult))
+
+            sendResponseToNative(~status=true, ~data=JSON.Encode.object(responseDict))
+          })
+        } else {
+          let errorData = Dict.make()
+          errorData->Dict.set("status", JSON.Encode.string(status.status))
+          errorData->Dict.set("message", JSON.Encode.string(status.message))
+          sendResponseToNative(~status=false, ~error=JSON.Encode.object(errorData))
+        }
+      },
+      threeDSRequestorAppURL,
+    )
+  }
+
+  let generateAReqParamsCallback = response => {
+    let responseDict = response->Utils.getDictFromJson
+    let directoryServerId = responseDict->Utils.getString("directoryServerId", "")
+    let cardNetwork = responseDict->Utils.getOptionString("cardNetwork")
+    let messageVersion = responseDict->Utils.getString("messageVersion", "")
+
+    sdkFunctions.generateAReqParamsFunc(messageVersion, directoryServerId, cardNetwork, (
+      status,
+      aReqParams,
+    ) => {
+      let responseDict = Dict.make()
+      responseDict->Dict.set("status", JSON.Encode.string(status.status))
+      responseDict->Dict.set("message", JSON.Encode.string(status.message))
+      responseDict->Dict.set("aReqParams", aReqParams->ExternalThreeDsTypes.aReqParamsToJson)
+      if status->ThreeDsUtils.isStatusSuccess {
+        headlessModule.sendAReqAndReceiveChallengeParams(
+          JSON.Encode.object(responseDict),
+          handleChallengeParamsResponse,
+        )
+      } else {
+        let errorData = Dict.make()
+        errorData->Dict.set("status", JSON.Encode.string(status.status))
+        errorData->Dict.set("message", JSON.Encode.string(status.message))
+        sendResponseToNative(~status=false, ~error=JSON.Encode.object(errorData))
+      }
+    })
+  }
+
   let getNativePropCallback = response => {
+    let isAuthSession = response->Utils.getDictFromJson->Utils.getBool("isAuthSession", false)
+
     let nativeProp = nativeJsonToRecord(response, 0)
 
     let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
@@ -467,6 +555,25 @@ let registerHeadless = headless => {
     )
 
     if isPublishableKeyValid && isClientSecretValid {
+      if isAuthSession {
+        sdkFunctions.initialiseSdkFunc(
+          {
+            apiKey: nativeProp.configuration.netceteraSDKApiKey->Option.getOr(""),
+            environment: nativeProp.env,
+          },
+          status => {
+            if status->ThreeDsUtils.isStatusSuccess {
+              headlessModule.getAuthRequestParams(generateAReqParamsCallback)
+            } else {
+              let errorData = Dict.make()
+              errorData->Dict.set("status", JSON.Encode.string(status.status))
+              errorData->Dict.set("message", JSON.Encode.string(status.message))
+              sendResponseToNative(~status=false, ~error=JSON.Encode.object(errorData))
+            }
+          },
+        )
+      }
+
       apiHandler(nativeProp)->ignore
     } else if !isPublishableKeyValid {
       errorOnApiCalls(INVALID_PK(Error, Static("")))->getDefaultPaymentSession
@@ -476,4 +583,5 @@ let registerHeadless = headless => {
   }
 
   headlessModule.initialisePaymentSession(getNativePropCallback)
+  headlessModule.initialiseAuthSession(getNativePropCallback)
 }
