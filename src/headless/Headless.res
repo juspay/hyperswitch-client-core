@@ -460,11 +460,12 @@ let registerHeadless = headless => {
   
   let sdkFunctions = ThreeDsSdkResolver.resolveThreeDsSdk(~threeDsSdkApiKey=None)
 
-  let sendResponseToNative = (~status: bool, ~data: option<JSON.t>=?, ~error: option<JSON.t>=?) => {
+  let sendResponseToNative = (~status: bool, ~method: string, ~data: option<JSON.t>=?, ~error: option<JSON.t>=?) => {
     let response = Dict.make()
 
     response->Dict.set("status", JSON.Encode.bool(status))
-    
+    response->Dict.set("method", JSON.Encode.string(method))
+
     switch (data, error) {
     | (Some(successData), None) when status => 
       response->Dict.set("data", successData)
@@ -501,13 +502,13 @@ let registerHeadless = headless => {
             doChallengeResult->Dict.set("message", JSON.Encode.string(status.message))
             responseDict->Dict.set("doChallengeResult", JSON.Encode.object(doChallengeResult))
 
-            sendResponseToNative(~status=true, ~data=JSON.Encode.object(responseDict))
+            sendResponseToNative(~status=true, ~method="generateChallenge", ~data=JSON.Encode.object(responseDict))
           })
         } else {
           let errorData = Dict.make()
           errorData->Dict.set("status", JSON.Encode.string(status.status))
           errorData->Dict.set("message", JSON.Encode.string(status.message))
-          sendResponseToNative(~status=false, ~error=JSON.Encode.object(errorData))
+          sendResponseToNative(~status=false, ~method="generateChallenge", ~error=JSON.Encode.object(errorData))
         }
       },
       threeDSRequestorAppURL,
@@ -537,7 +538,7 @@ let registerHeadless = headless => {
         let errorData = Dict.make()
         errorData->Dict.set("status", JSON.Encode.string(status.status))
         errorData->Dict.set("message", JSON.Encode.string(status.message))
-        sendResponseToNative(~status=false, ~error=JSON.Encode.object(errorData))
+        sendResponseToNative(~status=false, ~method="generateAReqParams", ~error=JSON.Encode.object(errorData))
       }
     })
   }
@@ -568,7 +569,7 @@ let registerHeadless = headless => {
               let errorData = Dict.make()
               errorData->Dict.set("status", JSON.Encode.string(status.status))
               errorData->Dict.set("message", JSON.Encode.string(status.message))
-              sendResponseToNative(~status=false, ~error=JSON.Encode.object(errorData))
+              sendResponseToNative(~status=false, ~method="initialiseSdkFunc", ~error=JSON.Encode.object(errorData))
             }
           },
         )
