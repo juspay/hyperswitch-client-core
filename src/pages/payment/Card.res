@@ -163,12 +163,6 @@ let make = (
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
-      <CardElement
-        setIsAllValid=setIsAllCardValuesValid
-        reset=false
-        keyToTrigerButtonClickError
-        cardNetworks=cardVal.card_networks
-      />
       {cardVal.required_field->Array.length != 0
         ? <>
             <DynamicFieldWrapper
@@ -178,10 +172,21 @@ let make = (
               isSaveCardsFlow={false}
               savedCardsData=None
               keyToTrigerButtonClickError
+              setIsAllCardValid=setIsAllCardValuesValid
+              cardNetworks=cardVal.card_networks
+              setConfirmButtonDataRef
+              isScreenFocus
             />
             <Space height=8. />
           </>
-        : React.null}
+        : <>
+            <CardElement
+              setIsAllValid=setIsAllCardValuesValid
+              reset=false
+              keyToTrigerButtonClickError
+              cardNetworks=cardVal.card_networks
+            />
+          </>}
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
         savedPaymentMethodsData.isGuestCustomer,

@@ -460,6 +460,8 @@ let make = (
   ~displayPreValueFields=false,
   ~paymentMethodType=?,
   ~fieldsOrder: array<fieldType>=[Other, Billing, Shipping],
+  ~setIsAllCardValid=?,
+  ~cardNetworks=?,
 ) => {
   // let {component} = ThemebasedStyle.useThemeBasedStyle()
   let clientTimeZone = Intl.DateTimeFormat.resolvedOptions(Intl.DateTimeFormat.make()).timeZone
@@ -673,6 +675,19 @@ let make = (
   //     : React.null
 
   <View style={empty}>
+    {switch setIsAllCardValid {
+    | Some(setIsAllCardValidFn) =>
+      <>
+        <CardElement
+          setIsAllValid=setIsAllCardValidFn
+          reset=false
+          keyToTrigerButtonClickError
+          ?cardNetworks
+        />
+        <Space height=8. />
+      </>
+    | None => React.null
+    }}
     {renderFields(fields, true)}
     // <Space height=10. />
     // {renderSectionTitle("Billing", insideBilling->Array.length > 0)}

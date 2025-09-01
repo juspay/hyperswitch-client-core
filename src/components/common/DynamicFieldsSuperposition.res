@@ -134,12 +134,226 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
 }
 
 @react.component
-let make = (~componentWiseRequiredFields: array<(string, array<fieldConfig>)>) => {
+let make = (
+  ~componentWiseRequiredFields: array<(string, array<fieldConfig>)>,
+  ~setConfirmButtonDataRef: React.element => unit,
+  ~isScreenFocus: bool,
+) => {
+  let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  
+  let (error, setError) = React.useState(_ => None)  
+  let processRequest = (formValues: JSON.t) => {
+    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+      if !closeSDK {
+        setLoading(FillingDetails)
+        switch errorMessage.message {
+        | Some(message) => setError(_ => Some(message))
+        | None => ()
+        }
+      }
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    }
+    
+    let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+      switch paymentStatus {
+      | PaymentSuccess => {
+          setLoading(PaymentSuccess)
+          setTimeout(() => {
+            handleSuccessFailure(~apiResStatus=status, ())
+          }, 300)->ignore
+        }
+      | _ => handleSuccessFailure(~apiResStatus=status, ())
+      }
+    }
+
+    // Convert react-final-form values to cardData format expected by existing utilities
+    let cardDataFromForm = formValues->JSON.Decode.object->Option.flatMap(obj => 
+      obj->Dict.get("card")->Option.flatMap(JSON.Decode.object)
+    )->Option.getOr(Dict.make())
+    
+    let cardNumber = cardDataFromForm->Dict.get("card_number")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+    let expiry = cardDataFromForm->Dict.get("card_exp_month")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+    let cvv = cardDataFromForm->Dict.get("card_cvc")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+    
+    let cardBrand = Validation.getCardBrand(cardNumber)
+    let cardData: CardDataContext.cardData = {
+      cardNumber: cardNumber,
+      expireDate: expiry,
+      cvv: cvv,
+      zip: "", 
+      isCardNumberValid: None,
+      isCardBrandSupported: None,
+      isExpireDataValid: None,
+      isCvvValid: None,
+      isZipValid: None,
+      cardBrand: cardBrand,
+      selectedCoBadgedCardBrand: None,
+    }
+    
+    let cardPaymentMethod = allApiData.paymentList->Array.find(paymentMethod => {
+      switch paymentMethod {
+      | PaymentMethodListType.CARD(_) => true
+      | _ => false
+      }
+    })
+    
+    switch cardPaymentMethod {
+    | Some(PaymentMethodListType.CARD(prop)) => {
+        let billingDataFromForm = formValues->JSON.Decode.object->Option.flatMap(obj => 
+          obj->Dict.get("billing")->Option.flatMap(JSON.Decode.object)
+        )->Option.getOr(Dict.make())
+        
+        let addressData = billingDataFromForm->Dict.get("address")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+        
+        let cardPaymentMethodData = PaymentUtils.generatePaymentMethodData(
+          ~prop,
+          ~cardData,
+          ~cardHolderName=None,
+          ~nickname=None,
+        )
+        
+        let payment_method_data = switch cardPaymentMethodData {
+        | Some(cardData) => {
+            let cardDataObj = cardData->JSON.Decode.object->Option.getOr(Dict.make())
+            
+            if billingDataFromForm->Dict.toArray->Array.length > 0 {
+              let billingDataForPMD = [
+                ("address", [
+                  ("first_name", addressData->Dict.get("first_name")->Option.flatMap(JSON.Decode.string)->Option.getOr("")->JSON.Encode.string),
+                  ("last_name", addressData->Dict.get("last_name")->Option.flatMap(JSON.Decode.string)->Option.getOr("")->JSON.Encode.string),
+                  ("city", addressData->Dict.get("city")->Option.flatMap(JSON.Decode.string)->Option.getOr("")->JSON.Encode.string),
+                  ("country", addressData->Dict.get("country")->Option.flatMap(JSON.Decode.string)->Option.getOr("")->JSON.Encode.string),
+                  ("line1", addressData->Dict.get("line1")->Option.flatMap(JSON.Decode.string)->Option.getOr("")->JSON.Encode.string),
+                  ("zip", addressData->Dict.get("zip")->Option.flatMap(JSON.Decode.string)->Option.getOr("")->JSON.Encode.string),
+                ]->Dict.fromArray->JSON.Encode.object)
+              ]->Dict.fromArray->JSON.Encode.object
+              
+              cardDataObj->Dict.set("billing", billingDataForPMD)
+              Some(cardDataObj->JSON.Encode.object)
+            } else {
+              Some(cardData)
+            }
+          }
+        | None => None
+        }
+
+        let body = PaymentUtils.generateCardConfirmBody(
+          ~nativeProp,
+          ~prop,
+          ~payment_method_data=payment_method_data->Option.getOr(JSON.Encode.null),
+          ~allApiData,
+          ~isNicknameSelected=false,
+          ~isSaveCardCheckboxVisible=false,
+          ~isGuestCustomer=true, 
+          (),
+        )
+
+        
+        let dynamicFieldsArray = formValues->JSON.Decode.object
+        ->Option.mapOr([], obj => 
+          obj->Dict.toArray
+          ->Array.filter(((key, _)) => key !== "card" && key !== "billing")
+          ->Array.map(((key, value)) => (key, value, None))
+        )
+        
+        let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
+          body,
+          dynamicFieldsArray,
+        )
+        
+        fetchAndRedirect(
+          ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
+          ~publishableKey=nativeProp.publishableKey,
+          ~clientSecret=nativeProp.clientSecret,
+          ~errorCallback,
+          ~responseCallback,
+          ~paymentMethod=prop.payment_method_type,
+          ~isCardPayment=true,
+          (),
+        )
+      }
+    | _ => {
+        errorCallback(~errorMessage={PaymentConfirmTypes.message: "Card payment method not available"}, ~closeSDK=false, ())
+      }
+    }
+  }
+
+  let setNestedValue = (obj: Dict.t<JSON.t>, path: string, value: JSON.t) => {
+    let pathParts = path->String.split(".")
+    let rec setNested = (currentObj: Dict.t<JSON.t>, parts: array<string>, index: int) => {
+      switch parts->Array.get(index) {
+      | Some(key) => {
+          if index === parts->Array.length - 1 {
+            currentObj->Dict.set(key, value)
+          } else {
+            let nested = switch currentObj->Dict.get(key) {
+            | Some(existingObj) => existingObj->JSON.Decode.object->Option.getOr(Dict.make())
+            | None => {
+                let newDict = Dict.make()
+                currentObj->Dict.set(key, newDict->JSON.Encode.object)
+                newDict
+              }
+            }
+            setNested(nested, parts, index + 1)
+            currentObj->Dict.set(key, nested->JSON.Encode.object)
+          }
+        }
+      | None => ()
+      }
+    }
+    setNested(obj, pathParts, 0)
+  }
+
+  let createInitialValues = (componentWiseFields: array<(string, array<fieldConfig>)>) => {
+    let initialValues = Dict.make()
+    
+    componentWiseFields->Array.forEach(((_, fields)) => {
+      fields->Array.forEach(field => {
+        if field.defaultValue !== "" {
+          setNestedValue(initialValues, field.name, field.defaultValue->JSON.Encode.string)
+        }
+      })
+    })
+    
+    initialValues->JSON.Encode.object
+  }
+  
+  let initialValues = React.useMemo1(() => {
+    createInitialValues(componentWiseRequiredFields)
+  }, [componentWiseRequiredFields])
+
   <View style={Style.empty}>
     <ReactFinalForm.Form
       onSubmit={(_, _) => Promise.resolve(Nullable.null)}
-      render={_ =>
+      initialValues
+      render={formRenderProps => {
+        let handlePress = _ => {
+          setLoading(ProcessingPayments(None))
+          processRequest(formRenderProps.values)
+        }
+
+        React.useEffect3(() => {
+          if isScreenFocus {
+            setConfirmButtonDataRef(
+              <ConfirmButton
+                loading=false 
+                isAllValuesValid={true}
+                handlePress
+                paymentMethod="CARD" 
+                errorText=error
+              />
+            )
+          }
+          None
+        }, (formRenderProps.values, isScreenFocus, error))
+
         <View>
+          {error->Option.isSome ? <ErrorText text={error} /> : React.null}
           {componentWiseRequiredFields
           ->Array.mapWithIndex((componentWithField, index) => {
             let (componentName, fields) = componentWithField
@@ -168,104 +382,12 @@ let make = (~componentWiseRequiredFields: array<(string, array<fieldConfig>)>) =
                       | None => (_, _) => Promise.resolve(Nullable.null)
                       }
                     }
-                    render={({input, meta}) => {
-                      let fieldName = getFieldNameFromOutputPath(field.outputPath)
-                      let fieldType = field.fieldType
+                    render={({input, meta}) =>
                       <View style={Style.s({marginVertical: 8.->Style.dp})}>
                         <Space height=5. />
-                        {switch fieldName {
-                        | "email" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="Email Address"
-                            isValid={meta.valid}
-                            keyboardType=#"email-address"
-                          />
-                        | "line1" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="Address Line 1"
-                            isValid={meta.valid}
-                          />
-                        | "line2" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="Address Line 2"
-                            isValid={meta.valid}
-                          />
-                        | "city" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="City"
-                            isValid={meta.valid}
-                          />
-                        | "state" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="State/Province"
-                            isValid={meta.valid}
-                          />
-                        | "zip" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="ZIP/Postal Code"
-                            isValid={meta.valid}
-                          />
-                        | "country" =>
-                          <CustomPicker
-                            value={Some(input.value->JSON.Decode.string->Option.getOr(""))}
-                            setValue={_ => ()}
-                            onChange={input.onChange}
-                            items={field.options->Array.map(option => {
-                              CustomPicker.label: option,
-                              value: option,
-                              icon: Utils.getCountryFlags(option),
-                            })}
-                            placeholderText="Country"
-                            isValid={meta.valid}
-                          />
-                        | "first_name" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="First Name"
-                            isValid={meta.valid}
-                          />
-                        | "last_name" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="Last Name"
-                            isValid={meta.valid}
-                          />
-                        | "number" if fieldType == "phone_input" =>
-                          <CustomInput
-                            state={input.value->JSON.Decode.string->Option.getOr("")}
-                            setState={_ => ()}
-                            onChange={input.onChange}
-                            placeholder="Phone Number"
-                            isValid={meta.valid}
-                            keyboardType=#"phone-pad"
-                          />
-                        | _ => 
-                          {renderFieldByType(field, input, meta)}
-                        }}
+                        {renderFieldByType(field, input, meta)}
                       </View>
-                    }}
+                    }
                   />
                 })
                 ->React.array}
@@ -464,7 +586,7 @@ let make = (~componentWiseRequiredFields: array<(string, array<fieldConfig>)>) =
           })
           ->React.array}
         </View>
-      }
+      }}
     />
   </View>
 }

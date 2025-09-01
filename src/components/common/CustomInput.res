@@ -40,6 +40,8 @@ let make = (
   ~borderBottomRightRadius=7.,
   ~onFocus=() => (),
   ~onBlur=() => (),
+  ~onFocusRFF: option<ReactEvent.Focus.t => unit>=?,
+  ~onBlurRFF: option<ReactEvent.Focus.t => unit>=?,
   ~textColor="black",
   ~editable=true,
   ~pointerEvents=#auto,
@@ -221,16 +223,29 @@ let make = (
           autoFocus
           autoComplete={#off}
           textContentType={#oneTimeCode}
-          onFocus={_ => {
+          onFocus={event => {
             setIsFocused(_ => true)
             onFocus()
+            switch onFocusRFF {
+            | Some(rffCallback) => {
+                let syntheticEvent: ReactEvent.Focus.t = event->Obj.magic
+                rffCallback(syntheticEvent)
+              }
+            | None => ()
+            }
             logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
           }}
-          onBlur={_ => {
-            // TODO: remove invalid input (string with only space) eg: "      "
+          onBlur={event => {
             state->String.trim == "" ? setState("") : ()
             onBlur()
             setIsFocused(_ => false)
+            switch onBlurRFF {
+            | Some(rffCallback) => {
+                let syntheticEvent: ReactEvent.Focus.t = event->Obj.magic
+                rffCallback(syntheticEvent)
+              }
+            | None => ()
+            }
             logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
           }}
           editable

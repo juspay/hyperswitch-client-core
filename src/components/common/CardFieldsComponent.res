@@ -39,8 +39,6 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
 
   <View>
     <View style={Style.s({marginBottom: 12.->Style.dp})}>
-      <Space height=5. />
-      <TextWrapper text="Card Details" textType=ModalText />
     </View>
     
     <View style={Style.s({width: 100.->Style.pct})}>
@@ -48,17 +46,9 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
       | (Some(cardField), Some(networkField), Some(monthField), Some(yearField), Some(cvv)) =>
         <ReactFinalForm.Field
           name={cardField.name}
-          validate={(value, _) => {
-            let cardNumber = value->Option.getOr("")->CardValidations.clearSpaces
-            let cardBrand = Validation.getCardBrand(cardNumber)
-            
-            if cardNumber->String.length == 0 {
-              Promise.resolve(Nullable.null)
-            } else if !Validation.cardValid(cardNumber, cardBrand) {
-              Promise.resolve(Nullable.make("Please enter a valid card number"))
-            } else {
-              Promise.resolve(Nullable.null)
-            }
+          validate={(_, _) => {
+            // No validation here - we'll handle it conditionally in the render function
+            Promise.resolve(Nullable.null)
           }}
           render={({input: cardInput, meta: cardMeta}) => {
             <ReactFinalForm.Field
@@ -66,16 +56,9 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
               render={({input: networkInput, meta: _}) => {
                 <ReactFinalForm.Field
                   name={monthField.name}
-                  validate={(value, _) => {
-                    let expiry = value->Option.getOr("")
-                    
-                    if expiry->String.length == 0 {
-                      Promise.resolve(Nullable.null)
-                    } else if !Validation.checkCardExpiry(expiry) {
-                      Promise.resolve(Nullable.make("Please enter a valid expiry date"))
-                    } else {
-                      Promise.resolve(Nullable.null)
-                    }
+                  validate={(_, _) => {
+                    // No validation here - handled in render logic
+                    Promise.resolve(Nullable.null)
                   }}
                   render={({input: expiryInput, meta: expiryMeta}) => {
                     <ReactFinalForm.Field
@@ -83,33 +66,9 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
                       render={({input: yearInput, meta: _}) => {
                         <ReactFinalForm.Field
                           name={cvv.name}
-                          validate={(value, formObject) => {
-                            let cvv = value->Option.getOr("")
-                            
-                            if cvv->String.length == 0 {
-                              Promise.resolve(Nullable.null)
-                            } else {
-                              let cardBrand = try {
-                                let formValues = formObject->JSON.Decode.object->Option.getOr(Dict.make())
-                                let cardNumberField = formValues->Dict.toArray->Array.find(((key, _)) => 
-                                  key->String.includes("card_number")
-                                )
-                                switch cardNumberField {
-                                | Some((_, cardNumberValue)) => 
-                                  let cardNumber = cardNumberValue->JSON.Decode.string->Option.getOr("")
-                                  Validation.getCardBrand(cardNumber)
-                                | None => ""
-                                }
-                              } catch {
-                              | _ => ""
-                              }
-                              
-                              if !Validation.checkCardCVC(cvv, cardBrand) {
-                                Promise.resolve(Nullable.make("Please enter a valid CVV"))
-                              } else {
-                                Promise.resolve(Nullable.null)
-                              }
-                            }
+                          validate={(_, _) => {
+                            // No validation here - handled in render logic
+                            Promise.resolve(Nullable.null)
                           }}
                           render={({input: cvvInput, meta: cvvMeta}) => {
                             let cardNumber = cardInput.value->JSON.Decode.string->Option.getOr("")
@@ -117,10 +76,33 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
                             let cvv = cvvInput.value->JSON.Decode.string->Option.getOr("")
                             let cardBrand = Validation.getCardBrand(cardNumber)
                             
-                            let isMaxCardLength = cardNumber->CardValidations.clearSpaces->String.length == Validation.maxCardLength(cardBrand)
-                            let isCardNumberValid = cardMeta.active ? cardMeta.valid || !isMaxCardLength : cardMeta.valid
-                            let isExpireDateValid = expiryMeta.active ? expiryMeta.valid || expireDate->String.length < 7 : expiryMeta.valid
-                            let isCvvValid = cvvMeta.active ? cvvMeta.valid || !Validation.cvcNumberInRange(cvv, cardBrand) : cvvMeta.valid
+                            // Card number validation logic: only validate when at max length or field is not active (lost focus)
+                            let cleanCardNumber = cardNumber->CardValidations.clearSpaces
+                            let maxLength = Validation.maxCardLength(cardBrand)
+                            let isAtMaxLength = cleanCardNumber->String.length == maxLength
+                            let shouldValidateCard = !cardMeta.active || isAtMaxLength
+                            let isCardNumberValid = if shouldValidateCard && cardNumber->String.length > 0 {
+                              Validation.cardValid(cardNumber, cardBrand)
+                            } else {
+                              true
+                            }
+                            
+                            let expiryMaxLength = 7
+                            let isExpiryAtMaxLength = expireDate->String.length == expiryMaxLength
+                            let shouldValidateExpiry = !expiryMeta.active || isExpiryAtMaxLength
+                            let isExpireDateValid = if shouldValidateExpiry && expireDate->String.length > 0 {
+                              Validation.checkCardExpiry(expireDate)
+                            } else {
+                              true 
+                            }
+                            
+                            let isCvvAtMaxLength = Validation.checkMaxCardCvv(cvv, cardBrand)
+                            let shouldValidateCvv = !cvvMeta.active || isCvvAtMaxLength
+                            let isCvvValid = if shouldValidateCvv && cvv->String.length > 0 {
+                              Validation.checkCardCVC(cvv, cardBrand)
+                            } else {
+                              true 
+                            }
                             
                             let errorMsgText = if !isCardNumberValid {
                               Some(localeObject.inValidCardErrorText)
@@ -165,6 +147,8 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
                                   state={cardInput.value->JSON.Decode.string->Option.getOr("")}
                                   setState={_ => ()}
                                   onChange={handleCardNumberChange}
+                                  onFocusRFF=cardInput.onFocus
+                                  onBlurRFF=cardInput.onBlur
                                   placeholder=nativeProp.configuration.placeholder.cardNumber
                                   animateLabel=localeObject.cardNumberLabel
                                   isValid={isCardNumberValid}
@@ -221,6 +205,8 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
                                         focusField(cvvRef)
                                       }
                                     }}
+                                    onFocusRFF=expiryInput.onFocus
+                                    onBlurRFF=expiryInput.onBlur
                                     placeholder=nativeProp.configuration.placeholder.expiryDate
                                     animateLabel=localeObject.validThruText
                                     isValid={isExpireDateValid}
@@ -261,6 +247,8 @@ let make = (~fields: array<fieldConfig>, ~createSyntheticEvent: string => ReactE
                                         blurField(cvvRef)
                                       }
                                     }}
+                                    onFocusRFF=cvvInput.onFocus
+                                    onBlurRFF=cvvInput.onBlur
                                     placeholder=nativeProp.configuration.placeholder.cvv
                                     animateLabel=localeObject.cvcTextLabel
                                     isValid={isCvvValid}
