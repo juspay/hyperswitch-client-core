@@ -8,27 +8,7 @@ let createSyntheticEvent = (_value: string): ReactEvent.Form.t => {
   %raw(`{target: {value: _value}}`)
 }
 
-let validateEmailAdapter = (value: option<string>, _formObject: JSON.t, _fieldConfig: fieldConfig) => {
-  let email = value->Option.getOr("")->String.trim
-  
-  if email->String.length == 0 {
-    None 
-  } else {
-    switch email->EmailValidation.isEmailValid {
-    | Some(false) => Some("Please enter a valid email address")
-    | Some(true) => None
-    | None => None
-    }
-  }
-}
 
-let getValidationFunction = (field: fieldConfig) => {
-  if field.outputPath->String.endsWith("email") || field.fieldType == "email_input" {
-    Some(validateEmailAdapter)
-  } else {
-    None
-  }
-}
 
 let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPropsInput, meta: ReactFinalForm.fieldRenderPropsMeta) => {
   switch field.fieldType {
@@ -373,15 +353,7 @@ let make = (
                   <ReactFinalForm.Field 
                     name={field.name} 
                     key={fieldIndex->Int.toString}
-                    validate={
-                      switch getValidationFunction(field) {
-                      | Some(validationFn) => (value, formObject) => {
-                          let error = validationFn(value, formObject, field)
-                          Promise.resolve(error->Nullable.fromOption)
-                        }
-                      | None => (_, _) => Promise.resolve(Nullable.null)
-                      }
-                    }
+                    validate={(_, _) => Promise.resolve(Nullable.null)}
                     render={({input, meta}) =>
                       <View style={Style.s({marginVertical: 8.->Style.dp})}>
                         <Space height=5. />
