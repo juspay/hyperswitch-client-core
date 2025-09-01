@@ -3,6 +3,7 @@ type sdkPaymentState =
   | FillingDetails
   | ProcessingPayments(option<processingPayments>)
   | PaymentSuccess
+  | PaymentFailed
   | PaymentCancelled
   | BankTransfer
 let defaultSetter = (_: sdkPaymentState) => ()
