@@ -5,8 +5,7 @@ import type { Double } from 'react-native/Libraries/Types/CodegenTypes';
 interface NativeProps extends ViewProps {
   buttonType?: string;
   buttonStyle?: string;
-  borderRadius?: Double;
-  allowedPaymentMethods?: string;
+  cornerRadius?: Double;
 }
 
-export default codegenNativeComponent<NativeProps>('GooglePayButton');
+export default codegenNativeComponent<NativeProps>('ApplePayView');
