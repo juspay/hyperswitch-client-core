@@ -436,3 +436,140 @@ let getMissingFieldsAndPaymentMethodData = (
 
   (hasMissingFields, updatedRequiredFields, paymentMethodData)
 }
+
+// Helper function to get wallet value for a superposition field
+let getWalletValueForSuperpositionField = (
+  field: SuperpositionHelper.fieldConfig,
+  ~shippingAddress,
+  ~billingAddress,
+  ~email=None,
+) => {
+  let address = getAddressForField(field.outputPath, ~shippingAddress, ~billingAddress)
+  
+  // Map superposition fieldType and outputPath to RequiredFieldsTypes.paymentMethodsFields for consistent logic
+  let mappedFieldType = switch field.fieldType {
+  | "email_input" => RequiredFieldsTypes.Email
+  | "text_input" =>
+    switch field.outputPath {
+    | path if path->String.includes("first_name") => RequiredFieldsTypes.FullName
+    | path if path->String.includes("last_name") => RequiredFieldsTypes.FullName
+    | path if path->String.includes("line1") => RequiredFieldsTypes.AddressLine1
+    | path if path->String.includes("line2") => RequiredFieldsTypes.AddressLine2
+    // | path if path->String.includes("city") => RequiredFieldsTypes.AddressCity
+    | path if path->String.includes("state") => RequiredFieldsTypes.AddressState
+    | path if path->String.includes("zip") || path->String.includes("postal_code") => RequiredFieldsTypes.AddressPincode
+    | _ => RequiredFieldsTypes.UnKnownField(field.outputPath)
+    }
+  | "country_select" =>
+    switch field.outputPath {
+    | path if path->String.includes("country") => RequiredFieldsTypes.AddressCountry(RequiredFieldsTypes.UseContextData)
+    | _ => RequiredFieldsTypes.UnKnownField(field.outputPath)
+    }
+  | "phone_input" => RequiredFieldsTypes.PhoneNumber
+  | "country_code_select" => RequiredFieldsTypes.PhoneCountryCode
+  | _ => RequiredFieldsTypes.UnKnownField(field.fieldType)
+  }
+  
+  // Use the mapped field type to get the appropriate value
+  let result = switch mappedFieldType {
+  | Email =>
+    email
+    ->Option.orElse(billingAddress->getEmailAddress)
+    ->Option.orElse(shippingAddress->getEmailAddress)
+  | FullName =>
+    switch field.outputPath {
+    | path if path->String.includes("first_name") => address->getFirstName
+    | path if path->String.includes("last_name") => address->getLastName
+    | _ => None
+    }
+  | AddressLine1 => address->getAddressLine1
+  | AddressLine2 => address->getAddressLine2
+  | AddressCity => address->getAddressCity
+  | AddressState => address->getAddressState
+  | AddressPincode => address->getAddressPincode
+  | AddressCountry(_) => address->getAddressCountry
+  | PhoneNumber => address->getPhoneNumber
+  | PhoneCountryCode => address->getPhoneCountryCode
+  | _ => None
+  }
+  
+  result
+}
+
+// Superposition version of getMissingFieldsAndPaymentMethodData
+let getMissingFieldsAndPaymentMethodDataSuperposition = (
+  componentWiseFields: array<(string, array<SuperpositionHelper.fieldConfig>)>,
+  ~shippingAddress,
+  ~billingAddress,
+  ~email=None,
+  ~collectBillingDetailsFromWallets: bool,
+) => {
+  let flattenedData = Dict.make()
+
+  // First, check if any required fields are missing from wallet data
+  let hasMissingFields = if collectBillingDetailsFromWallets {
+    componentWiseFields->Array.some(((_, fields)) => {
+      fields->Array.some(field => {
+        if field.required {
+          let walletValue = getWalletValueForSuperpositionField(
+            field,
+            ~shippingAddress,
+            ~billingAddress,
+            ~email,
+          )
+          // Check if wallet provided a value for this required field
+          switch walletValue {
+          | Some(value) when value !== "" => false // Field is provided
+          | _ => true // Field is missing
+          }
+        } else {
+          false // Field is not required
+        }
+      })
+    })
+  } else {
+    // When not collecting from wallets, check original default values
+    componentWiseFields->Array.some(((_, fields)) => {
+      fields->Array.some(field => field.required && field.defaultValue === "")
+    })
+  }
+
+  let updatedComponentWiseFields = componentWiseFields->Array.map(((componentName, fields)) => {
+    let updatedFields = fields->Array.map(field => {
+      let value = if collectBillingDetailsFromWallets {
+        let walletValue = getWalletValueForSuperpositionField(
+          field,
+          ~shippingAddress,
+          ~billingAddress,
+          ~email,
+        )
+        let valueStr = walletValue->Option.getOr("")
+        
+        // Set the value in flattened data for payment method data construction
+        if valueStr !== "" {
+          setIfPresent(flattenedData, field.outputPath, walletValue)
+        }
+        
+        valueStr
+      } else {
+        // When not collecting from wallets, use the default value from field
+        flattenedData->Dict.set(field.outputPath, field.defaultValue->JSON.Encode.string)
+        field.defaultValue
+      }
+      
+      {...field, defaultValue: value}
+    })
+    
+    (componentName, updatedFields)
+  })
+
+  let paymentMethodData =
+    flattenedData
+    ->JSON.Encode.object
+    ->RequiredFieldsTypes.unflattenObject
+    ->Dict.get("payment_method_data")
+    ->Option.getOr(JSON.Encode.null)
+    ->Utils.getDictFromJson
+
+  (hasMissingFields, updatedComponentWiseFields, paymentMethodData)
+}

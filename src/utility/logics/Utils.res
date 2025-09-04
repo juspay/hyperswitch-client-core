@@ -352,6 +352,16 @@ let getStringFromRecord = record => record->JSON.stringifyAny->Option.getOr("")
 
 let getJsonObjectFromRecord = record => record->Obj.magic
 
+let capitalizeFirst = (str: string): string => {
+  if str->String.length === 0 {
+    str
+  } else {
+    let firstChar = str->String.slice(~start=0, ~end=1)->Js.String.toUpperCase
+    let rest = str->String.slice(~start=1, ~end=str->String.length)
+    firstChar ++ rest
+  }
+}
+
 let getError = (err, defaultError) => {
   switch err->Exn.asJsExn {
   | Some(exn) => exn->Exn.message->Option.getOr(defaultError)->JSON.Encode.string

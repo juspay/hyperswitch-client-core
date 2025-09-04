@@ -444,6 +444,94 @@ let jsonToMandateData: JSON.t => jsonToMandateData = res => {
   }
 }
 
+type payment_method_data = {
+  payment_method: string,
+  eligible_connectors: array<JSON.t>,
+}
+
+let getPaymentMethodDataByType = (paymentMethodType: string, paymentList: array<payment_method>): payment_method_data => {
+  let foundPaymentMethod = paymentList->Array.find(pm => {
+    let currentPaymentMethodType = getPaymentMethodType(pm)
+    currentPaymentMethodType === paymentMethodType
+  })
+  
+  switch foundPaymentMethod {
+  | Some(pm) =>
+    switch pm {
+    | CARD(cardData) =>
+      {
+        payment_method: cardData.payment_method,
+        eligible_connectors: switch cardData.card_networks {
+        | Some(networks) when networks->Array.length > 0 =>
+          networks->Array.get(0)->Option.map(network => network.eligible_connectors)->Option.getOr([])
+        | _ => []
+        }
+      }
+    | WALLET(walletData) =>
+      {
+        payment_method: walletData.payment_method,
+        eligible_connectors: switch walletData.payment_experience->Array.get(0) {
+        | Some(exp) => exp.eligible_connectors
+        | None => []
+        }
+      }
+    | PAY_LATER(payLaterData) =>
+      {
+        payment_method: payLaterData.payment_method,
+        eligible_connectors: switch payLaterData.payment_experience->Array.get(0) {
+        | Some(exp) => exp.eligible_connectors
+        | None => []
+        }
+      }
+    | BANK_REDIRECT(bankData) =>
+      {
+        payment_method: bankData.payment_method,
+        eligible_connectors: switch bankData.bank_names->Array.get(0) {
+        | Some(bank) => bank.eligible_connectors
+        | None => []
+        }
+      }
+    | CRYPTO(cryptoData) =>
+      {
+        payment_method: cryptoData.payment_method,
+        eligible_connectors: switch cryptoData.payment_experience->Array.get(0) {
+        | Some(exp) => exp.eligible_connectors
+        | None => []
+        }
+      }
+    | OPEN_BANKING(openBankingData) =>
+      {
+        payment_method: openBankingData.payment_method,
+        eligible_connectors: switch openBankingData.payment_experience->Array.get(0) {
+        | Some(exp) => exp.eligible_connectors
+        | None => []
+        }
+      }
+    | BANK_DEBIT(bankDebitData) =>
+      {
+        payment_method: bankDebitData.payment_method,
+        eligible_connectors: switch bankDebitData.payment_experience->Array.get(0) {
+        | Some(exp) => exp.eligible_connectors
+        | None => []
+        }
+      }
+    | BANK_TRANSFER(bankTransferData) =>
+      {
+        payment_method: bankTransferData.payment_method,
+        eligible_connectors: switch bankTransferData.payment_experience->Array.get(0) {
+        | Some(exp) => exp.eligible_connectors
+        | None => []
+        }
+      }
+    }
+  | None =>
+    {
+      payment_method: "",
+      eligible_connectors: []
+    }
+  }
+}
+
 let getPaymentBody = (body, dynamicFieldsJson) => {
   let flattenedBodyDict =
     body->Utils.getJsonObjectFromRecord->RequiredFieldsTypes.flattenObject(true)

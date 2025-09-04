@@ -1,7 +1,68 @@
-let getValueFromPMLData = (outputPath: string, pmlRequiredFields: RequiredFieldsTypes.required_fields) => {
-  let foundField = pmlRequiredFields->Array.find(pmlField => {
+let getValueFromPMLData = (
+  outputPath: string, 
+  allPaymentMethods: array<PaymentMethodListType.payment_method>,
+  selectedPaymentMethod: option<string>,
+  ~isCardPayment: bool=false
+) => {
+  let targetPaymentMethodFields = switch selectedPaymentMethod {
+  | Some(paymentMethodName) => {
+      let matchingPaymentMethod = allPaymentMethods->Array.find(paymentMethod => {
+        let pmType = switch paymentMethod {
+        | PaymentMethodListType.CARD(_) => "card"
+        | PaymentMethodListType.PAY_LATER(prop) => prop.payment_method_type
+        | PaymentMethodListType.BANK_REDIRECT(prop) => prop.payment_method_type
+        | PaymentMethodListType.WALLET(prop) => prop.payment_method_type
+        | PaymentMethodListType.BANK_TRANSFER(prop) => prop.payment_method_type
+        | PaymentMethodListType.CRYPTO(prop) => prop.payment_method_type
+        | PaymentMethodListType.BANK_DEBIT(prop) => prop.payment_method_type
+        | PaymentMethodListType.OPEN_BANKING(prop) => prop.payment_method_type
+        }
+        pmType === paymentMethodName
+      })
+      
+      switch matchingPaymentMethod {
+      | Some(PaymentMethodListType.CARD(cardData)) => cardData.required_field
+      | Some(PaymentMethodListType.PAY_LATER(payLaterData)) => payLaterData.required_field
+      | Some(PaymentMethodListType.BANK_REDIRECT(bankData)) => bankData.required_field
+      | Some(PaymentMethodListType.WALLET(walletData)) => walletData.required_field
+      | Some(PaymentMethodListType.BANK_TRANSFER(bankTransferData)) => bankTransferData.required_field
+      | Some(PaymentMethodListType.CRYPTO(cryptoData)) => cryptoData.required_field
+      | Some(PaymentMethodListType.BANK_DEBIT(bankDebitData)) => bankDebitData.required_field
+      | Some(PaymentMethodListType.OPEN_BANKING(openBankingData)) => openBankingData.required_field
+      | None => []
+      }
+    }
+  | None => {
+      allPaymentMethods->Array.map(paymentMethod => {
+        switch paymentMethod {
+        | PaymentMethodListType.CARD(cardData) => cardData.required_field
+        | PaymentMethodListType.BANK_REDIRECT(bankData) => bankData.required_field
+        | PaymentMethodListType.WALLET(walletData) => walletData.required_field
+        | PaymentMethodListType.PAY_LATER(payLaterData) => payLaterData.required_field
+        | PaymentMethodListType.BANK_TRANSFER(bankTransferData) => bankTransferData.required_field
+        | PaymentMethodListType.CRYPTO(cryptoData) => cryptoData.required_field
+        | PaymentMethodListType.BANK_DEBIT(bankDebitData) => bankDebitData.required_field
+        | PaymentMethodListType.OPEN_BANKING(openBankingData) => openBankingData.required_field
+        }
+      })->Array.flat
+    }
+  }
+  
+  let filteredFields = if isCardPayment {
+    targetPaymentMethodFields->Array.filter(pmlField => {
+      let fieldName = pmlField.required_field->RequiredFieldsTypes.getRequiredFieldName
+      !(fieldName->String.includes("wallet.")) && 
+      !(fieldName->String.includes("bank_")) && 
+      !(fieldName->String.includes("crypto.")) &&
+      !(fieldName->String.includes("upi."))
+    })
+  } else {
+    targetPaymentMethodFields
+  }
+  
+  let foundField = filteredFields->Array.find(pmlField => {
     let pmlFieldPath = pmlField.required_field->RequiredFieldsTypes.getRequiredFieldName
-    pmlFieldPath === outputPath
+    pmlFieldPath->String.includes(outputPath)
   })
   
   switch foundField {
@@ -13,17 +74,30 @@ let getValueFromPMLData = (outputPath: string, pmlRequiredFields: RequiredFields
 
 let mergeSuperpositionWithPMLValues = (
   superpositionFields: array<(string, array<SuperpositionHelper.fieldConfig>)>,
-  allPMLRequiredFields: array<RequiredFieldsTypes.required_fields>,
+  allPaymentMethods: array<PaymentMethodListType.payment_method>,
+  selectedPaymentMethod: option<string>,
 ) => {
-  let flattenedPMLFields = allPMLRequiredFields->Array.flat
-  
   superpositionFields->Array.map(((componentName, fields)) => {
     let mergedFields = fields->Array.map(superpositionField => {
-      let pmlValue = getValueFromPMLData(superpositionField.outputPath, flattenedPMLFields)
-      
-      {
-        ...superpositionField,
-        defaultValue: pmlValue,
+      if superpositionField.name->String.endsWith(".full_name") && superpositionField.mergedFields->Array.length > 0 {
+        let mergedValues = superpositionField.mergedFields
+          ->Array.map(originalField => {
+            getValueFromPMLData(originalField.outputPath, allPaymentMethods, selectedPaymentMethod, ~isCardPayment=true)
+          })
+          ->Array.filter(value => value !== "")
+          ->Array.join(" ")
+        
+        {
+          ...superpositionField,
+          defaultValue: mergedValues,
+        }
+      } else {
+        let pmlValue = getValueFromPMLData(superpositionField.outputPath, allPaymentMethods, selectedPaymentMethod)
+        
+        {
+          ...superpositionField,
+          defaultValue: pmlValue,
+        }
       }
     })
     
@@ -67,35 +141,101 @@ let make = (
   ~cardNetworks=?,
   ~setConfirmButtonDataRef=?,
   ~isScreenFocus=true,
+  ~walletData: option<PaymentScreenContext.walletData>=?,
+  ~walletType: option<PaymentMethodListType.payment_method_types_wallet>=?,
+  ~onNoMissingFields: option<(unit) => unit>=?,
+  ~onFormValuesChange: option<(JSON.t) => unit>=?,
+  ~onMissingFieldsStateChange: option<(bool) => unit>=?,
 ) => {
+  let paymentMethodContext = React.useContext(PaymentMethodSelectionContext.paymentMethodSelectionContext)
+  let selectedPaymentMethod = paymentMethodContext.selectedPaymentMethod
+  let externalSuperpositionFields = paymentMethodContext.externalSuperpositionFields
   let (_, setIsSuperpositionInitialized) = React.useState(() => false)
   let (componentWiseRequiredFields, setComponentWiseRequiredFields) = React.useState(() => None)
+  let (hasMissingFields, setHasMissingFields) = React.useState(() => None)
+  let (walletPaymentMethodData, setWalletPaymentMethodData) = React.useState(() => None)
   
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  
+  // Default no-op function for onNoMissingFields callback
+  let onNoMissingFields = switch onNoMissingFields {
+  | Some(fn) => fn
+  | None => () => ()
+  }
+  
+  // Form values change callback
+  let onFormValuesChangeCallback = onFormValuesChange
+  
+  // Missing fields state change callback
+  let onMissingFieldsStateChangeCallback = onMissingFieldsStateChange
 
   let initSuperposition = async () => {
-    let componentRequiredFields = await SuperpositionHelper.initSuperpositionAndGetRequiredFields()
+    // Create context for superposition evaluation
+    let contextWithConnectorArray = {
+      SuperpositionHelper.eligibleConnectors: ["Stripe", "Adyen", "Cybersource", "Airwallex"],
+      payment_method: "Card",
+      payment_method_type: Some("debit"),
+      country: Some("US"),
+      mandate_type: Some("non_mandate"),
+    }
+    
+    let componentRequiredFields = await SuperpositionHelper.initSuperpositionAndGetRequiredFields(~contextWithConnectorArray)
     
     switch componentRequiredFields {
     | Some(fields) => {
-        let allPMLRequiredFields = allApiData.paymentList->Array.map(paymentMethod => {
-          switch paymentMethod {
-          | PaymentMethodListType.CARD(cardData) => cardData.required_field
-          | PaymentMethodListType.BANK_REDIRECT(bankData) => bankData.required_field
-          | PaymentMethodListType.WALLET(walletData) => walletData.required_field
-          | PaymentMethodListType.PAY_LATER(payLaterData) => payLaterData.required_field
-          | PaymentMethodListType.BANK_TRANSFER(bankTransferData) => bankTransferData.required_field
-          | PaymentMethodListType.CRYPTO(cryptoData) => cryptoData.required_field
-          | PaymentMethodListType.BANK_DEBIT(bankDebitData) => bankDebitData.required_field
-          | PaymentMethodListType.OPEN_BANKING(openBankingData) => openBankingData.required_field
+        // Check if this is a wallet missing fields scenario
+        switch (walletData, walletType) {
+        | (Some(walletDataValue), Some(_)) => {
+            // Extract shipping and billing addresses from wallet data
+            let (shippingAddress, billingAddress, email) = switch walletDataValue {
+            | GooglePayData(gPayData) => {
+                let billingFromGPay = switch gPayData.paymentMethodData.info {
+                | Some(info) => info.billing_address
+                | None => None
+                }
+                (gPayData.shippingDetails, billingFromGPay, gPayData.email)
+              }
+            | ApplePayData(aPayData) => (aPayData.shippingAddress, aPayData.billingContact, aPayData.email)
+            | SamsungPayData(_, billingAddr, shippingAddr) => (shippingAddr, billingAddr, billingAddr->Option.flatMap(addr => addr.email))
+            }
+            
+            // Filter to only billing fields since user mentioned we only need billing details
+            let billingOnlyFields = fields->Array.filter(((componentName, _)) => {
+              componentName === "billing"
+            })
+            
+            // For wallet missing fields, get the missing fields with wallet data pre-filled
+            let (hasMissingFieldsValue, missingFields, paymentMethodData) = WalletType.getMissingFieldsAndPaymentMethodDataSuperposition(
+              billingOnlyFields,
+              ~shippingAddress,
+              ~billingAddress,
+              ~email,
+              ~collectBillingDetailsFromWallets=true,
+            )
+            setComponentWiseRequiredFields(_ => Some(missingFields))
+            setHasMissingFields(_ => Some(hasMissingFieldsValue))
+            setWalletPaymentMethodData(_ => Some(paymentMethodData->JSON.Encode.object))
+            
+            // Notify parent of missing fields state change
+            switch onMissingFieldsStateChangeCallback {
+            | Some(callback) => callback(hasMissingFieldsValue)
+            | None => ()
+            }
+            
+            // If no fields are missing, call the callback to process payment directly
+            if !hasMissingFieldsValue {
+              onNoMissingFields()
+            }
           }
-        })
-        
-        let mergedFields = mergeSuperpositionWithPMLValues(fields, allPMLRequiredFields)
-        
-        let filteredFields = filterSuperpositionFields(mergedFields)
-        
-        setComponentWiseRequiredFields(_ => Some(filteredFields))
+        | _ => {
+            // Regular flow - merge with PML values
+            let mergedFields = mergeSuperpositionWithPMLValues(fields, allApiData.paymentList, selectedPaymentMethod)
+            
+            let filteredFields = filterSuperpositionFields(mergedFields)
+            
+            setComponentWiseRequiredFields(_ => Some(filteredFields))
+          }
+        }
       }
     | None => {
         setComponentWiseRequiredFields(_ => None)
@@ -105,20 +245,62 @@ let make = (
     setIsSuperpositionInitialized(_ => true)
   }
 
+  React.useEffect1(() => {
+    switch externalSuperpositionFields {
+    | Some(fields) => {
+        let mergedFields = mergeSuperpositionWithPMLValues(fields, allApiData.paymentList, selectedPaymentMethod)
+        let filteredFields = filterSuperpositionFields(mergedFields)
+        
+        setComponentWiseRequiredFields(_ => Some(filteredFields))
+      }
+    | None => {
+        switch selectedPaymentMethod {
+        | Some("card") | None => {
+            initSuperposition()->ignore
+          }
+        | Some(_) => {
+            setComponentWiseRequiredFields(_ => None)
+          }
+        }
+      }
+    }
+    None
+  }, [externalSuperpositionFields])
+
   React.useEffect0(() => {
-    initSuperposition()->ignore
+    switch (externalSuperpositionFields, selectedPaymentMethod) {
+    | (None, None) | (None, Some("card")) => {
+        initSuperposition()->ignore
+      }
+    | _ => () 
+    }
     None
   })
 
-  switch componentWiseRequiredFields {
-  | Some(fields) if fields->Array.length > 0 =>
+  let fieldsToRender = switch (selectedPaymentMethod, externalSuperpositionFields, componentWiseRequiredFields) {
+  | (Some(_), Some(fields), _) when fields->Array.length > 0 => Some(fields)
+  | (_, _, Some(fields)) when fields->Array.length > 0 => Some(fields)
+  | _ => None
+  }
+
+  let shouldRenderDefaultCard = switch (selectedPaymentMethod, setIsAllCardValid, fieldsToRender) {
+  | (Some("card"), Some(_), None) | (None, Some(_), None) => true // Card payment method or default with card validation, but no superposition fields
+  | _ => false
+  }
+
+  switch fieldsToRender {
+  | Some(fields) =>
     <DynamicFieldsSuperposition 
       componentWiseRequiredFields=fields 
       setConfirmButtonDataRef={setConfirmButtonDataRef->Option.getOr(_ => ())}
       isScreenFocus
+      _walletData=?walletData
+      _walletType=?walletType
+      ?hasMissingFields
+      ?walletPaymentMethodData
+      onFormValuesChange=?onFormValuesChangeCallback
     />
-  | None
-  | _ =>
+  | None when shouldRenderDefaultCard || selectedPaymentMethod->Option.isNone =>
     <DynamicFields
       requiredFields
       setIsAllDynamicFieldValid
@@ -133,5 +315,7 @@ let make = (
       ?setIsAllCardValid
       ?cardNetworks
     />
+  | None =>
+    React.null
   }
 }

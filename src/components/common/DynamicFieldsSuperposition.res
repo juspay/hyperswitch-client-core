@@ -116,8 +116,14 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
 @react.component
 let make = (
   ~componentWiseRequiredFields: array<(string, array<fieldConfig>)>,
+  ~_walletData: option<PaymentScreenContext.walletData>=?,
+  ~_walletType: option<PaymentMethodListType.payment_method_types_wallet>=?,
   ~setConfirmButtonDataRef: React.element => unit,
   ~isScreenFocus: bool,
+  // New wallet processing parameters
+  ~hasMissingFields: option<bool>=?,
+  ~walletPaymentMethodData: option<JSON.t>=?,
+  ~onFormValuesChange: option<(JSON.t) => unit>=?,
 ) => {
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -126,7 +132,84 @@ let make = (
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   
-  let (error, setError) = React.useState(_ => None)  
+  let (error, setError) = React.useState(_ => None)
+  
+  // Wallet processing function - handles direct payment when hasMissingFields=false
+  let processWalletPayment = () => {
+    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+      if !closeSDK {
+        setLoading(FillingDetails)
+        switch errorMessage.message {
+        | Some(message) => setError(_ => Some(message))
+        | None => ()
+        }
+      }
+      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+    }
+    
+    let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+      switch paymentStatus {
+      | PaymentSuccess => {
+          setLoading(PaymentSuccess)
+          setTimeout(() => {
+            handleSuccessFailure(~apiResStatus=status, ())
+          }, 300)->ignore
+        }
+      | _ => handleSuccessFailure(~apiResStatus=status, ())
+      }
+    }
+
+    switch (walletPaymentMethodData, _walletType, _walletData) {
+    | (Some(_), Some(walletType), Some(walletData)) => {
+        // Find the wallet payment method from allApiData
+        let walletPaymentMethod = allApiData.paymentList->Array.find(paymentMethod => {
+          switch paymentMethod {
+          | PaymentMethodListType.WALLET(prop) => prop.payment_method_type_wallet === walletType.payment_method_type_wallet
+          | _ => false
+          }
+        })
+        
+        switch walletPaymentMethod {
+        | Some(PaymentMethodListType.WALLET(prop)) => {
+            // Extract token based on wallet type
+            let token = switch walletData {
+            | GooglePayData(gpayData) => 
+              gpayData.paymentMethodData.tokenization_data
+              ->Option.map(tokenData => tokenData.token)
+              ->Option.getOr("")
+            | ApplePayData(applePayData) => 
+              applePayData.paymentData->JSON.stringify
+            | SamsungPayData(_, _, _) => ""
+            }
+            
+            let body = PaymentUtils.generateWalletConfirmBody(
+              ~nativeProp,
+              ~payment_token=token,
+              ~payment_method_type=prop.payment_method_type,
+            )
+            
+            fetchAndRedirect(
+              ~body=body->JSON.stringifyAny->Option.getOr(""),
+              ~publishableKey=nativeProp.publishableKey,
+              ~clientSecret=nativeProp.clientSecret,
+              ~errorCallback,
+              ~responseCallback,
+              ~paymentMethod=prop.payment_method_type,
+              ~isCardPayment=false,
+              (),
+            )
+          }
+        | _ => {
+            errorCallback(~errorMessage={PaymentConfirmTypes.message: "Wallet payment method not available"}, ~closeSDK=false, ())
+          }
+        }
+      }
+    | _ => {
+        errorCallback(~errorMessage={PaymentConfirmTypes.message: "Wallet data not available"}, ~closeSDK=false, ())
+      }
+    }
+  }
+  
   let processRequest = (formValues: JSON.t) => {
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       if !closeSDK {
@@ -314,9 +397,26 @@ let make = (
       render={formRenderProps => {
         let handlePress = _ => {
           setLoading(ProcessingPayments(None))
-          processRequest(formRenderProps.values)
+          // Check if this is a wallet scenario with hasMissingFields=false (direct payment)
+          switch (hasMissingFields, _walletData, _walletType) {
+          | (Some(false), Some(_), Some(_)) => processWalletPayment()
+          | _ => processRequest(formRenderProps.values)
+          }
         }
 
+        // Notify parent of form values changes (using useMemo to avoid infinite loops)
+        let formValuesJson = React.useMemo1(() => {
+          formRenderProps.values->JSON.stringifyAny
+        }, [formRenderProps.values])
+        
+        React.useEffect2(() => {
+          switch onFormValuesChange {
+          | Some(callback) => callback(formRenderProps.values)
+          | None => ()
+          }
+          None
+        }, (formValuesJson, onFormValuesChange))
+        
         React.useEffect3(() => {
           if isScreenFocus {
             setConfirmButtonDataRef(

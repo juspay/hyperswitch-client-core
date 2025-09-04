@@ -6,8 +6,6 @@ let make = (
   ~walletType: PaymentMethodListType.payment_method_types_wallet,
   ~walletData: PaymentScreenContext.walletData,
 ) => {
-  let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => false)
-
   let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): dict<(
     JSON.t,
     option<string>,
@@ -226,7 +224,7 @@ let make = (
   }
 
   let handlePress = _ => {
-    if isAllDynamicFieldValid {
+    // Always process payment when button is pressed - no validation checks
       setLoading(ProcessingPayments(None))
       setKeyToTrigerButtonClickError(prev => prev + 1)
       let payment_method_data = Dict.make()
@@ -293,9 +291,7 @@ let make = (
           )
         }
       }
-    } else {
-      setKeyToTrigerButtonClickError(prev => prev + 1)
-    }
+    // Removed validation check - payment always processes on button press
   }
 
   let (error, _setError) = React.useState(_ => None)
@@ -320,16 +316,103 @@ let make = (
     )
 
     None
-  }, (isAllDynamicFieldValid, walletType, error, dynamicFieldsJson))
+  }, (walletType, error, dynamicFieldsJson))
+
+  // Callback to process payment directly when no fields are missing
+  let handleNoMissingFields = () => {
+    setLoading(ProcessingPayments(None))
+    let payment_method_data = Dict.make()
+
+    switch walletData {
+    | GooglePayData(obj) => {
+        let shippingAddress = obj.shippingDetails
+
+        payment_method_data->Dict.set(
+          walletType.payment_method,
+          [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        )
+        processRequest(
+          ~payment_method_data=payment_method_data->JSON.Encode.object,
+          ~email=?obj.email,
+          ~shipping=shippingAddress,
+          (),
+        )
+      }
+    | ApplePayData(obj) => {
+        let shippingAddress = obj.shippingAddress
+        let billingAddress = obj.billingContact
+
+        let paymentData =
+          [
+            ("payment_data", obj.paymentData),
+            ("payment_method", obj.paymentMethod),
+            ("transaction_identifier", obj.transactionIdentifier),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object
+        payment_method_data->Dict.set(
+          walletType.payment_method,
+          [(walletType.payment_method_type, paymentData)]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        )
+        processRequest(
+          ~payment_method_data=payment_method_data->JSON.Encode.object,
+          ~email=?obj.email,
+          ~shipping=shippingAddress,
+          ~billing=billingAddress,
+          (),
+        )
+      }
+    | SamsungPayData(obj, billingAddress, shippingAddress) => {
+        payment_method_data->Dict.set(
+          walletType.payment_method,
+          [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        )
+        processRequest(
+          ~payment_method_data=payment_method_data->JSON.Encode.object,
+          ~email=?switch billingAddress {
+          | Some(address) => address.email
+          | None => None
+          },
+          ~billing=billingAddress,
+          ~shipping=shippingAddress,
+          (),
+        )
+      }
+    }
+  }
+
+  // Stable callback for form values changes to prevent infinite loops
+  let handleFormValuesChange = React.useCallback1(formValues => {
+    // Convert form values to dynamicFieldsJson format
+    let formValuesDict = formValues->JSON.Decode.object->Option.getOr(Dict.make())
+    let updatedDynamicFieldsJson = Dict.make()
+    
+    // Transform form values to the expected format for dynamicFieldsJson
+    formValuesDict->Dict.toArray->Array.forEach(((key, value)) => {
+      updatedDynamicFieldsJson->Dict.set(key, (value, None))
+    })
+    
+    setDynamicFieldsJson(_ => updatedDynamicFieldsJson)
+  }, [setDynamicFieldsJson])
 
   <React.Fragment>
     <DynamicFieldWrapper
       requiredFields={requiredFields}
-      setIsAllDynamicFieldValid
+      setIsAllDynamicFieldValid={_ => ()}
       setDynamicFieldsJson
       keyToTrigerButtonClickError
       displayPreValueFields=true
       savedCardsData=None
+      walletData={walletData}
+      walletType={walletType}
+      onNoMissingFields={handleNoMissingFields}
+      onFormValuesChange={handleFormValuesChange}
     />
     <Space height=15. />
     <GlobalConfirmButton confirmButtonDataRef />

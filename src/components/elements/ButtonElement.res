@@ -493,6 +493,7 @@ let make = (
   }, [walletType.payment_method_type_wallet])
 
   let pressHandler = () => {
+    Console.log2("Payment method selected:", walletType.payment_method_type)
     setLoading(ProcessingPayments(None))
     logger(
       ~logType=INFO,

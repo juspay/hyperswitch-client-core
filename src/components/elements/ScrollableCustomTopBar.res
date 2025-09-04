@@ -1,5 +1,23 @@
 open ReactNative
 open Style
+open PaymentMethodListType
+
+// Type alias for grouped fields
+type groupedFields = option<array<(string, array<SuperpositionHelper.fieldConfig>)>>
+
+// Type alias for the setter function
+type groupedFieldsSetter = groupedFields => unit
+
+let getInternalName = (displayName: string) => {
+  switch displayName {
+  | "Card" => "card"
+  | _ =>
+    Types.defaultConfig.redirectionList
+    ->Array.find(item => item.text == displayName)
+    ->Option.map(item => item.name)
+    ->Option.getOr(displayName->String.toLowerCase)
+  }
+}
 
 module BottomTabList = {
   @react.component
@@ -8,6 +26,9 @@ module BottomTabList = {
     ~index: int,
     ~indexInFocus: int,
     ~setIndexToScrollParentFlatList,
+    ~currentPaymentMethod: string,
+    ~setCurrentPaymentMethod: (string => string) => unit,
+    ~onPaymentMethodSelected: (string => unit),
   ) => {
     let isFocused = index == indexInFocus
     let routeName = item.name
@@ -27,7 +48,15 @@ module BottomTabList = {
 
     <View style={s({flex: 1., alignItems: #center, justifyContent: #center, marginRight: 13.->dp})}>
       <CustomTouchableOpacity
-        onPress={_ => setIndexToScrollParentFlatList(index)}
+        onPress={_ => {
+          let internalName = getInternalName(routeName)
+          
+          if currentPaymentMethod !== internalName {
+            setCurrentPaymentMethod(_ => internalName)
+            onPaymentMethodSelected(internalName)
+          }                  
+          setIndexToScrollParentFlatList(index)
+        }}
         accessibilityRole=#button
         accessibilityState={selected: isFocused}
         accessibilityLabel=routeName
@@ -73,9 +102,15 @@ let make = (
   ~indexInFocus,
   ~setIndexToScrollParentFlatList,
   ~height=75.->dp,
+  ~onPaymentMethodChange: option<(string) => unit>=?,
+  ~onSuperpositionFieldsChange: option<(option<array<(string, array<SuperpositionHelper.fieldConfig>)>>) => unit>=?,
 ) => {
   let flatlistRef = React.useRef(Nullable.null)
   let logger = LoggerHook.useLoggerHook()
+  
+  let (currentPaymentMethod, setCurrentPaymentMethod) = React.useState(_ => "")
+  
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
   let scrollToItem = () => {
     switch flatlistRef.current->Nullable.toOption {
@@ -125,6 +160,52 @@ let make = (
         renderItem={({item, index}) =>
           <BottomTabList
             key={index->Int.toString} item index indexInFocus setIndexToScrollParentFlatList
+            currentPaymentMethod setCurrentPaymentMethod
+            onPaymentMethodSelected={internalName => {
+              switch onPaymentMethodChange {
+              | Some(callback) => callback(internalName)
+              | None => ()
+              }
+              
+              let paymentMethodData = getPaymentMethodDataByType(internalName, allApiData.paymentList)
+              
+              // Create connector context for superposition
+              let connectorStrings = paymentMethodData.eligible_connectors
+                ->Array.filterMap(JSON.Decode.string)
+                ->Array.map(Utils.capitalizeFirst)
+              
+              let connectorContext: SuperpositionHelper.connectorArrayContext = {
+                eligibleConnectors: connectorStrings,
+                payment_method: paymentMethodData.payment_method,
+                payment_method_type: Some(Utils.capitalizeFirst(internalName)),
+                country: Some("US"),
+                mandate_type: Some("non_mandate"),
+              }
+              
+              let _ = SuperpositionHelper.initSuperpositionAndGetRequiredFields(~contextWithConnectorArray=connectorContext)
+              ->Promise.then(result => {
+                switch result {
+                | Some(fields) => 
+                  switch onSuperpositionFieldsChange {
+                  | Some(callback) => callback(Some(fields))
+                  | None => ()
+                  }
+                | None => 
+                  switch onSuperpositionFieldsChange {
+                  | Some(callback) => callback(None)
+                  | None => ()
+                  }
+                }
+                Promise.resolve()
+              })
+              ->Promise.catch(_ => {
+                switch onSuperpositionFieldsChange {
+                | Some(callback) => callback(None)
+                | None => ()
+                }
+                Promise.resolve()
+              })
+            }}
           />}
       />
     </View>

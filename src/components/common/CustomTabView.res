@@ -9,6 +9,16 @@ let make = (
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
   let setIndexInFocus = React.useCallback1(ind => setIndexInFocus(_ => ind), [setIndexInFocus])
   let sceneMap = Map.make()
+  
+  let (selectedPaymentMethod, setSelectedPaymentMethod) = React.useState(_ => None)
+  let (superpositionFields, setSuperpositionFields) = React.useState(() => None)
+  
+  let contextValue: PaymentMethodSelectionContext.paymentMethodSelectionContext = {
+    selectedPaymentMethod: selectedPaymentMethod,
+    setSelectedPaymentMethod: (value) => setSelectedPaymentMethod(_ => value),
+    externalSuperpositionFields: superpositionFields,
+    setExternalSuperpositionFields: (value) => setSuperpositionFields(_ => value),
+  }
 
   let data = React.useMemo1(() => {
     if loading {
@@ -35,43 +45,53 @@ let make = (
     }
   }, [hocComponentArr])
 
-  <UIUtils.RenderIf condition={data->Array.length > 0}>
-    {
-      let routes = data->Array.mapWithIndex((hoc, index) => {
-        sceneMap->Map.set(index, (~route as _, ~position as _, ~jumpTo as _) =>
-          hoc.componentHoc(~isScreenFocus=indexInFocus == index, ~setConfirmButtonDataRef)
-        )
+  <PaymentMethodSelectionContext.PaymentMethodSelectionProvider value=contextValue>
+    <UIUtils.RenderIf condition={data->Array.length > 0}>
+      {
+        let routes = data->Array.mapWithIndex((hoc, index) => {
+          sceneMap->Map.set(index, (~route as _, ~position as _, ~jumpTo as _) =>
+            hoc.componentHoc(~isScreenFocus=indexInFocus == index, ~setConfirmButtonDataRef)
+          )
 
-        let route: TabViewType.route = {
-          key: index,
-          title: hoc.name,
-          componentHoc: hoc.componentHoc,
-        }
-        route
-      })
-
-      let isScrollBarOnlyCards =
-        data->Array.length == 1 &&
-          switch data->Array.get(0) {
-          | Some({name}) => name == "Card"
-          | None => true
+          let route: TabViewType.route = {
+            key: index,
+            title: hoc.name,
+            componentHoc: hoc.componentHoc,
           }
+          route
+        })
 
-      <TabView
-        sceneContainerStyle={s({padding: 10.->dp})}
-        style={s({marginHorizontal: -10.->dp})}
-        indexInFocus
-        routes
-        onIndexChange=setIndexInFocus
-        renderTabBar={(~indexInFocus, ~routes as _, ~position as _, ~layout as _, ~jumpTo) => {
-          isScrollBarOnlyCards
-            ? React.null
-            : <ScrollableCustomTopBar
-                hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo}
-              />
-        }}
-        renderScene={SceneMap.sceneMap(sceneMap)}
-      />
-    }
-  </UIUtils.RenderIf>
+        let isScrollBarOnlyCards =
+          data->Array.length == 1 &&
+            switch data->Array.get(0) {
+            | Some({name}) => name == "Card"
+            | None => true
+            }
+
+        <TabView
+          sceneContainerStyle={s({padding: 10.->dp})}
+          style={s({marginHorizontal: -10.->dp})}
+          indexInFocus
+          routes
+          onIndexChange=setIndexInFocus
+          renderTabBar={(~indexInFocus, ~routes as _, ~position as _, ~layout as _, ~jumpTo) => {
+            isScrollBarOnlyCards
+              ? React.null
+              : <ScrollableCustomTopBar
+                  hocComponentArr=data 
+                  indexInFocus 
+                  setIndexToScrollParentFlatList={jumpTo}
+                  onPaymentMethodChange={paymentMethod => {
+                    setSelectedPaymentMethod(_ => Some(paymentMethod))
+                  }}
+                  onSuperpositionFieldsChange={fields => {
+                    setSuperpositionFields(_ => fields)
+                  }}
+                />
+          }}
+          renderScene={SceneMap.sceneMap(sceneMap)}
+        />
+      }
+    </UIUtils.RenderIf>
+  </PaymentMethodSelectionContext.PaymentMethodSelectionProvider>
 }
