@@ -1,6 +1,6 @@
 open ReactNative
 open Style
-open SuperpositionHelper
+open SuperpositionTypes
 open ReactFinalForm
 
 @react.component

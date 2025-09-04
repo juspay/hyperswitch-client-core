@@ -73,7 +73,7 @@ let getValueFromPMLData = (
 
 
 let mergeSuperpositionWithPMLValues = (
-  superpositionFields: array<(string, array<SuperpositionHelper.fieldConfig>)>,
+  superpositionFields: array<(string, array<SuperpositionTypes.fieldConfig>)>,
   allPaymentMethods: array<PaymentMethodListType.payment_method>,
   selectedPaymentMethod: option<string>,
 ) => {
@@ -105,12 +105,12 @@ let mergeSuperpositionWithPMLValues = (
   })
 }
 
-let hasAnyEmptyField = (fields: array<SuperpositionHelper.fieldConfig>) => {
+let hasAnyEmptyField = (fields: array<SuperpositionTypes.fieldConfig>) => {
   fields->Array.some(field => field.defaultValue === "")
 }
 
 let filterSuperpositionFields = (
-  componentWiseFields: array<(string, array<SuperpositionHelper.fieldConfig>)>,
+  componentWiseFields: array<(string, array<SuperpositionTypes.fieldConfig>)>,
 ) => {
   componentWiseFields->Array.filter(((componentName, fields)) => {
     switch componentName {
@@ -171,13 +171,15 @@ let make = (
 
   let initSuperposition = async () => {
     // Create context for superposition evaluation
-    let contextWithConnectorArray = {
-      SuperpositionHelper.eligibleConnectors: ["Stripe", "Adyen", "Cybersource", "Airwallex"],
-      payment_method: "Card",
-      payment_method_type: Some("debit"),
-      country: Some("US"),
-      mandate_type: Some("non_mandate"),
-    }
+  let contextWithConnectorArray: SuperpositionTypes.connectorArrayContext = {
+  eligibleConnectors: ["Stripe", "Adyen", "Cybersource", "Airwallex"],
+  payment_method: "Card",
+  payment_method_type: Some("debit"),
+  country: Some("US"),
+  mandate_type: Some("non_mandate"),
+  collect_shipping_details_from_wallet_connector: None,  // Add missing field
+  collect_billing_details_from_wallet_connector: None,   // Add missing field
+}
     
     let componentRequiredFields = await SuperpositionHelper.initSuperpositionAndGetRequiredFields(~contextWithConnectorArray)
     

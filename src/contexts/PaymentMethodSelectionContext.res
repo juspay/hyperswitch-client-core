@@ -1,8 +1,8 @@
 type paymentMethodSelectionContext = {
   selectedPaymentMethod: option<string>,
   setSelectedPaymentMethod: (option<string>) => unit,
-  externalSuperpositionFields: option<array<(string, array<SuperpositionHelper.fieldConfig>)>>,
-  setExternalSuperpositionFields: (option<array<(string, array<SuperpositionHelper.fieldConfig>)>>) => unit,
+  externalSuperpositionFields: option<array<(string, array<SuperpositionTypes.fieldConfig>)>>,
+  setExternalSuperpositionFields: (option<array<(string, array<SuperpositionTypes.fieldConfig>)>>) => unit,
 }
 
 let defaultPaymentMethodSelectionContext: paymentMethodSelectionContext = {

@@ -3,7 +3,7 @@ open Style
 open PaymentMethodListType
 
 // Type alias for grouped fields
-type groupedFields = option<array<(string, array<SuperpositionHelper.fieldConfig>)>>
+type groupedFields = option<array<(string, array<SuperpositionTypes.fieldConfig>)>>
 
 // Type alias for the setter function
 type groupedFieldsSetter = groupedFields => unit
@@ -103,7 +103,7 @@ let make = (
   ~setIndexToScrollParentFlatList,
   ~height=75.->dp,
   ~onPaymentMethodChange: option<(string) => unit>=?,
-  ~onSuperpositionFieldsChange: option<(option<array<(string, array<SuperpositionHelper.fieldConfig>)>>) => unit>=?,
+  ~onSuperpositionFieldsChange: option<(option<array<(string, array<SuperpositionTypes.fieldConfig>)>>) => unit>=?,
 ) => {
   let flatlistRef = React.useRef(Nullable.null)
   let logger = LoggerHook.useLoggerHook()
@@ -174,12 +174,14 @@ let make = (
                 ->Array.filterMap(JSON.Decode.string)
                 ->Array.map(Utils.capitalizeFirst)
               
-              let connectorContext: SuperpositionHelper.connectorArrayContext = {
+              let connectorContext: SuperpositionTypes.connectorArrayContext = {
                 eligibleConnectors: connectorStrings,
                 payment_method: paymentMethodData.payment_method,
                 payment_method_type: Some(Utils.capitalizeFirst(internalName)),
                 country: Some("US"),
                 mandate_type: Some("non_mandate"),
+                collect_shipping_details_from_wallet_connector: None, 
+                collect_billing_details_from_wallet_connector: None,
               }
               
               let _ = SuperpositionHelper.initSuperpositionAndGetRequiredFields(~contextWithConnectorArray=connectorContext)

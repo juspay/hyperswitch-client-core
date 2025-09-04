@@ -1,6 +1,6 @@
 open ReactNative
 open Style
-open SuperpositionHelper
+open SuperpositionTypes
 open ReactFinalForm
 
 // Creates React-compatible synthetic events for ReactFinalForm integration
@@ -12,7 +12,7 @@ let createSyntheticEvent = (_value: string): ReactEvent.Form.t => {
 
 let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPropsInput, meta: ReactFinalForm.fieldRenderPropsMeta) => {
   switch field.fieldType {
-  | "text_input" =>
+  | TextInput =>
     <CustomInput
       state={input.value->JSON.Decode.string->Option.getOr("")}
       setState={_ => ()}
@@ -20,7 +20,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       placeholder={field.displayName}
       isValid={meta.valid}
     />
-  | "email_input" =>
+  | EmailInput =>
     <CustomInput
       state={input.value->JSON.Decode.string->Option.getOr("")}
       setState={_ => ()}
@@ -29,7 +29,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       isValid={meta.valid}
       keyboardType=#"email-address"
     />
-  | "password_input" =>
+  | PasswordInput =>
     <CustomInput
       state={input.value->JSON.Decode.string->Option.getOr("")}
       setState={_ => ()}
@@ -38,7 +38,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       isValid={meta.valid}
       secureTextEntry={true}
     />
-  | "phone_input" =>
+  | PhoneInput =>
     <CustomInput
       state={input.value->JSON.Decode.string->Option.getOr("")}
       setState={_ => ()}
@@ -47,7 +47,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       isValid={meta.valid}
       keyboardType=#"phone-pad"
     />
-  | "country_select" =>
+  | CountrySelect =>
     <CustomPicker
       value={Some(input.value->JSON.Decode.string->Option.getOr(""))}
       setValue={_ => ()}
@@ -60,7 +60,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       placeholderText={field.displayName}
       isValid={meta.valid}
     />
-  | "country_code_select" | "dropdown_select" | "currency_select" =>
+  | CountryCodeSelect | DropdownSelect | CurrencySelect =>
     <CustomPicker
       value={Some(input.value->JSON.Decode.string->Option.getOr(""))}
       setValue={_ => ()}
@@ -73,7 +73,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       placeholderText={field.displayName}
       isValid={meta.valid}
     />
-  | "month_select" =>
+  | MonthSelect =>
     // For now, use text input for month selection - can be enhanced later with CustomPicker
     <CustomInput
       state={input.value->JSON.Decode.string->Option.getOr("")}
@@ -83,7 +83,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       isValid={meta.valid}
       keyboardType=#"numeric"
     />
-  | "year_select" =>
+  | YearSelect =>
     // For now, use text input for year selection - can be enhanced later with CustomPicker
     <CustomInput
       state={input.value->JSON.Decode.string->Option.getOr("")}
@@ -93,7 +93,7 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       isValid={meta.valid}
       keyboardType=#"numeric"
     />
-  | "date_picker" =>
+  | DatePicker =>
     // For now, use text input for date picker - can be enhanced later
     <CustomInput
       state={input.value->JSON.Decode.string->Option.getOr("")}
@@ -102,14 +102,14 @@ let renderFieldByType = (field: fieldConfig, input: ReactFinalForm.fieldRenderPr
       placeholder={field.displayName}
       isValid={meta.valid}
     />
-  | _ =>
-    <CustomInput
-      state={input.value->JSON.Decode.string->Option.getOr("")}
-      setState={_ => ()}
-      onChange={input.onChange}
-      placeholder={field.displayName}
-      isValid={meta.valid}
-    />
+  // | _ =>
+  //   <CustomInput
+  //     state={input.value->JSON.Decode.string->Option.getOr("")}
+  //     setState={_ => ()}
+  //     onChange={input.onChange}
+  //     placeholder={field.displayName}
+  //     isValid={meta.valid}
+  //   />
   }
 }
 

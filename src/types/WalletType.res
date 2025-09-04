@@ -439,7 +439,7 @@ let getMissingFieldsAndPaymentMethodData = (
 
 // Helper function to get wallet value for a superposition field
 let getWalletValueForSuperpositionField = (
-  field: SuperpositionHelper.fieldConfig,
+  field: SuperpositionTypes.fieldConfig,
   ~shippingAddress,
   ~billingAddress,
   ~email=None,
@@ -448,8 +448,8 @@ let getWalletValueForSuperpositionField = (
   
   // Map superposition fieldType and outputPath to RequiredFieldsTypes.paymentMethodsFields for consistent logic
   let mappedFieldType = switch field.fieldType {
-  | "email_input" => RequiredFieldsTypes.Email
-  | "text_input" =>
+  | EmailInput => RequiredFieldsTypes.Email
+  | TextInput =>
     switch field.outputPath {
     | path if path->String.includes("first_name") => RequiredFieldsTypes.FullName
     | path if path->String.includes("last_name") => RequiredFieldsTypes.FullName
@@ -460,14 +460,14 @@ let getWalletValueForSuperpositionField = (
     | path if path->String.includes("zip") || path->String.includes("postal_code") => RequiredFieldsTypes.AddressPincode
     | _ => RequiredFieldsTypes.UnKnownField(field.outputPath)
     }
-  | "country_select" =>
+  | CountrySelect =>
     switch field.outputPath {
     | path if path->String.includes("country") => RequiredFieldsTypes.AddressCountry(RequiredFieldsTypes.UseContextData)
     | _ => RequiredFieldsTypes.UnKnownField(field.outputPath)
     }
-  | "phone_input" => RequiredFieldsTypes.PhoneNumber
-  | "country_code_select" => RequiredFieldsTypes.PhoneCountryCode
-  | _ => RequiredFieldsTypes.UnKnownField(field.fieldType)
+  | PhoneInput => RequiredFieldsTypes.PhoneNumber
+  | CountryCodeSelect => RequiredFieldsTypes.PhoneCountryCode
+  | _ => RequiredFieldsTypes.UnKnownField(SuperpositionTypes.fieldTypeToString(field.fieldType))
   }
   
   // Use the mapped field type to get the appropriate value
@@ -498,7 +498,7 @@ let getWalletValueForSuperpositionField = (
 
 // Superposition version of getMissingFieldsAndPaymentMethodData
 let getMissingFieldsAndPaymentMethodDataSuperposition = (
-  componentWiseFields: array<(string, array<SuperpositionHelper.fieldConfig>)>,
+  componentWiseFields: array<(string, array<SuperpositionTypes.fieldConfig>)>,
   ~shippingAddress,
   ~billingAddress,
   ~email=None,
