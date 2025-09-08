@@ -80,16 +80,20 @@ let mergeSuperpositionWithPMLValues = (
   superpositionFields->Array.map(((componentName, fields)) => {
     let mergedFields = fields->Array.map(superpositionField => {
       if superpositionField.name->String.endsWith(".full_name") && superpositionField.mergedFields->Array.length > 0 {
-        let mergedValues = superpositionField.mergedFields
-          ->Array.map(originalField => {
-            getValueFromPMLData(originalField.outputPath, allPaymentMethods, selectedPaymentMethod, ~isCardPayment=true)
-          })
-          ->Array.filter(value => value !== "")
-          ->Array.join(" ")
-        
-        {
-          ...superpositionField,
-          defaultValue: mergedValues,
+        if superpositionField.defaultValue !== "" {
+          superpositionField
+        } else {
+          let mergedValues = superpositionField.mergedFields
+            ->Array.map(originalField => {
+              getValueFromPMLData(originalField.outputPath, allPaymentMethods, selectedPaymentMethod, ~isCardPayment=true)
+            })
+            ->Array.filter(value => value !== "")
+            ->Array.join(" ")
+          
+          {
+            ...superpositionField,
+            defaultValue: mergedValues,
+          }
         }
       } else {
         let pmlValue = getValueFromPMLData(superpositionField.outputPath, allPaymentMethods, selectedPaymentMethod)
@@ -115,8 +119,9 @@ let filterSuperpositionFields = (
   componentWiseFields->Array.filter(((componentName, fields)) => {
     switch componentName {
     | "billing" | "shipping" => {
-        let hasEmpty = hasAnyEmptyField(fields)
-        hasEmpty
+        // For billing and shipping, always include the component if it has fields
+        // We need to process both complete and incomplete PML data
+        fields->Array.length > 0
       }
     | _ => {
         hasAnyEmptyField(fields)
@@ -139,13 +144,17 @@ let make = (
   ~fieldsOrder: array<DynamicFields.fieldType>=[Other, Billing, Shipping],
   ~setIsAllCardValid=?,
   ~cardNetworks=?,
-  ~setConfirmButtonDataRef=?,
+  // ~setConfirmButtonDataRef=?,
   ~isScreenFocus=true,
   ~walletData: option<PaymentScreenContext.walletData>=?,
   ~walletType: option<PaymentMethodListType.payment_method_types_wallet>=?,
   ~onNoMissingFields: option<(unit) => unit>=?,
   ~onFormValuesChange: option<(JSON.t) => unit>=?,
   ~onMissingFieldsStateChange: option<(bool) => unit>=?,
+  ~isNicknameSelected=false,
+  ~nickname: option<string>=?,
+  ~isSaveCardCheckboxVisible=false,
+  ~isGuestCustomer=true,
 ) => {
   let paymentMethodContext = React.useContext(PaymentMethodSelectionContext.paymentMethodSelectionContext)
   let selectedPaymentMethod = paymentMethodContext.selectedPaymentMethod
@@ -182,9 +191,19 @@ let make = (
 }
     
     let componentRequiredFields = await SuperpositionHelper.initSuperpositionAndGetRequiredFields(~contextWithConnectorArray)
-    
     switch componentRequiredFields {
     | Some(fields) => {
+        let fieldsWithMergedNames = fields->Array.map(((componentName, componentFields)) => {
+          let mergedFields = SuperpositionHelper.mergeFields(
+            componentFields,
+            ["first_name", "last_name"],
+            "full_name",
+            "Full Name",
+            ~parent=""
+          )
+          (componentName, mergedFields)
+        })
+        
         // Check if this is a wallet missing fields scenario
         switch (walletData, walletType) {
         | (Some(walletDataValue), Some(_)) => {
@@ -202,7 +221,7 @@ let make = (
             }
             
             // Filter to only billing fields since user mentioned we only need billing details
-            let billingOnlyFields = fields->Array.filter(((componentName, _)) => {
+            let billingOnlyFields = fieldsWithMergedNames->Array.filter(((componentName, _)) => {
               componentName === "billing"
             })
             
@@ -231,11 +250,27 @@ let make = (
           }
         | _ => {
             // Regular flow - merge with PML values
-            let mergedFields = mergeSuperpositionWithPMLValues(fields, allApiData.paymentList, selectedPaymentMethod)
+            let mergedFields = mergeSuperpositionWithPMLValues(fieldsWithMergedNames, allApiData.paymentList, selectedPaymentMethod)
             
             let filteredFields = filterSuperpositionFields(mergedFields)
             
+            let hasMissingFieldsValue = {
+              let billingFields = filteredFields->Array.find(((componentName, _)) => componentName === "billing")
+              switch billingFields {
+              | Some(("billing", fields)) => 
+                  fields->Array.some(field => field.defaultValue === "" && field.required)
+              | Some((_, _)) => false 
+              | None => false 
+              }
+            }
+            
             setComponentWiseRequiredFields(_ => Some(filteredFields))
+            setHasMissingFields(_ => Some(hasMissingFieldsValue))
+            
+            switch onMissingFieldsStateChangeCallback {
+            | Some(callback) => callback(hasMissingFieldsValue)
+            | None => ()
+            }
           }
         }
       }
@@ -250,10 +285,37 @@ let make = (
   React.useEffect1(() => {
     switch externalSuperpositionFields {
     | Some(fields) => {
-        let mergedFields = mergeSuperpositionWithPMLValues(fields, allApiData.paymentList, selectedPaymentMethod)
+        let fieldsWithMergedNames = fields->Array.map(((componentName, componentFields)) => {
+          let mergedFields = SuperpositionHelper.mergeFields(
+            componentFields,
+            ["first_name", "last_name"],
+            "full_name",
+            "Full Name",
+            ~parent=""
+          )
+          (componentName, mergedFields)
+        })
+        
+        let mergedFields = mergeSuperpositionWithPMLValues(fieldsWithMergedNames, allApiData.paymentList, selectedPaymentMethod)
         let filteredFields = filterSuperpositionFields(mergedFields)
         
+        let hasMissingFieldsValue = {
+          let billingFields = filteredFields->Array.find(((componentName, _)) => componentName === "billing")
+          switch billingFields {
+          | Some(("billing", fields)) => 
+              fields->Array.some(field => field.defaultValue === "" && field.required)
+          | Some((_, _)) => false 
+          | None => false
+          }
+        }
+        
         setComponentWiseRequiredFields(_ => Some(filteredFields))
+        setHasMissingFields(_ => Some(hasMissingFieldsValue))
+        
+        switch onMissingFieldsStateChangeCallback {
+        | Some(callback) => callback(hasMissingFieldsValue)
+        | None => ()
+        }
       }
     | None => {
         switch selectedPaymentMethod {
@@ -286,7 +348,7 @@ let make = (
   }
 
   let shouldRenderDefaultCard = switch (selectedPaymentMethod, setIsAllCardValid, fieldsToRender) {
-  | (Some("card"), Some(_), None) | (None, Some(_), None) => true // Card payment method or default with card validation, but no superposition fields
+  | (Some("card"), Some(_), None) | (None, Some(_), None) => true 
   | _ => false
   }
 
@@ -294,13 +356,18 @@ let make = (
   | Some(fields) =>
     <DynamicFieldsSuperposition 
       componentWiseRequiredFields=fields 
-      setConfirmButtonDataRef={setConfirmButtonDataRef->Option.getOr(_ => ())}
+      // setConfirmButtonDataRef={setConfirmButtonDataRef->Option.getOr(_ => ())}
       isScreenFocus
       _walletData=?walletData
       _walletType=?walletType
       ?hasMissingFields
       ?walletPaymentMethodData
       onFormValuesChange=?onFormValuesChangeCallback
+      keyToTrigerButtonClickError
+      isNicknameSelected
+      nickname={nickname->Option.getOr("")}
+      isSaveCardCheckboxVisible
+      isGuestCustomer
     />
   | None when shouldRenderDefaultCard || selectedPaymentMethod->Option.isNone =>
     <DynamicFields

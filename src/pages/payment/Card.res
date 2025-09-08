@@ -44,9 +44,15 @@ let make = (
     JSON.t,
     option<string>,
   )> => Dict.make())
+  let isUsingSuperposition = cardVal.required_field->Array.length != 0
   let (error, setError) = React.useState(_ => None)
 
-  let isConfirmButtonValid = isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
+
+let isConfirmButtonValid = if isUsingSuperposition {
+  isAllDynamicFieldValid && isNicknameValid
+} else {
+  isAllCardValuesValid && isAllDynamicFieldValid && isNicknameValid
+}
 
   let initialiseNetcetera = NetceteraThreeDsHooks.useInitNetcetera()
   let (isInitialised, setIsInitialised) = React.useState(_ => false)
@@ -132,14 +138,18 @@ let make = (
     )
   }
 
-  let handlePress = _ => {
-    isConfirmButtonValid
-      ? {
-          setLoading(ProcessingPayments(None))
-          processRequest(cardVal)
-        }
-      : setKeyToTrigerButtonClickError(prev => prev + 1)
+let handlePress = _ => {
+  if isConfirmButtonValid {
+    if isUsingSuperposition {
+      setKeyToTrigerButtonClickError(prev => prev + 1)
+    } else {
+      setLoading(ProcessingPayments(None))
+      processRequest(cardVal)
+    }
+  } else {
+    setKeyToTrigerButtonClickError(prev => prev + 1)
   }
+}
 
   React.useEffect7(() => {
     if isScreenFocus {
@@ -174,8 +184,12 @@ let make = (
               keyToTrigerButtonClickError
               setIsAllCardValid=setIsAllCardValuesValid
               cardNetworks=cardVal.card_networks
-              setConfirmButtonDataRef
+              // setConfirmButtonDataRef
               isScreenFocus
+              isNicknameSelected
+              nickname={nickname->Option.getOr("")}
+              isSaveCardCheckboxVisible
+              isGuestCustomer=savedPaymentMethodsData.isGuestCustomer
             />
             <Space height=8. />
           </>
