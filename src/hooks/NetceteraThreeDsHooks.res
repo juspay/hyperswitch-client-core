@@ -72,7 +72,7 @@ let useExternalThreeDs = () => {
       if pollCount >= pollConfig.frequency {
         onPollCompletion()
       } else {
-        setLoading(ProcessingPayments(None))
+        setLoading(ProcessingPayments)
         let uri = `${baseUrl}/poll/status/${pollConfig.pollId}`
         apiLogWrapper(
           ~logType=INFO,
@@ -183,7 +183,7 @@ let useExternalThreeDs = () => {
         ~data=JSON.Encode.null,
         (),
       )
-      setLoading(ProcessingPayments(None))
+      setLoading(ProcessingPayments)
 
       retrievePayment(Types.Payment, clientSecret, publishableKey)
       ->Promise.then(res => {
@@ -229,7 +229,7 @@ let useExternalThreeDs = () => {
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
       APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
       ->Promise.then(async data => {
-        setLoading(ProcessingPayments(None))
+        setLoading(ProcessingPayments)
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
           apiLogWrapper(

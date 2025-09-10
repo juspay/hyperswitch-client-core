@@ -36,8 +36,6 @@ type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | Defaul
 
 type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE | KLARNA
 
-type payment_method_type_bank_transfer = ACH | NONE
-
 let walletNameMapper = str => {
   switch str {
   | "google_pay" => "Google Pay"
@@ -211,6 +209,7 @@ type address = {
   country?: string,
   line1?: string,
   line2?: string,
+  line3?: string,
   zip?: string,
   state?: string,
 }

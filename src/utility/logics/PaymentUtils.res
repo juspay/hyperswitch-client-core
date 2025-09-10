@@ -15,7 +15,7 @@ let showUseExisitingSavedCardsBtn = (
 }
 
 let generatePaymentMethodData = (
-  ~prop: PaymentMethodListType.payment_method_types_card,
+  ~prop: PaymentMethodListType.payment_method_type,
   ~cardData: CardDataContext.cardData,
   ~cardHolderName: option<'a>,
   ~nickname: option<'a>,
@@ -24,7 +24,7 @@ let generatePaymentMethodData = (
 
   [
     (
-      prop.payment_method,
+      prop.payment_method_str,
       [
         ("card_number", cardData.cardNumber->CardValidations.clearSpaces->JSON.Encode.string),
         ("card_exp_month", month->JSON.Encode.string),
@@ -67,13 +67,14 @@ let generatePaymentMethodData = (
 
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
-  ~prop: PaymentMethodListType.payment_method_types_card,
+  ~prop: PaymentMethodListType.payment_method_type,
   ~payment_method_data=?,
   ~allApiData: AllApiDataContext.allApiData,
   ~isNicknameSelected=false,
   ~payment_token=?,
   ~isSaveCardCheckboxVisible=?,
   ~isGuestCustomer,
+  ~email=?,
   (),
 ): PaymentMethodListType.redirectType => {
   let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
@@ -83,49 +84,11 @@ let generateCardConfirmBody = (
       ~appId=nativeProp.hyperParams.appId,
       ~appURL=allApiData.additionalPMLData.redirect_url,
     ),
-    payment_method: prop.payment_method,
+    payment_method: prop.payment_method_str,
     payment_method_type: ?Some(prop.payment_method_type),
-    connector: ?switch prop.card_networks {
-    | Some(cardNetwork) =>
-      cardNetwork
-      ->Array.get(0)
-      ->Option.mapOr(None, card_network => card_network.eligible_connectors->Some)
-    | None => None
-    },
     ?payment_method_data,
     ?payment_token,
-    billing: ?nativeProp.configuration.defaultBillingDetails,
-    shipping: ?nativeProp.configuration.shippingDetails,
-    // setup_future_usage: ?switch (allApiData.mandateType != NORMAL, isNicknameSelected) {
-    // | (true, _) => Some("off_session")
-    // | (false, true) => Some("on_session")
-    // | (false, false) => None
-    // },
-    // setup_future_usage: {
-    //   isNicknameSelected || isMandate->Option.getOr(false)
-    //     ? "off_session"
-    //     : "on_session"
-    // },
-    payment_type: ?allApiData.additionalPMLData.paymentType,
-    // mandate_data: ?(
-    //   (isNicknameSelected && isMandate->Option.getOr(false)) ||
-    //   isMandate->Option.getOr(false) &&
-    //   !isNicknameSelected &&
-    //   !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-    //   (allApiData.mandateType == NORMAL && isNicknameSelected)
-    //     ? Some({
-    //         customer_acceptance: {
-    //           acceptance_type: "online",
-    //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-    //           online: {
-    //             ip_address: ?nativeProp.hyperParams.ip,
-    //             user_agent: ?nativeProp.hyperParams.userAgent,
-    //           },
-    //         },
-    //       })
-    //     : None
-    // ),
-    // moved customer_acceptance outside mandate_data
+    ?email,
     customer_acceptance: ?(
       payment_token->Option.isNone &&
       ((isNicknameSelected && isMandate) ||

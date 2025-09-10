@@ -173,9 +173,6 @@ let make = () => {
       payment_method,
       payment_method_type,
       payment_method_data,
-      billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
-      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
           allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
@@ -256,13 +253,13 @@ let make = () => {
     )
   }
   let onPress = () => {
-    setLoading(ProcessingPayments(None))
+    setLoading(ProcessingPayments)
     processSavedExpressCheckoutRequest(pmToken)
   }
 
   React.useEffect1(() => {
     if nativeProp.publishableKey == "" {
-      setLoading(ProcessingPayments(None))
+      setLoading(ProcessingPayments)
     }
 
     let handleExpressCheckoutConfirm = (responseFromJava: PaymentConfirmTypes.responseFromJava) => {

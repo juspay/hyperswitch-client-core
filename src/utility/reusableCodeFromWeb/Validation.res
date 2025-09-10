@@ -1,20 +1,5 @@
 open CardValidations
 
-type cardIssuer =
-  | VISA
-  | MASTERCARD
-  | AMEX
-  | MAESTRO
-  | DINERSCLUB
-  | DISCOVER
-  | BAJAJ
-  | SODEXO
-  | RUPAY
-  | JCB
-  | CARTESBANCAIRES
-  | NOTFOUND
-
-
 let cardType = val => {
   switch val->String.toUpperCase {
   | "VISA" => VISA

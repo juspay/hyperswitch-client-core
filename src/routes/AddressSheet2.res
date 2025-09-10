@@ -2,25 +2,25 @@ open ReactNative
 
 @react.component
 let make = (
-  ~requiredFields,
-  ~walletType: PaymentMethodListType.payment_method_types_wallet,
+  ~requiredFields as _,
+  ~walletType: PaymentMethodListType.payment_method_type,
   ~walletData: PaymentScreenContext.walletData,
 ) => {
-  let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => false)
+  // let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => false)
 
-  let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): dict<(
-    JSON.t,
-    option<string>,
-  )> => Dict.make())
+  // let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): dict<(
+  //   JSON.t,
+  //   option<string>,
+  // )> => Dict.make())
 
-  let (keyToTrigerButtonClickError, setKeyToTrigerButtonClickError) = React.useState(_ => 0)
+  // let (keyToTrigerButtonClickError, setKeyToTrigerButtonClickError) = React.useState(_ => 0)
 
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
-  React.useEffect(() => {
-    setKeyToTrigerButtonClickError(_ => 1)
-    None
-  }, [])
+  // React.useEffect(() => {
+  //   setKeyToTrigerButtonClickError(_ => 1)
+  //   None
+  // }, [])
 
   let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
 
@@ -57,8 +57,6 @@ let make = (
     ~payment_method_data,
     ~walletTypeAlt=?,
     ~email=?,
-    ~shipping=None,
-    ~billing=None,
     (),
   ) => {
     let walletType = switch walletTypeAlt {
@@ -73,13 +71,7 @@ let make = (
         ~category=USER_EVENT,
         ~eventName=PAYMENT_FAILED,
         ~paymentMethod={walletType.payment_method_type},
-        ~paymentExperience=?walletType.payment_experience
-        ->Array.get(0)
-        ->Option.map(paymentExperience =>
-          PaymentMethodListType.getPaymentExperienceType(
-            paymentExperience.payment_experience_type_decode,
-          )
-        ),
+        ~paymentExperience=walletType.payment_experience,
         (),
       )
       if !closeSDK {
@@ -94,13 +86,7 @@ let make = (
         ~category=USER_EVENT,
         ~eventName=PAYMENT_DATA_FILLED,
         ~paymentMethod={walletType.payment_method_type},
-        ~paymentExperience=?walletType.payment_experience
-        ->Array.get(0)
-        ->Option.map(paymentExperience =>
-          PaymentMethodListType.getPaymentExperienceType(
-            paymentExperience.payment_experience_type_decode,
-          )
-        ),
+        ~paymentExperience=walletType.payment_experience,
         (),
       )
       logger(
@@ -109,13 +95,7 @@ let make = (
         ~category=USER_EVENT,
         ~eventName=PAYMENT_ATTEMPT,
         ~paymentMethod=walletType.payment_method_type,
-        ~paymentExperience=?walletType.payment_experience
-        ->Array.get(0)
-        ->Option.map(paymentExperience =>
-          PaymentMethodListType.getPaymentExperienceType(
-            paymentExperience.payment_experience_type_decode,
-          )
-        ),
+        ~paymentExperience=walletType.payment_experience,
         (),
       )
       switch paymentStatus {
@@ -126,13 +106,7 @@ let make = (
             ~category=USER_EVENT,
             ~eventName=PAYMENT_SUCCESS,
             ~paymentMethod={walletType.payment_method_type},
-            ~paymentExperience=?walletType.payment_experience
-            ->Array.get(0)
-            ->Option.map(paymentExperience =>
-              PaymentMethodListType.getPaymentExperienceType(
-                paymentExperience.payment_experience_type_decode,
-              )
-            ),
+            ~paymentExperience=walletType.payment_experience,
             (),
           )
           setLoading(PaymentSuccess)
@@ -162,22 +136,14 @@ let make = (
       // | Some(customer) => customer.id
       // | None => None
       // },
-      payment_method: walletType.payment_method,
+      payment_method: walletType.payment_method_str,
       payment_method_type: walletType.payment_method_type,
       payment_experience: ?(
         walletType.payment_experience
         ->Array.get(0)
         ->Option.map(paymentExperience => paymentExperience.payment_experience_type)
       ),
-      connector: ?(
-        walletType.payment_experience
-        ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.eligible_connectors)
-      ),
       payment_method_data,
-      billing: ?billing->Option.orElse(nativeProp.configuration.defaultBillingDetails),
-      shipping: ?shipping->Option.orElse(nativeProp.configuration.shippingDetails),
-      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
           allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
@@ -202,41 +168,30 @@ let make = (
       },
     }
 
-    let paymentBodyWithDynamicFields = PaymentMethodListType.getPaymentBody(
-      body,
-      dynamicFieldsJson->Dict.toArray->Array.map(((key, (value, error))) => (key, value, error)),
-    )
-
     fetchAndRedirect(
-      ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
+      ~body=body->JSON.stringifyAny->Option.getOr(""),
       ~publishableKey=nativeProp.publishableKey,
       ~clientSecret=nativeProp.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=walletType.payment_method_type,
-      ~paymentExperience=?walletType.payment_experience
-      ->Array.get(0)
-      ->Option.map(paymentExperience =>
-        PaymentMethodListType.getPaymentExperienceType(
-          paymentExperience.payment_experience_type_decode,
-        )
-      ),
+      ~paymentExperience=walletType.payment_experience,
       (),
     )
   }
 
   let handlePress = _ => {
-    if isAllDynamicFieldValid {
-      setLoading(ProcessingPayments(None))
-      setKeyToTrigerButtonClickError(prev => prev + 1)
+    // if isAllDynamicFieldValid {
+      setLoading(ProcessingPayments)
+      // setKeyToTrigerButtonClickError(prev => prev + 1)
       let payment_method_data = Dict.make()
 
       switch walletData {
       | GooglePayData(obj) => {
-          let shippingAddress = obj.shippingDetails
+          let _shippingAddress = obj.shippingDetails
 
           payment_method_data->Dict.set(
-            walletType.payment_method,
+            walletType.payment_method_str,
             [(walletType.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
             ->Dict.fromArray
             ->JSON.Encode.object,
@@ -244,13 +199,12 @@ let make = (
           processRequest(
             ~payment_method_data=payment_method_data->JSON.Encode.object,
             ~email=?obj.email,
-            ~shipping=shippingAddress,
             (),
           )
         }
       | ApplePayData(obj) => {
-          let shippingAddress = obj.shippingAddress
-          let billingAddress = obj.billingContact
+          let _shippingAddress = obj.shippingAddress
+          let _billingAddress = obj.billingContact
 
           let paymentData =
             [
@@ -261,7 +215,7 @@ let make = (
             ->Dict.fromArray
             ->JSON.Encode.object
           payment_method_data->Dict.set(
-            walletType.payment_method,
+            walletType.payment_method_str,
             [(walletType.payment_method_type, paymentData)]
             ->Dict.fromArray
             ->JSON.Encode.object,
@@ -269,14 +223,12 @@ let make = (
           processRequest(
             ~payment_method_data=payment_method_data->JSON.Encode.object,
             ~email=?obj.email,
-            ~shipping=shippingAddress,
-            ~billing=billingAddress,
             (),
           )
         }
-      | SamsungPayData(obj, billingAddress, shippingAddress) => {
+      | SamsungPayData(obj, billingAddress, _shippingAddress) => {
           payment_method_data->Dict.set(
-            walletType.payment_method,
+            walletType.payment_method_str,
             [(walletType.payment_method_type, obj->Utils.getJsonObjectFromRecord)]
             ->Dict.fromArray
             ->JSON.Encode.object,
@@ -287,15 +239,13 @@ let make = (
             | Some(address) => address.email
             | None => None
             },
-            ~billing=billingAddress,
-            ~shipping=shippingAddress,
             (),
           )
         }
       }
-    } else {
-      setKeyToTrigerButtonClickError(prev => prev + 1)
-    }
+    // } else {
+    //   setKeyToTrigerButtonClickError(prev => prev + 1)
+    // }
   }
 
   let (error, _setError) = React.useState(_ => None)
@@ -308,29 +258,23 @@ let make = (
         handlePress
         hasSomeFields=false
         paymentMethod=walletType.payment_method_type
-        paymentExperience=?{walletType.payment_experience
-        ->Array.get(0)
-        ->Option.map(paymentExperience =>
-          PaymentMethodListType.getPaymentExperienceType(
-            paymentExperience.payment_experience_type_decode,
-          )
-        )}
+        paymentExperience=walletType.payment_experience
         errorText=error
       />,
     )
 
     None
-  }, (isAllDynamicFieldValid, walletType, error, dynamicFieldsJson))
+  }, (walletType, error))
 
   <React.Fragment>
-    <DynamicFields
-      requiredFields={requiredFields}
-      setIsAllDynamicFieldValid
-      setDynamicFieldsJson
-      keyToTrigerButtonClickError
-      displayPreValueFields=true
-      savedCardsData=None
-    />
+    // <DynamicFields
+    //   requiredFields={requiredFields}
+    //   setIsAllDynamicFieldValid
+    //   setDynamicFieldsJson
+    //   keyToTrigerButtonClickError
+    //   displayPreValueFields=true
+    //   savedCardsData=None
+    // />
     <Space height=15. />
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=15. />

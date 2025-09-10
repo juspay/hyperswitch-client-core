@@ -4,7 +4,7 @@ let useBackHandler = (~loading: LoadingContext.sdkPaymentState, ~sdkState: SdkTy
   React.useEffect2(() => {
     let backHandler = ReactNative.BackHandler.addEventListener(#hardwareBackPress, () => {
       switch loading {
-      | ProcessingPayments(_) => ()
+      | ProcessingPayments | ProcessingPaymentsWithOverlay => ()
       | _ =>
         if [SdkTypes.PaymentSheet, SdkTypes.HostedCheckout]->Array.includes(sdkState) {
           handleSuccessFailure(

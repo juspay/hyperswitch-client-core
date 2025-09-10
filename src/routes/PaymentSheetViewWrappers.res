@@ -64,11 +64,11 @@ module FullSheetPaymentMethodWrapper = {
     switch paymentScreenType {
     | BANK_TRANSFER(data) => <ACHBankDebitComponent data />
     | WALLET_MISSING_FIELDS(
-        requiredFields: RequiredFieldsTypes.required_fields,
+        requiredFields: SuperpositionTypes.requiredFields,
         walletType,
         walletData,
       ) =>
-      <AddressSheet requiredFields walletType walletData />
+      <AddressSheet2 requiredFields walletType walletData />
     | _ => React.null
     }
   }

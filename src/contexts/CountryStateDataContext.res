@@ -90,13 +90,13 @@ module WrapperProvider = {
 let make = (~children) => {
   let (state, setState) = React.useState(_ => None)
   React.useEffect0(() => {
-    RequiredFieldsTypes.importStatesAndCountries(
+    ConfigurationService.importJSON(
       "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
     )
     ->Promise.then(res => {
       let initialData = S3ApiHook.decodeJsonTocountryStateData(res)
 
-      RequiredFieldsTypes.importStatesAndCountries(
+      ConfigurationService.importJSON(
         "./../utility/reusableCodeFromWeb/Phone_number.json",
       )
       ->Promise.then(

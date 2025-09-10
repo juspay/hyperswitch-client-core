@@ -13,12 +13,16 @@ let make = () => {
   let (nativeProps, _) = React.useContext(NativePropContext.nativePropContext)
 
   switch loading {
-  | ProcessingPayments(val) =>
+  | ProcessingPayments | ProcessingPaymentsWithOverlay =>
     <Portal>
       <View
         style={array([
-          s({flex: 1., opacity: val->Option.isSome ? 0.90 : 1.0, borderRadius}),
-          val->Option.isSome ? bgColor : s({backgroundColor: "transparent"}),
+          s({
+            flex: 1.,
+            opacity: loading === ProcessingPaymentsWithOverlay ? 0.90 : 1.0,
+            borderRadius,
+          }),
+          loading === ProcessingPaymentsWithOverlay ? bgColor : s({backgroundColor: "transparent"}),
         ])}>
         {switch nativeProps.sdkState {
         | CardWidget | CustomWidget(_) =>
@@ -51,10 +55,9 @@ let make = () => {
             // />
             <View style={s({flex: 1., justifyContent: #center, alignItems: #center})}>
               // <HyperLoaderAnimation />
-              {switch val {
-              | Some(val) => val.showOverlay ? <PaymentSheetProcessingElement /> : React.null
-              | None => React.null
-              }}
+              {loading === ProcessingPaymentsWithOverlay
+                ? <PaymentSheetProcessingElement />
+                : React.null}
             </View>
           </>
         }}

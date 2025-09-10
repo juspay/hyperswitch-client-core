@@ -163,9 +163,6 @@ let make = (~setConfirmButtonDataRef) => {
       payment_method,
       payment_method_type,
       payment_method_data,
-      billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
-      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
           allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
@@ -254,7 +251,7 @@ let make = (~setConfirmButtonDataRef) => {
   }
 
   let handlePress = _ => {
-    setLoading(ProcessingPayments(None))
+    setLoading(ProcessingPayments)
     processSavedPMRequest()
   }
 

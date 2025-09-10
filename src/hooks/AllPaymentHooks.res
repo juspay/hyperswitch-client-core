@@ -159,7 +159,7 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<string>=?,
+    ~paymentExperience: option<array<PaymentMethodListType.payment_experience>>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     ~isCardPayment=false,
     (),
@@ -211,7 +211,7 @@ let useRedirectHook = () => {
       switch nextAction {
       | None => ()
       | Some(data) =>
-        setLoading(BankTransfer)
+        setLoading(ProcessingPayments)
         setPaymentScreenType(
           BANK_TRANSFER(
             Some(
@@ -250,7 +250,7 @@ let useRedirectHook = () => {
       | "processing"
       | "requires_confirmation"
       | "requires_merchant_action" =>
-        responseCallback(~paymentStatus=ProcessingPayments(None), ~status=terminalStatusHandler())
+        responseCallback(~paymentStatus=ProcessingPayments, ~status=terminalStatusHandler())
       | "requires_customer_action" =>
         terminalStatusHandler()->ignore
         logger(

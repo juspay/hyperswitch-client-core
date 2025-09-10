@@ -12,8 +12,8 @@ type paymentScreenType =
   | SAVEDCARDSCREEN
   | BANK_TRANSFER(option<PaymentConfirmTypes.ach_credit_transfer>)
   | WALLET_MISSING_FIELDS(
-      RequiredFieldsTypes.required_fields,
-      PaymentMethodListType.payment_method_types_wallet,
+      SuperpositionTypes.requiredFields,
+      PaymentMethodListType.payment_method_type,
       walletData,
     )
 let dafaultVal = SAVEDCARDSCREEN

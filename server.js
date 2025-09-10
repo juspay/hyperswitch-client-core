@@ -79,7 +79,7 @@ app.get('/create-payment-intent', async (req, res) => {
         line2: 'Harrison Street',
         line3: 'Harrison Street',
         city: 'San Fransico',
-        state: 'California',
+        // state: 'California',
         zip: '94122',
         country: 'US',
         first_name: 'joseph',

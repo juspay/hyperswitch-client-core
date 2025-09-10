@@ -136,7 +136,7 @@ let registerHeadless = headless => {
             ),
             (
               "billing",
-              switch var->WalletType.getBillingContact("billing_contact") {
+              switch var->AddressUtils.getGooglePayBillingAddress("billing_contact") {
               | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
@@ -191,7 +191,7 @@ let registerHeadless = headless => {
       | GOOGLE_PAY => {
           let gPayCallback = async var => {
             try {
-              let _ = await RequiredFieldsTypes.importStatesAndCountries(
+              let _ = await ConfigurationService.importJSON(
                 "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
               )
               confirmGPay(var, data, nativeProp)
@@ -203,7 +203,6 @@ let registerHeadless = headless => {
             WalletType.getGpayTokenStringified(
               ~obj=session,
               ~appEnv=nativeProp.env,
-              ~requiredFields=[],
             ), //walletType.required_field,
             var => {
               gPayCallback(var)->ignore
@@ -235,7 +234,7 @@ let registerHeadless = headless => {
         }, 5000)
         let applePayCallback = async var => {
           try {
-            let _ = await RequiredFieldsTypes.importStatesAndCountries(
+            let _ = await ConfigurationService.importJSON(
               "./../utility/reusableCodeFromWeb/StatesAndCountry.json",
             )
             confirmApplePay(var, data, nativeProp)

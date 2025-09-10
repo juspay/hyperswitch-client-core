@@ -7,121 +7,101 @@ let usePayButton = () => {
   } = ThemebasedStyle.useThemeBasedStyle()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
 
-  let addApplePay = (~sessionObject: SessionsType.sessions, ~resolve as _) => {
-    let status = Window.useScript(
-      // "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
-      "https://applepay.cdn-apple.com/jsapi/v1.2.0-beta/apple-pay-sdk.js",
-    )
+  let googlePayStatus = Window.useScript("https://pay.google.com/gp/p/js/pay.js")
 
-    React.useEffect1(() => {
-      status == #ready
-        ? {
-            // let isApplePaySupported = switch Window.sessionForApplePay->Nullable.toOption {
-            // | Some(session) =>
-            //   try {
-            //     session.canMakePayments()
-            //   } catch {
-            //   | _ => false
-            //   }
-            // | None => false
-            // }
+  let applePayStatus = Window.useScript(
+    "https://applepay.cdn-apple.com/jsapi/1.latest/apple-pay-sdk.js",
+  )
 
-            // resolve(isApplePaySupported)
+  let defaultSession: option<SessionsType.sessions> = None
+  let googlePaySessionRef = React.useRef(defaultSession)
+  let applePaySessionRef = React.useRef(defaultSession)
 
-            let appleWalletButton = Window.querySelector("apple-pay-button")
+  React.useEffect1(() => {
+    switch (googlePayStatus, googlePaySessionRef.current) {
+    | (#ready, Some(sessionObject)) => {
+        let token = WalletType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env)
+        let onGooglePayButtonClick = () => {
+          launchGPay(WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env))
+        }
 
-            switch appleWalletButton->Nullable.toOption {
-            | Some(appleWalletButton) =>
-              appleWalletButton.removeAttribute("hidden")
-              appleWalletButton.removeAttribute("aria-hidden")
-              appleWalletButton.removeAttribute("disabled")
+        let paymentClient = Window.google(token.environment)
+        let buttonProps: Window.buttonProps = {
+          onClick: () => onGooglePayButtonClick(),
+          buttonType: nativeProp.configuration.appearance.googlePay.buttonType
+          ->Utils.getStringFromRecord
+          ->String.toLowerCase,
+          buttonSizeMode: "fill",
+          buttonColor: switch googlePayButtonColor {
+          | #light => "white"
+          | #dark => "black"
+          },
+          buttonRadius: buttonBorderRadius,
+        }
+        let googleWalletButton = paymentClient.createButton(buttonProps)
+        let container = Window.querySelector("#google-wallet-button-container")
+        switch container->Nullable.toOption {
+        | Some(container1) => 
+            container1.innerHTML = ""
+            container1.appendChild(googleWalletButton)
+        | _ => ()
+        }
+      }
+    | _ => ()
+    }
+    None
+  }, [googlePayStatus])
 
-              appleWalletButton.setAttribute(
-                "buttonstyle",
-                applePayButtonColor->Utils.getStringFromRecord,
+  React.useEffect1(() => {
+    switch (applePayStatus, applePaySessionRef.current) {
+    | (#ready, Some(sessionObject)) => {
+        let appleWalletButton = Window.querySelector("apple-pay-button")
+
+        switch appleWalletButton->Nullable.toOption {
+        | Some(appleWalletButton) =>
+          appleWalletButton.removeAttribute("hidden")
+          appleWalletButton.removeAttribute("aria-hidden")
+          appleWalletButton.removeAttribute("disabled")
+
+          appleWalletButton.setAttribute(
+            "buttonstyle",
+            applePayButtonColor->Utils.getStringFromRecord,
+          )
+          appleWalletButton.setAttribute(
+            "type",
+            nativeProp.configuration.appearance.applePay.buttonType->Utils.getStringFromRecord,
+          )
+          appleWalletButton.setAttribute("locale", "en-US")
+
+          appleWalletButton.onclick = () => {
+            try {
+              launchApplePay(
+                [
+                  ("session_token_data", sessionObject.session_token_data),
+                  ("payment_request_data", sessionObject.payment_request_data),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object
+                ->JSON.stringify,
               )
-              appleWalletButton.setAttribute(
-                "type",
-                nativeProp.configuration.appearance.applePay.buttonType->Utils.getStringFromRecord,
-              )
-              appleWalletButton.setAttribute("locale", "en-US")
-
-              appleWalletButton.onclick = () => {
-                try {
-                  launchApplePay(
-                    [
-                      ("session_token_data", sessionObject.session_token_data),
-                      ("payment_request_data", sessionObject.payment_request_data),
-                    ]
-                    ->Dict.fromArray
-                    ->JSON.Encode.object
-                    ->JSON.stringify,
-                  )
-                } catch {
-                | ex => AlertHook.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr("failed"))
-                }
-              }
-            | _ => ()
+            } catch {
+            | ex => AlertHook.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr("failed"))
             }
-
-            None
           }
-        : None
-    }, [status])
+        | _ => ()
+        }
+      }
+    | _ => ()
+    }
+    None
+  }, [applePayStatus])
+
+  let addApplePay = (~sessionObject: SessionsType.sessions, ~resolve as _) => {
+    applePaySessionRef.current = Some(sessionObject)
   }
 
-  let addGooglePay = (~sessionObject, ~requiredFields) => {
-    let status = Window.useScript("https://pay.google.com/gp/p/js/pay.js")
-
-    let token = WalletType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env, ~requiredFields)
-
-    let onGooglePayButtonClick = () => {
-      launchGPay(
-        WalletType.getGpayTokenStringified(
-          ~obj=sessionObject,
-          ~appEnv=nativeProp.env,
-          ~requiredFields,
-        ),
-      )
-    }
-
-    React.useEffect1(() => {
-      status == #ready
-        ? {
-            let paymentClient = Window.google(token.environment)
-
-            let buttonProps: Window.buttonProps = {
-              onClick: () => onGooglePayButtonClick(),
-              buttonType: nativeProp.configuration.appearance.googlePay.buttonType
-              ->Utils.getStringFromRecord
-              ->String.toLowerCase,
-              buttonSizeMode: "fill",
-              buttonColor: switch googlePayButtonColor {
-              | #light => "white"
-              | #dark => "black"
-              },
-              buttonRadius: buttonBorderRadius,
-            }
-            let googleWalletButton = paymentClient.createButton(buttonProps)
-
-            let container = Window.querySelector("#google-wallet-button-container")
-
-            switch container->Nullable.toOption {
-            | Some(container1) => container1.appendChild(googleWalletButton)
-            | _ => ()
-            }
-
-            Some(
-              () => {
-                switch container->Nullable.toOption {
-                | Some(containers) => containers.removeChild(googleWalletButton)
-                | _ => ()
-                }
-              },
-            )
-          }
-        : None
-    }, [status])
+  let addGooglePay = (~sessionObject) => {
+    googlePaySessionRef.current = Some(sessionObject)
   }
 
   (addApplePay, addGooglePay)
