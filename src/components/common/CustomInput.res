@@ -68,10 +68,6 @@ let make = (
   let logger = LoggerHook.useLoggerHook()
   let fontFamily = FontFamily.useCustomFontFamily()
 
-  // let focusedTextInputBoderColor = "rgba(0, 153, 255, 1)"
-  // let errorTextInputColor = "rgba(218, 14, 15, 1)"
-  // let normalTextInputBoderColor = "rgba(204, 210, 226, 0.75)"
-  // let _ = state != "" && secureTextEntry == false && enableCrossIcon
   let shadowStyle = enableShadow ? getShadowStyle : empty
 
   let animatedValue = React.useRef(Animated.Value.create(state != "" ? 1. : 0.)).current

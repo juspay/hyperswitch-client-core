@@ -358,3 +358,33 @@ let getError = (err, defaultError) => {
   | None => defaultError->JSON.Encode.string
   }
 }
+
+let getDisplayName = text => {
+  let newText = text === "credit" ? "Card" : text
+  let newText = newText === "crypto_currency" ? "Crypto" : newText
+  let newText = newText === "afterpay_clearpay" ? "Afterpay" : newText
+  let newText =
+    ["ach", "sepa", "bacs", "becs"]->Array.indexOf(newText) > -1 ? newText ++ " Debit" : newText
+  newText
+  ->String.split("_")
+  ->Array.map(str =>
+    switch str->String.get(0) {
+    | Some(firstChar) => firstChar->String.toUpperCase ++ str->String.sliceToEnd(~start=1)
+    | None => str
+    }
+  )
+  ->Array.join(" ")
+}
+
+let getCombinedFirstAndLast = (
+  ~first: option<string>,
+  ~last: option<string>,
+  ~delimiter: string,
+) => {
+  switch (first->Option.getOr(""), last->Option.getOr("")) {
+  | ("", "") => ""
+  | (first, "") => first
+  | ("", last) => last
+  | (first, last) => [first, last]->Array.join(delimiter)
+  }
+}

@@ -26,7 +26,6 @@ let make = (
             let newSheetType = switch isSavedCardScreen {
             | PAYMENTSHEET => PaymentScreenContext.SAVEDCARDSCREEN
             | SAVEDCARDSCREEN => PaymentScreenContext.PAYMENTSHEET
-            | _ => PaymentScreenContext.PAYMENTSHEET
             }
             setSaveCardScreen(newSheetType)
           }

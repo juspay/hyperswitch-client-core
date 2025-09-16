@@ -72,7 +72,7 @@ type localeStrings = {
   deletePaymentMethod?: string,
   enterValidDigitsText: string,
   digitsText: string,
-  enterValidIban : string,
+  enterValidIban: string,
   selectCardBrand: string,
   mandatoryFieldText: string,
   disclaimerTextAchTransfer: string,

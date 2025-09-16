@@ -47,7 +47,7 @@ let usePlaidProps = () => {
             | "requires_merchant_action" =>
               ()
               responseCallback(
-                ~paymentStatus=ProcessingPayments(None),
+                ~paymentStatus=ProcessingPayments,
                 ~status={status, message: "", code: "", type_: ""},
               )
             | _ =>

@@ -17,32 +17,20 @@ let make = () => {
   let mandateType = allApiData.additionalPMLData.mandateType
 
   <FullScreenSheetWrapper>
-    {switch paymentScreenType {
-    | BANK_TRANSFER(_)
-    | WALLET_MISSING_FIELDS(_, _, _) =>
-      <FullSheetPaymentMethodWrapper paymentScreenType />
-    | _ =>
-      <>
-        {switch (
-          allApiData.savedPaymentMethods,
-          allApiData.additionalPMLData.paymentType,
-          canLoadSDK,
-        ) {
-        | (_, None, _)
-        | (Loading, _, _) =>
-          <SDKLoadingStateWrapper isDefaultView setConfirmButtonDataRef />
-        | (Some(data), _, _) =>
-          <SDKEntryPointWrapper
-            setConfirmButtonDataRef
-            mandateType
-            isSavedPaymentMethodsAvailable={data.pmList->Option.getOr([])->Array.length > 0}
-            paymentScreenType
-          />
-        | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
-        }}
-        <GlobalConfirmButton confirmButtonDataRef />
-        <Space height=15. />
-      </>
+    {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
+    | (_, None, _)
+    | (Loading, _, _) =>
+      <SDKLoadingStateWrapper isDefaultView setConfirmButtonDataRef />
+    | (Some(data), _, _) =>
+      <SDKEntryPointWrapper
+        setConfirmButtonDataRef
+        mandateType
+        isSavedPaymentMethodsAvailable={data.pmList->Option.getOr([])->Array.length > 0}
+        paymentScreenType
+      />
+    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
     }}
+    <GlobalConfirmButton confirmButtonDataRef />
+    <Space height=15. />
   </FullScreenSheetWrapper>
 }

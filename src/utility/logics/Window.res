@@ -39,6 +39,7 @@ type rec element = {
   mutable async: bool,
   mutable rel: string,
   mutable href: string,
+  mutable innerHTML: string,
   mutable \"as": string,
   mutable crossorigin: string,
   mutable onclick: unit => unit,

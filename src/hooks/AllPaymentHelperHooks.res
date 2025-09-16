@@ -33,7 +33,7 @@ module BrowserRedirectionHooks = {
         | "cancelled"
         | "requires_merchant_action" =>
           responseCallback(
-            ~paymentStatus=LoadingContext.ProcessingPayments(None),
+            ~paymentStatus=LoadingContext.ProcessingPayments,
             ~status={status, message: "", code: "", type_: ""},
           )
         | _ =>
@@ -70,7 +70,7 @@ module BrowserRedirectionHooks = {
       })
       if paymentMethod->Option.getOr("") == "ach" {
         responseCallback(
-          ~paymentStatus=LoadingContext.ProcessingPayments(None),
+          ~paymentStatus=LoadingContext.ProcessingPayments,
           ~status={
             message: "",
             code: "",

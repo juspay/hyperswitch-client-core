@@ -11,6 +11,8 @@ paths = ['''\.env''']
 [[allowlists]]
 description = "Ignore .p12 files in ThreeDS SDK xcframework"
 paths = [
+    "ios/hyperswitch/HyperViewModel.swift",
+    "ios/hyperswitch/HeadlessViewController.swift",
     "ios/frameworkgen/3ds/Frameworks/ThreeDS_SDK.xcframework",
     "ios/build/Build/Products/Debug-iphonesimulator/hyperswitch.app/Frameworks/ThreeDS_SDK.framework",
     "ios/build/Build/Products/Debug-iphonesimulator/XCFrameworkIntermediates/react-native-hyperswitch-netcetera-3ds/ThreeDS_SDK.framework"

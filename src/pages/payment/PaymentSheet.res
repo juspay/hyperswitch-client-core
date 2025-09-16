@@ -3,8 +3,7 @@ let make = (~setConfirmButtonDataRef) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
 
-  //getting payment list data here
-  let {tabArr, elementArr} = PMListModifier.useListModifier()
+  let (tabArr, elementArr) = PMListModifier.useSheetListModifier()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {

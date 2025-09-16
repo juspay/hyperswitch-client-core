@@ -32,9 +32,9 @@ let useSamsungPayValidityHook = () => {
   }
 
   let isSamsungPayPresentInPML = {
-    let isPresentInAccPML = allApiData.paymentList->Array.reduce(false, (acc, item) => {
-      let isSamsungPayPresent = switch item {
-      | WALLET(walletVal) => walletVal.payment_method_type_wallet == SAMSUNG_PAY
+    let isPresentInAccPML = allApiData.paymentMethodList->Array.reduce(false, (acc, item) => {
+      let isSamsungPayPresent = switch item.payment_method {
+      | WALLET => item.payment_method_type_wallet == SAMSUNG_PAY
       | _ => false
       }
       acc || isSamsungPayPresent
@@ -91,9 +91,9 @@ let useSamsungPayValidityHook = () => {
 
 @react.component
 let make = (
-  ~walletType: PaymentMethodListType.payment_method_types_wallet,
-  ~sessionObject: SessionsType.sessions,
+  ~walletType as _: PaymentMethodListType.payment_method_type,
+  ~sessionObject as _: SessionsType.sessions,
 ) => {
   let samsungPayStatus = useSamsungPayValidityHook()
-  samsungPayStatus == Checking ? <CustomLoader /> : <ButtonElement walletType sessionObject />
+  samsungPayStatus == Checking ? <CustomLoader /> : React.null //<ButtonElement walletType sessionObject />
 }

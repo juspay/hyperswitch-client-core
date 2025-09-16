@@ -7,15 +7,15 @@ let make = () => {
   let {cardNumber, expireDate, cvv, zip} = cardData
 
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (reset, setReset) = React.useState(_ => false)
-  let (isCardValuesValid, setIsCardValuesValid) = React.useState(_ => false)
+  let (_reset, setReset) = React.useState(_ => false)
+  let (isCardValuesValid, _setIsCardValuesValid) = React.useState(_ => false)
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let retrievePayment = AllPaymentHooks.useRetrieveHook()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let processRequest = (
-    prop: PaymentMethodListType.payment_method_types_card,
+    prop: PaymentMethodListType.payment_method_type,
     clientSecret,
     publishableKey,
   ) => {
@@ -46,9 +46,9 @@ let make = () => {
     let payment_method_data =
       [
         (
-          prop.payment_method,
+          prop.payment_method_str,
           [
-            ("card_number", cardNumber->CardValidations.clearSpaces->JSON.Encode.string),
+            ("card_number", cardNumber->Validation.clearSpaces->JSON.Encode.string),
             ("card_exp_month", month->JSON.Encode.string),
             ("card_exp_year", year->JSON.Encode.string),
             ("card_holder_name", ""->JSON.Encode.string),
@@ -74,18 +74,9 @@ let make = () => {
         ~appId=nativeProp.hyperParams.appId,
         ~appURL=allApiData.additionalPMLData.redirect_url,
       ),
-      payment_method: prop.payment_method,
+      payment_method: prop.payment_method_str,
       payment_method_type: prop.payment_method_type,
-      connector: switch prop.card_networks {
-      | Some(cardNetworks) =>
-        cardNetworks
-        ->Array.get(0)
-        ->Option.mapOr([], card_network => card_network.eligible_connectors)
-      | None => []
-      },
       payment_method_data,
-      billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
     }
 
     fetchAndRedirect(
@@ -100,25 +91,18 @@ let make = () => {
   }
   let showAlert = AlertHook.useAlerts()
   let handlePress = (clientSecret, publishableKey) => {
-    setLoading(ProcessingPayments(None))
+    setLoading(ProcessingPayments)
     retrievePayment(List, clientSecret, publishableKey)
     ->Promise.then(res => {
       let paymentList =
         res
         ->PaymentMethodListType.jsonTopaymentMethodListType
         ->Array.find(item => {
-          switch item {
-          | CARD(_) => true
-          | _ => false
-          }
+          item.payment_method === CARD
         })
 
       switch paymentList {
-      | Some(val) =>
-        switch val {
-        | CARD(prop) => processRequest(prop, clientSecret, publishableKey)
-        | _ => ()
-        }->ignore
+      | Some(val) => processRequest(val, clientSecret, publishableKey)
       | None => showAlert(~errorType="warning", ~message="Card Payment is not enabled")
       }
 
@@ -135,9 +119,6 @@ let make = () => {
   <View
     style={array([
       s({flex: 1., justifyContent: #center, alignItems: #center, backgroundColor: "transparent"}),
-    ])}>
-    <CardElement
-      setIsAllValid=setIsCardValuesValid viewType=CardElement.CardForm({isZipAvailable: true}) reset
-    />
-  </View>
+    ])}
+  />
 }

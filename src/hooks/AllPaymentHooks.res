@@ -143,7 +143,6 @@ let useBrowserHook = () => {
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let browserRedirectionHandler = useBrowserHook()
   let retrievePayment = useRetrieveHook()
@@ -159,7 +158,7 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<string>=?,
+    ~paymentExperience: option<array<PaymentMethodListType.payment_experience>>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     ~isCardPayment=false,
     (),
@@ -210,17 +209,7 @@ let useRedirectHook = () => {
     let handleBankTransferFlow = (~nextAction) => {
       switch nextAction {
       | None => ()
-      | Some(data) =>
-        setLoading(BankTransfer)
-        setPaymentScreenType(
-          BANK_TRANSFER(
-            Some(
-              data.bank_transfer_steps_and_charges_detail
-              ->getACH_bank_transfer
-              ->getACH_details,
-            ),
-          ),
-        )
+      | Some(_data) => setLoading(ProcessingPayments)
       }
     }
 
@@ -250,7 +239,7 @@ let useRedirectHook = () => {
       | "processing"
       | "requires_confirmation"
       | "requires_merchant_action" =>
-        responseCallback(~paymentStatus=ProcessingPayments(None), ~status=terminalStatusHandler())
+        responseCallback(~paymentStatus=ProcessingPayments, ~status=terminalStatusHandler())
       | "requires_customer_action" =>
         terminalStatusHandler()->ignore
         logger(

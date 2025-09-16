@@ -54,11 +54,10 @@ module CardSchemeSelectionPopoverElement = {
 }
 
 @react.component
-let make = (~cardNumber, ~cardNetworks) => {
+let make = (~cardNumber, ~enabledCardSchemes) => {
   let (cardData, setCardData) = React.useContext(CardDataContext.cardDataContext)
   let logger = LoggerHook.useLoggerHook()
 
-  let enabledCardSchemes = PaymentUtils.getCardNetworks(cardNetworks->Option.getOr(None))
   let validCardBrand = Validation.getFirstValidCardScheme(~cardNumber, ~enabledCardSchemes)
   let cardBrand = validCardBrand === "" ? Validation.getCardBrand(cardNumber) : validCardBrand
   let (cardBrandIcon, setCardBrandIcon) = React.useState(_ =>
@@ -66,7 +65,7 @@ let make = (~cardNumber, ~cardNetworks) => {
   )
   let (dropDownIconWidth, _) = React.useState(_ => Animated.Value.create(0.))
 
-  let matchedCardSchemes = cardNumber->CardValidations.clearSpaces->CardValidations.getAllMatchedCardSchemes
+  let matchedCardSchemes = cardNumber->Validation.clearSpaces->Validation.getAllMatchedCardSchemes
   let eligibleCardSchemes = Validation.getEligibleCoBadgedCardSchemes(
     ~matchedCardSchemes,
     ~enabledCardSchemes,
@@ -82,7 +81,7 @@ let make = (~cardNumber, ~cardNetworks) => {
 
   let isCardCoBadged = eligibleCardSchemes->Array.length > 1
   let showCardSchemeDropDown =
-    isCardCoBadged && cardNumber->CardValidations.clearSpaces->String.length >= 16
+    isCardCoBadged && cardNumber->Validation.clearSpaces->String.length >= 16
 
   let selectedCardBrand =
     eligibleCardSchemes->Array.includes(cardData.selectedCoBadgedCardBrand->Option.getOr(cardBrand))

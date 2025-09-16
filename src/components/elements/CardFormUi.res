@@ -1,6 +1,6 @@
 open ReactNative
 open Style
-open Validation
+
 @react.component
 let make = (
   ~cardNumber,
@@ -24,7 +24,8 @@ let make = (
   let isCvvValid = isCvvValid->Option.getOr(true)
   let isZipValid = isZipValid->Option.getOr(true)
   let isMaxCardLength =
-    cardNumber->CardValidations.clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
+    cardNumber->Validation.clearSpaces->String.length ==
+      Validation.maxCardLength(Validation.getCardBrand(cardNumber))
   let (cardNumberIsFocus, setCardNumberIsFocus) = React.useState(_ => false)
   let isCardNumberValid = {
     cardNumberIsFocus ? isCardNumberValid || !isMaxCardLength : isCardNumberValid
@@ -40,7 +41,7 @@ let make = (
   let expireRef = React.useRef(Nullable.null)
   let cvvRef = React.useRef(Nullable.null)
   let zipRef = React.useRef(Nullable.null)
-  let cardBrand = getCardBrand(cardNumber)
+  let cardBrand = Validation.getCardBrand(cardNumber)
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
 
   let animateFlex = (~flexval, ~value) => {
@@ -80,7 +81,7 @@ let make = (
               ? <Icon
                   name={cardBrand === "" ? "waitcard" : cardBrand} height=35. width=35. fill="black"
                 />
-              : checkCardCVC(cvv, cardBrand)
+              : Validation.checkCardCVC(cvv, cardBrand)
               ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
               : <Icon name="cvvempty" height=35. width=35. fill="black" />
           : <Icon name={"waitcard"} height=35. width=35. fill="black" />}

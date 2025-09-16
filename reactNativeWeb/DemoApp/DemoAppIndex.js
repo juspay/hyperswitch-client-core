@@ -38,7 +38,7 @@ let defaultProps = {
       // shapes:{
       //   borderRadius:20.0
       // }}
-      // locale: "en"
+      locale: "fr",
       typography: {
         family: 'bitcount single',
       },

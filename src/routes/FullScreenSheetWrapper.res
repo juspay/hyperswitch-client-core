@@ -58,7 +58,12 @@ let make = (~children) => {
       alignContent: #"flex-end",
       backgroundColor: paymentSheetOverlay,
       justifyContent: #"flex-end",
-      paddingTop: (WebKit.platform === #androidWebView ? 75. : nativeProp.hyperParams.topInset->Option.getOr(75.) +. ViewportContext.defaultNavbarHeight)->dp,
+      paddingTop: (
+        WebKit.platform === #androidWebView
+          ? 75.
+          : nativeProp.hyperParams.topInset->Option.getOr(75.) +.
+              ViewportContext.defaultNavbarHeight
+      )->dp,
     })}>
     <Animated.View
       style={s({

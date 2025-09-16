@@ -11,9 +11,6 @@ type customPickerType = {
 let make = (
   ~value,
   ~setValue,
-  ~borderBottomLeftRadius=0.,
-  ~borderBottomRightRadius=0.,
-  ~borderBottomWidth=0.,
   ~disabled=false,
   ~placeholderText,
   ~items: array<customPickerType>,
@@ -22,6 +19,9 @@ let make = (
   ~isCountryStateFields=false,
   ~style=?,
   ~showValue=false,
+  ~onFocus=() => (),
+  ~onBlur=() => (),
+  ~onChange=() => (),
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -58,9 +58,11 @@ let make = (
         | _ => value->Option.getOr("")
         }}
         setState={_ => ()}
-        borderBottomLeftRadius
-        borderBottomRightRadius
-        borderBottomWidth
+        onBlur
+        onFocus
+        borderBottomLeftRadius=borderRadius
+        borderBottomRightRadius=borderRadius
+        borderBottomWidth=borderWidth
         isValid
         borderTopWidth=borderWidth
         borderLeftWidth=borderWidth

@@ -80,7 +80,6 @@ run_gitleaks_scan() {
     local current_dir=$(pwd)
     local config_file=""
     print_info "Scanning $name for secrets..."
-    
     if [[ -d "$directory" ]]; then
         if [[ "$directory" != "." ]]; then
             config_file="--config=$current_dir/.gitleaks.toml"

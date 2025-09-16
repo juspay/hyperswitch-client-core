@@ -23,7 +23,7 @@ module CVVComponent = {
 
     let errorMsgText = !isCvcValid ? Some(localeObject.inCompleteCVCErrorText) : None
 
-    let onCvvChange = cvv => setSavedCardCvv(_ => Some(CardValidations.formatCVCNumber(cvv, cardScheme)))
+    let onCvvChange = cvv => setSavedCardCvv(_ => Some(Validation.formatCVCNumber(cvv, cardScheme)))
 
     {
       isPaymentMethodSelected
