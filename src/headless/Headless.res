@@ -487,8 +487,8 @@ let registerHeadless = headless => {
 
     sdkFunctions.receiveChallengeParamsFunc(
       acsSignedContent,
-      acsTransactionId,
       acsRefNumber,
+      acsTransactionId,
       threeDSServerTransId,
       status => {
         let responseDict = Dict.make()
