@@ -151,7 +151,8 @@ let generateCardConfirmBody = (
       os_version: ?nativeProp.hyperParams.os_version,
       accept_header: "application/json",
       language: ?nativeProp.configuration.appearance.locale,
-      
+      java_enabled: true,
+      java_script_enabled: true,
     },
   }
 }
@@ -188,14 +189,20 @@ let generateSavedCardConfirmBody = (
   payment_method: "card",
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  browser_info : {
+  browser_info: {
     user_agent: ?nativeProp.hyperParams.userAgent,
     device_model: ?nativeProp.hyperParams.device_model,
     os_type: ?nativeProp.hyperParams.os_type,
     os_version: ?nativeProp.hyperParams.os_version,
     accept_header: "application/json",
     language: ?nativeProp.configuration.appearance.locale,
-  }
+    color_depth: 0,
+    java_enabled: true,
+    java_script_enabled: true,
+    screen_height: 932,
+    screen_width: 430,
+    time_zone: -330,
+  },
 }
 let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
@@ -206,14 +213,14 @@ let generateWalletConfirmBody = (
   payment_token,
   payment_method: "wallet",
   payment_method_type,
-    browser_info : {
+  browser_info: {
     user_agent: ?nativeProp.hyperParams.userAgent,
     device_model: ?nativeProp.hyperParams.device_model,
     os_type: ?nativeProp.hyperParams.os_type,
     os_version: ?nativeProp.hyperParams.os_version,
     accept_header: "application/json",
     language: ?nativeProp.configuration.appearance.locale,
-  }
+  },
 }
 
 let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {

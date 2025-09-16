@@ -189,6 +189,8 @@ let make = (~setConfirmButtonDataRef) => {
         os_version: ?nativeProp.hyperParams.os_version,
         accept_header: "application/json",
         language: ?nativeProp.configuration.appearance.locale,
+        java_enabled: true,
+        java_script_enabled: true,
       },
     }
 

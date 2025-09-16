@@ -279,14 +279,11 @@ let make = (
         os_type: ?nativeProp.hyperParams.os_type,
         os_version: ?nativeProp.hyperParams.os_version,
         accept_header: "application/json",
+
         // TODO: Remove these hardcoded values and get actual values from web-view (iOS and android)
-        // accept_header: "",
-        // color_depth: 0,
-        // java_enabled: true,
-        // java_script_enabled: true,
-        // screen_height: 932,
-        // screen_width: 430,
-        // time_zone: -330,
+        color_depth: 0,
+        java_enabled: true,
+        java_script_enabled: true,
       },
     }
 
