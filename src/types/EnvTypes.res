@@ -7,6 +7,7 @@ type envTypes = {
   "PROD_ASSETS_END_POINT": string,
   "SANDBOX_ASSETS_END_POINT": string,
   "INTEG_ASSETS_END_POINT": string,
+  "ENABLE_LOGS_BATCHING": bool,
 }
 type process = {env: envTypes}
 @val external process: process = "process"
