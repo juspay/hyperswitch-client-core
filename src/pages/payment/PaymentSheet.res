@@ -27,6 +27,8 @@ let make = (~setConfirmButtonDataRef) => {
       elementArr
       showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
     />
+    <Space height=15. />
+    {tabArr->Array.length > 0 && elementArr->Array.length > 0 ? <SheetSeperation /> : React.null}
     <CustomTabView
       hocComponentArr=tabArr
       loading={allApiData.sessions == Loading && localeStrings == Loading}

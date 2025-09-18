@@ -24,7 +24,6 @@ module WalletDisclaimer = {
 
 @react.component
 let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
-  let localeObject = GetLocale.useGetLocalObj()
   <>
     {switch elementArr->Array.length {
     | 0 =>
@@ -32,8 +31,6 @@ let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
         ? <>
             <Space />
             <CustomLoader />
-            <Space height=15. />
-            <TextWithLine text=localeObject.orPayUsing />
           </>
         : React.null
     | _ =>
@@ -41,8 +38,6 @@ let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
         <Space />
         {elementArr->React.array}
         {showDisclaimer ? <WalletDisclaimer /> : React.null}
-        <Space height=15. />
-        <TextWithLine text=localeObject.orPayUsing />
       </>
     }}
   </>
