@@ -14,6 +14,8 @@ let make = () => {
   <View style={s({maxWidth: 450.->dp, alignSelf: #center, width: 100.->pct})}>
     <Space height=20. />
     <WalletView elementArr />
+    <Space height=15. />
+    {tabArr->Array.length > 0 && elementArr->Array.length > 0 ? <SheetSeperation /> : React.null}
     <CustomTabView
       hocComponentArr=tabArr loading={allApiData.sessions == Loading} setConfirmButtonDataRef
     />
