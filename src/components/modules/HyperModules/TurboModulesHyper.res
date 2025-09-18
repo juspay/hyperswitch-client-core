@@ -23,10 +23,6 @@ let hyperTurboModule: hyperModule = {
   sendMessageToNative: TurboModules.sendMessageToNativeTurbo,
   launchApplePay: (requestObj, callback) =>
     TurboModules.launchApplePayTurbo(requestObj, convertCallback(callback)),
-  startApplePay: (requestObj, callback) =>
-    TurboModules.startApplePayTurbo(requestObj, convertCallback(callback)),
-  presentApplePay: (requestObj, callback) =>
-    TurboModules.presentApplePayTurbo(requestObj, convertCallback(callback)),
   launchGPay: (requestObj, callback) =>
     TurboModules.launchGPayTurbo(requestObj, convertCallback(callback)),
   exitPaymentsheet: TurboModules.exitPaymentsheetTurbo,
@@ -126,9 +122,7 @@ let useExitWidget = () => {
   }
 }
 
-let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
-  hyperTurboModule.startApplePay("", startCallback)
-  hyperTurboModule.presentApplePay("", presentCallback)
+let launchApplePay = (requestObj: string, callback) => {
   hyperTurboModule.launchApplePay(requestObj, callback)
 }
 

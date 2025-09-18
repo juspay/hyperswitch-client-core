@@ -1,81 +1,110 @@
-// Feature flag for turbo modules
-// @val @scope("global") external turboModuleProxy: Nullable.t<'a> = "__turboModuleProxy"
+// Feature flag for turbo modules and new architecture
+@val @scope("global") external turboModuleProxy: Nullable.t<'a> = "__turboModuleProxy"
+@val @scope("global") external nativeFabricUIManager: Nullable.t<'a> = "nativeFabricUIManager"
 
 let isTurboModuleEnabled = () => {
-  true
+  let hasFabricUIManager = switch nativeFabricUIManager {
+  | Value(_) => true
+  | Null | Undefined => false
+  }
+
+  let hasTurboModule = switch turboModuleProxy {
+  | Value(_) => true
+  | Null | Undefined => false
+  }
+
+  // Return true if either Fabric or TurboModules are available
+  hasFabricUIManager || hasTurboModule
 }
 
 let sendMessageToNative = str => {
   if isTurboModuleEnabled() {
-    TurboModulesHyper.sendMessageToNative(str)
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["sendMessageToNative"](str)
   } else {
     NativeModulesHyper.sendMessageToNative(str)
   }
 }
 
-let useExitPaymentsheet = 
-() => {
+let useExitPaymentsheet = () => {
   if isTurboModuleEnabled() {
-    TurboModulesHyper.useExitPaymentsheet()
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["useExitPaymentsheet"]()
   } else {
     NativeModulesHyper.useExitPaymentsheet()
   }
 }
 
-let useExitCard = () =>
+let useExitCard = () => {
   if isTurboModuleEnabled() {
-    TurboModulesHyper.useExitCard()
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["useExitCard"]()
   } else {
     NativeModulesHyper.useExitCard()
   }
+}
 
-let useExitWidget = () =>
+let useExitWidget = () => {
   if isTurboModuleEnabled() {
-    TurboModulesHyper.useExitWidget
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["useExitWidget"]
   } else {
     NativeModulesHyper.useExitWidget
   }
+}
 
-let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) =>
+let launchApplePay = (requestObj: string, callback) => {
   if isTurboModuleEnabled() {
-    TurboModulesHyper.launchApplePay(requestObj, callback, startCallback, presentCallback)
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["launchApplePay"](requestObj, callback)
   } else {
-    NativeModulesHyper.launchApplePay(requestObj, callback, startCallback, presentCallback)
+    NativeModulesHyper.launchApplePay(requestObj, callback)
   }
+}
 
-let launchGPay = (requestObj: string, callback) =>
+let launchGPay = (requestObj: string, callback) => {
   if isTurboModuleEnabled() {
-    TurboModulesHyper.launchGPay(requestObj, callback)
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["launchGPay"](requestObj, callback)
   } else {
     NativeModulesHyper.launchGPay(requestObj, callback)
   }
+}
 
-let launchWidgetPaymentSheet = (requestObj: string, callback) =>
+let launchWidgetPaymentSheet = (requestObj: string, callback) => {
   if isTurboModuleEnabled() {
-    TurboModulesHyper.launchWidgetPaymentSheet(requestObj, callback)
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["launchWidgetPaymentSheet"](requestObj, callback)
   } else {
     NativeModulesHyper.launchWidgetPaymentSheet(requestObj, callback)
   }
+}
 
 let updateWidgetHeight =
- if isTurboModuleEnabled() {
-  TurboModulesHyper.updateWidgetHeight
-} else {
-  NativeModulesHyper.updateWidgetHeight
-}
+  if isTurboModuleEnabled() {
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["updateWidgetHeight"]
+  } else {
+    NativeModulesHyper.updateWidgetHeight
+  }
+
 
 // Export the hyperModule object
 let hyperModule =
- if isTurboModuleEnabled() {
-  TurboModulesHyper.hyperTurboModule
-} else {
-  NativeModulesHyper.hyperModule
-}
+  if isTurboModuleEnabled() {
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["hyperTurboModule"]
+  } else {
+    NativeModulesHyper.hyperModule
+  }
+
 
 // Export stringifiedResStatus function
-let stringifiedResStatus = 
-if isTurboModuleEnabled() {
-  TurboModulesHyper.stringifiedResStatus
-} else {
-  NativeModulesHyper.stringifiedResStatus
-}
+let stringifiedResStatus =
+  if isTurboModuleEnabled() {
+    let turboModule = %raw("require('./TurboModulesHyper.bs.js')")
+    turboModule["stringifiedResStatus"]
+  } else {
+    NativeModulesHyper.stringifiedResStatus
+  }
+

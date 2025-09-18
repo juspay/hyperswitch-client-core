@@ -15,8 +15,6 @@ let hyperModuleDict =
 let hyperModule = {
   sendMessageToNative: getFunctionFromModule(hyperModuleDict, "sendMessageToNative", _ => ()),
   launchApplePay: getFunctionFromModule(hyperModuleDict, "launchApplePay", (_, _) => ()),
-  startApplePay: getFunctionFromModule(hyperModuleDict, "startApplePay", (_, _) => ()),
-  presentApplePay: getFunctionFromModule(hyperModuleDict, "presentApplePay", (_, _) => ()),
   launchGPay: getFunctionFromModule(hyperModuleDict, "launchGPay", (_, _) => ()),
   exitPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitPaymentsheet", (_, _, _) => ()),
   exitPaymentMethodManagement: getFunctionFromModule(
@@ -132,9 +130,7 @@ let useExitWidget = () => {
   }
 }
 
-let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
-  hyperModule.startApplePay("", startCallback)
-  hyperModule.presentApplePay("", presentCallback)
+let launchApplePay = (requestObj: string, callback) => {
   hyperModule.launchApplePay(requestObj, callback)
 }
 

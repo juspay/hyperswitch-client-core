@@ -7,9 +7,6 @@ export interface Spec extends TurboModule {
   
   // Apple Pay methods
   launchApplePay(requestObj: string, callback: (result: Object) => void): void;
-  startApplePay(requestObj: string, callback: (result: Object) => void): void;
-  presentApplePay(requestObj: string, callback: (result: Object) => void): void;
-  
   // Google Pay method
   launchGPay(requestObj: string, callback: (result: Object) => void): void;
   
@@ -29,8 +26,6 @@ const NativeHyperswitchSdk = TurboModuleRegistry.getEnforcing<Spec>('HyperModule
 
 export const sendMessageToNative = NativeHyperswitchSdk.sendMessageToNative;
 export const launchApplePay = NativeHyperswitchSdk.launchApplePay;
-export const startApplePay = NativeHyperswitchSdk.startApplePay;
-export const presentApplePay = NativeHyperswitchSdk.presentApplePay;
 export const launchGPay = NativeHyperswitchSdk.launchGPay;
 export const exitPaymentsheet = NativeHyperswitchSdk.exitPaymentsheet;
 export const exitPaymentMethodManagement = NativeHyperswitchSdk.exitPaymentMethodManagement;

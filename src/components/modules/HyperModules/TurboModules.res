@@ -2,10 +2,6 @@
 @module("./spec/modules") @val external sendMessageToNativeTurbo: string => unit = "sendMessageToNative"
 @module("./spec/modules")
 external launchApplePayTurbo: (string, JSON.t => unit) => unit = "launchApplePay"
-@module("./spec/modules")
-external startApplePayTurbo: (string, JSON.t => unit) => unit = "startApplePay"
-@module("./spec/modules")
-external presentApplePayTurbo: (string, JSON.t => unit) => unit = "presentApplePay"
 @module("./spec/modules") external launchGPayTurbo: (string, JSON.t => unit) => unit = "launchGPay"
 @module("./spec/modules")
 external exitPaymentsheetTurbo: (int, string, bool) => unit = "exitPaymentsheet"
@@ -26,8 +22,6 @@ external exitWidgetPaymentsheetTurbo: (int, string, bool) => unit = "exitWidgetP
 let turboModules = {
   "sendMessageToNative": sendMessageToNativeTurbo,
   "launchApplePay": launchApplePayTurbo,
-  "startApplePay": startApplePayTurbo,
-  "presentApplePay": presentApplePayTurbo,
   "launchGPay": launchGPayTurbo,
   "exitPaymentsheet": exitPaymentsheetTurbo,
   "exitPaymentMethodManagement": exitPaymentMethodManagementTurbo,

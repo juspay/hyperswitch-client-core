@@ -1,8 +1,6 @@
 type hyperModule = {
   sendMessageToNative: string => unit,
   launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  startApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  presentApplePay: (string, Dict.t<JSON.t> => unit) => unit,
   launchGPay: (string, Dict.t<JSON.t> => unit) => unit,
   exitPaymentsheet: (int, string, bool) => unit,
   exitPaymentMethodManagement: (int, string, bool) => unit,

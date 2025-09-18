@@ -602,24 +602,24 @@ let make = (
               (),
             )
 
-            let timerId = setTimeout(() => {
-              setLoading(FillingDetails)
-              showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-              logger(
-                ~logType=DEBUG,
-                ~value=walletType.payment_method_type,
-                ~category=USER_EVENT,
-                ~paymentMethod=walletType.payment_method_type,
-                ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-                ~paymentExperience=?walletType.payment_experience
-                ->Array.get(0)
-                ->Option.map(
-                  paymentExperience =>
-                    getPaymentExperienceType(paymentExperience.payment_experience_type_decode),
-                ),
-                (),
-              )
-            }, 5000)
+            // let timerId = setTimeout(() => {
+            //   setLoading(FillingDetails)
+            //   showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+            //   logger(
+            //     ~logType=DEBUG,
+            //     ~value=walletType.payment_method_type,
+            //     ~category=USER_EVENT,
+            //     ~paymentMethod=walletType.payment_method_type,
+            //     ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+            //     ~paymentExperience=?walletType.payment_experience
+            //     ->Array.get(0)
+            //     ->Option.map(
+            //       paymentExperience =>
+            //         getPaymentExperienceType(paymentExperience.payment_experience_type_decode),
+            //     ),
+            //     (),
+            //   )
+            // }, 5000)
 
             HyperModule.launchApplePay(
               [
@@ -630,24 +630,24 @@ let make = (
               ->JSON.Encode.object
               ->JSON.stringify,
               confirmApplePay,
-              _ => {
-                logger(
-                  ~logType=DEBUG,
-                  ~value=walletType.payment_method_type,
-                  ~category=USER_EVENT,
-                  ~paymentMethod=walletType.payment_method_type,
-                  ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                  ~paymentExperience=?walletType.payment_experience
-                  ->Array.get(0)
-                  ->Option.map(paymentExperience =>
-                    getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
-                  ),
-                  (),
-                )
-              },
-              _ => {
-                clearTimeout(timerId)
-              },
+              // _ => {
+              //   logger(
+              //     ~logType=DEBUG,
+              //     ~value=walletType.payment_method_type,
+              //     ~category=USER_EVENT,
+              //     ~paymentMethod=walletType.payment_method_type,
+              //     ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+              //     ~paymentExperience=?walletType.payment_experience
+              //     ->Array.get(0)
+              //     ->Option.map(paymentExperience =>
+              //       getPaymentExperienceType(paymentExperience.payment_experience_type_decode)
+              //     ),
+              //     (),
+              //   )
+              // },
+              // _ => {
+              //   clearTimeout(timerId)
+              // },
             )
           }
         | SAMSUNG_PAY => {
