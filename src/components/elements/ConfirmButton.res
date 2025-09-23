@@ -1,3 +1,4 @@
+open ReactNative
 @react.component
 let make = (
   ~loading: bool,
@@ -14,14 +15,14 @@ let make = (
 
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
 
-  <>
+  <View>
     {errorText->Belt.Option.isSome ? <ErrorText text={errorText} /> : React.null}
     {loading
-      ? <>
+      ? <View>
           <CustomLoader />
           <Space />
           <HyperSwitchBranding />
-        </>
+        </View>
       : <ConfirmButtonAnimation
           isAllValuesValid
           handlePress
@@ -40,5 +41,5 @@ let make = (
             }
           }}
         />}
-  </>
+  </View>
 }

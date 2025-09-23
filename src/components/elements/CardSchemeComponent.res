@@ -31,7 +31,7 @@ module CardSchemeSelectionPopoverElement = {
       None
     }, ())
 
-    <>
+    <View>
       <TextWrapper textType={ModalTextLight} text={localeObject.selectCardBrand} />
       <ScrollView keyboardShouldPersistTaps={#handled} contentContainerStyle={s({flexGrow: 0.})}>
         <Space />
@@ -49,7 +49,7 @@ module CardSchemeSelectionPopoverElement = {
         )
         ->React.array}
       </ScrollView>
-    </>
+    </View>
   }
 }
 

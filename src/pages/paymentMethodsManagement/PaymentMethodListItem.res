@@ -43,12 +43,12 @@ module PaymentMethodTitle = {
       {switch nickName {
       | Some(val) =>
         val != ""
-          ? <>
+          ? <View>
               <TextWrapper
                 text={val} textType={CardTextBold} ellipsizeMode=#tail numberOfLines={1}
               />
               <Space height=5. />
-            </>
+            </View>
           : React.null
       | None => React.null
       }}

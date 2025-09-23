@@ -1,3 +1,5 @@
+open ReactNative
+
 @react.component
 let make = (~setConfirmButtonDataRef) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -19,7 +21,7 @@ let make = (~setConfirmButtonDataRef) => {
 
   let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
 
-  <>
+  <View>
     <WalletView
       loading={nativeProp.sdkState !== CardWidget &&
       allApiData.sessions == Loading &&
@@ -38,7 +40,7 @@ let make = (~setConfirmButtonDataRef) => {
       ~mandateType=allApiData.additionalPMLData.mandateType,
       ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
     )
-      ? <>
+      ? <View>
           <Space height=10. />
           <ClickableTextElement
             initialIconName="cardv1"
@@ -49,7 +51,7 @@ let make = (~setConfirmButtonDataRef) => {
             fillIcon=true
           />
           <Space height=12. />
-        </>
+        </View>
       : React.null}
-  </>
+  </View>
 }

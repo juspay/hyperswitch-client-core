@@ -722,7 +722,7 @@ let make = (
     }
     None
   }, [confirm])
-  <>
+<View>  
     <CustomButton
       borderRadius=buttonBorderRadius
       linearGradientColorTuple=?{switch walletType.payment_method_type_wallet {
@@ -782,5 +782,5 @@ let make = (
       }}
     </CustomButton>
     <Space height=12. />
-  </>
+  </View>
 }

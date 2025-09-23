@@ -1,3 +1,5 @@
+open ReactNative
+
 @react.component
 let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
   let {component, borderWidth, borderRadius, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -20,7 +22,7 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
     }
   }
 
-  <>
+  <View>
     <Space />
     // <TextWrapper text={localeObject.cardNickname} textType=SubheadingBold />
     // <Space height=5. />
@@ -55,5 +57,5 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
     | None => React.null
     }}
     <Space height=5. />
-  </>
+  </View>
 }

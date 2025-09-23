@@ -1,5 +1,6 @@
 open PaymentMethodListType
 open RequiredFieldsTypes
+open ReactNative
 
 type klarnaSessionCheck = {
   isKlarna: bool,
@@ -747,13 +748,13 @@ let make = (
     error,
   ))
 
-  <>
+  <View>
     <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
       <UIUtils.RenderIf condition={fields.header->String.length > 0}>
         <TextWrapper text={fields.header} textType=Subheading />
       </UIUtils.RenderIf>
       {KlarnaModule.klarnaReactPaymentView->Option.isSome && fields.name == "klarna" && isKlarna
-        ? <>
+        ? <View>
             <Space />
             <Klarna
               launchKlarna
@@ -765,8 +766,8 @@ let make = (
               klarnaSessionTokens=session_token
             />
             <ErrorText text=error />
-          </>
-        : <>
+          </View>
+        : <View>
             <DynamicFields
               requiredFields={switch redirectProp {
               | PAY_LATER(prop) => prop.required_field
@@ -786,8 +787,8 @@ let make = (
             />
             <Space height=25. />
             <RedirectionText />
-          </>}
+          </View>}
     </ErrorBoundary>
     <Space height=5. />
-  </>
+  </View>
 }

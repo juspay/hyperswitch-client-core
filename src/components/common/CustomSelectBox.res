@@ -1,3 +1,4 @@
+open ReactNative
 @react.component
 let make = (~initialIconName, ~updateIconName, ~isSelected, ~fillIcon) => {
   let {primaryColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -6,7 +7,7 @@ let make = (~initialIconName, ~updateIconName, ~isSelected, ~fillIcon) => {
   switch updateIconName {
   | None => <Icon name={initialIconName} height=18. width=18. ?fill />
   | Some(updateIconName) =>
-    <>
+    <View>
       <Icon
         name={initialIconName}
         height=18.
@@ -21,6 +22,6 @@ let make = (~initialIconName, ~updateIconName, ~isSelected, ~fillIcon) => {
         ?fill
         style={ReactNative.Style.s({display: isSelected ? #none : #flex})}
       />
-    </>
+    </View>
   }
 }

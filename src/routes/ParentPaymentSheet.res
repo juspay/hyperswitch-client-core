@@ -1,5 +1,6 @@
 open SDKLoadCheckHook
 open PaymentSheetViewWrappers
+open ReactNative
 
 @react.component
 let make = () => {
@@ -22,7 +23,7 @@ let make = () => {
     | WALLET_MISSING_FIELDS(_, _, _) =>
       <FullSheetPaymentMethodWrapper paymentScreenType />
     | _ =>
-      <>
+      <View>
         {switch (
           allApiData.savedPaymentMethods,
           allApiData.additionalPMLData.paymentType,
@@ -42,7 +43,7 @@ let make = () => {
         }}
         <GlobalConfirmButton confirmButtonDataRef />
         <Space height=15. />
-      </>
+      </View>
     }}
   </FullScreenSheetWrapper>
 }

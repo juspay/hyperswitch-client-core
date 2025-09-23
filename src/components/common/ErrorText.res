@@ -5,8 +5,7 @@ let make = (~text=None) => {
   | Some(val) =>
     val == ""
       ? React.null
-      : <>
-          <TextWrapper textType={ErrorText}> {val->React.string} </TextWrapper>
-        </>
+      : <TextWrapper textType={ErrorText}> {val->React.string} </TextWrapper>
+      
   }
 }

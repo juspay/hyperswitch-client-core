@@ -18,7 +18,7 @@ let make = (
 
   let localeObj = GetLocale.useGetLocalObj()
 
-  <>
+  <View>
     <Space />
     <View
       style={array([
@@ -46,7 +46,7 @@ let make = (
       fillIcon=false
     />
     {showSavePMCheckbox
-      ? <>
+      ? <View>
           <Space />
           <ClickableTextElement
             disabled={false}
@@ -58,8 +58,8 @@ let make = (
             textType={TextWrapper.ModalText}
             disableScreenSwitch=true
           />
-        </>
+        </View>
       : React.null}
     <Space height=12. />
-  </>
+  </View>
 }

@@ -111,7 +111,7 @@ let make = (
     None
   }, [indexInFocus])
 
-  <>
+  <View>
     <Space height=15. />
     <View style={s({height, paddingHorizontal: 10.->dp})}>
       <FlatList
@@ -128,5 +128,5 @@ let make = (
           />}
       />
     </View>
-  </>
+  </View>
 }

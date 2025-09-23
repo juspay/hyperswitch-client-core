@@ -27,7 +27,7 @@ module CVVComponent = {
 
     {
       isPaymentMethodSelected
-        ? <>
+        ? <View>
             <View
               style={s({
                 display: #flex,
@@ -68,7 +68,7 @@ module CVVComponent = {
             {errorMsgText->Option.isSome && isPaymentMethodSelected
               ? <ErrorText text=errorMsgText />
               : React.null}
-          </>
+          </View>
         : React.null
     }
   }

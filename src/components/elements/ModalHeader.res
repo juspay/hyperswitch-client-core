@@ -42,7 +42,7 @@ let make = (~onModalClose) => {
       style={s({flexDirection: #row, flexWrap: #wrap, alignItems: #center, maxWidth: 40.->pct})}>
       {isLoadingScreenActive
         ? React.null
-        : <>
+        : <View>
             {nativeProp.env === GlobalVars.PROD
               ? React.null
               : <View
@@ -65,7 +65,7 @@ let make = (~onModalClose) => {
                 <Icon name="close" width=16. height=16. fill=iconColor />
               </CustomTouchableOpacity>
             }}
-          </>}
+          </View>}
     </View>
   </View>
 }

@@ -16,12 +16,12 @@ let make = (
       ->Array.pushMany([
         {
           name: "loading",
-          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) => <>
+          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) => <View>
             <Space height=20. />
             <CustomLoader height="33" />
             <Space height=5. />
             <CustomLoader height="33" />
-          </>,
+          </View>,
         },
         {
           name: "loading",

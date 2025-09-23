@@ -1,14 +1,16 @@
+open ReactNative
+
 module SdkLoadingScreen = {
   @react.component
   let make = () => {
-    <>
+    <View>
       <Space height=20. />
       <CustomLoader height="38" />
       <Space height=8. />
       <CustomLoader height="38" />
       <Space height=50. />
       <CustomLoader height="38" />
-    </>
+    </View>
   }
 }
 

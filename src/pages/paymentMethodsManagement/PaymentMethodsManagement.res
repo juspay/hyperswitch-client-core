@@ -111,7 +111,7 @@ let make = () => {
         <Space height=200. />
       </ScrollView>
     </View>
-    : <>
+    : <View>
         <View
           style={s({
             width: 100.->pct,
@@ -125,5 +125,5 @@ let make = () => {
           <TextWrapper text={"No saved payment methods available."} textType={ModalTextLight} />
         </View>
         <PaymentMethodListItem.AddPaymentMethodButton />
-      </>
+      </View>
 }

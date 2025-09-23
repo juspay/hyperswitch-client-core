@@ -266,7 +266,7 @@ module RenderField = {
       ~required_field=required_fields_type.required_field,
     )
     let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
-    <>
+    <View>
       // <TextWrapper text={placeholder()} textType=SubheadingBold />
       // <Space height=5. />
       {switch required_fields_type.required_field {
@@ -409,7 +409,7 @@ module RenderField = {
         <ErrorText text=errorMessage />
       }}
       //    <Space />
-    </>
+    </View>
   }
 }
 
@@ -650,7 +650,7 @@ let make = (
 
   let renderFields = (fields, extraSpacing) =>
     fields->Array.length > 0
-      ? <>
+      ? <View>
           {extraSpacing ? <Space height=24. /> : React.null}
           <Fields
             fields
@@ -662,7 +662,7 @@ let make = (
             paymentMethodType
             keyToTrigerButtonClickError
           />
-        </>
+        </View>
       : React.null
 
   // let renderSectionTitle = (title, show) =>

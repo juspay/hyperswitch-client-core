@@ -18,13 +18,13 @@ module LoadingListItem = {
 module LoadingPmList = {
   @react.component
   let make = () => {
-    <>
+    <View>
       <LoadingListItem />
       <Space height=15. />
       <LoadingListItem />
       <Space height=15. />
       <LoadingListItem />
-    </>
+    </View>
   }
 }
 

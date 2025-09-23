@@ -23,7 +23,7 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
     }
   }
 
-  <>
+  <View>
     <View
       style={s({
         backgroundColor: component.borderColor,
@@ -47,5 +47,5 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
       }}>
       <Icon name={"CAMERA"} height=25. width=25. fill=primaryColor />
     </CustomTouchableOpacity>
-  </>
+  </View>
 }

@@ -1,6 +1,5 @@
 open ReactNative
 open Style
-
 type iconType =
   | NoIcon
   | CustomIcon(React.element)

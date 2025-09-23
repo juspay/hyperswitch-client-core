@@ -38,7 +38,7 @@ let make = () => {
             <CustomLoader height="100%" />
           </View>
         | _ =>
-          <>
+          <View>
             // <Animated.View
             //   style={s({
             //     backgroundColor: "#FFB000",
@@ -56,7 +56,7 @@ let make = () => {
               | None => React.null
               }}
             </View>
-          </>
+          </View>
         }}
       </View>
     </Portal>

@@ -122,7 +122,7 @@ let make = (
       {switch children {
       | Some(child) => child
       | _ =>
-        <>
+        <View>
           {switch leftIcon {
           | CustomIcon(element) => element
           | NoIcon => React.null
@@ -156,7 +156,7 @@ let make = (
             | NoIcon => React.null
             }
           }}
-        </>
+        </View>
       }}
     </CustomTouchableOpacity>
   </View>

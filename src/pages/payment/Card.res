@@ -159,7 +159,7 @@ let make = (
     dynamicFieldsJson,
     cardData,
   ))
-  <>
+  <View>
     <View>
       <TextWrapper text=localeObject.cardDetailsLabel textType={ModalText} />
       <Space height=8. />
@@ -170,7 +170,7 @@ let make = (
         cardNetworks=cardVal.card_networks
       />
       {cardVal.required_field->Array.length != 0
-        ? <>
+        ? <View>
             <DynamicFields
               setIsAllDynamicFieldValid
               setDynamicFieldsJson
@@ -180,7 +180,7 @@ let make = (
               keyToTrigerButtonClickError
             />
             <Space height=8. />
-          </>
+          </View>
         : React.null}
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
@@ -188,7 +188,7 @@ let make = (
         allApiData.additionalPMLData.mandateType,
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
-        <>
+        <View>
           <Space height=8. />
           <ClickableTextElement
             disabled={false}
@@ -200,7 +200,7 @@ let make = (
             textType={ModalText}
             disableScreenSwitch=true
           />
-        </>
+        </View>
       | _ => React.null
       }}
       {switch (
@@ -218,5 +218,5 @@ let make = (
       | _ => React.null
       }}
     </View>
-  </>
+  </View>
 }
