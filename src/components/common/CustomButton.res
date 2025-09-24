@@ -23,7 +23,7 @@ let make = (
   ~children=None,
   ~testID=?,
 ) => {
-  let fillAnimation = React.useRef(Animated.Value.create(0.)).current
+  let fillAnimation = AnimatedValue.useAnimatedValue(0.)
   let {
     payNowButtonTextColor,
     payNowButtonShadowColor,
@@ -37,15 +37,11 @@ let make = (
     (),
   )
 
-  let backColor = switch linearGradientColorTuple {
-  | Some(tuple) => tuple
-  | None =>
-    switch buttonState {
-    | Normal => ("#0048a0", "#0570de")
-    | LoadingButton => ("#0048a0", "#0570de")
-    | Completed => ("#0048a0", "#0570de")
-    | Disabled => ("#808080", "#808080")
-    }
+  let _buttonColor = switch buttonState {
+  | Normal => ("#0048a0", "#0570de")
+  | LoadingButton => ("#0048a0", "#0570de")
+  | Completed => ("#0048a0", "#0570de")
+  | Disabled => ("#808080", "#808080")
   }
 
   let disabled = switch buttonState {
@@ -56,7 +52,6 @@ let make = (
   let loaderIconColor = switch buttonType {
   | Primary => Some(payNowButtonTextColor)
   }
-  let (bgColor1, _) = backColor
 
   let fillStyle = s({
     position: #absolute,
@@ -98,10 +93,13 @@ let make = (
         borderRadius,
         borderWidth,
         borderColor,
-        backgroundColor: bgColor1,
+        backgroundColor: ?linearGradientColorTuple->Option.map(tuple => {
+          let (bgColor, _) = tuple
+          bgColor
+        }),
       }),
     ])}>
-    <CustomTouchableOpacity
+    <CustomPressable
       disabled
       testID={testID->Option.getOr("")}
       style={array([
@@ -119,45 +117,53 @@ let make = (
         Keyboard.dismiss()
         onPress(ev)
       }}>
-      {switch children {
-      | Some(child) => child
-      | _ =>
-        <>
-          {switch leftIcon {
-          | CustomIcon(element) => element
-          | NoIcon => React.null
-          }}
-          {if buttonState == LoadingButton {
-            fillButton()
-            <Animated.View style={array([fillStyle, widthStyle])} />
-          } else {
-            React.null
-          }}
-          {switch text {
-          | Some(textStr) if textStr !== "" =>
-            <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
-              <TextWrapper
-                text={switch buttonState {
-                | LoadingButton => loadingText
-                | Completed => "Complete"
-                | _ => textStr
-                }}
-                // textType=CardText
-                textType={ButtonTextBold}
-              />
-            </View>
-          | _ => React.null
-          }}
-          {if buttonState == LoadingButton || buttonState == Completed {
-            <Loadericon iconColor=?loaderIconColor />
-          } else {
-            switch rightIcon {
+      <View style={s({flex: 1., flexDirection: #row, width: 100.->pct})} pointerEvents=#none>
+        {switch children {
+        | Some(child) => child
+        | _ =>
+          <>
+            {switch leftIcon {
             | CustomIcon(element) => element
             | NoIcon => React.null
-            }
-          }}
-        </>
-      }}
-    </CustomTouchableOpacity>
+            }}
+            {if buttonState == LoadingButton {
+              fillButton()
+              <Animated.View style={array([fillStyle, widthStyle])} />
+            } else {
+              React.null
+            }}
+            {switch text {
+            | Some(textStr) if textStr !== "" =>
+              <View
+                style={s({
+                  flex: 1.,
+                  width: 100.->pct,
+                  alignItems: #center,
+                  justifyContent: #center,
+                })}>
+                <TextWrapper
+                  text={switch buttonState {
+                  | LoadingButton => loadingText
+                  | Completed => "Complete"
+                  | _ => textStr
+                  }}
+                  // textType=CardText
+                  textType={ButtonTextBold}
+                />
+              </View>
+            | _ => React.null
+            }}
+            {if buttonState == LoadingButton || buttonState == Completed {
+              <Loadericon iconColor=?loaderIconColor />
+            } else {
+              switch rightIcon {
+              | CustomIcon(element) => element
+              | NoIcon => React.null
+              }
+            }}
+          </>
+        }}
+      </View>
+    </CustomPressable>
   </View>
 }

@@ -10,17 +10,18 @@ let make = (
   ~accessibilityState=?,
   ~accessibilityLabel=?,
   ~testID=?,
-  ~activeOpacity as _=?,
+  ~focusable=false,
 ) => {
-  <Pressable ?onPress children=?{React.useMemo1(_ =>
-      switch children {
-      | Some(children) => Some(_ => children)
-      | None => None
-      }
-    , [children])} style=?{React.useMemo1(_ =>
-      switch style {
-      | Some(style) => Some(_ => style)
-      | None => None
-      }
-    , [style])} ?disabled ?accessibilityRole ?accessibilityState ?accessibilityLabel ?testID />
+  <Pressable
+    ?onPress
+    children=?{children->Option.map(children => _ => children)}
+    style=?{style->Option.map(style => _ => style)}
+    ?disabled
+    ?accessibilityRole
+    ?accessibilityState
+    ?accessibilityLabel
+    ?testID
+    accessible=false
+    focusable
+  />
 }

@@ -3,8 +3,7 @@ let make = (~setConfirmButtonDataRef) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
 
-  //getting payment list data here
-  let {tabArr, elementArr} = PMListModifier.useListModifier()
+  let (tabArr, elementArr) = PMListModifier.useSheetListModifier()
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
 
   let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
@@ -25,13 +24,20 @@ let make = (~setConfirmButtonDataRef) => {
       allApiData.sessions == Loading &&
       localeStrings == Loading}
       elementArr
+      hideDivider={tabArr->Array.length === 0}
       showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
     />
-    <CustomTabView
-      hocComponentArr=tabArr
-      loading={allApiData.sessions == Loading && localeStrings == Loading}
-      setConfirmButtonDataRef
-    />
+    {nativeProp.configuration.appearance.layout === Tab
+      ? <CustomTabView
+          hocComponentArr=tabArr
+          loading={allApiData.sessions == Loading && localeStrings == Loading}
+          setConfirmButtonDataRef
+        />
+      : <CustomAccordionView
+          hocComponentArr=tabArr
+          loading={allApiData.sessions == Loading && localeStrings == Loading}
+          setConfirmButtonDataRef
+        />}
     {PaymentUtils.showUseExisitingSavedCardsBtn(
       ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
       ~pmList=savedPaymentMethodsData.pmList,

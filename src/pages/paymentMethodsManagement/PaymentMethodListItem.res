@@ -7,7 +7,7 @@ module AddPaymentMethodButton = {
     let {component} = ThemebasedStyle.useThemeBasedStyle()
     let localeObject = GetLocale.useGetLocalObj()
 
-    <CustomTouchableOpacity
+    <CustomPressable
       onPress={_ => HyperModule.hyperModule.onAddPaymentMethod("")}
       style={s({
         paddingVertical: 16.->dp,
@@ -27,7 +27,7 @@ module AddPaymentMethodButton = {
         <Space />
         <TextWrapper text={localeObject.addPaymentMethodLabel} textType=LinkText />
       </View>
-    </CustomTouchableOpacity>
+    </CustomPressable>
   }
 }
 
@@ -79,7 +79,7 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
   | SAVEDLISTWALLET(walletData) => walletData.paymentMethodId
   | NONE => None
   }
-  <CustomTouchableOpacity
+  <CustomPressable
     onPress={_ => handleDelete(paymentMethodId->Option.getOr(""))}
     style={s({
       padding: 16.->dp,
@@ -116,5 +116,5 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
         text={localeObject.deletePaymentMethod->Option.getOr("Delete")} textType=LinkText
       />
     </View>
-  </CustomTouchableOpacity>
+  </CustomPressable>
 }

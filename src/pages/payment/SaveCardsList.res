@@ -23,7 +23,7 @@ module CVVComponent = {
 
     let errorMsgText = !isCvcValid ? Some(localeObject.inCompleteCVCErrorText) : None
 
-    let onCvvChange = cvv => setSavedCardCvv(_ => Some(CardValidations.formatCVCNumber(cvv, cardScheme)))
+    let onCvvChange = cvv => setSavedCardCvv(_ => Some(Validation.formatCVCNumber(cvv, cardScheme)))
 
     {
       isPaymentMethodSelected
@@ -226,7 +226,7 @@ module PaymentMethodListView = {
       None
     }, (isPaymentMethodSelected, savedCardCvv))
 
-    <CustomTouchableOpacity
+    <CustomPressable
       onPress={_ => {
         onPress()
       }}
@@ -236,8 +236,7 @@ module PaymentMethodListView = {
         borderBottomWidth: {isButtomBorder ? 1.0 : 0.},
         borderBottomColor: component.borderColor,
         justifyContent: #center,
-      })}
-      activeOpacity=1.>
+      })}>
       <View
         style={s({
           flexDirection: #row,
@@ -269,6 +268,6 @@ module PaymentMethodListView = {
       {pmObject->PaymentUtils.checkIsCVCRequired
         ? <CVVComponent savedCardCvv setSavedCardCvv isPaymentMethodSelected cardScheme />
         : React.null}
-    </CustomTouchableOpacity>
+    </CustomPressable>
   }
 }

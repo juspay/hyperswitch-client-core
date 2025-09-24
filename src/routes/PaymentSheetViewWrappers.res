@@ -47,29 +47,3 @@ module SDKEntryPointWrapper = {
     }
   }
 }
-
-module ACHBankDebitComponent = {
-  @react.component
-  let make = (~data) => {
-    switch data {
-    | Some(data) => <ACHBankDetails data />
-    | _ => React.null
-    }
-  }
-}
-
-module FullSheetPaymentMethodWrapper = {
-  @react.component
-  let make = (~paymentScreenType: PaymentScreenContext.paymentScreenType) => {
-    switch paymentScreenType {
-    | BANK_TRANSFER(data) => <ACHBankDebitComponent data />
-    | WALLET_MISSING_FIELDS(
-        requiredFields: RequiredFieldsTypes.required_fields,
-        walletType,
-        walletData,
-      ) =>
-      <AddressSheet requiredFields walletType walletData />
-    | _ => React.null
-    }
-  }
-}

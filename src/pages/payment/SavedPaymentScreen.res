@@ -1,5 +1,3 @@
-open ReactNative
-
 @react.component
 let make = (~setConfirmButtonDataRef) => {
   let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
@@ -23,13 +21,6 @@ let make = (~setConfirmButtonDataRef) => {
   | _ => None
   }
 
-  // let (isAllDynamicFieldValid, setIsAllDynamicFieldValid) = React.useState(_ => true)
-  // let (dynamicFieldsJson, setDynamicFieldsJson) = React.useState((_): array<(
-  //   RescriptCoreFuture.Dict.key,
-  //   JSON.t,
-  //   option<string>,
-  // )> => [])
-
   let isCVVRequiredByAnyPm = (pmList: option<array<SdkTypes.savedDataType>>) => {
     pmList
     ->Option.getOr([])
@@ -52,7 +43,7 @@ let make = (~setConfirmButtonDataRef) => {
   let (isCvcValid, setIsCvcValid) = React.useState(_ => false)
   let logger = LoggerHook.useLoggerHook()
 
-  let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
+  let buttomFlex = AnimatedValue.useAnimatedValue(1.)
 
   let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
     if !closeSDK {
@@ -163,9 +154,6 @@ let make = (~setConfirmButtonDataRef) => {
       payment_method,
       payment_method_type,
       payment_method_data,
-      billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
-      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
           allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
@@ -254,7 +242,7 @@ let make = (~setConfirmButtonDataRef) => {
   }
 
   let handlePress = _ => {
-    setLoading(ProcessingPayments(None))
+    setLoading(ProcessingPayments)
     processSavedPMRequest()
   }
 

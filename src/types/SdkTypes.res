@@ -36,8 +36,6 @@ type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | Defaul
 
 type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE | KLARNA
 
-type payment_method_type_bank_transfer = ACH | NONE
-
 let walletNameMapper = str => {
   switch str {
   | "google_pay" => "Google Pay"
@@ -192,6 +190,7 @@ type applePayConfiguration = {
 }
 
 type themeType = Default | Light | Dark | Minimal | FlatMinimal
+type layoutType = Tab | Accordion | SpacedAccordion
 
 type appearance = {
   locale: option<localeTypes>,
@@ -202,6 +201,7 @@ type appearance = {
   googlePay: googlePayConfiguration,
   applePay: applePayConfiguration,
   theme: themeType,
+  layout: layoutType,
 }
 
 type address = {
@@ -211,6 +211,7 @@ type address = {
   country?: string,
   line1?: string,
   line2?: string,
+  line3?: string,
   zip?: string,
   state?: string,
 }
@@ -425,6 +426,7 @@ let defaultAppearance: appearance = {
     buttonStyle: None,
   },
   theme: Default,
+  layout: Tab,
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
@@ -736,9 +738,8 @@ let getAppearanceObj = (
       | "SUBSCRIBE" => SUBSCRIBE
       | _ => PLAIN
       },
-      buttonStyle: switch googlePayButtonStyle {
-      | Some(googlePayButtonStyle) =>
-        Some({
+      buttonStyle: googlePayButtonStyle->Option.map(googlePayButtonStyle => {
+        let style: googlePayThemeBaseStyle = {
           light: switch getString(googlePayButtonStyle, "light", "") {
           | "light" => #light
           | "dark" => #dark
@@ -749,9 +750,9 @@ let getAppearanceObj = (
           | "dark" => #dark
           | _ => #light
           },
-        })
-      | None => None
-      },
+        }
+        style
+      }),
     },
     applePay: {
       buttonType: switch getString(applePayDict, "buttonType", "") {
@@ -764,9 +765,8 @@ let getAppearanceObj = (
       | "subscribe" => #subscribe
       | _ => #plain
       },
-      buttonStyle: switch applePayButtonStyle {
-      | Some(applePayButtonStyle) =>
-        Some({
+      buttonStyle: applePayButtonStyle->Option.map(applePayButtonStyle => {
+        let style: applePayThemeBaseStyle = {
           light: switch getString(applePayButtonStyle, "light", "") {
           | "white" => #white
           | "whiteOutline" => #whiteOutline
@@ -779,9 +779,9 @@ let getAppearanceObj = (
           | "black" => #black
           | _ => #white
           },
-        })
-      | None => None
-      },
+        }
+        style
+      }),
     },
     theme: switch getString(appearanceDict, "theme", "") {
     | "Light" => Light
@@ -790,6 +790,7 @@ let getAppearanceObj = (
     | "FlatMinimal" => FlatMinimal
     | _ => Default
     },
+    layout: Tab,
   }
 }
 
@@ -846,29 +847,24 @@ let parseConfigurationDict = (configObj, from) => {
     | Some(shippingObj) =>
       let addressObj = getOptionalObj(shippingObj, "address")
       let (first_name, last_name) = getOptionString(shippingObj, "name")->splitName
-      //need changes
-      switch addressObj {
-      | None => None
-      | Some(addressObj) =>
-        Some({
-          address: Some({
-            first_name,
-            last_name,
-            city: ?getOptionString(addressObj, "city"),
-            country: ?getOptionString(addressObj, "country"),
-            line1: ?getOptionString(addressObj, "line1"),
-            line2: ?getOptionString(addressObj, "line2"),
-            zip: ?getOptionString(addressObj, "postalCode"),
-            state: ?getOptionString(addressObj, "state"),
-          }),
-          phone: Some({
-            number: ?getOptionString(shippingObj, "phoneNumber"),
-          }),
-          //isCheckboxSelected: getOptionBool(shippingObj, "isCheckboxSelected"),
-          email: None, //getOptionString(shippingObj, "email"),
-          //name: None, getOptionString(shippingObj, "name"),
-        })
-      }
+      addressObj->Option.map(addressObj => {
+        address: Some({
+          first_name,
+          last_name,
+          city: ?getOptionString(addressObj, "city"),
+          country: ?getOptionString(addressObj, "country"),
+          line1: ?getOptionString(addressObj, "line1"),
+          line2: ?getOptionString(addressObj, "line2"),
+          zip: ?getOptionString(addressObj, "postalCode"),
+          state: ?getOptionString(addressObj, "state"),
+        }),
+        phone: Some({
+          number: ?getOptionString(shippingObj, "phoneNumber"),
+        }),
+        //isCheckboxSelected: getOptionBool(shippingObj, "isCheckboxSelected"),
+        email: None, //getOptionString(shippingObj, "email"),
+        //name: None, getOptionString(shippingObj, "name"),
+      })
     | None => None
     },
     primaryButtonLabel: getOptionString(configObj, "primaryButtonLabel"),
@@ -885,29 +881,25 @@ let parseConfigurationDict = (configObj, from) => {
     // | _ => None
     // },
     merchantDisplayName: getString(configObj, "merchantDisplayName", ""),
-    defaultBillingDetails: switch addressDict {
-    | None => None
-    | Some(addressDict) =>
-      Some({
-        address: Some({
-          first_name: ?(
-            billingName->Array.get(0) === Some("default") ? None : billingName->Array.get(0)
-          ),
-          last_name: ?(billingName->Array.length > 1 ? billingName[1] : None),
-          city: ?getOptionString(addressDict, "city"),
-          country: ?getOptionString(addressDict, "country"),
-          line1: ?getOptionString(addressDict, "line1"),
-          line2: ?getOptionString(addressDict, "line2"),
-          zip: ?getOptionString(addressDict, "postalCode"),
-          state: ?getOptionString(addressDict, "state"),
-        }),
-        phone: Some({
-          number: ?getOptionString(billingDetailsDict, "phoneNumber"),
-        }),
-        email: None, //getOptionString(billingDetailsDict, "email"),
-        //name: None, getOptionString(billingDetailsDict, "name"),
-      })
-    },
+    defaultBillingDetails: addressDict->Option.map(addressDict => {
+      address: Some({
+        first_name: ?(
+          billingName->Array.get(0) === Some("default") ? None : billingName->Array.get(0)
+        ),
+        last_name: ?(billingName->Array.length > 1 ? billingName[1] : None),
+        city: ?getOptionString(addressDict, "city"),
+        country: ?getOptionString(addressDict, "country"),
+        line1: ?getOptionString(addressDict, "line1"),
+        line2: ?getOptionString(addressDict, "line2"),
+        zip: ?getOptionString(addressDict, "postalCode"),
+        state: ?getOptionString(addressDict, "state"),
+      }),
+      phone: Some({
+        number: ?getOptionString(billingDetailsDict, "phoneNumber"),
+      }),
+      email: None, //getOptionString(billingDetailsDict, "email"),
+      //name: None, getOptionString(billingDetailsDict, "name"),
+    }),
     primaryButtonColor: getOptionString(configObj, "primaryButtonColor"),
     allowsPaymentMethodsRequiringShippingAddress: getBool(
       configObj,
@@ -976,7 +968,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     configuration: parseConfigurationDict(configurationDict, from),
     hyperParams: {
       appId: ?getOptionString(hyperParams, "appId"),
-      country: getString(hyperParams, "country", ""),
+      country: getString(hyperParams, "country", "US"),
       disableBranding: getBool(hyperParams, "disableBranding", true),
       userAgent: getOptionString(hyperParams, "user-agent"),
       confirm: getBool(hyperParams, "confirm", false),

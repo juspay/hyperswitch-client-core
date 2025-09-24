@@ -33,7 +33,7 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
         width: 1.->dp,
       })}
     />
-    <CustomTouchableOpacity
+    <CustomPressable
       style={s({
         height: 100.->pct,
         width: 27.5->dp,
@@ -46,6 +46,6 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
         logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
       }}>
       <Icon name={"CAMERA"} height=25. width=25. fill=primaryColor />
-    </CustomTouchableOpacity>
+    </CustomPressable>
   </>
 }

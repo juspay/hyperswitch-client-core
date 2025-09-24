@@ -13,7 +13,7 @@ let make = (~children) => {
       while queue.current->Array.length > 0 {
         switch queue.current->Array.pop {
         | Some(Mount(val)) => manager.mount(val.key, val.children)->ignore
-        | Some(Update(val)) => manager.update(val.key, children)->ignore
+        | Some(Update(val)) => manager.update(val.key, val.children)->ignore
         | Some(Unmount(val)) => manager.unmount(val.key)
         | None => ()
         }
@@ -25,6 +25,7 @@ let make = (~children) => {
 
   let mount = React.useCallback0(children => {
     let key = nextKey.current + 1
+    nextKey.current = key
 
     switch managerRef.current->Nullable.toOption {
     | Some(manager) => manager.mount(key, children)
@@ -39,7 +40,7 @@ let make = (~children) => {
     | None =>
       let index = queue.current->Array.findIndex(o =>
         switch o {
-        | Mount(_) => true
+        | Mount(val) => val.key === key
         | Update(val) => val.key === key
         | _ => false
         }
@@ -59,8 +60,10 @@ let make = (~children) => {
     }
   })
 
-  <PortalContext value={mount, update, unmount}>
-    <View style={Style.s({flex: 1.})} collapsable=false pointerEvents=#"box-none"> children </View>
+  <Provider value={mount, update, unmount}>
+    <View style={Style.s({flex: 1.})} collapsable=false pointerEvents=#"box-none">
+      {children}
+    </View>
     <PortalManager ref={managerRef} />
-  </PortalContext>
+  </Provider>
 }

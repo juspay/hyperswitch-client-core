@@ -1,7 +1,7 @@
 type operation =
   | Mount({key: int, children: React.element})
-  | Unmount({key: int})
   | Update({key: int, children: React.element})
+  | Unmount({key: int})
 
 type portalMethods = {
   mount: React.element => int,
@@ -16,6 +16,7 @@ let defaultVal = {
 }
 
 let portalContext = React.createContext(defaultVal)
+
 module Provider = {
   let make = React.Context.provider(portalContext)
 }

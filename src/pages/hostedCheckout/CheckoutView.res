@@ -32,12 +32,10 @@ module CheckoutHeader = {
         bgColor,
       ])}>
       <View style={s({flexDirection: #row, alignItems: #center})}>
-        // <CustomTouchableOpacity style={s(~padding=16.->dp, ())}>
+        // <CustomPressable style={s(~padding=16.->dp, ())}>
         //   <Icon name="back" height=24. width=20. fill="black" />
-        // </CustomTouchableOpacity>
-        <ReImage
-          uri="https://stripe-camo.global.ssl.fastly.net/63f4ec8cbe3d41be42a10161d3a86d3a3bda2d541052dc077e4d5e164c3386e1/68747470733a2f2f66696c65732e7374726970652e636f6d2f66696c65732f4d44423859574e6a64463878534559775a317044536c4978626d7470597a4a5866475a666447567a6446394263456c304f453952576e5a7652454a555330566f4d47564d62464e34546b38303063713345486f6c71"
-        />
+        // </CustomPressable>
+        // <ReImage uri="" />
         <Space width=10. />
         <TextWrapper text="Powdur" textType={CardText} />
         <Space width=10. />
@@ -53,12 +51,12 @@ module CheckoutHeader = {
       </View>
       {useMediaView == Mobile
         ? <View style={s({flexDirection: #row, alignItems: #center})}>
-            <CustomTouchableOpacity
+            <CustomPressable
               onPress={_ => toggleModal()} style={s({flexDirection: #row, alignItems: #center})}>
               <TextWrapper text="Details" textType={ModalText} />
               <Space width=10. />
               <ChevronIcon width=15. height=15. fill="hsla(0,0%, 10% , 0.5 )" />
-            </CustomTouchableOpacity>
+            </CustomPressable>
           </View>
         : React.null}
     </View>
@@ -75,10 +73,10 @@ module Cart = {
         justifyContent: #"space-between",
       })}>
       <View style={s({flexDirection: #row})}>
-        <ReImage
-          style={s({width: 50.->dp, height: 50.->dp, borderRadius: 8.})}
-          uri="https://stripe-camo.global.ssl.fastly.net/c25a949b6f1ffabee9af1a5696d7f152325bdce2d1b926456d42994c3d91ad78/68747470733a2f2f66696c65732e7374726970652e636f6d2f6c696e6b732f666c5f746573745f67625631776635726a4c64725a635858647032346d643649"
-        />
+        // <ReImage
+        //   style={s({width: 50.->dp, height: 50.->dp, borderRadius: 8.})}
+        //   uri=""
+        // />
         <Space />
         <View>
           <TextWrapper text="The Pure Set" textType={ModalText} />
@@ -165,7 +163,7 @@ let make = () => {
             supportedOrientations=[#"portrait-upside-down"]>
             <View style={s({backgroundColor: "rgba(0,0,0,0.2)", flex: 1.})}>
               <CartView slideAnimation />
-              <CustomTouchableOpacity style={s({flex: 1.})} onPress={_ => toggleModal()} />
+              <CustomPressable style={s({flex: 1.})} onPress={_ => toggleModal()} />
             </View>
           </Modal>
         : <CartView slideAnimation />}

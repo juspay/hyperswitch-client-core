@@ -10,24 +10,25 @@ module WidgetError = {
 }
 
 @react.component
-let make = (~walletType) => {
+let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (button, setButton) = React.useState(_ => None)
+  let (button, _setButton) = React.useState(_ => None)
 
   React.useEffect1(() => {
     if nativeProp.publishableKey == "" {
-      setLoading(ProcessingPayments(None))
+      setLoading(ProcessingPayments)
     } else {
-      setButton(_ =>
-        PMListModifier.widgetModifier(
-          allApiData.paymentList,
-          allApiData.sessions,
-          walletType,
-          nativeProp.hyperParams.confirm,
-        )
-      )
+      // setButton(_ =>
+      //   PMListModifier.widgetModifier(
+      //     allApiData.paymentMethodList,
+      //     allApiData.sessions,
+      //     walletType,
+      //     nativeProp.hyperParams.confirm,
+      //   )
+      // )
+      ()
     }
 
     let handleWidgetEvent = (responseFromJava: NativeEventListener.widgetResponse) => {

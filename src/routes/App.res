@@ -12,9 +12,7 @@ module ContextWrapper = {
               <PaymentScreenContext>
                 <ThemeContext>
                   <LoggerContext>
-                    <CardDataContext>
-                      <AllApiDataContext> children </AllApiDataContext>
-                    </CardDataContext>
+                    <AllApiDataContext> children </AllApiDataContext>
                   </LoggerContext>
                 </ThemeContext>
               </PaymentScreenContext>

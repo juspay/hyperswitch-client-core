@@ -215,7 +215,7 @@ let darkRecord = {
   primaryColor: "#0057c7",
   borderRadius: 7.0,
   borderWidth: 1.,
-  buttonBorderRadius: 4.0,
+  buttonBorderRadius: 8.0,
   buttonBorderWidth: 0.0,
   component: {
     background: Color.rgb(~r=57, ~g=57, ~b=57),
@@ -301,7 +301,7 @@ let lightRecord = {
   primaryColor: "#006DF9",
   borderRadius: 7.0,
   borderWidth: 1.,
-  buttonBorderRadius: 4.0,
+  buttonBorderRadius: 8.0,
   buttonBorderWidth: 0.0,
   component: {
     background: "#FFFFFF",
@@ -388,7 +388,7 @@ let minimal = {
   primaryColor: "#0570de",
   borderRadius: 7.0,
   borderWidth: 0.5,
-  buttonBorderRadius: 4.0,
+  buttonBorderRadius: 8.0,
   buttonBorderWidth: 0.5,
   component: {
     background: "#ffffff",
@@ -475,7 +475,7 @@ let flatMinimal = {
   primaryColor: "#3541ff",
   borderRadius: 7.0,
   borderWidth: 0.5,
-  buttonBorderRadius: 4.0,
+  buttonBorderRadius: 8.0,
   buttonBorderWidth: 0.5,
   component: {
     background: "#ffffff",

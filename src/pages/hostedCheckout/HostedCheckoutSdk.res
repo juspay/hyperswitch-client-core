@@ -9,11 +9,11 @@ let make = () => {
   }, [setConfirmButtonDataRef])
 
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let {tabArr, elementArr} = PMListModifier.useListModifier()
+  let (tabArr, elementArr) = PMListModifier.useSheetListModifier()
 
   <View style={s({maxWidth: 450.->dp, alignSelf: #center, width: 100.->pct})}>
     <Space height=20. />
-    <WalletView elementArr />
+    <WalletView elementArr hideDivider={tabArr->Array.length === 0} />
     <CustomTabView
       hocComponentArr=tabArr loading={allApiData.sessions == Loading} setConfirmButtonDataRef
     />

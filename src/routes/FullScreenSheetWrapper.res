@@ -19,7 +19,7 @@ let make = (~children) => {
   })
   let {paymentSheetOverlay} = ThemebasedStyle.useThemeBasedStyle()
 
-  let (sheetFlex, _) = React.useState(_ => Animated.Value.create(0.))
+  let sheetFlex = AnimatedValue.useAnimatedValue(0.)
   React.useEffect0(() => {
     Animated.timing(
       sheetFlex,
@@ -32,7 +32,7 @@ let make = (~children) => {
     None
   })
 
-  let (heightPosition, _) = React.useState(_ => Animated.Value.create(0.))
+  let heightPosition = AnimatedValue.useAnimatedValue(0.)
   React.useEffect1(() => {
     if loading == LoadingContext.PaymentCancelled || loading == LoadingContext.PaymentSuccess {
       Animated.timing(
@@ -58,7 +58,12 @@ let make = (~children) => {
       alignContent: #"flex-end",
       backgroundColor: paymentSheetOverlay,
       justifyContent: #"flex-end",
-      paddingTop: (WebKit.platform === #androidWebView ? 75. : nativeProp.hyperParams.topInset->Option.getOr(75.) +. ViewportContext.defaultNavbarHeight)->dp,
+      paddingTop: (
+        WebKit.platform === #androidWebView
+          ? 75.
+          : nativeProp.hyperParams.topInset->Option.getOr(75.) +.
+              ViewportContext.defaultNavbarHeight
+      )->dp,
     })}>
     <Animated.View
       style={s({

@@ -9,7 +9,7 @@ let make = () => {
   <View style={s({flexDirection: #row})}>
     <Icon name="redirection" width=40. height=35. fill=component.color />
     <Space width=10. />
-    <View style={s({width: 90.->pct})}>
+    <View style={s({flex: 1.})}>
       <TextWrapper text=localeObject.redirectText textType=ModalText />
     </View>
   </View>

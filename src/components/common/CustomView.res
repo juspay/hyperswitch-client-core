@@ -29,7 +29,7 @@ let make = (
   //  let (locationY, setLocationY) = React.useState(_ => 0.)
 
   <View style=modalPosStyle>
-    <CustomTouchableOpacity
+    <CustomPressable
       style={s({
         flex: 1.,
         width: 100.->pct,

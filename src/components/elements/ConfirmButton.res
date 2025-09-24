@@ -12,8 +12,6 @@ let make = (
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
-  let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
-
   <>
     {errorText->Belt.Option.isSome ? <ErrorText text={errorText} /> : React.null}
     {loading
@@ -28,16 +26,12 @@ let make = (
           paymentMethod
           ?hasSomeFields
           ?paymentExperience
-          displayText={switch paymentScreenType {
-          | WALLET_MISSING_FIELDS(_, _, _) => "Submit"
-          | _ =>
-            switch nativeProp.configuration.primaryButtonLabel {
-            | Some(str) => str
-            | None =>
-              allApiData.additionalPMLData.mandateType != NORMAL
-                ? "Pay Now"
-                : localeObject.payNowButton
-            }
+          displayText={switch nativeProp.configuration.primaryButtonLabel {
+          | Some(str) => str
+          | None =>
+            allApiData.additionalPMLData.mandateType != NORMAL
+              ? "Pay Now"
+              : localeObject.payNowButton
           }}
         />}
   </>
