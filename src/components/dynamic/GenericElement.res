@@ -1,0 +1,184 @@
+open ReactNative
+open Style
+open Validation
+
+@react.component
+let make = (
+  ~fields: array<SuperpositionTypes.fieldConfig>,
+  ~createFieldValidator,
+  ~formatValue as _,
+  ~country,
+  ~setCountry,
+  ~accessible=?,
+) => {
+  let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
+
+  let getValidationRuleFromFieldType = (fieldType: SuperpositionTypes.fieldType) => {
+    switch fieldType {
+    | CardNumberTextInput => CardNumber
+    | CvcPasswordInput => CardCVC("default")
+    | DatePicker => CardExpiry
+    | EmailInput => Email
+    | PhoneInput => Phone
+    | TextInput | PasswordInput => MinLength(1)
+    | _ => MinLength(1)
+    }
+  }
+
+  let renderFieldInput = (
+    field: SuperpositionTypes.fieldConfig,
+    {input, meta}: ReactFinalForm.Field.fieldProps,
+  ) => {
+    let handleInputChange = (value: string) => {
+      let formattedValue = value //formatValue(value, field.fieldType)
+      input.onChange(formattedValue)
+    }
+    let handlePickerChange = (value: unit => option<string>) => {
+      let data = value()->Option.getOr("")
+      switch field.fieldType {
+      | CountrySelect =>
+        setCountry(data)
+        setTimeout(() => {
+          input.onChange(data)
+        }, 0)->ignore
+      | _ => input.onChange(data)
+      }
+    }
+
+    let placeholder = GetLocale.getLocalString(field.displayName)
+
+    switch field.fieldType {
+    | CardNumberTextInput
+    | CvcPasswordInput
+    | TextInput
+    | PasswordInput
+    | EmailInput
+    | PhoneInput
+    | MonthSelect
+    | YearSelect
+    | DatePicker =>
+      <>
+        <CustomInput
+          state={input.value->Option.getOr("")}
+          setState=handleInputChange
+          placeholder
+          enableCrossIcon=false
+          isValid={meta.error->Option.isNone || !meta.touched}
+          onFocus={_ => input.onFocus()}
+          onBlur={_ => input.onBlur()}
+          textColor={meta.active || meta.error->Option.isNone || !meta.touched
+            ? component.color
+            : dangerColor}
+          ?accessible
+        />
+        {switch (meta.error, meta.touched) {
+        | (Some(error), true) => <ErrorText text={Some(error)} />
+        | _ => React.null
+        }}
+      </>
+    | CountrySelect =>
+      <>
+        <CustomPicker
+          value=input.value
+          setValue=handlePickerChange
+          items={switch countryStateData {
+          | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
+            field.options->AddressUtils.getCountryData(res.countries)
+          | _ => []
+          }}
+          placeholderText=placeholder
+          isValid={meta.error->Option.isNone || !meta.touched}
+          isLoading=false
+          onFocus={_ => input.onFocus()}
+          onBlur={_ => input.onBlur()}
+          isCountryStateFields=true
+          ?accessible
+        />
+        {switch (meta.error, meta.touched) {
+        | (Some(error), true) => <ErrorText text={Some(error)} />
+        | _ => React.null
+        }}
+      </>
+    | CountryCodeSelect =>
+      <>
+        <CustomPicker
+          value={input.value}
+          setValue=handlePickerChange
+          items={switch countryStateData {
+          | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
+            AddressUtils.getPhoneCodeData(res.countries)
+          | _ => []
+          }}
+          placeholderText=placeholder
+          isValid={meta.error->Option.isNone || !meta.touched}
+          isLoading=false
+          onFocus={_ => input.onFocus()}
+          onBlur={_ => input.onBlur()}
+          isCountryStateFields=true
+          ?accessible
+        />
+        {switch (meta.error, meta.touched) {
+        | (Some(error), true) => <ErrorText text={Some(error)} />
+        | _ => React.null
+        }}
+      </>
+    | StateSelect =>
+      <>
+        <CustomPicker
+          value=input.value
+          setValue=handlePickerChange
+          items={switch countryStateData {
+          | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
+            AddressUtils.getStateData(statesAndCountryVal.states, country)
+          | _ => []
+          }}
+          placeholderText=placeholder
+          isValid={meta.error->Option.isNone || !meta.touched}
+          isLoading=false
+          onFocus={_ => input.onFocus()}
+          onBlur={_ => input.onBlur()}
+          ?accessible
+        />
+        {switch (meta.error, meta.touched) {
+        | (Some(error), true) => <ErrorText text={Some(error)} />
+        | _ => React.null
+        }}
+      </>
+    | CurrencySelect | DropdownSelect =>
+      <>
+        <CustomPicker
+          value=input.value
+          setValue=handlePickerChange
+          items={field.options->Array.map(opt => {
+            CustomPicker.label: opt,
+            value: opt,
+          })}
+          placeholderText=placeholder
+          isValid={meta.error->Option.isNone || !meta.touched}
+          isLoading=false
+          onFocus={_ => input.onFocus()}
+          onBlur={_ => input.onBlur()}
+          ?accessible
+        />
+        {switch (meta.error, meta.touched) {
+        | (Some(error), true) => <ErrorText text={Some(error)} />
+        | _ => React.null
+        }}
+      </>
+    }
+  }
+
+  let renderField = (field: SuperpositionTypes.fieldConfig) => {
+    <React.Fragment key={field.outputPath}>
+      <View style={s({marginBottom: 16.->dp})}>
+        <ReactFinalForm.Field
+          name=field.outputPath
+          validate=Some(createFieldValidator(getValidationRuleFromFieldType(field.fieldType)))>
+          {fieldProps => renderFieldInput(field, fieldProps)}
+        </ReactFinalForm.Field>
+      </View>
+    </React.Fragment>
+  }
+  {fields->Array.map(renderField)->React.array}
+}
