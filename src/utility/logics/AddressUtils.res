@@ -28,11 +28,27 @@ let getGooglePayBillingAddress = (dict, str) => {
   })
 }
 
-let getApplePayBillingAddress = (dict, str) => {
+let getApplePayBillingAddress = (dict, str, shipping: option<string>) => {
   dict
   ->Dict.get(str)
   ->Option.flatMap(JSON.Decode.object)
   ->Option.map(json => {
+    let newJson = switch shipping {
+    | Some(str) =>
+      dict
+      ->Dict.get(str)
+      ->Option.flatMap(JSON.Decode.object)
+    | None => Some(json)
+    }
+
+    let (email, phoneNumber) = switch newJson {
+    | Some(shippingJson) => (
+        getOptionString(shippingJson, "emailAddress"),
+        getOptionString(shippingJson, "phoneNumber"),
+      )
+    | None => (getOptionString(json, "emailAddress"), getOptionString(json, "phoneNumber"))
+    }
+
     let name = json->getDictFromJsonKey("name")
     let postalAddress = json->getDictFromJsonKey("postalAddress")
 
@@ -58,9 +74,9 @@ let getApplePayBillingAddress = (dict, str) => {
         zip: ?getOptionString(postalAddress, "postalCode"),
         state: ?getOptionString(postalAddress, "state"),
       }),
-      email: getOptionString(json, "emailAddress"),
+      email,
       phone: Some({
-        number: ?getOptionString(json, "phoneNumber"),
+        number: ?phoneNumber,
       }),
     }
   })

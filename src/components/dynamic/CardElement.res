@@ -77,6 +77,12 @@ let make = (
         (),
       )
 
+      let {input: cardNetworkInput, meta: _cardNetworkMeta} = ReactFinalForm.useField(
+        cardNetworkConfig.outputPath,
+        ~config={validate: createFieldValidator(Required)},
+        (),
+      )
+
       let {input: cardExpiryYearInput, meta: cardExpiryYearMeta} = ReactFinalForm.useField(
         cardExpiryYearConfig.outputPath,
         ~config={validate: createFieldValidator(Required)},
@@ -85,13 +91,7 @@ let make = (
 
       let {input: cardCvcInput, meta: cardCvcMeta} = ReactFinalForm.useField(
         cardCvcConfig.outputPath,
-        ~config={validate: createFieldValidator(Required)},
-        (),
-      )
-
-      let {input: cardNetworkInput, meta: _cardNetworkMeta} = ReactFinalForm.useField(
-        cardNetworkConfig.outputPath,
-        ~config={validate: createFieldValidator(Required)},
+        ~config={validate: createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr("")))},
         (),
       )
 
@@ -313,7 +313,7 @@ let make = (
                   textColor={(cardExpiryMonthMeta.error->Option.isNone ||
                   !cardExpiryMonthMeta.touched ||
                   cardExpiryYearMeta.error->Option.isNone ||
-                  !cardExpiryYearMeta.touched) &&
+                  !cardExpiryYearMeta.touched || cardExpiryMonthMeta.active) &&
                     (expireDate === "" || Validation.checkCardExpiry(expireDate))
                     ? component.color
                     : dangerColor}

@@ -135,6 +135,43 @@ let make = (
     [paymentMethodData.payment_method_type],
   )
 
+  React.useEffect1(() => {
+    if(formData->Dict.toArray->Array.length>0) {
+    let eligibleConnectors = switch paymentMethodData.payment_method {
+      | CARD =>
+        paymentMethodData.card_networks
+        ->Array.get(0)
+        ->Option.mapOr([], network => network.eligible_connectors)
+      | _ =>
+        paymentMethodData.payment_experience
+        ->Array.get(0)
+        ->Option.mapOr([], experience => experience.eligible_connectors)
+      }
+
+      let configParams: SuperpositionTypes.superpositionBaseContext = {
+        payment_method: paymentMethodData.payment_method_str,
+        payment_method_type: paymentMethodData.payment_method_type,
+        mandate_type: allApiData.additionalPMLData.mandateType === NORMAL
+          ? "non_mandate"
+          : "mandate",
+        collect_billing_details_from_wallet_connector: "required",
+        collect_shipping_details_from_wallet_connector: "required",
+        country,
+      }
+
+      let (requiredFields, missingRequiredFields, _) = getSuperpositionFinalFields(
+        eligibleConnectors,
+        configParams,
+        Dict.make(),
+      )
+
+      Console.log3(">>>>>>>>>>>", missingRequiredFields, country)
+
+      setWalletData(requiredFields, formData, walletDict)
+    }
+    None
+  }, [country])
+
   let confirmPayPal = var => {
     let status = handleWalletPayments(
       PAYPAL,
@@ -250,11 +287,6 @@ let make = (
       ~eventName=PAYMENT_METHOD_CHANGED,
       ~paymentExperience=paymentMethodData.payment_experience,
       (),
-    )
-
-    Console.log2(
-      "paymentMethodData.payment_method_type_wallet",
-      paymentMethodData.payment_method_type_wallet,
     )
 
     if (

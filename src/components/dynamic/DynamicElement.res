@@ -71,11 +71,9 @@ let make = (
     otherFields,
   ) = categorizedFields
 
-  let createFieldValidator = React.useMemo1(() => {
-    (validationRule: Validation.validationRule) => {
-      Validation.createFieldValidator(validationRule, ~enabledCardSchemes)
-    }
-  }, [enabledCardSchemes])
+  let createFieldValidator = (validationRule: Validation.validationRule) => {
+    Validation.createFieldValidator(validationRule, ~enabledCardSchemes)
+  }
 
   let formatValue = Validation.formatValue
 

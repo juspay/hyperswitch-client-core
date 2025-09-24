@@ -62,14 +62,14 @@ let make = (
       collect_shipping_details_from_wallet_connector: "required",
       country,
     }
-
+    
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       requiredFieldsFromPML,
     )
 
-    (missingRequiredFields, initialValues)
+    (missingRequiredFields, CommonUtils.mergeDict(initialValues, formData))
   }, (paymentMethodData.payment_method_type, country))
 
   let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
