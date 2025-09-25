@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.2...v1.8.0) (2025-09-25)
+
+
+### Features
+
+* web apple pay fix ([7c9f6ef](https://github.com/juspay/hyperswitch-client-core/commit/7c9f6ef184a63e0530ce62398f88a4255e89de1b))
+
 ## [1.7.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.1...v1.7.2) (2025-07-30)
 
 
