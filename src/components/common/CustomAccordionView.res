@@ -16,11 +16,7 @@ module SectionHeader = {
             padding: 20.->dp,
           }),
         ])}>
-        <CustomRadioButton
-          size=20.5
-          selected=isExpanded
-          color=primaryColor
-        />
+        <CustomRadioButton size=20.5 selected=isExpanded color=primaryColor />
         <Space height=5. />
         {section.title === "loading"
           ? <CustomLoader height="18" width="18" />
@@ -44,7 +40,6 @@ module MoreButton = {
       component,
       borderRadius,
       borderWidth,
-      bgColor,
     } = ThemebasedStyle.useThemeBasedStyle()
 
     <View
@@ -52,7 +47,6 @@ module MoreButton = {
       <CustomPressable
         onPress={_ => handleMoreToggle()}
         style={array([
-          bgColor,
           s({
             width: 100.->pct,
             flexDirection: #row,
@@ -65,7 +59,20 @@ module MoreButton = {
             borderRadius,
           }),
         ])}>
-        <Icon name="dropdown" width=18. height=18. fill={iconColor} />
+        <svg
+          ariaHidden=true
+          className="SVGInline-svg SVGInline--cleaned-svg SVG-svg Icon-svg Icon--chevronDown-svg Icon-color-svg Icon-color--blue-svg"
+          height="12"
+          width="12"
+          viewBox="0 0 16 16"
+          fill=iconColor
+          xmlns="http://www.w3.org/2000/svg">
+          <path
+            fillRule="evenodd"
+            clipRule="evenodd"
+            d="M.381 4.381a.875.875 0 0 1 1.238 0L8 10.763l6.381-6.382A.875.875 0 1 1 15.62 5.62l-7 7a.875.875 0 0 1-1.238 0l-7-7a.875.875 0 0 1 0-1.238Z"
+          />
+        </svg>
         <Space height=5. />
         <TextWrapper text="More" textType=CardTextBold />
       </CustomPressable>
