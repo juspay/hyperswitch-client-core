@@ -6,6 +6,7 @@ let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
   ~formatValue as _,
+  ~country,
   ~accessible=?,
 ) => {
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
@@ -21,9 +22,44 @@ let make = (
 
     let {input: phoneNumberInput, meta: phoneNumberMeta} = ReactFinalForm.useField(
       phoneNumberConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.Required)},
+      ~config={validate: createFieldValidator(Validation.Phone)},
       (),
     )
+
+    React.useEffect0(() => {
+      let (code: string, phone) = switch countryStateData {
+      | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
+        switch phoneCodeInput.value {
+        | None | Some("") =>
+          switch phoneNumberInput.value {
+          | None | Some("") => (
+              res.countries
+              ->Array.find(countryData => countryData.country_code === country)
+              ->Option.map(country => country.phone_number_code)
+              ->Option.getOr(""),
+              "",
+            )
+          | Some(phoneNumber) =>
+            switch PhoneNumberValidation.formatPhoneNumber(phoneNumber, res.countries) {
+            | ("", phone) => (
+                res.countries
+                ->Array.find(countryData => countryData.country_code === country)
+                ->Option.map(country => country.phone_number_code)
+                ->Option.getOr(""),
+                phone,
+              )
+            | (code, phone) => (code, phone)
+            }
+          }
+        | Some(code) => (code, phoneNumberInput.value->Option.getOr(""))
+        }
+      | _ => ("", "")
+      }
+      phoneCodeInput.onChange(code)
+      phoneNumberInput.onChange(phone)
+      None
+    })
+
     <React.Fragment>
       <View style={s({marginBottom: 16.->dp})}>
         <View style={s({flexDirection: #row})}>
@@ -48,6 +84,7 @@ let make = (
               onFocus={_ => phoneCodeInput.onFocus()}
               onBlur={_ => phoneCodeInput.onBlur()}
               isCountryStateFields=true
+              showValue=true
               ?accessible
             />
           }

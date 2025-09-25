@@ -10,7 +10,6 @@ let make = (
 ) => {
   let getNetworkArray = currency => {
     switch currency->Option.getOr("") {
-    | "BTC" => ["bitcoin", "bnb_smart_chain"]
     | "LTC" => ["litecoin", "bnb_smart_chain"]
     | "ETH" => ["ethereum", "bnb_smart_chain"]
     | "XRP" => ["ripple", "bnb_smart_chain"]
@@ -25,7 +24,7 @@ let make = (
     | "USDT" => ["ethereum", "tron", "bnb_smart_chain"]
     | "USDC" => ["ethereum", "tron", "bnb_smart_chain"]
     | "DAI" => ["ethereum", "bnb_smart_chain"]
-    | _ => []
+    | "BTC" | _ => ["bitcoin", "bnb_smart_chain"]
     }
   }
 
@@ -82,14 +81,21 @@ let make = (
             let handlePickerChange = (value: unit => option<string>) => {
               networkInput.onChange(value()->Option.getOr(""))
             }
+            let items = getNetworkArray(currencyInput.value)->Array.map(opt => {
+              CustomPicker.label: opt->CommonUtils.getDisplayName,
+              value: opt,
+            })
             <>
               <CustomPicker
-                value=networkInput.value
+                value={switch networkInput.value {
+                | None | Some("") => networkInput.value
+                | Some(network) =>
+                  items
+                  ->Array.find(c => c.value === network || c.label === network)
+                  ->Option.map(c => c.label)
+                }}
                 setValue=handlePickerChange
-                items={getNetworkArray(currencyInput.value)->Array.map(opt => {
-                  CustomPicker.label: opt->CommonUtils.getDisplayName,
-                  value: opt,
-                })}
+                items
                 placeholderText={GetLocale.getLocalString(networkConfig.displayName)}
                 isValid={networkMeta.error->Option.isNone ||
                 !networkMeta.touched ||

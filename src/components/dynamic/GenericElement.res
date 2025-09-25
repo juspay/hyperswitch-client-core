@@ -123,15 +123,20 @@ let make = (
         }}
       </>
     | StateSelect =>
+      let items = switch countryStateData {
+      | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
+        AddressUtils.getStateData(statesAndCountryVal.states, country)
+      | _ => []
+      }
       <>
         <CustomPicker
-          value=input.value
-          setValue=handlePickerChange
-          items={switch countryStateData {
-          | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
-            AddressUtils.getStateData(statesAndCountryVal.states, country)
-          | _ => []
+          value={switch input.value {
+          | None | Some("") => input.value
+          | Some(value) =>
+            items->Array.find(c => c.value === value || c.label === value)->Option.map(c => c.label)
           }}
+          setValue=handlePickerChange
+          items
           placeholderText=placeholder
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false

@@ -27,7 +27,7 @@ let make = (
   | FULLNAME(fields) if fields->Array.length > 0 =>
     <FullNameElement fields createFieldValidator formatValue isCardPayment ?accessible />
   | PHONE(fields) if fields->Array.length > 0 =>
-    <PhoneElement fields createFieldValidator formatValue ?accessible />
+    <PhoneElement fields createFieldValidator formatValue country ?accessible />
   | GENERIC(fields) if fields->Array.length > 0 =>
     <GenericElement fields createFieldValidator formatValue country setCountry ?accessible />
   | _ => React.null

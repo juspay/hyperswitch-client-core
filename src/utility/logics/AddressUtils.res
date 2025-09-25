@@ -168,7 +168,7 @@ let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.
 let getPhoneCodeData = (contextCountryData: CountryStateDataHookTypes.countries) => {
   contextCountryData->Array.map((item): CustomPicker.customPickerType => {
     {
-      label: item.phone_number_code, //`${item.country_name} (${item.phone_number_code})`,
+      label: `${item.country_name} (${item.phone_number_code})`,
       value: item.phone_number_code,
       icon: Utils.getCountryFlags(item.country_code),
     }
