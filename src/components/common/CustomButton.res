@@ -117,7 +117,9 @@ let make = (
         Keyboard.dismiss()
         onPress(ev)
       }}>
-      <View style={s({flex: 1., flexDirection: #row, width: 100.->pct, height: 100.->pct})} pointerEvents=#none>
+      <View
+        style={s({flex: 1., flexDirection: #row, width: 100.->pct, height: 100.->pct})}
+        pointerEvents=#none>
         {switch children {
         | Some(child) => child
         | _ =>

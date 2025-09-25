@@ -85,7 +85,8 @@ let useWallet = (
           )
         }, 2000)->ignore
       } else {
-        let _billingAddress = var->AddressUtils.getApplePayBillingAddress("billing_contact", Some("shipping_contact"))
+        let _billingAddress =
+          var->AddressUtils.getApplePayBillingAddress("billing_contact", Some("shipping_contact"))
         let _shippingAddress = var->AddressUtils.getApplePayBillingAddress("shipping_contact", None)
 
         let _walletType =

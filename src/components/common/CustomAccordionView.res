@@ -16,11 +16,7 @@ module SectionHeader = {
             padding: 20.->dp,
           }),
         ])}>
-        <CustomRadioButton
-          size=20.5
-          selected=isExpanded
-          color=primaryColor
-        />
+        <CustomRadioButton size=20.5 selected=isExpanded color=primaryColor />
         <Space height=5. />
         {section.title === "loading"
           ? <CustomLoader height="18" width="18" />

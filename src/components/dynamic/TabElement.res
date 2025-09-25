@@ -4,6 +4,8 @@ let make = (
   ~isScreenFocus,
   ~processRequest,
   ~setConfirmButtonDataRef,
+  ~isNicknameSelected,
+  ~setIsNicknameSelected,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -62,7 +64,7 @@ let make = (
       collect_shipping_details_from_wallet_connector: "required",
       country,
     }
-    
+
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
@@ -72,7 +74,6 @@ let make = (
     (missingRequiredFields, CommonUtils.mergeDict(initialValues, formData))
   }, (paymentMethodData.payment_method_type, country))
 
-  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
   let (nickname, setNickname) = React.useState(_ => None)
   let (isNicknameValid, setIsNicknameValid) = React.useState(_ => true)
 

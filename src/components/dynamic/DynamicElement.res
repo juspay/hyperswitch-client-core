@@ -1,4 +1,5 @@
 open ReactNative
+open ParentElement
 
 @react.component
 let make = (
@@ -71,8 +72,18 @@ let make = (
     otherFields,
   ) = categorizedFields
 
+  let elements = [CARD(cardFields), GENERIC(otherFields), CRYPTO(cryptoFields), EMAIL(emailFields)]
+
+  let addressElements = [
+    FULLNAME(billingNameFields),
+    GENERIC(billingOtherFields),
+    PHONE(billingPhoneFields),
+  ]
+
+  let localeObject = GetLocale.useGetLocalObj()
+
   let createFieldValidator = (validationRule: Validation.validationRule) => {
-    Validation.createFieldValidator(validationRule, ~enabledCardSchemes)
+    Validation.createFieldValidator(validationRule, ~enabledCardSchemes, ~localeObject)
   }
 
   let formatValue = Validation.formatValue
@@ -93,21 +104,27 @@ let make = (
       })
 
       <View>
-        <CardElement
-          fields=cardFields createFieldValidator formatValue enabledCardSchemes ?accessible
-        />
-        <GenericElement
-          fields=otherFields createFieldValidator formatValue country setCountry ?accessible
-        />
-        <CryptoElement fields=cryptoFields createFieldValidator formatValue ?accessible />
-        <MergedElement fields=emailFields createFieldValidator formatValue ?accessible />
+        {elements
+        ->Array.mapWithIndex((element, index) =>
+          <ParentElement
+            key={index->Int.toString}
+            element
+            createFieldValidator
+            formatValue
+            isCardPayment
+            enabledCardSchemes
+            country
+            setCountry
+            ?accessible
+          />
+        )
+        ->React.array}
         <AddressElement
-          nameFields=billingNameFields
-          billingFields=billingOtherFields
-          phoneFields=billingPhoneFields
+          addressElements
           createFieldValidator
           formatValue
           isCardPayment
+          enabledCardSchemes
           country
           setCountry
           ?accessible

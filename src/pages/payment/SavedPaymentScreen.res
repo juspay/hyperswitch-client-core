@@ -114,7 +114,12 @@ let make = (~setConfirmButtonDataRef) => {
     None
   })
 
-  let processRequest = (paymentMethodDataDict, email: option<string>) => {
+  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
+  | Some(data) => data
+  | _ => AllApiDataContext.dafaultsavePMObj
+  }
+
+  let processRequest = (paymentMethodData, paymentMethodDataDict, email: option<string>) => {
     switch paymentMethodData {
     | Some(paymentMethodData) =>
       setLoading(ProcessingPayments)
@@ -147,7 +152,7 @@ let make = (~setConfirmButtonDataRef) => {
           paymentMethodData.payment_method === CARD &&
             nativeProp.configuration.displaySavedPaymentMethodsCheckbox
         },
-        ~isGuestCustomer=true,
+        ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
         ~email?,
         ~screen_height=viewPortContants.screenHeight,
         ~screen_width=viewPortContants.screenWidth,
@@ -170,11 +175,12 @@ let make = (~setConfirmButtonDataRef) => {
     }
   }
 
-  let handlePress = (walletDict, formData, initialValues) => {
+  let handlePress = (paymentMethodData, walletDict, formData, initialValues) => {
     if isFormValid || requiredFields->Array.length === 0 {
       let walletDict = [("payment_method_data", walletDict->Js.Json.object_)]->Dict.fromArray
       setLoading(FillingDetails)
       processRequest(
+        paymentMethodData,
         CommonUtils.mergeDict(walletDict, CommonUtils.mergeDict(initialValues, formData)),
         formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
       )
@@ -237,16 +243,16 @@ let make = (~setConfirmButtonDataRef) => {
       country,
     }
 
-    let (requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+    let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       requiredFieldsFromSource,
     )
 
     if missingRequiredFields->Array.length === 0 {
-      handlePress(walletDict, Dict.make(), initialValues)
+      handlePress(Some(paymentMethodData), walletDict, Dict.make(), initialValues)
     } else {
-      setWalletData(requiredFields, initialValues, walletDict)
+      setWalletData(missingRequiredFields, initialValues, walletDict)
     }
   }
 
@@ -472,7 +478,7 @@ let make = (~setConfirmButtonDataRef) => {
       setFormMethods
       country
       setCountry
-      handlePress={_ => handlePress(walletDict, formData, initialValues)}
+      handlePress={_ => handlePress(paymentMethodData, walletDict, formData, initialValues)}
       showInSheet=true
     />
   </>

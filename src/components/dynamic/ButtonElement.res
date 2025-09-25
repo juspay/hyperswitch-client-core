@@ -24,18 +24,20 @@ let make = (
   let getSuperpositionFinalFields = ConfigurationService.useConfigurationService()
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
 
-  let ((requiredFields, initialValues, walletDict), setWalletData) = React.useState(_ => (
-    [],
-    Dict.make(),
-    Dict.make(),
-  ))
+  let (
+    (requiredFields, initialValues, walletDict, requiredFieldsFromSource),
+    setWalletData,
+  ) = React.useState(_ => ([], Dict.make(), Dict.make(), Dict.make()))
 
   let (country, setCountry) = React.useState(() => nativeProp.hyperParams.country)
   let setCountry = React.useCallback1(c => setCountry(_ => c), [setCountry])
 
-  let setWalletData = React.useCallback1((requiredFields, initialValues, walletDict) => {
-    setWalletData(_ => (requiredFields, initialValues, walletDict))
-  }, [setWalletData])
+  let setWalletData = React.useCallback1(
+    (requiredFields, initialValues, walletDict, requiredFieldsFromSource) => {
+      setWalletData(_ => (requiredFields, initialValues, walletDict, requiredFieldsFromSource))
+    },
+    [setWalletData],
+  )
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
   let (isFormValid, setIsFormValid) = React.useState(_ => false)
@@ -120,7 +122,7 @@ let make = (
         country,
       }
 
-      let (requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+      let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
         eligibleConnectors,
         configParams,
         requiredFieldsFromSource,
@@ -129,15 +131,15 @@ let make = (
       if missingRequiredFields->Array.length === 0 {
         handlePress(walletDict, Dict.make(), initialValues)
       } else {
-        setWalletData(requiredFields, initialValues, walletDict)
+        setWalletData(missingRequiredFields, initialValues, walletDict, requiredFieldsFromSource)
       }
     },
     [paymentMethodData.payment_method_type],
   )
 
   React.useEffect1(() => {
-    if(formData->Dict.toArray->Array.length>0) {
-    let eligibleConnectors = switch paymentMethodData.payment_method {
+    if formData->Dict.toArray->Array.length > 0 {
+      let eligibleConnectors = switch paymentMethodData.payment_method {
       | CARD =>
         paymentMethodData.card_networks
         ->Array.get(0)
@@ -159,15 +161,13 @@ let make = (
         country,
       }
 
-      let (requiredFields, missingRequiredFields, _) = getSuperpositionFinalFields(
+      let (_requiredFields, missingRequiredFields, _) = getSuperpositionFinalFields(
         eligibleConnectors,
         configParams,
-        Dict.make(),
+        requiredFieldsFromSource,
       )
 
-      Console.log3(">>>>>>>>>>>", missingRequiredFields, country)
-
-      setWalletData(requiredFields, formData, walletDict)
+      setWalletData(missingRequiredFields, formData, walletDict, requiredFieldsFromSource)
     }
     None
   }, [country])

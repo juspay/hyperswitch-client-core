@@ -168,7 +168,11 @@ let applePayItemToObjMapper = dict => {
   paymentMethod: dict->Dict.get("payment_method")->Option.getOr(JSON.Encode.null),
   transactionIdentifier: dict->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null),
   email: ?getOptionString(dict, "email"),
-  billingContact: ?AddressUtils.getApplePayBillingAddress(dict, "billing_contact", Some("shipping_contact")),
+  billingContact: ?AddressUtils.getApplePayBillingAddress(
+    dict,
+    "billing_contact",
+    Some("shipping_contact"),
+  ),
   shippingAddress: ?AddressUtils.getApplePayBillingAddress(dict, "shipping_contact", None),
 }
 

@@ -13,12 +13,12 @@ let make = (
   | (Some(firstNameConfig), Some(lastNameConfig)) =>
     let {input: firstNameInput, meta: firstNameMeta} = ReactFinalForm.useField(
       firstNameConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.FullName)},
+      ~config={validate: createFieldValidator(Validation.FirstName)},
       (),
     )
     let {input: lastNameInput, meta: lastNameMeta} = ReactFinalForm.useField(
       lastNameConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.FullName)},
+      ~config={validate: createFieldValidator(Validation.LastName)},
       (),
     )
     <React.Fragment>
@@ -58,31 +58,26 @@ let make = (
               placeholder={isCardPayment ? "Card Holder Name" : "Full Name"}
               enableCrossIcon=false
               isValid={firstNameMeta.error->Option.isNone ||
-              !firstNameMeta.touched ||
+              !lastNameMeta.touched ||
+              lastNameMeta.active ||
               lastNameMeta.error->Option.isNone}
               onFocus={_ => {
-                firstNameInput.onFocus()
                 lastNameInput.onFocus()
               }}
               onBlur={_ => {
-                firstNameInput.onBlur()
                 lastNameInput.onBlur()
               }}
-              textColor={firstNameMeta.active ||
-              firstNameMeta.error->Option.isNone ||
-              !firstNameMeta.touched ||
-              lastNameMeta.active ||
-              lastNameMeta.error->Option.isNone ||
-              !lastNameMeta.touched
+              textColor={firstNameMeta.error->Option.isNone &&
+                (lastNameMeta.active || lastNameMeta.error->Option.isNone || !lastNameMeta.touched)
                 ? component.color
                 : dangerColor}
               ?accessible
             />
-            {switch (firstNameMeta.error, firstNameMeta.touched) {
-            | (Some(error), true) => <ErrorText text={Some(error)} />
+            {switch (firstNameMeta.error, lastNameMeta.touched, lastNameMeta.active) {
+            | (Some(error), true, false) => <ErrorText text={Some(error)} />
             | _ =>
-              switch (lastNameMeta.error, lastNameMeta.touched) {
-              | (Some(error), true) => <ErrorText text={Some(error)} />
+              switch (lastNameMeta.error, lastNameMeta.touched, lastNameMeta.active) {
+              | (Some(error), true, false) => <ErrorText text={Some(error)} />
               | _ => React.null
               }
             }}

@@ -50,10 +50,7 @@ let make = (
       Some(cardNetworkConfig),
     ) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-
-      // let (cardNumber, setCardNumber) = React.useState(() => "")
       let (expireDate, setExpireDate) = React.useState(() => "")
-      // let (cvv, setCvv) = React.useState(() => "")
 
       let {component, dangerColor, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
       let localeObject = GetLocale.useGetLocalObj()
@@ -71,21 +68,21 @@ let make = (
         (),
       )
 
-      let {input: cardExpiryMonthInput, meta: cardExpiryMonthMeta} = ReactFinalForm.useField(
+      let {input: cardExpiryMonthInput, meta: _cardExpiryMonthMeta} = ReactFinalForm.useField(
         cardExpiryMonthConfig.outputPath,
-        ~config={validate: createFieldValidator(Required)},
-        (),
-      )
-
-      let {input: cardNetworkInput, meta: _cardNetworkMeta} = ReactFinalForm.useField(
-        cardNetworkConfig.outputPath,
-        ~config={validate: createFieldValidator(Required)},
+        ~config={validate: createFieldValidator(CardExpiry(expireDate))},
         (),
       )
 
       let {input: cardExpiryYearInput, meta: cardExpiryYearMeta} = ReactFinalForm.useField(
         cardExpiryYearConfig.outputPath,
-        ~config={validate: createFieldValidator(Required)},
+        ~config={validate: createFieldValidator(CardExpiry(expireDate))},
+        (),
+      )
+
+      let {input: cardNetworkInput, meta: cardNetworkMeta} = ReactFinalForm.useField(
+        cardNetworkConfig.outputPath,
+        ~config={validate: createFieldValidator(CardNetwork(enabledCardSchemes))},
         (),
       )
 
@@ -95,38 +92,29 @@ let make = (
         (),
       )
 
-      // let (previousCardBrand, setPreviousCardBrand) = React.useState(() => "")
-
       let (
         (eligibleCardSchemes, showCardSchemeDropDown),
         setCardSchemeVariables,
       ) = React.useState(_ => ([], false))
-      // let (currentCardBrand, setCurrentCardCrand) = React.useState(_ => (""))
-      // let setCurrentCardCrand = React.useCallback1((cardBrand) => {setCurrentCardCrand(_=>cardBrand)}, [setCurrentCardCrand])
 
       let onChangeCardNumber = (
         text,
         expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
       ) => {
         let matchedCardSchemes = text->Validation.clearSpaces->Validation.getAllMatchedCardSchemes
-        //getFirstValidCardScheme(~cardNumber=text, ~enabledCardSchemes)
-        let eligibleCardSchemes = Validation.getEligibleCoBadgedCardSchemes(
-          ~matchedCardSchemes,
-          ~enabledCardSchemes,
-        )
 
-        let isCardCoBadged = eligibleCardSchemes->Array.length > 1
+        let isCardCoBadged = matchedCardSchemes->Array.length > 1
         let showCardSchemeDropDown =
           isCardCoBadged && text->Validation.clearSpaces->String.length >= 16
 
-        let currentCardBrand = eligibleCardSchemes->Array.get(0)->Option.getOr("")
+        let currentCardBrand = matchedCardSchemes->Array.get(0)->Option.getOr("")
         let num = formatCardNumber(text, cardType(currentCardBrand))
 
-        setCardSchemeVariables(_ => (eligibleCardSchemes, showCardSchemeDropDown))
+        setCardSchemeVariables(_ => (matchedCardSchemes, showCardSchemeDropDown))
 
         if (
           currentCardBrand !== cardNetworkInput.value->Option.getOr("") &&
-            eligibleCardSchemes->Array.find(v => v === currentCardBrand)->Option.isNone
+            matchedCardSchemes->Array.find(v => v === currentCardBrand)->Option.isNone
         ) {
           cardExpiryMonthInput.onChange("")
           cardExpiryYearInput.onChange("")
@@ -226,7 +214,9 @@ let make = (
                 setState={text => onChangeCardNumber(text, expireRef)}
                 placeholder=nativeProp.configuration.placeholder.cardNumber
                 keyboardType=#"number-pad"
-                isValid={cardNumberMeta.error->Option.isNone || !cardNumberMeta.touched}
+                isValid={cardNumberMeta.error->Option.isNone ||
+                !cardNumberMeta.touched ||
+                cardNumberMeta.active}
                 maxLength=Some(23)
                 borderTopLeftRadius=borderRadius
                 borderTopRightRadius=borderRadius
@@ -296,11 +286,10 @@ let make = (
                   placeholder=nativeProp.configuration.placeholder.expiryDate
                   keyboardType=#"number-pad"
                   enableCrossIcon=false
-                  isValid={(cardExpiryMonthMeta.error->Option.isNone ||
-                  !cardExpiryMonthMeta.touched ||
-                  cardExpiryYearMeta.error->Option.isNone ||
-                  !cardExpiryYearMeta.touched) &&
-                    (expireDate === "" || Validation.checkCardExpiry(expireDate))}
+                  isValid={cardExpiryYearMeta.error->Option.isNone ||
+                  !cardExpiryYearMeta.touched ||
+                  cardExpiryYearMeta.active ||
+                  checkCardExpiry(expireDate)}
                   maxLength=Some(7)
                   borderTopWidth=0.25
                   borderRightWidth=borderWidth
@@ -310,20 +299,17 @@ let make = (
                   borderBottomLeftRadius=borderRadius
                   borderBottomWidth=borderWidth
                   borderLeftWidth=borderWidth
-                  textColor={(cardExpiryMonthMeta.error->Option.isNone ||
-                  !cardExpiryMonthMeta.touched ||
-                  cardExpiryYearMeta.error->Option.isNone ||
-                  !cardExpiryYearMeta.touched || cardExpiryMonthMeta.active) &&
-                    (expireDate === "" || Validation.checkCardExpiry(expireDate))
+                  textColor={cardExpiryYearMeta.error->Option.isNone ||
+                  !cardExpiryYearMeta.touched ||
+                  cardExpiryYearMeta.active ||
+                  checkCardExpiry(expireDate)
                     ? component.color
                     : dangerColor}
                   onFocus={() => {
-                    cardExpiryMonthInput.onFocus()
                     cardExpiryYearInput.onFocus()
                     onChangeCardExpire(expireDate, nullRef)
                   }}
                   onBlur={() => {
-                    cardExpiryMonthInput.onBlur()
                     cardExpiryYearInput.onBlur()
                   }}
                   onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
@@ -352,7 +338,9 @@ let make = (
                   borderRightWidth=borderWidth
                   secureTextEntry=true
                   state={cardCvcInput.value->Option.getOr("")}
-                  isValid={cardCvcMeta.error->Option.isNone || !cardCvcMeta.touched}
+                  isValid={cardCvcMeta.error->Option.isNone ||
+                  !cardCvcMeta.touched ||
+                  cardCvcMeta.active}
                   maxLength=Some(4)
                   setState={text => onChangeCvv(text, cvvRef)}
                   placeholder=nativeProp.configuration.placeholder.cvv
@@ -365,9 +353,9 @@ let make = (
                   onBlur={() => {
                     cardCvcInput.onBlur()
                   }}
-                  textColor={{
-                    cardCvcMeta.error->Option.isNone || !cardCvcMeta.touched || cardCvcMeta.active
-                  }
+                  textColor={cardCvcMeta.error->Option.isNone ||
+                  !cardCvcMeta.touched ||
+                  cardCvcMeta.active
                     ? component.color
                     : dangerColor}
                   iconRight=CustomIcon({
@@ -398,13 +386,17 @@ let make = (
           {switch (cardNumberMeta.error, cardNumberMeta.touched) {
           | (Some(error), true) => <ErrorText text={Some(error)} />
           | _ =>
-            switch (cardExpiryMonthMeta.error, cardExpiryMonthMeta.touched) {
-            | (Some(error), true) => <ErrorText text={Some(error)} />
+            switch (
+              cardExpiryYearMeta.error,
+              cardExpiryYearMeta.touched,
+              checkCardExpiry(expireDate),
+            ) {
+            | (Some(error), true, false) => <ErrorText text={Some(error)} />
             | _ =>
-              switch (cardExpiryYearMeta.error, cardExpiryYearMeta.touched) {
-              | (Some(error), true) => <ErrorText text={Some(error)} />
+              switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
+              | (Some(error), true, false) => <ErrorText text={Some(error)} />
               | _ =>
-                switch (cardCvcMeta.error, cardCvcMeta.touched) {
+                switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
                 | (Some(error), true) => <ErrorText text={Some(error)} />
                 | _ => React.null
                 }

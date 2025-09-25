@@ -1,24 +1,31 @@
 @react.component
 let make = (
-  ~nameFields,
-  ~billingFields,
-  ~phoneFields,
+  ~addressElements,
   ~otherFields=None,
   ~createFieldValidator,
   ~formatValue,
   ~isCardPayment,
+  ~enabledCardSchemes,
   ~country,
   ~setCountry,
   ~accessible=?,
 ) => {
   <>
-    <FullNameElement
-      fields={nameFields} createFieldValidator formatValue isCardPayment ?accessible
-    />
-    <GenericElement
-      fields=billingFields createFieldValidator formatValue country setCountry ?accessible
-    />
-    <PhoneElement fields={phoneFields} createFieldValidator formatValue ?accessible />
+    {addressElements
+    ->Array.mapWithIndex((element, index) =>
+      <ParentElement
+        key={index->Int.toString}
+        element
+        createFieldValidator
+        formatValue
+        isCardPayment
+        enabledCardSchemes
+        country
+        setCountry
+        ?accessible
+      />
+    )
+    ->React.array}
     {switch otherFields {
     | Some(fields) =>
       <GenericElement fields createFieldValidator formatValue country setCountry ?accessible />

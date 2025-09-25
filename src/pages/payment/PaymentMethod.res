@@ -14,6 +14,12 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
+
+  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
+  | Some(data) => data
+  | _ => AllApiDataContext.dafaultsavePMObj
+  }
 
   let processRequest = (paymentMethodDataDict, email: option<string>) => {
     setLoading(ProcessingPayments)
@@ -46,7 +52,8 @@ let make = (
         paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=true,
+      ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
+      ~isNicknameSelected,
       ~email?,
       ~screen_height=viewPortContants.screenHeight,
       ~screen_width=viewPortContants.screenWidth,
@@ -69,7 +76,15 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     {switch methodType {
     | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
-    | TAB => <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonDataRef />
+    | TAB =>
+      <TabElement
+        paymentMethodData
+        processRequest
+        isScreenFocus
+        setConfirmButtonDataRef
+        isNicknameSelected
+        setIsNicknameSelected
+      />
     | _ => React.null
     }}
   </ErrorBoundary>

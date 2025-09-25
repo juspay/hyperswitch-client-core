@@ -41,7 +41,9 @@ let make = (
               | _ => []
               }}
               placeholderText=phoneCodeConfig.displayName
-              isValid={phoneCodeMeta.error->Option.isNone || !phoneCodeMeta.touched}
+              isValid={phoneCodeMeta.error->Option.isNone ||
+              !phoneCodeMeta.touched ||
+              phoneCodeMeta.active}
               isLoading=false
               onFocus={_ => phoneCodeInput.onFocus()}
               onBlur={_ => phoneCodeInput.onBlur()}
@@ -61,27 +63,29 @@ let make = (
               setState=handleInputChange
               placeholder={GetLocale.getLocalString(phoneNumberConfig.displayName)}
               enableCrossIcon=false
-              isValid={phoneNumberMeta.error->Option.isNone || !phoneNumberMeta.touched}
+              isValid={phoneNumberMeta.error->Option.isNone ||
+              !phoneNumberMeta.touched ||
+              phoneNumberMeta.active}
               onFocus={_ => {
                 phoneNumberInput.onFocus()
               }}
               onBlur={_ => {
                 phoneNumberInput.onBlur()
               }}
-              textColor={phoneNumberMeta.active ||
-              phoneNumberMeta.error->Option.isNone ||
-              !phoneNumberMeta.touched
+              textColor={phoneNumberMeta.error->Option.isNone ||
+              !phoneNumberMeta.touched ||
+              phoneNumberMeta.active
                 ? component.color
                 : dangerColor}
               ?accessible
             />
           }
         </View>
-        {switch (phoneCodeMeta.error, phoneCodeMeta.touched) {
-        | (Some(error), true) => <ErrorText text={Some(error)} />
+        {switch (phoneCodeMeta.error, phoneCodeMeta.touched, phoneCodeMeta.active) {
+        | (Some(error), true, false) => <ErrorText text={Some(error)} />
         | _ =>
-          switch (phoneNumberMeta.error, phoneNumberMeta.touched) {
-          | (Some(error), true) => <ErrorText text={Some(error)} />
+          switch (phoneNumberMeta.error, phoneNumberMeta.touched, phoneNumberMeta.active) {
+          | (Some(error), true, false) => <ErrorText text={Some(error)} />
           | _ => React.null
           }
         }}

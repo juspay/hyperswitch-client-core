@@ -59,15 +59,17 @@ let make = (
                   value: opt,
                 })}
                 placeholderText={GetLocale.getLocalString(currencyConfig.displayName)}
-                isValid={currencyMeta.error->Option.isNone || !currencyMeta.touched}
+                isValid={currencyMeta.error->Option.isNone ||
+                !currencyMeta.touched ||
+                currencyMeta.active}
                 isLoading=false
                 onFocus={_ => currencyInput.onFocus()}
                 onBlur={_ => currencyInput.onBlur()}
                 isCountryStateFields=true
                 ?accessible
               />
-              {switch (currencyMeta.error, currencyMeta.touched) {
-              | (Some(error), true) => <ErrorText text={Some(error)} />
+              {switch (currencyMeta.error, currencyMeta.touched, currencyMeta.active) {
+              | (Some(error), true, false) => <ErrorText text={Some(error)} />
               | _ => React.null
               }}
             </>
@@ -89,15 +91,17 @@ let make = (
                   value: opt,
                 })}
                 placeholderText={GetLocale.getLocalString(networkConfig.displayName)}
-                isValid={networkMeta.error->Option.isNone || !networkMeta.touched}
+                isValid={networkMeta.error->Option.isNone ||
+                !networkMeta.touched ||
+                networkMeta.active}
                 isLoading=false
                 onFocus={_ => networkInput.onFocus()}
                 onBlur={_ => networkInput.onBlur()}
                 isCountryStateFields=true
                 ?accessible
               />
-              {switch (networkMeta.error, networkMeta.touched) {
-              | (Some(error), true) => <ErrorText text={Some(error)} />
+              {switch (networkMeta.error, networkMeta.touched, networkMeta.active) {
+              | (Some(error), true, false) => <ErrorText text={Some(error)} />
               | _ => React.null
               }}
             </>

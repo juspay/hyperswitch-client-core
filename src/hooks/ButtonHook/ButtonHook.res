@@ -78,8 +78,13 @@ let useProcessPayButtonResult = () => {
             let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
             let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
-            let billingAddress = var->AddressUtils.getApplePayBillingAddress("billing_contact", Some("shipping_contact"))
-            let shippingAddress = var->AddressUtils.getApplePayBillingAddress("shipping_contact", None)
+            let billingAddress =
+              var->AddressUtils.getApplePayBillingAddress(
+                "billing_contact",
+                Some("shipping_contact"),
+              )
+            let shippingAddress =
+              var->AddressUtils.getApplePayBillingAddress("shipping_contact", None)
 
             let paymentData =
               [

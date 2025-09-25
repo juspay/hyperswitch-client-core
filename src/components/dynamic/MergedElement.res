@@ -37,20 +37,20 @@ let make = (
               setState=handleInputChange
               placeholder={GetLocale.getLocalString("Email")}
               enableCrossIcon=false
-              isValid={meta.error->Option.isNone || !meta.touched}
+              isValid={meta.error->Option.isNone || !meta.touched || meta.active}
               onFocus={_ => {
                 input.onFocus()
               }}
               onBlur={_ => {
                 input.onBlur()
               }}
-              textColor={meta.active || meta.error->Option.isNone || !meta.touched
+              textColor={meta.error->Option.isNone || !meta.touched || meta.active
                 ? component.color
                 : dangerColor}
               ?accessible
             />
-            {switch (meta.error, meta.touched) {
-            | (Some(error), true) => <ErrorText text={Some(error)} />
+            {switch (meta.error, meta.touched, meta.active) {
+            | (Some(error), true, false) => <ErrorText text={Some(error)} />
             | _ => React.null
             }}
           </>

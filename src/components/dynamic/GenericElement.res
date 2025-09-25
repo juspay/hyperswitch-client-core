@@ -18,7 +18,6 @@ let make = (
     switch fieldType {
     | CardNumberTextInput => CardNumber
     | CvcPasswordInput => CardCVC("default")
-    | DatePicker => CardExpiry
     | EmailInput => Email
     | PhoneInput => Phone
     | TextInput | PasswordInput => MinLength(1)
@@ -64,16 +63,16 @@ let make = (
           setState=handleInputChange
           placeholder
           enableCrossIcon=false
-          isValid={meta.error->Option.isNone || !meta.touched}
+          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
-          textColor={meta.active || meta.error->Option.isNone || !meta.touched
+          textColor={meta.error->Option.isNone || !meta.touched || meta.active
             ? component.color
             : dangerColor}
           ?accessible
         />
-        {switch (meta.error, meta.touched) {
-        | (Some(error), true) => <ErrorText text={Some(error)} />
+        {switch (meta.error, meta.touched, meta.active) {
+        | (Some(error), true, false) => <ErrorText text={Some(error)} />
         | _ => React.null
         }}
       </>
@@ -88,15 +87,15 @@ let make = (
           | _ => []
           }}
           placeholderText=placeholder
-          isValid={meta.error->Option.isNone || !meta.touched}
+          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
           isCountryStateFields=true
           ?accessible
         />
-        {switch (meta.error, meta.touched) {
-        | (Some(error), true) => <ErrorText text={Some(error)} />
+        {switch (meta.error, meta.touched, meta.active) {
+        | (Some(error), true, false) => <ErrorText text={Some(error)} />
         | _ => React.null
         }}
       </>
@@ -111,15 +110,15 @@ let make = (
           | _ => []
           }}
           placeholderText=placeholder
-          isValid={meta.error->Option.isNone || !meta.touched}
+          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
           isCountryStateFields=true
           ?accessible
         />
-        {switch (meta.error, meta.touched) {
-        | (Some(error), true) => <ErrorText text={Some(error)} />
+        {switch (meta.error, meta.touched, meta.active) {
+        | (Some(error), true, false) => <ErrorText text={Some(error)} />
         | _ => React.null
         }}
       </>
@@ -134,14 +133,14 @@ let make = (
           | _ => []
           }}
           placeholderText=placeholder
-          isValid={meta.error->Option.isNone || !meta.touched}
+          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
           ?accessible
         />
-        {switch (meta.error, meta.touched) {
-        | (Some(error), true) => <ErrorText text={Some(error)} />
+        {switch (meta.error, meta.touched, meta.active) {
+        | (Some(error), true, false) => <ErrorText text={Some(error)} />
         | _ => React.null
         }}
       </>
@@ -155,14 +154,14 @@ let make = (
             value: opt,
           })}
           placeholderText=placeholder
-          isValid={meta.error->Option.isNone || !meta.touched}
+          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
           ?accessible
         />
-        {switch (meta.error, meta.touched) {
-        | (Some(error), true) => <ErrorText text={Some(error)} />
+        {switch (meta.error, meta.touched, meta.active) {
+        | (Some(error), true, false) => <ErrorText text={Some(error)} />
         | _ => React.null
         }}
       </>
