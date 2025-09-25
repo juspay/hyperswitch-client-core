@@ -188,6 +188,12 @@ let make = (
         let isCardValid = cardValid(cardNumber, cardBrand)
         let expireDate = formatCardExpiryNumber(expiry)
         let isExpiryValid = checkCardExpiry(expireDate)
+        cardNumberInput.onChange(cardNumber)
+        cardNetworkInput.onChange(cardBrand)
+        let (month, year) = expireDate->splitExpiryDates
+        cardExpiryMonthInput.onChange(month)
+        cardExpiryYearInput.onChange(year)
+        setExpireDate(_ => expireDate)
         switch (isCardValid, isExpiryValid) {
         | (true, true) =>
           switch cvvRef.current->Nullable.toOption {
@@ -252,7 +258,6 @@ let make = (
                 )
                 onFocus={() => {
                   cardNumberInput.onFocus()
-                  onChangeCardNumber({cardNumberInput.value->Option.getOr("")}, nullRef)
                 }}
                 onBlur={() => {
                   cardNumberInput.onBlur()
@@ -286,10 +291,10 @@ let make = (
                   placeholder=nativeProp.configuration.placeholder.expiryDate
                   keyboardType=#"number-pad"
                   enableCrossIcon=false
-                  isValid={cardExpiryYearMeta.error->Option.isNone ||
+                  isValid={(cardExpiryYearMeta.error->Option.isNone ||
                   !cardExpiryYearMeta.touched ||
-                  cardExpiryYearMeta.active ||
-                  checkCardExpiry(expireDate)}
+                  cardExpiryYearMeta.active) &&
+                  expireDate->String.length < 7 || (expireDate->String.length === 7 && checkCardExpiry(expireDate))}
                   maxLength=Some(7)
                   borderTopWidth=0.25
                   borderRightWidth=borderWidth
@@ -299,15 +304,14 @@ let make = (
                   borderBottomLeftRadius=borderRadius
                   borderBottomWidth=borderWidth
                   borderLeftWidth=borderWidth
-                  textColor={cardExpiryYearMeta.error->Option.isNone ||
+                  textColor={(cardExpiryYearMeta.error->Option.isNone ||
                   !cardExpiryYearMeta.touched ||
-                  cardExpiryYearMeta.active ||
-                  checkCardExpiry(expireDate)
+                  cardExpiryYearMeta.active) &&
+                  expireDate->String.length < 7 || (expireDate->String.length === 7 && checkCardExpiry(expireDate))
                     ? component.color
                     : dangerColor}
                   onFocus={() => {
                     cardExpiryYearInput.onFocus()
-                    onChangeCardExpire(expireDate, nullRef)
                   }}
                   onBlur={() => {
                     cardExpiryYearInput.onBlur()
@@ -342,13 +346,12 @@ let make = (
                   !cardCvcMeta.touched ||
                   cardCvcMeta.active}
                   maxLength=Some(4)
-                  setState={text => onChangeCvv(text, cvvRef)}
+                  setState={text => onChangeCvv(text, nullRef)}
                   placeholder=nativeProp.configuration.placeholder.cvv
                   keyboardType=#"number-pad"
                   enableCrossIcon=false
                   onFocus={() => {
                     cardCvcInput.onFocus()
-                    onChangeCvv(cardCvcInput.value->Option.getOr(""), nullRef)
                   }}
                   onBlur={() => {
                     cardCvcInput.onBlur()
@@ -388,10 +391,9 @@ let make = (
           | _ =>
             switch (
               cardExpiryYearMeta.error,
-              cardExpiryYearMeta.touched,
-              checkCardExpiry(expireDate),
+              expireDate->String.length < 7 || (expireDate->String.length === 7 && checkCardExpiry(expireDate)),
             ) {
-            | (Some(error), true, false) => <ErrorText text={Some(error)} />
+            | (Some(error), false) => <ErrorText text={Some(error)} />
             | _ =>
               switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
               | (Some(error), true, false) => <ErrorText text={Some(error)} />

@@ -20,8 +20,8 @@ let make = (
     | CvcPasswordInput => CardCVC("default")
     | EmailInput => Email
     | PhoneInput => Phone
-    | TextInput | PasswordInput => MinLength(1)
-    | _ => MinLength(1)
+    // | TextInput | PasswordInput => MinLength(1)
+    | _ => Required
     }
   }
 

@@ -1,5 +1,5 @@
 @react.component
-let make = () => {
+let make = (~isSheet=true) => {
   let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
@@ -13,7 +13,7 @@ let make = () => {
   let isDefaultView = nativeProp.configuration.defaultView
   let mandateType = allApiData.additionalPMLData.mandateType
 
-  <FullScreenSheetWrapper>
+  <FullScreenSheetWrapper isSheet>
     {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
     | (_, None, _)
     | (Loading, _, _) =>

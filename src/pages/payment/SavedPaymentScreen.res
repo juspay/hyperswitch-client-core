@@ -347,7 +347,7 @@ let make = (~setConfirmButtonDataRef) => {
   let confirmApplePay = (var: dict<JSON.t>) => {
     let paymentMethodData =
       allApiData.paymentMethodList->Array.find(item =>
-        item.payment_method_type_wallet === SAMSUNG_PAY
+        item.payment_method_type_wallet === APPLE_PAY
       )
 
     setPaymentMethodData(_ => paymentMethodData)

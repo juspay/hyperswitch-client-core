@@ -168,6 +168,7 @@ let make = (
             : <FlatList
                 ref={pickerRef->ReactNative.Ref.value}
                 keyboardShouldPersistTaps={#handled}
+                keyboardDismissMode={#"on-drag"}
                 data={items->Array.filter(x =>
                   x.label
                   ->String.toLowerCase

@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~children) => {
+let make = (~children, ~isSheet=true) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -34,7 +34,7 @@ let make = (~children) => {
 
   let heightPosition = AnimatedValue.useAnimatedValue(0.)
   React.useEffect1(() => {
-    if loading == LoadingContext.PaymentCancelled || loading == LoadingContext.PaymentSuccess {
+    if isSheet && (loading == LoadingContext.PaymentCancelled || loading == LoadingContext.PaymentSuccess) {
       Animated.timing(
         heightPosition,
         {
@@ -53,27 +53,38 @@ let make = (~children) => {
   }, [loading])
 
   <View
-    style={s({
-      flex: 1.,
-      alignContent: #"flex-end",
-      backgroundColor: paymentSheetOverlay,
-      justifyContent: #"flex-end",
-      paddingTop: (
-        WebKit.platform === #androidWebView
-          ? 75.
-          : nativeProp.hyperParams.topInset->Option.getOr(75.) +.
-              ViewportContext.defaultNavbarHeight
-      )->dp,
-    })}>
+    style={isSheet
+      ? s({
+          flex: 1.,
+          alignContent: #"flex-end",
+          backgroundColor: paymentSheetOverlay,
+          justifyContent: #"flex-end",
+          paddingTop: (
+            WebKit.platform === #androidWebView
+              ? 75.
+              : nativeProp.hyperParams.topInset->Option.getOr(75.) +.
+                  ViewportContext.defaultNavbarHeight
+          )->dp,
+        })
+      : s({
+          flex: 1.,
+          alignContent: #center,
+          backgroundColor: "transparent",
+          justifyContent: #center,
+        })}>
     <Animated.View
-      style={s({
-        transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
-        flexGrow: {sheetFlex->Animated.StyleProp.float},
-        maxHeight: 100.->pct,
-      })}>
-      <CustomView onDismiss=onModalClose>
-        <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
-      </CustomView>
+      style={isSheet
+        ? s({
+            transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
+            flexGrow: {sheetFlex->Animated.StyleProp.float},
+            maxHeight: 100.->pct,
+          })
+        : s({maxHeight: 100.->pct})}>
+      {isSheet
+        ? <CustomView onDismiss=onModalClose>
+            <CustomView.Wrapper onModalClose> {children} </CustomView.Wrapper>
+          </CustomView>
+        : <CustomView.Wrapper onModalClose isSheet> {children} </CustomView.Wrapper>}
     </Animated.View>
     <LoadingOverlay />
   </View>
