@@ -82,7 +82,7 @@ module Wrapper = {
       keyboardShouldPersistTaps={#handled}
       showsVerticalScrollIndicator=false
       style={array([s({flexGrow: 1., width}), bgColor])}>
-      {isSheet ? <ModalHeader onModalClose />: React.null}
+      {isSheet ? <ModalHeader onModalClose /> : React.null}
       children
     </ScrollView>
   }

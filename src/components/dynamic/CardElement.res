@@ -291,10 +291,10 @@ let make = (
                   placeholder=nativeProp.configuration.placeholder.expiryDate
                   keyboardType=#"number-pad"
                   enableCrossIcon=false
-                  isValid={(cardExpiryYearMeta.error->Option.isNone ||
+                  isValid={((cardExpiryYearMeta.error->Option.isNone ||
                   !cardExpiryYearMeta.touched ||
-                  cardExpiryYearMeta.active) &&
-                  expireDate->String.length < 7 || (expireDate->String.length === 7 && checkCardExpiry(expireDate))}
+                  cardExpiryYearMeta.active) && expireDate->String.length < 7) ||
+                    (expireDate->String.length === 7 && checkCardExpiry(expireDate))}
                   maxLength=Some(7)
                   borderTopWidth=0.25
                   borderRightWidth=borderWidth
@@ -304,10 +304,10 @@ let make = (
                   borderBottomLeftRadius=borderRadius
                   borderBottomWidth=borderWidth
                   borderLeftWidth=borderWidth
-                  textColor={(cardExpiryYearMeta.error->Option.isNone ||
+                  textColor={((cardExpiryYearMeta.error->Option.isNone ||
                   !cardExpiryYearMeta.touched ||
-                  cardExpiryYearMeta.active) &&
-                  expireDate->String.length < 7 || (expireDate->String.length === 7 && checkCardExpiry(expireDate))
+                  cardExpiryYearMeta.active) && expireDate->String.length < 7) ||
+                    (expireDate->String.length === 7 && checkCardExpiry(expireDate))
                     ? component.color
                     : dangerColor}
                   onFocus={() => {
@@ -391,7 +391,8 @@ let make = (
           | _ =>
             switch (
               cardExpiryYearMeta.error,
-              expireDate->String.length < 7 || (expireDate->String.length === 7 && checkCardExpiry(expireDate)),
+              expireDate->String.length < 7 ||
+                (expireDate->String.length === 7 && checkCardExpiry(expireDate)),
             ) {
             | (Some(error), false) => <ErrorText text={Some(error)} />
             | _ =>

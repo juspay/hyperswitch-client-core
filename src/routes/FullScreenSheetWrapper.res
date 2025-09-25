@@ -34,7 +34,10 @@ let make = (~children, ~isSheet=true) => {
 
   let heightPosition = AnimatedValue.useAnimatedValue(0.)
   React.useEffect1(() => {
-    if isSheet && (loading == LoadingContext.PaymentCancelled || loading == LoadingContext.PaymentSuccess) {
+    if (
+      isSheet &&
+      (loading == LoadingContext.PaymentCancelled || loading == LoadingContext.PaymentSuccess)
+    ) {
       Animated.timing(
         heightPosition,
         {

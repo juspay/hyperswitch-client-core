@@ -35,12 +35,7 @@ module SectionHeader = {
 module MoreButton = {
   @react.component
   let make = (~handleMoreToggle) => {
-    let {
-      iconColor,
-      component,
-      borderRadius,
-      borderWidth,
-    } = ThemebasedStyle.useThemeBasedStyle()
+    let {iconColor, component, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
 
     <View
       style={s({flex: 1., alignItems: #center, justifyContent: #center, paddingVertical: 10.->dp})}>
