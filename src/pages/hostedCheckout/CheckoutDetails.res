@@ -14,7 +14,7 @@ let make = (~toggleModal) => {
     <TextWrapper text="US$129.00" textType=TextWrapper.SubheadingBold />
     <Space />
     {isMobileView
-      ? <CustomTouchableOpacity
+      ? <CustomPressable
           onPress={_ => {toggleModal()}}
           style={s({
             backgroundColor: "hsla(0,0%, 10% , 0.05 )",
@@ -27,7 +27,7 @@ let make = (~toggleModal) => {
           <TextWrapper text="View Details" textType={LinkText} />
           <Space width=8. />
           <ChevronIcon width=14. height=14. fill="black" />
-        </CustomTouchableOpacity>
+        </CustomPressable>
       : React.null}
   </View>
 }

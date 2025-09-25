@@ -106,15 +106,12 @@ let make = (
   }
 
   <View ref={Ref.value(renderedElement)} onLayout={_ => ()}>
-    <CustomTouchableOpacity onPress activeOpacity={disabled ? 1. : 0.2} disabled>
-      children
-    </CustomTouchableOpacity>
+    <CustomPressable onPress disabled> children </CustomPressable>
     <UIUtils.RenderIf condition={isVisible && tooltipPosition->Option.isSome}>
       <Portal>
-        <CustomTouchableOpacity
-          activeOpacity=1. onPress={_ => toggleVisibility()} style={s({flex: 1.})}>
+        <CustomPressable onPress={_ => toggleVisibility()} style={s({flex: 1.})}>
           <View style={tooltipStyle}> {renderContent(toggleVisibility)} </View>
-        </CustomTouchableOpacity>
+        </CustomPressable>
       </Portal>
     </UIUtils.RenderIf>
   </View>

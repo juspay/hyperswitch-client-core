@@ -1,0 +1,167 @@
+@module("./ButtonHookImpl")
+external usePayButton: unit => (
+  (~sessionObject: SessionsType.sessions, ~resolve: 'a) => unit,
+  (~sessionObject: SessionsType.sessions) => unit,
+) = "usePayButton"
+
+type walletStatus =
+  | Success(
+      RescriptCore.Dict.t<Core__JSON.t>,
+      option<SdkTypes.addressDetails>,
+      option<SdkTypes.addressDetails>,
+    )
+  | Cancelled
+  | Failed(string)
+  | Simulated
+
+let useProcessPayButtonResult = () => {
+  (
+    walletType: SdkTypes.payment_method_type_wallet,
+    var,
+    payment_method_str,
+    payment_method_type,
+  ) => {
+    switch walletType {
+    | GOOGLE_PAY =>
+      let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
+      switch paymentData.error {
+      | "" =>
+        let json = paymentData.paymentMethodData->JSON.parseExn
+        let paymentDataFromGPay =
+          json
+          ->Utils.getDictFromJson
+          ->WalletType.itemToObjMapper
+        let billingAddress = switch paymentDataFromGPay.paymentMethodData.info {
+        | Some(info) => info.billing_address
+        | None => None
+        }
+        let shippingAddress = paymentDataFromGPay.shippingDetails
+
+        let payment_method_data = [
+          (
+            payment_method_str,
+            [
+              (
+                payment_method_type,
+                paymentDataFromGPay.paymentMethodData->Utils.getJsonObjectFromRecord,
+              ),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]->Dict.fromArray
+
+        Success(payment_method_data, billingAddress, shippingAddress)
+      | "Cancel" => Cancelled
+      | err => Failed(err)
+      }
+    | APPLE_PAY =>
+      switch var
+      ->Dict.get("status")
+      ->Option.getOr(JSON.Encode.null)
+      ->JSON.Decode.string
+      ->Option.getOr("") {
+      | "Cancelled" => Cancelled
+      | "Failed" => Failed("Failed")
+      | "Error" => Failed("Error")
+      | _ => {
+          let transaction_identifier =
+            var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
+
+          if (
+            transaction_identifier->Utils.getStringFromJson(
+              "Simulated Identifier",
+            ) == "Simulated Identifier"
+          ) {
+            Simulated
+          } else {
+            let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
+            let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
+
+            let billingAddress =
+              var->AddressUtils.getApplePayBillingAddress(
+                "billing_contact",
+                Some("shipping_contact"),
+              )
+            let shippingAddress =
+              var->AddressUtils.getApplePayBillingAddress("shipping_contact", None)
+
+            let paymentData =
+              [
+                ("payment_data", payment_data),
+                ("payment_method", payment_method),
+                ("transaction_identifier", transaction_identifier),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object
+
+            let payment_method_data = [
+              (
+                payment_method_str,
+                [(payment_method_type, paymentData)]
+                ->Dict.fromArray
+                ->JSON.Encode.object,
+              ),
+            ]->Dict.fromArray
+
+            Success(payment_method_data, billingAddress, shippingAddress)
+          }
+        }
+      }
+    | PAYPAL =>
+      let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
+      switch paymentData.error {
+      | "" =>
+        let json = paymentData.paymentMethodData->JSON.Encode.string
+        let paymentData = [("token", json)]->Dict.fromArray->JSON.Encode.object
+        let payment_method_data = [
+          (
+            payment_method_str,
+            [(payment_method_type ++ "_sdk", paymentData)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]->Dict.fromArray
+        Success(payment_method_data, None, None)
+      | "User has canceled" => Cancelled
+      | err => Failed(err)
+      }
+    | SAMSUNG_PAY =>
+      let status =
+        var
+        ->Dict.get("status")
+        ->Option.getOr(JSON.Encode.null)
+        ->JSON.Decode.string
+        ->Option.getOr("")
+      let message =
+        var
+        ->Dict.get("message")
+        ->Option.getOr(JSON.Encode.null)
+        ->JSON.Decode.string
+        ->Option.getOr("")
+      if status === "success" {
+        let response =
+          message
+          ->JSON.parseExn
+          ->JSON.Decode.object
+          ->Option.getOr(Dict.make())
+
+        let samsungPayData = SamsungPayType.itemToObjMapper(response)
+
+        let payment_method_data = [
+          (
+            payment_method_str,
+            [(payment_method_type, samsungPayData->Utils.getJsonObjectFromRecord)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]->Dict.fromArray
+
+        Success(payment_method_data, None, None)
+      } else {
+        Failed(message)
+      }
+    | _ => Cancelled
+    }
+  }
+}

@@ -1,13 +1,13 @@
 const path = require('path');
 const TerserPlugin = require('terser-webpack-plugin');
 
-require('dotenv').config({path: './.env'});
+require('dotenv').config({ path: './.env' });
 
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 const appDirectory = path.resolve(__dirname);
-const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
+const { presets, plugins } = require(`${appDirectory}/babel.config.js`);
 const isDevelopment = process.env.NODE_ENV == 'development';
 const repoVersion = require('./version.json').version;
 const majorVersion = 'v' + repoVersion.split('.')[0];
@@ -80,6 +80,27 @@ const imageLoaderConfiguration = {
   },
 };
 
+const replaceConfiguration = {
+  test: /Custom.*\.bs\.js$/,
+  use: [
+    {
+      loader: 'string-replace-loader',
+      options: {
+        multiple: [
+          {
+            search: /accessible: false/g,
+            replace: 'tabIndex: -1'
+          },
+          {
+            search: /accessible: props.accessible/g,
+            replace: 'tabIndex: (props.accessible === false ? -1 : 0)'
+          },
+        ]
+      }
+    }
+  ]
+}
+
 module.exports = {
   entry: {
     app: path.join(__dirname, 'index.web.js'),
@@ -95,8 +116,8 @@ module.exports = {
     port: 8082,
     historyApiFallback: {
       rewrites: [
-        {from: /^\/redirect/, to: '/redirect.html'},
-        {from: /./, to: '/index.html'},
+        { from: /^\/redirect/, to: '/redirect.html' },
+        { from: /./, to: '/index.html' },
       ],
     },
   },
@@ -133,6 +154,7 @@ module.exports = {
       babelLoaderConfiguration,
       imageLoaderConfiguration,
       svgLoaderConfiguration,
+      replaceConfiguration,
     ],
   },
   plugins: [

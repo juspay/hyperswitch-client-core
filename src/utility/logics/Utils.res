@@ -319,10 +319,7 @@ let getArrofJsonString = (arr: array<string>) => {
 }
 
 let getCustomReturnAppUrl = (~appId) => {
-  switch appId {
-  | Some(id) => Some(id ++ ".hyperswitch://")
-  | None => None
-  }
+  appId->Option.map(id => id ++ ".hyperswitch://")
 }
 
 let getReturnUrlWeb = (~appURL) =>

@@ -83,7 +83,7 @@ let make = () => {
         } else if paymentMethodListData == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          let paymentList = handlePMLResponse(paymentMethodListData)
+          let paymentMethodList = handlePMLResponse(paymentMethodListData)
           let additionalPMLData = handlePMLAdditionalResponse(paymentMethodListData)
           let sessions = handleSessionResponse(sessionTokenData)
           let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(
@@ -94,7 +94,7 @@ let make = () => {
           )
 
           setAllApiData({
-            paymentList,
+            paymentMethodList,
             additionalPMLData,
             sessions,
             savedPaymentMethods,
@@ -118,6 +118,7 @@ let make = () => {
   }, [nativeProp])
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
+  ConfigurationService.useConfigurationService()->ignore
 
   {
     switch nativeProp.sdkState {
@@ -126,7 +127,7 @@ let make = () => {
     | CardWidget => <CardWidget />
     | CustomWidget(walletType) => <CustomWidget walletType />
     | ExpressCheckoutWidget => <ExpressCheckoutWidget />
-    | WidgetPaymentSheet => <ParentPaymentSheet />
+    | WidgetPaymentSheet => <ParentPaymentSheet isSheet=false />
     | Headless
     | NoView
     | PaymentMethodsManagement => React.null

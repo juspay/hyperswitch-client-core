@@ -1,6 +1,6 @@
 open ReactNative
 open Style
-open Validation
+
 @react.component
 let make = (
   ~cardNumber,
@@ -18,13 +18,14 @@ let make = (
   ~isZipValid,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
+  let buttomFlex = AnimatedValue.useAnimatedValue(1.)
   let isCardNumberValid = isCardNumberValid->Option.getOr(true)
   let isExpireDataValid = isExpireDataValid->Option.getOr(true)
   let isCvvValid = isCvvValid->Option.getOr(true)
   let isZipValid = isZipValid->Option.getOr(true)
   let isMaxCardLength =
-    cardNumber->CardValidations.clearSpaces->String.length == maxCardLength(getCardBrand(cardNumber))
+    cardNumber->Validation.clearSpaces->String.length ==
+      Validation.maxCardLength(Validation.getCardBrand(cardNumber))
   let (cardNumberIsFocus, setCardNumberIsFocus) = React.useState(_ => false)
   let isCardNumberValid = {
     cardNumberIsFocus ? isCardNumberValid || !isMaxCardLength : isCardNumberValid
@@ -32,15 +33,15 @@ let make = (
 
   let localeObject = GetLocale.useGetLocalObj()
   let {bgColor, component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
-  let (cardNumInputFlex, _) = React.useState(_ => Animated.Value.create(1.))
-  let (expireInputFlex, _) = React.useState(_ => Animated.Value.create(1.))
-  let (cvvInputFlex, _) = React.useState(_ => Animated.Value.create(1.))
-  let (zipInputFlex, _) = React.useState(_ => Animated.Value.create(1.))
+  let cardNumInputFlex = AnimatedValue.useAnimatedValue(1.)
+  let expireInputFlex = AnimatedValue.useAnimatedValue(1.)
+  let cvvInputFlex = AnimatedValue.useAnimatedValue(1.)
+  let zipInputFlex = AnimatedValue.useAnimatedValue(1.)
   let cardRef = React.useRef(Nullable.null)
   let expireRef = React.useRef(Nullable.null)
   let cvvRef = React.useRef(Nullable.null)
   let zipRef = React.useRef(Nullable.null)
-  let cardBrand = getCardBrand(cardNumber)
+  let cardBrand = Validation.getCardBrand(cardNumber)
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
 
   let animateFlex = (~flexval, ~value) => {
@@ -80,7 +81,7 @@ let make = (
               ? <Icon
                   name={cardBrand === "" ? "waitcard" : cardBrand} height=35. width=35. fill="black"
                 />
-              : checkCardCVC(cvv, cardBrand)
+              : Validation.checkCardCVC(cvv, cardBrand)
               ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
               : <Icon name="cvvempty" height=35. width=35. fill="black" />
           : <Icon name={"waitcard"} height=35. width=35. fill="black" />}

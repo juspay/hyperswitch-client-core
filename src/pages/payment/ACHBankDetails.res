@@ -73,7 +73,7 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
       })}>
       <DetailsView title=localeObject.accountNumberText value={data.account_number} />
       <DetailsView title=localeObject.bankName value={data.bank_name} />
-      <DetailsView title=localeObject.routingNumber value={data.routing_number} />
+      <DetailsView title=localeObject.formFieldACHRoutingNumberLabel value={data.routing_number} />
       <DetailsView title=localeObject.swiftCode value={data.swift_code} />
     </View>
     <Space height=18.0 />
@@ -150,7 +150,7 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
         {localeObject.poweredBy->React.string}
       </TextWrapper>
     </View>
-    <CustomTouchableOpacity onPress={_ => ()} />
+    <CustomPressable onPress={_ => ()} />
     <Space height=8.0 />
   </View>
 }

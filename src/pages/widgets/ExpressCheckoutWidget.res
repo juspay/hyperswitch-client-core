@@ -13,7 +13,7 @@ let make = () => {
   let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let logger = LoggerHook.useLoggerHook()
-  let (buttomFlex, _) = React.useState(_ => Animated.Value.create(1.))
+  let buttomFlex = AnimatedValue.useAnimatedValue(1.)
   let localeObj = GetLocale.useGetLocalObj()
   let (_, setMissingFieldsData) = React.useState(_ => [])
 
@@ -173,9 +173,6 @@ let make = () => {
       payment_method,
       payment_method_type,
       payment_method_data,
-      billing: ?nativeProp.configuration.defaultBillingDetails,
-      shipping: ?nativeProp.configuration.shippingDetails,
-      payment_type: ?allApiData.additionalPMLData.paymentType,
       customer_acceptance: ?(
         if (
           allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
@@ -235,7 +232,7 @@ let make = () => {
     )
   }
 
-  let handleSamsungPayNativeResponse = (
+  let _handleSamsungPayNativeResponse = (
     statusFromNative,
     billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
   ) => {
@@ -251,18 +248,18 @@ let make = () => {
       ~activePaymentToken=tokenToUse,
       ~gPayResponseHandler=handleGPayNativeResponse,
       ~applePayResponseHandler=handleApplePayNativeResponse,
-      ~samsungPayResponseHandler=handleSamsungPayNativeResponse,
+      // ~samsungPayResponseHandler=handleSamsungPayNativeResponse,
       (),
     )
   }
   let onPress = () => {
-    setLoading(ProcessingPayments(None))
+    setLoading(ProcessingPayments)
     processSavedExpressCheckoutRequest(pmToken)
   }
 
   React.useEffect1(() => {
     if nativeProp.publishableKey == "" {
-      setLoading(ProcessingPayments(None))
+      setLoading(ProcessingPayments)
     }
 
     let handleExpressCheckoutConfirm = (responseFromJava: PaymentConfirmTypes.responseFromJava) => {

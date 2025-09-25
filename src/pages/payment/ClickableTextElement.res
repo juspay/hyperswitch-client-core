@@ -16,9 +16,8 @@ let make = (
   let (isSavedCardScreen, setSaveCardScreen) = React.useContext(
     PaymentScreenContext.paymentScreenTypeContext,
   )
-  <CustomTouchableOpacity
+  <CustomPressable
     disabled
-    activeOpacity=1.
     style={s({flexDirection: #row, alignItems: #center, alignSelf: #"flex-start"})}
     onPress={_ => {
       !disableScreenSwitch
@@ -26,7 +25,6 @@ let make = (
             let newSheetType = switch isSavedCardScreen {
             | PAYMENTSHEET => PaymentScreenContext.SAVEDCARDSCREEN
             | SAVEDCARDSCREEN => PaymentScreenContext.PAYMENTSHEET
-            | _ => PaymentScreenContext.PAYMENTSHEET
             }
             setSaveCardScreen(newSheetType)
           }
@@ -34,5 +32,5 @@ let make = (
     }}>
     <CustomSelectBox initialIconName updateIconName isSelected fillIcon />
     <TextWrapper text textType overrideStyle=Some(s({paddingHorizontal: 6.->dp})) />
-  </CustomTouchableOpacity>
+  </CustomPressable>
 }

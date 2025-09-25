@@ -49,6 +49,7 @@ let make = (
   ~animateLabel=?,
   ~name="",
   ~style=?,
+  ~accessible=?,
 ) => {
   let {
     placeholderColor,
@@ -68,13 +69,9 @@ let make = (
   let logger = LoggerHook.useLoggerHook()
   let fontFamily = FontFamily.useCustomFontFamily()
 
-  // let focusedTextInputBoderColor = "rgba(0, 153, 255, 1)"
-  // let errorTextInputColor = "rgba(218, 14, 15, 1)"
-  // let normalTextInputBoderColor = "rgba(204, 210, 226, 0.75)"
-  // let _ = state != "" && secureTextEntry == false && enableCrossIcon
   let shadowStyle = enableShadow ? getShadowStyle : empty
 
-  let animatedValue = React.useRef(Animated.Value.create(state != "" ? 1. : 0.)).current
+  let animatedValue = AnimatedValue.useAnimatedValue(state != "" ? 1. : 0.)
 
   React.useEffect2(() => {
     Animated.timing(
@@ -181,10 +178,7 @@ let make = (
             </Animated.View>
           : React.null}
         <TextInput
-          ref=?{switch reference {
-          | Some(ref) => ref->ReactNative.Ref.value->Some
-          | None => None
-          }}
+          ref=?{reference->Option.map(ref => ref->ReactNative.Ref.value)}
           style={array([
             s({
               fontStyle: #normal,
@@ -225,22 +219,23 @@ let make = (
           }}
           editable
           pointerEvents
+          ?accessible
         />
       </View>
-      <CustomTouchableOpacity activeOpacity=1. onPress=?onPressIconRight>
-        {switch iconRight {
-        | NoIcon => React.null
-        | CustomIcon(element) =>
+      {switch iconRight {
+      | NoIcon => React.null
+      | CustomIcon(element) =>
+        <CustomPressable onPress=?onPressIconRight>
           <View style={s({flexDirection: #row, alignContent: #"space-around"})}> element </View>
-        }}
-      </CustomTouchableOpacity>
+        </CustomPressable>
+      }}
       {secureTextEntry && showEyeIconaftersecureTextEntry
         ? {
-            <CustomTouchableOpacity
+            <CustomPressable
               style={s({height: 100.->pct, justifyContent: #center, paddingLeft: 5.->dp})}
               onPress={_ => {setShowPass(prev => !prev)}}>
               <TextWrapper textType={PlaceholderText}> {"eye"->React.string} </TextWrapper>
-            </CustomTouchableOpacity>
+            </CustomPressable>
           }
         : React.null}
     </View>

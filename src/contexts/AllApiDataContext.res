@@ -24,15 +24,17 @@ let additionalPMLData = {
   collectShippingDetailsFromWallets: false,
 }
 
-type paymentList = array<PaymentMethodListType.payment_method>
-
-let paymentList = [
-  PaymentMethodListType.CARD({
-    payment_method: "card",
+let paymentMethodList: PaymentMethodListType.payment_methods = [
+  {
+    payment_method: CARD,
+    payment_method_str: "card",
     payment_method_type: "debit",
-    card_networks: None,
-    required_field: [],
-  }),
+    payment_method_type_wallet: NONE,
+    card_networks: [],
+    bank_names: [],
+    payment_experience: [],
+    required_fields: Dict.make(),
+  },
 ]
 
 type sessions = Some(array<SessionsType.sessions>) | Loading | None
@@ -48,13 +50,13 @@ let dafaultsavePMObj = {pmList: None, isGuestCustomer: false}
 
 type allApiData = {
   additionalPMLData: additionalPMLData,
-  paymentList: paymentList,
+  paymentMethodList: PaymentMethodListType.payment_methods,
   sessions: sessions,
   savedPaymentMethods: savedPaymentMethods,
 }
 let dafaultVal = {
   additionalPMLData,
-  paymentList,
+  paymentMethodList,
   sessions,
   savedPaymentMethods,
 }

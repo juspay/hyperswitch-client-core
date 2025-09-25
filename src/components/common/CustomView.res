@@ -29,7 +29,7 @@ let make = (
   //  let (locationY, setLocationY) = React.useState(_ => 0.)
 
   <View style=modalPosStyle>
-    <CustomTouchableOpacity
+    <CustomPressable
       style={s({
         flex: 1.,
         width: 100.->pct,
@@ -66,10 +66,9 @@ let make = (
     // </TouchableWithoutFeedback>
   </View>
 }
-
 module Wrapper = {
   @react.component
-  let make = (~onModalClose, ~width=100.->pct, ~children=React.null) => {
+  let make = (~onModalClose, ~width=100.->pct, ~children=React.null, ~isSheet=true) => {
     let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
@@ -83,7 +82,7 @@ module Wrapper = {
       keyboardShouldPersistTaps={#handled}
       showsVerticalScrollIndicator=false
       style={array([s({flexGrow: 1., width}), bgColor])}>
-      <ModalHeader onModalClose />
+      {isSheet ? <ModalHeader onModalClose />: React.null}
       children
     </ScrollView>
   }

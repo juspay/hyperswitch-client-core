@@ -280,11 +280,21 @@ let make = (
     }
   }, (layout.width, panX))
 
-  let (height, setHeight) = React.useState(_ => 100.)
+  let animatedHeight = AnimatedValue.useAnimatedValue(100.)
 
-  let setDynamicHeight = React.useCallback1(height => {
-    setHeight(_ => height)
-  }, [setHeight])
+  let setDynamicHeight = React.useCallback1(newHeight => {
+    Animated.timing(
+      animatedHeight,
+      {
+        toValue: newHeight->Animated.Value.Timing.fromRawValue,
+        isInteraction: true,
+        useNativeDriver: false,
+        delay: 0.,
+        duration: 300.,
+        easing: Easing.ease,
+      },
+    )->Animated.start
+  }, [indexInFocus])
 
   children(~indexInFocus, ~routes, ~position, ~addEnterListener, ~jumpTo, ~render=children => {
     <Animated.View
@@ -319,10 +329,10 @@ let make = (
         switch routes[i] {
         | Some(route) =>
           let focused = i === indexInFocus
-          <View
+          <Animated.View
             key={route.title ++ route.key->Int.toString}
             style=?{if layout.width != 0. {
-              Some(s({width: layout.width->dp, height: height->dp}))
+              Some(s({width: layout.width->dp, height: animatedHeight->Animated.StyleProp.size}))
             } else if focused {
               Some(StyleSheet.absoluteFill)
             } else {
@@ -333,7 +343,7 @@ let make = (
                   child
                 </TopTabScreenWrapper>
               : React.null}
-          </View>
+          </Animated.View>
         | None => React.null
         }
       })}

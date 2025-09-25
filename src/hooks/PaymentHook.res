@@ -87,7 +87,7 @@ let usePayment = (
     }
   }
 
-  let initiateSamsungPay = (
+  let _initiateSamsungPay = (
     ~samsungPayResponseHandler: (
       ExternalThreeDsTypes.statusType,
       option<SamsungPayType.addressCollectedFromSpay>,
@@ -159,10 +159,10 @@ let usePayment = (
     ~activePaymentToken: string,
     ~gPayResponseHandler: Dict.t<JSON.t> => unit,
     ~applePayResponseHandler: Dict.t<JSON.t> => unit,
-    ~samsungPayResponseHandler: (
-      ExternalThreeDsTypes.statusType,
-      option<SamsungPayType.addressCollectedFromSpay>,
-    ) => unit,
+    // ~samsungPayResponseHandler: (
+    //   ExternalThreeDsTypes.statusType,
+    //   option<SamsungPayType.addressCollectedFromSpay>,
+    // ) => unit,
     (),
   ) => {
     let sessionObject: SessionsType.sessions = switch allApiData.sessions {
@@ -176,7 +176,7 @@ let usePayment = (
     switch activeWalletName {
     | GOOGLE_PAY => initiateGooglePay(~sessionObject, ~gPayResponseHandler, ())
     | APPLE_PAY => initiateApplePay(~sessionObject, ~applePayResponseHandler, ())
-    | SAMSUNG_PAY => initiateSamsungPay(~samsungPayResponseHandler, ())
+    // | SAMSUNG_PAY => initiateSamsungPay(~samsungPayResponseHandler, ())
     | NONE => initiateSavedCardPayment(~activePaymentToken, ())
     | _ => initiateWalletPayment(~activeWalletName, ~activePaymentToken, ())
     }

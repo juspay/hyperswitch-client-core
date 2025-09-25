@@ -15,7 +15,7 @@ let make = (~loaderColor=?, ~size=?) => {
   | None => 180.
   }
 
-  let rotateSpin = React.useRef(Animated.Value.create(0.)).current
+  let rotateSpin = AnimatedValue.useAnimatedValue(0.)
 
   let angleSpinValue = Animated.Interpolation.interpolate(
     rotateSpin,

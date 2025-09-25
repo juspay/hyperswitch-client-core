@@ -22,6 +22,9 @@ let make = (
   ~isCountryStateFields=false,
   ~style=?,
   ~showValue=false,
+  ~onFocus,
+  ~onBlur,
+  ~accessible=?,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -50,34 +53,38 @@ let make = (
     None
   }, [isModalVisible])
   <View ?style>
-    <CustomTouchableOpacity
-      disabled activeOpacity=1. onPress={_ => setIsModalVisible(prev => !prev)}>
+    <CustomPressable disabled onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
-        state={switch items->Array.find(x => x.value == value->Option.getOr("")) {
+        state={switch items->Array.find(x =>
+          x.value == value->Option.getOr("") || x.label == value->Option.getOr("")
+        ) {
         | Some(y) => showValue ? y.value : y.label
         | _ => value->Option.getOr("")
         }}
         setState={_ => ()}
-        borderBottomLeftRadius
-        borderBottomRightRadius
-        borderBottomWidth
         isValid
         borderTopWidth=borderWidth
         borderLeftWidth=borderWidth
         borderRightWidth=borderWidth
+        borderBottomWidth=borderWidth
         borderTopLeftRadius=borderRadius
         borderTopRightRadius=borderRadius
+        borderBottomLeftRadius=borderRadius
+        borderBottomRightRadius=borderRadius
         placeholder=placeholderText
         editable=false
         textColor=component.color
         iconRight=CustomIcon(
-          <CustomTouchableOpacity disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+          <CustomPressable disabled onPress={_ => setIsModalVisible(prev => !prev)}>
             <ChevronIcon width=13. height=13. fill=iconColor />
-          </CustomTouchableOpacity>,
+          </CustomPressable>,
         )
         pointerEvents={#none}
+        onBlur
+        onFocus
+        ?accessible
       />
-    </CustomTouchableOpacity>
+    </CustomPressable>
     <Modal
       visible={isModalVisible}
       transparent={true}
@@ -110,7 +117,10 @@ let make = (
               backgroundColor: component.background,
               justifyContent: #center,
               alignItems: #center,
-              borderRadius: 10.,
+              borderTopLeftRadius: borderRadius,
+              borderTopRightRadius: borderRadius,
+              borderBottomLeftRadius: 0.,
+              borderBottomRightRadius: 0.,
               padding: 15.->dp,
               paddingHorizontal: 20.->dp,
             }),
@@ -124,10 +134,10 @@ let make = (
               justifyContent: #"space-between",
             })}>
             <TextWrapper text=placeholderText textType={HeadingBold} />
-            <CustomTouchableOpacity
+            <CustomPressable
               onPress={_ => setIsModalVisible(prev => !prev)} style={s({padding: 14.->dp})}>
               <Icon name="close" width=20. height=20. fill=iconColor />
-            </CustomTouchableOpacity>
+            </CustomPressable>
           </View>
           <CustomInput
             reference={Some(searchInputRef)}
@@ -146,6 +156,7 @@ let make = (
             borderBottomWidth=borderWidth
             borderLeftWidth=borderWidth
             borderRightWidth=borderWidth
+            ?accessible
           />
           <Space />
           {isLoading
@@ -157,6 +168,7 @@ let make = (
             : <FlatList
                 ref={pickerRef->ReactNative.Ref.value}
                 keyboardShouldPersistTaps={#handled}
+                keyboardDismissMode={#"on-drag"}
                 data={items->Array.filter(x =>
                   x.label
                   ->String.toLowerCase
@@ -167,7 +179,7 @@ let make = (
                 keyExtractor={(_, i) => i->Int.toString}
                 horizontal=false
                 renderItem={({item, index}) =>
-                  <CustomTouchableOpacity
+                  <CustomPressable
                     key={index->Int.toString}
                     style={s({height: 32.->dp, margin: 1.->dp, justifyContent: #center})}
                     onPress={_ => {
@@ -177,7 +189,7 @@ let make = (
                     <TextWrapper
                       text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
                     />
-                  </CustomTouchableOpacity>}
+                  </CustomPressable>}
               />}
         </View>
       </View>

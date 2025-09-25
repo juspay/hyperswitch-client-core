@@ -36,11 +36,9 @@ let make = React.memo((
   ~width=20.,
   ~height=16.,
   ~fill="#ffffff",
-  ~defaultView: option<React.element>=?,
   ~style=empty,
   ~fallbackIcon: option<string>=?,
 ) => {
-  defaultView->ignore
   let (isLoaded, setIsLoaded) = React.useState(_ => false)
   let (iconName, setIconName) = React.useState(_ =>
     name->String.replaceRegExp(%re("/ /g"), "")->String.toLowerCase

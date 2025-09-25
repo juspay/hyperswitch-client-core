@@ -110,7 +110,7 @@ let getNextAction = (dict, str) => {
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.object
       ->Option.getOr(Dict.make())
-    let bankTransferStepsAndChargesDetailsDict = 
+    let bankTransferStepsAndChargesDetailsDict =
       json
       ->Dict.get("bank_transfer_steps_and_charges_details")
       ->Option.getOr(JSON.Encode.null)

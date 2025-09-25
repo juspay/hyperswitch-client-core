@@ -23,7 +23,7 @@ module WalletDisclaimer = {
 }
 
 @react.component
-let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
+let make = (~loading=true, ~elementArr, ~showDisclaimer=false, ~hideDivider=false) => {
   let localeObject = GetLocale.useGetLocalObj()
   <>
     {switch elementArr->Array.length {
@@ -40,9 +40,13 @@ let make = (~loading=true, ~elementArr, ~showDisclaimer=false) => {
       <>
         <Space />
         {elementArr->React.array}
-        {showDisclaimer ? <WalletDisclaimer /> : React.null}
-        <Space height=15. />
-        <TextWithLine text=localeObject.orPayUsing />
+        <UIUtils.RenderIf condition={showDisclaimer}>
+          <WalletDisclaimer />
+        </UIUtils.RenderIf>
+        <UIUtils.RenderIf condition={!hideDivider}>
+          <Space height=15. />
+          <TextWithLine text=localeObject.orPayUsing />
+        </UIUtils.RenderIf>
       </>
     }}
   </>

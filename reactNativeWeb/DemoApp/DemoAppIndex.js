@@ -29,18 +29,18 @@ let defaultProps = {
     // displaySavedPaymentMethods: false,
     appearance: {
       theme: 'Light',
-      // componentBackground:"black",
-      // colors:{
-      //   background:"#F5F8F9",
-      //   primary:"#8DBD00"
-      // },
+      colors:{
+        // background:"#3a1753",
+        // primary:"#8DBD00"
+        // componentBackground:"#00000000",
+      },
       // primaryButton:{
       // shapes:{
       //   borderRadius:20.0
       // }}
-      // locale: "en"
+      locale: "en",
       typography: {
-        family: 'bitcount single',
+        family: 'montserrat',
       },
     },
   },

@@ -1,5 +1,5 @@
 @react.component
-let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
+let make = (~nickname, ~setNickname, ~setIsNicknameValid, ~accessible) => {
   let {component, borderWidth, borderRadius, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
   let (isFocus, setisFocus) = React.useState(_ => false)
@@ -27,7 +27,7 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
     <CustomInput
       state={nickname->Option.getOr("")}
       setState={str => onChange(str)}
-      placeholder={`${localeObject.cardNickname}${" (Optional)"}`}
+      placeholder={localeObject.nicknamePlaceholder}
       keyboardType=#default
       isValid={isFocus || errorMessage->Option.isNone}
       onFocus={_ => {
@@ -47,8 +47,9 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid) => {
       borderBottomWidth=borderWidth
       borderLeftWidth=borderWidth
       borderRightWidth=borderWidth
-      animateLabel=localeObject.cardNickname
+      animateLabel=localeObject.nicknamePlaceholder
       maxLength=Some(12)
+      accessible
     />
     {switch errorMessage {
     | Some(text) => !isFocus ? <ErrorText text=Some(text) /> : React.null

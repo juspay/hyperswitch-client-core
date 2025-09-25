@@ -14,66 +14,18 @@ let showUseExisitingSavedCardsBtn = (
   displaySavedPaymentMethods
 }
 
-let generatePaymentMethodData = (
-  ~prop: PaymentMethodListType.payment_method_types_card,
-  ~cardData: CardDataContext.cardData,
-  ~cardHolderName: option<'a>,
-  ~nickname: option<'a>,
-) => {
-  let (month, year) = Validation.getExpiryDates(cardData.expireDate)
-
-  [
-    (
-      prop.payment_method,
-      [
-        ("card_number", cardData.cardNumber->CardValidations.clearSpaces->JSON.Encode.string),
-        ("card_exp_month", month->JSON.Encode.string),
-        ("card_exp_year", year->JSON.Encode.string),
-        (
-          "card_holder_name",
-          switch cardHolderName {
-          | Some(cardHolderName) => cardHolderName->JSON.Encode.string
-          | None => JSON.Encode.null
-          },
-        ),
-        (
-          "nick_name",
-          switch nickname {
-          | Some(nick) => nick->JSON.Encode.string
-          | None => JSON.Encode.null
-          },
-        ),
-        ("card_cvc", cardData.cvv->JSON.Encode.string),
-        (
-          "card_network",
-          switch cardData.selectedCoBadgedCardBrand {
-          | Some(selectedCoBadgedCardBrand) => selectedCoBadgedCardBrand->JSON.Encode.string
-          | None =>
-            switch cardData.cardBrand {
-            | "" => JSON.Encode.null
-            | cardBrand => cardBrand->JSON.Encode.string
-            }
-          },
-        ),
-      ]
-      ->Dict.fromArray
-      ->JSON.Encode.object,
-    ),
-  ]
-  ->Dict.fromArray
-  ->JSON.Encode.object
-  ->Some
-}
-
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
-  ~prop: PaymentMethodListType.payment_method_types_card,
+  ~prop: PaymentMethodListType.payment_method_type,
   ~payment_method_data=?,
   ~allApiData: AllApiDataContext.allApiData,
   ~isNicknameSelected=false,
   ~payment_token=?,
   ~isSaveCardCheckboxVisible=?,
   ~isGuestCustomer,
+  ~email=?,
+  ~screen_height=?,
+  ~screen_width=?,
   (),
 ): PaymentMethodListType.redirectType => {
   let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
@@ -83,49 +35,11 @@ let generateCardConfirmBody = (
       ~appId=nativeProp.hyperParams.appId,
       ~appURL=allApiData.additionalPMLData.redirect_url,
     ),
-    payment_method: prop.payment_method,
+    payment_method: prop.payment_method_str,
     payment_method_type: ?Some(prop.payment_method_type),
-    connector: ?switch prop.card_networks {
-    | Some(cardNetwork) =>
-      cardNetwork
-      ->Array.get(0)
-      ->Option.mapOr(None, card_network => card_network.eligible_connectors->Some)
-    | None => None
-    },
     ?payment_method_data,
     ?payment_token,
-    billing: ?nativeProp.configuration.defaultBillingDetails,
-    shipping: ?nativeProp.configuration.shippingDetails,
-    // setup_future_usage: ?switch (allApiData.mandateType != NORMAL, isNicknameSelected) {
-    // | (true, _) => Some("off_session")
-    // | (false, true) => Some("on_session")
-    // | (false, false) => None
-    // },
-    // setup_future_usage: {
-    //   isNicknameSelected || isMandate->Option.getOr(false)
-    //     ? "off_session"
-    //     : "on_session"
-    // },
-    payment_type: ?allApiData.additionalPMLData.paymentType,
-    // mandate_data: ?(
-    //   (isNicknameSelected && isMandate->Option.getOr(false)) ||
-    //   isMandate->Option.getOr(false) &&
-    //   !isNicknameSelected &&
-    //   !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-    //   (allApiData.mandateType == NORMAL && isNicknameSelected)
-    //     ? Some({
-    //         customer_acceptance: {
-    //           acceptance_type: "online",
-    //           accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-    //           online: {
-    //             ip_address: ?nativeProp.hyperParams.ip,
-    //             user_agent: ?nativeProp.hyperParams.userAgent,
-    //           },
-    //         },
-    //       })
-    //     : None
-    // ),
-    // moved customer_acceptance outside mandate_data
+    ?email,
     customer_acceptance: ?(
       payment_token->Option.isNone &&
       ((isNicknameSelected && isMandate) ||
@@ -146,6 +60,14 @@ let generateCardConfirmBody = (
     ),
     browser_info: {
       user_agent: ?nativeProp.hyperParams.userAgent,
+      accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+      language: SdkTypes.localeTypeToString(nativeProp.configuration.appearance.locale),
+      color_depth: 32,
+      screen_height: ?screen_height->Option.map(Int.fromFloat),
+      screen_width: ?screen_width->Option.map(Int.fromFloat),
+      time_zone: Date.make()->Date.getTimezoneOffset,
+      java_enabled: true,
+      java_script_enabled: true,
       device_model: ?nativeProp.hyperParams.device_model,
       os_type: ?nativeProp.hyperParams.os_type,
       os_version: ?nativeProp.hyperParams.os_version,

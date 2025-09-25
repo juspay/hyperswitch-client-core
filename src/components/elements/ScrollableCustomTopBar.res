@@ -26,13 +26,12 @@ module BottomTabList = {
     let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
 
     <View style={s({flex: 1., alignItems: #center, justifyContent: #center, marginRight: 13.->dp})}>
-      <CustomTouchableOpacity
+      <CustomPressable
         onPress={_ => setIndexToScrollParentFlatList(index)}
         accessibilityRole=#button
         accessibilityState={selected: isFocused}
         accessibilityLabel=routeName
         testID=routeName
-        activeOpacity=1.
         style={array([
           bgColor,
           getShadowStyle,
@@ -62,7 +61,7 @@ module BottomTabList = {
               | _ => CardText
               }}
             />}
-      </CustomTouchableOpacity>
+      </CustomPressable>
     </View>
   }
 }
