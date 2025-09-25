@@ -117,9 +117,7 @@ let make = (
         Keyboard.dismiss()
         onPress(ev)
       }}>
-      <View
-        style={s({flex: 1., flexDirection: #row, width: 100.->pct, height: 100.->pct})}
-        pointerEvents=#none>
+      <PaymentButtonWrapper>
         {switch children {
         | Some(child) => child
         | _ =>
@@ -165,7 +163,7 @@ let make = (
             }}
           </>
         }}
-      </View>
+      </PaymentButtonWrapper>
     </CustomPressable>
   </View>
 }
