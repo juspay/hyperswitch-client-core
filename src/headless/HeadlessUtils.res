@@ -13,7 +13,7 @@ let sendLogs = async (logFile, customLogUrl, env: GlobalVars.envType) => {
   if WebKit.platform != #next {
     let data = logFile->LoggerUtils.logFileToObj->JSON.stringify
     try {
-      let _ = await APIUtils.fetchApi(
+      let _ = await APIHelpers.fetchApi(
         ~uri,
         ~method_=Post,
         ~bodyStr=data,
@@ -146,7 +146,7 @@ let handleApiCall = async (
 
     | _ => ()
     }
-    let data = await APIUtils.fetchApi(
+    let data = await APIHelpers.fetchApi(
       ~uri,
       ~method_=method,
       ~headers,

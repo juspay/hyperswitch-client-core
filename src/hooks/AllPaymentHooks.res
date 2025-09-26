@@ -36,7 +36,7 @@ let useSessionToken = () => {
     | _ =>
       let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
       let uri = `${baseUrl}/payments/session_tokens`
-      APIUtils.fetchApiWrapper(
+      APIHelpers.fetchApiWrapper(
         ~uri,
         ~body=PaymentUtils.generateSessionsTokenBody(
           ~clientSecret=nativeProp.clientSecret,
@@ -76,7 +76,7 @@ let useRetrieveHook = () => {
         )
       }
 
-      APIUtils.fetchApiWrapper(~uri, ~method=Get, ~headers, ~eventName, ~apiLogWrapper)
+      APIHelpers.fetchApiWrapper(~uri, ~method=Get, ~headers, ~eventName, ~apiLogWrapper)
     }
   }
 }
@@ -317,7 +317,7 @@ let useGetSavedPMHook = () => {
     switch WebKit.platform {
     | #next => Promise.resolve(Next.clistRes->Some)
     | _ =>
-      APIUtils.fetchApiOptionalWrapper(
+      APIHelpers.fetchApiOptionalWrapper(
         ~uri,
         ~method=Fetch.Get,
         ~headers=Utils.getHeader(apiKey, nativeProp.hyperParams.appId),
@@ -346,7 +346,7 @@ let useDeleteSavedPaymentMethod = () => {
     )
 
     if nativeProp.ephemeralKey->Option.isSome {
-      APIUtils.fetchApiOptionalWrapper(
+      APIHelpers.fetchApiOptionalWrapper(
         ~uri,
         ~method=Fetch.Delete,
         ~headers=Utils.getHeader(
@@ -371,7 +371,7 @@ let useSavePaymentMethod = () => {
     let uriParam = nativeProp.paymentMethodId
     let uri = `${baseUrl}/payment_methods/${uriParam}/save`
 
-    APIUtils.fetchApiOptionalWrapper(
+    APIHelpers.fetchApiOptionalWrapper(
       ~uri,
       ~method=Fetch.Post,
       ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),

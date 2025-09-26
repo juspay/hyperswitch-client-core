@@ -153,7 +153,7 @@ module RedirectionHooks = {
           }
         } else {
           try {
-            let jsonResponse = await APIUtils.fetchApiWrapper(
+            let jsonResponse = await APIHelpers.fetchApiWrapper(
               ~body,
               ~eventName=LoggerTypes.CONFIRM_CALL,
               ~headers,
@@ -170,7 +170,7 @@ module RedirectionHooks = {
 
       | _ =>
         try {
-          let jsonResponse = await APIUtils.fetchApiWrapper(
+          let jsonResponse = await APIHelpers.fetchApiWrapper(
             ~body,
             ~eventName=LoggerTypes.CONFIRM_CALL,
             ~headers,
