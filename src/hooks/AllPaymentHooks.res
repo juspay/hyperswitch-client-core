@@ -18,8 +18,8 @@ let useHandleSuccessFailure = () => {
         exit(apiResStatus, reset)
       }
     | CustomWidget(str) =>
-      exitWidget(apiResStatus, str->SdkTypes.widgetToStrMapper->String.toLowerCase)
-    | ExpressCheckoutWidget => exitWidget(apiResStatus, "expressCheckout")
+      exitWidget()(apiResStatus, str->SdkTypes.widgetToStrMapper->String.toLowerCase)
+    | ExpressCheckoutWidget => exitWidget()(apiResStatus, "expressCheckout")
     | _ => ()
     }
   }

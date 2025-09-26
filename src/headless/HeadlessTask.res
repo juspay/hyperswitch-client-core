@@ -235,28 +235,6 @@ let make = async props => {
           )
         }
       | APPLE_PAY =>
-        let timerId = setTimeout(() => {
-          logWrapper(
-            ~logType=DEBUG,
-            ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-            ~url="",
-            ~customLogUrl=nativeProp.customLogUrl,
-            ~env=nativeProp.env,
-            ~category=API,
-            ~statusCode="",
-            ~apiLogType=None,
-            ~data=JSON.Encode.null,
-            ~publishableKey=nativeProp.publishableKey,
-            ~paymentId="",
-            ~paymentMethod=None,
-            ~paymentExperience=None,
-            ~timestamp=0.,
-            ~latency=0.,
-            ~version=nativeProp.hyperParams.sdkVersion,
-            (),
-          )
-          headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
-        }, 5000)
         let applePayCallback = async var => {
           try {
             confirmApplePay(var, data, nativeProp)
@@ -274,31 +252,7 @@ let make = async props => {
           ->JSON.stringify,
           var => {
             applePayCallback(var)->ignore
-          },
-          _ => {
-            logWrapper(
-              ~logType=DEBUG,
-              ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-              ~url="",
-              ~customLogUrl=nativeProp.customLogUrl,
-              ~env=nativeProp.env,
-              ~category=API,
-              ~statusCode="",
-              ~apiLogType=None,
-              ~data=JSON.Encode.null,
-              ~publishableKey=nativeProp.publishableKey,
-              ~paymentId="",
-              ~paymentMethod=None,
-              ~paymentExperience=None,
-              ~timestamp=0.,
-              ~latency=0.,
-              ~version=nativeProp.hyperParams.sdkVersion,
-              (),
-            )
-          },
-          _ => {
-            clearTimeout(timerId)
-          },
+          }
         )
       | _ => ()
       }
