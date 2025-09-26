@@ -6,21 +6,10 @@ let make = (~initialIconName, ~updateIconName, ~isSelected, ~fillIcon) => {
   switch updateIconName {
   | None => <Icon name={initialIconName} height=18. width=18. ?fill />
   | Some(updateIconName) =>
-    <>
-      <Icon
-        name={initialIconName}
-        height=18.
-        width=18.
-        ?fill
-        style={ReactNative.Style.s({display: isSelected ? #flex : #none})}
-      />
-      <Icon
-        name={updateIconName}
-        height=18.
-        width=18.
-        ?fill
-        style={ReactNative.Style.s({display: isSelected ? #none : #flex})}
-      />
-    </>
+    if isSelected {
+      <Icon name={initialIconName} height=18. width=18. ?fill />
+    } else {
+      <Icon name={updateIconName} height=18. width=18. ?fill />
+    }
   }
 }

@@ -1,18 +1,4 @@
-type hyperModule = {
-  sendMessageToNative: string => unit,
-  launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  startApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  presentApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  launchGPay: (string, Dict.t<JSON.t> => unit) => unit,
-  exitPaymentsheet: (int, string, bool) => unit,
-  exitPaymentMethodManagement: (int, string, bool) => unit,
-  exitWidget: (string, string) => unit,
-  exitCardForm: string => unit,
-  launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
-  onAddPaymentMethod: string => unit,
-  exitWidgetPaymentsheet: (int, string, bool) => unit,
-  updateWidgetHeight: int => unit,
-}
+open NativeModulesType
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
   switch dict->Dict.get(key) {
@@ -29,8 +15,6 @@ let hyperModuleDict =
 let hyperModule = {
   sendMessageToNative: getFunctionFromModule(hyperModuleDict, "sendMessageToNative", _ => ()),
   launchApplePay: getFunctionFromModule(hyperModuleDict, "launchApplePay", (_, _) => ()),
-  startApplePay: getFunctionFromModule(hyperModuleDict, "startApplePay", (_, _) => ()),
-  presentApplePay: getFunctionFromModule(hyperModuleDict, "presentApplePay", (_, _) => ()),
   launchGPay: getFunctionFromModule(hyperModuleDict, "launchGPay", (_, _) => ()),
   exitPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitPaymentsheet", (_, _, _) => ()),
   exitPaymentMethodManagement: getFunctionFromModule(
@@ -74,15 +58,10 @@ let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
   ->JSON.stringify
 }
 
-type useExitPaymentsheetReturnType = {
-  exit: (PaymentConfirmTypes.error, bool) => unit,
-  simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
-}
-let useExitPaymentsheet = () => {
-  // let (ref, _) = React.useContext(ReactNativeWrapperContext.reactNativeWrapperContext)
+
+let useExitPaymentsheet = () : useExitPaymentsheetReturnType=> {
   let logger = LoggerHook.useLoggerHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
@@ -151,9 +130,7 @@ let useExitWidget = () => {
   }
 }
 
-let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
-  hyperModule.startApplePay("", startCallback)
-  hyperModule.presentApplePay("", presentCallback)
+let launchApplePay = (requestObj: string, callback) => {
   hyperModule.launchApplePay(requestObj, callback)
 }
 
