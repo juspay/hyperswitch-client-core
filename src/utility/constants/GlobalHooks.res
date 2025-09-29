@@ -37,10 +37,10 @@ let useGetAssetUrlWithVersion = () => {
   }
 }
 
-let useGetLoggingUrl = () => {
+let useGetLoggingData = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   () => {
-    switch (nativeProp.customBackendUrl, nativeProp.customLogUrl) {
+    let url = switch (nativeProp.customBackendUrl, nativeProp.customLogUrl) {
     | (Some(_), None) => None
     | (_, Some(url)) => Some(url)
     | (None, None) =>
@@ -52,5 +52,8 @@ let useGetLoggingUrl = () => {
         process.env["HYPERSWITCH_LOGS_PATH"],
       )
     }
+
+    let isEnableLogsBatching = process.env["ENABLE_LOGS_BATCHING"] || false
+    (url, isEnableLogsBatching)
   }
 }

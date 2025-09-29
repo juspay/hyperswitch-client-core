@@ -67,7 +67,7 @@ let inactiveScreenApiCall = (
     firstEvent,
     source: nativeProp.sdkState->SdkTypes.sdkStateToStrMapper,
   }
-  sendLogs(logFile, uri, nativeProp.publishableKey, nativeProp.hyperParams.appId)
+  sendLogs([logFile], uri, nativeProp.publishableKey, nativeProp.hyperParams.appId)
   updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)
   setEvents(updatedEvents)
 }
@@ -107,7 +107,7 @@ let useLoggerHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (events, setEvents) = React.useContext(LoggerContext.loggingContext)
   let calculateLatency = useCalculateLatency()
-  let getLoggingEndpointHook = GlobalHooks.useGetLoggingUrl()
+  let getLoggingEndpointHook = GlobalHooks.useGetLoggingData()
   (
     ~logType,
     ~value,
@@ -127,7 +127,7 @@ let useLoggerHook = () => {
     | Some(latency) => latency->Float.toString
     | None => calculateLatency(eventName->eventToStrMapper)
     }
-    let uri = getLoggingEndpointHook()
+    let (uri, isEnableLogsBatching) = getLoggingEndpointHook()
     let logFile = {
       logType,
       timestamp: timestamp->Float.toString,
@@ -139,7 +139,9 @@ let useLoggerHook = () => {
       value,
       internalMetadata: internalMetadata->Option.getOr(""),
       category,
-      paymentId: String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
+      paymentId: String.split(nativeProp.clientSecret, "_secret_")
+      ->Array.get(0)
+      ->Option.getOr(""),
       merchantId: nativeProp.publishableKey,
       appId: ?nativeProp.hyperParams.appId,
       platform: WebKit.platformString,
@@ -161,7 +163,14 @@ let useLoggerHook = () => {
       latency,
       source: nativeProp.sdkState->SdkTypes.sdkStateToStrMapper,
     }
-    sendLogs(logFile, uri, nativeProp.publishableKey, nativeProp.hyperParams.appId)
+
+    LogProcessor.checkLogSizeAndSendData(
+      logFile,
+      uri,
+      nativeProp.publishableKey,
+      nativeProp.hyperParams.appId,
+      isEnableLogsBatching,
+    )
     updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)
     setEvents(updatedEvents)
     snooze(
