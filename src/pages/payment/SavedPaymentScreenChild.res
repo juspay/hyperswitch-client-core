@@ -37,6 +37,8 @@ let make = (
       />
     </View>
     <Space height=20. />
+    <VisaClickToPay />
+    <Space height=20. />
     <ClickableTextElement
       initialIconName="addwithcircle"
       text={localeObj.addPaymentMethodLabel}
