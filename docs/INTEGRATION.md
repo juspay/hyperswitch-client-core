@@ -1,91 +1,141 @@
 # Hyperswitch SDK Integration Guide
 
-This guide provides examples and steps to integrate the Hyperswitch Client Core SDK into your project across platforms.
+This guide provides step-by-step instructions to integrate the Hyperswitch SDK into your Android and iOS applications.  
 
 ---
 
-## 1. Web Integration
+## 1. Android Integration
 
-1. Install dependencies:
+### Prerequisites
 
-```bash
-yarn install
+- Android Studio (latest stable version)
+- Java 11 or higher
+- Android SDK installed
+- Ensure the Hyperswitch SDK is cloned or added as a local module.
+
+### Setup Steps
+
+1. **Add the SDK dependency** in your `app/build.gradle` file:
+
+```gradle
+dependencies {
+    implementation project(":hyperswitch-sdk-android")
+}
 ```
-2. Start the development server:
 
-```bash
-yarn run web
+2. **Initialize the SDK** (as shown in the demo app):
+
+```kotlin
+import com.hyperswitch.sdk.HyperswitchSdk
+import com.hyperswitch.sdk.Environment
+
+class MainActivity : AppCompatActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        HyperswitchSdk.initialize(
+            context = this,
+            apiKey = "<YOUR_API_KEY>",
+            environment = Environment.SANDBOX
+        )
+    }
+}
 ```
 
-3. Import the SDK in your project:
+3. **Trigger payments using SDK functions:**
 
-```javascript
-import Hyperswitch from 'hyperswitch-client-core';
+```kotlin
+HyperswitchSdk.createPayment(
+    amount = 5000,
+    currency = "INR",
+    onSuccess = { response ->
+        Log.d("Hyperswitch", "Payment Success: $response")
+    },
+    onError = { error ->
+        Log.e("Hyperswitch", "Payment Error: $error")
+    }
+)
 ```
-4. Initialize the SDK:
 
-```javascript
-const sdk = new Hyperswitch({
-  apiKey: process.env.HYPERSWITCH_API_KEY,
-  environment: 'sandbox' // or 'production'
-});
-```
-5. Use SDK functions as needed:
 
-```javascript
-sdk.createPayment({...});
-sdk.getTransactionStatus(transactionId);
-```
-## 2. Android Integration
+---
 
-1. Open the Android project in Android Studio.
-2. Ensure dependencies are installed:
-```bash
-yarn run build:android:detox
-```
-3. Initialize the SDK in your app:
-```java
-HyperswitchClient client = new HyperswitchClient.Builder()
-    .setApiKey("YOUR_API_KEY")
-    .setEnvironment(HyperswitchEnvironment.SANDBOX)
-    .build();
-```
-4. Use SDK methods to handle payments and transactions.
+## 2. iOS Integration
 
-## 3. iOS Integration
+### Prerequisites
 
-1. Open the iOS project in Xcode (HyperswitchClientCore.xcworkspace).
-2. Ensure pods are installed:
+- Xcode 14 or higher
+- CocoaPods installed (`sudo gem install cocoapods`)
+- iOS SDK cloned or installed
+
+### Setup Steps
+
+1. **Install dependencies:**
+
 ```bash
 cd ios
 pod install
 cd ..
 ```
 
-3. Initialize the SDK in your app:
-```swift
-let client = HyperswitchClient(apiKey: "YOUR_API_KEY", environment: .sandbox)
+2. **Open the workspace** in Xcode:
+
+```
+open HyperswitchClientCore.xcworkspace
 ```
 
-4. Call SDK functions to handle payments and transactions.
+3. **Initialize the SDK** in your Swift app:
 
-## 4. Common Integration Tips
+```swift
+import Hyperswitch
 
-- Always use **environment variables** for sensitive keys.  
-- Test on **sandbox** first before switching to production.  
-- Use the **example apps** in the repository as references.  
-- If you make changes to the SDK, rebuild using:
+class ViewController: UIViewController {
+    let client = HyperswitchClient(apiKey: "YOUR_API_KEY", environment: .sandbox)
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        // Example: prepare and show payment sheet
+        client.preparePaymentSheet()
+    }
+}
+```
+
+4. **Use PaymentSheet as per the demo app:**
+
+```swift
+PaymentSheet.PaymentButton(
+    paymentSession: paymentSession,
+    configuration: setupConfiguration(),
+    onCompletion: onPaymentCompletion
+) {
+    Text("Launch Payment Sheet")
+}
+```
+
+
+---
+
+## 3. Best Practices
+
+- Use **sandbox** mode during development and switch to production only after testing.
+- Store API keys securely — avoid hardcoding them.
+- Always rebuild SDKs after local changes:
 
 ```bash
-yarn run build:web
 yarn run build:android:detox
 yarn run build:ios:detox
 ```
-## 5. Troubleshooting
+
+---
+
+## 4. Troubleshooting
 
 | Issue                        | Solution                                                      |
 |-------------------------------|---------------------------------------------------------------|
-| SDK not found                  | Make sure submodules are initialized: `git submodule update --init --recursive` |
-| API errors                     | Check that the correct API key and environment are used      |
-| Build fails after SDK changes  | Rebuild the SDK for the platform you are targeting           |
+| SDK not found                 | Run `git submodule update --init --recursive`                 |
+| API errors                    | Verify API key and environment configuration                 |
+| Build errors                  | Clean and rebuild the project in Xcode or Android Studio      |
+| CocoaPods issue               | Run `pod repo update` and reinstall with `pod install`        |
 
+---
