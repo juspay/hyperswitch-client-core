@@ -1,26 +1,26 @@
 open ReactNative
 open Style
 
-type statusColorConfig = {
+type StatusColorConfig = {
   textColor: ReactNative.Color.t,
   backgroundColor: ReactNative.Color.t,
 }
 
-type buttonColorConfig = (string, string)
+type ButtonColorConfig = (string, string)
 type componentConfig = {
   background: ReactNative.Color.t,
   borderColor: ReactNative.Color.t,
   dividerColor: ReactNative.Color.t,
   color: ReactNative.Color.t,
 }
-type statusColor = {
-  green: statusColorConfig,
-  orange: statusColorConfig,
-  red: statusColorConfig,
-  blue: statusColorConfig,
+type StatusColor = {
+  green: StatusColorConfig,
+  orange: StatusColorConfig,
+  red: StatusColorConfig,
+  blue: StatusColorConfig,
 }
 
-type maxTextSize = {
+type MaxTextSize = {
   maxHeadingTextSize: float,
   maxSubHeadingTextSize: float,
   maxPlaceholderTextSize: float,
@@ -57,7 +57,7 @@ let maxTextSize = {
   maxCardTextSize: 7.,
 }
 
-let status_color = {
+let statusColor = {
   green: {textColor: "#36AF47", backgroundColor: "rgba(54, 175, 71, 0.12)"},
   orange: {textColor: "#CA8601", backgroundColor: "rgba(202, 134, 1, 0.12)"},
   red: {textColor: "#EF6969", backgroundColor: "rgba(239, 105, 105, 0.12)"},
@@ -124,7 +124,7 @@ type themeBasedStyleObj = {
   boxBorderColor: ReactNative.Style.t,
   dropDownSelectAll: array<array<ReactNative.Color.t>>,
   fadedColor: array<ReactNative.Color.t>,
-  status_color: statusColor,
+  statusColor: StatusColor,
   detailViewToolTipText: string,
   summarisedViewSingleStatHeading: string,
   switchThumbColor: string,
@@ -132,7 +132,7 @@ type themeBasedStyleObj = {
   lastOffset: string,
   dangerColor: string,
   orderDisableButton: string,
-  toastColorConfig: statusColorConfig, // [backrgroundcolor, textColor]
+  toastColorConfig: StatusColorConfig, // [backrgroundcolor, textColor]
   primaryColor: ReactNative.Color.t,
   borderRadius: float,
   borderWidth: float,
@@ -149,11 +149,11 @@ type themeBasedStyleObj = {
   linkTextSizeAdjust: float,
   modalTextSizeAdjust: float,
   cardTextSizeAdjust: float,
-  paypalButonColor: buttonColorConfig,
-  samsungPayButtonColor: buttonColorConfig,
+  paypalButonColor: ButtonColorConfig,
+  samsungPayButtonColor: ButtonColorConfig,
   applePayButtonColor: SdkTypes.applePayButtonStyle,
   googlePayButtonColor: Appearance.t,
-  payNowButtonColor: buttonColorConfig,
+  payNowButtonColor: ButtonColorConfig6,
   payNowButtonTextColor: string,
   payNowButtonBorderColor: string,
   payNowButtonShadowColor: string,
@@ -200,7 +200,7 @@ let darkRecord = {
   boxBorderColor: styles["dark_boxBorderColor"],
   dropDownSelectAll: [["#202124", "#202124", "#202124"], ["#202124", "#202124", "#202124"]],
   fadedColor: ["rgba(0, 0, 0, 0.75)", "rgba(0, 0, 0,1)"],
-  status_color,
+  statusColor,
   detailViewToolTipText: "rgba(25, 26, 26, 0.75)",
   summarisedViewSingleStatHeading: "#F6F8F9",
   switchThumbColor: "#f4f3f4",
@@ -286,7 +286,7 @@ let lightRecord = {
   boxBorderColor: styles["light_boxBorderColor"],
   dropDownSelectAll: [["#E7EAF1", "#E7EAF1", "#E7EAF1"], ["#F1F5FA", "#FDFEFF", "#F1F5FA"]],
   fadedColor: ["#CCCFD450", "rgba(53, 64, 82, 0.5)"],
-  status_color,
+  statusColor6,
   detailViewToolTipText: "rgba(246, 248, 249, 0.75)",
   summarisedViewSingleStatHeading: "#354052",
   switchThumbColor: "white",
@@ -373,7 +373,7 @@ let minimal = {
   boxBorderColor: styles["light_boxBorderColor"],
   dropDownSelectAll: [["#E7EAF1", "#E7EAF1", "#E7EAF1"], ["#F1F5FA", "#FDFEFF", "#F1F5FA"]],
   fadedColor: ["#CCCFD450", "rgba(53, 64, 82, 0.5)"],
-  status_color,
+  statusColor,
   detailViewToolTipText: "rgba(246, 248, 249, 0.75)",
   summarisedViewSingleStatHeading: "#354052",
   switchThumbColor: "white",
@@ -460,7 +460,7 @@ let flatMinimal = {
   boxBorderColor: styles["light_boxBorderColor"],
   dropDownSelectAll: [["#E7EAF1", "#E7EAF1", "#E7EAF1"], ["#F1F5FA", "#FDFEFF", "#F1F5FA"]],
   fadedColor: ["#CCCFD450", "rgba(53, 64, 82, 0.5)"],
-  status_color,
+  statusColor,
   detailViewToolTipText: "rgba(246, 248, 249, 0.75)",
   summarisedViewSingleStatHeading: "#354052",
   switchThumbColor: "white",
@@ -642,7 +642,7 @@ let itemToObj = (
     boxBorderColor: themeObj.boxBorderColor,
     dropDownSelectAll: themeObj.dropDownSelectAll,
     fadedColor: themeObj.fadedColor,
-    status_color,
+    statusColor,
     detailViewToolTipText: themeObj.detailViewToolTipText,
     summarisedViewSingleStatHeading: themeObj.summarisedViewSingleStatHeading,
     switchThumbColor: themeObj.switchThumbColor,

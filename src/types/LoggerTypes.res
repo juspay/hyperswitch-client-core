@@ -1,13 +1,13 @@
-type logType = DEBUG | INFO | ERROR | WARNING
-type logCategory = API | USER_ERROR | USER_EVENT | MERCHANT_EVENT
-type logComponent = MOBILE
-type apiLogType = Request | Response | NoResponse | Err
-type sdkVersionFetched =
+type LogType = DEBUG | INFO | ERROR | WARNING
+type LogCategory = API | USER_ERROR | USER_EVENT | MERCHANT_EVENT
+type LogComponent = MOBILE
+type ApiLogType = Request | Response | NoResponse | Err
+type SDKVersionFetched =
   | PACKAGE_JSON_NOT_STARTED
   | PACKAGE_JSON_LOADING
   | PACKAGE_JSON_REFERENCE_ERROR
   | PACKAGE_JSON_LOADED(string)
-type eventName =
+type EventName =
   | APP_RENDERED
   | S3_API
   | INACTIVE_SCREEN
@@ -58,11 +58,11 @@ type eventName =
   | SAMSUNG_PAY
   | CARD_SCHEME_SELECTION
 
-type logFile = {
+type LogFile = {
   timestamp: string,
-  logType: logType,
-  component: logComponent,
-  category: logCategory,
+  logType: LogType,
+  component: LogComponent,
+  category: LogCategory,
   version: string,
   codePushVersion: string,
   clientCoreVersion: string,
@@ -74,14 +74,14 @@ type logFile = {
   appId?: string,
   platform: string,
   userAgent: string,
-  eventName: eventName,
+  eventName: EventName,
   latency?: string,
   firstEvent: bool,
   paymentMethod?: string,
   paymentExperience?: string,
   source: string,
 }
-let getApiInitEvent = (event: eventName): option<eventName> => {
+let getApiInitEvent = (event: EventName): option<EventName> => {
   switch event {
   | RETRIEVE_CALL => Some(RETRIEVE_CALL_INIT)
   | CONFIRM_CALL => Some(CONFIRM_CALL_INIT)
