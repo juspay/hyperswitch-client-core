@@ -67,15 +67,9 @@ Use the SDK as shown in the example app:
 ```swift
 import Hyperswitch
 
-class ViewController: UIViewController {
-    let client = HyperswitchClient(apiKey: "YOUR_API_KEY", environment: .sandbox)
+let paymentSession = PaymentSession(publishableKey: "YOUR_PUBLISHABLE_KEY")
+paymentSession.initPaymentSession(paymentIntentClientSecret: "CLIENT_SECRET_FROM_BACKEND")
 
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Prepare and show the payment sheet
-        client.preparePaymentSheet()
-    }
-}
 ```
 
 ---

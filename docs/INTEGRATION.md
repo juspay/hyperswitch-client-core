@@ -1,6 +1,6 @@
 # Hyperswitch SDK Integration Guide
 
-This guide provides step-by-step instructions to integrate the Hyperswitch SDK into your Android and iOS applications.  
+This guide provides step-by-step instructions to integrate the Hyperswitch SDK into your Android and iOS applications.
 
 ---
 
@@ -8,22 +8,31 @@ This guide provides step-by-step instructions to integrate the Hyperswitch SDK i
 
 ### Prerequisites
 
-- Android Studio (latest stable version)
+- Android Studio 2022+ (latest stable version)
 - Java 11 or higher
 - Android SDK installed
-- Ensure the Hyperswitch SDK is cloned or added as a local module.
 
 ### Setup Steps
 
-1. **Add the SDK dependency** in your `app/build.gradle` file:
+#### Option 1: Gradle (Recommended)
+Add the dependency in your `app/build.gradle`:
 
 ```gradle
 dependencies {
-    implementation project(":hyperswitch-sdk-android")
+    implementation 'com.juspay:hyperswitch-client-core:<latest-version>'
 }
 ```
 
-2. **Initialize the SDK** (as shown in the demo app):
+#### Option 2: Local Development Build
+
+```bash
+git clone https://github.com/YOUR_USERNAME/hyperswitch-client-core.git
+cd hyperswitch-client-core
+git submodule update --init --recursive
+yarn run build:android:detox
+```
+
+### Initialize the SDK
 
 ```kotlin
 import com.hyperswitch.sdk.HyperswitchSdk
@@ -34,30 +43,26 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Use publishable key only
         HyperswitchSdk.initialize(
             context = this,
-            apiKey = "<YOUR_API_KEY>",
+            publishableKey = "YOUR_PUBLISHABLE_KEY",
             environment = Environment.SANDBOX
         )
     }
 }
 ```
 
-3. **Trigger payments using SDK functions:**
+### Trigger Payments
 
 ```kotlin
 HyperswitchSdk.createPayment(
     amount = 5000,
     currency = "INR",
-    onSuccess = { response ->
-        Log.d("Hyperswitch", "Payment Success: $response")
-    },
-    onError = { error ->
-        Log.e("Hyperswitch", "Payment Error: $error")
-    }
+    onSuccess = { response -> Log.d("Hyperswitch", "Payment Success: $response") },
+    onError = { error -> Log.e("Hyperswitch", "Payment Error: $error") }
 )
 ```
-
 
 ---
 
@@ -65,13 +70,13 @@ HyperswitchSdk.createPayment(
 
 ### Prerequisites
 
-- Xcode 14 or higher
+- Xcode 14+ installed
 - CocoaPods installed (`sudo gem install cocoapods`)
 - iOS SDK cloned or installed
 
 ### Setup Steps
 
-1. **Install dependencies:**
+1. **Install dependencies**
 
 ```bash
 cd ios
@@ -79,53 +84,63 @@ pod install
 cd ..
 ```
 
-2. **Open the workspace** in Xcode:
+2. **Open workspace**
 
-```
+```bash
 open HyperswitchClientCore.xcworkspace
 ```
 
-3. **Initialize the SDK** in your Swift app:
+3. **Initialize the SDK** (Headless Flow)
 
 ```swift
 import Hyperswitch
 
-class ViewController: UIViewController {
-    let client = HyperswitchClient(apiKey: "YOUR_API_KEY", environment: .sandbox)
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        // Example: prepare and show payment sheet
-        client.preparePaymentSheet()
-    }
-}
+let paymentSession = PaymentSession(publishableKey: "YOUR_PUBLISHABLE_KEY")
+paymentSession.initPaymentSession(paymentIntentClientSecret: "CLIENT_SECRET_FROM_BACKEND")
 ```
 
-4. **Use PaymentSheet as per the demo app:**
+4. **Customize Payment Flow**
 
 ```swift
-PaymentSheet.PaymentButton(
-    paymentSession: paymentSession,
-    configuration: setupConfiguration(),
-    onCompletion: onPaymentCompletion
-) {
-    Text("Launch Payment Sheet")
+private var handler: PaymentSessionHandler?
+
+func initSavedPaymentMethodSessionCallback(handler: PaymentSessionHandler) {
+    self.handler = handler
+}
+
+@objc func launchHeadless(_ sender: Any) {
+    paymentSession.getCustomerSavedPaymentMethods(initSavedPaymentMethodSessionCallback)
+}
+
+@objc func confirmPayment(_ sender: Any) {
+    self.handler?.confirmWithLastUsedSavedPaymentMethodData(callback)
 }
 ```
 
+5. **Handle Payment Results**
+
+```swift
+switch result {
+case .completed(let data): print("Payment completed: \(data)")
+case .failed(let error): print("Payment failed: \(error)")
+case .canceled(let data): print("Payment canceled: \(data)")
+}
+```
 
 ---
 
 ## 3. Best Practices
 
-- Use **sandbox** mode during development and switch to production only after testing.
-- Store API keys securely — avoid hardcoding them.
+- Use **sandbox mode** during development.
+- Store API keys securely — never expose secret keys in client apps.
 - Always rebuild SDKs after local changes:
 
 ```bash
 yarn run build:android:detox
 yarn run build:ios:detox
 ```
+
+- Run `git submodule update --init --recursive` after cloning.
 
 ---
 
@@ -134,7 +149,7 @@ yarn run build:ios:detox
 | Issue                        | Solution                                                      |
 |-------------------------------|---------------------------------------------------------------|
 | SDK not found                 | Run `git submodule update --init --recursive`                 |
-| API errors                    | Verify API key and environment configuration                 |
+| API errors                    | Verify publishable key and environment configuration         |
 | Build errors                  | Clean and rebuild the project in Xcode or Android Studio      |
 | CocoaPods issue               | Run `pod repo update` and reinstall with `pod install`        |
 
