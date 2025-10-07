@@ -1,28 +1,30 @@
-# Hyperswitch Android Development Setup
+# Hyperswitch Android Setup Guide
 
-This guide helps you set up the Android environment for the Hyperswitch Client Core SDK step by step.
+This guide walks you through setting up and running the Hyperswitch Android demo app using the official SDK and `PaymentSession` class.
 
 ---
 
 ## 1. SDK Installation
 
-Install the SDK either via **Gradle** or **local development build**.
+You can set up the Hyperswitch Android SDK in two ways — via **Gradle** or by **building locally** for development.
 
 ### Option 1: Gradle (Recommended)
-Add the dependency in your `app/build.gradle`:
+
+Add the dependency to your app-level `build.gradle` file:
 
 ```gradle
 dependencies {
-   implementation 'com.juspay:hyperswitch-client-core:<latest-version>'
+    implementation 'io.hyperswitch:hyperswitch-sdk-android:+'
 }
 ```
 
 ### Option 2: Local Development Build
-1. Clone the repo:
+
+1. Clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/hyperswitch-client-core.git
-cd hyperswitch-client-core
+git clone --recurse-submodules https://github.com/juspay/hyperswitch.git
+cd hyperswitch
 git submodule update --init --recursive
 ```
 
@@ -36,55 +38,91 @@ yarn run build:android:detox
 
 ## 2. Getting Started
 
-1. **Install Android Studio** (2022+ recommended)  
-   [Download here](https://developer.android.com/studio)
+Follow these steps to set up the project and run the demo app locally.
 
-2. **Install Java JDK 11+**  
-   - [Adoptium](https://adoptium.net/) or [Oracle JDK](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html)  
-
-**Set JAVA_HOME:**
-
-**Windows**
-```cmd
-setx JAVA_HOME "C:\Program Files\Java\jdk-11"
-```
-
-**Linux / Mac**
-```bash
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-```
+### Step 1: Install Required Tools
+- **Android Studio** (2022.1.1+)
+- **Java JDK 11+**
+- **Yarn & Node.js** (for SDK builds)
 
 Verify:
 ```bash
 java -version
+yarn -v
 ```
-
-3. **Open Project in Android Studio**  
-   - File → Open → Select cloned repo folder  
-   - Wait for Gradle sync
-
-4. **Run the App**  
-   - Connect a real device or start an emulator (AVD Manager)  
-   - Run → Run 'app' (Shift + F10)
 
 ---
 
-## 3. Common Issues & Solutions
+### Step 2: Open the Project
 
-| Issue                 | Solution                                                        |
-|-----------------------|-----------------------------------------------------------------|
-| Gradle sync fails      | File → Sync Project with Gradle Files; check internet          |
-| Emulator not starting  | Enable virtualization (VT-x/AMD-V) in BIOS                     |
-| SDK not found          | Run `git submodule update --init --recursive`                 |
+1. Open **Android Studio**
+2. Go to **File → Open**
+3. Select the `android` folder inside the cloned repository
+4. Wait for Gradle sync to complete
+
+---
+
+### Step 3: Start the Local Backend
+
+The sample app connects to a backend server to fetch the `clientSecret` and `publishableKey`.
+
+Run your backend locally on port `5252`:
+
+```bash
+python3 server.py
+```
+
+Use the following endpoint inside the Android app:
+
+```
+http://10.0.2.2:5252
+```
+
+---
+
+### Step 4: Initialize and Launch PaymentSession
+
+Hyperswitch uses `PaymentSession` for managing the payment flow.
+
+
+```kotlin
+val paymentSession = PaymentSession(this, publishableKey)
+paymentSession.initPaymentSession(clientSecret)
+
+CoroutineScope(Dispatchers.Main).launch {
+    val config = getCustomisations()
+    paymentSession.presentPaymentSheet(config, ::onPaymentSheetResult)
+}
+```
+
+This automatically launches the Hyperswitch payment sheet and handles callbacks.
+
+---
+
+### Step 5: Run the App
+
+1. Connect a device or open an emulator (AVD Manager)  
+2. Click **Run ▶️** in Android Studio or press **Shift + F10**
+
+---
+
+## 3. Common Issues
+
+| Issue | Solution |
+|-------|-----------|
+| Gradle sync fails | Click **Sync Project with Gradle Files** |
+| Backend not reachable | Use `http://10.0.2.2` instead of `localhost` |
+| SDK build failed | Run `yarn run build:android:detox` |
+| Emulator not starting | Enable virtualization (VT-x / AMD-V) in BIOS |
 
 ---
 
 ## 4. Tips
 
-- Always use **Android Studio 2022+**  
-- Run `git submodule update --init --recursive` after cloning  
-- Rebuild SDK if making changes:
+- Always rebuild SDK after local changes:  
+  ```bash
+  yarn run build:android:detox
+  ```
+- Don’t hardcode API keys in the app.
 
-```bash
-yarn run build:android:detox
-```
+---
