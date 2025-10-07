@@ -1,171 +1,44 @@
 open ReactNative
 open ReactNative.Style
-
-module VisaSDK = {
-  type visaSDKRef
-  type methods = array<string>
-
-  type dpaTransactionOptions = {
-    transactionAmount: {"transactionAmount": string, "transactionCurrencyCode": string},
-    dpaBillingPreference: string,
-    dpaAcceptedBillingCountries: array<string>,
-    merchantCategoryCode: string,
-    merchantCountryCode: string,
-    payloadTypeIndicator: string,
-    merchantOrderId: string,
-    paymentOptions: array<{"dpaDynamicDataTtlMinutes": int, "dynamicDataType": string}>,
-    dpaLocale: string,
-  }
-
-  type initializeParams = {
-    dpaTransactionOptions: dpaTransactionOptions,
-    correlationId: string,
-  }
-
-  type consumerIdentity = {
-    identityProvider: string,
-    identityValue: string,
-    identityType: string,
-  }
-
-  type getCardsParams = {
-    consumerIdentity: consumerIdentity,
-    validationData?: string,
-  }
-
-  type maskedCard = {
-    srcDigitalCardId: string,
-    paymentCardDescriptor: string,
-    panLastFour: string,
-    panExpirationMonth: string,
-    panExpirationYear: string,
-  }
-
-  type checkoutParams = {
-    srcDigitalCardId: string,
-    payloadTypeIndicatorCheckout: string,
-    dpaTransactionOptions: {
-      "authenticationPreferences": {
-        "authenticationMethods": array<{
-          "authenticationMethodType": string,
-          "authenticationSubject": string,
-          "methodAttributes": {"challengeIndicator": string},
-        }>,
-        "payloadRequested": string,
-      },
-      "acquirerBIN": string,
-      "acquirerMerchantId": string,
-      "merchantName": string,
-    },
-  }
-
-  @module("react-native-hyperswitch-click-to-pay") @react.component
-  external make: (
-    ~ref: React.ref<Nullable.t<visaSDKRef>>=?,
-    ~onSDKReady: methods => unit=?,
-    ~onError: {..} => unit=?,
-  ) => React.element = "VisaSDKIntegration"
-
-  @send external callFunction: (visaSDKRef, string, 'a) => promise<'b> = "callFunction"
-}
+open VisaClickToPaySDK
+open VisaClickToPayLogic
 
 @react.component
 let make = () => {
-  let sdkRef = React.useRef(Nullable.null)
-  let (sdkReady, setSdkReady) = React.useState(() => false)
-  let (otp, setOtp) = React.useState(() => ["", "", "", "", "", ""])
-  let (showOtpInput, setShowOtpInput) = React.useState(() => false)
-  let (cardsArray, setCardsArray) = React.useState(() => [])
-  let (srcId, setSrcId) = React.useState(() => "")
-  let (isLoading, setIsLoading) = React.useState(() => false)
-  let {borderRadius, component} = ThemebasedStyle.useThemeBasedStyle()
+  let {borderRadius, component, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
 
-
-  let consumerIdentity: VisaSDK.consumerIdentity = {
-    identityProvider: "SRC",
-    identityValue: "pradeep.kumar@juspay.in",
-    identityType: "EMAIL_ADDRESS",
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let clickToPaySession = switch allApiData.sessions {
+  | Some(sessions) => sessions->Array.find(session => session.wallet_name == CLICK_TO_PAY)
+  | _ => None
   }
 
-  let handleGetCardsOutput = cards => {
-  open Belt.Option
-
-  let actionCode = cards->Js.Dict.get("actionCode")->flatMap(JSON.Decode.string)
-
-  switch actionCode {
-  | Some("PENDING_CONSUMER_IDV") => setShowOtpInput(_ => true)
-  | Some("SUCCESS") =>
-    setShowOtpInput(_ => false)
-
-    let maskedCards =
-      cards
-      ->Js.Dict.get("profiles")
-      ->flatMap(JSON.Decode.array)
-      ->flatMap(arr => Array.get(arr, 0))
-      ->flatMap(JSON.Decode.object)
-      ->flatMap(profile => profile->Js.Dict.get("maskedCards"))
-      ->flatMap(JSON.Decode.array)
-
-    switch maskedCards {
-    | Some(cards) => setCardsArray(_ => cards)
-    | None => ()
-    }
-  | _ => setShowOtpInput(_ => false)
-  }
-}
-
-  let initVisaClickToPayAndGetCards = async () => {
-    try {
-      setIsLoading(_ => true)
-      Console.log("Auto-initializing Visa Click to Pay...")
-      let sdkRefValue = sdkRef.current->Nullable.toOption
-
-      switch sdkRefValue {
-      | Some(sdk) => {
-          let initParams: VisaSDK.initializeParams = {
-            dpaTransactionOptions: {
-              transactionAmount: {
-                "transactionAmount": "123.94",
-                "transactionCurrencyCode": "USD",
-              },
-              dpaBillingPreference: "NONE",
-              dpaAcceptedBillingCountries: ["US", "CA"],
-              merchantCategoryCode: "4829",
-              merchantCountryCode: "US",
-              payloadTypeIndicator: "FULL",
-              merchantOrderId: "order_" ++ Date.now()->Float.toString,
-              paymentOptions: [
-                {
-                  "dpaDynamicDataTtlMinutes": 2,
-                  "dynamicDataType": "CARD_APPLICATION_CRYPTOGRAM_LONG_FORM",
-                },
-              ],
-              dpaLocale: "en_US",
-            },
-            correlationId: "my-id",
-          }
-
-          let _ = await VisaSDK.callFunction(sdk, "initialize", initParams)
-          Console.log("Visa Click to Pay initialized")
-
-          let getCardsParams: VisaSDK.getCardsParams = {consumerIdentity: consumerIdentity}
-          let cards = await VisaSDK.callFunction(sdk, "getCards", getCardsParams)
-          handleGetCardsOutput(cards)
-          setIsLoading(_ => false)
-        }
-      | None => {
-          Console.log("SDK ref not available")
-          setIsLoading(_ => false)
-        }
-      }
-    } catch {
-    | error => {
-        setShowOtpInput(_ => false)
-        setIsLoading(_ => false)
-        Console.log2("Error during Visa Click to Pay:", error)
-      }
-    }
-  }
+  let {
+    sdkRef,
+    sdkReady,
+    setSdkReady,
+    otp,
+    otpRefs,
+    componentState,
+    srcId,
+    setSrcId,
+    showNotYouScreen,
+    setShowNotYouScreen,
+    newIdentifier,
+    setNewIdentifier,
+    resendLoading,
+    resendTimer,
+    setResendTimer,
+    rememberMe,
+    setRememberMe,
+    cardsArray,
+    initVisaClickToPayAndGetCards,
+    submitOtp,
+    resendOtp,
+    handleOtpChange,
+    handleCheckout,
+    switchIdentity,
+  } = useVisaClickToPay(clickToPaySession)
 
   React.useEffect1(() => {
     if sdkReady {
@@ -174,149 +47,120 @@ let make = () => {
     None
   }, [sdkReady])
 
-  let submitOtp = async () => {
-    try {
-      setIsLoading(_ => true)
-      let otpString = otp->Array.join("")
-      let sdkRefValue = sdkRef.current->Nullable.toOption
+  React.useEffect1(() => {
+    if resendTimer > 0 {
+      let timerId = setTimeout(() => {
+        setResendTimer(prev => prev - 1)
+      }, 1000)
+      Some(() => clearTimeout(timerId))
+    } else {
+      None
+    }
+  }, [resendTimer])
 
-      switch sdkRefValue {
-      | Some(sdk) => {
-          let getCardsParams: VisaSDK.getCardsParams = {
-            consumerIdentity: consumerIdentity,
-            validationData: otpString,
-          }
-          let cards = await VisaSDK.callFunction(sdk, "getCards", getCardsParams)
-          handleGetCardsOutput(cards)
-          setIsLoading(_ => false)
-        }
-      | None => {
-          Console.log("SDK ref not available")
-          setIsLoading(_ => false)
-        }
+  React.useEffect1(() => {
+    if componentState == OTP_INPUT {
+      otpRefs[0]
+      ->Option.flatMap(ref => ref.current->Nullable.toOption)
+      ->Option.forEach(input => input->ReactNative.TextInput.focus)
+    }
+    None
+  }, [componentState])
+
+  let cardBrands = switch clickToPaySession {
+  | Some(session) =>
+    session.card_brands
+    ->Array.map(json => json->JSON.Decode.string->Option.getOr(""))
+    ->Array.filter(brand => brand !== "")
+  | None => []
+  }
+
+  let maskEmail = email => {
+    switch email->String.split("@") {
+    | [localPart, domain] => {
+        let prefix = localPart->String.substring(~start=0, ~end=2)
+        prefix ++ "•••@" ++ domain
       }
-    } catch {
-    | error => {
-        Console.log2("Error submitting OTP:", error)
-        setIsLoading(_ => false)
-      }
+    | _ => email
     }
   }
 
-  let handleOtpChange = (index, value) => {
-    if String.length(value) <= 1 {
-      let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? value : item)
-      setOtp(_ => newOtp)
-    }
-  }
-
-  let handleCheckout = async () => {
-    try {
-      setIsLoading(_ => true)
-      let sdkRefValue = sdkRef.current->Nullable.toOption
-
-      switch sdkRefValue {
-      | Some(sdk) => {
-          let checkoutParams: VisaSDK.checkoutParams = {
-            srcDigitalCardId: srcId,
-            payloadTypeIndicatorCheckout: "FULL",
-            dpaTransactionOptions: {
-              "authenticationPreferences": {
-                "authenticationMethods": [
-                  {
-                    "authenticationMethodType": "3DS",
-                    "authenticationSubject": "CARDHOLDER",
-                    "methodAttributes": {"challengeIndicator": "01"},
-                  },
-                ],
-                "payloadRequested": "AUTHENTICATED",
-              },
-              "acquirerBIN": "455555",
-              "acquirerMerchantId": "12345678",
-              "merchantName": "TestMerchant",
-            },
-          }
-          let checkoutResponse = await VisaSDK.callFunction(sdk, "checkout", checkoutParams)
-          Console.log2("===> Checkout Response:", checkoutResponse)
-          setIsLoading(_ => false)
-          // TODO: Handle checkout response and process payment
-        }
-      | None => {
-          Console.log("SDK ref not available")
-          setIsLoading(_ => false)
-        }
-      }
-    } catch {
-    | error => {
-        Console.log2("Error during checkout:", error)
-        setIsLoading(_ => false)
-      }
-    }
+  let maskedEmail = switch clickToPaySession {
+  | Some(session) => session.email->Option.map(maskEmail)->Option.getOr("")
+  | None => ""
   }
 
   <>
-    <View style={s({marginVertical: 12.->dp})}>
-      <View
-        style={s({
-          flexDirection: #row,
-          alignItems: #center,
-          marginBottom: 12.->dp,
-          paddingVertical: 8.->dp,
-        })}>
-        <View
+    {componentState == CARDS_LOADING
+      ? <View
           style={s({
-            backgroundColor: "#1434CB",
-            paddingHorizontal: 8.->dp,
-            paddingVertical: 4.->dp,
-            borderRadius: 4.,
+            flex: 1.,
+            justifyContent: #center,
+            alignItems: #center,
+            paddingVertical: 40.->dp,
           })}>
-          <Text style={s({color: "#FFFFFF", fontSize: 12., fontWeight: #bold})}>
-            {"VISA"->React.string}
-          </Text>
+          <VisaClickToPaySDK.SrcLoader height=200. width=200. />
         </View>
-        <Text style={s({marginLeft: 8.->dp, fontSize: 14., fontWeight: #\"600"})}>
-          {"Click to Pay"->React.string}
-        </Text>
-      </View>
-      {isLoading
-        ? <View style={s({paddingVertical: 16.->dp, alignItems: #center})}>
-            <Text style={s({fontSize: 14., color: "#666"})}>
-              {"Loading..."->React.string}
-            </Text>
+      : React.null}
+    {componentState == OTP_INPUT || componentState == CARDS_DISPLAY
+      ? <View style={s({marginVertical: 12.->dp})}>
+          <View style={s({alignItems: #"flex-start", marginBottom: 12.->dp})}>
+            {cardBrands->Array.length > 0
+              ? <SrcMark cardBrands height=32. width=150. />
+              : React.null}
           </View>
-        : React.null}
-      {showOtpInput && !isLoading
-        ? <View style={s({marginTop: 8.->dp})}>
-            <Text style={s({fontSize: 14., marginBottom: 12.->dp, fontWeight: #\"600"})}>
-              {"Enter verification code"->React.string}
-            </Text>
+          {maskedEmail !== ""
+            ? <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
+                <View style={s({flexDirection: #row, alignItems: #center})}>
+                  <Text style={s({fontSize: 14., color: "#666", marginRight: 8.->dp})}>
+                    {maskedEmail->React.string}
+                  </Text>
+                  <TouchableOpacity onPress={_ => setShowNotYouScreen(_ => true)}>
+                    <Text style={s({fontSize: 14., color: "#007AFF"})}>
+                      {"Not you?"->React.string}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            : React.null}
+          {componentState == OTP_INPUT
+            ? <View style={s({marginTop: 8.->dp})}>
+                <Text style={s({fontSize: 14., marginBottom: 12.->dp, fontWeight: #\"600"})}>
+                  {"Enter verification code"->React.string}
+                </Text>
             <View
               style={s({
                 flexDirection: #row,
                 justifyContent: #\"space-between",
                 marginBottom: 16.->dp,
               })}>
-              {otp
-              ->Array.mapWithIndex((digit, index) => {
+              {[0, 1, 2, 3, 4, 5]
+              ->Array.mapWithIndex((index, _) =>
                 <TextInput
                   key={index->Int.toString}
+                  ref={otpRefs[index]->Option.getExn->ReactNative.Ref.value}
                   style={s({
                     width: 45.->dp,
                     height: 50.->dp,
-                    borderWidth: 1.,
-                    borderColor: component.borderColor,
+                    borderWidth: 2.,
+                    borderColor: otp[index]->Option.getOr("") !== ""
+                      ? primaryColor
+                      : component.borderColor,
                     borderRadius,
                     textAlign: #center,
                     fontSize: 20.,
                     fontWeight: #\"600",
                     backgroundColor: component.background,
+                    color: component.color,
                   })}
-                  value=digit
+                  value={otp[index]->Option.getOr("")}
                   onChangeText={value => handleOtpChange(index, value)}
                   keyboardType=#numeric
                   maxLength=1
+                  autoFocus={index === 0}
+                  selectTextOnFocus=true
                 />
-              })
+              )
               ->React.array}
             </View>
             <TouchableOpacity
@@ -332,11 +176,57 @@ let make = () => {
                 {"Continue"->React.string}
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              onPress={_ => resendOtp()->ignore}
+              disabled={resendTimer > 0 || resendLoading}
+              style={s({marginTop: 12.->dp, alignItems: #center})}>
+              <Text
+                style={s({
+                  fontSize: 14.,
+                  color: resendTimer > 0 || resendLoading ? "#CCC" : "#007AFF",
+                  fontWeight: #\"500",
+                })}>
+                {(resendTimer > 0
+                    ? `Resend code in ${resendTimer->Int.toString}s`
+                    : resendLoading
+                    ? "Sending..."
+                    : "Resend code")->React.string}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={_ => setRememberMe(prev => !prev)}
+              style={s({
+                flexDirection: #row,
+                alignItems: #center,
+                marginTop: 16.->dp,
+              })}>
+              <View
+                style={s({
+                  width: 20.->dp,
+                  height: 20.->dp,
+                  borderWidth: 2.,
+                  borderColor: rememberMe ? "#007AFF" : "#CCC",
+                  borderRadius: 3.,
+                  marginRight: 8.->dp,
+                  justifyContent: #center,
+                  alignItems: #center,
+                  backgroundColor: rememberMe ? "#007AFF" : "transparent",
+                })}>
+                {rememberMe
+                  ? <Text style={s({color: "#FFFFFF", fontSize: 14., fontWeight: #bold})}>
+                      {"\u2713"->React.string}
+                    </Text>
+                  : React.null}
+              </View>
+              <Text style={s({fontSize: 12., color: "#666"})}>
+                {"Remember me on this browser"->React.string}
+              </Text>
+            </TouchableOpacity>
           </View>
         : React.null}
-      {cardsArray->Array.length > 0 && !showOtpInput && !isLoading
-        ? <View style={s({marginTop: 12.->dp})}>
-            {cardsArray
+          {componentState == CARDS_DISPLAY
+            ? <View style={s({marginTop: 12.->dp})}>
+                {cardsArray
             ->Array.mapWithIndex((card, index) => {
               let cardDict = card->JSON.Decode.object->Option.getOr(Js.Dict.empty())
               let srcDigitalCardId =
@@ -366,94 +256,149 @@ let make = () => {
                 ->Option.getOr("")
 
               let isSelected = srcId === srcDigitalCardId
+              let isLastCard = index === cardsArray->Array.length - 1
 
               <TouchableOpacity
                 key={index->Int.toString}
                 onPress={_ => setSrcId(_ => srcDigitalCardId)}
                 style={s({
-                  flexDirection: #row,
-                  alignItems: #center,
-                  padding: 12.->dp,
-                  marginBottom: 8.->dp,
-                  borderWidth: 1.,
-                  borderColor: isSelected ? "#007AFF" : component.borderColor,
-                  borderRadius,
-                  backgroundColor: component.background,
+                  minHeight: 60.->dp,
+                  paddingVertical: 16.->dp,
+                  borderBottomWidth: isLastCard ? 0. : 1.,
+                  borderBottomColor: component.borderColor,
+                  justifyContent: #center,
                 })}>
-                // Radio button
                 <View
                   style={s({
-                    width: 20.->dp,
-                    height: 20.->dp,
-                    borderRadius: 10.,
-                    borderWidth: 2.,
-                    borderColor: isSelected ? "#007AFF" : "#CCC",
-                    marginRight: 12.->dp,
-                    justifyContent: #center,
+                    flexDirection: #row,
                     alignItems: #center,
+                    justifyContent: #"space-between",
                   })}>
-                  {isSelected
-                    ? <View
-                        style={s({
-                          width: 10.->dp,
-                          height: 10.->dp,
-                          borderRadius: 5.,
-                          backgroundColor: "#007AFF",
-                        })}
+                  <View style={s({flexDirection: #row, alignItems: #center, maxWidth: 60.->pct})}>
+                    <CustomRadioButton size=20.5 selected=isSelected color=primaryColor />
+                    <Space />
+                    <View style={s({flexDirection: #row, alignItems: #center})}>
+                      <Icon
+                        name={paymentCardDescriptor->String.toLowerCase}
+                        height=25.
+                        width=24.
+                        style={s({marginEnd: 5.->dp})}
                       />
-                    : React.null}
-                </View>
-                <View
-                  style={s({
-                    backgroundColor: "#1434CB",
-                    paddingHorizontal: 6.->dp,
-                    paddingVertical: 3.->dp,
-                    borderRadius: 3.,
-                    marginRight: 8.->dp,
-                  })}>
-                  <Text style={s({color: "#FFFFFF", fontSize: 10., fontWeight: #bold})}>
-                    {paymentCardDescriptor->React.string}
-                  </Text>
-                </View>
-                <View style={s({flex: 1.})}>
-                  <Text style={s({fontSize: 14., fontWeight: #\"600", marginBottom: 2.->dp})}>
-                    {`•••• ${panLastFour}`->React.string}
-                  </Text>
-                  <Text style={s({fontSize: 12., color: "#666"})}>
-                    {`${panExpirationMonth} / ${panExpirationYear}`->React.string}
-                  </Text>
+                      <TextWrapper
+                        text={`•••• ${panLastFour}`}
+                        textType={{CardTextBold}}
+                      />
+                    </View>
+                  </View>
+                  <TextWrapper
+                    text={`${panExpirationMonth}/${panExpirationYear->String.slice(~start=-2, ~end=String.length(panExpirationYear))}`}
+                    textType={{{ModalTextLight}}}
+                  />
                 </View>
               </TouchableOpacity>
             })
             ->React.array}
-            {srcId !== ""
-              ? <TouchableOpacity
-                  onPress={_ => handleCheckout()->ignore}
-                  disabled=isLoading
-                  style={s({
-                    backgroundColor: isLoading ? "#CCC" : "#007AFF",
-                    padding: 14.->dp,
-                    borderRadius,
-                    alignItems: #center,
-                    marginTop: 12.->dp,
-                  })}>
-                  <Text style={s({color: "#FFFFFF", fontSize: 16., fontWeight: #\"600"})}>
-                    {(isLoading ? "Processing..." : "Pay with Click to Pay")->React.string}
-                  </Text>
-                </TouchableOpacity>
+                {srcId !== ""
+                  ? <TouchableOpacity
+                      onPress={_ => handleCheckout()->ignore}
+                      style={s({
+                        backgroundColor: "#007AFF",
+                        padding: 14.->dp,
+                        borderRadius,
+                        alignItems: #center,
+                        marginTop: 12.->dp,
+                      })}>
+                      <Text style={s({color: "#FFFFFF", fontSize: 16., fontWeight: #\"600"})}>
+                        {"Pay with Click to Pay"->React.string}
+                      </Text>
+                    </TouchableOpacity>
+                  : React.null}
+              </View>
+            : React.null}
+        </View>
+      : React.null}
+    <View
+      style={s({
+        position: #absolute,
+        top: 0.->dp,
+        left: 0.->dp,
+        width: 1.->dp,
+        height: 1.->dp,
+        opacity: 0.,
+        zIndex: -999,
+      })}>
+      <VisaSDK
+        ref={sdkRef}
+        style={s({
+          height: 1.->dp,
+          width: 1.->dp,
+        })}
+        onSDKReady={_ => setSdkReady(_ => true)}
+        onError={_ => ()}
+      />
+    </View>
+    {showNotYouScreen
+      ? <View
+          style={s({
+            position: #absolute,
+            top: 0.->dp,
+            left: 0.->dp,
+            right: 0.->dp,
+            bottom: 0.->dp,
+            backgroundColor: "white",
+            padding: 16.->dp,
+          })}>
+          <TouchableOpacity
+            onPress={_ => setShowNotYouScreen(_ => false)}
+            style={s({marginBottom: 16.->dp})}>
+            <Text style={s({fontSize: 16., color: "#007AFF"})}> {"← Back"->React.string} </Text>
+          </TouchableOpacity>
+          <View style={s({alignItems: #center, marginBottom: 16.->dp})}>
+            {cardBrands->Array.length > 0
+              ? <SrcMark cardBrands height=32. width=150. />
               : React.null}
           </View>
-        : React.null}
-    </View>
-    <VisaSDK
-      ref={sdkRef}
-      onSDKReady={methods => {
-        Console.log2("Visa SDK Ready! Available methods:", methods)
-        setSdkReady(_ => true)
-      }}
-      onError={error => {
-        Console.log2("Visa SDK Error:", error)
-      }}
-    />
+          <Text
+            style={s({
+              fontSize: 14.,
+              color: "#666",
+              textAlign: #center,
+              marginBottom: 16.->dp,
+            })}>
+            {"Enter a new email or mobile number to access a different set of linked cards."->React.string}
+          </Text>
+          <TextInput
+            value=newIdentifier
+            onChangeText={value => setNewIdentifier(_ => value)}
+            placeholder="Enter email"
+            keyboardType=#"email-address"
+            autoCapitalize=#none
+            style={s({
+              borderWidth: 1.,
+              borderColor: component.borderColor,
+              borderRadius,
+              padding: 12.->dp,
+              fontSize: 14.,
+              marginBottom: 16.->dp,
+              backgroundColor: component.background,
+            })}
+          />
+          <TouchableOpacity
+            onPress={_ => {
+              switchIdentity(newIdentifier)->ignore
+            }}
+            disabled={newIdentifier === ""}
+            style={s({
+              backgroundColor: newIdentifier === "" ? "#CCC" : "#007AFF",
+              padding: 14.->dp,
+              borderRadius,
+              alignItems: #center,
+            })}>
+            <Text style={s({color: "#FFFFFF", fontSize: 16., fontWeight: #\"600"})}>
+              {"Switch ID"->React.string}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      : React.null}
   </>
 }

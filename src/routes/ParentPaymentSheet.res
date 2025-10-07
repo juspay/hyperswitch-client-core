@@ -13,6 +13,11 @@ let make = (~isSheet=true) => {
   let isDefaultView = nativeProp.configuration.defaultView
   let mandateType = allApiData.additionalPMLData.mandateType
 
+  let hasClickToPaySession = switch allApiData.sessions {
+  | Some(sessions) => sessions->Array.some(session => session.wallet_name == SdkTypes.CLICK_TO_PAY)
+  | _ => false
+  }
+
   <FullScreenSheetWrapper isSheet>
     {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
     | (_, None, _)
@@ -22,10 +27,19 @@ let make = (~isSheet=true) => {
       <PaymentSheetViewWrappers.SDKEntryPointWrapper
         setConfirmButtonDataRef
         mandateType
-        isSavedPaymentMethodsAvailable={data.pmList->Option.getOr([])->Array.length > 0}
+        isSavedPaymentMethodsAvailable={data.pmList->Option.getOr([])->Array.length > 0 ||
+        hasClickToPaySession}
         paymentScreenType
       />
-    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
+    | (None, _, _) =>
+      hasClickToPaySession
+        ? <PaymentSheetViewWrappers.SDKEntryPointWrapper
+            setConfirmButtonDataRef
+            mandateType
+            isSavedPaymentMethodsAvailable=true
+            paymentScreenType
+          />
+        : <PaymentSheet setConfirmButtonDataRef />
     }}
     <GlobalConfirmButton confirmButtonDataRef />
     <Space height=15. />

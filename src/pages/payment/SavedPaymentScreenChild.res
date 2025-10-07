@@ -1,5 +1,6 @@
 open ReactNative
 open ReactNative.Style
+open SdkTypes
 
 @react.component
 let make = (
@@ -18,27 +19,41 @@ let make = (
 
   let localeObj = GetLocale.useGetLocalObj()
 
+  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let hasClickToPaySession = switch allApiData.sessions {
+  | Some(sessions) => sessions->Array.some(session => session.wallet_name == CLICK_TO_PAY)
+  | _ => false
+  }
+
   <>
-    <Space />
-    <View
-      style={array([
-        getShadowStyle,
-        s({
-          paddingHorizontal: 24.->dp,
-          paddingVertical: 5.->dp,
-          borderRadius,
-          borderWidth: 0.0,
-          borderColor: component.borderColor,
-          backgroundColor: component.background,
-        }),
-      ])}>
-      <SavedPMListWithLoader
-        listArr={savedPaymentMethodsData} savedCardCvv setSavedCardCvv setIsCvcValid
-      />
-    </View>
-    <Space height=20. />
-    <VisaClickToPay />
-    <Space height=20. />
+    {hasClickToPaySession
+      ? <>
+          <VisaClickToPay />
+          <Space height=20. />
+        </>
+      : React.null}
+    {savedPaymentMethodsData->Array.length > 0
+      ? <>
+          <Space />
+          <View
+            style={array([
+              getShadowStyle,
+              s({
+                paddingHorizontal: 24.->dp,
+                paddingVertical: 5.->dp,
+                borderRadius,
+                borderWidth: 0.0,
+                borderColor: component.borderColor,
+                backgroundColor: component.background,
+              }),
+            ])}>
+            <SavedPMListWithLoader
+              listArr={savedPaymentMethodsData} savedCardCvv setSavedCardCvv setIsCvcValid
+            />
+          </View>
+          <Space height=20. />
+        </>
+      : React.null}
     <ClickableTextElement
       initialIconName="addwithcircle"
       text={localeObj.addPaymentMethodLabel}
