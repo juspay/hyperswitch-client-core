@@ -34,7 +34,8 @@ type localeTypes =
 
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
-type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE | KLARNA
+type payment_method_type_wallet =
+  GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | KLARNA | SKRILL | PAY_SAFE_CARD | NONE
 
 let walletNameMapper = str => {
   switch str {
@@ -83,10 +84,16 @@ type savedWallet = {
   lastUsedAt?: string,
 }
 
-type savedDataType =
-  | SAVEDLISTCARD(savedCard)
-  | SAVEDLISTWALLET(savedWallet)
-  | NONE
+// type savedDataType =
+//   | SAVEDLISTCARD(savedCard)
+//   | SAVEDLISTWALLET(savedWallet)
+//   | NONE
+
+type customPickerType = {
+  label: string,
+  value: string,
+  icon?: string,
+}
 
 type colors = {
   primary: option<string>,
@@ -256,16 +263,21 @@ type configurationType = {
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
   enablePartialLoading: bool,
+  displayMergedSavedMethods: bool,
 }
 
 type sdkState =
   | PaymentSheet
+  | ButtonSheet
+  | TabSheet
+  | WidgetPaymentSheet
+  | WidgetButtonSheet
+  | WidgetTabSheet
   | HostedCheckout
   | CardWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
   | PaymentMethodsManagement
-  | WidgetPaymentSheet
   | Headless
   | NoView
 
@@ -290,12 +302,16 @@ let walletTypeToStrMapper = walletType => {
 let sdkStateToStrMapper = sdkState => {
   switch sdkState {
   | PaymentSheet => "PAYMENT_SHEET"
+  | TabSheet => "TAB_SHEET"
+  | ButtonSheet => "BUTTON_SHEET"
+  | WidgetPaymentSheet => "WIDGET_PAYMENT_SHEET"
+  | WidgetTabSheet => "WIDGET_TAB_SHEET"
+  | WidgetButtonSheet => "WIDGET_BUTTON_SHEET"
   | HostedCheckout => "HOSTED_CHECKOUT"
   | CardWidget => "CARD_FORM"
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
-  | WidgetPaymentSheet => "WIDGET_PAYMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
   }
@@ -612,24 +628,16 @@ let getAppearanceObj = (
         }
       }->Some,
       scale: retOptionalFloat(getProp(keys.scale, fontDict)),
-      // headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust, fontDict)),
-      // subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust, fontDict)),
-      // placeholderTextSizeAdjust: retOptionalFloat(
-      // getProp(keys.placeholderTextSizeAdjust, fontDict),
-      // ),
-      // buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust, fontDict)),
-      // errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust, fontDict)),
-      // linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust, fontDict)),
-      // modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust, fontDict)),
-      // cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust, fontDict)),
-      headingTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
-      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
-      placeholderTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
-      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
-      errorTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
-      linkTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
-      modalTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
-      cardTextSizeAdjust: retOptionalFloat(getProp(keys.scale, fontDict)),
+      headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust, fontDict)),
+      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust, fontDict)),
+      placeholderTextSizeAdjust: retOptionalFloat(
+        getProp(keys.placeholderTextSizeAdjust, fontDict),
+      ),
+      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust, fontDict)),
+      errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust, fontDict)),
+      linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust, fontDict)),
+      modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust, fontDict)),
+      cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust, fontDict)),
     }),
     primaryButton: Some({
       shapes: Some({
@@ -790,7 +798,12 @@ let getAppearanceObj = (
     | "FlatMinimal" => FlatMinimal
     | _ => Default
     },
-    layout: Tab,
+    layout: switch getString(appearanceDict, "layout", "") {
+    | "tabs" => Tab
+    | "accordion" => Accordion
+    | "spacedAccordion" => SpacedAccordion
+    | _ => Tab
+    },
   }
 }
 
@@ -919,6 +932,7 @@ let parseConfigurationDict = (configObj, from) => {
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
       cvv: getString(placeholderDict, "cvv", "CVC"),
     },
+    displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
   }
   configuration
 }
@@ -955,11 +969,15 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     sessionId: "",
     sdkState: switch getString(dictfromNative, "type", "") {
     | "payment" => PaymentSheet
+    | "tabSheet" => TabSheet
+    | "buttonSheet" => ButtonSheet
+    | "widgetPaymentSheet" => WidgetPaymentSheet
+    | "widgetTabSheet" => WidgetTabSheet
+    | "widgetButtonSheet" => WidgetButtonSheet
     | "hostedCheckout" => HostedCheckout
     | "google_pay" => CustomWidget(GOOGLE_PAY)
     | "paypal" => CustomWidget(PAYPAL)
     | "card" => CardWidget
-    | "widgetPayment" => WidgetPaymentSheet
     | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
     | "headless" => Headless
@@ -969,7 +987,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     hyperParams: {
       appId: ?getOptionString(hyperParams, "appId"),
       country: getString(hyperParams, "country", "US"),
-      disableBranding: getBool(hyperParams, "disableBranding", true),
+      disableBranding: getBool(hyperParams, "disableBranding", false),
       userAgent: getOptionString(hyperParams, "user-agent"),
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),

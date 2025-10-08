@@ -43,6 +43,7 @@ let make = (
   ~style=empty,
   ~animationEnabled=false,
   ~layoutDirection: TabViewType.localeDirection=#ltr,
+  ~isLoading,
 ) => {
   let panX = AnimatedValue.useAnimatedValue(0.0)
 
@@ -225,7 +226,7 @@ let make = (
   }
 
   let addEnterListener = React.useCallback1(listener => {
-    listenersRef.current->Belt.Array.push(listener)
+    listenersRef.current->Array.push(listener)
 
     () => {
       let index = listenersRef.current->Array.indexOf(listener)
@@ -280,21 +281,23 @@ let make = (
     }
   }, (layout.width, panX))
 
-  let animatedHeight = AnimatedValue.useAnimatedValue(100.)
+  let animatedHeight = AnimatedValue.useAnimatedValue(isLoading ? 160. : 100.)
 
-  let setDynamicHeight = React.useCallback1(newHeight => {
-    Animated.timing(
-      animatedHeight,
-      {
-        toValue: newHeight->Animated.Value.Timing.fromRawValue,
-        isInteraction: true,
-        useNativeDriver: false,
-        delay: 0.,
-        duration: 300.,
-        easing: Easing.ease,
-      },
-    )->Animated.start
-  }, [indexInFocus])
+  let setDynamicHeight = React.useCallback2(newHeight => {
+    if !isLoading {
+      Animated.timing(
+        animatedHeight,
+        {
+          toValue: newHeight->Animated.Value.Timing.fromRawValue,
+          isInteraction: true,
+          useNativeDriver: false,
+          delay: 0.,
+          duration: 300.,
+          easing: Easing.ease,
+        },
+      )->Animated.start
+    }
+  }, (indexInFocus, isLoading))
 
   children(~indexInFocus, ~routes, ~position, ~addEnterListener, ~jumpTo, ~render=children => {
     <Animated.View

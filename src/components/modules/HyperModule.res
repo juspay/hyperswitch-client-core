@@ -98,7 +98,7 @@ let useExitPaymentsheet = () => {
       ReactNative.Platform.os == #web
         ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
         : switch nativeProp.sdkState {
-          | WidgetPaymentSheet =>
+          | WidgetPaymentSheet | WidgetButtonSheet =>
             hyperModule.exitWidgetPaymentsheet(
               nativeProp.rootTag,
               apiResStatus->stringifiedResStatus,
@@ -132,7 +132,7 @@ let useExitPaymentsheet = () => {
         //       )}?status=${"failed"}&payment_intent_client_secret=clientSecret&amount=6541`,
         //   )
         exitPaymentSheet(apiResStatus->stringifiedResStatus)
-      : nativeProp.sdkState == WidgetPaymentSheet
+      : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
       ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }

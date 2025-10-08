@@ -11,12 +11,11 @@ let make = (
   ~loadingText="Loading..",
   ~buttonState: buttonState=Normal,
   ~text=?,
-  ~name as _=?,
   ~buttonType: buttonType=Primary,
   ~leftIcon: iconType=NoIcon,
   ~rightIcon: iconType=NoIcon,
   ~onPress,
-  ~linearGradientColorTuple=None,
+  ~backgroundColor=?,
   ~borderWidth=0.,
   ~borderRadius=0.,
   ~borderColor="#ffffff",
@@ -25,6 +24,7 @@ let make = (
 ) => {
   let fillAnimation = AnimatedValue.useAnimatedValue(0.)
   let {
+    payNowButtonColor,
     payNowButtonTextColor,
     payNowButtonShadowColor,
     payNowButtonShadowIntensity,
@@ -82,88 +82,98 @@ let make = (
     )->Animated.start
   }
 
-  <View
+  <CustomPressable
+    disabled
+    testID={testID->Option.getOr("")}
     style={array([
-      getShadowStyle,
       s({
         height: primaryButtonHeight->dp,
         width: 100.->pct,
-        justifyContent: #center,
-        alignItems: #center,
         borderRadius,
         borderWidth,
         borderColor,
-        backgroundColor: ?linearGradientColorTuple->Option.map(tuple => {
-          let (bgColor, _) = tuple
-          bgColor
-        }),
+        backgroundColor: ?(
+          children->Option.isNone ? Some(backgroundColor->Option.getOr(payNowButtonColor)) : None
+        ),
+        overflow: #hidden,
       }),
-    ])}>
-    <CustomPressable
-      disabled
-      testID={testID->Option.getOr("")}
+    ])}
+    onPress={ev => {
+      Keyboard.dismiss()
+      onPress(ev)
+    }}>
+    <View
       style={array([
+        getShadowStyle,
         s({
-          height: 100.->pct,
           width: 100.->pct,
-          borderRadius,
-          flex: 1.,
+          height: 100.->pct,
           flexDirection: #row,
-          justifyContent: #center,
-          alignItems: #center,
         }),
       ])}
-      onPress={ev => {
-        Keyboard.dismiss()
-        onPress(ev)
-      }}>
-      <PaymentButtonWrapper>
-        {switch children {
-        | Some(child) => child
-        | _ =>
-          <>
-            {switch leftIcon {
-            | CustomIcon(element) => element
-            | NoIcon => React.null
-            }}
-            {if buttonState == LoadingButton {
+      pointerEvents={Platform.os === #web ? #auto : #none}>
+      {switch children {
+      | Some(child) => child
+      | _ =>
+        <>
+          <UIUtils.RenderIf condition={buttonState == LoadingButton}>
+            {
               fillButton()
               <Animated.View style={array([fillStyle, widthStyle])} />
-            } else {
-              React.null
-            }}
-            {switch text {
-            | Some(textStr) if textStr !== "" =>
-              <View
-                style={s({
-                  flex: 1.,
-                  width: 100.->pct,
-                  alignItems: #center,
-                  justifyContent: #center,
-                })}>
-                <TextWrapper
-                  text={switch buttonState {
-                  | LoadingButton => loadingText
-                  | Completed => "Complete"
-                  | _ => textStr
-                  }}
-                  // textType=CardText
-                  textType={ButtonTextBold}
-                />
-              </View>
-            | _ => React.null
-            }}
-            {if buttonState == LoadingButton || buttonState == Completed {
-              <Loadericon iconColor=?loaderIconColor />
-            } else {
-              switch rightIcon {
+            }
+          </UIUtils.RenderIf>
+          {switch text {
+          | Some(textStr) if textStr !== "" =>
+            <View
+              style={s({
+                flex: 1.,
+                flexDirection: #row,
+                alignItems: #center,
+                justifyContent: #center,
+                gap: 12.->dp,
+              })}>
+              {switch leftIcon {
               | CustomIcon(element) => element
               | NoIcon => React.null
-              }
-            }}
-          </>
-        }}
-      </PaymentButtonWrapper>
-    </CustomPressable>
-  </View>
+              }}
+              <TextWrapper
+                text={switch buttonState {
+                | LoadingButton => loadingText
+                | Completed => "Complete"
+                | _ => textStr
+                }}
+                // textType=CardText
+                textType={ButtonTextBold}
+              />
+              {switch rightIcon {
+              | CustomIcon(element) => element
+              | NoIcon => React.null
+              }}
+            </View>
+          | _ =>
+            <View
+              style={s({
+                flex: 1.,
+                flexDirection: #row,
+                alignItems: #center,
+                justifyContent: #center,
+                gap: 12.->dp,
+              })}>
+              {switch leftIcon {
+              | CustomIcon(element) => element
+              | NoIcon => React.null
+              }}
+              {switch rightIcon {
+              | CustomIcon(element) => element
+              | NoIcon => React.null
+              }}
+            </View>
+          }}
+          <UIUtils.RenderIf condition={buttonState == LoadingButton || buttonState == Completed}>
+            <Loadericon iconColor=?loaderIconColor />
+          </UIUtils.RenderIf>
+        </>
+      }}
+    </View>
+  </CustomPressable>
 }

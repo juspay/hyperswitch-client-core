@@ -10,65 +10,64 @@ module WidgetError = {
 }
 
 @react.component
-let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
-  let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
-  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+let make = (~walletType as _: SdkTypes.payment_method_type_wallet) => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (button, _setButton) = React.useState(_ => None)
 
-  React.useEffect1(() => {
-    if nativeProp.publishableKey == "" {
-      setLoading(ProcessingPayments)
-    } else {
-      // setButton(_ =>
-      //   PMListModifier.widgetModifier(
-      //     allApiData.paymentMethodList,
-      //     allApiData.sessions,
-      //     walletType,
-      //     nativeProp.hyperParams.confirm,
-      //   )
-      // )
-      ()
-    }
+  // React.useEffect1(() => {
+  //   if nativeProp.publishableKey == "" {
+  //     setLoading(ProcessingPayments)
+  //   } else {
+  //     // setButton(_ =>
+  //     //   PMListModifier.widgetModifier(
+  //     //     allApiData.paymentMethodList,
+  //     //     allApiData.sessions,
+  //     //     walletType,
+  //     //     nativeProp.hyperParams.confirm,
+  //     //   )
+  //     // )
+  //     ()
+  //   }
 
-    let handleWidgetEvent = (responseFromJava: NativeEventListener.widgetResponse) => {
-      if (
-        walletType ==
-          switch responseFromJava.paymentMethodType {
-          | "google_pay" => GOOGLE_PAY
-          | "paypal" => PAYPAL
-          | _ => NONE
-          }
-      ) {
-        setNativeProp({
-          ...nativeProp,
-          publishableKey: responseFromJava.publishableKey,
-          clientSecret: responseFromJava.clientSecret,
-          hyperParams: {
-            ...nativeProp.hyperParams,
-            confirm: responseFromJava.confirm,
-          },
-          configuration: {
-            ...nativeProp.configuration,
-            appearance: {
-              ...nativeProp.configuration.appearance,
-              googlePay: {
-                buttonType: PLAIN,
-                buttonStyle: None,
-              },
-            },
-          },
-        })
-      }
-    }
+  //   let handleWidgetEvent = (responseFromJava: NativeEventListener.widgetResponse) => {
+  //     if (
+  //       walletType ==
+  //         switch responseFromJava.paymentMethodType {
+  //         | "google_pay" => GOOGLE_PAY
+  //         | "paypal" => PAYPAL
+  //         | _ => NONE
+  //         }
+  //     ) {
+  //       setNativeProp({
+  //         ...nativeProp,
+  //         publishableKey: responseFromJava.publishableKey,
+  //         clientSecret: responseFromJava.clientSecret,
+  //         hyperParams: {
+  //           ...nativeProp.hyperParams,
+  //           confirm: responseFromJava.confirm,
+  //         },
+  //         configuration: {
+  //           ...nativeProp.configuration,
+  //           appearance: {
+  //             ...nativeProp.configuration.appearance,
+  //             googlePay: {
+  //               buttonType: PLAIN,
+  //               buttonStyle: None,
+  //             },
+  //           },
+  //         },
+  //       })
+  //     }
+  //   }
 
-    let cleanup = NativeEventListener.setupWidgetEventListener(
-      ~onWidgetEvent=handleWidgetEvent,
-      ~walletType,
-    )
+  //   let cleanup = NativeEventListener.setupWidgetEventListener(
+  //     ~onWidgetEvent=handleWidgetEvent,
+  //     ~walletType,
+  //   )
 
-    Some(cleanup)
-  }, [allApiData.sessions])
+  //   Some(cleanup)
+  // }, [allApiData.sessions])
 
   <ErrorBoundary level={FallBackScreen.Widget} rootTag=nativeProp.rootTag>
     <View

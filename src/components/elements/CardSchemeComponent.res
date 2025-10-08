@@ -48,6 +48,95 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
   let logger = LoggerHook.useLoggerHook()
 
   let dropDownIconWidth = AnimatedValue.useAnimatedValue(0.)
+  let fadeAnim = AnimatedValue.useAnimatedValue(1.)
+
+  let ((_, cardBrandForShow), setCardBrandForShow) = React.useState(_ => (0, "visa"))
+
+  let scaleAnim = fadeAnim->Animated.Value.interpolate({
+    inputRange: [0., 1.],
+    outputRange: [0.8, 1.]->Animated.Interpolation.fromFloatArray,
+    extrapolate: #clamp,
+  })
+
+  let animationRef = React.useRef(None)
+
+  let rec startContinuousAnimation = () => {
+    let fadeOutSequence = Animated.sequence([
+      Animated.delay(2000.),
+      Animated.timing(
+        fadeAnim,
+        {
+          toValue: 0.->Animated.Value.Timing.fromRawValue,
+          duration: 300.,
+          useNativeDriver: false,
+          easing: Easing.ease,
+        },
+      ),
+    ])
+
+    animationRef.current = Some(fadeOutSequence)
+
+    fadeOutSequence->Animated.start(~endCallback=endResult => {
+      if endResult.finished {
+        setCardBrandForShow(((index, _)) => {
+          let cardBrandArr = [
+            "visa",
+            "mastercard",
+            "americanexpress",
+            "dinersclub",
+            "discover",
+            "jcb",
+          ]
+          let newIndex = index === 5 ? 0 : index + 1
+          (
+            newIndex,
+            cardBrandArr
+            ->Array.get(newIndex)
+            ->Option.getOr("waitcard"),
+          )
+        })
+
+        let fadeInAnimation = Animated.timing(
+          fadeAnim,
+          {
+            toValue: 1.->Animated.Value.Timing.fromRawValue,
+            duration: 300.,
+            useNativeDriver: false,
+            easing: Easing.ease,
+          },
+        )
+
+        animationRef.current = Some(fadeInAnimation)
+
+        fadeInAnimation->Animated.start(~endCallback=endResult => {
+          if endResult.finished {
+            startContinuousAnimation()
+          }
+        })
+      }
+    })
+  }
+
+  React.useLayoutEffect1(() => {
+    if cardBrand === "" {
+      startContinuousAnimation()
+      Some(
+        () => {
+          switch animationRef.current {
+          | Some(animation) => animation->Animated.stop
+          | None => ()
+          }
+        },
+      )
+    } else {
+      switch animationRef.current {
+      | Some(animation) => animation->Animated.stop
+      | None => ()
+      }
+      fadeAnim->Animated.Value.setValue(1.)
+      None
+    }
+  }, [cardBrand])
 
   React.useEffect(() => {
     Animated.timing(
@@ -77,7 +166,7 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
     None
   }, [showCardSchemeDropDown])
 
-  <View style={s({paddingLeft: 10.->dp, paddingVertical: 10.->dp})}>
+  <View>
     <Tooltip
       disabled={!showCardSchemeDropDown}
       maxWidth=200.
@@ -86,19 +175,25 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
         <CardSchemeSelectionPopoverElement eligibleCardSchemes setCardBrand toggleVisibility />}>
       <View
         style={s({
+          height: 46.->dp,
           display: #flex,
           flexDirection: #row,
           justifyContent: #center,
           alignItems: #center,
-          overflow: #hidden,
         })}>
-        <Icon
-          name={cardBrand === "" ? "waitcard" : cardBrand}
-          height=30.
-          width=30.
-          fill="black"
-          fallbackIcon="waitcard"
-        />
+        <Animated.View
+          style={s({
+            opacity: fadeAnim->Animated.StyleProp.float,
+            transform: [scale(~scale=scaleAnim->Animated.StyleProp.float)],
+          })}>
+          <Icon
+            name={cardBrand === "" ? cardBrandForShow : cardBrand}
+            height=32.
+            width=32.
+            fill="black"
+            fallbackIcon="waitcard"
+          />
+        </Animated.View>
         <Animated.View style={s({width: dropDownIconWidth->Animated.StyleProp.size})}>
           <UIUtils.RenderIf condition={showCardSchemeDropDown}>
             <View style={s({marginLeft: 8.->dp})}>

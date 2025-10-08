@@ -10,11 +10,6 @@ let defaultSetter = (_: sdkPaymentState) => ()
 let loadingContext = React.createContext((FillingDetails, defaultSetter))
 
 module Provider = {
-  let makeProps = (~value, ~children, ()) =>
-    {
-      "value": value,
-      "children": children,
-    }
   let make = React.Context.provider(loadingContext)
 }
 @react.component

@@ -7,7 +7,7 @@ open LoggerTypes
 let make = () => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (_, customerPaymentMethodData, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (confirm, setConfirm) = React.useState(_ => false)
   let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
@@ -15,7 +15,6 @@ let make = () => {
   let logger = LoggerHook.useLoggerHook()
   let buttomFlex = AnimatedValue.useAnimatedValue(1.)
   let localeObj = GetLocale.useGetLocalObj()
-  let (_, setMissingFieldsData) = React.useState(_ => [])
 
   let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
     setSavedCardCvv(_ => None)
@@ -38,67 +37,68 @@ let make = () => {
     }
   }
 
-  let initiatePayment = PaymentHook.usePayment(~errorCallback, ~responseCallback, ~savedCardCvv)
+  let _initiatePayment = PaymentHook.usePayment(~errorCallback, ~responseCallback, ~savedCardCvv)
 
-  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
-  | Some(data) => data
-  | _ => AllApiDataContext.dafaultsavePMObj
-  }
+  // let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
+  // | Some(data) => data
+  // | _ => AllApiDataContext.dafaultsavePMObj
+  // }
 
   let firstPaymentMethod = {
-    let pmList = savedPaymentMethodsData.pmList->Option.getOr([])
+    let pmList =
+      customerPaymentMethodData->Option.map(customerPaymentMethods =>
+        customerPaymentMethods.customer_payment_methods
+      )
     let platform = ReactNative.Platform.os
 
-    if pmList->Belt.Array.length == 0 {
-      None
-    } else {
-      let first = pmList->Belt.Array.get(0)
+    pmList
+    ->Option.map(customer_payment_method_types => {
+      let first = customer_payment_method_types->Array.get(0)
 
       let shouldUseNext = switch (platform, first) {
-      | (#android, Some(SdkTypes.SAVEDLISTWALLET(wallet))) =>
-        let currentWalletPmType =
-          wallet.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-        currentWalletPmType == SdkTypes.APPLE_PAY
-      | (#ios, Some(SdkTypes.SAVEDLISTWALLET(wallet))) =>
-        let currentWalletPmType =
-          wallet.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-        currentWalletPmType == SdkTypes.GOOGLE_PAY
+      | (#android, Some(customer_payment_method_type)) =>
+        customer_payment_method_type.payment_method_type_wallet == SdkTypes.APPLE_PAY
+      | (#ios, Some(customer_payment_method_type)) =>
+        customer_payment_method_type.payment_method_type_wallet == SdkTypes.GOOGLE_PAY
       | _ => false
       }
 
-      if shouldUseNext && pmList->Belt.Array.length > 1 {
-        pmList->Belt.Array.get(1)
+      if shouldUseNext && customer_payment_method_types->Array.length > 1 {
+        customer_payment_method_types->Array.get(1)
       } else {
         first
       }
-    }
+    })
+    ->Option.getOr(None)
   }
 
-  let cardScheme = switch firstPaymentMethod {
-  | Some(SdkTypes.SAVEDLISTCARD(card)) => card.cardScheme->Option.getOr("")
-  | _ => "NotCard"
-  }
+  let cardScheme =
+    firstPaymentMethod
+    ->Option.map(x =>
+      switch x.payment_method {
+      | CARD => x.card->Option.map(card => card.card_network)->Option.getOr("NotCard")
+      | _ => "NotCard"
+      }
+    )
+    ->Option.getOr("NotCard")
 
   let (pmToken, walletType: SdkTypes.payment_method_type_wallet) = switch firstPaymentMethod {
-  | Some(SAVEDLISTCARD(obj)) => (
-      obj.mandate_id->Option.isSome
-        ? obj.mandate_id->Option.getOr("")
-        : obj.payment_token->Option.getOr(""),
+  | Some(customer_payment_method_type) => (
+      switch customer_payment_method_type.mandate_id {
+      | Some(mandate_id) => mandate_id
+      | None => customer_payment_method_type.payment_token
+      },
       NONE,
     )
-  | Some(SdkTypes.SAVEDLISTWALLET(obj)) => (
-      obj.payment_token->Option.getOr(""),
-      obj.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper,
-    )
-  | Some(NONE) | None => ("", NONE)
+  | None => ("", NONE)
   }
 
-  let selectedObj = {
+  let _selectedObj = {
     SavedPaymentMethodContext.walletName: walletType,
     token: Some(pmToken),
   }
 
-  let processExpressCheckoutApiRequest = (
+  let _processExpressCheckoutApiRequest = (
     ~payment_method,
     ~payment_method_data,
     ~payment_method_type,
@@ -166,7 +166,7 @@ let make = () => {
       }
     }
 
-    let body: PaymentMethodListType.redirectType = {
+    let body: PaymentConfirmTypes.redirectType = {
       client_secret: nativeProp.clientSecret,
       return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
       ?email,
@@ -175,8 +175,9 @@ let make = () => {
       payment_method_data,
       customer_acceptance: ?(
         if (
-          allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
-            !savedPaymentMethodsData.isGuestCustomer
+          true
+          //allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
+          //  !savedPaymentMethodsData.isGuestCustomer
         ) {
           Some({
             acceptance_type: "online",
@@ -207,50 +208,51 @@ let make = () => {
       (),
     )
   }
-  let (
-    handleGooglePayPayment,
-    handleApplePayPayment,
-    handleSamsungPayPayment,
-  ) = WalletHooks.useWallet(
-    ~selectedObj,
-    ~setMissingFieldsData,
-    ~processRequestFn=processExpressCheckoutApiRequest,
-    ~isWidget=true,
-  )
+  // let (
+  //   handleGooglePayPayment,
+  //   handleApplePayPayment,
+  //   handleSamsungPayPayment,
+  // ) = WalletHooks.useWallet(
+  //   ~selectedObj,
+  //   ~setMissingFieldsData,
+  //   ~processRequestFn=processExpressCheckoutApiRequest,
+  //   ~isWidget=true,
+  // )
 
-  let handleGPayNativeResponse = var => {
-    handleGooglePayPayment(
-      var,
-      ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-    )
-  }
+  // let handleGPayNativeResponse = var => {
+  //   handleGooglePayPayment(
+  //     var,
+  //     ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+  //   )
+  // }
 
-  let handleApplePayNativeResponse = var => {
-    handleApplePayPayment(
-      var,
-      ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-    )
-  }
+  // let handleApplePayNativeResponse = var => {
+  //   handleApplePayPayment(
+  //     var,
+  //     ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+  //   )
+  // }
 
-  let _handleSamsungPayNativeResponse = (
-    statusFromNative,
-    billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
-  ) => {
-    handleSamsungPayPayment(
-      statusFromNative,
-      billingDetails,
-      ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
-    )
-  }
-  let processSavedExpressCheckoutRequest = tokenToUse => {
-    initiatePayment(
-      ~activeWalletName=walletType,
-      ~activePaymentToken=tokenToUse,
-      ~gPayResponseHandler=handleGPayNativeResponse,
-      ~applePayResponseHandler=handleApplePayNativeResponse,
-      // ~samsungPayResponseHandler=handleSamsungPayNativeResponse,
-      (),
-    )
+  // let _handleSamsungPayNativeResponse = (
+  //   statusFromNative,
+  //   billingDetails: option<SamsungPayType.addressCollectedFromSpay>,
+  // ) => {
+  //   handleSamsungPayPayment(
+  //     statusFromNative,
+  //     billingDetails,
+  //     ~walletTypeStr=selectedObj.walletName->SdkTypes.walletTypeToStrMapper,
+  //   )
+  // }
+  let processSavedExpressCheckoutRequest = _tokenToUse => {
+    // initiatePayment(
+    //   ~activeWalletName=walletType,
+    //   ~activePaymentToken=tokenToUse,
+    //   ~gPayResponseHandler=handleGPayNativeResponse,
+    //   ~applePayResponseHandler=handleApplePayNativeResponse,
+    //   // ~samsungPayResponseHandler=handleSamsungPayNativeResponse,
+    //   (),
+    // )
+    ()
   }
   let onPress = () => {
     setLoading(ProcessingPayments)
@@ -303,7 +305,7 @@ let make = () => {
   React.useEffect1(_ => {
     let widgetHeight = {
       switch firstPaymentMethod {
-      | Some(pm) => pm->PaymentUtils.checkIsCVCRequired ? 290 : 150
+      | Some(pm) => pm.requires_cvv ? 290 : 150
       | _ => 150
       }
     }
@@ -334,24 +336,29 @@ let make = () => {
         justifyContent: #"space-between",
       })}>
       {switch firstPaymentMethod {
-      | Some(pmDetails) => <SaveCardsList.PMWithNickNameComponent pmDetails={pmDetails} />
+      | Some(_pmDetails) => React.null //<SavedPaymentMethod.PMWithNickNameComponent savedPaymentMethod={pmDetails} />
       | None => React.null
       }}
       {switch firstPaymentMethod {
-      | Some(SAVEDLISTCARD(obj)) =>
-        <TextWrapper
-          text={localeObj.cardExpiresText ++ " " ++ obj.expiry_date->Option.getOr("")}
-          textType={ModalTextLight}
-        />
-      | Some(SAVEDLISTWALLET(_)) | Some(NONE) | None => React.null
+      | Some(obj) =>
+        switch obj.card {
+        | Some(card) =>
+          <TextWrapper
+            text={`${localeObj.cardExpiresText} ${card.expiry_month}/${card.expiry_year->String.sliceToEnd(
+                ~start=-2,
+              )}`}
+            textType={ModalTextLight}
+          />
+        | None => React.null
+        }
+
+      | None => React.null
       }}
     </View>
     {switch firstPaymentMethod {
     | Some(pm) =>
-      pm->PaymentUtils.checkIsCVCRequired
-        ? <SaveCardsList.CVVComponent
-            savedCardCvv setSavedCardCvv isPaymentMethodSelected={true} cardScheme
-          />
+      pm.requires_cvv
+        ? <SavedPaymentMethod.CVVComponent savedCardCvv setSavedCardCvv cardScheme />
         : React.null
     | _ => React.null
     }}

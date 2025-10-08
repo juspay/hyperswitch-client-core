@@ -1,18 +1,14 @@
-type data =
-  | Loading
-  | Some(LocaleDataType.localeStrings)
+type data = LocaleDataType.localeStrings
 
-let localeDataContext = React.createContext((Loading, (_: data => data) => ()))
+let localeDataContext = React.createContext((LocaleDataType.defaultLocale, (_: data => data) => ()))
 
 module Provider = {
   let make = React.Context.provider(localeDataContext)
 }
 
 @react.component
-let make = (~children) => {
-  let (state, setState) = React.useState(_ => Loading)
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let locale = nativeProp.configuration.appearance.locale
+let make = (~children, ~locale) => {
+  let (state, setState) = React.useState(_ => LocaleDataType.defaultLocale)
   let fetchDataFromS3WithGZipDecoding = S3ApiHook.useFetchDataFromS3WithGZipDecoding()
   //getLocaleStringsFromJson
   let path = "/jsons/locales"
@@ -24,7 +20,7 @@ let make = (~children) => {
     ->Promise.then(res => {
       switch res {
       | Some(data) =>
-        setState(_ => Some(data))
+        setState(_ => data)
         Promise.resolve()
       | _ => Promise.reject(Exn.raiseError("API Failed"))
       }
@@ -38,7 +34,7 @@ let make = (~children) => {
         res => {
           switch res {
           | Some(data) =>
-            setState(_ => Some(data))
+            setState(_ => data)
             Promise.resolve()
           | _ => Promise.reject(Exn.raiseError("API Failed"))
           }
@@ -46,7 +42,6 @@ let make = (~children) => {
       )
       ->Promise.catch(
         _ => {
-          setState(_ => Some(LocaleDataType.defaultLocale))
           Promise.resolve()
         },
       )

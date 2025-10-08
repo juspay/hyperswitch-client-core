@@ -4,7 +4,7 @@ open Style
 module BottomTabList = {
   @react.component
   let make = (
-    ~item: PMListModifier.hoc,
+    ~item: AllApiDataModifier.hoc,
     ~index: int,
     ~indexInFocus: int,
     ~setIndexToScrollParentFlatList,
@@ -68,7 +68,7 @@ module BottomTabList = {
 
 @react.component
 let make = (
-  ~hocComponentArr: array<PMListModifier.hoc>=[],
+  ~hocComponentArr: array<AllApiDataModifier.hoc>=[],
   ~indexInFocus,
   ~setIndexToScrollParentFlatList,
   ~height=75.->dp,
@@ -101,7 +101,6 @@ let make = (
 
     | None => ()
     }
-    ()
   }
   React.useEffect1(() => {
     if hocComponentArr->Array.length > 0 {

@@ -10,27 +10,22 @@ let make = (
   ~setIsSelected,
   ~textType,
   ~fillIcon=true,
+  ~fillText=false,
   ~disabled=false,
-  ~disableScreenSwitch=false,
+  ~gap=10.,
+  ~coloredText=false,
+  ~size=?,
 ) => {
-  let (isSavedCardScreen, setSaveCardScreen) = React.useContext(
-    PaymentScreenContext.paymentScreenTypeContext,
-  )
+  let {linkColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
+  let isLink = textType === TextWrapper.LinkText || textType === LinkTextBold
   <CustomPressable
     disabled
-    style={s({flexDirection: #row, alignItems: #center, alignSelf: #"flex-start"})}
-    onPress={_ => {
-      !disableScreenSwitch
-        ? {
-            let newSheetType = switch isSavedCardScreen {
-            | PAYMENTSHEET => PaymentScreenContext.SAVEDCARDSCREEN
-            | SAVEDCARDSCREEN => PaymentScreenContext.PAYMENTSHEET
-            }
-            setSaveCardScreen(newSheetType)
-          }
-        : setIsSelected(_ => !isSelected)
-    }}>
-    <CustomSelectBox initialIconName updateIconName isSelected fillIcon />
-    <TextWrapper text textType overrideStyle=Some(s({paddingHorizontal: 6.->dp})) />
+    style={s({flexDirection: #row, alignItems: #center})}
+    onPress={_ => setIsSelected(!isSelected)}>
+    <CustomSelectBox
+      initialIconName updateIconName isSelected fill={isLink ? linkColor : primaryColor} ?size
+    />
+    <Space width=gap />
+    <TextWrapper text textType overrideStyle={isLink ? Some(s({flex:1., color: linkColor})) : Some(s({flex:1.}))} />
   </CustomPressable>
 }

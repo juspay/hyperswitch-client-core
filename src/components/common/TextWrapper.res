@@ -103,7 +103,7 @@ let make = (
       s({color: payNowButtonTextColor, fontSize: 17. +. buttonTextSizeAdjust, fontWeight: #600}),
     ])
   | LinkText => array([s({fontSize: 14. +. linkTextSizeAdjust}), textPrimary])
-  | LinkTextBold => array([s({fontSize: 14. +. linkTextSizeAdjust, fontWeight: #500}), textPrimary])
+  | LinkTextBold => array([s({fontSize: 16. +. linkTextSizeAdjust, fontWeight: #600}), textPrimary])
   | CardTextBold =>
     array([s({fontSize: 14. +. cardTextSizeAdjust, fontWeight: #600, color: component.color})])
   | CardText =>

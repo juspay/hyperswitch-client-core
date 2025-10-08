@@ -37,7 +37,12 @@ let useErrorWarningValidationOnLoad = () => {
   () => {
     if !isPublishableKeyValid {
       switch nativeProp.sdkState {
-      | PaymentSheet | WidgetPaymentSheet =>
+      | PaymentSheet
+      | WidgetPaymentSheet
+      | WidgetButtonSheet
+      | ButtonSheet
+      | TabSheet
+      | WidgetTabSheet =>
         showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
@@ -47,7 +52,12 @@ let useErrorWarningValidationOnLoad = () => {
     } else if !isClientSecretValid {
       let dynamicStr = "ClientSecret is expected to be in format pay_******_secret_*****"
       switch nativeProp.sdkState {
-      | PaymentSheet | WidgetPaymentSheet =>
+      | PaymentSheet
+      | WidgetPaymentSheet
+      | WidgetButtonSheet
+      | ButtonSheet
+      | TabSheet
+      | WidgetTabSheet =>
         showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()

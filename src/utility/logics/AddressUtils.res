@@ -1,6 +1,27 @@
 open SdkTypes
 open Utils
 
+let parseBillingAddress = (billingDetailsDict: Js.Dict.t<JSON.t>) => {
+  let addressDict = getOptionalObj(billingDetailsDict, "address")
+
+  {
+    address: addressDict->Option.map(addressDict => {
+      first_name: ?getOptionString(addressDict, "city"),
+      last_name: ?getOptionString(addressDict, "city"),
+      city: ?getOptionString(addressDict, "city"),
+      country: ?getOptionString(addressDict, "country"),
+      line1: ?getOptionString(addressDict, "line1"),
+      line2: ?getOptionString(addressDict, "line2"),
+      zip: ?getOptionString(addressDict, "postalCode"),
+      state: ?getOptionString(addressDict, "state"),
+    }),
+    phone: Some({
+      number: ?getOptionString(billingDetailsDict, "phoneNumber"),
+    }),
+    email: getOptionString(billingDetailsDict, "email"),
+  }
+}
+
 let getGooglePayBillingAddress = (dict, str) => {
   dict
   ->Dict.get(str)
@@ -157,7 +178,7 @@ let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.
   ->Array.filter(item => {
     countryArr->Array.includes(item.country_code)
   })
-  ->Array.map((item): CustomPicker.customPickerType => {
+  ->Array.map((item): SdkTypes.customPickerType => {
     {
       label: item.country_name,
       value: item.country_code,
@@ -166,7 +187,7 @@ let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.
   })
 }
 let getPhoneCodeData = (contextCountryData: CountryStateDataHookTypes.countries) => {
-  contextCountryData->Array.map((item): CustomPicker.customPickerType => {
+  contextCountryData->Array.map((item): SdkTypes.customPickerType => {
     {
       label: `${item.country_name} (${item.phone_number_code})`,
       value: item.phone_number_code,
@@ -177,7 +198,7 @@ let getPhoneCodeData = (contextCountryData: CountryStateDataHookTypes.countries)
 let getStateData = (states, country) => {
   states
   ->Utils.getStateNames(country)
-  ->Array.map((item): CustomPicker.customPickerType => {
+  ->Array.map((item): SdkTypes.customPickerType => {
     {
       label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
       value: item.code,

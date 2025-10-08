@@ -15,12 +15,7 @@ type walletStatus =
   | Simulated
 
 let useProcessPayButtonResult = () => {
-  (
-    walletType: SdkTypes.payment_method_type_wallet,
-    var,
-    payment_method_str,
-    payment_method_type,
-  ) => {
+  (walletType: SdkTypes.payment_method_type_wallet, var) => {
     switch walletType {
     | GOOGLE_PAY =>
       let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -37,21 +32,11 @@ let useProcessPayButtonResult = () => {
         }
         let shippingAddress = paymentDataFromGPay.shippingDetails
 
-        let payment_method_data = [
-          (
-            payment_method_str,
-            [
-              (
-                payment_method_type,
-                paymentDataFromGPay.paymentMethodData->Utils.getJsonObjectFromRecord,
-              ),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-        ]->Dict.fromArray
-
-        Success(payment_method_data, billingAddress, shippingAddress)
+        Success(
+          paymentDataFromGPay.paymentMethodData->Utils.getJsonObjectFromRecord,
+          billingAddress,
+          shippingAddress,
+        )
       | "Cancel" => Cancelled
       | err => Failed(err)
       }
@@ -91,20 +76,9 @@ let useProcessPayButtonResult = () => {
                 ("payment_data", payment_data),
                 ("payment_method", payment_method),
                 ("transaction_identifier", transaction_identifier),
-              ]
-              ->Dict.fromArray
-              ->JSON.Encode.object
+              ]->Dict.fromArray
 
-            let payment_method_data = [
-              (
-                payment_method_str,
-                [(payment_method_type, paymentData)]
-                ->Dict.fromArray
-                ->JSON.Encode.object,
-              ),
-            ]->Dict.fromArray
-
-            Success(payment_method_data, billingAddress, shippingAddress)
+            Success(paymentData, billingAddress, shippingAddress)
           }
         }
       }
@@ -113,16 +87,8 @@ let useProcessPayButtonResult = () => {
       switch paymentData.error {
       | "" =>
         let json = paymentData.paymentMethodData->JSON.Encode.string
-        let paymentData = [("token", json)]->Dict.fromArray->JSON.Encode.object
-        let payment_method_data = [
-          (
-            payment_method_str,
-            [(payment_method_type ++ "_sdk", paymentData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-        ]->Dict.fromArray
-        Success(payment_method_data, None, None)
+        let paymentData = [("token", json)]->Dict.fromArray
+        Success(paymentData, None, None)
       | "User has canceled" => Cancelled
       | err => Failed(err)
       }
@@ -146,18 +112,8 @@ let useProcessPayButtonResult = () => {
           ->JSON.Decode.object
           ->Option.getOr(Dict.make())
 
-        let samsungPayData = SamsungPayType.itemToObjMapper(response)
-
-        let payment_method_data = [
-          (
-            payment_method_str,
-            [(payment_method_type, samsungPayData->Utils.getJsonObjectFromRecord)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
-          ),
-        ]->Dict.fromArray
-
-        Success(payment_method_data, None, None)
+        let samsungPayData = SamsungPayType.itemToObjMapper(response)->Utils.getJsonObjectFromRecord
+        Success(samsungPayData, None, None)
       } else {
         Failed(message)
       }

@@ -50,9 +50,9 @@ let make = (~children, ~handlePress) => {
     <View
       style={s({
         flex: 1.,
-        alignContent: #"flex-end",
+        alignContent: #center,
         backgroundColor: paymentSheetOverlay,
-        justifyContent: #"flex-end",
+        justifyContent: #center,
         paddingTop: (
           WebKit.platform === #androidWebView
             ? 75.
@@ -62,8 +62,8 @@ let make = (~children, ~handlePress) => {
       })}>
       <Animated.View
         style={s({
-          transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
-          flexGrow: {sheetFlex->Animated.StyleProp.float},
+          // transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
+          // flexGrow: {sheetFlex->Animated.StyleProp.float},
           maxHeight: 100.->pct,
         })}>
         <View style={s({flex: 1., alignItems: #center, justifyContent: #"flex-end"})}>
@@ -79,8 +79,8 @@ let make = (~children, ~handlePress) => {
             style={s({
               width: 100.->pct,
               borderRadius: 15.,
-              borderBottomLeftRadius: 0.,
-              borderBottomRightRadius: 0.,
+              // borderBottomLeftRadius: 0.,
+              // borderBottomRightRadius: 0.,
               overflow: #hidden,
               maxHeight: 100.->pct,
               alignItems: #center,
@@ -116,10 +116,7 @@ let make = (~children, ~handlePress) => {
                 </View>
                 {children}
                 <ConfirmButtonAnimation
-                  isAllValuesValid=true
-                  paymentMethod="Address Sheet"
-                  handlePress
-                  displayText="Submit"
+                  paymentMethod="Address Sheet" handlePress displayText="Submit"
                 />
               </View>
             </ScrollView>

@@ -6,11 +6,12 @@ let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
   ~formatValue as _,
-  ~country,
   ~accessible=?,
 ) => {
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+
+  let {country} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   switch (fields->Array.get(0), fields->Array.get(1)) {
   | (Some(phoneCodeConfig), Some(phoneNumberConfig)) =>

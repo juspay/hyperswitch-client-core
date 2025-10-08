@@ -1,26 +1,8 @@
 @react.component
-let make = (~initialIconName, ~updateIconName, ~isSelected, ~fillIcon) => {
-  let {primaryColor} = ThemebasedStyle.useThemeBasedStyle()
-  let fill = fillIcon ? Some(primaryColor) : None
-
+let make = (~initialIconName, ~updateIconName, ~isSelected, ~fill, ~size=18.) => {
   switch updateIconName {
-  | None => <Icon name={initialIconName} height=18. width=18. ?fill />
+  | None => <Icon name={initialIconName} height=18. width=18. fill />
   | Some(updateIconName) =>
-    <>
-      <Icon
-        name={initialIconName}
-        height=18.
-        width=18.
-        ?fill
-        style={ReactNative.Style.s({display: isSelected ? #flex : #none})}
-      />
-      <Icon
-        name={updateIconName}
-        height=18.
-        width=18.
-        ?fill
-        style={ReactNative.Style.s({display: isSelected ? #none : #flex})}
-      />
-    </>
+    <Icon name={isSelected ? initialIconName : updateIconName} height=size width=size fill />
   }
 }

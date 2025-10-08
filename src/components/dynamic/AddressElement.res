@@ -6,8 +6,6 @@ let make = (
   ~formatValue,
   ~isCardPayment,
   ~enabledCardSchemes,
-  ~country,
-  ~setCountry,
   ~accessible=?,
 ) => {
   <>
@@ -20,15 +18,12 @@ let make = (
         formatValue
         isCardPayment
         enabledCardSchemes
-        country
-        setCountry
         ?accessible
       />
     )
     ->React.array}
     {switch otherFields {
-    | Some(fields) =>
-      <GenericElement fields createFieldValidator formatValue country setCountry ?accessible />
+    | Some(fields) => <GenericTabElement fields createFieldValidator formatValue ?accessible />
     | None => React.null
     }}
   </>
