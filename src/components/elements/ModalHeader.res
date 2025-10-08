@@ -19,9 +19,9 @@ let make = (~onModalClose, ~isLoading=false) => {
       <CustomPressable
         style={s({maxWidth: 60.->pct, flexDirection: #row, alignItems: #center})}
         onPress={_ => setSheetType(ButtonSheet)}>
-        <Icon name="back" />
+        <Icon name="back" fill="#000" />
         <Space width=5. />
-        <TextWrapper text={"Back"} textType={HeadingBold} />
+        <TextWrapper text={"Back"} textType={ModalTextBold} />
       </CustomPressable>
     } else if isLoading {
       <View />
