@@ -1,4 +1,4 @@
-let checkIfMandate = (paymentType: PaymentMethodListType.mandateType) => {
+let checkIfMandate = (paymentType: PaymentMethodType.mandateType) => {
   paymentType == NEW_MANDATE || paymentType == SETUP_MANDATE
 }
 
@@ -10,15 +10,17 @@ let showUseExisitingSavedCardsBtn = (
 ) => {
   !isGuestCustomer &&
   pmList->Option.getOr([])->Array.length > 0 &&
-  (mandateType == PaymentMethodListType.NEW_MANDATE || mandateType == NORMAL) &&
+  (mandateType == PaymentMethodType.NEW_MANDATE || mandateType == NORMAL) &&
   displaySavedPaymentMethods
 }
 
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
-  ~prop: PaymentMethodListType.payment_method_type,
+  ~payment_method_str: string,
+  ~payment_method_type: string,
   ~payment_method_data=?,
-  ~allApiData: AllApiDataContext.allApiData,
+  ~payment_type: PaymentMethodType.mandateType,
+  ~appURL: option<string>=?,
   ~isNicknameSelected=false,
   ~payment_token=?,
   ~isSaveCardCheckboxVisible=?,
@@ -27,25 +29,23 @@ let generateCardConfirmBody = (
   ~screen_height=?,
   ~screen_width=?,
   (),
-): PaymentMethodListType.redirectType => {
-  let isMandate = allApiData.additionalPMLData.mandateType->checkIfMandate
+): PaymentConfirmTypes.redirectType => {
+  let isMandate = payment_type !== NORMAL
   {
     client_secret: nativeProp.clientSecret,
-    return_url: ?Utils.getReturnUrl(
-      ~appId=nativeProp.hyperParams.appId,
-      ~appURL=allApiData.additionalPMLData.redirect_url,
-    ),
-    payment_method: prop.payment_method_str,
-    payment_method_type: ?Some(prop.payment_method_type),
+    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+    payment_method: payment_method_str,
+    payment_method_type,
     ?payment_method_data,
     ?payment_token,
     ?email,
+    // payment_type: payment_type_str,
     customer_acceptance: ?(
       payment_token->Option.isNone &&
       ((isNicknameSelected && isMandate) ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-      allApiData.additionalPMLData.mandateType == NORMAL && isNicknameSelected ||
-      allApiData.additionalPMLData.mandateType == SETUP_MANDATE) &&
+      payment_type === NORMAL && isNicknameSelected ||
+      payment_type === SETUP_MANDATE) &&
       !isGuestCustomer
         ? Some({
             {
@@ -75,12 +75,6 @@ let generateCardConfirmBody = (
   }
 }
 
-let checkIsCVCRequired = (pmObject: SdkTypes.savedDataType) =>
-  switch pmObject {
-  | SAVEDLISTCARD(obj) => obj.requiresCVV
-  | _ => false
-  }
-
 let generateSessionsTokenBody = (~clientSecret, ~wallet) => {
   [
     (
@@ -102,7 +96,7 @@ let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
   ~savedCardCvv,
-): PaymentMethodListType.redirectType => {
+): PaymentConfirmTypes.redirectType => {
   client_secret: nativeProp.clientSecret,
   payment_method: "card",
   payment_token,
@@ -112,7 +106,7 @@ let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
   ~payment_method_type,
-): PaymentMethodListType.redirectType => {
+): PaymentConfirmTypes.redirectType => {
   client_secret: nativeProp.clientSecret,
   payment_token,
   payment_method: "wallet",
@@ -127,7 +121,7 @@ let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
 let getCardNetworks = cardNetworks => {
   switch cardNetworks {
   | Some(cardNetworks) =>
-    cardNetworks->Array.map((item: PaymentMethodListType.card_networks) => item.card_network)
+    cardNetworks->Array.map((item: AccountPaymentMethodType.card_networks) => item.card_network)
   | None => []
   }
 }

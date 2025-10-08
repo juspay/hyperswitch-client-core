@@ -7,12 +7,11 @@ let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
   ~formatValue as _,
-  ~country,
-  ~setCountry,
   ~accessible=?,
 ) => {
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
+  let {country, setCountry} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let getValidationRuleFromFieldType = (fieldType: SuperpositionTypes.fieldType) => {
     switch fieldType {
@@ -155,7 +154,7 @@ let make = (
           value=input.value
           setValue=handlePickerChange
           items={field.options->Array.map(opt => {
-            CustomPicker.label: opt,
+            SdkTypes.label: opt,
             value: opt,
           })}
           placeholderText=placeholder

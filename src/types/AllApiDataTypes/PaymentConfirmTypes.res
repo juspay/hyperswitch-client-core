@@ -1,7 +1,40 @@
-// type redirectToUrl = {
-//   returnUrl: string,
-//   url: string,
-// }
+type online = {
+  user_agent?: string,
+  accept_header?: string,
+  language?: string,
+  color_depth?: int,
+  java_enabled?: bool,
+  java_script_enabled?: bool,
+  screen_height?: int,
+  screen_width?: int,
+  time_zone?: int,
+  device_model?: string,
+  os_type?: string,
+  os_version?: string,
+}
+
+type customer_acceptance = {
+  acceptance_type: string,
+  accepted_at: string,
+  online: online,
+}
+
+type mandate_data = {customer_acceptance: customer_acceptance}
+
+type redirectType = {
+  client_secret: string,
+  return_url?: string,
+  email?: string,
+  payment_method?: string,
+  payment_method_type?: string,
+  payment_method_data?: JSON.t,
+  payment_experience?: string,
+  payment_token?: string,
+  mandate_data?: mandate_data,
+  browser_info?: online,
+  customer_acceptance?: customer_acceptance,
+  card_cvc?: string,
+}
 
 type pollConfig = {
   pollId: string,

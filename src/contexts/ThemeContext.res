@@ -10,13 +10,14 @@ module Provider = {
 }
 
 @react.component
-let make = (~children) => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+let make = (~children, ~appearance: SdkTypes.appearance) => {
   let isDarkMode = LightDarkTheme.useIsDarkMode()
   let (theme, setTheme) = React.useState(_ =>
-    isDarkMode
-      ? Dark(nativeProp.configuration.appearance)
-      : Light(nativeProp.configuration.appearance)
+    switch appearance.theme {
+    | Default => isDarkMode ? Dark(appearance) : Light(appearance)
+    | Dark => Dark(appearance)
+    | _ => Light(appearance)
+    }
   )
   let setTheme = React.useCallback1(val => {
     setTheme(_ => val)

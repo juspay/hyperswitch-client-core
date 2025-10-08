@@ -9,7 +9,7 @@ let usePayment = (
   ~savedCardCvv: option<string>,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let logger = LoggerHook.useLoggerHook()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let showAlert = AlertHook.useAlerts()
@@ -165,13 +165,14 @@ let usePayment = (
     // ) => unit,
     (),
   ) => {
-    let sessionObject: SessionsType.sessions = switch allApiData.sessions {
-    | Some(sessionData) =>
-      sessionData
-      ->Array.find(item => item.wallet_name == activeWalletName)
-      ->Option.getOr(SessionsType.defaultToken)
-    | _ => SessionsType.defaultToken
-    }
+    let sessionObject: SessionsType.sessions = SessionsType.defaultToken
+    // switch allApiData.sessions {
+    // | Some(sessionData) =>
+    //   sessionData
+    //   ->Array.find(item => item.wallet_name == activeWalletName)
+    //   ->Option.getOr(SessionsType.defaultToken)
+    // | _ => SessionsType.defaultToken
+    // }
 
     switch activeWalletName {
     | GOOGLE_PAY => initiateGooglePay(~sessionObject, ~gPayResponseHandler, ())

@@ -1,7 +1,7 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
+  // let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let showErrorOrWarning = ErrorHooks.useShowErrorOrWarning()
   let savedPaymentMethods = AllPaymentHooks.useGetSavedPMHook()
   let logger = LoggerHook.useLoggerHook()
@@ -15,18 +15,18 @@ let make = () => {
 
     if nativeProp.ephemeralKey->Option.getOr("") != "" {
       savedPaymentMethods()
-      ->Promise.then(customerSavedPMData => {
-        let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(
-          ~customerSavedPMData,
-          ~sessions=None,
-          ~isPaymentMethodManagement=true,
-          ~nativeProp,
-        )
+      ->Promise.then(_customerSavedPMData => {
+        // let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(
+        //   ~customerSavedPMData=Some(customerSavedPMData),
+        //   ~sessions=None,
+        //   ~isPaymentMethodManagement=true,
+        //   ~nativeProp,
+        // )
 
-        setAllApiData({
-          ...allApiData,
-          savedPaymentMethods,
-        })
+        // setAllApiData({
+        //   ...allApiData,
+        //   savedPaymentMethods,
+        // })
 
         Promise.resolve()
       })

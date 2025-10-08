@@ -2,26 +2,27 @@ type methodType = TAB | ELEMENT | WIDGET
 
 @react.component
 let make = (
-  ~paymentMethodData: PaymentMethodListType.payment_method_type,
+  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
   ~isScreenFocus: bool=false,
-  ~setConfirmButtonDataRef: React.element => unit=_ => (),
+  ~setConfirmButtonData=_ => (),
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
   ~methodType=TAB,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+    AllApiDataContextNew.allApiDataContext,
+  )
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
+  let {nickname, isNicknameSelected} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
-  | Some(data) => data
-  | _ => AllApiDataContext.dafaultsavePMObj
-  }
-
-  let processRequest = (paymentMethodDataDict, email: option<string>) => {
+  let processRequest = (
+    tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
+    walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
+    email: option<string>,
+  ) => {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -43,16 +44,74 @@ let make = (
       }
     }
 
+    let paymentMethodDataDict = switch paymentMethodData.payment_method {
+    | CARD =>
+      switch nickname {
+      | Some(name) =>
+        [
+          (
+            "payment_method_data",
+            [
+              (
+                paymentMethodData.payment_method_str,
+                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+              ),
+            ]
+            ->Dict.fromArray
+            ->Js.Json.object_,
+          ),
+        ]->Dict.fromArray
+      | None => Dict.make()
+      }
+    | pm =>
+      [
+        (
+          "payment_method_data",
+          [
+            (
+              paymentMethodData.payment_method_str,
+              [
+                (
+                  paymentMethodData.payment_method_type ++ (
+                    pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL
+                      ? "_redirect"
+                      : ""
+                  ),
+                  walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                ),
+              ]
+              ->Dict.fromArray
+              ->Js.Json.object_,
+            ),
+          ]
+          ->Dict.fromArray
+          ->Js.Json.object_,
+        ),
+      ]->Dict.fromArray
+    }
+
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,
-      ~prop=paymentMethodData,
-      ~payment_method_data=?paymentMethodDataDict->Dict.get("payment_method_data"),
-      ~allApiData,
+      ~payment_method_str=paymentMethodData.payment_method_str,
+      ~payment_method_type=paymentMethodData.payment_method_type,
+      ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
+        "payment_method_data",
+      ),
+      ~payment_type=accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+      ->Option.getOr(NORMAL),
+      ~appURL=?{
+        accountPaymentMethodData->Option.map(accountPaymentMethods =>
+          accountPaymentMethods.redirect_url
+        )
+      },
       ~isSaveCardCheckboxVisible={
         paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
+      ~isGuestCustomer=customerPaymentMethodData
+      ->Option.map(customerPaymentMethods => customerPaymentMethods.is_guest_customer)
+      ->Option.getOr(true),
       ~isNicknameSelected,
       ~email?,
       ~screen_height=viewPortContants.screenHeight,
@@ -76,15 +135,7 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     {switch methodType {
     | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
-    | TAB =>
-      <TabElement
-        paymentMethodData
-        processRequest
-        isScreenFocus
-        setConfirmButtonDataRef
-        isNicknameSelected
-        setIsNicknameSelected
-      />
+    | TAB => <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonData />
     | _ => React.null
     }}
   </ErrorBoundary>

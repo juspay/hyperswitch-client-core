@@ -62,7 +62,7 @@ let inactiveScreenApiCall = (
     merchantId: publishableKey,
     ?appId,
     platform,
-    userAgent: "userAgent",
+    userAgent: nativeProp.hyperParams.userAgent->Option.getOr("userAgent"),
     eventName,
     firstEvent,
     source: nativeProp.sdkState->SdkTypes.sdkStateToStrMapper,
@@ -114,6 +114,7 @@ let useLoggerHook = () => {
     ~category,
     ~paymentMethod=?,
     ~paymentExperience=?,
+    ~customerPaymentExperience=?,
     ~internalMetadata=?,
     ~eventName,
     ~latency=?,
@@ -143,20 +144,25 @@ let useLoggerHook = () => {
       merchantId: nativeProp.publishableKey,
       appId: ?nativeProp.hyperParams.appId,
       platform: WebKit.platformString,
-      userAgent: "userAgent",
+      userAgent: nativeProp.hyperParams.userAgent->Option.getOr("userAgent"),
       eventName,
       firstEvent,
       paymentMethod: paymentMethod->Option.getOr(""),
       paymentExperience: ?switch paymentExperience {
-      | Some(payment_experience: array<PaymentMethodListType.payment_experience>) =>
+      | Some(payment_experience: array<AccountPaymentMethodType.payment_experience>) =>
         payment_experience
         ->Array.get(0)
-        ->Option.map(paymentExperience =>
-          PaymentMethodListType.getPaymentExperienceType(
-            paymentExperience.payment_experience_type_decode,
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type)
+      | None =>
+        switch customerPaymentExperience {
+        | Some(payment_experience: array<PaymentMethodType.payment_experience_type>) =>
+          payment_experience
+          ->Array.get(0)
+          ->Option.map(payment_experience_type =>
+            PaymentMethodType.getPaymentExperienceType(payment_experience_type)
           )
-        )
-      | None => None
+        | None => None
+        }
       },
       latency,
       source: nativeProp.sdkState->SdkTypes.sdkStateToStrMapper,

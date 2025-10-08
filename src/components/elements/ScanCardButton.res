@@ -36,7 +36,7 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
     <CustomPressable
       style={s({
         height: 100.->pct,
-        width: 27.5->dp,
+        width: 28.->dp,
         display: #flex,
         alignItems: #"flex-start",
         justifyContent: #center,
@@ -45,7 +45,7 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
         ScanCardModule.launchScanCard(scanCardCallback)
         logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
       }}>
-      <Icon name={"CAMERA"} height=25. width=25. fill=primaryColor />
+      <Icon name={"CAMERA"} height=26. width=26. fill=primaryColor />
     </CustomPressable>
   </>
 }

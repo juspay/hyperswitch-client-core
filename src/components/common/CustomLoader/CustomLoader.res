@@ -2,7 +2,7 @@ type props = {
   height?: string,
   width?: string,
   speed?: float,
-  radius?: float,
+  radius?: option<float>,
   style?: ReactNative.Style.t,
 }
 

@@ -5,10 +5,7 @@ type route = {
   accessible?: bool,
   accessibilityLabel?: string,
   testID?: string,
-  componentHoc: (
-    ~isScreenFocus: bool,
-    ~setConfirmButtonDataRef: React.element => unit,
-  ) => React.element,
+  componentHoc: AllApiDataModifier.componentHoc,
 }
 
 type scene = {route: route}

@@ -66,9 +66,9 @@ let make = (
     // </TouchableWithoutFeedback>
   </View>
 }
-module Wrapper = {
+module WidgetWrapper = {
   @react.component
-  let make = (~onModalClose, ~width=100.->pct, ~children=React.null, ~isSheet=true) => {
+  let make = (~width=100.->pct, ~children=React.null) => {
     let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
@@ -82,7 +82,27 @@ module Wrapper = {
       keyboardShouldPersistTaps={#handled}
       showsVerticalScrollIndicator=false
       style={array([s({flexGrow: 1., width}), bgColor])}>
-      {isSheet ? <ModalHeader onModalClose /> : React.null}
+      children
+    </ScrollView>
+  }
+}
+module Wrapper = {
+  @react.component
+  let make = (~onModalClose, ~width=100.->pct, ~children=React.null, ~isLoading) => {
+    let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
+    let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+
+    <ScrollView
+      contentContainerStyle={s({
+        minHeight: 250.->dp,
+        paddingHorizontal: sheetContentPadding->dp,
+        paddingTop: sheetContentPadding->dp,
+        paddingBottom: viewPortContants.navigationBarHeight->dp,
+      })}
+      keyboardShouldPersistTaps={#handled}
+      showsVerticalScrollIndicator=false
+      style={array([s({flexGrow: 1., width}), bgColor])}>
+      <ModalHeader onModalClose isLoading />
       children
     </ScrollView>
   }

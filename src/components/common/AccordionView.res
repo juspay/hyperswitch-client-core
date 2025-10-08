@@ -9,10 +9,7 @@ type accordionSection = {
   accessible?: bool,
   accessibilityLabel?: string,
   testID?: string,
-  componentHoc: (
-    ~isScreenFocus: bool,
-    ~setConfirmButtonDataRef: React.element => unit,
-  ) => React.element,
+  componentHoc: AllApiDataModifier.componentHoc,
 }
 
 @react.component

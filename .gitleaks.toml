@@ -19,8 +19,8 @@ regexes = ["(^|/).*\\.p12$"]
 
 [[allowlists]]
 description = "Ignore Cardinal JFrog in Android"
-commits = ["00210e92b02c166825ceae8882dad79dc0149b2b"]
-regexes = ["/.*DAUQKXLDPDx6NYRkqrgFLRc3qDrayg6rrCb.*/"]
+commits = ["00210e92b02c166825ceae8882dad79dc0149b2b", "84f22db3afd94b7094940d0759c89e3477772bf7"]
+regexes = ["/.*DAUQKXLDPDx6NYRkqrgFLRc3qDrayg6rrCb.*/", "/.*_e.minKey=_e.mergeU=void.*/"]
 
 [[allowlists]]
 description = "Ignore .bundle files in iOS"

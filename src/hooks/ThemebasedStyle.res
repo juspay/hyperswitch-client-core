@@ -6,7 +6,6 @@ type StatusColorConfig = {
   backgroundColor: ReactNative.Color.t,
 }
 
-type ButtonColorConfig = (string, string)
 type componentConfig = {
   background: ReactNative.Color.t,
   borderColor: ReactNative.Color.t,
@@ -149,11 +148,11 @@ type themeBasedStyleObj = {
   linkTextSizeAdjust: float,
   modalTextSizeAdjust: float,
   cardTextSizeAdjust: float,
-  paypalButonColor: ButtonColorConfig,
-  samsungPayButtonColor: ButtonColorConfig,
+6  paypalButonColor: ReactNative.Color.t,
+  samsungPayButtonColor: ReactNative.Color.t,
   applePayButtonColor: SdkTypes.applePayButtonStyle,
   googlePayButtonColor: Appearance.t,
-  payNowButtonColor: ButtonColorConfig6,
+  payNowButtonColor: ReactNative.Color.t,
   payNowButtonTextColor: string,
   payNowButtonBorderColor: string,
   payNowButtonShadowColor: string,
@@ -190,7 +189,7 @@ let darkRecord = {
   textInputBg: styles["dark_textInputBg"],
   iconColor: "rgba(246, 248, 249, 0.25)",
   lineBorderColor: "#2C2D2F",
-  linkColor: "#0099FF",
+  linkColor: "#00B0FF",
   disableBgColor: "#202124",
   filterHeaderColor: "rgba(246, 248, 249, 0.75)",
   filterOptionTextColor: ["rgba(246, 248, 249, 0.8)", "#F6F8F9"],
@@ -237,12 +236,12 @@ let darkRecord = {
   linkTextSizeAdjust: 0.,
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
-  paypalButonColor: ("#ffffff", "#ffffff"),
-  samsungPayButtonColor: ("#000000", "#000000"),
-  payNowButtonTextColor: "#FFFFFF",
+  paypalButonColor: "#ffffff",
+  samsungPayButtonColor: "#000000",
+  payNowButtonTextColor: "#fff",
   applePayButtonColor: #white,
   googlePayButtonColor: #light,
-  payNowButtonColor: ("#0057c7", "#0057c7"),
+  payNowButtonColor: "#0057c7",
   payNowButtonBorderColor: "#e6e6e650",
   payNowButtonShadowColor: "black",
   payNowButtonShadowIntensity: 2.,
@@ -276,7 +275,7 @@ let lightRecord = {
   textInputBg: styles["light_textInputBg"],
   iconColor: "rgba(53, 64, 82, 0.25)",
   lineBorderColor: "#CCD2E250",
-  linkColor: "#0099FF",
+  linkColor: "#006DF9",
   disableBgColor: "#ECECEC",
   filterHeaderColor: "#666666",
   filterOptionTextColor: ["#354052", "rgba(53, 64, 82, 0.8)"],
@@ -323,11 +322,11 @@ let lightRecord = {
   linkTextSizeAdjust: 0.,
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
-  paypalButonColor: ("#F6C657", "#F6C657"),
+  paypalButonColor: "#F6C657",
   applePayButtonColor: #black,
-  samsungPayButtonColor: ("#000000", "#000000"),
+  samsungPayButtonColor: "#000000",
   googlePayButtonColor: #dark,
-  payNowButtonColor: ("#006DF9", "#006DF9"),
+  payNowButtonColor: "#006DF9",
   payNowButtonTextColor: "#FFFFFF",
   payNowButtonBorderColor: "#ffffff",
   payNowButtonShadowColor: "black",
@@ -363,7 +362,7 @@ let minimal = {
   textInputBg: styles["light_textInputBg"],
   iconColor: "rgba(53, 64, 82, 0.25)",
   lineBorderColor: "#CCD2E250",
-  linkColor: "#0099FF",
+  linkColor: "#006DF9",
   disableBgColor: "#ECECEC",
   filterHeaderColor: "#666666",
   filterOptionTextColor: ["#354052", "rgba(53, 64, 82, 0.8)"],
@@ -410,11 +409,11 @@ let minimal = {
   linkTextSizeAdjust: 0.,
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
-  paypalButonColor: ("#ffc439", "#ffc439"),
-  samsungPayButtonColor: ("#000000", "#000000"),
+  paypalButonColor: "#ffc439",
+  samsungPayButtonColor: "#000000",
   applePayButtonColor: #black,
   googlePayButtonColor: #dark,
-  payNowButtonColor: ("#0570de", "#0080FE"),
+  payNowButtonColor: "#0570de",
   payNowButtonTextColor: "#FFFFFF",
   payNowButtonBorderColor: "#ffffff",
   payNowButtonShadowColor: "black",
@@ -450,7 +449,7 @@ let flatMinimal = {
   textInputBg: styles["light_textInputBg"],
   iconColor: "rgba(53, 64, 82, 0.25)",
   lineBorderColor: "#CCD2E250",
-  linkColor: "#0099FF",
+  linkColor: "#006DF9",
   disableBgColor: "#ECECEC",
   filterHeaderColor: "#666666",
   filterOptionTextColor: ["#354052", "rgba(53, 64, 82, 0.8)"],
@@ -497,11 +496,11 @@ let flatMinimal = {
   linkTextSizeAdjust: 0.,
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
-  paypalButonColor: ("#ffc439", "#ffc439"),
+  paypalButonColor: "#ffc439",
   applePayButtonColor: #black,
   googlePayButtonColor: #dark,
-  samsungPayButtonColor: ("#000000", "#000000"),
-  payNowButtonColor: ("#0570de", "#0080FE"),
+  samsungPayButtonColor: "#000000",
+  payNowButtonColor: "#0570de",
   payNowButtonTextColor: "#000000",
   payNowButtonBorderColor: "#000000",
   payNowButtonShadowColor: "black",
@@ -811,12 +810,12 @@ let itemToObj = (
       ~overRideProp=switch btnColor {
       | Some(obj) =>
         switch obj.background {
-        | Some(str) => Some((str, str))
+        | Some(str) => Some(str)
         | None =>
           switch appearanceColor {
           | Some(appObj) =>
             switch appObj.primary {
-            | Some(str) => Some((str, str))
+            | Some(str) => Some(str)
             | None => None
             }
           | None => None

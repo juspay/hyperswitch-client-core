@@ -2,11 +2,10 @@ open ReactNative
 open Style
 @react.component
 let make = (
-  ~isAllValuesValid,
   ~handlePress,
-  ~hasSomeFields=true,
   ~paymentMethod,
   ~paymentExperience=?,
+  ~customerPaymentExperience=?,
   ~displayText="Pay Now",
   (),
 ) => {
@@ -21,20 +20,18 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
   let logger = LoggerHook.useLoggerHook()
 
-  React.useEffect2(() => {
-    if isAllValuesValid && hasSomeFields {
-      logger(
-        ~logType=INFO,
-        ~value="",
-        ~category=USER_EVENT,
-        ~eventName=PAYMENT_DATA_FILLED,
-        ~paymentMethod,
-        ~paymentExperience?,
-        (),
-      )
-    }
+  React.useEffect0(() => {
+    logger(
+      ~logType=INFO,
+      ~value="",
+      ~category=USER_EVENT,
+      ~eventName=PAYMENT_DATA_FILLED,
+      ~paymentMethod,
+      ~paymentExperience?,
+      (),
+    )
     None
-  }, (isAllValuesValid, hasSomeFields))
+  })
 
   <View style={s({alignItems: #center})}>
     <Space height=10. />
@@ -45,25 +42,13 @@ let make = (
       buttonState={switch loading {
       | ProcessingPayments | ProcessingPaymentsWithOverlay => LoadingButton
       | PaymentSuccess => Completed
-      | _ => isAllValuesValid ? Normal : Disabled
+      | _ => Normal
       }}
       loadingText="Processing..."
-      linearGradientColorTuple=Some(isAllValuesValid ? payNowButtonColor : ("#CCCCCC", "#CCCCCC"))
+      backgroundColor={payNowButtonColor}
       text={displayText == "Pay Now" ? localeObject.payNowButton : displayText}
-      name="Pay"
       testID={TestUtils.payButtonTestId}
       onPress={ev => {
-        if !(isAllValuesValid && hasSomeFields) {
-          logger(
-            ~logType=INFO,
-            ~value="",
-            ~category=USER_EVENT,
-            ~eventName=PAYMENT_DATA_FILLED,
-            ~paymentMethod,
-            ~paymentExperience?,
-            (),
-          )
-        }
         logger(
           ~logType=INFO,
           ~value="",
@@ -71,11 +56,11 @@ let make = (
           ~eventName=PAYMENT_ATTEMPT,
           ~paymentMethod,
           ~paymentExperience?,
+          ~customerPaymentExperience?,
           (),
         )
         handlePress(ev)
       }}
     />
-    <HyperSwitchBranding />
   </View>
 }

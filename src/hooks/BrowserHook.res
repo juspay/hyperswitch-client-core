@@ -70,7 +70,16 @@ let openUrl = (
                   | Some(id) => clearInterval(id)
                   | None => ()
                   }
-                  resolve({message: "", url: None, \"type": "cancel"})
+                  if WebKit.platform === #web {
+                    Window.addEventListener(
+                      "focus",
+                      _ => {
+                        resolve({message: "status=processing", url: None, \"type": "cancel"})
+                      },
+                    )
+                  } else {
+                    resolve({message: "", url: None, \"type": "cancel"})
+                  }
                 } else {
                   try {
                     let currentUrl = tab.location.href

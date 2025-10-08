@@ -1,11 +1,41 @@
 open SdkTypes
 open HeadlessUtils
-open HeadlessNative
+
+type headlessModule = {
+  initialisePaymentSession: (JSON.t => unit) => unit,
+  getPaymentSession: (JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
+  exitHeadless: string => unit,
+}
+
+let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default: 'b): 'b => {
+  switch dict->Dict.get(key) {
+  | Some(fn) => Obj.magic(fn)
+  | None => default
+  }
+}
 
 let reRegisterCallback = ref(() => ())
 
-let registerHeadless = headless => {
-  let headlessModule = initialise(headless)
+let make = async props => {
+  let hyperSwitchHeadlessDict =
+    Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.getOr(Dict.make())
+
+  let headlessModule = {
+    initialisePaymentSession: getFunctionFromModule(
+      hyperSwitchHeadlessDict,
+      "initialisePaymentSession",
+      _ => (),
+    ),
+    getPaymentSession: getFunctionFromModule(hyperSwitchHeadlessDict, "getPaymentSession", (
+      _,
+      _,
+      _,
+      _,
+    ) => ()),
+    exitHeadless: getFunctionFromModule(hyperSwitchHeadlessDict, "exitHeadless", _ => ()),
+  }
 
   let getDefaultPaymentSession = error => {
     headlessModule.getPaymentSession(
@@ -28,7 +58,11 @@ let registerHeadless = headless => {
     headlessModule.exitHeadless(confirmRes.error->HyperModule.stringifiedResStatus)
   }
 
-  let confirmGPay = (var, data, nativeProp) => {
+  let confirmGPay = (
+    var,
+    data: CustomerPaymentMethodType.customer_payment_method_type,
+    nativeProp,
+  ) => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
     switch paymentData.error {
     | "" =>
@@ -42,12 +76,7 @@ let registerHeadless = headless => {
         [
           (
             "wallet",
-            [
-              (
-                data.payment_method_type->Option.getOr(""),
-                obj.paymentMethodData->Utils.getJsonObjectFromRecord,
-              ),
-            ]
+            [(data.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
@@ -81,7 +110,11 @@ let registerHeadless = headless => {
     }
   }
 
-  let confirmApplePay = (var, data, nativeProp) => {
+  let confirmApplePay = (
+    var,
+    data: CustomerPaymentMethodType.customer_payment_method_type,
+    nativeProp,
+  ) => {
     switch var
     ->Dict.get("status")
     ->Option.getOr(JSON.Encode.null)
@@ -130,7 +163,7 @@ let registerHeadless = headless => {
           [
             (
               "wallet",
-              [(data.payment_method_type->Option.getOr(""), paymentData)]
+              [(data.payment_method_type, paymentData)]
               ->Dict.fromArray
               ->JSON.Encode.object,
             ),
@@ -154,17 +187,17 @@ let registerHeadless = headless => {
 
   let processRequest = async (
     nativeProp,
-    data,
+    data: CustomerPaymentMethodType.customer_payment_method_type,
     response,
     sessions: option<array<SessionsType.sessions>>,
   ) => {
-    switch data {
-    | SAVEDLISTCARD(data) =>
+    switch data.payment_method {
+    | CARD =>
       let body =
         [
           ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
           ("payment_method", "card"->JSON.Encode.string),
-          ("payment_token", data.payment_token->Option.getOr("")->JSON.Encode.string),
+          ("payment_token", data.payment_token->JSON.Encode.string),
           (
             "card_cvc",
             switch response->Utils.getDictFromJson->Dict.get("cvc") {
@@ -177,17 +210,15 @@ let registerHeadless = headless => {
         ->JSON.Encode.object
       confirmCall(body->JSON.stringify, nativeProp)->ignore
 
-    | SAVEDLISTWALLET(data) =>
+    | WALLET =>
       let session = switch sessions {
       | Some(sessionData) =>
         sessionData
-        ->Array.find(item =>
-          item.wallet_name == data.walletType->Option.getOr("")->walletNameToTypeMapper
-        )
+        ->Array.find(item => item.wallet_name == data.payment_method_type_wallet)
         ->Option.getOr(SessionsType.defaultToken)
       | None => SessionsType.defaultToken
       }
-      switch data.walletType->Option.getOr("")->walletNameToTypeMapper {
+      switch data.payment_method_type_wallet {
       | GOOGLE_PAY => {
           let gPayCallback = async var => {
             try {
@@ -271,61 +302,46 @@ let registerHeadless = headless => {
         )
       | _ => ()
       }
-    | NONE => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
+    | _ => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
     }
   }
 
-  let getPaymentSession = (nativeProp, spmData, sessions: option<array<SessionsType.sessions>>) => {
+  let getPaymentSession = (
+    nativeProp,
+    spmData: CustomerPaymentMethodType.customer_payment_methods,
+    sessions: option<array<SessionsType.sessions>>,
+  ) => {
     if spmData->Array.length > 0 {
-      let defaultSpmData = switch spmData
-      ->Array.find(x =>
-        switch x {
-        | SAVEDLISTCARD(savedCard) => savedCard.isDefaultPaymentMethod->Option.getOr(false)
-        | SAVEDLISTWALLET(savedWallet) => savedWallet.isDefaultPaymentMethod->Option.getOr(false)
-        | NONE => false
-        }
-      )
-      ->Option.getOr(NONE) {
-      | NONE => getDefaultError->Utils.getJsonObjectFromRecord
-      | x => x->Utils.getJsonObjectFromRecord
+      let defaultSpmData = switch spmData->Array.find(savedCard =>
+        savedCard.default_payment_method_set
+      ) {
+      | None => getDefaultError->Utils.getJsonObjectFromRecord
+      | Some(x) => x->Utils.getJsonObjectFromRecord
       }
 
-      let lastUsedSpmData = switch spmData
-      ->Array.reduce(None, (a: option<SdkTypes.savedDataType>, b: SdkTypes.savedDataType) => {
+      let lastUsedSpmData = switch spmData->Array.reduce(None, (
+        a: option<CustomerPaymentMethodType.customer_payment_method_type>,
+        b: CustomerPaymentMethodType.customer_payment_method_type,
+      ) => {
         let lastUsedAtA = switch a {
-        | Some(a) =>
-          switch a {
-          | SAVEDLISTCARD(savedCard) => savedCard.lastUsedAt
-          | SAVEDLISTWALLET(savedWallet) => savedWallet.lastUsedAt
-          | NONE => None
-          }
+        | Some(a) => a.last_used_at
         | None => None
         }
-        let lastUsedAtB = switch b {
-        | SAVEDLISTCARD(savedCard) => savedCard.lastUsedAt
-        | SAVEDLISTWALLET(savedWallet) => savedWallet.lastUsedAt
-        | NONE => None
-        }
+        let lastUsedAtB = b.last_used_at
         switch (lastUsedAtA, lastUsedAtB) {
         | (None, Some(_)) => Some(b)
         | (Some(_), None) => a
         | (Some(dateA), Some(dateB)) =>
-          if (
-            compare(
-              Date.fromString(dateA)->Js.Date.getTime,
-              Date.fromString(dateB)->Js.Date.getTime,
-            ) < 0
-          ) {
+          if compare(dateA->Js.Date.getTime, dateB->Js.Date.getTime) < 0 {
             Some(b)
           } else {
             a
           }
         | (None, None) => a
         }
-      })
-      ->Option.getOr(NONE) {
-      | NONE => getDefaultError->Utils.getJsonObjectFromRecord
-      | x => x->Utils.getJsonObjectFromRecord
+      }) {
+      | None => getDefaultError->Utils.getJsonObjectFromRecord
+      | Some(x) => x->Utils.getJsonObjectFromRecord
       }
 
       reRegisterCallback.contents = () => {
@@ -336,21 +352,7 @@ let registerHeadless = headless => {
           response => {
             switch response->Utils.getDictFromJson->Utils.getOptionString("paymentToken") {
             | Some(token) =>
-              switch spmData->Array.find(x =>
-                switch x {
-                | SAVEDLISTCARD(savedCard) =>
-                  switch savedCard.payment_token {
-                  | Some(payment_token) => payment_token == token
-                  | None => false
-                  }
-                | SAVEDLISTWALLET(savedWallet) =>
-                  switch savedWallet.payment_token {
-                  | Some(payment_token) => payment_token == token
-                  | None => false
-                  }
-                | NONE => false
-                }
-              ) {
+              switch spmData->Array.find(x => x.payment_token == token) {
               | Some(data) => processRequest(nativeProp, data, response, sessions)->ignore
               | None =>
                 headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
@@ -368,38 +370,27 @@ let registerHeadless = headless => {
   }
 
   let apiHandler = async nativeProp => {
-    //customerSavedPMData
     let customerSavedPMData = await savedPaymentMethodAPICall(nativeProp)
     switch customerSavedPMData {
     | Some(obj) =>
-      let spmData = obj->PaymentMethodListType.jsonToSavedPMObj
-      let sessionSpmData = spmData->Array.filter(data => {
-        switch data {
-        | SAVEDLISTWALLET(val) =>
-          let walletType = val.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-          switch (walletType, ReactNative.Platform.os) {
-          | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
-          | _ => false
-          }
+      let spmData = obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType
+      let sessionSpmData = spmData.customer_payment_methods->Array.filter(data => {
+        switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
+        | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
         | _ => false
         }
       })
 
-      let walletSpmData = spmData->Array.filter(data => {
-        switch data {
-        | SAVEDLISTWALLET(val) =>
-          let walletType = val.walletType->Option.getOr("")->SdkTypes.walletNameToTypeMapper
-          switch (walletType, ReactNative.Platform.os) {
-          | (GOOGLE_PAY, _) | (APPLE_PAY, _) => false
-          | _ => true
-          }
-        | _ => false
+      let walletSpmData = spmData.customer_payment_methods->Array.filter(data => {
+        switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
+        | (GOOGLE_PAY, _) | (APPLE_PAY, _) => false
+        | _ => true
         }
       })
 
-      let cardSpmData = spmData->Array.filter(data => {
-        switch data {
-        | SAVEDLISTCARD(_) => true
+      let cardSpmData = spmData.customer_payment_methods->Array.filter(data => {
+        switch data.payment_method {
+        | CARD => true
         | _ => false
         }
       })
@@ -421,15 +412,10 @@ let registerHeadless = headless => {
           switch session->Utils.getDictFromJson->SessionsType.itemToObjMapper {
           | Some(sessions) =>
             let walletNameArray = sessions->Array.map(wallet => wallet.wallet_name)
-            let filteredSessionSpmData = sessionSpmData->Array.filter(data =>
-              switch data {
-              | SAVEDLISTWALLET(data) =>
-                walletNameArray->Array.includes(
-                  data.walletType->Option.getOr("")->walletNameToTypeMapper,
-                )
-              | _ => false
-              }
-            )
+            let filteredSessionSpmData =
+              sessionSpmData->Array.filter(data =>
+                walletNameArray->Array.includes(data.payment_method_type_wallet)
+              )
             let filteredSpmData =
               filteredSessionSpmData->Array.concat(walletSpmData->Array.concat(cardSpmData))
 
@@ -446,24 +432,21 @@ let registerHeadless = headless => {
     | None => customerSavedPMData->getErrorFromResponse->getDefaultPaymentSession
     }
   }
-  let getNativePropCallback = response => {
-    let nativeProp = nativeJsonToRecord(response, 0)
 
-    let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
+  let nativeProp = nativeJsonToRecord(props, 0)
 
-    let isClientSecretValid = RegExp.test(
-      `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
-      nativeProp.clientSecret,
-    )
+  let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
 
-    if isPublishableKeyValid && isClientSecretValid {
-      apiHandler(nativeProp)->ignore
-    } else if !isPublishableKeyValid {
-      errorOnApiCalls(INVALID_PK(Error, Static("")))->getDefaultPaymentSession
-    } else if !isClientSecretValid {
-      errorOnApiCalls(INVALID_CL(Error, Static("")))->getDefaultPaymentSession
-    }
+  let isClientSecretValid = RegExp.test(
+    `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
+    nativeProp.clientSecret,
+  )
+
+  if isPublishableKeyValid && isClientSecretValid {
+    apiHandler(nativeProp)->ignore
+  } else if !isPublishableKeyValid {
+    errorOnApiCalls(INVALID_PK(Error, Static("")))->getDefaultPaymentSession
+  } else if !isClientSecretValid {
+    errorOnApiCalls(INVALID_CL(Error, Static("")))->getDefaultPaymentSession
   }
-
-  headlessModule.initialisePaymentSession(getNativePropCallback)
 }
