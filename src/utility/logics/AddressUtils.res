@@ -38,6 +38,7 @@ let getGooglePayBillingAddress = (dict, str) => {
         ?country,
         line1: ?getOptionString(json, "address1"),
         line2: ?getOptionString(json, "address2"),
+        line3: ?getOptionString(json, "address3"),
         zip: ?getOptionString(json, "postalCode"),
         state: ?getOptionString(json, "administrativeArea"),
       }),
@@ -80,7 +81,12 @@ let getApplePayBillingAddress = (dict, str, shipping: option<string>) => {
     let street = getString(postalAddress, "street", "")->String.split("\n")
     let line1 = Array.at(street, 0)
     let line2 = if Array.length(street) > 1 {
-      Some(Array.join(Array.sliceToEnd(street, ~start=1), " "))
+      Array.at(street, 1)
+    } else {
+      None
+    }
+    let line3 = if Array.length(street) > 2 {
+      Some(Array.join(Array.sliceToEnd(street, ~start=2), " "))
     } else {
       None
     }
@@ -92,6 +98,7 @@ let getApplePayBillingAddress = (dict, str, shipping: option<string>) => {
         ?country,
         ?line1,
         ?line2,
+        ?line3,
         zip: ?getOptionString(postalAddress, "postalCode"),
         state: ?getOptionString(postalAddress, "state"),
       }),
@@ -118,6 +125,18 @@ let getFlatAddressDict = (
       "payment_method_data.billing.address.last_name",
       address.last_name->Option.getOr(""),
     )
+    addressDict->Dict.set(
+      "payment_method_data.billing.address.line1",
+      address.line1->Option.getOr(""),
+    )  
+    addressDict->Dict.set(
+      "payment_method_data.billing.address.line2",
+      address.line2->Option.getOr(""),
+    )
+    addressDict->Dict.set(
+      "payment_method_data.billing.address.line3",
+      address.line3->Option.getOr(""),
+    )    
     addressDict->Dict.set(
       "payment_method_data.billing.address.city",
       address.city->Option.getOr(""),
@@ -154,6 +173,9 @@ let getFlatAddressDict = (
     | Some(address) =>
       addressDict->Dict.set("payment_method_data.shipping.address.first_name", address.first_name->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.last_name", address.last_name->Option.getOr(""))
+      addressDict->Dict.set("payment_method_data.shipping.address.line1", address.line1->Option.getOr(""))
+      addressDict->Dict.set("payment_method_data.shipping.address.line2", address.line2->Option.getOr(""))
+      addressDict->Dict.set("payment_method_data.shipping.address.line3", address.line3->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.city", address.city->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.state", address.state->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.country", address.country->Option.getOr(""))
