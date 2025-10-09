@@ -1,22 +1,22 @@
 open Utils
-type payment3DS = {
+type Payment3DS = {
   \"type": string,
   version: string,
   data: string,
 }
 
-type addressType = BILLING_ADDRESS | SHIPPING_ADDRESS
+type AddressType = BILLING_ADDRESS | SHIPPING_ADDRESS
 
-type addressCollectedFromSpay = {billingDetails?: string, shippingDetails?: string}
+type AddressCollectedFromSpay = {billingDetails?: string, shippingDetails?: string}
 
-type paymentCredential = {
-  \"3_d_s": payment3DS,
+type PaymentCredential = {
+  \"3_d_s": Payment3DS,
   card_brand: string,
   card_last4digits: string,
   method: string,
   recurring_payment: bool,
 }
-type paymentMethodData = {payment_credential: paymentCredential}
+type PaymentMethodData = {payment_credential: PaymentCredential}
 
 let defaultSPayPaymentMethodData = {
   payment_credential: {
@@ -57,7 +57,7 @@ let getPaymentMethodData = dict => {
   }
 }
 
-type paymentDataFromSPay = {paymentMethodData: paymentMethodData, email?: string}
+type paymentDataFromSPay = {paymentMethodData: PaymentMethodData, email?: string}
 let itemToObjMapper = dict => {
   getPaymentMethodData(dict)
 }
@@ -109,7 +109,7 @@ let getAddress = address => {
   }
 }
 
-let getAddressObj = (addressDetails, addressType: addressType) => {
+let getAddressObj = (addressDetails, addressType: AddressType) => {
   switch addressDetails {
   | Some(details) => {
       let address =
