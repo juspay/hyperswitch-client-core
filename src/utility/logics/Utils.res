@@ -355,3 +355,42 @@ let getError = (err, defaultError) => {
   | None => defaultError->JSON.Encode.string
   }
 }
+module Debouncer = {
+  type t<'params> = {
+    mutable timeout: option<timeoutId>,
+    mutable latestParams: option<'params>,
+  }
+
+  let create = () => {
+    timeout: None,
+    latestParams: None,
+  }
+
+  let cancel = (debouncer: t<'params>) => {
+    switch debouncer.timeout {
+    | Some(timeoutId) => {
+        clearTimeout(timeoutId)
+        debouncer.timeout = None
+      }
+    | None => ()
+    }
+  }
+
+  let execute = (
+    ~debouncer: t<'params>,
+    ~params: 'params,
+    ~delay: int,
+    ~function: 'params => unit,
+  ) => {
+    debouncer.latestParams = Some(params)
+
+    cancel(debouncer)
+
+    debouncer.timeout = Some(setTimeout(() => {
+        switch debouncer.latestParams {
+        | Some(storedParams) => function(storedParams)
+        | None => ()
+        }
+      }, delay))
+  }
+}

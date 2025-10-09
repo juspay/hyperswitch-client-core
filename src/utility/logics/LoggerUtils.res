@@ -70,12 +70,14 @@ let logFileToObj = logFile => {
   ->Dict.fromArray
   ->JSON.Encode.object
 }
-let sendLogs = (logFile, uri: option<string>, publishableKey, appId) => {
-  if WebKit.platform != #next {
+
+let sendLogs = (logFile: array<logFile>, uri: option<string>, publishableKey, appId) => {
+  if WebKit.platform != #next && logFile->Array.length > 0 {
     switch uri {
     | Some("") | None => ()
     | Some(uri) =>
-      let data = logFile->logFileToObj->JSON.stringify
+      let data = logFile->Array.map(logFileToObj)->JSON.Encode.array->JSON.stringify
+
       APIUtils.fetchApi(
         ~uri,
         ~method_=Post,
