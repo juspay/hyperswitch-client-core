@@ -1,0 +1,226 @@
+type screenState = NONE | LOADING | OTP_INPUT | CARDS_DISPLAY | NOT_YOU
+
+type clickToPayUIState = {
+  screenState: screenState,
+  setScreenState: (screenState => screenState) => unit,
+  clickToPay: ClickToPay.Types.clickToPayHook,
+  otp: array<string>,
+  setOtp: (array<string> => array<string>) => unit,
+  otpRefs: array<option<React.ref<Nullable.t<ReactNative.TextInput.element>>>>,
+  maskedChannel: option<string>,
+  setMaskedChannel: (option<string> => option<string>) => unit,
+  resendTimer: int,
+  setResendTimer: (int => int) => unit,
+  resendLoading: bool,
+  setResendLoading: (bool => bool) => unit,
+  rememberMe: bool,
+  setRememberMe: (bool => bool) => unit,
+  selectedCardId: option<string>,
+  setSelectedCardId: (option<string> => option<string>) => unit,
+  newIdentifier: string,
+  setNewIdentifier: (string => string) => unit,
+  userIdentity: option<ClickToPay.Types.userIdentity>,
+  setUserIdentity: (
+    option<ClickToPay.Types.userIdentity> => option<ClickToPay.Types.userIdentity>
+  ) => unit,
+  handleOtpChange: (int, string) => unit,
+  submitOtp: unit => promise<unit>,
+  resendOtp: unit => promise<unit>,
+  handleCheckout: unit => promise<unit>,
+  switchIdentity: string => promise<unit>,
+}
+
+let useClickToPayUI = (~onCheckoutComplete: JSON.t => unit) => {
+  let clickToPay = ClickToPay.useClickToPay()
+
+  let (screenState, setScreenState) = React.useState(() => NONE)
+  let (otp, setOtp) = React.useState(() => ["", "", "", "", "", ""])
+  let (maskedChannel, setMaskedChannel) = React.useState(() => None)
+  let (resendTimer, setResendTimer) = React.useState(() => 0)
+  let (resendLoading, setResendLoading) = React.useState(() => false)
+  let (rememberMe, setRememberMe) = React.useState(() => false)
+  let (selectedCardId, setSelectedCardId) = React.useState(() => None)
+  let (newIdentifier, setNewIdentifier) = React.useState(() => "")
+  let (userIdentity, setUserIdentity) = React.useState(() => None)
+
+  let otpRef0 = React.useRef(Nullable.null)
+  let otpRef1 = React.useRef(Nullable.null)
+  let otpRef2 = React.useRef(Nullable.null)
+  let otpRef3 = React.useRef(Nullable.null)
+  let otpRef4 = React.useRef(Nullable.null)
+  let otpRef5 = React.useRef(Nullable.null)
+  let otpRefs = [
+    Some(otpRef0),
+    Some(otpRef1),
+    Some(otpRef2),
+    Some(otpRef3),
+    Some(otpRef4),
+    Some(otpRef5),
+  ]
+
+  React.useEffect1(() => {
+    if resendTimer > 0 {
+      let timerId = setTimeout(() => {
+        setResendTimer(prev => prev - 1)
+      }, 1000)
+      Some(() => clearTimeout(timerId))
+    } else {
+      None
+    }
+  }, [resendTimer])
+
+  React.useEffect1(() => {
+    if clickToPay.cards->Array.length > 0 && selectedCardId === None {
+      clickToPay.cards
+      ->Array.get(0)
+      ->Option.forEach(card => setSelectedCardId(_ => Some(card.id)))
+    }
+    None
+  }, [clickToPay.cards])
+
+  let submitOtp = async () => {
+    try {
+      setScreenState(_ => LOADING)
+      let otpString = otp->Array.join("")
+      let _cards = await clickToPay.authenticate(otpString)
+      setOtp(_ => ["", "", "", "", "", ""])
+      setScreenState(_ => CARDS_DISPLAY)
+    } catch {
+    | _ => setScreenState(_ => OTP_INPUT)
+    }
+  }
+
+  let handleOtpChange = (index, value) => {
+    let focusInput = idx => {
+      otpRefs
+      ->Array.get(idx)
+      ->Option.flatMap(optRef => optRef)
+      ->Option.flatMap(ref => ref.current->Nullable.toOption)
+      ->Option.forEach(input => input->ReactNative.TextInput.focus)
+    }
+
+    if String.length(value) > 1 {
+      let digits = value->String.split("")->Array.filter(d => d >= "0" && d <= "9")
+      let newOtp = otp->Array.mapWithIndex((_, i) => {
+        if i >= index && i < index + Array.length(digits) {
+          digits[i - index]->Option.getOr("")
+        } else {
+          otp[i]->Option.getOr("")
+        }
+      })
+      setOtp(_ => newOtp)
+
+      let nextIndex = index + Array.length(digits) > 5 ? 5 : index + Array.length(digits)
+      focusInput(nextIndex)
+    } else if String.length(value) == 1 && value >= "0" && value <= "9" {
+      let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? value : item)
+      setOtp(_ => newOtp)
+
+      if index < 5 {
+        focusInput(index + 1)
+      }
+    } else if String.length(value) == 0 {
+      let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? "" : item)
+      setOtp(_ => newOtp)
+    }
+  }
+
+  let resendOtp = async () => {
+    try {
+      setResendLoading(_ => true)
+      setResendTimer(_ => 30)
+
+      switch userIdentity {
+      | Some(identity) => {
+          let _result = await clickToPay.validate(identity)
+          setOtp(_ => ["", "", "", "", "", ""])
+          setResendLoading(_ => false)
+        }
+      | None => setResendLoading(_ => false)
+      }
+    } catch {
+    | _ => setResendLoading(_ => false)
+    }
+  }
+
+  let handleCheckout = async () => {
+    try {
+      setScreenState(_ => LOADING)
+
+      switch selectedCardId {
+      | Some(cardId) => {
+          let checkoutParams: ClickToPay.Types.checkoutParams = {
+            srcDigitalCardId: cardId,
+            amount: "99.99",
+            currency: "USD",
+            orderId: "order-" ++ Js.Date.now()->Float.toString,
+            rememberMe,
+          }
+
+          let result = await clickToPay.checkout(checkoutParams)
+          onCheckoutComplete(result)
+        }
+      | None => setScreenState(_ => CARDS_DISPLAY)
+      }
+    } catch {
+    | error => {
+        Console.error2("[ClickToPay] Checkout error:", error)
+        setScreenState(_ => CARDS_DISPLAY)
+      }
+    }
+  }
+
+  let switchIdentity = async (newEmail: string) => {
+    try {
+      setScreenState(_ => LOADING)
+
+      let newUserIdentity: ClickToPay.Types.userIdentity = {
+        value: newEmail,
+        type_: "EMAIL_ADDRESS",
+      }
+
+      setUserIdentity(_ => Some(newUserIdentity))
+      let result = await clickToPay.validate(newUserIdentity)
+
+      switch result.requiresOTP {
+      | Some(true) => {
+          setMaskedChannel(_ => result.maskedValidationChannel)
+          setScreenState(_ => OTP_INPUT)
+        }
+      | _ => setScreenState(_ => CARDS_DISPLAY)
+      }
+
+      setNewIdentifier(_ => "")
+    } catch {
+    | _ => setScreenState(_ => NOT_YOU)
+    }
+  }
+
+  {
+    screenState,
+    setScreenState,
+    clickToPay,
+    otp,
+    setOtp,
+    otpRefs,
+    maskedChannel,
+    setMaskedChannel,
+    resendTimer,
+    setResendTimer,
+    resendLoading,
+    setResendLoading,
+    rememberMe,
+    setRememberMe,
+    selectedCardId,
+    setSelectedCardId,
+    newIdentifier,
+    setNewIdentifier,
+    userIdentity,
+    setUserIdentity,
+    handleOtpChange,
+    submitOtp,
+    resendOtp,
+    handleCheckout,
+    switchIdentity,
+  }
+}
