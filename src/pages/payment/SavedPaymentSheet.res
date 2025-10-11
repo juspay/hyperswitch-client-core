@@ -37,9 +37,14 @@ let make = (
     handleSuccessFailure(~apiResStatus=successResponse, ~closeSDK=true, ~reset=true, ())
   })
 
-  let hasValidated = React.useRef(false)
+  let (sdkInitialized, setSdkInitialized) = React.useState(_ => false)
+  let (initializeLoading, setInitializeLoading) = React.useState(_ => false)
+  let (getCardsLoading, setGetCardsLoading) = React.useState(_ => false)
 
-  React.useEffect0(() => {
+  let handleInitializeSDK = _ => {
+    Console.log("[ClickToPay] Button 1: Initialize SDK clicked - Loading silently...")
+    setInitializeLoading(_ => true)
+    // TODO: Replace with actual config values from session token
     let clickToPayConfig: ClickToPay.Types.clickToPayConfig = {
       dpaId: "498WCF39JVQVH1UK4TGG21leLAj_MJQoapP5f12IanfEYaSno",
       environment: #sandbox,
@@ -53,81 +58,81 @@ let make = (
       debug: true,
     }
 
-    if clickToPayUI.clickToPay.config->Nullable.isNullable {
-      clickToPayUI.setScreenState(_ => ClickToPayLogic.LOADING)
+    clickToPayUI.clickToPay.initialize(clickToPayConfig)
+    ->Promise.then(() => {
+      Console.log("[ClickToPay] SDK initialized successfully - Button 2 is now enabled!")
+      setSdkInitialized(_ => true)
+      setInitializeLoading(_ => false)
+      Promise.resolve()
+    })
+    ->Promise.catch(error => {
+      Console.error2("[ClickToPay] Error initializing SDK:", error)
+      setInitializeLoading(_ => false)
+      setSdkInitialized(_ => false)
+      showAlert(~errorType="error", ~message="SDK Initialization Failed")
+      Promise.resolve()
+    })
+    ->ignore
+  }
 
-      clickToPayUI.clickToPay.initialize(clickToPayConfig)
-      ->Promise.then(() => {
-        Console.log("[ClickToPay] SDK initialized successfully")
-        Promise.resolve()
-      })
-      ->Promise.catch(error => {
-        Console.error2("[ClickToPay] Error initializing SDK:", error)
-        clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
-        Promise.resolve()
-      })
-      ->ignore
+  let handleGetCards = _ => {
+    Console.log("[ClickToPay] Button 2: Get Cards clicked")
+    setGetCardsLoading(_ => true)
+    clickToPayUI.setScreenState(_ => ClickToPayLogic.LOADING)
+
+    let userIdentity: ClickToPay.Types.userIdentity = {
+      value: "pradeep.kumar@juspay.in",
+      type_: "EMAIL_ADDRESS",
     }
 
-    None
-  })
+    clickToPayUI.setUserIdentity(_ => Some(userIdentity))
 
-  React.useEffect1(() => {
-    if (
-      !clickToPayUI.clickToPay.isLoading &&
-      !(clickToPayUI.clickToPay.config->Nullable.isNullable) &&
-      !hasValidated.current
-    ) {
-      hasValidated.current = true
+    clickToPayUI.clickToPay.validate(userIdentity)
+    ->Promise.then(result => {
+      setGetCardsLoading(_ => false)
 
-      let userIdentity: ClickToPay.Types.userIdentity = {
-        value: "pradeepgongada9949@gmail.com",
-        // value: "pradeep.kumar@juspay.in",
-        // value: "newaccount2@mailnator.com",
-        // value: "pradeeprock9949@gmail.com",
-        type_: "EMAIL_ADDRESS",
-      }
-
-      clickToPayUI.setUserIdentity(_ => Some(userIdentity))
-
-      clickToPayUI.clickToPay.validate(userIdentity)
-      ->Promise.then(result => {
-        switch (result.actionCode, result.requiresOTP) {
-        | (Some(#PENDING_CONSUMER_IDV), _)
-        | (None, Some(true)) => {
-            clickToPayUI.setMaskedChannel(_ => result.maskedValidationChannel)
-            clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)
-          }
-        | (Some(#SUCCESS), _)
-        | (None, Some(false))
-        | (None, None) => {
-            let hasCards = switch result.cards {
-            | Some(cards) if cards->Array.length > 0 => true
-            | _ => clickToPayUI.clickToPay.cards->Array.length > 0
-            }
-
-            if hasCards {
-              clickToPayUI.setScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
-            } else {
-              clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
-            }
-          }
-        | (Some(#ADD_CARD), _)
-        | (Some(#FAILED), _)
-        | (Some(#ERROR), _) =>
-          clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+      switch (result.actionCode, result.requiresOTP) {
+      | (Some(#PENDING_CONSUMER_IDV), _)
+      | (None, Some(true)) => {
+          Console.log("[ClickToPay] OTP required - showing OTP input")
+          clickToPayUI.setMaskedChannel(_ => result.maskedValidationChannel)
+          clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)
         }
-        Promise.resolve()
-      })
-      ->Promise.catch(_error => {
-        clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
-        Promise.resolve()
-      })
-      ->ignore
-    }
+      | (Some(#SUCCESS), _)
+      | (None, Some(false))
+      | (None, None) => {
+          let hasCards = switch result.cards {
+          | Some(cards) if cards->Array.length > 0 => true
+          | _ => clickToPayUI.clickToPay.cards->Array.length > 0
+          }
 
-    None
-  }, [clickToPayUI.clickToPay.isLoading])
+          if hasCards {
+            Console.log("[ClickToPay] Cards found - displaying cards")
+            clickToPayUI.setScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
+          } else {
+            Console.log("[ClickToPay] No cards found")
+            clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+            showAlert(~errorType="warning", ~message="No cards found")
+          }
+        }
+      | (Some(#ADD_CARD), _)
+      | (Some(#FAILED), _)
+      | (Some(#ERROR), _) => {
+          Console.log("[ClickToPay] Validation failed or add card required")
+          clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+          showAlert(~errorType="error", ~message="Validation Failed")
+        }
+      }
+      Promise.resolve()
+    })
+    ->Promise.catch(_error => {
+      setGetCardsLoading(_ => false)
+      clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+      showAlert(~errorType="error", ~message="Get Cards Failed")
+      Promise.resolve()
+    })
+    ->ignore
+  }
 
   let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
   let setSaveCardChecboxSelected = React.useCallback1(isSelected => {
@@ -634,73 +639,158 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     <View style={s({position: #relative, flex: 1.})}>
       <Space />
-      {switch clickToPayUI.screenState {
-      | ClickToPayLogic.OTP_INPUT =>
-        <View
-          style={array([
-            getShadowStyle,
-            s({
-              paddingHorizontal: 16.->dp,
-              paddingVertical: 16.->dp,
-              borderRadius,
-              borderWidth,
-              borderColor: component.borderColor,
-              backgroundColor: component.background,
-            }),
-          ])}>
-          <ClickToPayOTPScreen
-            maskedChannel=clickToPayUI.maskedChannel
-            otp=clickToPayUI.otp
-            otpRefs=clickToPayUI.otpRefs
-            handleOtpChange=clickToPayUI.handleOtpChange
-            onSubmit={() => clickToPayUI.submitOtp()->ignore}
-            onNotYouPress={() => clickToPayUI.setScreenState(_ => ClickToPayLogic.NOT_YOU)}
-            resendOtp=clickToPayUI.resendOtp
-            resendTimer=clickToPayUI.resendTimer
-            resendLoading=clickToPayUI.resendLoading
-            rememberMe=clickToPayUI.rememberMe
-            setRememberMe=clickToPayUI.setRememberMe
-            disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
-          />
+      <View
+        style={array([
+          getShadowStyle,
+          s({
+            paddingHorizontal: 16.->dp,
+            paddingVertical: 16.->dp,
+            borderRadius,
+            borderWidth,
+            borderColor: component.borderColor,
+            backgroundColor: component.background,
+          }),
+        ])}>
+        <Text style={s({fontWeight: #bold, marginBottom: 12.->dp, fontSize: 16.})}>
+          {"Click to Pay - Manual Control"->React.string}
+        </Text>
+        <TouchableOpacity
+          style={s({
+            backgroundColor: sdkInitialized ? "#28A745" : "#007AFF",
+            paddingVertical: 12.->dp,
+            borderRadius: 8.,
+            alignItems: #center,
+            marginBottom: 12.->dp,
+            opacity: initializeLoading ? 0.6 : 1.0,
+          })}
+          onPress=handleInitializeSDK
+          disabled=initializeLoading>
+          <Text style={s({color: "#FFFFFF", fontWeight: #bold, fontSize: 16.})}>
+            {(
+              sdkInitialized
+                ? "SDK Initialized"
+                : initializeLoading
+                ? "Initializing SDK..."
+                : "Button 1: Initialize SDK"
+            )->React.string}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={s({
+            backgroundColor: sdkInitialized && !getCardsLoading ? "#FF9500" : "#CCCCCC",
+            paddingVertical: 12.->dp,
+            borderRadius: 8.,
+            alignItems: #center,
+            opacity: getCardsLoading ? 0.6 : 1.0,
+          })}
+          onPress=handleGetCards
+          disabled={!sdkInitialized || getCardsLoading}>
+          <Text style={s({color: "#FFFFFF", fontWeight: #bold, fontSize: 16.})}>
+            {(
+              getCardsLoading
+                ? "Getting Cards..."
+                : sdkInitialized
+                ? "Button 2: Get Cards"
+                : "Button 2: Get Cards (Disabled)"
+            )->React.string}
+          </Text>
+        </TouchableOpacity>
+        {sdkInitialized
+          ? <Text
+              style={s({fontSize: 12., color: "#28A745", marginTop: 8.->dp, textAlign: #center})}>
+              {"SDK is ready! You can now click 'Get Cards'"->React.string}
+            </Text>
+          : <Text style={s({fontSize: 12., color: "#999", marginTop: 8.->dp, textAlign: #center})}>
+              {"Click 'Initialize SDK' first to enable Get Cards button"->React.string}
+            </Text>}
+      </View>
+      <Space />
+      <Modal
+        visible={clickToPayUI.screenState == ClickToPayLogic.OTP_INPUT ||
+          clickToPayUI.screenState == ClickToPayLogic.CARDS_DISPLAY}
+        animationType=#slide
+        transparent=false
+        onRequestClose={_ => clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)}>
+        <View style={s({flex: 1., backgroundColor: component.background})}>
+          <TouchableOpacity
+            style={s({
+              position: #absolute,
+              top: 60.->dp,
+              right: 20.->dp,
+              zIndex: 999,
+              padding: 8.->dp,
+              backgroundColor: "#F5F5F5",
+              borderRadius: 20.,
+              width: 44.->dp,
+              height: 44.->dp,
+              alignItems: #center,
+              justifyContent: #center,
+            })}
+            onPress={_ => clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)}>
+            <Text style={s({fontSize: 24., color: "#000", fontWeight: #600})}>
+              {"×"->React.string}
+            </Text>
+          </TouchableOpacity>
+          <ScrollView
+            style={s({flex: 1.})}
+            contentContainerStyle={s({
+              paddingTop: 120.->dp,
+              paddingHorizontal: 20.->dp,
+              paddingBottom: 40.->dp,
+            })}>
+            {
+              let maskedEmail = switch clickToPayUI.userIdentity {
+              | Some(identity) if identity.type_ == "EMAIL_ADDRESS" =>
+                let email = identity.value
+                let parts = email->String.split("@")
+                switch (parts->Array.get(0), parts->Array.get(1)) {
+                | (Some(name), Some(domain)) =>
+                  let maskedName =
+                    name->String.length > 2
+                      ? name->String.slice(~start=0, ~end=1) ++
+                        "*******" ++
+                        name->String.slice(~start=-1, ~end=String.length(name))
+                      : name
+                  Some(maskedName ++ "@" ++ domain)
+                | _ => Some(email)
+                }
+              | _ => None
+              }
+
+              let maskedPhone = clickToPayUI.maskedChannel
+
+              switch clickToPayUI.screenState {
+              | ClickToPayLogic.OTP_INPUT =>
+                <ClickToPayOTPScreen
+                  maskedChannel=clickToPayUI.maskedChannel
+                  ?maskedEmail
+                  otp=clickToPayUI.otp
+                  otpRefs=clickToPayUI.otpRefs
+                  handleOtpChange=clickToPayUI.handleOtpChange
+                  onSubmit={() => clickToPayUI.submitOtp()->ignore}
+                  resendOtp=clickToPayUI.resendOtp
+                  resendTimer=clickToPayUI.resendTimer
+                  resendLoading=clickToPayUI.resendLoading
+                  rememberMe=clickToPayUI.rememberMe
+                  setRememberMe=clickToPayUI.setRememberMe
+                  disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
+                />
+              | ClickToPayLogic.CARDS_DISPLAY =>
+                <ClickToPayCardsScreen
+                  cards=clickToPayUI.clickToPay.cards
+                  selectedCardId=clickToPayUI.selectedCardId
+                  setSelectedCardId=setClickToPayCardAndClearSaved
+                  ?maskedEmail
+                  ?maskedPhone
+                  onCheckout={() => clickToPayUI.handleCheckout()->ignore}
+                  disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
+                />
+              | _ => React.null
+              }
+            }
+          </ScrollView>
         </View>
-      | ClickToPayLogic.CARDS_DISPLAY =>
-        <View
-          style={array([
-            getShadowStyle,
-            s({
-              paddingHorizontal: 16.->dp,
-              paddingVertical: 16.->dp,
-              borderRadius,
-              borderWidth,
-              borderColor: component.borderColor,
-              backgroundColor: component.background,
-            }),
-          ])}>
-          <ClickToPayCardsScreen
-            cards=clickToPayUI.clickToPay.cards
-            selectedCardId=clickToPayUI.selectedCardId
-            setSelectedCardId=setClickToPayCardAndClearSaved
-            disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
-          />
-        </View>
-      | ClickToPayLogic.LOADING =>
-        <View
-          style={array([
-            getShadowStyle,
-            s({
-              paddingHorizontal: 16.->dp,
-              paddingVertical: 16.->dp,
-              borderRadius,
-              borderWidth,
-              borderColor: component.borderColor,
-              backgroundColor: component.background,
-            }),
-          ])}>
-          <ClickToPayShimmer />
-        </View>
-      | _ => React.null
-      }}
-      {clickToPayUI.screenState != ClickToPayLogic.NONE ? <Space /> : React.null}
+      </Modal>
       <View
         style={array([
           getShadowStyle,
