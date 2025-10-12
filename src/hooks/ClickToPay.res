@@ -4,6 +4,12 @@ module Types = {
   type brand = [#visa | #mastercard]
   type actionCode = [#SUCCESS | #PENDING_CONSUMER_IDV | #FAILED | #ERROR | #ADD_CARD]
 
+  type clickToPayError = {
+    reason?: string,
+    message?: string,
+    details?: string,
+  }
+
   type clickToPayConfig = {
     dpaId: string,
     environment: environment,
@@ -38,6 +44,8 @@ module Types = {
     requiresOTP?: bool,
     requiresNewCard?: bool,
     maskedValidationChannel?: string,
+    maskedEmail?: string,
+    error?: clickToPayError,
   }
 
   type cardData = {

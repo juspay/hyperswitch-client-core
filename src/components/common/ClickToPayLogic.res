@@ -15,6 +15,8 @@ type clickToPayUIState = {
   setResendLoading: (bool => bool) => unit,
   rememberMe: bool,
   setRememberMe: (bool => bool) => unit,
+  otpError: string,
+  setOtpError: (string => string) => unit,
   selectedCardId: option<string>,
   setSelectedCardId: (option<string> => option<string>) => unit,
   newIdentifier: string,
@@ -39,6 +41,7 @@ let useClickToPayUI = (~onCheckoutComplete: JSON.t => unit) => {
   let (resendTimer, setResendTimer) = React.useState(() => 0)
   let (resendLoading, setResendLoading) = React.useState(() => false)
   let (rememberMe, setRememberMe) = React.useState(() => false)
+  let (otpError, setOtpError) = React.useState(() => "NONE")
   let (selectedCardId, setSelectedCardId) = React.useState(() => None)
   let (newIdentifier, setNewIdentifier) = React.useState(() => "")
   let (userIdentity, setUserIdentity) = React.useState(() => None)
@@ -81,16 +84,35 @@ let useClickToPayUI = (~onCheckoutComplete: JSON.t => unit) => {
   let submitOtp = async () => {
     try {
       setScreenState(_ => LOADING)
+      setOtpError(_ => "NONE")
       let otpString = otp->Array.join("")
-      let _cards = await clickToPay.authenticate(otpString)
-      setOtp(_ => ["", "", "", "", "", ""])
-      setScreenState(_ => CARDS_DISPLAY)
+      let cards = await clickToPay.authenticate(otpString)
+
+      // Only go to CARDS_DISPLAY if we actually got cards
+      if cards->Array.length > 0 {
+        setOtp(_ => ["", "", "", "", "", ""])
+        setScreenState(_ => CARDS_DISPLAY)
+      } else {
+        // Empty cards means authentication failed
+        Console.log("[ClickToPay] Authentication returned 0 cards - invalid OTP")
+        setOtpError(_ => "VALIDATION_DATA_INVALID")
+        setScreenState(_ => OTP_INPUT)
+      }
     } catch {
-    | _ => setScreenState(_ => OTP_INPUT)
+    | _ => {
+        Console.log("[ClickToPay] Authentication failed - invalid OTP")
+        setOtpError(_ => "VALIDATION_DATA_INVALID")
+        setScreenState(_ => OTP_INPUT)
+      }
     }
   }
 
   let handleOtpChange = (index, value) => {
+    // Clear error when user starts typing again
+    if otpError !== "NONE" {
+      setOtpError(_ => "NONE")
+    }
+
     let focusInput = idx => {
       otpRefs
       ->Array.get(idx)
@@ -129,6 +151,7 @@ let useClickToPayUI = (~onCheckoutComplete: JSON.t => unit) => {
     try {
       setResendLoading(_ => true)
       setResendTimer(_ => 30)
+      setOtpError(_ => "NONE")
 
       switch userIdentity {
       | Some(identity) => {
@@ -211,6 +234,8 @@ let useClickToPayUI = (~onCheckoutComplete: JSON.t => unit) => {
     setResendLoading,
     rememberMe,
     setRememberMe,
+    otpError,
+    setOtpError,
     selectedCardId,
     setSelectedCardId,
     newIdentifier,

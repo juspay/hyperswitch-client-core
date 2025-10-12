@@ -91,36 +91,96 @@ let make = (
     ->Promise.then(result => {
       setGetCardsLoading(_ => false)
 
-      switch (result.actionCode, result.requiresOTP) {
-      | (Some(#PENDING_CONSUMER_IDV), _)
-      | (None, Some(true)) => {
-          Console.log("[ClickToPay] OTP required - showing OTP input")
-          clickToPayUI.setMaskedChannel(_ => result.maskedValidationChannel)
-          clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)
-        }
-      | (Some(#SUCCESS), _)
-      | (None, Some(false))
-      | (None, None) => {
+      switch result.actionCode {
+      | Some(#SUCCESS) => {
+          Console.log("[ClickToPay] SUCCESS - Cards fetched successfully")
           let hasCards = switch result.cards {
           | Some(cards) if cards->Array.length > 0 => true
           | _ => clickToPayUI.clickToPay.cards->Array.length > 0
           }
 
           if hasCards {
-            Console.log("[ClickToPay] Cards found - displaying cards")
             clickToPayUI.setScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
           } else {
-            Console.log("[ClickToPay] No cards found")
             clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
             showAlert(~errorType="warning", ~message="No cards found")
           }
         }
-      | (Some(#ADD_CARD), _)
-      | (Some(#FAILED), _)
-      | (Some(#ERROR), _) => {
-          Console.log("[ClickToPay] Validation failed or add card required")
+      | Some(#PENDING_CONSUMER_IDV) => {
+          Console.log("[ClickToPay] PENDING_CONSUMER_IDV - OTP required")
+          clickToPayUI.setMaskedChannel(_ => result.maskedValidationChannel)
+          clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)
+        }
+      | Some(#ADD_CARD) => {
+          Console.log("[ClickToPay] ADD_CARD - Need to implement add card flow")
           clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
-          showAlert(~errorType="error", ~message="Validation Failed")
+          showAlert(~errorType="warning", ~message="Add card flow not yet implemented")
+        }
+      | Some(#FAILED)
+      | Some(#ERROR) => // Check if there's an error reason
+        switch result.error {
+        | Some(err) =>
+          switch err.reason {
+          | Some("VALIDATION_DATA_INVALID") => {
+              Console.log("[ClickToPay] VALIDATION_DATA_INVALID - Invalid OTP")
+              clickToPayUI.setOtpError(_ => "VALIDATION_DATA_INVALID")
+              clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)
+              showAlert(~errorType="error", ~message="Invalid OTP code")
+            }
+          | Some("OTP_SEND_FAILED") => {
+              Console.log("[ClickToPay] OTP_SEND_FAILED - Failed to send OTP")
+              clickToPayUI.setOtpError(_ => "NONE")
+              showAlert(~errorType="error", ~message="Failed to send OTP. Please try again.")
+            }
+          | Some("ACCT_INACCESSIBLE") => {
+              Console.log(
+                "[ClickToPay] ACCT_INACCESSIBLE - Account temporarily locked due to too many attempts",
+              )
+              clickToPayUI.setOtpError(_ => "ACCT_INACCESSIBLE")
+              clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+              showAlert(
+                ~errorType="error",
+                ~message="Account temporarily locked. Too many attempts. Please try again later.",
+              )
+            }
+          | Some(reason) => {
+              Console.log2("[ClickToPay] Get cards failed with reason:", reason)
+              clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+              showAlert(~errorType="error", ~message="Validation failed")
+            }
+          | None => {
+              Console.log("[ClickToPay] Validation failed - no error reason")
+              clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+              showAlert(~errorType="error", ~message="Validation failed")
+            }
+          }
+        | None => {
+            Console.log("[ClickToPay] Validation failed - no error object")
+            clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+            showAlert(~errorType="error", ~message="Validation failed")
+          }
+        }
+      | None => // Fallback for when no actionCode is provided - check requiresOTP
+        switch result.requiresOTP {
+        | Some(true) => {
+            Console.log("[ClickToPay] OTP required (no action code)")
+            clickToPayUI.setMaskedChannel(_ => result.maskedValidationChannel)
+            clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)
+          }
+        | Some(false)
+        | None => {
+            let hasCards = switch result.cards {
+            | Some(cards) if cards->Array.length > 0 => true
+            | _ => clickToPayUI.clickToPay.cards->Array.length > 0
+            }
+
+            if hasCards {
+              clickToPayUI.setScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
+            } else {
+              clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
+              showAlert(~errorType="warning", ~message="No cards found")
+            }
+          }
         }
       }
       Promise.resolve()
@@ -727,14 +787,14 @@ let make = (
               justifyContent: #center,
             })}
             onPress={_ => clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)}>
-            <Text style={s({fontSize: 32., color: "#000", fontWeight: #600})}>
+            <Text style={s({fontSize: 28., color: "#000", fontWeight: #600})}>
               {"×"->React.string}
             </Text>
           </TouchableOpacity>
           <ScrollView
             style={s({flex: 1.})}
             contentContainerStyle={s({
-              paddingTop: 120.->dp,
+              paddingTop: 80.->dp,
               paddingHorizontal: 20.->dp,
               paddingBottom: 40.->dp,
             })}>
@@ -773,6 +833,7 @@ let make = (
                   resendLoading=clickToPayUI.resendLoading
                   rememberMe=clickToPayUI.rememberMe
                   setRememberMe=clickToPayUI.setRememberMe
+                  otpError=clickToPayUI.otpError
                   disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
                 />
               | ClickToPayLogic.CARDS_DISPLAY =>

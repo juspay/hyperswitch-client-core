@@ -14,6 +14,7 @@ let make = (
   ~resendLoading: bool,
   ~rememberMe: bool,
   ~setRememberMe: (bool => bool) => unit,
+  ~otpError: string="NONE",
   ~disabled: bool=false,
 ) => {
   let {borderRadius, component, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -22,7 +23,7 @@ let make = (
     <View>
       <Text
         style={s({
-          fontSize: 28.,
+          fontSize: 35.,
           fontWeight: #700,
           color: component.color,
           marginBottom: 12.->dp,
@@ -31,14 +32,12 @@ let make = (
       </Text>
       <Text
         style={s({
-          fontSize: 14.,
+          fontSize: 20.,
           color: "#666",
           marginBottom: 24.->dp,
         })}>
-        {`We sent a code to ${maskedChannel->Option.getOr(
-            "+49 12345678",
-          )} & ${maskedEmail->Option.getOr(
-            "a*******g@mail.com",
+        {`We sent a code to ${maskedChannel->Option.getOr("")} & ${maskedEmail->Option.getOr(
+            "",
           )} to confirm it's you.`->React.string}
       </Text>
     </View>
@@ -61,7 +60,9 @@ let make = (
               width: 45.->dp,
               height: 50.->dp,
               borderWidth: 2.,
-              borderColor: otp[index]->Option.getOr("") !== ""
+              borderColor: otpError !== "NONE"
+                ? "#DC3545"
+                : otp[index]->Option.getOr("") !== ""
                 ? primaryColor
                 : component.borderColor,
               borderRadius,
@@ -82,6 +83,26 @@ let make = (
         )
         ->React.array}
       </View>
+      {otpError !== "NONE"
+        ? <View style={s({marginBottom: 16.->dp})}>
+            <Text
+              style={s({
+                color: "#DC3545",
+                fontSize: 14.,
+                textAlign: #center,
+                fontWeight: #500,
+              })}>
+              {(
+                switch otpError {
+                | "VALIDATION_DATA_INVALID" => "Invalid OTP code. Please try again."
+                | "ACCT_INACCESSIBLE" =>
+                  "Account temporarily locked. Too many attempts. Please try again later."
+                | _ => "An error occurred. Please try again."
+                }
+              )->React.string}
+            </Text>
+          </View>
+        : React.null}
       <TouchableOpacity
         onPress={_ => setRememberMe(prev => !prev)}
         style={s({
