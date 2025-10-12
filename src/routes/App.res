@@ -5,6 +5,15 @@ module ContextWrapper = {
   @react.component
   let make = (~props, ~rootTag, ~children) => {
     let nativeProp = SdkTypes.nativeJsonToRecord(props, rootTag)
+
+    let (clickToPayCookies, setClickToPayCookies) = React.useState(_ => None)
+
+    let handleCookiesExtracted = React.useCallback1(cookies => {
+      Console.log("[ClickToPay] Cookies extracted from library!")
+      Console.log2("[ClickToPay] Cookie data:", cookies)
+      setClickToPayCookies(_ => Some(cookies))
+    }, [setClickToPayCookies])
+
     <NativePropContext nativeProp>
       <LoggerContext>
         <ViewportContext bottomInset=nativeProp.hyperParams.bottomInset>
@@ -13,7 +22,13 @@ module ContextWrapper = {
               <CountryStateDataContext>
                 <LoadingContext>
                   <DynamicFieldsContext>
-                    <BannerContext> children </BannerContext>
+                    <BannerContext>
+                      <ClickToPay.Provider
+                        onCookiesExtracted=Some(handleCookiesExtracted)
+                        initialCookies=clickToPayCookies>
+                        children
+                      </ClickToPay.Provider>
+                    </BannerContext>
                   </DynamicFieldsContext>
                 </LoadingContext>
               </CountryStateDataContext>
