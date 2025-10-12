@@ -14,7 +14,7 @@ let make = (
   let {component} = ThemebasedStyle.useThemeBasedStyle()
 
   <View style={s({flex: 1.})}>
-    <View style={s({paddingHorizontal: 20.->dp})}>
+    <View>
       <Text
         style={s({
           fontSize: 28.,
@@ -119,7 +119,6 @@ let make = (
     </View>
     <View
       style={s({
-        paddingHorizontal: 20.->dp,
         paddingVertical: 16.->dp,
         backgroundColor: component.background,
       })}>

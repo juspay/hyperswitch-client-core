@@ -19,7 +19,7 @@ let make = (
   let {borderRadius, component, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
 
   <View style={s({flex: 1.})}>
-    <View style={s({paddingHorizontal: 20.->dp})}>
+    <View>
       <Text
         style={s({
           fontSize: 28.,
@@ -35,10 +35,14 @@ let make = (
           color: "#666",
           marginBottom: 24.->dp,
         })}>
-        {`We sent a code to ${maskedChannel->Option.getOr("+49 12345678")} & ${maskedEmail->Option.getOr("a*******g@mail.com")} to confirm it's you.`->React.string}
+        {`We sent a code to ${maskedChannel->Option.getOr(
+            "+49 12345678",
+          )} & ${maskedEmail->Option.getOr(
+            "a*******g@mail.com",
+          )} to confirm it's you.`->React.string}
       </Text>
     </View>
-    <View style={s({flex: 1., paddingHorizontal: 20.->dp})}>
+    <View style={s({flex: 1.})}>
       <View
         style={s({
           flexDirection: #row,
@@ -57,7 +61,9 @@ let make = (
               width: 45.->dp,
               height: 50.->dp,
               borderWidth: 2.,
-              borderColor: otp[index]->Option.getOr("") !== "" ? primaryColor : component.borderColor,
+              borderColor: otp[index]->Option.getOr("") !== ""
+                ? primaryColor
+                : component.borderColor,
               borderRadius,
               textAlign: #center,
               fontSize: 20.,
@@ -109,12 +115,18 @@ let make = (
       <TouchableOpacity
         onPress={_ => resendOtp()->ignore}
         disabled={resendTimer > 0 || resendLoading}
-        style={s({alignItems: #center})}>
+        style={s({
+          backgroundColor: resendTimer > 0 || resendLoading ? "transparent" : "#E8F4FF",
+          paddingVertical: 10.->dp,
+          paddingHorizontal: 16.->dp,
+          borderRadius: 8.,
+          alignSelf: #"flex-start",
+        })}>
         <Text
           style={s({
             fontSize: 14.,
             color: resendTimer > 0 || resendLoading ? "#CCC" : "#007AFF",
-            fontWeight: #500,
+            fontWeight: #600,
           })}>
           {(
             resendTimer > 0
@@ -128,7 +140,6 @@ let make = (
     </View>
     <View
       style={s({
-        paddingHorizontal: 20.->dp,
         paddingVertical: 16.->dp,
         backgroundColor: component.background,
       })}>

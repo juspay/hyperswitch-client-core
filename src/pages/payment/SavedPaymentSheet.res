@@ -715,7 +715,7 @@ let make = (
           <TouchableOpacity
             style={s({
               position: #absolute,
-              top: 60.->dp,
+              top: 20.->dp,
               right: 20.->dp,
               zIndex: 999,
               padding: 8.->dp,
@@ -727,7 +727,7 @@ let make = (
               justifyContent: #center,
             })}
             onPress={_ => clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)}>
-            <Text style={s({fontSize: 24., color: "#000", fontWeight: #600})}>
+            <Text style={s({fontSize: 32., color: "#000", fontWeight: #600})}>
               {"×"->React.string}
             </Text>
           </TouchableOpacity>
