@@ -53,7 +53,7 @@ module BrowserRedirectionHooks = {
       } else {
         errorCallback(
           ~errorMessage={status: "cancelled", message: "", type_: "", code: ""},
-          ~closeSDK={false},
+          ~closeSDK={true},
           (),
         )
       }
