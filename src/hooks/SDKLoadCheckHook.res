@@ -1,24 +1,21 @@
 let useSDKLoadCheck = (~enablePartialLoading=true) => {
   let samsungPayValidity = SamsungPay.useSamsungPayValidityHook()
-  let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
   let (canLoad, setCanLoad) = React.useState(_ => false)
 
   let checkIsSDKAbleToLoad = () => {
     if enablePartialLoading {
-      setCanLoad(_ => localeStrings != Loading)
+      setCanLoad(_ => true)
     } else {
       let val =
-        samsungPayValidity != SamsungPay.Checking &&
-        samsungPayValidity != SamsungPay.Not_Started &&
-        localeStrings != Loading
+        samsungPayValidity != SamsungPay.Checking && samsungPayValidity != SamsungPay.Not_Started
       setCanLoad(_ => val)
     }
   }
 
-  React.useEffect2(() => {
+  React.useEffect1(() => {
     checkIsSDKAbleToLoad()
     None
-  }, (samsungPayValidity, localeStrings))
+  }, [samsungPayValidity])
 
   canLoad
 }

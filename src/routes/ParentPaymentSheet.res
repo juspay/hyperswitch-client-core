@@ -1,33 +1,90 @@
 @react.component
-let make = (~isSheet=true) => {
-  let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
+let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
-  let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
-    setConfirmButtonDataRef(_ => confirmButtonDataRef)
-  }, [setConfirmButtonDataRef])
+  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+    AllApiDataContextNew.allApiDataContext,
+  )
+  let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let enablePartialLoading = nativeProp.configuration.enablePartialLoading
-  let canLoadSDK = SDKLoadCheckHook.useSDKLoadCheck(~enablePartialLoading)
-  let isDefaultView = nativeProp.configuration.defaultView
-  let mandateType = allApiData.additionalPMLData.mandateType
+  let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
+  let localeObject = GetLocale.useGetLocalObj()
 
-  <FullScreenSheetWrapper isSheet>
-    {switch (allApiData.savedPaymentMethods, allApiData.additionalPMLData.paymentType, canLoadSDK) {
-    | (_, None, _)
-    | (Loading, _, _) =>
-      <PaymentSheetViewWrappers.SDKLoadingStateWrapper isDefaultView setConfirmButtonDataRef />
-    | (Some(data), _, _) =>
-      <PaymentSheetViewWrappers.SDKEntryPointWrapper
-        setConfirmButtonDataRef
-        mandateType
-        isSavedPaymentMethodsAvailable={data.pmList->Option.getOr([])->Array.length > 0}
-        paymentScreenType
-      />
-    | (None, _, _) => <PaymentSheet setConfirmButtonDataRef />
+  let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => true)
+  let setIsSavedPaymentScreen = React.useCallback1(isSaved => {
+    setIsSavedPaymentScreen(_ => isSaved)
+  }, [setIsSavedPaymentScreen])
+
+  let (confirmButtonData, setConfirmButtonData) = React.useState(_ =>
+    GlobalConfirmButton.defaultConfirmButtonData
+  )
+  let setConfirmButtonData = React.useCallback1(confirmButtonData => {
+    setConfirmButtonData(_ => confirmButtonData)
+  }, [setConfirmButtonData])
+
+  <FullScreenSheetWrapper isLoading=confirmButtonData.loading>
+    {switch sheetType {
+    | ButtonSheet =>
+      switch (
+        nativeProp.sdkState,
+        !nativeProp.configuration.displaySavedPaymentMethods ||
+        nativeProp.configuration.displayMergedSavedMethods,
+      ) {
+      | (PaymentSheet, true)
+      | (WidgetPaymentSheet, true)
+      | (TabSheet, true)
+      | (WidgetTabSheet, true)
+      | (ButtonSheet, _)
+      | (WidgetButtonSheet, _) =>
+        <PaymentSheet setConfirmButtonData isLoading=confirmButtonData.loading tabArr elementArr />
+      | (PaymentSheet, false)
+      | (WidgetPaymentSheet, false)
+      | (WidgetTabSheet, false)
+      | (TabSheet, false) =>
+        switch customerPaymentMethodData->Option.map(customerPaymentMethods =>
+          customerPaymentMethods.customer_payment_methods
+        ) {
+        | Some(customerPaymentMethods) =>
+          let showSavedScreen =
+            customerPaymentMethods->Array.length > 0 &&
+              accountPaymentMethodData
+              ->Option.map(data => data.payment_type)
+              ->Option.getOr(NORMAL) !== SETUP_MANDATE
+          <>
+            {isSavedPaymentScreen && showSavedScreen
+              ? <SavedPaymentSheet
+                  customerPaymentMethods
+                  setConfirmButtonData
+                  merchantName={accountPaymentMethodData
+                  ->Option.map(data => data.merchant_name)
+                  ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
+                />
+              : <PaymentSheet
+                  setConfirmButtonData isLoading=confirmButtonData.loading tabArr elementArr
+                />}
+            {showSavedScreen
+              ? <>
+                  <ClickableTextElement
+                    initialIconName="addwithcircle"
+                    updateIconName={Some("cardv1")}
+                    text={isSavedPaymentScreen
+                      ? localeObject.addPaymentMethodLabel
+                      : localeObject.useExisitingSavedCards}
+                    isSelected=isSavedPaymentScreen
+                    setIsSelected=setIsSavedPaymentScreen
+                    textType={TextWrapper.LinkTextBold}
+                    size=24.
+                  />
+                  <Space height=5. />
+                </>
+              : React.null}
+          </>
+        | None => <SavedPaymentSheetLoader />
+        }
+      | _ => React.null
+      }
+    | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
-    <GlobalConfirmButton confirmButtonDataRef />
+    <GlobalConfirmButton confirmButtonData />
     <Space height=15. />
   </FullScreenSheetWrapper>
 }

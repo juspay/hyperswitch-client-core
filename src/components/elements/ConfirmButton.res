@@ -1,38 +1,35 @@
 @react.component
 let make = (
-  ~loading: bool,
-  ~isAllValuesValid: bool,
+  ~loading,
   ~handlePress: ReactNative.Event.pressEvent => unit,
-  ~hasSomeFields=?,
   ~paymentMethod: string,
   ~paymentExperience=?,
+  ~customerPaymentExperience=?,
   ~errorText=None,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
+  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
   <>
-    {errorText->Belt.Option.isSome ? <ErrorText text={errorText} /> : React.null}
+    {errorText->Option.isSome ? <ErrorText text={errorText} /> : React.null}
     {loading
-      ? <>
-          <CustomLoader />
-          <Space />
-          <HyperSwitchBranding />
-        </>
+      ? <CustomLoader />
       : <ConfirmButtonAnimation
-          isAllValuesValid
           handlePress
           paymentMethod
-          ?hasSomeFields
           ?paymentExperience
+          ?customerPaymentExperience
           displayText={switch nativeProp.configuration.primaryButtonLabel {
           | Some(str) => str
           | None =>
-            allApiData.additionalPMLData.mandateType != NORMAL
+            accountPaymentMethodData
+            ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+            ->Option.getOr(NORMAL) !== NORMAL
               ? "Pay Now"
               : localeObject.payNowButton
           }}
         />}
+    <HyperSwitchBranding />
   </>
 }

@@ -3,21 +3,20 @@ open Style
 
 @react.component
 let make = () => {
-  let (confirmButtonDataRef, setConfirmButtonDataRef) = React.useState(_ => React.null)
-  let setConfirmButtonDataRef = React.useCallback1(confirmButtonDataRef => {
-    setConfirmButtonDataRef(_ => confirmButtonDataRef)
-  }, [setConfirmButtonDataRef])
+  let (confirmButtonData, setConfirmButtonData) = React.useState(_ =>
+    GlobalConfirmButton.defaultConfirmButtonData
+  )
+  let setConfirmButtonData = React.useCallback1(confirmButtonData => {
+    setConfirmButtonData(_ => confirmButtonData)
+  }, [setConfirmButtonData])
 
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (tabArr, elementArr) = PMListModifier.useSheetListModifier()
+  let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
 
   <View style={s({maxWidth: 450.->dp, alignSelf: #center, width: 100.->pct})}>
     <Space height=20. />
     <WalletView elementArr hideDivider={tabArr->Array.length === 0} />
-    <CustomTabView
-      hocComponentArr=tabArr loading={allApiData.sessions == Loading} setConfirmButtonDataRef
-    />
+    <CustomTabView hocComponentArr=tabArr isLoading={false} setConfirmButtonData />
     <Space />
-    {confirmButtonDataRef}
+    <GlobalConfirmButton confirmButtonData />
   </View>
 }

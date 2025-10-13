@@ -2,16 +2,10 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~onModalClose) => {
+let make = (~onModalClose, ~isLoading=false) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let {sheetType, setSheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
-  let (paymentScreenType, _) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let (localStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
-  let isLoadingScreenActive = switch (allApiData.savedPaymentMethods, localStrings) {
-  | (Loading, _) | (_, Loading) => true
-  | _ => false
-  }
 
   <View
     style={s({
@@ -21,14 +15,18 @@ let make = (~onModalClose) => {
       alignItems: #center,
       justifyContent: #"space-between",
     })}>
-    {if isLoadingScreenActive {
+    {if sheetType !== ButtonSheet {
+      <CustomPressable
+        style={s({maxWidth: 60.->pct, flexDirection: #row, alignItems: #center})}
+        onPress={_ => setSheetType(ButtonSheet)}>
+        <Icon name="back" fill="#000" />
+        <Space width=5. />
+        <TextWrapper text={"Back"} textType={ModalTextBold} />
+      </CustomPressable>
+    } else if isLoading {
       <View />
     } else {
-      switch switch paymentScreenType {
-      | PaymentScreenContext.PAYMENTSHEET => nativeProp.configuration.paymentSheetHeaderText
-      | PaymentScreenContext.SAVEDCARDSCREEN =>
-        nativeProp.configuration.savedPaymentScreenHeaderText
-      } {
+      switch nativeProp.configuration.paymentSheetHeaderText {
       | Some(var) =>
         <View style={s({maxWidth: 60.->pct})}>
           <TextWrapper text={var} textType={HeadingBold} />
@@ -38,7 +36,7 @@ let make = (~onModalClose) => {
     }}
     <View
       style={s({flexDirection: #row, flexWrap: #wrap, alignItems: #center, maxWidth: 40.->pct})}>
-      {isLoadingScreenActive
+      {isLoading
         ? React.null
         : <>
             {nativeProp.env === GlobalVars.PROD

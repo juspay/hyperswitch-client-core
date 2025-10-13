@@ -14,11 +14,11 @@ let usePayButton = () => {
   )
 
   let defaultSession: option<SessionsType.sessions> = None
-  let googlePaySessionRef = React.useRef(defaultSession)
-  let applePaySessionRef = React.useRef(defaultSession)
+  let (googlePaySession, setGooglePaySession) = React.useState(_ => defaultSession)
+  let (applePaySession, setApplePaySession) = React.useState(_ => defaultSession)
 
-  React.useEffect1(() => {
-    switch (googlePayStatus, googlePaySessionRef.current) {
+  React.useEffect2(() => {
+    switch (googlePayStatus, googlePaySession) {
     | (#ready, Some(sessionObject)) => {
         let token = WalletType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env)
         let onGooglePayButtonClick = () => {
@@ -57,10 +57,10 @@ let usePayButton = () => {
     | _ => ()
     }
     None
-  }, [googlePayStatus])
+  }, (googlePayStatus, googlePaySession))
 
-  React.useEffect1(() => {
-    switch (applePayStatus, applePaySessionRef.current) {
+  React.useEffect2(() => {
+    switch (applePayStatus, applePaySession) {
     | (#ready, Some(sessionObject)) => {
         let appleWalletButton = Window.querySelector("apple-pay-button")
         switch appleWalletButton->Nullable.toOption {
@@ -113,14 +113,14 @@ let usePayButton = () => {
     | _ => ()
     }
     None
-  }, [applePayStatus])
+  }, (applePayStatus, applePaySession))
 
   let addApplePay = (~sessionObject: SessionsType.sessions, ~resolve as _) => {
-    applePaySessionRef.current = Some(sessionObject)
+    setApplePaySession(_ => Some(sessionObject))
   }
 
   let addGooglePay = (~sessionObject) => {
-    googlePaySessionRef.current = Some(sessionObject)
+    setGooglePaySession(_ => Some(sessionObject))
   }
 
   (addApplePay, addGooglePay)

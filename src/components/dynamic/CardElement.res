@@ -52,7 +52,13 @@ let make = (
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
       let (expireDate, setExpireDate) = React.useState(() => "")
 
-      let {component, dangerColor, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
+      let {
+        component,
+        dangerColor,
+        borderRadius,
+        borderWidth,
+        primaryColor,
+      } = ThemebasedStyle.useThemeBasedStyle()
       let localeObject = GetLocale.useGetLocalObj()
       let cardRef = React.useRef(Nullable.null)
       let expireRef = React.useRef(Nullable.null)
@@ -215,7 +221,7 @@ let make = (
             <View style={s({width: 100.->pct})}>
               <CustomInput
                 name={TestUtils.cardNumberInputTestId}
-                reference={None} // previously Some(cardRef->toInputRef)
+                reference=Some(cardRef)
                 state={cardNumberInput.value->Option.getOr("")}
                 setState={text => onChangeCardNumber(text, expireRef)}
                 placeholder=nativeProp.configuration.placeholder.cardNumber
@@ -361,14 +367,28 @@ let make = (
                   cardCvcMeta.active
                     ? component.color
                     : dangerColor}
-                  iconRight=CustomIcon({
-                    checkCardCVC(
-                      cardCvcInput.value->Option.getOr(""),
-                      cardNetworkInput.value->Option.getOr(""),
-                    )
-                      ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
-                      : <Icon name="cvvempty" height=35. width=35. fill="black" />
-                  })
+                  iconRight=CustomIcon(
+                    <View
+                      style={s({
+                        height: 46.->dp,
+                        display: #flex,
+                        flexDirection: #row,
+                        justifyContent: #center,
+                        alignItems: #center,
+                      })}>
+                      <Icon
+                        name="cvv"
+                        height=32.
+                        width=32.
+                        fill={checkCardCVC(
+                          cardCvcInput.value->Option.getOr(""),
+                          cardNetworkInput.value->Option.getOr(""),
+                        )
+                          ? primaryColor
+                          : "#858F97"}
+                      />
+                    </View>,
+                  )
                   onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
                     if (
                       ev.nativeEvent.key == "Backspace" &&

@@ -1,61 +1,20 @@
 @react.component
-let make = (~setConfirmButtonDataRef) => {
+let make = (~setConfirmButtonData, ~isLoading, ~tabArr, ~elementArr) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (_, setPaymentScreenType) = React.useContext(PaymentScreenContext.paymentScreenTypeContext)
-
-  let (tabArr, elementArr) = PMListModifier.useSheetListModifier()
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-
-  let savedPaymentMethodsData = switch allApiData.savedPaymentMethods {
-  | Some(data) => data
-  | _ => AllApiDataContext.dafaultsavePMObj
-  }
-  let localeObject = GetLocale.useGetLocalObj()
-  React.useEffect0(() => {
-    setPaymentScreenType(PAYMENTSHEET)
-    None
-  })
-
-  let (localeStrings, _) = React.useContext(LocaleStringDataContext.localeDataContext)
+  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  AllApiDataModifier.useAddWebPaymentButton()
 
   <>
     <WalletView
-      loading={nativeProp.sdkState !== CardWidget &&
-      allApiData.sessions == Loading &&
-      localeStrings == Loading}
       elementArr
+      isLoading
       hideDivider={tabArr->Array.length === 0}
-      showDisclaimer={allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate}
+      showDisclaimer={accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+      ->Option.getOr(NORMAL) !== NORMAL}
     />
     {nativeProp.configuration.appearance.layout === Tab
-      ? <CustomTabView
-          hocComponentArr=tabArr
-          loading={allApiData.sessions == Loading && localeStrings == Loading}
-          setConfirmButtonDataRef
-        />
-      : <CustomAccordionView
-          hocComponentArr=tabArr
-          loading={allApiData.sessions == Loading && localeStrings == Loading}
-          setConfirmButtonDataRef
-        />}
-    {PaymentUtils.showUseExisitingSavedCardsBtn(
-      ~isGuestCustomer=savedPaymentMethodsData.isGuestCustomer,
-      ~pmList=savedPaymentMethodsData.pmList,
-      ~mandateType=allApiData.additionalPMLData.mandateType,
-      ~displaySavedPaymentMethods=nativeProp.configuration.displaySavedPaymentMethods,
-    )
-      ? <>
-          <Space height=10. />
-          <ClickableTextElement
-            initialIconName="cardv1"
-            text=localeObject.useExisitingSavedCards
-            isSelected=true
-            setIsSelected={_ => ()}
-            textType={TextWrapper.LinkTextBold}
-            fillIcon=true
-          />
-          <Space height=12. />
-        </>
-      : React.null}
+      ? <CustomTabView hocComponentArr=tabArr isLoading setConfirmButtonData />
+      : <CustomAccordionView hocComponentArr=tabArr isLoading setConfirmButtonData />}
   </>
 }

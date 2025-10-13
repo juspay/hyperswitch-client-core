@@ -13,8 +13,6 @@ let make = (
   ~formatValue,
   ~isCardPayment,
   ~enabledCardSchemes: array<string>=[],
-  ~country,
-  ~setCountry,
   ~accessible=?,
 ) => {
   switch element {
@@ -27,9 +25,9 @@ let make = (
   | FULLNAME(fields) if fields->Array.length > 0 =>
     <FullNameElement fields createFieldValidator formatValue isCardPayment ?accessible />
   | PHONE(fields) if fields->Array.length > 0 =>
-    <PhoneElement fields createFieldValidator formatValue country ?accessible />
+    <PhoneElement fields createFieldValidator formatValue ?accessible />
   | GENERIC(fields) if fields->Array.length > 0 =>
-    <GenericElement fields createFieldValidator formatValue country setCountry ?accessible />
+    <GenericTabElement fields createFieldValidator formatValue ?accessible />
   | _ => React.null
   }
 }

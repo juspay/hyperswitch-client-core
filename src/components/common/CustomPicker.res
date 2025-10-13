@@ -1,12 +1,6 @@
 open ReactNative
 open Style
 
-type customPickerType = {
-  label: string,
-  value: string,
-  icon?: string,
-}
-
 @react.component
 let make = (
   ~value,
@@ -16,7 +10,7 @@ let make = (
   ~borderBottomWidth=0.,
   ~disabled=false,
   ~placeholderText,
-  ~items: array<customPickerType>,
+  ~items: array<SdkTypes.customPickerType>,
   ~isValid=true,
   ~isLoading=false,
   ~isCountryStateFields=false,

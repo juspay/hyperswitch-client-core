@@ -2,10 +2,10 @@ open ReactNative
 
 @react.component
 let make = (
-  ~launchKlarna: option<PaymentMethodListType.payment_method_type>,
+  ~launchKlarna: option<string>,
   ~return_url,
   ~klarnaSessionTokens: string,
-  ~processRequest: (PaymentMethodListType.payment_method_type, string) => unit,
+  ~processRequest: (string, string) => unit,
 ) => {
   let (_paymentViewLoaded, setpaymentViewLoaded) = React.useState(_ => false)
   let (_token, _) = React.useState(_ => None)

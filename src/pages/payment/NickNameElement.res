@@ -6,16 +6,16 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid, ~accessible) => {
   let (errorMessage, setErrorMesage) = React.useState(_ => None)
 
   let onChange = text => {
-    setNickname(_ => text == "" || String.trim(text) == "" ? None : Some(text))
+    setNickname(text == "" || String.trim(text) == "" ? None : Some(text))
 
     switch text->Validation.containsMoreThanTwoDigits {
     | true => {
         setErrorMesage(_ => Some(localeObject.invalidDigitsNickNameError))
-        setIsNicknameValid(_ => false)
+        setIsNicknameValid(false)
       }
     | false => {
         setErrorMesage(_ => None)
-        setIsNicknameValid(_ => true)
+        setIsNicknameValid(true)
       }
     }
   }
@@ -31,11 +31,11 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid, ~accessible) => {
       keyboardType=#default
       isValid={isFocus || errorMessage->Option.isNone}
       onFocus={_ => {
-        setNickname(nickname => String.trim(nickname->Option.getOr(""))->Some)
+        setNickname(String.trim(nickname->Option.getOr(""))->Some)
         setisFocus(_ => true)
       }}
       onBlur={_ => {
-        setNickname(nickname => String.trim(nickname->Option.getOr(""))->Some)
+        setNickname(String.trim(nickname->Option.getOr(""))->Some)
         setisFocus(_ => false)
       }}
       textColor={isFocus || errorMessage->Option.isNone ? component.color : dangerColor}

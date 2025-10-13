@@ -1,16 +1,5 @@
 open SdkTypes
 
-type samsungPaySession = {
-  wallet_name: string,
-  version: string,
-  service_id: string,
-  order_number: string,
-  merchant: JSON.t,
-  amount: JSON.t,
-  protocol: string,
-  allowed_brands: array<JSON.t>,
-}
-
 type sessions = {
   wallet_name: payment_method_type_wallet,
   session_token: string,
@@ -114,4 +103,8 @@ let itemToObjMapper = dict => {
       }
     })
   })
+}
+
+let jsonToSessionTokenType = sessionTokenData => {
+  sessionTokenData->Utils.getDictFromJson->itemToObjMapper
 }

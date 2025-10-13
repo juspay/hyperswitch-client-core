@@ -62,7 +62,7 @@ let itemToObjMapper = dict => {
   getPaymentMethodData(dict)
 }
 
-let getSamsungPaySessionObject = (sessionData: AllApiDataContext.sessions) => {
+let getSamsungPaySessionObject = (sessionData: option<array<SessionsType.sessions>>) => {
   let sessionObject = switch sessionData {
   | Some(sessionData) =>
     sessionData

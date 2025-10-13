@@ -2,44 +2,21 @@ open ReactNative
 open Style
 @react.component
 let make = (
-  ~hocComponentArr: array<PMListModifier.hoc>=[],
-  ~loading=true,
-  ~setConfirmButtonDataRef,
+  ~hocComponentArr: array<AllApiDataModifier.hoc>=[],
+  ~isLoading,
+  ~setConfirmButtonData,
 ) => {
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
-  let setIndexInFocus = React.useCallback1(ind => setIndexInFocus(_ => ind), [setIndexInFocus])
+  let setIndexInFocus = React.useCallback1(index => {
+    setIndexInFocus(_ => index)
+  }, [setIndexInFocus])
   let sceneMap = Map.make()
 
-  let data = React.useMemo1(() => {
-    if loading {
-      hocComponentArr
-      ->Array.pushMany([
-        {
-          name: "loading",
-          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) => <>
-            <Space height=20. />
-            <CustomLoader height="33" />
-            <Space height=5. />
-            <CustomLoader height="33" />
-          </>,
-        },
-        {
-          name: "loading",
-          componentHoc: (~isScreenFocus as _, ~setConfirmButtonDataRef as _) => React.null,
-        },
-      ])
-      ->ignore
-      hocComponentArr
-    } else {
-      hocComponentArr
-    }
-  }, [hocComponentArr])
-
-  <UIUtils.RenderIf condition={data->Array.length > 0}>
+  <UIUtils.RenderIf condition={hocComponentArr->Array.length > 0}>
     {
-      let routes = data->Array.mapWithIndex((hoc, index) => {
+      let routes = hocComponentArr->Array.mapWithIndex((hoc, index) => {
         sceneMap->Map.set(index, (~route as _, ~position as _, ~jumpTo as _) =>
-          hoc.componentHoc(~isScreenFocus=indexInFocus == index, ~setConfirmButtonDataRef)
+          hoc.componentHoc(~isScreenFocus=indexInFocus == index, ~setConfirmButtonData)
         )
 
         let route: TabViewType.route = {
@@ -51,8 +28,8 @@ let make = (
       })
 
       let isScrollBarOnlyCards =
-        data->Array.length == 1 &&
-          switch data->Array.get(0) {
+        hocComponentArr->Array.length == 1 &&
+          switch hocComponentArr->Array.get(0) {
           | Some({name}) => name == "Card"
           | None => true
           }
@@ -67,10 +44,11 @@ let make = (
           isScrollBarOnlyCards
             ? React.null
             : <ScrollableCustomTopBar
-                hocComponentArr=data indexInFocus setIndexToScrollParentFlatList={jumpTo}
+                hocComponentArr indexInFocus setIndexToScrollParentFlatList={jumpTo}
               />
         }}
         renderScene={SceneMap.sceneMap(sceneMap)}
+        isLoading
       />
     }
   </UIUtils.RenderIf>

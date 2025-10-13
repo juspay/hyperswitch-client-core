@@ -225,9 +225,7 @@ let make = (
       {switch iconRight {
       | NoIcon => React.null
       | CustomIcon(element) =>
-        <CustomPressable onPress=?onPressIconRight>
-          <View style={s({flexDirection: #row, alignContent: #"space-around"})}> element </View>
-        </CustomPressable>
+        <CustomPressable onPress=?onPressIconRight> element </CustomPressable>
       }}
       {secureTextEntry && showEyeIconaftersecureTextEntry
         ? {

@@ -1,6 +1,27 @@
 open SdkTypes
 open Utils
 
+let parseBillingAddress = (billingDetailsDict: Js.Dict.t<JSON.t>) => {
+  let addressDict = getOptionalObj(billingDetailsDict, "address")
+
+  {
+    address: addressDict->Option.map(addressDict => {
+      first_name: ?getOptionString(addressDict, "city"),
+      last_name: ?getOptionString(addressDict, "city"),
+      city: ?getOptionString(addressDict, "city"),
+      country: ?getOptionString(addressDict, "country"),
+      line1: ?getOptionString(addressDict, "line1"),
+      line2: ?getOptionString(addressDict, "line2"),
+      zip: ?getOptionString(addressDict, "postalCode"),
+      state: ?getOptionString(addressDict, "state"),
+    }),
+    phone: Some({
+      number: ?getOptionString(billingDetailsDict, "phoneNumber"),
+    }),
+    email: getOptionString(billingDetailsDict, "email"),
+  }
+}
+
 let getGooglePayBillingAddress = (dict, str) => {
   dict
   ->Dict.get(str)
@@ -17,6 +38,7 @@ let getGooglePayBillingAddress = (dict, str) => {
         ?country,
         line1: ?getOptionString(json, "address1"),
         line2: ?getOptionString(json, "address2"),
+        line3: ?getOptionString(json, "address3"),
         zip: ?getOptionString(json, "postalCode"),
         state: ?getOptionString(json, "administrativeArea"),
       }),
@@ -59,7 +81,12 @@ let getApplePayBillingAddress = (dict, str, shipping: option<string>) => {
     let street = getString(postalAddress, "street", "")->String.split("\n")
     let line1 = Array.at(street, 0)
     let line2 = if Array.length(street) > 1 {
-      Some(Array.join(Array.sliceToEnd(street, ~start=1), " "))
+      Array.at(street, 1)
+    } else {
+      None
+    }
+    let line3 = if Array.length(street) > 2 {
+      Some(Array.join(Array.sliceToEnd(street, ~start=2), " "))
     } else {
       None
     }
@@ -71,6 +98,7 @@ let getApplePayBillingAddress = (dict, str, shipping: option<string>) => {
         ?country,
         ?line1,
         ?line2,
+        ?line3,
         zip: ?getOptionString(postalAddress, "postalCode"),
         state: ?getOptionString(postalAddress, "state"),
       }),
@@ -97,6 +125,18 @@ let getFlatAddressDict = (
       "payment_method_data.billing.address.last_name",
       address.last_name->Option.getOr(""),
     )
+    addressDict->Dict.set(
+      "payment_method_data.billing.address.line1",
+      address.line1->Option.getOr(""),
+    )  
+    addressDict->Dict.set(
+      "payment_method_data.billing.address.line2",
+      address.line2->Option.getOr(""),
+    )
+    addressDict->Dict.set(
+      "payment_method_data.billing.address.line3",
+      address.line3->Option.getOr(""),
+    )    
     addressDict->Dict.set(
       "payment_method_data.billing.address.city",
       address.city->Option.getOr(""),
@@ -133,6 +173,9 @@ let getFlatAddressDict = (
     | Some(address) =>
       addressDict->Dict.set("payment_method_data.shipping.address.first_name", address.first_name->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.last_name", address.last_name->Option.getOr(""))
+      addressDict->Dict.set("payment_method_data.shipping.address.line1", address.line1->Option.getOr(""))
+      addressDict->Dict.set("payment_method_data.shipping.address.line2", address.line2->Option.getOr(""))
+      addressDict->Dict.set("payment_method_data.shipping.address.line3", address.line3->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.city", address.city->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.state", address.state->Option.getOr(""))
       addressDict->Dict.set("payment_method_data.shipping.address.country", address.country->Option.getOr(""))
@@ -157,7 +200,7 @@ let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.
   ->Array.filter(item => {
     countryArr->Array.includes(item.country_code)
   })
-  ->Array.map((item): CustomPicker.customPickerType => {
+  ->Array.map((item): SdkTypes.customPickerType => {
     {
       label: item.country_name,
       value: item.country_code,
@@ -166,7 +209,7 @@ let getCountryData = (countryArr, contextCountryData: CountryStateDataHookTypes.
   })
 }
 let getPhoneCodeData = (contextCountryData: CountryStateDataHookTypes.countries) => {
-  contextCountryData->Array.map((item): CustomPicker.customPickerType => {
+  contextCountryData->Array.map((item): SdkTypes.customPickerType => {
     {
       label: `${item.country_name} (${item.phone_number_code})`,
       value: item.phone_number_code,
@@ -177,7 +220,7 @@ let getPhoneCodeData = (contextCountryData: CountryStateDataHookTypes.countries)
 let getStateData = (states, country) => {
   states
   ->Utils.getStateNames(country)
-  ->Array.map((item): CustomPicker.customPickerType => {
+  ->Array.map((item): SdkTypes.customPickerType => {
     {
       label: item.label != "" ? item.label ++ " - " ++ item.value : item.value,
       value: item.code,

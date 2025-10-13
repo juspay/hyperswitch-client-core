@@ -4,6 +4,6 @@ let make = () => {
 
   switch nativeProp.sdkState {
   | PaymentMethodsManagement => <PMMangementNavigatorRouter />
-  | _ => <NavigatorRouter />
+  | _ => <NavigationRouter />
   }
 }

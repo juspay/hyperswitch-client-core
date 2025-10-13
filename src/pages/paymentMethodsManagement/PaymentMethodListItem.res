@@ -33,9 +33,9 @@ module AddPaymentMethodButton = {
 
 module PaymentMethodTitle = {
   @react.component
-  let make = (~pmDetails: SdkTypes.savedDataType) => {
-    let nickName = switch pmDetails {
-    | SAVEDLISTCARD(obj) => obj.nick_name
+  let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type) => {
+    let nickName = switch pmDetails.card {
+    | Some(obj) => obj.nick_name
     | _ => None
     }
 
@@ -53,15 +53,16 @@ module PaymentMethodTitle = {
       | None => React.null
       }}
       <TextWrapper
-        text={switch pmDetails {
-        | SAVEDLISTWALLET(obj) => obj.walletType
-        | SAVEDLISTCARD(obj) => obj.cardNumber
-        | NONE => None
-        }
-        ->Option.getOr("")
-        ->String.replaceAll("*", "●")}
-        textType={switch pmDetails {
-        | SAVEDLISTWALLET(_) => CardTextBold
+        text={switch pmDetails.payment_method {
+        | WALLET => pmDetails.payment_method_type
+        | CARD =>
+          pmDetails.card
+          ->Option.map(card => "●●●● "->String.concat(card.last4_digits))
+          ->Option.getOr("")
+        | _ => ""
+        }}
+        textType={switch pmDetails.payment_method {
+        | WALLET => CardTextBold
         | _ => CardText
         }}
       />
@@ -70,17 +71,13 @@ module PaymentMethodTitle = {
 }
 
 @react.component
-let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
+let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type, ~handleDelete) => {
   let {component} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
 
-  let paymentMethodId = switch pmDetails {
-  | SAVEDLISTCARD(cardData) => cardData.paymentMethodId
-  | SAVEDLISTWALLET(walletData) => walletData.paymentMethodId
-  | NONE => None
-  }
+  let paymentMethodId = pmDetails.payment_method_id
   <CustomPressable
-    onPress={_ => handleDelete(paymentMethodId->Option.getOr(""))}
+    onPress={_ => handleDelete(paymentMethodId)}
     style={s({
       padding: 16.->dp,
       borderBottomWidth: 0.8,
@@ -93,11 +90,11 @@ let make = (~pmDetails: SdkTypes.savedDataType, ~handleDelete) => {
     })}>
     <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center, flex: 4.})}>
       <Icon
-        name={switch pmDetails {
-        | SAVEDLISTCARD(obj) => obj.cardScheme
-        | SAVEDLISTWALLET(obj) => obj.walletType
-        | NONE => None
-        }->Option.getOr("")}
+        name={switch pmDetails.payment_method {
+        | CARD => pmDetails.card->Option.map(card => card.card_network)->Option.getOr("")
+        | WALLET => pmDetails.payment_method_type
+        | _ => ""
+        }}
         height=36.
         width=36.
         style={s({marginEnd: 5.->dp})}

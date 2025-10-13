@@ -3,12 +3,11 @@ open Style
 
 @react.component
 let make = (
-  ~paymentMethodData: PaymentMethodListType.payment_method_type,
+  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
   ~sessionObject,
   ~processRequest,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let showAlert = AlertHook.useAlerts()
   let logger = LoggerHook.useLoggerHook()
@@ -18,171 +17,81 @@ let make = (
     applePayButtonColor,
     buttonBorderRadius,
     primaryButtonHeight,
-    samsungPayButtonColor,
+    payNowButtonTextColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
-  let getSuperpositionFinalFields = ConfigurationService.useConfigurationService()
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
+  let {getRequiredFieldsForButton} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let (
-    (requiredFields, initialValues, walletDict, requiredFieldsFromSource),
-    setWalletData,
-  ) = React.useState(_ => ([], Dict.make(), Dict.make(), Dict.make()))
+  let processWalletData = (
+    walletDict,
+    ~billingAddress=?,
+    ~shippingAddress=?,
+    ~useIntentData=false,
+  ) => {
+    let (isFieldsMissing, initialValues) = getRequiredFieldsForButton(
+      paymentMethodData,
+      walletDict,
+      billingAddress,
+      shippingAddress,
+      useIntentData,
+    )
 
-  let (country, setCountry) = React.useState(() => nativeProp.hyperParams.country)
-  let setCountry = React.useCallback1(c => setCountry(_ => c), [setCountry])
-
-  let setWalletData = React.useCallback1(
-    (requiredFields, initialValues, walletDict, requiredFieldsFromSource) => {
-      setWalletData(_ => (requiredFields, initialValues, walletDict, requiredFieldsFromSource))
-    },
-    [setWalletData],
-  )
-
-  let (formData, setFormData) = React.useState(_ => Dict.make())
-  let (isFormValid, setIsFormValid) = React.useState(_ => false)
-  let (formMethods: option<ReactFinalForm.Form.formMethods>, setFormMethods) = React.useState(_ =>
-    None
-  )
-
-  let setFormData = React.useCallback1(data => {
-    setFormData(_ => data)
-  }, [setFormData])
-
-  let setIsFormValid = React.useCallback1(isValid => {
-    setIsFormValid(_ => isValid)
-  }, [setIsFormValid])
-
-  let setFormMethods = React.useCallback1(formSubmit => {
-    setFormMethods(_ => formSubmit)
-  }, [setFormMethods])
-
-  let handlePress = (walletDict, formData, initialValues) => {
-    if isFormValid || requiredFields->Array.length === 0 {
-      let walletDict = [("payment_method_data", walletDict->Js.Json.object_)]->Dict.fromArray
-      setLoading(FillingDetails)
+    if !isFieldsMissing {
       processRequest(
-        CommonUtils.mergeDict(walletDict, CommonUtils.mergeDict(initialValues, formData)),
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+        initialValues, //CommonUtils.mergeDict(initialValues, formData),
+        Some(walletDict),
+        // formData
+        initialValues->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
       )
     } else {
-      switch formMethods {
-      | Some(methods) => methods.submit()
-      | None => ()
-      }
+      setLoading(FillingDetails)
     }
   }
 
-  let processWalletData = React.useCallback1(
-    (walletDict, ~billingAddress=?, ~shippingAddress=?) => {
-      let eligibleConnectors = switch paymentMethodData.payment_method {
-      | CARD =>
-        paymentMethodData.card_networks
-        ->Array.get(0)
-        ->Option.mapOr([], network => network.eligible_connectors)
-      | _ =>
-        paymentMethodData.payment_experience
-        ->Array.get(0)
-        ->Option.mapOr([], experience => experience.eligible_connectors)
-      }
+  // React.useEffect1(() => {
+  //   if formData->Dict.toArray->Array.length > 0 {
+  //     let eligibleConnectors = switch paymentMethodData.payment_method {
+  //     | CARD =>
+  //       paymentMethodData.card_networks
+  //       ->Array.get(0)
+  //       ->Option.mapOr([], network => network.eligible_connectors)
+  //     | _ =>
+  //       paymentMethodData.payment_experience
+  //       ->Array.get(0)
+  //       ->Option.mapOr([], experience => experience.eligible_connectors)
+  //     }
 
-      let requiredFieldsFromSource = if (
-        allApiData.additionalPMLData.collectBillingDetailsFromWallets
-      ) {
-        let requiredFieldsFromWallet = switch billingAddress {
-        | Some(billingAddress) => AddressUtils.getFlatAddressDict(~billingAddress, ~shippingAddress)
-        | None => SuperpositionHelper.extractFieldValuesFromPML(paymentMethodData.required_fields)
-        }
-        switch requiredFieldsFromWallet->Dict.get("payment_method_data.billing.address.country") {
-        | Some("") | None =>
-          requiredFieldsFromWallet->Dict.set("payment_method_data.billing.address.country", country)
-        | _ => ()
-        }
-        requiredFieldsFromWallet
-      } else {
-        let requiredFieldsFromPML = SuperpositionHelper.extractFieldValuesFromPML(
-          paymentMethodData.required_fields,
-        )
-        switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
-        | Some("") | None =>
-          requiredFieldsFromPML->Dict.set("payment_method_data.billing.address.country", country)
-        | _ => ()
-        }
-        requiredFieldsFromPML
-      }
+  //     let configParams: SuperpositionTypes.superpositionBaseContext = {
+  //       payment_method: paymentMethodData.payment_method_str,
+  //       payment_method_type: paymentMethodData.payment_method_type,
+  //       mandate_type: accountPaymentMethodData
+  //       ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+  //       ->Option.getOr(NORMAL) === NORMAL
+  //         ? "non_mandate"
+  //         : "mandate",
+  //       collect_billing_details_from_wallet_connector: "required",
+  //       collect_shipping_details_from_wallet_connector: "required",
+  //       country,
+  //     }
 
-      let configParams: SuperpositionTypes.superpositionBaseContext = {
-        payment_method: paymentMethodData.payment_method_str,
-        payment_method_type: paymentMethodData.payment_method_type,
-        mandate_type: allApiData.additionalPMLData.mandateType === NORMAL
-          ? "non_mandate"
-          : "mandate",
-        collect_billing_details_from_wallet_connector: "required",
-        collect_shipping_details_from_wallet_connector: "required",
-        country,
-      }
+  //     let (_requiredFields, missingRequiredFields, _) = getSuperpositionFinalFields(
+  //       eligibleConnectors,
+  //       configParams,
+  //       requiredFieldsFromSource,
+  //     )
 
-      let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
-        eligibleConnectors,
-        configParams,
-        requiredFieldsFromSource,
-      )
-
-      if missingRequiredFields->Array.length === 0 {
-        handlePress(walletDict, Dict.make(), initialValues)
-      } else {
-        setWalletData(missingRequiredFields, initialValues, walletDict, requiredFieldsFromSource)
-      }
-    },
-    [paymentMethodData.payment_method_type],
-  )
-
-  React.useEffect1(() => {
-    if formData->Dict.toArray->Array.length > 0 {
-      let eligibleConnectors = switch paymentMethodData.payment_method {
-      | CARD =>
-        paymentMethodData.card_networks
-        ->Array.get(0)
-        ->Option.mapOr([], network => network.eligible_connectors)
-      | _ =>
-        paymentMethodData.payment_experience
-        ->Array.get(0)
-        ->Option.mapOr([], experience => experience.eligible_connectors)
-      }
-
-      let configParams: SuperpositionTypes.superpositionBaseContext = {
-        payment_method: paymentMethodData.payment_method_str,
-        payment_method_type: paymentMethodData.payment_method_type,
-        mandate_type: allApiData.additionalPMLData.mandateType === NORMAL
-          ? "non_mandate"
-          : "mandate",
-        collect_billing_details_from_wallet_connector: "required",
-        collect_shipping_details_from_wallet_connector: "required",
-        country,
-      }
-
-      let (_requiredFields, missingRequiredFields, _) = getSuperpositionFinalFields(
-        eligibleConnectors,
-        configParams,
-        requiredFieldsFromSource,
-      )
-
-      setWalletData(missingRequiredFields, formData, walletDict, requiredFieldsFromSource)
-    }
-    None
-  }, [country])
+  //     setWalletData(missingRequiredFields, formData, walletDict, requiredFieldsFromSource)
+  //   }
+  //   None
+  // }, [country])
 
   let confirmPayPal = var => {
-    let status = handleWalletPayments(
-      PAYPAL,
-      var,
-      paymentMethodData.payment_method_str,
-      paymentMethodData.payment_method_type,
-    )
+    let status = handleWalletPayments(PAYPAL, var)
 
     switch status {
-    | Success(payment_method_data, billingAddress, shippingAddress) =>
-      processWalletData(payment_method_data, ~billingAddress?, ~shippingAddress?)
+    | Success(walletData, billingAddress, shippingAddress) =>
+      processWalletData(walletData, ~billingAddress?, ~shippingAddress?)
     | Cancelled | Simulated =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
@@ -191,16 +100,11 @@ let make = (
   }
 
   let confirmGPay = var => {
-    let status = handleWalletPayments(
-      GOOGLE_PAY,
-      var,
-      paymentMethodData.payment_method_str,
-      paymentMethodData.payment_method_type,
-    )
+    let status = handleWalletPayments(GOOGLE_PAY, var)
 
     switch status {
-    | Success(payment_method_data, billingAddress, shippingAddress) =>
-      processWalletData(payment_method_data, ~billingAddress?, ~shippingAddress?)
+    | Success(walletData, billingAddress, shippingAddress) =>
+      processWalletData(walletData, ~billingAddress?, ~shippingAddress?)
     | Cancelled | Simulated =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
@@ -211,16 +115,11 @@ let make = (
   }
 
   let _confirmSamsungPay = (var, billingAddress, shippingAddress) => {
-    let status = handleWalletPayments(
-      SAMSUNG_PAY,
-      var,
-      paymentMethodData.payment_method_str,
-      paymentMethodData.payment_method_type,
-    )
+    let status = handleWalletPayments(SAMSUNG_PAY, var)
 
     switch status {
-    | Success(payment_method_data, _, _) =>
-      processWalletData(payment_method_data, ~billingAddress?, ~shippingAddress?)
+    | Success(walletData, _, _) =>
+      processWalletData(walletData, ~billingAddress?, ~shippingAddress?)
 
     | Cancelled | Simulated =>
       setLoading(FillingDetails)
@@ -250,16 +149,11 @@ let make = (
       (),
     )
 
-    let status = handleWalletPayments(
-      APPLE_PAY,
-      var,
-      paymentMethodData.payment_method_str,
-      paymentMethodData.payment_method_type,
-    )
+    let status = handleWalletPayments(APPLE_PAY, var)
 
     switch status {
-    | Success(payment_method_data, billingAddress, shippingAddress) =>
-      processWalletData(payment_method_data, ~billingAddress?, ~shippingAddress?)
+    | Success(walletData, billingAddress, shippingAddress) =>
+      processWalletData(walletData, ~billingAddress?, ~shippingAddress?)
 
     | Cancelled =>
       setLoading(FillingDetails)
@@ -289,152 +183,109 @@ let make = (
       (),
     )
 
-    if (
-      paymentMethodData.payment_experience
-      ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
-      ->Option.isSome
-    ) {
-      switch paymentMethodData.payment_method_type_wallet {
-      | GOOGLE_PAY =>
-        HyperModule.launchGPay(
-          WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-          confirmGPay,
-        )
-      | PAYPAL =>
-        if (
-          sessionObject.session_token !== "" &&
-          WebKit.platform == #android &&
-          PaypalModule.payPalModule->Option.isSome
-        ) {
-          PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
-        } else if (
-          paymentMethodData.payment_experience
-          ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
-          ->Option.isSome
-        ) {
-          let redirectData = []->Dict.fromArray->JSON.Encode.object
-          let payment_method_data = [
-            (
-              paymentMethodData.payment_method_str,
-              [(paymentMethodData.payment_method_type ++ "_redirect", redirectData)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-          ]->Dict.fromArray
+    switch paymentMethodData.payment_method_type_wallet {
+    | GOOGLE_PAY =>
+      HyperModule.launchGPay(
+        WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+        confirmGPay,
+      )
+    | PAYPAL =>
+      if (
+        sessionObject.session_token !== "" &&
+        WebKit.platform == #android &&
+        PaypalModule.payPalModule->Option.isSome
+      ) {
+        PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
+      } else if (
+        paymentMethodData.payment_experience
+        ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+        ->Option.isSome
+      ) {
+        let redirectData = []->Dict.fromArray->JSON.Encode.object
+        let payment_method_data = [
+          (
+            paymentMethodData.payment_method_str,
+            [(paymentMethodData.payment_method_type ++ "_redirect", redirectData)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]->Dict.fromArray
 
-          processWalletData(payment_method_data)
-        } else {
+        processWalletData(payment_method_data)
+      } else {
+        setLoading(FillingDetails)
+        showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+      }
+    | APPLE_PAY =>
+      if (
+        sessionObject.session_token_data == JSON.Encode.null ||
+          sessionObject.payment_request_data == JSON.Encode.null
+      ) {
+        setLoading(FillingDetails)
+        showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+      } else {
+        logger(
+          ~logType=DEBUG,
+          ~value=paymentMethodData.payment_method_type,
+          ~category=USER_EVENT,
+          ~paymentMethod=paymentMethodData.payment_method_type,
+          ~eventName=APPLE_PAY_STARTED_FROM_JS,
+          ~paymentExperience=paymentMethodData.payment_experience,
+          (),
+        )
+
+        let timerId = setTimeout(() => {
           setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Payment Method Unavailable")
-        }
-      | APPLE_PAY =>
-        if (
-          sessionObject.session_token_data == JSON.Encode.null ||
-            sessionObject.payment_request_data == JSON.Encode.null
-        ) {
-          setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Waiting for Sessions API")
-        } else {
+          showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
           logger(
             ~logType=DEBUG,
             ~value=paymentMethodData.payment_method_type,
             ~category=USER_EVENT,
             ~paymentMethod=paymentMethodData.payment_method_type,
-            ~eventName=APPLE_PAY_STARTED_FROM_JS,
+            ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
             ~paymentExperience=paymentMethodData.payment_experience,
             (),
           )
+        }, 5000)
 
-          let timerId = setTimeout(() => {
-            setLoading(FillingDetails)
-            showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+        HyperModule.launchApplePay(
+          [
+            ("session_token_data", sessionObject.session_token_data),
+            ("payment_request_data", sessionObject.payment_request_data),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object
+          ->JSON.stringify,
+          confirmApplePay,
+          _ => {
             logger(
               ~logType=DEBUG,
               ~value=paymentMethodData.payment_method_type,
               ~category=USER_EVENT,
               ~paymentMethod=paymentMethodData.payment_method_type,
-              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+              ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
               ~paymentExperience=paymentMethodData.payment_experience,
               (),
             )
-          }, 5000)
-
-          HyperModule.launchApplePay(
-            [
-              ("session_token_data", sessionObject.session_token_data),
-              ("payment_request_data", sessionObject.payment_request_data),
-            ]
-            ->Dict.fromArray
-            ->JSON.Encode.object
-            ->JSON.stringify,
-            confirmApplePay,
-            _ => {
-              logger(
-                ~logType=DEBUG,
-                ~value=paymentMethodData.payment_method_type,
-                ~category=USER_EVENT,
-                ~paymentMethod=paymentMethodData.payment_method_type,
-                ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                ~paymentExperience=paymentMethodData.payment_experience,
-                (),
-              )
-            },
-            _ => {
-              clearTimeout(timerId)
-            },
-          )
-        }
-      | SAMSUNG_PAY =>
-        logger(
-          ~logType=INFO,
-          ~value="Samsung Pay Button Clicked",
-          ~category=USER_EVENT,
-          ~eventName=SAMSUNG_PAY,
-          (),
+          },
+          _ => {
+            clearTimeout(timerId)
+          },
         )
-      // SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
-      | _ => {
-          logger(
-            ~logType=DEBUG,
-            ~value=paymentMethodData.payment_method_type,
-            ~category=USER_EVENT,
-            ~paymentMethod=paymentMethodData.payment_method_type,
-            ~eventName=NO_WALLET_ERROR,
-            ~paymentExperience=paymentMethodData.payment_experience,
-            (),
-          )
-          setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Waiting for Sessions API")
-        }
       }
-    } else if (
-      paymentMethodData.payment_experience
-      ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
-      ->Option.isSome
-    ) {
-      let redirectData = []->Dict.fromArray->JSON.Encode.object
-      let payment_method_data = [
-        (
-          paymentMethodData.payment_method_str,
-          [(paymentMethodData.payment_method_type ++ "_redirect", redirectData)]
-          ->Dict.fromArray
-          ->JSON.Encode.object,
-        ),
-      ]->Dict.fromArray
-
-      processWalletData(payment_method_data)
-    } else {
+    | SAMSUNG_PAY =>
       logger(
-        ~logType=DEBUG,
-        ~value=paymentMethodData.payment_method_type,
+        ~logType=INFO,
+        ~value="Samsung Pay Button Clicked",
         ~category=USER_EVENT,
-        ~paymentMethod=paymentMethodData.payment_method_type,
-        ~eventName=NO_WALLET_ERROR,
-        ~paymentExperience=paymentMethodData.payment_experience,
+        ~eventName=SAMSUNG_PAY,
         (),
       )
-      setLoading(FillingDetails)
-      showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+    // SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
+    | _ => {
+        setLoading(FillingDetails)
+        processWalletData(Dict.make(), ~useIntentData=true)
+      }
     }
   }
 
@@ -447,17 +298,14 @@ let make = (
     None
   }, [paymentMethodData.payment_method_type_wallet])
 
+  let buttonName = paymentMethodData.payment_method_type->CommonUtils.getDisplayName
+
   <>
     <CustomButton
+      text={paymentMethodData.payment_method_type->CommonUtils.getDisplayName}
       borderRadius=buttonBorderRadius
-      linearGradientColorTuple=?{switch paymentMethodData.payment_method_type_wallet {
-      | PAYPAL => Some(Some(paypalButonColor))
-      | SAMSUNG_PAY => Some(Some(samsungPayButtonColor))
-      | _ => None
-      }}
-      leftIcon=CustomIcon(<Icon name=paymentMethodData.payment_method_type width=24. height=32. />)
-      onPress={_ => pressHandler()}
-      name=paymentMethodData.payment_method_type>
+      leftIcon=CustomIcon(<Icon name=buttonName width=24. height=32. fill=payNowButtonTextColor />)
+      onPress={_ => pressHandler()}>
       {switch paymentMethodData.payment_method_type_wallet {
       | SAMSUNG_PAY =>
         Some(
@@ -470,7 +318,7 @@ let make = (
               width: 100.->pct,
               height: 100.->pct,
             })}>
-            <Icon name=paymentMethodData.payment_method_type width=240. height=60. />
+            <Icon name=buttonName width=240. height=60. />
           </View>,
         )
       | APPLE_PAY =>
@@ -492,34 +340,13 @@ let make = (
             borderRadius={buttonBorderRadius}
           />,
         )
-      | PAYPAL =>
-        Some(
-          <View
-            style={s({
-              flexDirection: #row,
-              alignItems: #center,
-              justifyContent: #center,
-              width: 100.->pct,
-            })}>
-            <Icon name=paymentMethodData.payment_method_type width=22. height=28. />
-            <Space width=10. />
-            <Icon name={paymentMethodData.payment_method_type ++ "2"} width=90. height=28. />
-          </View>,
-        )
+      | PAYPAL => Some(<GenericButtonElement buttonName width=80. color=paypalButonColor />)
+      | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)
+      | PAY_SAFE_CARD => Some(<GenericButtonElement buttonName width=92. color="#008ac9" />)
+      | KLARNA => Some(<GenericButtonElement buttonName width=92. height=32. color="#0B051D" />)
       | _ => None
       }}
     </CustomButton>
     <Space height=12. />
-    <DynamicFields
-      fields=requiredFields
-      initialValues
-      setFormData
-      setIsFormValid
-      setFormMethods
-      country
-      setCountry
-      handlePress={_ => handlePress(walletDict, formData, initialValues)}
-      showInSheet=true
-    />
   </>
 }

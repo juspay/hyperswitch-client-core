@@ -1,7 +1,11 @@
 import {AppRegistry} from 'react-native';
-import NewApp from './src/routes/Update';
+import NewApp, {HeadlessApp} from './src/routes/Update';
 import {name as appName, headless} from './app.json';
-import {registerHeadless} from './src/headless/Headless.bs';
 
 AppRegistry.registerComponent(appName, () => NewApp);
-registerHeadless(headless);
+
+if (Platform.OS === 'android') {
+    AppRegistry.registerHeadlessTask(headless, () => HeadlessApp);
+} else if (Platform.OS === 'ios') {
+    AppRegistry.registerComponent(headless, () => HeadlessApp);
+}

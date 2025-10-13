@@ -32,15 +32,11 @@ module Provider = {
   let make = React.Context.provider(viewPortContext)
 }
 @react.component
-let make = (~children) => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-
+let make = (~children, ~bottomInset) => {
   let (state, setState) = React.useState(_ => {
     ...defaultVal,
     navigationBarHeight: (
-      WebKit.platform === #androidWebView
-        ? 0.
-        : nativeProp.hyperParams.bottomInset->Option.getOr(20.)
+      WebKit.platform === #androidWebView ? 0. : bottomInset->Option.getOr(20.)
     ) +.
     defaultNavbarHeight,
   })

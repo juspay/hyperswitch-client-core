@@ -54,7 +54,7 @@ let make = (
                 value=currencyInput.value
                 setValue=handlePickerChange
                 items={currencyConfig.options->Array.map(opt => {
-                  CustomPicker.label: opt,
+                  SdkTypes.label: opt,
                   value: opt,
                 })}
                 placeholderText={GetLocale.getLocalString(currencyConfig.displayName)}
@@ -82,7 +82,7 @@ let make = (
               networkInput.onChange(value()->Option.getOr(""))
             }
             let items = getNetworkArray(currencyInput.value)->Array.map(opt => {
-              CustomPicker.label: opt->CommonUtils.getDisplayName,
+              SdkTypes.label: opt->CommonUtils.getDisplayName,
               value: opt,
             })
             <>

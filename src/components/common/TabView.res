@@ -34,6 +34,7 @@ let make = (
   ~swipeEnabled: bool=false,
   ~tabBarPosition=#top,
   ~animationEnabled=true,
+  ~isLoading,
 ) => {
   let defaultLayout: Event.ScrollEvent.dimensions = {
     width: initialLayout.width->Option.getOr(0.),
@@ -77,7 +78,8 @@ let make = (
       onIndexChange=jumpToIndex
       animationEnabled
       style=?pagerStyle
-      layoutDirection=direction>
+      layoutDirection=direction
+      isLoading>
       {(~addEnterListener, ~jumpTo, ~position, ~render, ~indexInFocus, ~routes) => {
         <React.Fragment>
           {tabBarPosition === #top
