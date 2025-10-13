@@ -14,9 +14,10 @@ let make = (
   ~resendLoading: bool,
   ~rememberMe: bool,
   ~setRememberMe: (bool => bool) => unit,
+  ~otpError: string="NONE",
   ~disabled: bool=false,
 ) => {
-  let {borderRadius, component, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
+  let {borderRadius, component, primaryColor, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
   <View style={s({marginVertical: 12.->dp})}>
     {switch maskedChannel {
@@ -54,7 +55,11 @@ let make = (
             width: 45.->dp,
             height: 50.->dp,
             borderWidth: 2.,
-            borderColor: otp[index]->Option.getOr("") !== "" ? primaryColor : component.borderColor,
+            borderColor: otpError !== "NONE"
+              ? dangerColor
+              : otp[index]->Option.getOr("") !== ""
+              ? primaryColor
+              : component.borderColor,
             borderRadius,
             textAlign: #center,
             fontSize: 20.,
@@ -73,6 +78,24 @@ let make = (
       )
       ->React.array}
     </View>
+    {otpError !== "NONE"
+      ? <View style={s({marginBottom: 16.->dp})}>
+          <Text
+            style={s({
+              color: dangerColor,
+              fontSize: 14.,
+              textAlign: #center,
+              fontWeight: #500,
+            })}>
+            {switch otpError {
+            | "VALIDATION_DATA_INVALID" => "Invalid OTP code. Please try again."
+            | "OTP_SEND_FAILED" => "Failed to send OTP. Please try again."
+            | "ACCT_INACCESSIBLE" => "Account temporarily locked. Too many attempts. Please try again later."
+            | _ => "An error occurred. Please try again."
+            }->React.string}
+          </Text>
+        </View>
+      : React.null}
     <TouchableOpacity
       onPress={_ => resendOtp()->ignore}
       disabled={resendTimer > 0 || resendLoading}

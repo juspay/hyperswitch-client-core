@@ -137,6 +137,58 @@ let generateWalletConfirmBody = (
   payment_method_type,
 }
 
+let generateClickToPayConfirmBody = (
+  ~nativeProp: SdkTypes.nativeProp,
+  ~checkoutResult: JSON.t,
+  ~provider: string,
+  ~email: string,
+): string => {
+  open Utils
+
+  let dict = checkoutResult->getDictFromJson
+
+  let ctpServiceDetails = switch provider->String.toLowerCase {
+  | "mastercard" => {
+      let headers = dict->getJsonObjectFromDict("headers")->getDictFromJson
+      let merchantTransactionId = headers->getString("merchant-transaction-id", "")
+      let xSrcFlowId = headers->getString("x-src-cx-flow-id", "")
+      let checkoutResponseData =
+        dict->getJsonObjectFromDict("checkoutResponseData")->getDictFromJson
+      let correlationId = checkoutResponseData->getString("srcCorrelationId", "")
+
+      [
+        ("merchant_transaction_id", merchantTransactionId->JSON.Encode.string),
+        ("correlation_id", correlationId->JSON.Encode.string),
+        ("x_src_flow_id", xSrcFlowId->JSON.Encode.string),
+        ("provider", "mastercard"->JSON.Encode.string),
+      ]->Dict.fromArray
+    }
+  | "visa" => {
+      let encryptedPayload = dict->getString("checkoutResponse", "")
+
+      [
+        ("encrypted_payload", encryptedPayload->JSON.Encode.string),
+        ("provider", "visa"->JSON.Encode.string),
+      ]->Dict.fromArray
+    }
+  | _ => Dict.make()
+  }
+
+  let confirmBody = [
+    ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+    ("payment_method", "card"->JSON.Encode.string),
+    ("ctp_service_details", ctpServiceDetails->JSON.Encode.object),
+  ]
+  Console.log2("[ClickToPay] Confirm body before email:", confirmBody)
+  let confirmBodyWithEmail = if provider->String.toLowerCase === "visa" {
+    Array.concat(confirmBody, [("email", email->JSON.Encode.string)])
+  } else {
+    confirmBody
+  }
+
+  confirmBodyWithEmail->Dict.fromArray->JSON.Encode.object->JSON.stringify
+}
+
 let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
   let actionType = nextActionObj->Option.getOr({type_: "", redirectToUrl: ""})
   actionType.type_
