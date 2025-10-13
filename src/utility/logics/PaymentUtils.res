@@ -96,11 +96,30 @@ let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
   ~savedCardCvv,
+  ~appURL: option<string>=?,
+  ~screen_height=?,
+  ~screen_width=?,
+
 ): PaymentConfirmTypes.redirectType => {
   client_secret: nativeProp.clientSecret,
   payment_method: "card",
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
+  return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+  browser_info: {
+    user_agent: ?nativeProp.hyperParams.userAgent,
+    accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+    language: SdkTypes.localeTypeToString(nativeProp.configuration.appearance.locale),
+    color_depth: 32,
+    screen_height: ?screen_height->Option.map(Int.fromFloat),
+    screen_width: ?screen_width->Option.map(Int.fromFloat),
+    time_zone: Date.make()->Date.getTimezoneOffset,
+    java_enabled: true,
+    java_script_enabled: true,
+    device_model: ?nativeProp.hyperParams.device_model,
+    os_type: ?nativeProp.hyperParams.os_type,
+    os_version: ?nativeProp.hyperParams.os_version,
+  },
 }
 let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
