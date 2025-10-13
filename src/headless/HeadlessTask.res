@@ -324,21 +324,19 @@ let make = async props => {
         b: CustomerPaymentMethodType.customer_payment_method_type,
       ) => {
         let lastUsedAtA = switch a {
-        | Some(a) => a.last_used_at
+        | Some(a) => Some(a.last_used_at)
         | None => None
         }
-        let lastUsedAtB = b.last_used_at
-        switch (lastUsedAtA, lastUsedAtB) {
-        | (None, Some(_)) => Some(b)
-        | (Some(_), None) => a
-        | (Some(dateA), Some(dateB)) =>
-          if compare(dateA->Js.Date.getTime, dateB->Js.Date.getTime) < 0 {
-            Some(b)
-          } else {
-            a
-          }
-        | (None, None) => a
-        }
+        lastUsedAtA
+        ->Option.map(date =>
+          compare(
+            Date.fromString(date)->Js.Date.getTime,
+            Date.fromString(b.last_used_at)->Js.Date.getTime,
+          ) < 0
+            ? Some(b)
+            : a
+        )
+        ->Option.getOr(Some(b))
       }) {
       | None => getDefaultError->Utils.getJsonObjectFromRecord
       | Some(x) => x->Utils.getJsonObjectFromRecord
