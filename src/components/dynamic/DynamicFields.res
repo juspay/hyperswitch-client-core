@@ -44,8 +44,8 @@ let make = (
         ->Option.getOr(NORMAL),
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
-        <>
-          <Space height=8. />
+        <ReactNative.View style=ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})>
+          <Space height=5. />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
@@ -56,7 +56,8 @@ let make = (
             textType={ModalText}
             // disableScreenSwitch=true
           />
-        </>
+          <Space height=5. />
+        </ReactNative.View>
       | _ => React.null
       }}
       {switch (

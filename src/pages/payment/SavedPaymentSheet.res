@@ -540,8 +540,8 @@ let make = (
     </View>
     <Space />
     {showDisclaimer
-      ? <>
-          <Space height=10. />
+      ? <View style={s({paddingHorizontal: 2.->dp})}>
+          <Space height=5. />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
@@ -550,10 +550,9 @@ let make = (
             isSelected={isSaveCardCheckboxSelected}
             setIsSelected={setSaveCardChecboxSelected}
             textType={TextWrapper.ModalText}
-            gap=15.
           />
-        </>
+          <Space height=5. />
+        </View>
       : React.null}
-    <Space height=12. />
   </ErrorBoundary>
 }
