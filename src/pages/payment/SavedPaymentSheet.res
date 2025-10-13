@@ -76,6 +76,13 @@ let make = (
       ~nativeProp,
       ~payment_token=token.payment_token,
       ~savedCardCvv,
+      ~appURL=?{
+        accountPaymentMethodData->Option.map(accountPaymentMethods =>
+          accountPaymentMethods.redirect_url
+        )
+      },
+      ~screen_height=viewPortContants.screenHeight,
+      ~screen_width=viewPortContants.screenWidth,
     )
 
     redirectHook(
