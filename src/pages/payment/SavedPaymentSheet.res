@@ -371,7 +371,7 @@ let make = (
     ->Option.getOr(NORMAL) !== NORMAL
 
   let handlePress = _ => {
-    switch (selectedToken, showDisclaimer && isSaveCardCheckboxSelected) {
+    switch (selectedToken, !showDisclaimer || (showDisclaimer && isSaveCardCheckboxSelected)) {
     | (Some(token), true) =>
       switch token.payment_method {
       | CARD =>
