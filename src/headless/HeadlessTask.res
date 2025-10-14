@@ -2,7 +2,6 @@ open SdkTypes
 open HeadlessUtils
 
 type headlessModule = {
-  initialisePaymentSession: (JSON.t => unit) => unit,
   getPaymentSession: (JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
   exitHeadless: string => unit,
 }
@@ -16,18 +15,14 @@ let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default: 'b): 'b => 
 
 let reRegisterCallback = ref(() => ())
 
-let make = async props => {
+@react.component
+let make = (~props) => {
   let hyperSwitchHeadlessDict =
     Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
     ->Option.flatMap(JSON.Decode.object)
     ->Option.getOr(Dict.make())
 
   let headlessModule = {
-    initialisePaymentSession: getFunctionFromModule(
-      hyperSwitchHeadlessDict,
-      "initialisePaymentSession",
-      _ => (),
-    ),
     getPaymentSession: getFunctionFromModule(hyperSwitchHeadlessDict, "getPaymentSession", (
       _,
       _,
