@@ -193,19 +193,32 @@ let make = async props => {
   ) => {
     switch data.payment_method {
     | CARD =>
+      let bodyArr = [
+        ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+        ("payment_method", "card"->JSON.Encode.string),
+        ("payment_token", data.payment_token->JSON.Encode.string),
+        (
+          "card_cvc",
+          switch response->Utils.getDictFromJson->Dict.get("cvc") {
+          | Some(cvc) => cvc
+          | None => JSON.Encode.null
+          },
+        ),
+      ]
+
+      data.billing
+      ->Option.map(address => {
+        bodyArr->Array.push((
+          "payment_method_data",
+          [("billing", address->Utils.getJsonObjectFromRecord)]
+          ->Dict.fromArray
+          ->JSON.Encode.object,
+        ))
+      })
+      ->Option.getOr()
+
       let body =
-        [
-          ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
-          ("payment_method", "card"->JSON.Encode.string),
-          ("payment_token", data.payment_token->JSON.Encode.string),
-          (
-            "card_cvc",
-            switch response->Utils.getDictFromJson->Dict.get("cvc") {
-            | Some(cvc) => cvc
-            | None => JSON.Encode.null
-            },
-          ),
-        ]
+        bodyArr
         ->Dict.fromArray
         ->JSON.Encode.object
       confirmCall(body->JSON.stringify, nativeProp)->ignore

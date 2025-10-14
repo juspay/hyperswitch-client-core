@@ -99,13 +99,18 @@ let generateSavedCardConfirmBody = (
   ~appURL: option<string>=?,
   ~screen_height=?,
   ~screen_width=?,
-
+  ~billing=?,
 ): PaymentConfirmTypes.redirectType => {
   client_secret: nativeProp.clientSecret,
   payment_method: "card",
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
   return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+  payment_method_data: ?billing->Option.map(address =>
+    [("billing", address->Utils.getJsonObjectFromRecord)]
+    ->Dict.fromArray
+    ->JSON.Encode.object
+  ),
   browser_info: {
     user_agent: ?nativeProp.hyperParams.userAgent,
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
