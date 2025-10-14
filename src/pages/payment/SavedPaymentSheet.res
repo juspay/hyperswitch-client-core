@@ -76,6 +76,14 @@ let make = (
       ~nativeProp,
       ~payment_token=token.payment_token,
       ~savedCardCvv,
+      ~appURL=?{
+        accountPaymentMethodData->Option.map(accountPaymentMethods =>
+          accountPaymentMethods.redirect_url
+        )
+      },
+      ~billing=token.billing,
+      ~screen_height=viewPortContants.screenHeight,
+      ~screen_width=viewPortContants.screenWidth,
     )
 
     redirectHook(
@@ -371,7 +379,7 @@ let make = (
     ->Option.getOr(NORMAL) !== NORMAL
 
   let handlePress = _ => {
-    switch (selectedToken, showDisclaimer && isSaveCardCheckboxSelected) {
+    switch (selectedToken, !showDisclaimer || (showDisclaimer && isSaveCardCheckboxSelected)) {
     | (Some(token), true) =>
       switch token.payment_method {
       | CARD =>
@@ -540,8 +548,8 @@ let make = (
     </View>
     <Space />
     {showDisclaimer
-      ? <>
-          <Space height=10. />
+      ? <View style={s({paddingHorizontal: 2.->dp})}>
+          <Space height=5. />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
@@ -550,10 +558,9 @@ let make = (
             isSelected={isSaveCardCheckboxSelected}
             setIsSelected={setSaveCardChecboxSelected}
             textType={TextWrapper.ModalText}
-            gap=15.
           />
-        </>
+          <Space height=5. />
+        </View>
       : React.null}
-    <Space height=12. />
   </ErrorBoundary>
 }

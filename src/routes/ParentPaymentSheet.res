@@ -63,7 +63,6 @@ let make = () => {
                 />}
             {showSavedScreen
               ? <>
-                  <Space height=5. />
                   <ClickableTextElement
                     initialIconName="addwithcircle"
                     updateIconName={Some("cardv1")}
@@ -73,9 +72,9 @@ let make = () => {
                     isSelected=isSavedPaymentScreen
                     setIsSelected=setIsSavedPaymentScreen
                     textType={TextWrapper.LinkTextBold}
-                    size={isSavedPaymentScreen ? 16. : 24.}
+                    size=24.
                   />
-                  <Space height=12. />
+                  <Space height=5. />
                 </>
               : React.null}
           </>

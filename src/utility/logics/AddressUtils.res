@@ -16,7 +16,8 @@ let parseBillingAddress = (billingDetailsDict: Js.Dict.t<JSON.t>) => {
       state: ?getOptionString(addressDict, "state"),
     }),
     phone: Some({
-      number: ?getOptionString(billingDetailsDict, "phoneNumber"),
+      country_code: ?getOptionString(billingDetailsDict, "country_code"),
+      number: ?getOptionString(billingDetailsDict, "number"),
     }),
     email: getOptionString(billingDetailsDict, "email"),
   }

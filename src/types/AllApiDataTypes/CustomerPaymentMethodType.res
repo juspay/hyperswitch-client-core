@@ -32,13 +32,11 @@ type customer_payment_method_type = {
   payment_experience: array<PaymentMethodType.payment_experience_type>,
   card: option<savedCardType>,
   metadata: option<string>,
-  created: option<Date.t>,
-  created_str: option<string>,
+  created: string,
   bank: option<string>,
   surcharge_details: option<string>,
   requires_cvv: bool,
-  last_used_at: option<Date.t>,
-  last_used_at_str: option<string>,
+  last_used_at: string,
   default_payment_method_set: bool,
   billing: option<SdkTypes.addressDetails>,
   mandate_id?: string,
@@ -100,10 +98,6 @@ let processCustomerPaymentMethods = (jsonArray: array<JSON.t>) => {
       ->Option.flatMap(JSON.Decode.object)
       ->Option.map(AddressUtils.parseBillingAddress)
 
-    let createdDate = customerPaymentMethodDict->getOptionString("created")
-
-    let lastUsedDate = customerPaymentMethodDict->getOptionString("last_used_at")
-
     {
       payment_token: customerPaymentMethodDict->getString("payment_token", ""),
       payment_method_id: customerPaymentMethodDict->getString("payment_method_id", ""),
@@ -124,13 +118,11 @@ let processCustomerPaymentMethods = (jsonArray: array<JSON.t>) => {
       payment_experience: paymentExperienceArray,
       card: cardData,
       metadata: customerPaymentMethodDict->getOptionString("metadata"),
-      created: createdDate->Option.flatMap(dateStr => Date.fromString(dateStr)->Some),
-      created_str: createdDate,
+      created: getString(customerPaymentMethodDict, "created", ""),
       bank: customerPaymentMethodDict->getOptionString("bank"),
       surcharge_details: customerPaymentMethodDict->getOptionString("surcharge_details"),
       requires_cvv: customerPaymentMethodDict->getBool("requires_cvv", false),
-      last_used_at: lastUsedDate->Option.flatMap(dateStr => Date.fromString(dateStr)->Some),
-      last_used_at_str: lastUsedDate,
+      last_used_at: getString(customerPaymentMethodDict, "last_used_at", ""),
       default_payment_method_set: customerPaymentMethodDict->getBool(
         "default_payment_method_set",
         false,
@@ -150,8 +142,8 @@ let sortPaymentListArray = plist => {
     if normalizedPriority1 !== normalizedPriority2 {
       Int.compare(normalizedPriority2, normalizedPriority1)
     } else {
-      let time1 = s1.last_used_at->Option.getOr(Date.make())->Js.Date.valueOf
-      let time2 = s2.last_used_at->Option.getOr(Date.make())->Js.Date.valueOf
+      let time1 = Date.fromString(s1.last_used_at)->Js.Date.valueOf
+      let time2 = Date.fromString(s2.last_used_at)->Js.Date.valueOf
       Float.compare(time2, time1)->Float.toInt->Ordering.fromInt
     }
   })
