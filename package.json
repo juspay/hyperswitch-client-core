@@ -36,7 +36,8 @@
     "test:android": "npx detox test --configuration android.emu.debug  --loglevel trace --record-logs all",
     "test:ios": "npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all",
     "prepare": "husky",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "lint:secrets": "gitleaks detect --source . --no-banner --verbose"
   },
   "dependencies": {
     "@sentry/react-native": "^6.13.0",
