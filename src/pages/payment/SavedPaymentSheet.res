@@ -6,6 +6,9 @@ let make = (
   ~customerPaymentMethods: CustomerPaymentMethodType.customer_payment_methods,
   ~setConfirmButtonData,
   ~merchantName,
+  ~setIsSavedPaymentScreen=?,
+  ~setIsClickToPayNewCardFlow=?,
+  ~shouldInitializeClickToPay=true,
   ~isScreenFocus=true,
   ~animated=true,
 ) => {
@@ -36,6 +39,17 @@ let make = (
   let onClickToPayStateChange = React.useCallback1(state => {
     setClickToPayState(_ => state)
   }, [setClickToPayState])
+
+  let onRequiresNewCard = React.useCallback2(() => {
+    switch setIsSavedPaymentScreen {
+    | Some(setter) => setter(false)
+    | None => ()
+    }
+    switch setIsClickToPayNewCardFlow {
+    | Some(setter) => setter(true)
+    | None => ()
+    }
+  }, (setIsSavedPaymentScreen, setIsClickToPayNewCardFlow))
 
   let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
   let setSaveCardChecboxSelected = React.useCallback1(isSelected => {
@@ -612,33 +626,44 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     <View style={s({position: #relative, flex: 1.})}>
       <Space />
-      <ClickToPaySection
-        sessionTokenData onClearSavedPayment onStateChange=onClickToPayStateChange
-      />
-      {clickToPayState.screenState != ClickToPayLogic.NONE ? <Space /> : React.null}
-      <View
-        style={array([
-          getShadowStyle,
-          s({
-            paddingHorizontal: 16.->dp,
-            paddingVertical: 5.->dp,
-            borderRadius,
-            borderWidth,
-            borderColor: component.borderColor,
-            backgroundColor: component.background,
-          }),
-        ])}>
-        <SavedPaymentMethod
-          customerPaymentMethods
-          selectedToken
-          setSelectedToken=setSelectedTokenAndClearClickToPay
-          savedCardCvv
-          setSavedCardCvv
-          isScreenFocus
-          animated
-        />
-      </View>
-      <Space />
+      {shouldInitializeClickToPay
+        ? <ClickToPaySection
+            sessionTokenData
+            onClearSavedPayment
+            onStateChange=onClickToPayStateChange
+            onRequiresNewCard
+          />
+        : React.null}
+      {shouldInitializeClickToPay && clickToPayState.screenState != ClickToPayLogic.NONE
+        ? <Space />
+        : React.null}
+      {customerPaymentMethods->Array.length > 0
+        ? <>
+            <View
+              style={array([
+                getShadowStyle,
+                s({
+                  paddingHorizontal: 16.->dp,
+                  paddingVertical: 5.->dp,
+                  borderRadius,
+                  borderWidth,
+                  borderColor: component.borderColor,
+                  backgroundColor: component.background,
+                }),
+              ])}>
+              <SavedPaymentMethod
+                customerPaymentMethods
+                selectedToken
+                setSelectedToken=setSelectedTokenAndClearClickToPay
+                savedCardCvv
+                setSavedCardCvv
+                isScreenFocus
+                animated
+              />
+            </View>
+            <Space />
+          </>
+        : React.null}
       {showDisclaimer
         ? <View style={s({paddingHorizontal: 2.->dp})}>
             <Space height=5. />

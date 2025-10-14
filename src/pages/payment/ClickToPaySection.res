@@ -12,11 +12,34 @@ let make = (
   ~sessionTokenData: option<array<SessionsType.sessions>>,
   ~onClearSavedPayment: unit => unit,
   ~onStateChange: clickToPayUIState => unit,
+  ~onRequiresNewCard: unit => unit,
 ) => {
   let clickToPayUI = ClickToPayLogic.useClickToPayUI()
 
   let hasValidated = React.useRef(false)
   let showAlert = AlertHook.useAlerts()
+
+  let maskedEmail = React.useMemo1(() => {
+    switch sessionTokenData {
+    | Some(sessionData) =>
+      sessionData
+      ->Array.find(item => item.wallet_name == CLICK_TO_PAY)
+      ->Option.flatMap(session => session.email)
+      ->Option.map(email => {
+        let parts = email->String.split("@")
+        switch parts {
+        | [username, domain] =>
+          let maskedUsername =
+            username->String.length > 2
+              ? username->String.substring(~start=0, ~end=2) ++ "***"
+              : username
+          maskedUsername ++ "@" ++ domain
+        | _ => email
+        }
+      })
+    | None => None
+    }
+  }, [sessionTokenData])
 
   let {
     borderWidth,
@@ -125,8 +148,7 @@ let make = (
               }
             | (_, Some(true), _) => {
                 Console.log("[ClickToPay] Add card flow required")
-                clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
-                showAlert(~errorType="warning", ~message="Add card flow not yet implemented")
+                onRequiresNewCard()
               }
             | (_, _, Some(cards)) if cards->Array.length > 0 => {
                 Console.log("[ClickToPay] Cards fetched successfully")
@@ -185,12 +207,15 @@ let make = (
           }),
         ])}>
         <ClickToPayOTPScreen
-          maskedChannel=clickToPayUI.maskedChannel
+          ?maskedEmail
           otp=clickToPayUI.otp
           otpRefs=clickToPayUI.otpRefs
           handleOtpChange=clickToPayUI.handleOtpChange
           onSubmit={() => clickToPayUI.submitOtp()->ignore}
-          onNotYouPress={() => clickToPayUI.setScreenState(_ => ClickToPayLogic.NOT_YOU)}
+          onNotYouPress={() => {
+            clickToPayUI.setPreviousScreenState(_ => ClickToPayLogic.OTP_INPUT)
+            clickToPayUI.setScreenState(_ => ClickToPayLogic.NOT_YOU)
+          }}
           resendOtp=clickToPayUI.resendOtp
           resendTimer=clickToPayUI.resendTimer
           resendLoading=clickToPayUI.resendLoading
@@ -217,6 +242,11 @@ let make = (
           cards=clickToPayUI.clickToPay.cards
           selectedCardId=clickToPayUI.selectedCardId
           setSelectedCardId=setClickToPayCardAndClearSaved
+          ?maskedEmail
+          onNotYouPress={() => {
+            clickToPayUI.setPreviousScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
+            clickToPayUI.setScreenState(_ => ClickToPayLogic.NOT_YOU)
+          }}
           disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
         />
       </View>
@@ -251,7 +281,7 @@ let make = (
         <ClickToPayNotYouScreen
           newIdentifier=clickToPayUI.newIdentifier
           setNewIdentifier=clickToPayUI.setNewIdentifier
-          onBack={() => clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)}
+          onBack={() => clickToPayUI.setScreenState(_ => clickToPayUI.previousScreenState)}
           onSwitch={email => clickToPayUI.switchIdentity(email)->ignore}
           cardBrands=[]
           disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}

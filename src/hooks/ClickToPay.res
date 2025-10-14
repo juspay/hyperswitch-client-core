@@ -21,7 +21,7 @@ module Types = {
   type clickToPayCard = {
     id: string,
     maskedPan: string,
-    brand: brand,
+    brand: string,
     expiryMonth: string,
     expiryYear: string,
     digitalCardId: string,

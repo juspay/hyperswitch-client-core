@@ -3,6 +3,8 @@ type screenState = NONE | LOADING | OTP_INPUT | CARDS_DISPLAY | NOT_YOU
 type clickToPayUIState = {
   screenState: screenState,
   setScreenState: (screenState => screenState) => unit,
+  previousScreenState: screenState,
+  setPreviousScreenState: (screenState => screenState) => unit,
   clickToPay: ClickToPay.Types.clickToPayHook,
   otp: array<string>,
   setOtp: (array<string> => array<string>) => unit,
@@ -36,6 +38,7 @@ let useClickToPayUI = () => {
   let clickToPay = ClickToPay.useClickToPay()
 
   let (screenState, setScreenState) = React.useState(() => NONE)
+  let (previousScreenState, setPreviousScreenState) = React.useState(() => OTP_INPUT)
   let (otp, setOtp) = React.useState(() => ["", "", "", "", "", ""])
   let (maskedChannel, setMaskedChannel) = React.useState(() => None)
   let (resendTimer, setResendTimer) = React.useState(() => 0)
@@ -225,6 +228,8 @@ let useClickToPayUI = () => {
   {
     screenState,
     setScreenState,
+    previousScreenState,
+    setPreviousScreenState,
     clickToPay,
     otp,
     setOtp,

@@ -3,7 +3,7 @@ open ReactNative.Style
 
 @react.component
 let make = (
-  ~maskedChannel: option<string>,
+  ~maskedEmail: option<string>=?,
   ~otp: array<string>,
   ~otpRefs: array<option<React.ref<Nullable.t<ReactNative.TextInput.element>>>>,
   ~handleOtpChange: (int, string) => unit,
@@ -20,12 +20,15 @@ let make = (
   let {borderRadius, component, primaryColor, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
   <View style={s({marginVertical: 12.->dp})}>
-    {switch maskedChannel {
-    | Some(channel) =>
+    <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
+      <Icon name="visa" height=24. width=32. />
+    </View>
+    {switch maskedEmail {
+    | Some(email) =>
       <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
         <View style={s({flexDirection: #row, alignItems: #center})}>
           <Text style={s({fontSize: 14., color: "#666", marginRight: 8.->dp})}>
-            {channel->React.string}
+            {email->React.string}
           </Text>
           <TouchableOpacity onPress={_ => onNotYouPress()}>
             <Text style={s({fontSize: 14., color: "#007AFF"})}> {"Not you?"->React.string} </Text>
@@ -34,6 +37,9 @@ let make = (
       </View>
     | None => React.null
     }}
+    <Text style={s({fontSize: 20., marginBottom: 12.->dp, fontWeight: #800, color: "#000000"})}>
+      {"Click to Pay has found your linked cards"->React.string}
+    </Text>
     <Text style={s({fontSize: 14., marginBottom: 12.->dp, fontWeight: #600})}>
       {"Enter verification code"->React.string}
     </Text>

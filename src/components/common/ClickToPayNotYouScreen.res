@@ -13,6 +13,9 @@ let make = (
   let {borderRadius, component} = ThemebasedStyle.useThemeBasedStyle()
 
   <View style={s({marginVertical: 12.->dp})}>
+    <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
+      <Icon name="visa" height=24. width=32. />
+    </View>
     <TouchableOpacity onPress={_ => onBack()} style={s({marginBottom: 16.->dp})}>
       <Text style={s({fontSize: 14., color: "#007AFF"})}> {"← Back"->React.string} </Text>
     </TouchableOpacity>

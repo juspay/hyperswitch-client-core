@@ -1,18 +1,33 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
-  let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {sheetType, setIsPayWithClickToPaySelected} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
 
   let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
   let localeObject = GetLocale.useGetLocalObj()
 
   let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => true)
-  let setIsSavedPaymentScreen = React.useCallback1(isSaved => {
+  let (isClickToPayNewCardFlow, setIsClickToPayNewCardFlow) = React.useState(_ => false)
+  let hasNavigatedAwayRef = React.useRef(false)
+
+  let setIsSavedPaymentScreen = React.useCallback3(isSaved => {
     setIsSavedPaymentScreen(_ => isSaved)
-  }, [setIsSavedPaymentScreen])
+    if isSaved {
+      setIsClickToPayNewCardFlow(_ => false)
+      setIsPayWithClickToPaySelected(false)
+    } else {
+      hasNavigatedAwayRef.current = true
+    }
+  }, (setIsSavedPaymentScreen, setIsClickToPayNewCardFlow, setIsPayWithClickToPaySelected))
+
+  let setIsClickToPayNewCardFlow = React.useCallback1(isClickToPay => {
+    setIsClickToPayNewCardFlow(_ => isClickToPay)
+  }, [setIsClickToPayNewCardFlow])
 
   let (confirmButtonData, setConfirmButtonData) = React.useState(_ =>
     GlobalConfirmButton.defaultConfirmButtonData
@@ -45,10 +60,11 @@ let make = () => {
         ) {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
-            customerPaymentMethods->Array.length > 0 &&
-              accountPaymentMethodData
-              ->Option.map(data => data.payment_type)
-              ->Option.getOr(NORMAL) !== SETUP_MANDATE
+            (customerPaymentMethods->Array.length > 0 ||
+              ClickToPaySection.shouldShowClickToPay(sessionTokenData)) &&
+            accountPaymentMethodData
+            ->Option.map(data => data.payment_type)
+            ->Option.getOr(NORMAL) !== SETUP_MANDATE
           <>
             {isSavedPaymentScreen && showSavedScreen
               ? <SavedPaymentSheet
@@ -57,9 +73,16 @@ let make = () => {
                   merchantName={accountPaymentMethodData
                   ->Option.map(data => data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
+                  setIsSavedPaymentScreen
+                  setIsClickToPayNewCardFlow
+                  shouldInitializeClickToPay={!hasNavigatedAwayRef.current}
                 />
               : <PaymentSheet
-                  setConfirmButtonData isLoading=confirmButtonData.loading tabArr elementArr
+                  setConfirmButtonData
+                  isLoading=confirmButtonData.loading
+                  tabArr
+                  elementArr
+                  isClickToPayNewCardFlow
                 />}
             {showSavedScreen
               ? <>

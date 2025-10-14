@@ -6,11 +6,30 @@ let make = (
   ~cards: array<ClickToPay.Types.clickToPayCard>,
   ~selectedCardId: option<string>,
   ~setSelectedCardId: (option<string> => option<string>) => unit,
+  ~maskedEmail: option<string>=?,
+  ~onNotYouPress: option<unit => unit>=?,
   ~disabled: bool=false,
 ) => {
   let {component, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
 
   <View style={s({marginTop: 12.->dp})}>
+    <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
+      <Icon name="visa" height=24. width=32. />
+    </View>
+    {switch (maskedEmail, onNotYouPress) {
+    | (Some(email), Some(onPress)) =>
+      <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
+        <View style={s({flexDirection: #row, alignItems: #center})}>
+          <Text style={s({fontSize: 14., color: "#666", marginRight: 8.->dp})}>
+            {email->React.string}
+          </Text>
+          <TouchableOpacity onPress={_ => onPress()}>
+            <Text style={s({fontSize: 14., color: "#007AFF"})}> {"Not you?"->React.string} </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    | _ => React.null
+    }}
     {cards
     ->Array.mapWithIndex((card, index) => {
       let isSelected = switch selectedCardId {
@@ -19,9 +38,15 @@ let make = (
       }
       let isLastCard = index === cards->Array.length - 1
 
-      let brandText = switch card.brand {
-      | #visa => "visa"
-      | #mastercard => "mastercard"
+      let brandText = {
+        let brandLower = card.brand->String.toLowerCase
+        if brandLower->String.includes("mastercard") {
+          "mastercard"
+        } else if brandLower->String.includes("visa") {
+          "visa"
+        } else {
+          "visa"
+        }
       }
 
       <TouchableOpacity
@@ -45,17 +70,15 @@ let make = (
             <CustomRadioButton size=20.5 selected=isSelected color=primaryColor />
             <Space />
             <View style={s({flexDirection: #row, alignItems: #center})}>
-              <Icon
-                name={brandText}
-                height=25.
-                width=24.
-                style={s({marginEnd: 5.->dp})}
-              />
+              <Icon name={brandText} height=25. width=24. style={s({marginEnd: 5.->dp})} />
               <TextWrapper text={`•••• ${card.maskedPan}`} textType={CardTextBold} />
             </View>
           </View>
           <TextWrapper
-            text={`${card.expiryMonth}/${card.expiryYear->String.slice(~start=-2, ~end=String.length(card.expiryYear))}`}
+            text={`${card.expiryMonth}/${card.expiryYear->String.slice(
+                ~start=-2,
+                ~end=String.length(card.expiryYear),
+              )}`}
             textType={ModalTextLight}
           />
         </View>
