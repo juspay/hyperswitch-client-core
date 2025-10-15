@@ -62,9 +62,9 @@ let make = () => {
           let showSavedScreen =
             (customerPaymentMethods->Array.length > 0 ||
               ClickToPaySection.shouldShowClickToPay(sessionTokenData)) &&
-            accountPaymentMethodData
-            ->Option.map(data => data.payment_type)
-            ->Option.getOr(NORMAL) !== SETUP_MANDATE
+              accountPaymentMethodData
+              ->Option.map(data => data.payment_type)
+              ->Option.getOr(NORMAL) !== SETUP_MANDATE
           <>
             {isSavedPaymentScreen && showSavedScreen
               ? <SavedPaymentSheet
@@ -84,7 +84,7 @@ let make = () => {
                   elementArr
                   isClickToPayNewCardFlow
                 />}
-            {showSavedScreen
+            {showSavedScreen && (isSavedPaymentScreen || customerPaymentMethods->Array.length > 0)
               ? <>
                   <ClickableTextElement
                     initialIconName="addwithcircle"

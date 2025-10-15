@@ -12,9 +12,37 @@ let make = (
 ) => {
   let {borderRadius, component} = ThemebasedStyle.useThemeBasedStyle()
 
+  let supportedCardBrands = cardBrands->Array.filter(brand => {
+    switch brand {
+    | "AmericanExpress" | "DinersClub" | "Visa" | "Mastercard" => true
+    | _ => false
+    }
+  })
+
+  let getIconName = brand => {
+    switch brand {
+    | "DinersClub" => "discoverc2p"
+    | "Visa" => "visac2p"
+    | "Mastercard" => "mastercardc2p"
+    | "AmericanExpress" => "americanexpress"
+    | _ => ""
+    }
+  }
+
   <View style={s({marginVertical: 12.->dp})}>
-    <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
-      <Icon name="visa" height=24. width=32. />
+    <View
+      style={s({
+        flexDirection: #row,
+        alignItems: #center,
+        marginBottom: 16.->dp,
+      })}>
+      <Icon name="src" height=18. width=18. />
+      {supportedCardBrands
+      ->Array.map(brand => {
+        let iconName = getIconName(brand)
+        <Icon key={brand} name={iconName} height=18. style={s({marginLeft: 6.->dp})} />
+      })
+      ->React.array}
     </View>
     <TouchableOpacity onPress={_ => onBack()} style={s({marginBottom: 16.->dp})}>
       <Text style={s({fontSize: 14., color: "#007AFF"})}> {"← Back"->React.string} </Text>

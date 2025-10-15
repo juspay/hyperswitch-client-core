@@ -19,25 +19,30 @@ let make = (
   let hasValidated = React.useRef(false)
   let showAlert = AlertHook.useAlerts()
 
-  let maskedEmail = React.useMemo1(() => {
+  let (maskedEmail, maskedPhone) = React.useMemo1(() => {
+    switch clickToPayUI.maskedChannel {
+    | Some(channel) =>
+      if channel->String.includes("@") {
+        (Some(channel), None) // maskedValidationChannel is an email
+      } else {
+        (None, Some(channel)) // maskedValidationChannel is a phone
+      }
+    | None => (None, None)
+    }
+  }, [clickToPayUI.maskedChannel])
+
+  let cardBrands = React.useMemo1(() => {
     switch sessionTokenData {
     | Some(sessionData) =>
       sessionData
       ->Array.find(item => item.wallet_name == CLICK_TO_PAY)
-      ->Option.flatMap(session => session.email)
-      ->Option.map(email => {
-        let parts = email->String.split("@")
-        switch parts {
-        | [username, domain] =>
-          let maskedUsername =
-            username->String.length > 2
-              ? username->String.substring(~start=0, ~end=2) ++ "***"
-              : username
-          maskedUsername ++ "@" ++ domain
-        | _ => email
-        }
-      })
-    | None => None
+      ->Option.map(session =>
+        session.card_brands
+        ->Array.map(brand => brand->JSON.Decode.string->Option.getOr(""))
+        ->Array.filter(brand => brand != "")
+      )
+      ->Option.getOr([])
+    | None => []
     }
   }, [sessionTokenData])
 
@@ -208,9 +213,11 @@ let make = (
         ])}>
         <ClickToPayOTPScreen
           ?maskedEmail
+          ?maskedPhone
           otp=clickToPayUI.otp
           otpRefs=clickToPayUI.otpRefs
           handleOtpChange=clickToPayUI.handleOtpChange
+          handleKeyPress=clickToPayUI.handleKeyPress
           onSubmit={() => clickToPayUI.submitOtp()->ignore}
           onNotYouPress={() => {
             clickToPayUI.setPreviousScreenState(_ => ClickToPayLogic.OTP_INPUT)
@@ -223,6 +230,7 @@ let make = (
           setRememberMe=clickToPayUI.setRememberMe
           otpError=clickToPayUI.otpError
           disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
+          cardBrands
         />
       </View>
     | ClickToPayLogic.CARDS_DISPLAY =>
@@ -248,6 +256,7 @@ let make = (
             clickToPayUI.setScreenState(_ => ClickToPayLogic.NOT_YOU)
           }}
           disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
+          cardBrands
         />
       </View>
     | ClickToPayLogic.LOADING =>
@@ -283,7 +292,7 @@ let make = (
           setNewIdentifier=clickToPayUI.setNewIdentifier
           onBack={() => clickToPayUI.setScreenState(_ => clickToPayUI.previousScreenState)}
           onSwitch={email => clickToPayUI.switchIdentity(email)->ignore}
-          cardBrands=[]
+          cardBrands
           disabled={clickToPayUI.screenState == ClickToPayLogic.LOADING}
         />
       </View>

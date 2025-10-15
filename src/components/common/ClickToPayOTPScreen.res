@@ -4,9 +4,11 @@ open ReactNative.Style
 @react.component
 let make = (
   ~maskedEmail: option<string>=?,
+  ~maskedPhone: option<string>=?,
   ~otp: array<string>,
   ~otpRefs: array<option<React.ref<Nullable.t<ReactNative.TextInput.element>>>>,
   ~handleOtpChange: (int, string) => unit,
+  ~handleKeyPress: (int, ReactNative.TextInput.KeyPressEvent.t) => unit,
   ~onSubmit: unit => unit,
   ~onNotYouPress: unit => unit,
   ~resendOtp: unit => promise<unit>,
@@ -16,32 +18,58 @@ let make = (
   ~setRememberMe: (bool => bool) => unit,
   ~otpError: string="NONE",
   ~disabled: bool=false,
+  ~cardBrands: array<string>=[],
 ) => {
   let {borderRadius, component, primaryColor, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let (showTooltip, setShowTooltip) = React.useState(() => false)
+
+  let supportedCardBrands = cardBrands->Array.filter(brand => {
+    switch brand {
+    | "AmericanExpress" | "DinersClub" | "Visa" | "Mastercard" => true
+    | _ => false
+    }
+  })
+
+  let getIconName = brand => {
+    switch brand {
+    | "AmericanExpress" => "americanexpress"
+    | "DinersClub" => "discoverc2p"
+    | "Visa" => "visac2p"
+    | "Mastercard" => "mastercardc2p"
+    | _ => ""
+    }
+  }
 
   <View style={s({marginVertical: 12.->dp})}>
-    <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
-      <Icon name="visa" height=24. width=32. />
+    <View
+      style={s({
+        flexDirection: #row,
+        alignItems: #center,
+        marginBottom: 16.->dp,
+      })}>
+      <Icon name="src" height=24. width=18. />
+      {supportedCardBrands
+      ->Array.map(brand => {
+        let iconName = getIconName(brand)
+        <Icon key={brand} name={iconName} height=18. style={s({marginLeft: 6.->dp})} />
+      })
+      ->React.array}
     </View>
-    {switch maskedEmail {
-    | Some(email) =>
-      <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
-        <View style={s({flexDirection: #row, alignItems: #center})}>
-          <Text style={s({fontSize: 14., color: "#666", marginRight: 8.->dp})}>
-            {email->React.string}
-          </Text>
-          <TouchableOpacity onPress={_ => onNotYouPress()}>
-            <Text style={s({fontSize: 14., color: "#007AFF"})}> {"Not you?"->React.string} </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    | None => React.null
-    }}
+    <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
+      <TouchableOpacity onPress={_ => onNotYouPress()}>
+        <Text style={s({fontSize: 14., color: "#007AFF"})}> {"Not you?"->React.string} </Text>
+      </TouchableOpacity>
+    </View>
     <Text style={s({fontSize: 20., marginBottom: 12.->dp, fontWeight: #800, color: "#000000"})}>
       {"Click to Pay has found your linked cards"->React.string}
     </Text>
     <Text style={s({fontSize: 14., marginBottom: 12.->dp, fontWeight: #600})}>
-      {"Enter verification code"->React.string}
+      {switch (maskedEmail, maskedPhone) {
+      | (Some(email), Some(phone)) => `Enter the code sent to ${email}, ${phone}`->React.string
+      | (Some(email), None) => `Enter the code sent to ${email}`->React.string
+      | (None, Some(phone)) => `Enter the code sent to ${phone}`->React.string
+      | (None, None) => "Enter verification code"->React.string
+      }}
     </Text>
     <View
       style={s({
@@ -75,8 +103,8 @@ let make = (
           })}
           value={otp[index]->Option.getOr("")}
           onChangeText={value => handleOtpChange(index, value)}
+          onKeyPress={event => handleKeyPress(index, event)}
           keyboardType=#numeric
-          maxLength=1
           autoFocus={index === 0}
           selectTextOnFocus=true
           editable={!disabled}
@@ -146,10 +174,57 @@ let make = (
             </Text>
           : React.null}
       </View>
-      <Text style={s({fontSize: 12., color: "#666"})}>
+      <Text style={s({fontSize: 12., color: "#666", marginRight: 6.->dp})}>
         {"Remember me on this browser"->React.string}
       </Text>
+      <TouchableOpacity onPress={_ => setShowTooltip(_ => true)}>
+        <Icon name="tooltip" height=12. width=12. />
+      </TouchableOpacity>
     </TouchableOpacity>
+    {showTooltip
+      ? <View
+          style={s({
+            backgroundColor: "#F5F5F5",
+            borderRadius: 8.,
+            padding: 16.->dp,
+            marginBottom: 16.->dp,
+            position: #relative,
+          })}>
+          <View
+            style={s({
+              position: #absolute,
+              top: -8.->dp,
+              right: 20.->dp,
+              width: 0.->dp,
+              height: 0.->dp,
+              backgroundColor: "transparent",
+              borderStyle: #solid,
+              borderLeftWidth: 8.,
+              borderRightWidth: 8.,
+              borderBottomWidth: 8.,
+              borderLeftColor: "transparent",
+              borderRightColor: "transparent",
+              borderBottomColor: "#F5F5F5",
+            })}
+          />
+          <TouchableOpacity
+            onPress={_ => setShowTooltip(_ => false)}
+            style={s({
+              position: #absolute,
+              top: 8.->dp,
+              right: 8.->dp,
+              padding: 4.->dp,
+            })}>
+            <Icon name="close" height=16. width=16. />
+          </TouchableOpacity>
+          <Text style={s({fontSize: 14., color: "#000000", marginBottom: 12.->dp, lineHeight: 20., paddingRight: 24.->dp})}>
+            {"If you're remembered, you won't need to enter a code next time to securely access your saved cards."->React.string}
+          </Text>
+          <Text style={s({fontSize: 14., color: "#000000", lineHeight: 20.})}>
+            {"Not recommended for public or shared devices because this uses cookies."->React.string}
+          </Text>
+        </View>
+      : React.null}
     <TouchableOpacity
       onPress={_ => onSubmit()}
       disabled={otp->Array.some(d => d === "") || disabled}

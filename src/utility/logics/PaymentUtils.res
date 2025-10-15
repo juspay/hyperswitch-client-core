@@ -173,10 +173,12 @@ let generateClickToPayConfirmBody = (
     }
   | _ => Dict.make()
   }
-
+  let paymentMethod = dict->getString("payment_method", "card")
+  let paymentMethodType = dict->getString("payment_method_type", "debit")
   let confirmBody = [
     ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
-    ("payment_method", "card"->JSON.Encode.string),
+    ("payment_method", paymentMethod->JSON.Encode.string),
+    ("payment_method_type", paymentMethodType->JSON.Encode.string),
     ("ctp_service_details", ctpServiceDetails->JSON.Encode.object),
   ]
   Console.log2("[ClickToPay] Confirm body before email:", confirmBody)

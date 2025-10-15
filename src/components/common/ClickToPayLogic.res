@@ -28,6 +28,7 @@ type clickToPayUIState = {
     option<ClickToPay.Types.userIdentity> => option<ClickToPay.Types.userIdentity>
   ) => unit,
   handleOtpChange: (int, string) => unit,
+  handleKeyPress: (int, ReactNative.TextInput.KeyPressEvent.t) => unit,
   submitOtp: unit => promise<unit>,
   resendOtp: unit => promise<unit>,
   handleCheckout: unit => promise<JSON.t>,
@@ -120,17 +121,22 @@ let useClickToPayUI = () => {
     }
 
     if String.length(value) > 1 {
-      let digits = value->String.split("")->Array.filter(d => d >= "0" && d <= "9")
+      let digits =
+        value
+        ->String.split("")
+        ->Array.filter(d => d >= "0" && d <= "9")
+        ->Array.slice(~start=0, ~end=6)
+
       let newOtp = otp->Array.mapWithIndex((_, i) => {
-        if i >= index && i < index + Array.length(digits) {
-          digits[i - index]->Option.getOr("")
+        if i < Array.length(digits) {
+          digits[i]->Option.getOr("")
         } else {
-          otp[i]->Option.getOr("")
+          ""
         }
       })
       setOtp(_ => newOtp)
 
-      let nextIndex = index + Array.length(digits) > 5 ? 5 : index + Array.length(digits)
+      let nextIndex = Array.length(digits) >= 6 ? 5 : Array.length(digits)
       focusInput(nextIndex)
     } else if String.length(value) == 1 && value >= "0" && value <= "9" {
       let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? value : item)
@@ -142,6 +148,23 @@ let useClickToPayUI = () => {
     } else if String.length(value) == 0 {
       let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? "" : item)
       setOtp(_ => newOtp)
+    }
+  }
+
+  let handleKeyPress = (index, event: ReactNative.TextInput.KeyPressEvent.t) => {
+    if otpError !== "NONE" {
+      setOtpError(_ => "NONE")
+    }
+    if event.nativeEvent.key == "Backspace" {
+      let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? "" : item)
+      setOtp(_ => newOtp)
+      if index > 0 {
+        otpRefs
+        ->Array.get(index - 1)
+        ->Option.flatMap(optRef => optRef)
+        ->Option.flatMap(ref => ref.current->Nullable.toOption)
+        ->Option.forEach(input => input->ReactNative.TextInput.focus)
+      }
     }
   }
 
@@ -251,6 +274,7 @@ let useClickToPayUI = () => {
     userIdentity,
     setUserIdentity,
     handleOtpChange,
+    handleKeyPress,
     submitOtp,
     resendOtp,
     handleCheckout,

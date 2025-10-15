@@ -5,6 +5,8 @@ let make = (
   ~processRequest,
   ~setConfirmButtonData,
 ) => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let {
     getRequiredFieldsForTabs,
     country,
@@ -12,7 +14,25 @@ let make = (
     isPayWithClickToPaySelected,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
+  let (_, _, sessionTokenData) = React.useContext(AllApiDataContextNew.allApiDataContext)
+
+  let redirectHook = AllPaymentHooks.useRedirectHook()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let showAlert = AlertHook.useAlerts()
+
   let clickToPay = ClickToPay.useClickToPay()
+
+  let hasClickToPaySession = React.useMemo1(() => {
+    switch sessionTokenData {
+    | Some(sessionData) => sessionData->Array.some(item => item.wallet_name == CLICK_TO_PAY)
+    | None => false
+    }
+  }, [sessionTokenData])
+
+  let clickToPaySession = switch sessionTokenData {
+  | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
+  | None => None
+  }
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
   let setFormData = React.useCallback1(data => {
@@ -43,37 +63,42 @@ let make = (
     if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
       // Check if we need to encrypt card with Click to Pay
       let shouldEncryptWithClickToPay =
-        isPayWithClickToPaySelected &&
-        paymentMethodData.payment_method === CARD
+        (isPayWithClickToPaySelected || hasClickToPaySession) &&
+          paymentMethodData.payment_method === CARD
 
       if shouldEncryptWithClickToPay {
         try {
-          // Extract card data from formData
+          let paymentMethodData =
+            formData->Dict.get("payment_method_data")->Option.flatMap(JSON.Decode.object)
+
+          let cardData =
+            paymentMethodData->Option.flatMap(pmd =>
+              pmd->Dict.get("card")->Option.flatMap(JSON.Decode.object)
+            )
+
           let cardNumber =
-            formData
-            ->Dict.get("payment_method_data.card.card_number")
-            ->Option.flatMap(JSON.Decode.string)
+            cardData
+            ->Option.flatMap(cd => cd->Dict.get("card_number")->Option.flatMap(JSON.Decode.string))
             ->Option.getOr("")
 
           let expiryMonth =
-            formData
-            ->Dict.get("payment_method_data.card.card_exp_month")
-            ->Option.flatMap(JSON.Decode.string)
+            cardData
+            ->Option.flatMap(cd =>
+              cd->Dict.get("card_exp_month")->Option.flatMap(JSON.Decode.string)
+            )
             ->Option.getOr("")
 
           let expiryYear =
-            formData
-            ->Dict.get("payment_method_data.card.card_exp_year")
-            ->Option.flatMap(JSON.Decode.string)
+            cardData
+            ->Option.flatMap(cd =>
+              cd->Dict.get("card_exp_year")->Option.flatMap(JSON.Decode.string)
+            )
             ->Option.getOr("")
 
           let cvv =
-            formData
-            ->Dict.get("payment_method_data.card.card_cvc")
-            ->Option.flatMap(JSON.Decode.string)
+            cardData
+            ->Option.flatMap(cd => cd->Dict.get("card_cvc")->Option.flatMap(JSON.Decode.string))
             ->Option.getOr("")
-
-          Console.log("[ClickToPay] Encrypting card data...")
 
           // Create card data object for encryption
           let cardData: ClickToPay.Types.cardData = {
@@ -81,9 +106,11 @@ let make = (
             expiryMonth,
             expiryYear,
             cvv,
-            cardholderName: ?formData
-            ->Dict.get("payment_method_data.card.card_holder_name")
-            ->Option.flatMap(JSON.Decode.string),
+            cardholderName: ?(
+              formData
+              ->Dict.get("payment_method_data.card.card_holder_name")
+              ->Option.flatMap(JSON.Decode.string)
+            ),
           }
 
           // Call checkout to encrypt the card
@@ -98,25 +125,59 @@ let make = (
           let encryptedResult = await clickToPay.checkout(checkoutParams)
           Console.log2("[ClickToPay] Encryption successful:", encryptedResult)
 
-          // Include encrypted card data in the form data
-          let formDataWithEncryption = formData->Dict.copy
-          formDataWithEncryption->Dict.set("payment_method_data.card.encrypted_card_data", encryptedResult)
+          setLoading(ProcessingPayments)
 
-          // Pass form data with encrypted card to processRequest
-          processRequest(
-            CommonUtils.mergeDict(initialValues, formDataWithEncryption),
-            (None: option<Dict.t<JSON.t>>),
-            formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+          let provider =
+            clickToPaySession
+            ->Option.flatMap(session => session.provider)
+            ->Option.getOr("")
+
+          let email =
+            clickToPaySession
+            ->Option.flatMap(session => session.email)
+            ->Option.getOr("")
+
+          let body = PaymentUtils.generateClickToPayConfirmBody(
+            ~nativeProp,
+            ~checkoutResult=encryptedResult,
+            ~provider,
+            ~email,
+          )
+
+          let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+            if !closeSDK {
+              setLoading(FillingDetails)
+            }
+            handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+          }
+
+          let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+            switch paymentStatus {
+            | PaymentSuccess => {
+                setLoading(PaymentSuccess)
+                setTimeout(() => {
+                  handleSuccessFailure(~apiResStatus=status, ())
+                }, 300)->ignore
+              }
+            | _ => handleSuccessFailure(~apiResStatus=status, ())
+            }
+          }
+
+          redirectHook(
+            ~body,
+            ~publishableKey=nativeProp.publishableKey,
+            ~clientSecret=nativeProp.clientSecret,
+            ~errorCallback,
+            ~responseCallback,
+            ~paymentMethod="click_to_pay",
+            ~isCardPayment=true,
+            (),
           )
         } catch {
         | error => {
             Console.error2("[ClickToPay] Encryption failed:", error)
-            // Fallback to normal payment flow
-            processRequest(
-              CommonUtils.mergeDict(initialValues, formData),
-              (None: option<Dict.t<JSON.t>>),
-              formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-            )
+            setLoading(FillingDetails)
+            showAlert(~errorType="error", ~message="Click to Pay encryption failed")
           }
         }
       } else {
@@ -158,6 +219,7 @@ let make = (
     formMethods,
     isNicknameValid,
     isPayWithClickToPaySelected,
+    hasClickToPaySession,
   ))
 
   <DynamicFields
