@@ -12,7 +12,7 @@ type paymentMethod =
   | GIFT_CARD
   | OTHERS
 
-type payment_experience_type = INVOKE_SDK_CLIENT | REDIRECT_TO_URL | NONE
+type paymentExperienceType = INVOKE_SDK_CLIENT | REDIRECT_TO_URL | NONE
 
 type mandateType = NORMAL | NEW_MANDATE | SETUP_MANDATE
 
@@ -51,8 +51,8 @@ let getExperienceType = str =>
   | _ => NONE
   }
 
-let getPaymentExperienceType = (payment_experience_type: payment_experience_type) => {
-  switch payment_experience_type {
+let getPaymentExperienceType = (paymentExperienceType: paymentExperienceType) => {
+  switch paymentExperienceType {
   | INVOKE_SDK_CLIENT => "INVOKE_SDK_CLIENT"
   | REDIRECT_TO_URL => "REDIRECT_TO_URL"
   | NONE => ""

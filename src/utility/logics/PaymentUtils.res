@@ -16,61 +16,61 @@ let showUseExisitingSavedCardsBtn = (
 
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
-  ~payment_method_str: string,
-  ~payment_method_type: string,
-  ~payment_method_data=?,
-  ~payment_type: PaymentMethodType.mandateType,
+  ~paymentMethodStr: string,
+  ~paymentMethodType: string,
+  ~paymentMethodData=?,
+  ~paymentType: PaymentMethodType.mandateType,
   ~appURL: option<string>=?,
   ~isNicknameSelected=false,
-  ~payment_token=?,
+  ~paymentToken=?,
   ~isSaveCardCheckboxVisible=?,
   ~isGuestCustomer,
   ~email=?,
-  ~screen_height=?,
-  ~screen_width=?,
+  ~screenHeight=?,
+  ~screenWidth=?,
   (),
 ): PaymentConfirmTypes.redirectType => {
-  let isMandate = payment_type !== NORMAL
+  let isMandate = paymentType !== NORMAL
   {
-    client_secret: nativeProp.clientSecret,
-    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
-    payment_method: payment_method_str,
-    payment_method_type,
-    ?payment_method_data,
-    ?payment_token,
+    clientSecret: nativeProp.clientSecret,
+    returnUrl: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+    paymentMethod: paymentMethodStr,
+    paymentMethodType,
+    ?paymentMethodData,
+    ?paymentToken,
     ?email,
-    // payment_type: payment_type_str,
-    customer_acceptance: ?(
-      payment_token->Option.isNone &&
+    // paymentType: paymentTypeStr,
+    customerAcceptance: ?(
+      paymentToken->Option.isNone &&
       ((isNicknameSelected && isMandate) ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-      payment_type === NORMAL && isNicknameSelected ||
-      payment_type === SETUP_MANDATE) &&
+      paymentType === NORMAL && isNicknameSelected ||
+      paymentType === SETUP_MANDATE) &&
       !isGuestCustomer
         ? Some({
             {
-              acceptance_type: "online",
-              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+              acceptanceType: "online",
+              acceptedAt: Date.now()->Date.fromTime->Date.toISOString,
               online: {
-                user_agent: ?nativeProp.hyperParams.userAgent,
+                userAgent: ?nativeProp.hyperParams.userAgent,
               },
             }
           })
         : None
     ),
-    browser_info: {
-      user_agent: ?nativeProp.hyperParams.userAgent,
-      accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+    browserInfo: {
+      userAgent: ?nativeProp.hyperParams.userAgent,
+      acceptHeader: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
       language: SdkTypes.localeTypeToString(nativeProp.configuration.appearance.locale),
-      color_depth: 32,
-      screen_height: ?screen_height->Option.map(Int.fromFloat),
-      screen_width: ?screen_width->Option.map(Int.fromFloat),
-      time_zone: Date.make()->Date.getTimezoneOffset,
-      java_enabled: true,
-      java_script_enabled: true,
-      device_model: ?nativeProp.hyperParams.device_model,
-      os_type: ?nativeProp.hyperParams.os_type,
-      os_version: ?nativeProp.hyperParams.os_version,
+      colorDepth: 32,
+      screenHeight: ?screenHeight->Option.map(Int.fromFloat),
+      screenWidth: ?screenWidth->Option.map(Int.fromFloat),
+      timeZone: Date.make()->Date.getTimezoneOffset,
+      javaEnabled: true,
+      javaScriptEnabled: true,
+      deviceModel: ?nativeProp.hyperParams.deviceModel,
+      osType: ?nativeProp.hyperParams.osType,
+      osVersion: ?nativeProp.hyperParams.osVersion,
     },
   }
 }
@@ -84,7 +84,7 @@ let generateSessionsTokenBody = (~clientSecret, ~wallet) => {
       ->Option.getOr("")
       ->JSON.Encode.string,
     ),
-    ("client_secret", clientSecret->JSON.Encode.string),
+    ("clientSecret", clientSecret->JSON.Encode.string),
     ("wallets", wallet->JSON.Encode.array),
   ]
   ->Dict.fromArray
@@ -94,47 +94,47 @@ let generateSessionsTokenBody = (~clientSecret, ~wallet) => {
 
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
-  ~payment_token,
+  ~paymentToken,
   ~savedCardCvv,
   ~appURL: option<string>=?,
-  ~screen_height=?,
-  ~screen_width=?,
+  ~screenHeight=?,
+  ~screenWidth=?,
   ~billing=?,
 ): PaymentConfirmTypes.redirectType => {
-  client_secret: nativeProp.clientSecret,
-  payment_method: "card",
-  payment_token,
-  card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
-  payment_method_data: ?billing->Option.map(address =>
+  clientSecret: nativeProp.clientSecret,
+  paymentMethod: "card",
+  paymentToken,
+  cardCvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
+  returnUrl: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+  paymentMethodData: ?billing->Option.map(address =>
     [("billing", address->Utils.getJsonObjectFromRecord)]
     ->Dict.fromArray
     ->JSON.Encode.object
   ),
-  browser_info: {
-    user_agent: ?nativeProp.hyperParams.userAgent,
-    accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+  browserInfo: {
+    userAgent: ?nativeProp.hyperParams.userAgent,
+    acceptHeader: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
     language: SdkTypes.localeTypeToString(nativeProp.configuration.appearance.locale),
-    color_depth: 32,
-    screen_height: ?screen_height->Option.map(Int.fromFloat),
-    screen_width: ?screen_width->Option.map(Int.fromFloat),
-    time_zone: Date.make()->Date.getTimezoneOffset,
-    java_enabled: true,
-    java_script_enabled: true,
-    device_model: ?nativeProp.hyperParams.device_model,
-    os_type: ?nativeProp.hyperParams.os_type,
-    os_version: ?nativeProp.hyperParams.os_version,
+    colorDepth: 32,
+    screenHeight: ?screenHeight->Option.map(Int.fromFloat),
+    screenWidth: ?screenWidth->Option.map(Int.fromFloat),
+    timeZone: Date.make()->Date.getTimezoneOffset,
+    javaEnabled: true,
+    javaScriptEnabled: true,
+    deviceModel: ?nativeProp.hyperParams.deviceModel,
+    osType: ?nativeProp.hyperParams.osType,
+    osVersion: ?nativeProp.hyperParams.osVersion,
   },
 }
 let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
-  ~payment_token,
-  ~payment_method_type,
+  ~paymentToken,
+  ~paymentMethodType,
 ): PaymentConfirmTypes.redirectType => {
-  client_secret: nativeProp.clientSecret,
-  payment_token,
-  payment_method: "wallet",
-  payment_method_type,
+  clientSecret: nativeProp.clientSecret,
+  paymentToken,
+  paymentMethod: "wallet",
+  paymentMethodType,
 }
 
 let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
@@ -145,7 +145,7 @@ let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
 let getCardNetworks = cardNetworks => {
   switch cardNetworks {
   | Some(cardNetworks) =>
-    cardNetworks->Array.map((item: AccountPaymentMethodType.card_networks) => item.card_network)
+    cardNetworks->Array.map((item: AccountPaymentMethodType.cardNetworks) => item.cardNetwork)
   | None => []
   }
 }

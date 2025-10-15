@@ -38,7 +38,7 @@ type widgetResponse = {
 }
 let setupWidgetEventListener = (
   ~onWidgetEvent: widgetResponse => unit,
-  ~walletType: SdkTypes.payment_method_type_wallet,
+  ~walletType: SdkTypes.paymentMethodTypeWallet,
 ) => {
   let formattedType = walletType->SdkTypes.widgetToStrMapper->String.toLowerCase
   sendReadyMessage(formattedType)

@@ -3,7 +3,7 @@ open Style
 
 @react.component
 let make = (
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: AccountPaymentMethodType.paymentMethodType,
   ~sessionObject,
   ~processRequest,
 ) => {
@@ -57,14 +57,14 @@ let make = (
   //       ->Array.get(0)
   //       ->Option.mapOr([], network => network.eligible_connectors)
   //     | _ =>
-  //       paymentMethodData.payment_experience
+  //       paymentMethodData.paymentExperience
   //       ->Array.get(0)
   //       ->Option.mapOr([], experience => experience.eligible_connectors)
   //     }
 
   //     let configParams: SuperpositionTypes.superpositionBaseContext = {
   //       payment_method: paymentMethodData.payment_method_str,
-  //       payment_method_type: paymentMethodData.payment_method_type,
+  //       paymentMethodType: paymentMethodData.paymentMethodType,
   //       mandate_type: accountPaymentMethodData
   //       ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
   //       ->Option.getOr(NORMAL) === NORMAL
@@ -141,11 +141,11 @@ let make = (
   let confirmApplePay = (var: dict<JSON.t>) => {
     logger(
       ~logType=DEBUG,
-      ~value=paymentMethodData.payment_method_type,
+      ~value=paymentMethodData.paymentMethodType,
       ~category=USER_EVENT,
-      ~paymentMethod=paymentMethodData.payment_method_type,
+      ~paymentMethod=paymentMethodData.paymentMethodType,
       ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
-      ~paymentExperience=paymentMethodData.payment_experience,
+      ~paymentExperience=paymentMethodData.paymentExperience,
       (),
     )
 
@@ -175,15 +175,15 @@ let make = (
     setLoading(ProcessingPayments)
     logger(
       ~logType=INFO,
-      ~value=paymentMethodData.payment_method_type,
+      ~value=paymentMethodData.paymentMethodType,
       ~category=USER_EVENT,
-      ~paymentMethod=paymentMethodData.payment_method_type,
+      ~paymentMethod=paymentMethodData.paymentMethodType,
       ~eventName=PAYMENT_METHOD_CHANGED,
-      ~paymentExperience=paymentMethodData.payment_experience,
+      ~paymentExperience=paymentMethodData.paymentExperience,
       (),
     )
 
-    switch paymentMethodData.payment_method_type_wallet {
+    switch paymentMethodData.paymentMethodTypeWallet {
     | GOOGLE_PAY =>
       HyperModule.launchGPay(
         WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
@@ -191,46 +191,46 @@ let make = (
       )
     | PAYPAL =>
       if (
-        sessionObject.session_token !== "" &&
+        sessionObject.sessionToken !== "" &&
         WebKit.platform == #android &&
         PaypalModule.payPalModule->Option.isSome
       ) {
-        PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
+        PaypalModule.launchPayPal(sessionObject.sessionToken, confirmPayPal)
       } else if (
-        paymentMethodData.payment_experience
-        ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+        paymentMethodData.paymentExperience
+        ->Array.find(exp => exp.paymentExperienceTypeDecode == REDIRECT_TO_URL)
         ->Option.isSome
       ) {
         let redirectData = []->Dict.fromArray->JSON.Encode.object
-        let payment_method_data = [
+        let paymentMethodData = [
           (
-            paymentMethodData.payment_method_str,
-            [(paymentMethodData.payment_method_type ++ "_redirect", redirectData)]
+            paymentMethodData.paymentMethodStr,
+            [(paymentMethodData.paymentMethodType ++ "_redirect", redirectData)]
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
         ]->Dict.fromArray
 
-        processWalletData(payment_method_data)
+        processWalletData(paymentMethodData)
       } else {
         setLoading(FillingDetails)
         showAlert(~errorType="warning", ~message="Payment Method Unavailable")
       }
     | APPLE_PAY =>
       if (
-        sessionObject.session_token_data == JSON.Encode.null ||
-          sessionObject.payment_request_data == JSON.Encode.null
+        sessionObject.sessionTokenData == JSON.Encode.null ||
+          sessionObject.paymentRequestData == JSON.Encode.null
       ) {
         setLoading(FillingDetails)
         showAlert(~errorType="warning", ~message="Waiting for Sessions API")
       } else {
         logger(
           ~logType=DEBUG,
-          ~value=paymentMethodData.payment_method_type,
+          ~value=paymentMethodData.paymentMethodType,
           ~category=USER_EVENT,
-          ~paymentMethod=paymentMethodData.payment_method_type,
+          ~paymentMethod=paymentMethodData.paymentMethodType,
           ~eventName=APPLE_PAY_STARTED_FROM_JS,
-          ~paymentExperience=paymentMethodData.payment_experience,
+          ~paymentExperience=paymentMethodData.paymentExperience,
           (),
         )
 
@@ -239,19 +239,19 @@ let make = (
           showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
           logger(
             ~logType=DEBUG,
-            ~value=paymentMethodData.payment_method_type,
+            ~value=paymentMethodData.paymentMethodType,
             ~category=USER_EVENT,
-            ~paymentMethod=paymentMethodData.payment_method_type,
+            ~paymentMethod=paymentMethodData.paymentMethodType,
             ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-            ~paymentExperience=paymentMethodData.payment_experience,
+            ~paymentExperience=paymentMethodData.paymentExperience,
             (),
           )
         }, 5000)
 
         HyperModule.launchApplePay(
           [
-            ("session_token_data", sessionObject.session_token_data),
-            ("payment_request_data", sessionObject.payment_request_data),
+            ("sessionTokenData", sessionObject.sessionTokenData),
+            ("paymentRequestData", sessionObject.paymentRequestData),
           ]
           ->Dict.fromArray
           ->JSON.Encode.object
@@ -260,11 +260,11 @@ let make = (
           _ => {
             logger(
               ~logType=DEBUG,
-              ~value=paymentMethodData.payment_method_type,
+              ~value=paymentMethodData.paymentMethodType,
               ~category=USER_EVENT,
-              ~paymentMethod=paymentMethodData.payment_method_type,
+              ~paymentMethod=paymentMethodData.paymentMethodType,
               ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-              ~paymentExperience=paymentMethodData.payment_experience,
+              ~paymentExperience=paymentMethodData.paymentExperience,
               (),
             )
           },
@@ -290,23 +290,23 @@ let make = (
   }
 
   React.useEffect1(() => {
-    switch paymentMethodData.payment_method_type_wallet {
+    switch paymentMethodData.paymentMethodTypeWallet {
     | APPLE_PAY => Window.registerEventListener("applePayData", confirmApplePay)
     | GOOGLE_PAY => Window.registerEventListener("googlePayData", confirmGPay)
     | _ => ()
     }
     None
-  }, [paymentMethodData.payment_method_type_wallet])
+  }, [paymentMethodData.paymentMethodTypeWallet])
 
-  let buttonName = paymentMethodData.payment_method_type->CommonUtils.getDisplayName
+  let buttonName = paymentMethodData.paymentMethodType->CommonUtils.getDisplayName
 
   <>
     <CustomButton
-      text={paymentMethodData.payment_method_type->CommonUtils.getDisplayName}
+      text={paymentMethodData.paymentMethodType->CommonUtils.getDisplayName}
       borderRadius=buttonBorderRadius
       leftIcon=CustomIcon(<Icon name=buttonName width=24. height=32. fill=payNowButtonTextColor />)
       onPress={_ => pressHandler()}>
-      {switch paymentMethodData.payment_method_type_wallet {
+      {switch paymentMethodData.paymentMethodTypeWallet {
       | SAMSUNG_PAY =>
         Some(
           <View

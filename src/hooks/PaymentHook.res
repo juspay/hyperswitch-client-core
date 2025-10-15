@@ -53,8 +53,8 @@ let usePayment = (
       }, 5000)
       HyperModule.launchApplePay(
         [
-          ("session_token_data", sessionObject.session_token_data),
-          ("payment_request_data", sessionObject.payment_request_data),
+          ("sessionTokenData", sessionObject.sessionTokenData),
+          ("paymentRequestData", sessionObject.paymentRequestData),
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
@@ -77,8 +77,8 @@ let usePayment = (
     } else {
       webkitLaunchApplePay(
         [
-          ("session_token_data", sessionObject.session_token_data),
-          ("payment_request_data", sessionObject.payment_request_data),
+          ("sessionTokenData", sessionObject.sessionTokenData),
+          ("paymentRequestData", sessionObject.paymentRequestData),
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
@@ -108,7 +108,7 @@ let usePayment = (
     let (body, paymentMethodType) = (
       PaymentUtils.generateSavedCardConfirmBody(
         ~nativeProp,
-        ~payment_token=activePaymentToken,
+        ~paymentToken=activePaymentToken,
         ~savedCardCvv,
       ),
       "card",
@@ -128,15 +128,15 @@ let usePayment = (
   }
 
   let initiateWalletPayment = (
-    ~activeWalletName: payment_method_type_wallet,
+    ~activeWalletName: paymentMethodTypeWallet,
     ~activePaymentToken: string,
     (),
   ) => {
     let (body, paymentMethodType) = (
       PaymentUtils.generateWalletConfirmBody(
         ~nativeProp,
-        ~payment_method_type=activeWalletName->SdkTypes.walletTypeToStrMapper,
-        ~payment_token=activePaymentToken,
+        ~paymentMethodType=activeWalletName->SdkTypes.walletTypeToStrMapper,
+        ~paymentToken=activePaymentToken,
       ),
       "wallet",
     )
@@ -155,7 +155,7 @@ let usePayment = (
   }
 
   let initiatePayment = (
-    ~activeWalletName: payment_method_type_wallet,
+    ~activeWalletName: paymentMethodTypeWallet,
     ~activePaymentToken: string,
     ~gPayResponseHandler: Dict.t<JSON.t> => unit,
     ~applePayResponseHandler: Dict.t<JSON.t> => unit,

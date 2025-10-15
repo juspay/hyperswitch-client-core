@@ -17,11 +17,11 @@ let make = (~setConfirmButtonData) => {
     walletDict,
     isCardPayment,
     enabledCardSchemes,
-    payment_method,
-    payment_method_str,
-    payment_method_type,
-    payment_method_type_wallet,
-    payment_experience,
+    paymentMethod,
+    paymentMethodStr,
+    paymentMethodType,
+    paymentMethodTypeWallet,
+    paymentExperience,
   ) = walletData
 
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
@@ -71,17 +71,17 @@ let make = (~setConfirmButtonData) => {
       }
     }
 
-    let paymentMethodDataDict = switch payment_method {
+    let paymentMethodDataDict = switch paymentMethod {
     | CARD =>
       switch nickname {
       | Some(name) =>
         [
           (
-            "payment_method_data",
+            "paymentMethodData",
             [
               (
-                payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                paymentMethodStr,
+                [("nickName", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
               ),
             ]
             ->Dict.fromArray
@@ -93,14 +93,14 @@ let make = (~setConfirmButtonData) => {
     | pm =>
       [
         (
-          "payment_method_data",
+          "paymentMethodData",
           [
             (
-              payment_method_str,
+              paymentMethodStr,
               [
                 (
-                  payment_method_type ++ (
-                    pm === PAY_LATER || payment_method_type_wallet === PAYPAL ? "_redirect" : ""
+                  paymentMethodType ++ (
+                    pm === PAY_LATER || paymentMethodTypeWallet === PAYPAL ? "_redirect" : ""
                   ),
                   walletDict->Option.getOr(Dict.make())->Js.Json.object_,
                 ),
@@ -117,29 +117,29 @@ let make = (~setConfirmButtonData) => {
 
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,
-      ~payment_method_str,
-      ~payment_method_type,
-      ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
-        "payment_method_data",
+      ~paymentMethodStr,
+      ~paymentMethodType,
+      ~paymentMethodData=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
+        "paymentMethodData",
       ),
-      ~payment_type=accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+      ~paymentType=accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
       ->Option.getOr(NORMAL),
       ~appURL=?{
         accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirect_url
+          accountPaymentMethods.redirectUrl
         )
       },
       ~isSaveCardCheckboxVisible={
-        payment_method === CARD && nativeProp.configuration.displaySavedPaymentMethodsCheckbox
+        paymentMethod === CARD && nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
       ~isGuestCustomer=customerPaymentMethodData
-      ->Option.map(customerPaymentMethods => customerPaymentMethods.is_guest_customer)
+      ->Option.map(customerPaymentMethods => customerPaymentMethods.isGuestCustomer)
       ->Option.getOr(true),
       ~isNicknameSelected,
       ~email?,
-      ~screen_height=viewPortContants.screenHeight,
-      ~screen_width=viewPortContants.screenWidth,
+      ~screenHeight=viewPortContants.screenHeight,
+      ~screenWidth=viewPortContants.screenWidth,
       (),
     )
 
@@ -149,9 +149,9 @@ let make = (~setConfirmButtonData) => {
       ~clientSecret=nativeProp.clientSecret,
       ~errorCallback,
       ~responseCallback,
-      ~paymentMethod=payment_method_type,
-      ~paymentExperience=payment_experience,
-      ~isCardPayment={payment_method === CARD},
+      ~paymentMethod=paymentMethodType,
+      ~paymentExperience=paymentExperience,
+      ~isCardPayment={paymentMethod === CARD},
       (),
     )->ignore
   }
@@ -175,8 +175,8 @@ let make = (~setConfirmButtonData) => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
-      payment_method_type,
-      payment_experience,
+      paymentMethodType,
+      paymentExperience,
       errorText: None,
     }
     setConfirmButtonData(confirmButton)

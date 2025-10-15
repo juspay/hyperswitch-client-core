@@ -72,13 +72,13 @@ module CVVComponent = {
 }
 module PMWithNickNameComponent = {
   @react.component
-  let make = (~savedPaymentMethod: CustomerPaymentMethodType.customer_payment_method_type) => {
+  let make = (~savedPaymentMethod: CustomerPaymentMethodType.customerPaymentMethodType) => {
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
     let nickName = switch savedPaymentMethod.card {
-    | Some(card) => card.nick_name
+    | Some(card) => card.nickName
     | _ => None
     }
-    let isDefaultPm = savedPaymentMethod.default_payment_method_set
+    let isDefaultPm = savedPaymentMethod.defaultPaymentMethodSet
 
     <View style={s({display: #flex, flexDirection: #column})}>
       {switch nickName {
@@ -102,8 +102,8 @@ module PMWithNickNameComponent = {
       <View style={s({display: #flex, flexDirection: #row, alignItems: #center})}>
         <Icon
           name={switch savedPaymentMethod.card {
-          | Some(card) => card.card_network
-          | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+          | Some(card) => card.cardNetwork
+          | None => savedPaymentMethod.paymentMethodType->CommonUtils.getDisplayName
           }}
           height=26.
           width=26.
@@ -111,8 +111,8 @@ module PMWithNickNameComponent = {
         <Space width=8. />
         <TextWrapper
           text={switch savedPaymentMethod.card {
-          | Some(card) => "●●●● "->String.concat(card.last4_digits)
-          | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+          | Some(card) => "●●●● "->String.concat(card.last4Digits)
+          | None => savedPaymentMethod.paymentMethodType->CommonUtils.getDisplayName
           }}
           textType={switch savedPaymentMethod.card {
           | Some(_) => CardText
@@ -127,7 +127,7 @@ module PMWithNickNameComponent = {
 module PaymentMethodListView = {
   @react.component
   let make = (
-    ~savedPaymentMethod: CustomerPaymentMethodType.customer_payment_method_type,
+    ~savedPaymentMethod: CustomerPaymentMethodType.customerPaymentMethodType,
     ~isButtomBorder=true,
     ~savedCardCvv,
     ~setSavedCardCvv,
@@ -167,7 +167,7 @@ module PaymentMethodListView = {
         {switch savedPaymentMethod.card {
         | Some(card) =>
           <TextWrapper
-            text={`${localeObj.cardExpiresText} ${card.expiry_month}/${card.expiry_year->String.sliceToEnd(
+            text={`${localeObj.cardExpiresText} ${card.expiryMonth}/${card.expiryYear->String.sliceToEnd(
                 ~start=-2,
               )}`}
             textType={ModalTextLight}
@@ -176,13 +176,13 @@ module PaymentMethodListView = {
         }}
       </View>
       {isPaymentMethodSelected &&
-      savedPaymentMethod.payment_method === CARD &&
-      savedPaymentMethod.requires_cvv
+      savedPaymentMethod.paymentMethod === CARD &&
+      savedPaymentMethod.requiresCvv
         ? <CVVComponent
             savedCardCvv
             setSavedCardCvv
             cardScheme={savedPaymentMethod.card
-            ->Option.map(card => card.card_network)
+            ->Option.map(card => card.cardNetwork)
             ->Option.getOr("")}
           />
         : React.null}
@@ -193,7 +193,7 @@ module PaymentMethodListView = {
 @react.component
 let make = (
   ~customerPaymentMethods,
-  ~selectedToken: option<CustomerPaymentMethodType.customer_payment_method_type>,
+  ~selectedToken: option<CustomerPaymentMethodType.customerPaymentMethodType>,
   ~setSelectedToken,
   ~savedCardCvv,
   ~setSavedCardCvv,
@@ -220,7 +220,7 @@ let make = (
     customerPaymentMethods
     ->Array.mapWithIndex((savedPaymentMethod, i) => {
       <PaymentMethodListView
-        key={savedPaymentMethod.payment_method_id}
+        key={savedPaymentMethod.paymentMethodId}
         savedPaymentMethod
         isButtomBorder={Some(customerPaymentMethods)->Option.getOr([])->Array.length - 1 === i
           ? false
@@ -228,7 +228,7 @@ let make = (
         savedCardCvv
         setSavedCardCvv
         isPaymentMethodSelected={selectedToken
-        ->Option.map(token => token.payment_method_id === savedPaymentMethod.payment_method_id)
+        ->Option.map(token => token.paymentMethodId === savedPaymentMethod.paymentMethodId)
         ->Option.getOr(i === 0)}
         setSelectedToken
       />

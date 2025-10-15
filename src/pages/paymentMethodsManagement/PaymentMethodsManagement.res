@@ -23,11 +23,11 @@ let make = () => {
   // }, [allApiData.savedPaymentMethods])
 
   let _filterPaymentMethod = (
-    savedMethods: array<CustomerPaymentMethodType.customer_payment_method_type>,
+    savedMethods: array<CustomerPaymentMethodType.customerPaymentMethodType>,
     paymentMethodId,
   ) => {
     savedMethods->Array.filter(pm => {
-      pm.payment_method_id != paymentMethodId
+      pm.paymentMethodId != paymentMethodId
     })
   }
 
@@ -43,7 +43,7 @@ let make = () => {
     //   switch res {
     //   | Some(data) => {
     //       let dict = data->Utils.getDictFromJson
-    //       let paymentMethodId = dict->Utils.getString("payment_method_id", "")
+    //       let paymentMethodId = dict->Utils.getString("paymentMethodId", "")
     //       let isDeleted = dict->Utils.getBool("deleted", false)
 
     //       if isDeleted {

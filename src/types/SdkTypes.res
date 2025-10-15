@@ -34,7 +34,7 @@ type localeTypes =
 
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
-type payment_method_type_wallet =
+type paymentMethodTypeWallet =
   GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | KLARNA | SKRILL | PAY_SAFE_CARD | NONE
 
 let walletNameMapper = str => {
@@ -67,7 +67,7 @@ type savedCard = {
   payment_token?: string,
   paymentMethodId?: string,
   mandate_id?: string,
-  nick_name?: string,
+  nickName?: string,
   isDefaultPaymentMethod?: bool,
   requiresCVV: bool,
   created?: string,
@@ -75,7 +75,7 @@ type savedCard = {
 }
 
 type savedWallet = {
-  payment_method_type?: string,
+  paymentMethodType?: string,
   walletType?: string,
   payment_token?: string,
   paymentMethodId?: string,
@@ -275,7 +275,7 @@ type sdkState =
   | WidgetTabSheet
   | HostedCheckout
   | CardWidget
-  | CustomWidget(payment_method_type_wallet)
+  | CustomWidget(paymentMethodTypeWallet)
   | ExpressCheckoutWidget
   | PaymentMethodsManagement
   | Headless
@@ -325,9 +325,9 @@ type hyperParams = {
   userAgent: option<string>,
   launchTime?: float,
   sdkVersion: string,
-  device_model: option<string>,
-  os_type: option<string>,
-  os_version: option<string>,
+  deviceModel: option<string>,
+  osType: option<string>,
+  osVersion: option<string>,
   deviceBrand: option<string>,
   bottomInset: option<float>,
   topInset: option<float>,
@@ -992,9 +992,9 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),
       sdkVersion: getString(hyperParams, "sdkVersion", ""),
-      device_model: getOptionString(hyperParams, "device_model"),
-      os_type: getOptionString(hyperParams, "os_type"),
-      os_version: getOptionString(hyperParams, "os_version"),
+      deviceModel: getOptionString(hyperParams, "deviceModel"),
+      osType: getOptionString(hyperParams, "osType"),
+      osVersion: getOptionString(hyperParams, "osVersion"),
       deviceBrand: getOptionString(hyperParams, "deviceBrand"),
       bottomInset: getOptionFloat(hyperParams, "bottomInset"),
       topInset: getOptionFloat(hyperParams, "topInset"),

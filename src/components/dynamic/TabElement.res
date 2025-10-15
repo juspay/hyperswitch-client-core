@@ -1,6 +1,6 @@
 @react.component
 let make = (
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: AccountPaymentMethodType.paymentMethodType,
   ~isScreenFocus,
   ~processRequest,
   ~setConfirmButtonData,
@@ -32,7 +32,7 @@ let make = (
     accessible,
   ) = React.useMemo4(_ => {
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
-  }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
+  }, (paymentMethodData.paymentMethodType, getRequiredFieldsForTabs, country, isScreenFocus))
 
   let handlePress = _ => {
     if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
@@ -54,15 +54,15 @@ let make = (
       let confirmButton = {
         GlobalConfirmButton.loading: false,
         handlePress,
-        payment_method_type: paymentMethodData.payment_method_type,
-        payment_experience: paymentMethodData.payment_experience,
+        paymentMethodType: paymentMethodData.paymentMethodType,
+        paymentExperience: paymentMethodData.paymentExperience,
         errorText: None,
       }
       setConfirmButtonData(confirmButton)
     }
     None
   }, (
-    paymentMethodData.payment_method_type,
+    paymentMethodData.paymentMethodType,
     isScreenFocus,
     setConfirmButtonData,
     requiredFields,

@@ -12,7 +12,7 @@ let make = () => {
   // let retrievePayment = AllPaymentHooks.useRetrieveHook()
   // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   // let processRequest = (
-  //   prop: PaymentMethodListType.payment_method_type,
+  //   prop: PaymentMethodListType.paymentMethodType,
   //   clientSecret,
   //   publishableKey,
   // ) => {
@@ -72,7 +72,7 @@ let make = () => {
   //       ~appURL=allApiData.additionalPMLData.redirect_url,
   //     ),
   //     payment_method: prop.payment_method_str,
-  //     payment_method_type: prop.payment_method_type,
+  //     paymentMethodType: prop.paymentMethodType,
   //     payment_method_data,
   //   }
 
@@ -82,7 +82,7 @@ let make = () => {
   //     ~clientSecret,
   //     ~errorCallback,
   //     ~responseCallback,
-  //     ~paymentMethod=prop.payment_method_type,
+  //     ~paymentMethod=prop.paymentMethodType,
   //     (),
   //   )
   // }

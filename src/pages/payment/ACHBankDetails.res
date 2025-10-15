@@ -27,7 +27,7 @@ module DetailsView = {
 }
 
 @react.component
-let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
+let make = (~data: PaymentConfirmTypes.achCreditTransfer) => {
   let (clicked, setClicked) = React.useState(_ => false)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let localeObject = GetLocale.useGetLocalObj()
@@ -71,10 +71,10 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
         borderColor: useThemeBasedStyle().silverBorderColor,
         gap: 12.->dp,
       })}>
-      <DetailsView title=localeObject.accountNumberText value={data.account_number} />
-      <DetailsView title=localeObject.bankName value={data.bank_name} />
-      <DetailsView title=localeObject.formFieldACHRoutingNumberLabel value={data.routing_number} />
-      <DetailsView title=localeObject.swiftCode value={data.swift_code} />
+      <DetailsView title=localeObject.accountNumberText value={data.accountNumber} />
+      <DetailsView title=localeObject.bankName value={data.bankName} />
+      <DetailsView title=localeObject.formFieldACHRoutingNumberLabel value={data.routingNumber} />
+      <DetailsView title=localeObject.swiftCode value={data.swiftCode} />
     </View>
     <Space height=18.0 />
     <View
@@ -114,19 +114,19 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
           let textToCopy =
             localeObject.accountNumberText ++
             " : " ++
-            data.account_number ++
+            data.accountNumber ++
             "\n" ++
             localeObject.bankName ++
             " : " ++
-            data.bank_name ++
+            data.bankName ++
             "\n" ++
             localeObject.bankName ++
             " : " ++
-            data.routing_number ++
+            data.routingNumber ++
             "\n" ++
             localeObject.swiftCode ++
             " : " ++
-            data.swift_code
+            data.swiftCode
           // let copyToClipboard = () => {
           //  Clipboard.setString(textToCopy)
           RNClipboard.setString(textToCopy)

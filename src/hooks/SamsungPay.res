@@ -35,7 +35,7 @@ let useSamsungPayValidityHook = () => {
   // let isSamsungPayPresentInPML = {
   //   let isPresentInAccPML = allApiData.paymentMethodList->Array.reduce(false, (acc, item) => {
   //     let isSamsungPayPresent = switch item.payment_method {
-  //     | WALLET => item.payment_method_type_wallet == SAMSUNG_PAY
+  //     | WALLET => item.paymentMethodTypeWallet == SAMSUNG_PAY
   //     | _ => false
   //     }
   //     acc || isSamsungPayPresent

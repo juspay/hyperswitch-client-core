@@ -96,8 +96,8 @@ let usePayButton = () => {
             try {
               launchApplePay(
                 [
-                  ("session_token_data", sessionObject.session_token_data),
-                  ("payment_request_data", sessionObject.payment_request_data),
+                  ("sessionTokenData", sessionObject.sessionTokenData),
+                  ("paymentRequestData", sessionObject.paymentRequestData),
                 ]
                 ->Dict.fromArray
                 ->JSON.Encode.object

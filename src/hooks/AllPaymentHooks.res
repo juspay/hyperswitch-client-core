@@ -121,7 +121,7 @@ let useBrowserHook = () => {
       Utils.getReturnUrl(
         ~appId=nativeProp.hyperParams.appId,
         ~appURL=accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirect_url
+          accountPaymentMethods.redirectUrl
         ),
       ),
       intervalId,
@@ -169,7 +169,7 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<array<AccountPaymentMethodType.payment_experience>>=?,
+    ~paymentExperience: option<array<AccountPaymentMethodType.paymentExperience>>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     ~isCardPayment=false,
     (),
@@ -207,11 +207,11 @@ let useRedirectHook = () => {
 
     let handleThirdPartySDKSessionFlow = (~nextAction) => {
       // TODO: add event loggers for analytics
-      let session_token = Option.getOr(nextAction, defaultNextAction).session_token
+      let sessionToken = Option.getOr(nextAction, defaultNextAction).sessionToken
       let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
-      switch session_token {
+      switch sessionToken {
       | Some(token) =>
-        Plaid.create({token: token.open_banking_session_token})
+        Plaid.create({token: token.openBankingSessionToken})
         Plaid.open_(openProps)->ignore
       | None => ()
       }

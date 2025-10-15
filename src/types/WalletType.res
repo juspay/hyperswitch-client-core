@@ -62,23 +62,23 @@ let arrayJsonToCamelCase = arr => {
 let itemToObject = (data: SessionsType.sessions): paymentData => {
   apiVersion: 2,
   apiVersionMinor: 0,
-  merchantInfo: data.merchant_info->transformKeysSnakeToCamel,
-  allowedPaymentMethods: data.allowed_payment_methods->arrayJsonToCamelCase,
-  transactionInfo: data.transaction_info->transformKeysSnakeToCamel,
-  shippingAddressRequired: data.shipping_address_required,
-  emailRequired: data.email_required,
-  shippingAddressParameters: data.shipping_address_parameters->transformKeysSnakeToCamel,
+  merchantInfo: data.merchantInfo->transformKeysSnakeToCamel,
+  allowedPaymentMethods: data.allowedPaymentMethods->arrayJsonToCamelCase,
+  transactionInfo: data.transactionInfo->transformKeysSnakeToCamel,
+  shippingAddressRequired: data.shippingAddressRequired,
+  emailRequired: data.emailRequired,
+  shippingAddressParameters: data.shippingAddressParameters->transformKeysSnakeToCamel,
 }
 
-type assurance_details = {
-  account_verified: bool,
-  card_holder_authenticated: bool,
+type assuranceDetails = {
+  accountVerified: bool,
+  cardHolderAuthenticated: bool,
 }
 type info = {
-  card_network: string,
-  card_details: string,
-  assurance_details?: assurance_details,
-  billing_address?: addressDetails,
+  cardNetwork: string,
+  cardDetails: string,
+  assuranceDetails?: assuranceDetails,
+  billingAddress?: addressDetails,
 }
 type tokenizationData = {token: string, \"type": string}
 
@@ -95,8 +95,8 @@ let getAssuranceDetails = (dict, str) => {
   ->Option.flatMap(JSON.Decode.object)
   ->Option.map(json => {
     {
-      account_verified: getBool(json, "accountVerified", false),
-      card_holder_authenticated: getBool(json, "cardHolderAuthenticated", false),
+      accountVerified: getBool(json, "accountVerified", false),
+      cardHolderAuthenticated: getBool(json, "cardHolderAuthenticated", false),
     }
   })
 }
@@ -107,10 +107,10 @@ let getInfo = (str, dict) => {
   ->Option.flatMap(JSON.Decode.object)
   ->Option.map(json => {
     {
-      card_network: getString(json, "cardNetwork", ""),
-      card_details: getString(json, "cardDetails", ""),
-      assurance_details: ?getAssuranceDetails(json, "assuranceDetails"),
-      billing_address: ?AddressUtils.getGooglePayBillingAddress(json, "billingAddress"),
+      cardNetwork: getString(json, "cardNetwork", ""),
+      cardDetails: getString(json, "cardDetails", ""),
+      assuranceDetails: ?getAssuranceDetails(json, "assuranceDetails"),
+      billingAddress: ?AddressUtils.getGooglePayBillingAddress(json, "billingAddress"),
     }
   })
 }
@@ -164,8 +164,8 @@ let itemToObjMapper = dict => {
 }
 
 let applePayItemToObjMapper = dict => {
-  paymentData: dict->Dict.get("payment_data")->Option.getOr(JSON.Encode.null),
-  paymentMethod: dict->Dict.get("payment_method")->Option.getOr(JSON.Encode.null),
+  paymentData: dict->Dict.get("paymentData")->Option.getOr(JSON.Encode.null),
+  paymentMethod: dict->Dict.get("paymentMethod")->Option.getOr(JSON.Encode.null),
   transactionIdentifier: dict->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null),
   email: ?getOptionString(dict, "email"),
   billingContact: ?AddressUtils.getApplePayBillingAddress(

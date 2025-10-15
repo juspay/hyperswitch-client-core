@@ -2,69 +2,69 @@ open Utils
 
 type savedCardType = {
   scheme: string,
-  issuer_country: string,
-  last4_digits: string,
-  expiry_month: string,
-  expiry_year: string,
-  card_token: option<string>,
-  card_holder_name: string,
-  card_fingerprint: option<string>,
-  nick_name: option<string>,
-  card_network: string,
-  card_isin: string,
-  card_issuer: string,
-  card_type: string,
-  saved_to_locker: bool,
+  issuerCountry: string,
+  last4Digits: string,
+  expiryMonth: string,
+  expiryYear: string,
+  cardToken: option<string>,
+  cardHolderName: string,
+  cardFingerprint: option<string>,
+  nickName: option<string>,
+  cardNetwork: string,
+  cardIsin: string,
+  cardIssuer: string,
+  cardType: string,
+  savedToLocker: bool,
 }
 
-type customer_payment_method_type = {
-  payment_token: string,
-  payment_method_id: string,
-  customer_id: string,
-  payment_method: PaymentMethodType.paymentMethod,
-  payment_method_str: string,
-  payment_method_type: string,
-  payment_method_type_wallet: SdkTypes.payment_method_type_wallet,
-  payment_method_issuer: string,
-  payment_method_issuer_code: option<string>,
-  recurring_enabled: bool,
-  installment_payment_enabled: bool,
-  payment_experience: array<PaymentMethodType.payment_experience_type>,
+type customerPaymentMethodType = {
+  paymentToken: string,
+  paymentMethodId: string,
+  customerId: string,
+  paymentMethod: PaymentMethodType.paymentMethod,
+  paymentMethodStr: string,
+  paymentMethodType: string,
+  paymentMethodTypeWallet: SdkTypes.paymentMethodTypeWallet,
+  paymentMethodIssuer: string,
+  paymentMethodIssuerCode: option<string>,
+  recurringEnabled: bool,
+  installmentPaymentEnabled: bool,
+  paymentExperience: array<PaymentMethodType.paymentExperienceType>,
   card: option<savedCardType>,
   metadata: option<string>,
   created: string,
   bank: option<string>,
-  surcharge_details: option<string>,
-  requires_cvv: bool,
-  last_used_at: string,
-  default_payment_method_set: bool,
+  surchargeDetails: option<string>,
+  requiresCvv: bool,
+  lastUsedAt: string,
+  defaultPaymentMethodSet: bool,
   billing: option<SdkTypes.addressDetails>,
-  mandate_id?: string,
+  mandateId?: string,
 }
 
-type customer_payment_methods = array<customer_payment_method_type>
+type customerPaymentMethodTypes = array<customerPaymentMethodType>
 
 type customerPaymentMethods = {
-  customer_payment_methods: customer_payment_methods,
-  is_guest_customer: bool,
+  customerPaymentMethodTypes: customerPaymentMethodTypes,
+  isGuestCustomer: bool,
 }
 
 let parseSavedCard = (cardDict: Js.Dict.t<JSON.t>) => {
   {
     scheme: cardDict->getString("scheme", ""),
-    issuer_country: cardDict->getString("issuer_country", ""),
-    last4_digits: cardDict->getString("last4_digits", ""),
-    expiry_month: cardDict->getString("expiry_month", ""),
-    expiry_year: cardDict->getString("expiry_year", ""),
-    card_token: cardDict->getOptionString("card_token"),
-    card_holder_name: cardDict->getString("card_holder_name", ""),
-    card_fingerprint: cardDict->getOptionString("card_fingerprint"),
-    nick_name: cardDict->getOptionString("nick_name"),
-    card_network: cardDict->getString("card_network", ""),
-    card_isin: cardDict->getString("card_isin", ""),
-    card_issuer: cardDict->getString("card_issuer", ""),
-    card_type: cardDict->getString("card_type", ""),
-    saved_to_locker: cardDict->getBool("saved_to_locker", false),
+    issuerCountry: cardDict->getString("issuerCountry", ""),
+    last4Digits: cardDict->getString("last4Digits", ""),
+    expiryMonth: cardDict->getString("expiryMonth", ""),
+    expiryYear: cardDict->getString("expiryYear", ""),
+    cardToken: cardDict->getOptionString("cardToken"),
+    cardHolderName: cardDict->getString("cardHolderName", ""),
+    cardFingerprint: cardDict->getOptionString("cardFingerprint"),
+    nickName: cardDict->getOptionString("nickName"),
+    cardNetwork: cardDict->getString("cardNetwork", ""),
+    cardIsin: cardDict->getString("cardIsin", ""),
+    cardIssuer: cardDict->getString("cardIssuer", ""),
+    cardType: cardDict->getString("cardType", ""),
+    savedToLocker: cardDict->getBool("savedToLocker", false),
   }
 }
 
@@ -78,8 +78,8 @@ let parsePaymentExperienceArray = (experienceArray: array<JSON.t>) => {
 let processCustomerPaymentMethods = (jsonArray: array<JSON.t>) => {
   jsonArray->Array.map(item => {
     let customerPaymentMethodDict = item->getDictFromJson
-    let paymentMethodStr = customerPaymentMethodDict->getString("payment_method", "")
-    let paymentMethodTypeStr = customerPaymentMethodDict->getString("payment_method_type", "")
+    let paymentMethodStr = customerPaymentMethodDict->getString("paymentMethod", "")
+    let paymentMethodTypeStr = customerPaymentMethodDict->getString("paymentMethodType", "")
 
     let cardData =
       customerPaymentMethodDict
@@ -89,7 +89,7 @@ let processCustomerPaymentMethods = (jsonArray: array<JSON.t>) => {
 
     let paymentExperienceArray =
       customerPaymentMethodDict
-      ->getArray("payment_experience")
+      ->getArray("paymentExperience")
       ->parsePaymentExperienceArray
 
     let billingData =
@@ -99,51 +99,51 @@ let processCustomerPaymentMethods = (jsonArray: array<JSON.t>) => {
       ->Option.map(AddressUtils.parseBillingAddress)
 
     {
-      payment_token: customerPaymentMethodDict->getString("payment_token", ""),
-      payment_method_id: customerPaymentMethodDict->getString("payment_method_id", ""),
-      customer_id: customerPaymentMethodDict->getString("customer_id", ""),
-      payment_method: PaymentMethodType.getPaymentMethod(paymentMethodStr),
-      payment_method_str: paymentMethodStr,
-      payment_method_type: paymentMethodTypeStr,
-      payment_method_type_wallet: PaymentMethodType.getWalletType(paymentMethodTypeStr),
-      payment_method_issuer: customerPaymentMethodDict->getString("payment_method_issuer", ""),
-      payment_method_issuer_code: customerPaymentMethodDict->getOptionString(
-        "payment_method_issuer_code",
+      paymentToken: customerPaymentMethodDict->getString("paymentToken", ""),
+      paymentMethodId: customerPaymentMethodDict->getString("paymentMethodId", ""),
+      customerId: customerPaymentMethodDict->getString("customerId", ""),
+      paymentMethod: PaymentMethodType.getPaymentMethod(paymentMethodStr),
+      paymentMethodStr: paymentMethodStr,
+      paymentMethodType: paymentMethodTypeStr,
+      paymentMethodTypeWallet: PaymentMethodType.getWalletType(paymentMethodTypeStr),
+      paymentMethodIssuer: customerPaymentMethodDict->getString("paymentMethodIssuer", ""),
+      paymentMethodIssuerCode: customerPaymentMethodDict->getOptionString(
+        "paymentMethodIssuerCode",
       ),
-      recurring_enabled: customerPaymentMethodDict->getBool("recurring_enabled", false),
-      installment_payment_enabled: customerPaymentMethodDict->getBool(
-        "installment_payment_enabled",
+      recurringEnabled: customerPaymentMethodDict->getBool("recurringEnabled", false),
+      installmentPaymentEnabled: customerPaymentMethodDict->getBool(
+        "installmentPaymentEnabled",
         false,
       ),
-      payment_experience: paymentExperienceArray,
+      paymentExperience: paymentExperienceArray,
       card: cardData,
       metadata: customerPaymentMethodDict->getOptionString("metadata"),
       created: getString(customerPaymentMethodDict, "created", ""),
       bank: customerPaymentMethodDict->getOptionString("bank"),
-      surcharge_details: customerPaymentMethodDict->getOptionString("surcharge_details"),
-      requires_cvv: customerPaymentMethodDict->getBool("requires_cvv", false),
-      last_used_at: getString(customerPaymentMethodDict, "last_used_at", ""),
-      default_payment_method_set: customerPaymentMethodDict->getBool(
-        "default_payment_method_set",
+      surchargeDetails: customerPaymentMethodDict->getOptionString("surchargeDetails"),
+      requiresCvv: customerPaymentMethodDict->getBool("requiresCvv", false),
+      lastUsedAt: getString(customerPaymentMethodDict, "last_used_at", ""),
+      defaultPaymentMethodSet: customerPaymentMethodDict->getBool(
+        "defaultPaymentMethodSet",
         false,
       ),
       billing: billingData,
-      mandate_id: customerPaymentMethodDict->getString("mandate_id", ""),
+      mandateId: customerPaymentMethodDict->getString("mandateId", ""),
     }
   })
 }
 
 let sortPaymentListArray = plist => {
   plist->Array.sort((s1, s2) => {
-    let priority1 = Types.priorityArr->Array.findIndex(x => x == s1.payment_method_type)
-    let priority2 = Types.priorityArr->Array.findIndex(x => x == s2.payment_method_type)
+    let priority1 = Types.priorityArr->Array.findIndex(x => x == s1.paymentMethodType)
+    let priority2 = Types.priorityArr->Array.findIndex(x => x == s2.paymentMethodType)
     let normalizedPriority1 = priority1 == -1 ? -1 : priority1
     let normalizedPriority2 = priority2 == -1 ? -1 : priority2
     if normalizedPriority1 !== normalizedPriority2 {
       Int.compare(normalizedPriority2, normalizedPriority1)
     } else {
-      let time1 = Date.fromString(s1.last_used_at)->Js.Date.valueOf
-      let time2 = Date.fromString(s2.last_used_at)->Js.Date.valueOf
+      let time1 = Date.fromString(s1.lastUsedAt)->Js.Date.valueOf
+      let time2 = Date.fromString(s2.lastUsedAt)->Js.Date.valueOf
       Float.compare(time2, time1)->Float.toInt->Ordering.fromInt
     }
   })
@@ -153,7 +153,7 @@ let sortPaymentListArray = plist => {
 
 let filterPaymentListArray = plist => {
   plist->Array.filter(v =>
-    switch (WebKit.platform, v.payment_method_type_wallet) {
+    switch (WebKit.platform, v.paymentMethodTypeWallet) {
     | (#android, APPLE_PAY)
     | (#androidWebView, APPLE_PAY)
     | (#ios, GOOGLE_PAY)
@@ -166,10 +166,10 @@ let filterPaymentListArray = plist => {
 let jsonToCustomerPaymentMethodType: JSON.t => customerPaymentMethods = res => {
   let customerPaymentMethodsDict = res->getDictFromJson
   {
-    customer_payment_methods: getArray(customerPaymentMethodsDict, "customer_payment_methods")
+    customerPaymentMethodTypes: getArray(customerPaymentMethodsDict, "customerPaymentMethodTypes")
     ->processCustomerPaymentMethods
     ->sortPaymentListArray
     ->filterPaymentListArray,
-    is_guest_customer: getBool(customerPaymentMethodsDict, "is_guest_customer", true),
+    isGuestCustomer: getBool(customerPaymentMethodsDict, "isGuestCustomer", true),
   }
 }

@@ -33,9 +33,9 @@ module AddPaymentMethodButton = {
 
 module PaymentMethodTitle = {
   @react.component
-  let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type) => {
+  let make = (~pmDetails: CustomerPaymentMethodType.customerPaymentMethodType) => {
     let nickName = switch pmDetails.card {
-    | Some(obj) => obj.nick_name
+    | Some(obj) => obj.nickName
     | _ => None
     }
 
@@ -53,15 +53,15 @@ module PaymentMethodTitle = {
       | None => React.null
       }}
       <TextWrapper
-        text={switch pmDetails.payment_method {
-        | WALLET => pmDetails.payment_method_type
+        text={switch pmDetails.paymentMethod {
+        | WALLET => pmDetails.paymentMethodType
         | CARD =>
           pmDetails.card
-          ->Option.map(card => "●●●● "->String.concat(card.last4_digits))
+          ->Option.map(card => "●●●● "->String.concat(card.last4Digits))
           ->Option.getOr("")
         | _ => ""
         }}
-        textType={switch pmDetails.payment_method {
+        textType={switch pmDetails.paymentMethod {
         | WALLET => CardTextBold
         | _ => CardText
         }}
@@ -71,11 +71,11 @@ module PaymentMethodTitle = {
 }
 
 @react.component
-let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type, ~handleDelete) => {
+let make = (~pmDetails: CustomerPaymentMethodType.customerPaymentMethodType, ~handleDelete) => {
   let {component} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
 
-  let paymentMethodId = pmDetails.payment_method_id
+  let paymentMethodId = pmDetails.paymentMethodId
   <CustomPressable
     onPress={_ => handleDelete(paymentMethodId)}
     style={s({
@@ -90,9 +90,9 @@ let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type, 
     })}>
     <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center, flex: 4.})}>
       <Icon
-        name={switch pmDetails.payment_method {
-        | CARD => pmDetails.card->Option.map(card => card.card_network)->Option.getOr("")
-        | WALLET => pmDetails.payment_method_type
+        name={switch pmDetails.paymentMethod {
+        | CARD => pmDetails.card->Option.map(card => card.cardNetwork)->Option.getOr("")
+        | WALLET => pmDetails.paymentMethodType
         | _ => ""
         }}
         height=36.

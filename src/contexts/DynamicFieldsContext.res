@@ -4,7 +4,7 @@ type dynamicFieldsData = {
   sheetType: sheetType,
   setSheetType: sheetType => unit,
   getRequiredFieldsForTabs: (
-    AccountPaymentMethodType.payment_method_type,
+    AccountPaymentMethodType.paymentMethodType,
     Dict.t<JSON.t>,
     bool,
   ) => (
@@ -15,7 +15,7 @@ type dynamicFieldsData = {
     bool,
   ),
   getRequiredFieldsForButton: (
-    AccountPaymentMethodType.payment_method_type,
+    AccountPaymentMethodType.paymentMethodType,
     RescriptCore.Dict.t<Core__JSON.t>,
     option<SdkTypes.addressDetails>,
     option<SdkTypes.addressDetails>,
@@ -32,8 +32,8 @@ type dynamicFieldsData = {
     PaymentMethodType.paymentMethod,
     string,
     string,
-    SdkTypes.payment_method_type_wallet,
-    array<AccountPaymentMethodType.payment_experience>,
+    SdkTypes.paymentMethodTypeWallet,
+    array<AccountPaymentMethodType.paymentExperience>,
   ),
   isNicknameSelected: bool,
   setIsNicknameSelected: bool => unit,
@@ -79,36 +79,36 @@ let make = (~children) => {
   }, [setCountry])
 
   let getRequiredFieldsForTabs = (
-    paymentMethodData: AccountPaymentMethodType.payment_method_type,
+    paymentMethodData: AccountPaymentMethodType.paymentMethodType,
     formData,
     isScreenFocus,
   ) => {
-    let eligibleConnectors = switch paymentMethodData.payment_method {
+    let eligibleConnectors = switch paymentMethodData.paymentMethod {
     | CARD =>
-      paymentMethodData.card_networks->AccountPaymentMethodType.getEligibleConnectorFromCardNetwork
+      paymentMethodData.cardNetworks->AccountPaymentMethodType.getEligibleConnectorFromCardNetwork
     | _ =>
-      paymentMethodData.payment_experience->AccountPaymentMethodType.getEligibleConnectorFromPaymentExperience
+      paymentMethodData.paymentExperience->AccountPaymentMethodType.getEligibleConnectorFromPaymentExperience
     }
 
     let configParams: SuperpositionTypes.superpositionBaseContext = {
-      payment_method: paymentMethodData.payment_method_str,
-      payment_method_type: paymentMethodData.payment_method_type,
-      mandate_type: accountPaymentMethodData
-      ->Option.map(data => data.payment_type === NORMAL ? "non_mandate" : "mandate")
+      paymentMethod: paymentMethodData.paymentMethodStr,
+      paymentMethodType: paymentMethodData.paymentMethodType,
+      mandateType: accountPaymentMethodData
+      ->Option.map(data => data.paymentType === NORMAL ? "non_mandate" : "mandate")
       ->Option.getOr("non_mandate"),
-      collect_billing_details_from_wallet_connector: "required",
-      collect_shipping_details_from_wallet_connector: "required",
+      collectBillingDetailsFromWalletConnector: "required",
+      collectShippingDetailsFromWalletConnector: "required",
       country,
     }
 
     let requiredFieldsFromPML = SuperpositionHelper.extractFieldValuesFromPML(
-      paymentMethodData.required_fields,
+      paymentMethodData.requiredFields,
     )
 
-    switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
+    switch requiredFieldsFromPML->Dict.get("paymentMethodData.billing.address.country") {
     | None | Some("") =>
       requiredFieldsFromPML->Dict.set(
-        "payment_method_data.billing.address.country",
+        "paymentMethodData.billing.address.country",
         nativeProp.hyperParams.country,
       )
     | _ => ()
@@ -123,8 +123,8 @@ let make = (~children) => {
     (
       missingRequiredFields,
       CommonUtils.mergeDict(initialValues, formData),
-      paymentMethodData.payment_method === CARD,
-      PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
+      paymentMethodData.paymentMethod === CARD,
+      PaymentUtils.getCardNetworks(paymentMethodData.cardNetworks->Some),
       isScreenFocus,
     )
   }
@@ -138,7 +138,7 @@ let make = (~children) => {
     (OTHERS: PaymentMethodType.paymentMethod),
     "",
     "",
-    (NONE: SdkTypes.payment_method_type_wallet),
+    (NONE: SdkTypes.paymentMethodTypeWallet),
     [],
   ))
 
@@ -149,11 +149,11 @@ let make = (~children) => {
       walletDict,
       isCardPayment,
       enabledCardSchemes,
-      payment_method,
-      payment_method_str,
-      payment_method_type,
-      payment_method_type_wallet,
-      payment_experience,
+      paymentMethod,
+      paymentMethodStr,
+      paymentMethodType,
+      paymentMethodTypeWallet,
+      paymentExperience,
     ) => {
       setWalletData(_ => (
         requiredFields,
@@ -161,73 +161,73 @@ let make = (~children) => {
         walletDict,
         isCardPayment,
         enabledCardSchemes,
-        payment_method,
-        payment_method_str,
-        payment_method_type,
-        payment_method_type_wallet,
-        payment_experience,
+        paymentMethod,
+        paymentMethodStr,
+        paymentMethodType,
+        paymentMethodTypeWallet,
+        paymentExperience,
       ))
     },
     [setWalletData],
   )
 
   let getRequiredFieldsForButton = (
-    paymentMethodData: AccountPaymentMethodType.payment_method_type,
+    paymentMethodData: AccountPaymentMethodType.paymentMethodType,
     walletDict,
     billingAddress,
     shippingAddress,
     useIntentData,
   ) => {
-    let eligibleConnectors = switch paymentMethodData.payment_method {
+    let eligibleConnectors = switch paymentMethodData.paymentMethod {
     | CARD =>
-      paymentMethodData.card_networks
+      paymentMethodData.cardNetworks
       ->Array.get(0)
-      ->Option.mapOr([], network => network.eligible_connectors)
+      ->Option.mapOr([], network => network.eligibleConnectors)
     | _ =>
-      paymentMethodData.payment_experience
+      paymentMethodData.paymentExperience
       ->Array.get(0)
-      ->Option.mapOr([], experience => experience.eligible_connectors)
+      ->Option.mapOr([], experience => experience.eligibleConnectors)
     }
 
     let requiredFieldsFromSource = if (
       accountPaymentMethodData
       ->Option.map(accountPaymentMethods =>
-        accountPaymentMethods.collect_billing_details_from_wallets
+        accountPaymentMethods.collectBillingDetailsFromWallets
       )
       ->Option.getOr(false) && !useIntentData
     ) {
       let requiredFieldsFromWallet = switch billingAddress {
       | Some(billingAddress) => AddressUtils.getFlatAddressDict(~billingAddress, ~shippingAddress)
-      | None => SuperpositionHelper.extractFieldValuesFromPML(paymentMethodData.required_fields)
+      | None => SuperpositionHelper.extractFieldValuesFromPML(paymentMethodData.requiredFields)
       }
-      switch requiredFieldsFromWallet->Dict.get("payment_method_data.billing.address.country") {
+      switch requiredFieldsFromWallet->Dict.get("paymentMethodData.billing.address.country") {
       | Some("") | None =>
-        requiredFieldsFromWallet->Dict.set("payment_method_data.billing.address.country", country)
+        requiredFieldsFromWallet->Dict.set("paymentMethodData.billing.address.country", country)
       | _ => ()
       }
       requiredFieldsFromWallet
     } else {
       let requiredFieldsFromPML = SuperpositionHelper.extractFieldValuesFromPML(
-        paymentMethodData.required_fields,
+        paymentMethodData.requiredFields,
       )
-      switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
+      switch requiredFieldsFromPML->Dict.get("paymentMethodData.billing.address.country") {
       | Some("") | None =>
-        requiredFieldsFromPML->Dict.set("payment_method_data.billing.address.country", country)
+        requiredFieldsFromPML->Dict.set("paymentMethodData.billing.address.country", country)
       | _ => ()
       }
       requiredFieldsFromPML
     }
 
     let configParams: SuperpositionTypes.superpositionBaseContext = {
-      payment_method: paymentMethodData.payment_method_str,
-      payment_method_type: paymentMethodData.payment_method_type,
-      mandate_type: accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+      paymentMethod: paymentMethodData.paymentMethodStr,
+      paymentMethodType: paymentMethodData.paymentMethodType,
+      mandateType: accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
       ->Option.getOr(NORMAL) === NORMAL
         ? "non_mandate"
         : "mandate",
-      collect_billing_details_from_wallet_connector: "required",
-      collect_shipping_details_from_wallet_connector: "required",
+      collectBillingDetailsFromWalletConnector: "required",
+      collectShippingDetailsFromWalletConnector: "required",
       country,
     }
 
@@ -244,13 +244,13 @@ let make = (~children) => {
         missingRequiredFields,
         initialValues,
         walletDict,
-        paymentMethodData.payment_method === CARD,
-        PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
-        paymentMethodData.payment_method,
-        paymentMethodData.payment_method_str,
-        paymentMethodData.payment_method_type,
-        paymentMethodData.payment_method_type_wallet,
-        paymentMethodData.payment_experience,
+        paymentMethodData.paymentMethod === CARD,
+        PaymentUtils.getCardNetworks(paymentMethodData.cardNetworks->Some),
+        paymentMethodData.paymentMethod,
+        paymentMethodData.paymentMethodStr,
+        paymentMethodData.paymentMethodType,
+        paymentMethodData.paymentMethodTypeWallet,
+        paymentMethodData.paymentExperience,
       )
       setSheetType(DynamicFieldsSheet)
     }

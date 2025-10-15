@@ -149,17 +149,17 @@ let useLoggerHook = () => {
       firstEvent,
       paymentMethod: paymentMethod->Option.getOr(""),
       paymentExperience: ?switch paymentExperience {
-      | Some(payment_experience: array<AccountPaymentMethodType.payment_experience>) =>
-        payment_experience
+      | Some(paymentExperience: array<AccountPaymentMethodType.paymentExperience>) =>
+        paymentExperience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.payment_experience_type)
+        ->Option.map(paymentExperience => paymentExperience.paymentExperienceType)
       | None =>
         switch customerPaymentExperience {
-        | Some(payment_experience: array<PaymentMethodType.payment_experience_type>) =>
-          payment_experience
+        | Some(paymentExperience: array<PaymentMethodType.paymentExperienceType>) =>
+          paymentExperience
           ->Array.get(0)
-          ->Option.map(payment_experience_type =>
-            PaymentMethodType.getPaymentExperienceType(payment_experience_type)
+          ->Option.map(paymentExperienceType =>
+            PaymentMethodType.getPaymentExperienceType(paymentExperienceType)
           )
         | None => None
         }

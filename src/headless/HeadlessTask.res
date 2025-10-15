@@ -55,7 +55,7 @@ let make = (~props) => {
 
   let confirmGPay = (
     var,
-    data: CustomerPaymentMethodType.customer_payment_method_type,
+    data: CustomerPaymentMethodType.customerPaymentMethodType,
     nativeProp,
   ) => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -67,11 +67,11 @@ let make = (~props) => {
         ->Utils.getDictFromJson
         ->WalletType.itemToObjMapper
 
-      let payment_method_data =
+      let paymentMethodData =
         [
           (
             "wallet",
-            [(data.payment_method_type, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
+            [(data.paymentMethodType, obj.paymentMethodData->Utils.getJsonObjectFromRecord)]
             ->Dict.fromArray
             ->JSON.Encode.object,
           ),
@@ -79,7 +79,7 @@ let make = (~props) => {
             "billing",
             switch obj.paymentMethodData.info {
             | Some(info) =>
-              switch info.billing_address {
+              switch info.billingAddress {
               | Some(address) => address->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               }
@@ -90,7 +90,7 @@ let make = (~props) => {
         ->Dict.fromArray
         ->JSON.Encode.object
 
-      generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
+      generateWalletConfirmBody(~data, ~nativeProp, ~paymentMethodData)
       ->confirmCall(nativeProp)
       ->ignore
     | "Cancel" => reRegisterCallback.contents()
@@ -107,7 +107,7 @@ let make = (~props) => {
 
   let confirmApplePay = (
     var,
-    data: CustomerPaymentMethodType.customer_payment_method_type,
+    data: CustomerPaymentMethodType.customerPaymentMethodType,
     nativeProp,
   ) => {
     switch var
@@ -129,15 +129,15 @@ let make = (~props) => {
         {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
       )
     | _ =>
-      let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
+      let paymentData = var->Dict.get("paymentData")->Option.getOr(JSON.Encode.null)
 
-      let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
+      let paymentMethod = var->Dict.get("paymentMethod")->Option.getOr(JSON.Encode.null)
 
-      let transaction_identifier =
-        var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)
+      let transactionIdentifier =
+        var->Dict.get("transactionIdentifier")->Option.getOr(JSON.Encode.null)
 
       if (
-        transaction_identifier->Utils.getStringFromJson(
+        transactionIdentifier->Utils.getStringFromJson(
           "Simulated Identifier",
         ) == "Simulated Identifier"
       ) {
@@ -147,18 +147,18 @@ let make = (~props) => {
       } else {
         let paymentData =
           [
-            ("payment_data", payment_data),
-            ("payment_method", payment_method),
-            ("transaction_identifier", transaction_identifier),
+            ("paymentData", paymentData),
+            ("paymentMethod", paymentMethod),
+            ("transactionIdentifier", transactionIdentifier),
           ]
           ->Dict.fromArray
           ->JSON.Encode.object
 
-        let payment_method_data =
+        let paymentMethodData =
           [
             (
               "wallet",
-              [(data.payment_method_type, paymentData)]
+              [(data.paymentMethodType, paymentData)]
               ->Dict.fromArray
               ->JSON.Encode.object,
             ),
@@ -173,7 +173,7 @@ let make = (~props) => {
           ->Dict.fromArray
           ->JSON.Encode.object
 
-        generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
+        generateWalletConfirmBody(~data, ~nativeProp, ~paymentMethodData)
         ->confirmCall(nativeProp)
         ->ignore
       }
@@ -182,24 +182,24 @@ let make = (~props) => {
 
   let processRequest = async (
     nativeProp,
-    data: CustomerPaymentMethodType.customer_payment_method_type,
+    data: CustomerPaymentMethodType.customerPaymentMethodType,
     response,
     sessions: option<array<SessionsType.sessions>>,
   ) => {
-    switch data.payment_method {
+    switch data.paymentMethod {
     | CARD =>
       let bodyArr = [
-        ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
-        ("payment_method", "card"->JSON.Encode.string),
-        ("payment_token", data.payment_token->JSON.Encode.string),
-        (
-          "card_cvc",
-          switch response->Utils.getDictFromJson->Dict.get("cvc") {
-          | Some(cvc) => cvc
-          | None => JSON.Encode.null
-          },
-        ),
-      ]
+          ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+          ("paymentMethod", "card"->JSON.Encode.string),
+          ("paymentToken", data.paymentToken->JSON.Encode.string),
+          (
+            "card_cvc",
+            switch response->Utils.getDictFromJson->Dict.get("cvc") {
+            | Some(cvc) => cvc
+            | None => JSON.Encode.null
+            },
+          ),
+        ]
 
       data.billing
       ->Option.map(address => {
@@ -222,11 +222,11 @@ let make = (~props) => {
       let session = switch sessions {
       | Some(sessionData) =>
         sessionData
-        ->Array.find(item => item.wallet_name == data.payment_method_type_wallet)
+        ->Array.find(item => item.walletName == data.paymentMethodTypeWallet)
         ->Option.getOr(SessionsType.defaultToken)
       | None => SessionsType.defaultToken
       }
-      switch data.payment_method_type_wallet {
+      switch data.paymentMethodTypeWallet {
       | GOOGLE_PAY => {
           let gPayCallback = async var => {
             try {
@@ -274,8 +274,8 @@ let make = (~props) => {
         }
         HyperModule.launchApplePay(
           [
-            ("session_token_data", session.session_token_data),
-            ("payment_request_data", session.payment_request_data),
+            ("sessionTokenData", session.sessionTokenData),
+            ("paymentRequestData", session.paymentRequestData),
           ]
           ->Dict.fromArray
           ->JSON.Encode.object
@@ -316,30 +316,30 @@ let make = (~props) => {
 
   let getPaymentSession = (
     nativeProp,
-    spmData: CustomerPaymentMethodType.customer_payment_methods,
+    spmData: CustomerPaymentMethodType.customerPaymentMethodTypes,
     sessions: option<array<SessionsType.sessions>>,
   ) => {
     if spmData->Array.length > 0 {
       let defaultSpmData = switch spmData->Array.find(savedCard =>
-        savedCard.default_payment_method_set
+        savedCard.defaultPaymentMethodSet
       ) {
       | None => getDefaultError->Utils.getJsonObjectFromRecord
       | Some(x) => x->Utils.getJsonObjectFromRecord
       }
 
       let lastUsedSpmData = switch spmData->Array.reduce(None, (
-        a: option<CustomerPaymentMethodType.customer_payment_method_type>,
-        b: CustomerPaymentMethodType.customer_payment_method_type,
+        a: option<CustomerPaymentMethodType.customerPaymentMethodType>,
+        b: CustomerPaymentMethodType.customerPaymentMethodType,
       ) => {
         let lastUsedAtA = switch a {
-        | Some(a) => Some(a.last_used_at)
+        | Some(a) => Some(a.lastUsedAt)
         | None => None
         }
         lastUsedAtA
         ->Option.map(date =>
           compare(
             Date.fromString(date)->Js.Date.getTime,
-            Date.fromString(b.last_used_at)->Js.Date.getTime,
+            Date.fromString(b.lastUsedAt)->Js.Date.getTime,
           ) < 0
             ? Some(b)
             : a
@@ -358,7 +358,7 @@ let make = (~props) => {
           response => {
             switch response->Utils.getDictFromJson->Utils.getOptionString("paymentToken") {
             | Some(token) =>
-              switch spmData->Array.find(x => x.payment_token == token) {
+              switch spmData->Array.find(x => x.paymentToken == token) {
               | Some(data) => processRequest(nativeProp, data, response, sessions)->ignore
               | None =>
                 headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
@@ -380,22 +380,22 @@ let make = (~props) => {
     switch customerSavedPMData {
     | Some(obj) =>
       let spmData = obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType
-      let sessionSpmData = spmData.customer_payment_methods->Array.filter(data => {
-        switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
+      let sessionSpmData = spmData.customerPaymentMethodTypes->Array.filter(data => {
+        switch (data.paymentMethodTypeWallet, ReactNative.Platform.os) {
         | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
         | _ => false
         }
       })
 
-      let walletSpmData = spmData.customer_payment_methods->Array.filter(data => {
-        switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
+      let walletSpmData = spmData.customerPaymentMethodTypes->Array.filter(data => {
+        switch (data.paymentMethodTypeWallet, ReactNative.Platform.os) {
         | (GOOGLE_PAY, _) | (APPLE_PAY, _) => false
         | _ => true
         }
       })
 
-      let cardSpmData = spmData.customer_payment_methods->Array.filter(data => {
-        switch data.payment_method {
+      let cardSpmData = spmData.customerPaymentMethodTypes->Array.filter(data => {
+        switch data.paymentMethod {
         | CARD => true
         | _ => false
         }
@@ -417,10 +417,10 @@ let make = (~props) => {
         } else if session != JSON.Encode.null {
           switch session->Utils.getDictFromJson->SessionsType.itemToObjMapper {
           | Some(sessions) =>
-            let walletNameArray = sessions->Array.map(wallet => wallet.wallet_name)
+            let walletNameArray = sessions->Array.map(wallet => wallet.walletName)
             let filteredSessionSpmData =
               sessionSpmData->Array.filter(data =>
-                walletNameArray->Array.includes(data.payment_method_type_wallet)
+                walletNameArray->Array.includes(data.paymentMethodTypeWallet)
               )
             let filteredSpmData =
               filteredSessionSpmData->Array.concat(walletSpmData->Array.concat(cardSpmData))
