@@ -5,7 +5,12 @@ type props = {
   style?: ReactNative.Style.t,
   allowedPaymentMethods?: string,
 }
+let make : React.component<props>= if HyperModule.isTurboModuleEnabled() {
+    let turboGooglePayButton = %raw(
+      "require('../HyperModules/spec/views/GooglePayButtonNativeComponent.ts')"
+    )
+    turboGooglePayButton["default"]
+  } else {
+    ReactNative.NativeModules.requireNativeComponent("GooglePayButton")
+  }
 
-let make: React.component<props> = ReactNative.NativeModules.requireNativeComponent(
-  "GooglePayButton",
-)
