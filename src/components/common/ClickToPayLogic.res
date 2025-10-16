@@ -213,8 +213,7 @@ let useClickToPayUI = () => {
         }
       }
     } catch {
-    | error => {
-        Console.error2("[ClickToPay] Checkout error:", error)
+    | _ => {
         setScreenState(_ => CARDS_DISPLAY)
         JSON.Encode.null
       }

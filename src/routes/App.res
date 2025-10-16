@@ -9,8 +9,6 @@ module ContextWrapper = {
     let (clickToPayCookies, setClickToPayCookies) = React.useState(_ => None)
 
     let handleCookiesExtracted = React.useCallback1(cookies => {
-      Console.log("[ClickToPay] Cookies extracted from library!")
-      Console.log2("[ClickToPay] Cookie data:", cookies)
       setClickToPayCookies(_ => Some(cookies))
     }, [setClickToPayCookies])
 

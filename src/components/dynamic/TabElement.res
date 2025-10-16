@@ -76,44 +76,43 @@ let make = (
               pmd->Dict.get("card")->Option.flatMap(JSON.Decode.object)
             )
 
-          let cardNumber =
+          let primaryAccountNumber =
             cardData
             ->Option.flatMap(cd => cd->Dict.get("card_number")->Option.flatMap(JSON.Decode.string))
             ->Option.getOr("")
+            ->String.replaceAll(" ", "")
 
-          let expiryMonth =
+          let panExpirationMonth =
             cardData
             ->Option.flatMap(cd =>
               cd->Dict.get("card_exp_month")->Option.flatMap(JSON.Decode.string)
             )
             ->Option.getOr("")
 
-          let expiryYear =
+          let panExpirationYear =
             cardData
             ->Option.flatMap(cd =>
               cd->Dict.get("card_exp_year")->Option.flatMap(JSON.Decode.string)
             )
+            ->Option.map(year => {
+              year->String.length == 2 ? "20" ++ year : year
+            })
             ->Option.getOr("")
 
-          let cvv =
+          let cardSecurityCode =
             cardData
             ->Option.flatMap(cd => cd->Dict.get("card_cvc")->Option.flatMap(JSON.Decode.string))
             ->Option.getOr("")
 
-          // Create card data object for encryption
-          let cardData: ClickToPay.Types.cardData = {
-            cardNumber,
-            expiryMonth,
-            expiryYear,
-            cvv,
-            cardholderName: ?(
-              formData
-              ->Dict.get("payment_method_data.card.card_holder_name")
-              ->Option.flatMap(JSON.Decode.string)
-            ),
-          }
+          let cardHolderName = "test user" // TO DO: cardHolder name from pml and formdata
 
-          // Call checkout to encrypt the card
+          let cardData: ClickToPay.Types.cardData = {
+            primaryAccountNumber,
+            panExpirationMonth,
+            panExpirationYear,
+            cardSecurityCode,
+            cardHolderName,
+          }
           let checkoutParams: ClickToPay.Types.checkoutParams = {
             cardData: ?Some(cardData),
             amount: "100.00", // TODO: Get from payment intent
@@ -123,7 +122,6 @@ let make = (
           }
 
           let encryptedResult = await clickToPay.checkout(checkoutParams)
-          Console.log2("[ClickToPay] Encryption successful:", encryptedResult)
 
           setLoading(ProcessingPayments)
 
@@ -174,8 +172,7 @@ let make = (
             (),
           )
         } catch {
-        | error => {
-            Console.error2("[ClickToPay] Encryption failed:", error)
+        | _ => {
             setLoading(FillingDetails)
             showAlert(~errorType="error", ~message="Click to Pay encryption failed")
           }

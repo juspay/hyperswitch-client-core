@@ -25,11 +25,12 @@ module Types = {
     expiryMonth: string,
     expiryYear: string,
     digitalCardId: string,
+    paymentCardDescriptor: string,
   }
 
   type userIdentity = {
     value: string,
-    @as("type") type_: string, // "EMAIL_ADDRESS" | "PHONE_NUMBER"
+    @as("type") type_: string,
   }
 
   type validateResult = {
@@ -41,11 +42,11 @@ module Types = {
   }
 
   type cardData = {
-    cardNumber: string,
-    expiryMonth: string,
-    expiryYear: string,
-    cvv: string,
-    cardholderName?: string,
+    primaryAccountNumber: string,
+    panExpirationMonth: string,
+    panExpirationYear: string,
+    cardSecurityCode: string,
+    cardHolderName?: string,
   }
 
   type checkoutParams = {

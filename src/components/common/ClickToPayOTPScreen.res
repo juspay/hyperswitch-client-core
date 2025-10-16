@@ -3,7 +3,7 @@ open ReactNative.Style
 
 @react.component
 let make = (
-  ~maskedEmail: option<string>=?,
+  ~userEmail: option<string>=?,
   ~maskedPhone: option<string>=?,
   ~otp: array<string>,
   ~otpRefs: array<option<React.ref<Nullable.t<ReactNative.TextInput.element>>>>,
@@ -63,8 +63,8 @@ let make = (
     <Text style={s({fontSize: 20., marginBottom: 12.->dp, fontWeight: #800, color: "#000000"})}>
       {"Click to Pay has found your linked cards"->React.string}
     </Text>
-    <Text style={s({fontSize: 14., marginBottom: 12.->dp, fontWeight: #600})}>
-      {switch (maskedEmail, maskedPhone) {
+    <Text style={s({fontSize: 14., marginBottom: 12.->dp, color: "rgba(0, 0, 0, 0.83)"})}>
+      {switch (userEmail, maskedPhone) {
       | (Some(email), Some(phone)) => `Enter the code sent to ${email}, ${phone}`->React.string
       | (Some(email), None) => `Enter the code sent to ${email}`->React.string
       | (None, Some(phone)) => `Enter the code sent to ${phone}`->React.string
@@ -149,82 +149,81 @@ let make = (
         )->React.string}
       </Text>
     </TouchableOpacity>
-    <TouchableOpacity
-      onPress={_ => setRememberMe(prev => !prev)}
+    <View
       style={s({
         flexDirection: #row,
         alignItems: #center,
         marginBottom: 16.->dp,
+        alignSelf: #"flex-start",
       })}>
-      <View
-        style={s({
-          width: 20.->dp,
-          height: 20.->dp,
-          borderWidth: 2.,
-          borderColor: rememberMe ? "#007AFF" : "#CCC",
-          borderRadius: 3.,
-          marginRight: 8.->dp,
-          justifyContent: #center,
-          alignItems: #center,
-          backgroundColor: rememberMe ? "#007AFF" : "transparent",
-        })}>
-        {rememberMe
-          ? <Text style={s({color: "#FFFFFF", fontSize: 14., fontWeight: #bold})}>
-              {"\u2713"->React.string}
-            </Text>
-          : React.null}
-      </View>
-      <Text style={s({fontSize: 12., color: "#666", marginRight: 6.->dp})}>
-        {"Remember me on this browser"->React.string}
-      </Text>
+      <ClickableTextElement
+        disabled=false
+        initialIconName="checkboxClicked"
+        updateIconName=Some("checkboxNotClicked")
+        text="Remember me on this browser"
+        isSelected=rememberMe
+        setIsSelected={value => setRememberMe(_ => value)}
+        textType={ModalText}
+        size=18.
+      />
+      <Space width=4. />
       <TouchableOpacity onPress={_ => setShowTooltip(_ => true)}>
         <Icon name="tooltip" height=12. width=12. />
       </TouchableOpacity>
-    </TouchableOpacity>
-    {showTooltip
-      ? <View
+    </View>
+    <Modal
+      visible=showTooltip
+      transparent=true
+      animationType=#fade
+      onRequestClose={_ => setShowTooltip(_ => false)}>
+      <TouchableOpacity
+        activeOpacity=1.
+        onPress={_ => setShowTooltip(_ => false)}
+        style={s({
+          flex: 1.,
+          backgroundColor: "rgba(0, 0, 0, 0.5)",
+          justifyContent: #center,
+          alignItems: #center,
+          padding: 20.->dp,
+        })}>
+        <TouchableOpacity
+          activeOpacity=1.
+          onPress={_ => ()}
           style={s({
-            backgroundColor: "#F5F5F5",
-            borderRadius: 8.,
+            backgroundColor: component.background,
+            borderRadius,
             padding: 16.->dp,
-            marginBottom: 16.->dp,
-            position: #relative,
+            maxWidth: 320.->dp,
+            width: 100.->pct,
           })}>
           <View
             style={s({
-              position: #absolute,
-              top: -8.->dp,
-              right: 20.->dp,
-              width: 0.->dp,
-              height: 0.->dp,
-              backgroundColor: "transparent",
-              borderStyle: #solid,
-              borderLeftWidth: 8.,
-              borderRightWidth: 8.,
-              borderBottomWidth: 8.,
-              borderLeftColor: "transparent",
-              borderRightColor: "transparent",
-              borderBottomColor: "#F5F5F5",
-            })}
-          />
-          <TouchableOpacity
-            onPress={_ => setShowTooltip(_ => false)}
-            style={s({
-              position: #absolute,
-              top: 8.->dp,
-              right: 8.->dp,
-              padding: 4.->dp,
+              flexDirection: #row,
+              justifyContent: #"space-between",
+              marginBottom: 12.->dp,
             })}>
-            <Icon name="close" height=16. width=16. />
-          </TouchableOpacity>
-          <Text style={s({fontSize: 14., color: "#000000", marginBottom: 12.->dp, lineHeight: 20., paddingRight: 24.->dp})}>
+            <Text style={s({fontSize: 16., fontWeight: #600, color: component.color})}>
+              {"Remember Me"->React.string}
+            </Text>
+            <TouchableOpacity onPress={_ => setShowTooltip(_ => false)}>
+              <Icon name="close" height=20. width=20. />
+            </TouchableOpacity>
+          </View>
+          <Text
+            style={s({
+              fontSize: 14.,
+              color: component.color,
+              marginBottom: 12.->dp,
+              lineHeight: 20.,
+            })}>
             {"If you're remembered, you won't need to enter a code next time to securely access your saved cards."->React.string}
           </Text>
-          <Text style={s({fontSize: 14., color: "#000000", lineHeight: 20.})}>
+          <Text style={s({fontSize: 14., color: component.color, lineHeight: 20.})}>
             {"Not recommended for public or shared devices because this uses cookies."->React.string}
           </Text>
-        </View>
-      : React.null}
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
     <TouchableOpacity
       onPress={_ => onSubmit()}
       disabled={otp->Array.some(d => d === "") || disabled}

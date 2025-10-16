@@ -6,7 +6,6 @@ let make = (
   ~cards: array<ClickToPay.Types.clickToPayCard>,
   ~selectedCardId: option<string>,
   ~setSelectedCardId: (option<string> => option<string>) => unit,
-  ~maskedEmail: option<string>=?,
   ~onNotYouPress: option<unit => unit>=?,
   ~disabled: bool=false,
   ~cardBrands: array<string>=[],
@@ -45,17 +44,12 @@ let make = (
       })
       ->React.array}
     </View>
-    {switch (maskedEmail, onNotYouPress) {
-    | (Some(email), Some(onPress)) =>
+    {switch onNotYouPress {
+    | Some(onPress) =>
       <View style={s({alignItems: #"flex-start", marginBottom: 16.->dp})}>
-        <View style={s({flexDirection: #row, alignItems: #center})}>
-          <Text style={s({fontSize: 14., color: "#666", marginRight: 8.->dp})}>
-            {email->React.string}
-          </Text>
-          <TouchableOpacity onPress={_ => onPress()}>
-            <Text style={s({fontSize: 14., color: "#007AFF"})}> {"Not you?"->React.string} </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={_ => onPress()}>
+          <Text style={s({fontSize: 14., color: "#007AFF"})}> {"Not you?"->React.string} </Text>
+        </TouchableOpacity>
       </View>
     | _ => React.null
     }}
@@ -68,11 +62,8 @@ let make = (
       let isLastCard = index === cards->Array.length - 1
 
       let brandText = {
-        let brandLower = card.brand->String.toLowerCase
-        if brandLower->String.includes("mastercard") {
+        if card.paymentCardDescriptor->String.toLocaleLowerCase === "mastercard" {
           "mastercard"
-        } else if brandLower->String.includes("visa") {
-          "visa"
         } else {
           "visa"
         }

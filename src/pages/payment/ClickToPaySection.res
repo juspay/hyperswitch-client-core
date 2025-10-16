@@ -19,17 +19,24 @@ let make = (
   let hasValidated = React.useRef(false)
   let showAlert = AlertHook.useAlerts()
 
-  let (maskedEmail, maskedPhone) = React.useMemo1(() => {
-    switch clickToPayUI.maskedChannel {
-    | Some(channel) =>
+  let (userEmail, maskedPhone) = React.useMemo2(() => {
+    switch (clickToPayUI.userIdentity, clickToPayUI.maskedChannel) {
+    | (Some(identity), Some(channel)) =>
       if channel->String.includes("@") {
-        (Some(channel), None) // maskedValidationChannel is an email
+        (Some(identity.value), None)
       } else {
-        (None, Some(channel)) // maskedValidationChannel is a phone
+        (Some(identity.value), Some(channel))
       }
-    | None => (None, None)
+    | (Some(identity), None) => (Some(identity.value), None)
+    | (None, Some(channel)) =>
+      if channel->String.includes("@") {
+        (Some(channel), None)
+      } else {
+        (None, Some(channel))
+      }
+    | (None, None) => (None, None)
     }
-  }, [clickToPayUI.maskedChannel])
+  }, (clickToPayUI.userIdentity, clickToPayUI.maskedChannel))
 
   let cardBrands = React.useMemo1(() => {
     switch sessionTokenData {
@@ -70,7 +77,7 @@ let make = (
     switch clickToPaySessionObject {
     | Some(sessionObject) =>
       let provider = switch sessionObject.provider {
-      | Some("mastercard") => #visa // change it to mastercard while pushing.
+      | Some("mastercard") => #mastercard
       | Some("visa") => #visa
       | _ => #visa
       }
@@ -82,7 +89,7 @@ let make = (
         ->Array.join(",")
 
       let clickToPayConfig: ClickToPay.Types.clickToPayConfig = {
-        dpaId: "498WCF39JVQVH1UK4TGG21leLAj_MJQoapP5f12IanfEYaSno", //sessionObject.dpa_id->Option.getOr(""),
+        dpaId: sessionObject.dpa_id->Option.getOr(""),
         environment: #sandbox,
         provider,
         locale: ?sessionObject.locale,
@@ -90,8 +97,7 @@ let make = (
         clientId: ?sessionObject.dpa_name,
         transactionAmount: ?sessionObject.transaction_amount,
         transactionCurrency: ?sessionObject.transaction_currency_code,
-        timeout: 3000,
-        // debug: nativeProp.env != "live",
+        // timeout: 150000,
       }
 
       if clickToPayUI.clickToPay.config->Nullable.isNullable {
@@ -99,11 +105,9 @@ let make = (
 
         clickToPayUI.clickToPay.initialize(clickToPayConfig)
         ->Promise.then(() => {
-          Console.log("[ClickToPay] SDK initialized successfully")
           Promise.resolve()
         })
-        ->Promise.catch(error => {
-          Console.error2("[ClickToPay] Error initializing SDK:", error)
+        ->Promise.catch(_ => {
           clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
           Promise.resolve()
         })
@@ -143,24 +147,15 @@ let make = (
 
           clickToPayUI.clickToPay.validate(userIdentity)
           ->Promise.then(result => {
-            Console.log2("[ClickToPay] Validation result:", result)
-
             switch (result.requiresOTP, result.requiresNewCard, result.cards) {
             | (Some(true), _, _) => {
-                Console.log("[ClickToPay] OTP required")
                 clickToPayUI.setMaskedChannel(_ => result.maskedValidationChannel)
                 clickToPayUI.setScreenState(_ => ClickToPayLogic.OTP_INPUT)
               }
-            | (_, Some(true), _) => {
-                Console.log("[ClickToPay] Add card flow required")
-                onRequiresNewCard()
-              }
-            | (_, _, Some(cards)) if cards->Array.length > 0 => {
-                Console.log("[ClickToPay] Cards fetched successfully")
-                clickToPayUI.setScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
-              }
+            | (_, Some(true), _) => onRequiresNewCard()
+            | (_, _, Some(cards)) if cards->Array.length > 0 =>
+              clickToPayUI.setScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
             | _ => {
-                Console.log("[ClickToPay] No cards found")
                 clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
                 showAlert(~errorType="warning", ~message="No cards found")
               }
@@ -168,14 +163,12 @@ let make = (
 
             Promise.resolve()
           })
-          ->Promise.catch(error => {
-            Console.error2("[ClickToPay] Validation error:", error)
+          ->Promise.catch(_ => {
             clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
             Promise.resolve()
           })
           ->ignore
         } else {
-          Console.warn("[ClickToPay] No email found in session token")
           clickToPayUI.setScreenState(_ => ClickToPayLogic.NONE)
         }
       }
@@ -212,7 +205,7 @@ let make = (
           }),
         ])}>
         <ClickToPayOTPScreen
-          ?maskedEmail
+          ?userEmail
           ?maskedPhone
           otp=clickToPayUI.otp
           otpRefs=clickToPayUI.otpRefs
@@ -250,7 +243,6 @@ let make = (
           cards=clickToPayUI.clickToPay.cards
           selectedCardId=clickToPayUI.selectedCardId
           setSelectedCardId=setClickToPayCardAndClearSaved
-          ?maskedEmail
           onNotYouPress={() => {
             clickToPayUI.setPreviousScreenState(_ => ClickToPayLogic.CARDS_DISPLAY)
             clickToPayUI.setScreenState(_ => ClickToPayLogic.NOT_YOU)

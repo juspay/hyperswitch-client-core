@@ -75,7 +75,7 @@ let make = () => {
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                   setIsSavedPaymentScreen
                   setIsClickToPayNewCardFlow
-                  shouldInitializeClickToPay={!hasNavigatedAwayRef.current}
+                  shouldInitializeClickToPay={!hasNavigatedAwayRef.current} // handle properly from api types
                 />
               : <PaymentSheet
                   setConfirmButtonData

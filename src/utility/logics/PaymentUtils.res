@@ -181,7 +181,6 @@ let generateClickToPayConfirmBody = (
     ("payment_method_type", paymentMethodType->JSON.Encode.string),
     ("ctp_service_details", ctpServiceDetails->JSON.Encode.object),
   ]
-  Console.log2("[ClickToPay] Confirm body before email:", confirmBody)
   let confirmBodyWithEmail = if provider->String.toLowerCase === "visa" {
     Array.concat(confirmBody, [("email", email->JSON.Encode.string)])
   } else {
