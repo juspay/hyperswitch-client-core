@@ -62,9 +62,8 @@ module CVVComponent = {
               display: #flex,
               flexDirection: #row,
               alignItems: #center,
-              paddingLeft: 47.5->dp,
+              paddingLeft: 100.->dp,
             })}>
-            <Space width=50. />
             <ErrorText text=errorMsgText />
           </View>
         : React.null}

@@ -411,8 +411,8 @@ let make = (
           | _ =>
             switch (
               cardExpiryYearMeta.error,
-              expireDate->String.length < 7 ||
-                (expireDate->String.length === 7 && checkCardExpiry(expireDate)),
+              (expireDate->String.length > 0 || !cardExpiryYearMeta.touched) &&
+                (expireDate->String.length < 7 || checkCardExpiry(expireDate)),
             ) {
             | (Some(error), false) => <ErrorText text={Some(error)} />
             | _ =>

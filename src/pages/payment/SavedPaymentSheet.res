@@ -81,6 +81,7 @@ let make = (
           accountPaymentMethods.redirect_url
         )
       },
+      ~billing=token.billing,
       ~screen_height=viewPortContants.screenHeight,
       ~screen_width=viewPortContants.screenWidth,
     )
