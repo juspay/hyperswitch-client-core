@@ -6,6 +6,9 @@ let make = (
   ~customerPaymentMethods: CustomerPaymentMethodType.customer_payment_methods,
   ~setConfirmButtonData,
   ~merchantName,
+  ~setIsSavedPaymentScreen=?,
+  ~setIsClickToPayNewCardFlow=?,
+  ~shouldInitializeClickToPay=false,
   ~isScreenFocus=true,
   ~animated=true,
 ) => {
@@ -38,6 +41,35 @@ let make = (
   let setSelectedToken = React.useCallback1(token => {
     setSelectedToken(_ => token)
   }, [setSelectedToken])
+
+  let (clickToPayState, setClickToPayState) = React.useState(() => {
+    let initialState: ClickToPayHandler.clickToPayUIState = {
+      screenState: ClickToPayHooks.NONE,
+    }
+    initialState
+  })
+
+  let isClickToPaySelected =
+    selectedToken
+    ->Option.map(card => card.payment_method_type_wallet === SdkTypes.CLICK_TO_PAY)
+    ->Option.getOr(false)
+
+  let onClickToPayStateChange = React.useCallback1(state => {
+    setClickToPayState(_ => state)
+  }, [setClickToPayState])
+
+  let onRequiresNewCard = React.useCallback2(() => {
+    switch setIsSavedPaymentScreen {
+    | Some(setter) => setter(false)
+    | None => ()
+    }
+    switch setIsClickToPayNewCardFlow {
+    | Some(setter) => setter(true)
+    | None => ()
+    }
+  }, (setIsSavedPaymentScreen, setIsClickToPayNewCardFlow))
+
+  let clickToPayUI = ClickToPayHooks.useClickToPayUI()
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
@@ -379,134 +411,202 @@ let make = (
     ->Option.getOr(NORMAL) !== NORMAL
 
   let handlePress = _ => {
-    switch (selectedToken, !showDisclaimer || (showDisclaimer && isSaveCardCheckboxSelected)) {
-    | (Some(token), true) =>
-      switch token.payment_method {
-      | CARD =>
-        token.requires_cvv &&
-        (savedCardCvv->Option.isNone ||
-          !Validation.cvcNumberInRange(
-            savedCardCvv->Option.getOr(""),
-            token.card
-            ->Option.map(card => card.card_network)
-            ->Option.getOr(""),
-          ))
-          ? {
-              if savedCardCvv->Option.isNone {
-                setSavedCardCvv(_ => Some(""))
+    if isClickToPaySelected {
+      clickToPayUI.handleCheckout(selectedToken)
+      ->Promise.then(checkoutResult => {
+        let clickToPaySessionObject = switch sessionTokenData {
+        | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
+        | _ => None
+        }
+
+        switch clickToPaySessionObject {
+        | Some(sessionObject) => {
+            let provider = sessionObject.provider->Option.getOr("")
+            let email = sessionObject.email->Option.getOr("")
+
+            let body = PaymentUtils.generateClickToPayConfirmBody(
+              ~nativeProp,
+              ~checkoutResult,
+              ~provider,
+              ~email,
+            )
+            let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+              if !closeSDK {
+                setLoading(FillingDetails)
               }
-              setLoading(FillingDetails)
+              handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
             }
-          : processRequestSaved(token)
-      | WALLET =>
-        switch token.payment_method_type_wallet {
-        | APPLE_PAY =>
-          let sessionObject = switch sessionTokenData {
-          | Some(sessionData) =>
-            sessionData
-            ->Array.find(item => item.wallet_name == APPLE_PAY)
-            ->Option.getOr(SessionsType.defaultToken)
-          | _ => SessionsType.defaultToken
-          }
-          if (
-            sessionObject.session_token_data == JSON.Encode.null ||
-              sessionObject.payment_request_data == JSON.Encode.null
-          ) {
-            setLoading(FillingDetails)
-            showAlert(~errorType="warning", ~message="Waiting for Sessions API")
-          } else {
-            logger(
-              ~logType=DEBUG,
-              ~value="apple_pay",
-              ~category=USER_EVENT,
-              ~paymentMethod="apple_pay",
-              ~eventName=APPLE_PAY_STARTED_FROM_JS,
+
+            let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+              switch paymentStatus {
+              | PaymentSuccess => {
+                  setLoading(PaymentSuccess)
+                  setTimeout(() => {
+                    handleSuccessFailure(~apiResStatus=status, ())
+                  }, 300)->ignore
+                }
+              | _ => handleSuccessFailure(~apiResStatus=status, ())
+              }
+            }
+            redirectHook(
+              ~body,
+              ~publishableKey=nativeProp.publishableKey,
+              ~clientSecret=nativeProp.clientSecret,
+              ~errorCallback,
+              ~responseCallback,
+              ~paymentMethod="click_to_pay",
+              ~isCardPayment=true,
               (),
             )
+          }
+        | None => {
+            setLoading(FillingDetails)
+            showAlert(~errorType="error", ~message="Click to Pay session not found")
+          }
+        }
 
-            let timerId = setTimeout(() => {
+        Promise.resolve()
+      })
+      ->Promise.catch(_ => {
+        setLoading(FillingDetails)
+        showAlert(~errorType="error", ~message="Click to Pay checkout failed")
+        Promise.resolve()
+      })
+      ->ignore
+    } else {
+      switch (selectedToken, !showDisclaimer || (showDisclaimer && isSaveCardCheckboxSelected)) {
+      | (Some(token), true) =>
+        switch token.payment_method {
+        | CARD =>
+          token.requires_cvv &&
+          (savedCardCvv->Option.isNone ||
+            !Validation.cvcNumberInRange(
+              savedCardCvv->Option.getOr(""),
+              token.card
+              ->Option.map(card => card.card_network)
+              ->Option.getOr(""),
+            ))
+            ? {
+                if savedCardCvv->Option.isNone {
+                  setSavedCardCvv(_ => Some(""))
+                }
+                setLoading(FillingDetails)
+              }
+            : processRequestSaved(token)
+        | WALLET =>
+          switch token.payment_method_type_wallet {
+          | APPLE_PAY =>
+            let sessionObject = switch sessionTokenData {
+            | Some(sessionData) =>
+              sessionData
+              ->Array.find(item => item.wallet_name == APPLE_PAY)
+              ->Option.getOr(SessionsType.defaultToken)
+            | _ => SessionsType.defaultToken
+            }
+            if (
+              sessionObject.session_token_data == JSON.Encode.null ||
+                sessionObject.payment_request_data == JSON.Encode.null
+            ) {
               setLoading(FillingDetails)
-              showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+              showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+            } else {
               logger(
                 ~logType=DEBUG,
                 ~value="apple_pay",
                 ~category=USER_EVENT,
                 ~paymentMethod="apple_pay",
-                ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+                ~eventName=APPLE_PAY_STARTED_FROM_JS,
                 (),
               )
-            }, 5000)
 
-            WebKit.platform === #ios
-              ? HyperModule.launchApplePay(
-                  [
-                    ("session_token_data", sessionObject.session_token_data),
-                    ("payment_request_data", sessionObject.payment_request_data),
-                  ]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object
-                  ->JSON.stringify,
-                  confirmApplePay,
-                  _ => {
-                    logger(
-                      ~logType=DEBUG,
-                      ~value="apple_pay",
-                      ~category=USER_EVENT,
-                      ~paymentMethod="apple_pay",
-                      ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                      (),
-                    )
-                  },
-                  _ => {
-                    clearTimeout(timerId)
-                  },
+              let timerId = setTimeout(() => {
+                setLoading(FillingDetails)
+                showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+                logger(
+                  ~logType=DEBUG,
+                  ~value="apple_pay",
+                  ~category=USER_EVENT,
+                  ~paymentMethod="apple_pay",
+                  ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+                  (),
                 )
-              : launchApplePay(
-                  [
-                    ("session_token_data", sessionObject.session_token_data),
-                    ("payment_request_data", sessionObject.payment_request_data),
-                  ]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object
-                  ->JSON.stringify,
-                )
-          }
+              }, 5000)
 
-        | GOOGLE_PAY =>
-          let sessionObject = switch sessionTokenData {
-          | Some(sessionData) =>
-            sessionData
-            ->Array.find(item => item.wallet_name == GOOGLE_PAY)
-            ->Option.getOr(SessionsType.defaultToken)
-          | _ => SessionsType.defaultToken
+              WebKit.platform === #ios
+                ? HyperModule.launchApplePay(
+                    [
+                      ("session_token_data", sessionObject.session_token_data),
+                      ("payment_request_data", sessionObject.payment_request_data),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+                    ->JSON.stringify,
+                    confirmApplePay,
+                    _ => {
+                      logger(
+                        ~logType=DEBUG,
+                        ~value="apple_pay",
+                        ~category=USER_EVENT,
+                        ~paymentMethod="apple_pay",
+                        ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+                        (),
+                      )
+                    },
+                    _ => {
+                      clearTimeout(timerId)
+                    },
+                  )
+                : launchApplePay(
+                    [
+                      ("session_token_data", sessionObject.session_token_data),
+                      ("payment_request_data", sessionObject.payment_request_data),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+                    ->JSON.stringify,
+                  )
+            }
+
+          | GOOGLE_PAY =>
+            let sessionObject = switch sessionTokenData {
+            | Some(sessionData) =>
+              sessionData
+              ->Array.find(item => item.wallet_name == GOOGLE_PAY)
+              ->Option.getOr(SessionsType.defaultToken)
+            | _ => SessionsType.defaultToken
+            }
+            WebKit.platform === #android
+              ? HyperModule.launchGPay(
+                  WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+                  confirmGPay,
+                )
+              : launchGPay(
+                  WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+                )
+          | _ => processRequestSaved(token)
           }
-          WebKit.platform === #android
-            ? HyperModule.launchGPay(
-                WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-                confirmGPay,
-              )
-            : launchGPay(
-                WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-              )
         | _ => processRequestSaved(token)
         }
-      | _ => processRequestSaved(token)
-      }
-    | _ =>
-      setLoading(FillingDetails)
-      if showDisclaimer && !isSaveCardCheckboxSelected {
-        setErrorText(_ => Some("Please accept the terms and conditions to continue."))
+      | _ =>
+        setLoading(FillingDetails)
+        if showDisclaimer && !isSaveCardCheckboxSelected {
+          setErrorText(_ => Some("Please accept the terms and conditions to continue."))
+        }
       }
     }
   }
 
-  React.useEffect6(() => {
+  React.useEffect7(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
-      payment_method_type: selectedToken
-      ->Option.map(token => token.payment_method_type)
-      ->Option.getOr("Saved Payment"),
+      payment_method_type: if isClickToPaySelected {
+        "Click to Pay"
+      } else {
+        selectedToken
+        ->Option.map(token => token.payment_method_type)
+        ->Option.getOr("Saved Payment")
+      },
       customer_payment_experience: ?selectedToken->Option.map(token => token.payment_experience),
       errorText,
     }
@@ -520,47 +620,67 @@ let make = (
     selectedToken,
     savedCardCvv,
     errorText,
+    isClickToPaySelected,
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
-    <Space />
-    <View
-      style={array([
-        getShadowStyle,
-        s({
-          paddingHorizontal: 16.->dp,
-          paddingVertical: 5.->dp,
-          borderRadius,
-          borderWidth,
-          borderColor: component.borderColor,
-          backgroundColor: component.background,
-        }),
-      ])}>
-      <SavedPaymentMethod
-        customerPaymentMethods
-        selectedToken
-        setSelectedToken
-        savedCardCvv
-        setSavedCardCvv
-        isScreenFocus
-        animated
-      />
+    <View style={s({position: #relative, flex: 1.})}>
+      <Space />
+      {shouldInitializeClickToPay
+        ? <>
+            <ClickToPayHandler
+              sessionTokenData
+              onStateChange=onClickToPayStateChange
+              onRequiresNewCard
+              selectedToken
+              setSelectedToken
+              clickToPayUI
+            />
+            {clickToPayState.screenState != ClickToPayHooks.NONE ? <Space /> : React.null}
+          </>
+        : React.null}
+      {customerPaymentMethods->Array.length > 0
+        ? <>
+            <View
+              style={array([
+                getShadowStyle,
+                s({
+                  paddingHorizontal: 16.->dp,
+                  paddingVertical: 5.->dp,
+                  borderRadius,
+                  borderWidth,
+                  borderColor: component.borderColor,
+                  backgroundColor: component.background,
+                }),
+              ])}>
+              <SavedPaymentMethod
+                customerPaymentMethods
+                selectedToken
+                setSelectedToken
+                savedCardCvv
+                setSavedCardCvv
+                isScreenFocus
+                animated
+              />
+            </View>
+            <Space />
+          </>
+        : React.null}
+      {showDisclaimer
+        ? <View style={s({paddingHorizontal: 2.->dp})}>
+            <Space height=5. />
+            <ClickableTextElement
+              disabled={false}
+              initialIconName="checkboxClicked"
+              updateIconName=Some("checkboxNotClicked")
+              text={localeObj.cardTermsPart1 ++ merchantName ++ localeObj.cardTermsPart2}
+              isSelected={isSaveCardCheckboxSelected}
+              setIsSelected={setSaveCardChecboxSelected}
+              textType={TextWrapper.ModalText}
+            />
+            <Space height=5. />
+          </View>
+        : React.null}
     </View>
-    <Space />
-    {showDisclaimer
-      ? <View style={s({paddingHorizontal: 2.->dp})}>
-          <Space height=5. />
-          <ClickableTextElement
-            disabled={false}
-            initialIconName="checkboxClicked"
-            updateIconName=Some("checkboxNotClicked")
-            text={localeObj.cardTermsPart1 ++ merchantName ++ localeObj.cardTermsPart2}
-            isSelected={isSaveCardCheckboxSelected}
-            setIsSelected={setSaveCardChecboxSelected}
-            textType={TextWrapper.ModalText}
-          />
-          <Space height=5. />
-        </View>
-      : React.null}
   </ErrorBoundary>
 }

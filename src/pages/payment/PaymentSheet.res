@@ -1,5 +1,11 @@
 @react.component
-let make = (~setConfirmButtonData, ~isLoading, ~tabArr, ~elementArr) => {
+let make = (
+  ~setConfirmButtonData,
+  ~isLoading,
+  ~tabArr,
+  ~elementArr,
+  ~isClickToPayNewCardFlow=false,
+) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   AllApiDataModifier.useAddWebPaymentButton()

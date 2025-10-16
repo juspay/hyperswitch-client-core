@@ -35,7 +35,15 @@ type localeTypes =
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
 type payment_method_type_wallet =
-  GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | KLARNA | SKRILL | PAY_SAFE_CARD | NONE
+  | GOOGLE_PAY
+  | APPLE_PAY
+  | PAYPAL
+  | SAMSUNG_PAY
+  | KLARNA
+  | SKRILL
+  | PAY_SAFE_CARD
+  | CLICK_TO_PAY
+  | NONE
 
 let walletNameMapper = str => {
   switch str {
@@ -43,6 +51,7 @@ let walletNameMapper = str => {
   | "apple_pay" => "Apple Pay"
   | "paypal" => "Paypal"
   | "samsung_pay" => "Samsung Pay"
+  | "click_to_pay" => "Click to Pay"
   | _ => ""
   }
 }
@@ -53,6 +62,7 @@ let walletNameToTypeMapper = str => {
   | "Apple Pay" => APPLE_PAY
   | "Paypal" => PAYPAL
   | "Samsung Pay" => SAMSUNG_PAY
+  | "Click to Pay" => CLICK_TO_PAY
   | _ => NONE
   }
 }
