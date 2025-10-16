@@ -1,6 +1,6 @@
 # Hyperswitch Android Setup Guide
 
-This guide walks you through setting up and running the Hyperswitch Android demo app using the official SDK and `PaymentSession` class.
+This guide explains how to set up and run the Hyperswitch Android demo app using the official SDK
 
 ---
 
@@ -10,7 +10,7 @@ You can set up the Hyperswitch Android SDK in two ways — via **Gradle** or by 
 
 ### Option 1: Gradle (Recommended)
 
-Add the dependency to your app-level `build.gradle` file:
+Add the dependency to your app-level `build.gradle`:
 
 ```gradle
 dependencies {
@@ -23,27 +23,26 @@ dependencies {
 1. Clone the repository:
 
 ```bash
-git clone --recurse-submodules https://github.com/juspay/hyperswitch.git
-cd hyperswitch
+git clone https://github.com/juspay/hyperswitch-client-core.git
+cd hyperswitch-client-core
 git submodule update --init --recursive
 ```
 
-2. Build the SDK locally:
+2. Build the SDK locally (used mainly for detox testing):
 
 ```bash
+# This step is required only if you need local SDK artifacts for tests or detox
 yarn run build:android:detox
 ```
-
 ---
 
 ## 2. Getting Started
 
-Follow these steps to set up the project and run the demo app locally.
-
 ### Step 1: Install Required Tools
-- **Android Studio** (2022.1.1+)
-- **Java JDK 11+**
-- **Yarn & Node.js** (for SDK builds)
+
+- Android Studio (2022.1.1 or later)
+- Java JDK 11+
+- Yarn & Node.js (only if building the SDK locally)
 
 Verify:
 ```bash
@@ -51,57 +50,64 @@ java -version
 yarn -v
 ```
 
----
-
 ### Step 2: Open the Project
 
-1. Open **Android Studio**
-2. Go to **File → Open**
-3. Select the `android` folder inside the cloned repository
-4. Wait for Gradle sync to complete
-
----
+1. Open **Android Studio**  
+2. File → Open → select the `android` folder inside the cloned repo  
+3. Wait for Gradle sync to complete
 
 ### Step 3: Start the Local Backend
 
-The sample app connects to a backend server to fetch the `clientSecret` and `publishableKey`.
+The demo app fetches `clientSecret` and `publishableKey` from the repository's local backend script.
 
-Run your backend locally on port `5252`:
+Run your backend locally on port 5252:
 
 ```bash
-python3 server.py
+# from repo root
+node server.js
 ```
 
 Use the following endpoint inside the Android app:
-
 ```
 http://10.0.2.2:5252
 ```
 
 ---
 
-### Step 4: Initialize and Launch PaymentSession
+### Step 4: Initialize and Launch `PaymentSession`
 
-Hyperswitch uses `PaymentSession` for managing the payment flow.
-
+Hyperswitch uses PaymentSession to manage the payment flow.
 
 ```kotlin
 val paymentSession = PaymentSession(this, publishableKey)
 paymentSession.initPaymentSession(clientSecret)
 
+// Minimal inline customization example (self-contained)
+val appearance = PaymentSheet.Appearance().apply {
+    // simple color / button tweaks shown inline
+    colors.background = Color.parseColor("#F5F8F9")
+    colors.primary = Color.parseColor("#8DBD00")
+    primaryButton.cornerRadius = 32
+}
+
+val configuration = PaymentSheet.Configuration.Builder("Hyperswitch Demo")
+    .appearance(appearance)
+    .primaryButtonLabel("Purchase ($2.00)")
+    .displaySavedPaymentMethods(true)
+    .build()
+
+// Launch payment sheet
 CoroutineScope(Dispatchers.Main).launch {
-    val config = getCustomisations()
-    paymentSession.presentPaymentSheet(config, ::onPaymentSheetResult)
+    paymentSession.presentPaymentSheet(configuration, ::onPaymentSheetResult)
 }
 ```
-
 This automatically launches the Hyperswitch payment sheet and handles callbacks.
 
 ---
 
 ### Step 5: Run the App
 
-1. Connect a device or open an emulator (AVD Manager)  
+1. Connect a device or open an emulator  
 2. Click **Run ▶️** in Android Studio or press **Shift + F10**
 
 ---
@@ -109,20 +115,18 @@ This automatically launches the Hyperswitch payment sheet and handles callbacks.
 ## 3. Common Issues
 
 | Issue | Solution |
-|-------|-----------|
+|---|---|
 | Gradle sync fails | Click **Sync Project with Gradle Files** |
-| Backend not reachable | Use `http://10.0.2.2` instead of `localhost` |
-| SDK build failed | Run `yarn run build:android:detox` |
+| Backend not reachable from emulator | Use `http://10.0.2.2:5252` instead of `localhost` |
+| SDK build failed | Run `yarn run build:android:detox` (only if doing local SDK build) |
 | Emulator not starting | Enable virtualization (VT-x / AMD-V) in BIOS |
 
 ---
 
 ## 4. Tips
 
-- Always rebuild SDK after local changes:  
-  ```bash
-  yarn run build:android:detox
-  ```
-- Don’t hardcode API keys in the app.
-
----
+- Don’t hardcode secret keys in the app. Use publishable keys on the client and your backend for secret operations.
+- Rebuild SDK only when making SDK changes.
+```bash
+yarn run build:android:detox
+```

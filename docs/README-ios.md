@@ -47,7 +47,7 @@ cd ..
 
 ## 5. Open Project in Xcode
 
-1. Open `HyperswitchClientCore.xcworkspace` in Xcode  
+1. Open `hyperswitch.xcworkspace` in Xcode  
 2. Select the target device or simulator  
 3. Wait for dependencies to load
 
@@ -70,6 +70,17 @@ import Hyperswitch
 let paymentSession = PaymentSession(publishableKey: "YOUR_PUBLISHABLE_KEY")
 paymentSession.initPaymentSession(paymentIntentClientSecret: "CLIENT_SECRET_FROM_BACKEND")
 
+// Presenting the payment sheet (demo usage)
+paymentSession.presentPaymentSheet(viewController: self, configuration: configuration) { result in
+    switch result {
+    case .completed:
+        print("Payment complete")
+    case .failed(let error):
+        print("Payment failed:", error)
+    case .canceled:
+        print("Payment canceled")
+    }
+}
 ```
 
 ---
