@@ -1,39 +1,39 @@
 type online = {
-  userAgent?: string,
-  acceptHeader?: string,
+  user_agent?: string,
+  accept_header?: string,
   language?: string,
-  colorDepth?: int,
-  javaEnabled?: bool,
-  javaScriptEnabled?: bool,
-  screenHeight?: int,
-  screenWidth?: int,
-  timeZone?: int,
-  deviceModel?: string,
-  osType?: string,
-  osVersion?: string,
+  color_depth?: int,
+  java_enabled?: bool,
+  java_script_enabled?: bool,
+  screen_height?: int,
+  screen_width?: int,
+  time_zone?: int,
+  device_model?: string,
+  os_type?: string,
+  os_version?: string,
 }
 
 type customerAcceptance = {
-  acceptanceType: string,
-  acceptedAt: string,
+  acceptance_type: string,
+  accepted_at: string,
   online: online,
 }
 
-type mandateData = {customerAcceptance: customerAcceptance}
+type mandate_data = {customer_acceptance: customerAcceptance}
 
 type redirectType = {
-  clientSecret: string,
-  returnUrl?: string,
+  client_secret: string,
+  return_url?: string,
   email?: string,
-  paymentMethod?: string,
-  paymentMethodType?: string,
-  paymentMethodData?: JSON.t,
-  paymentExperience?: string,
-  paymentToken?: string,
-  mandateData?: mandateData,
-  browserInfo?: online,
-  customerAcceptance?: customerAcceptance,
-  cardCvc?: string,
+  payment_method?: string,
+  payment_method_type?: string,
+  payment_method_data?: JSON.t,
+  payment_experience?: string,
+  payment_token?: string,
+  mandate_data?: mandate_data,
+  browser_info?: online,
+  customer_acceptance?: customerAcceptance,
+  card_cvc?: string,
 }
 
 type pollConfig = {
@@ -50,23 +50,23 @@ type threeDsData = {
 }
 
 type sessionToken = {
-  walletname: string,
-  openBankingSessionToken: string,
+  wallet_name: string,
+  open_banking_session_token: string,
 }
 type achCreditTransfer = {
-  accountNumber: string,
-  bankName: string,
-  routingNumber: string,
-  swiftCode: string,
+  account_number: string,
+  bank_name: string,
+  routing_number: string,
+  swift_code: string,
 }
-type bankTransferStepsAndChargesDetails = {achCreditTransfer?: achCreditTransfer}
+type bankTransferStepsAndChargesDetails = {ach_credit_transfer?: achCreditTransfer}
 
 type nextAction = {
   redirectToUrl: string,
   type_: string,
   threeDsData?: threeDsData,
-  sessionToken?: sessionToken,
-  bankTransferStepsAndChargesDetail?: bankTransferStepsAndChargesDetails,
+  session_token?: sessionToken,
+  bank_transfer_steps_and_charges_detail?: bankTransferStepsAndChargesDetails,
 }
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
@@ -98,23 +98,23 @@ let defaultSuccess = {
 }
 let getACH_bank_transfer = (data: option<bankTransferStepsAndChargesDetails>) => {
   switch data {
-  | Some(data) => data.achCreditTransfer
+  | Some(data) => data.ach_credit_transfer
   | None =>
     Some({
-      accountNumber: "",
-      bankName: "",
-      routingNumber: "",
-      swiftCode: "",
+      account_number: "",
+      bank_name: "",
+      routing_number: "",
+      swift_code: "",
     })
   }
 }
 
 let getACH_details = (data: option<achCreditTransfer>) => {
   data->Option.getOr({
-    accountNumber: "",
-    bankName: "",
-    routingNumber: "",
-    swiftCode: "",
+    account_number: "",
+    bank_name: "",
+    routing_number: "",
+    swift_code: "",
   })
 }
 
@@ -139,19 +139,19 @@ let getNextAction = (dict, str) => {
 
     let sessionTokenDict =
       json
-      ->Dict.get("sessionToken")
+      ->Dict.get("session_token")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.object
       ->Option.getOr(Dict.make())
     let bankTransferStepsAndChargesDetailsDict =
       json
-      ->Dict.get("bankTransferStepsAndChargesDetails")
+      ->Dict.get("bank_transfer_steps_and_charges_details")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.object
       ->Option.getOr(Dict.make())
     let achCreditTransferDict =
       bankTransferStepsAndChargesDetailsDict
-      ->Dict.get("achCreditTransfer")
+      ->Dict.get("ach_credit_transfer")
       ->Option.getOr(JSON.Encode.null)
       ->JSON.Decode.object
       ->Option.getOr(Dict.make())
@@ -172,17 +172,17 @@ let getNextAction = (dict, str) => {
           frequency: getOptionFloat(pollConfigDict, "frequency")->Option.getOr(0.)->Int.fromFloat,
         },
       },
-      bankTransferStepsAndChargesDetail: {
-        achCreditTransfer: {
-          accountNumber: getString(achCreditTransferDict, "accountNumber", ""),
-          bankName: getString(achCreditTransferDict, "bankName", ""),
-          routingNumber: getString(achCreditTransferDict, "routingNumber", ""),
-          swiftCode: getString(achCreditTransferDict, "swiftCode", ""),
+      bank_transfer_steps_and_charges_detail: {
+        ach_credit_transfer: {
+          account_number: getString(achCreditTransferDict, "account_number", ""),
+          bank_name: getString(achCreditTransferDict, "bank_name", ""),
+          routing_number: getString(achCreditTransferDict, "routing_number", ""),
+          swift_code: getString(achCreditTransferDict, "swift_code", ""),
         },
       },
-      sessionToken: {
-        walletname: getString(sessionTokenDict, "walletname", ""),
-        openBankingSessionToken: getString(sessionTokenDict, "openBankingSessionToken", ""),
+      session_token: {
+        wallet_name: getString(sessionTokenDict, "wallet_name", ""),
+        open_banking_session_token: getString(sessionTokenDict, "open_banking_session_token", ""),
       },
     }
   })

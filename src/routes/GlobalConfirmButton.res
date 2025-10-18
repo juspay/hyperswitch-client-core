@@ -1,16 +1,16 @@
 type confirmButtonData = {
   loading: bool,
   handlePress: ReactNative.Event.pressEvent => unit,
-  paymentMethodType: string,
-  paymentExperience?: array<AccountPaymentMethodType.paymentExperience>,
-  customerPaymentExperience?: array<PaymentMethodType.paymentExperienceType>,
+  payment_method_type: string,
+  payment_experience?: array<AccountPaymentMethodType.paymentExperience>,
+  customer_payment_experience?: array<PaymentMethodType.paymentExperienceType>,
   errorText: option<string>,
 }
 
 let defaultConfirmButtonData = {
   loading: true,
   handlePress: _ => (),
-  paymentMethodType: "loading",
+  payment_method_type: "loading",
   errorText: None,
 }
 
@@ -25,9 +25,9 @@ let make = (~confirmButtonData) => {
     <ConfirmButton
       loading=confirmButtonData.loading
       handlePress=confirmButtonData.handlePress
-      paymentMethod=confirmButtonData.paymentMethodType
-      paymentExperience=?confirmButtonData.paymentExperience
-      customerPaymentExperience=?confirmButtonData.customerPaymentExperience
+      paymentMethod=confirmButtonData.payment_method_type
+      paymentExperience=?confirmButtonData.payment_experience
+      customerPaymentExperience=?confirmButtonData.customer_payment_experience
       errorText=confirmButtonData.errorText
     />
   </UIUtils.RenderIf>

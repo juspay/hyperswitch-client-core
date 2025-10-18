@@ -10,7 +10,7 @@ let make = (~setConfirmButtonData, ~isLoading, ~tabArr, ~elementArr) => {
       isLoading
       hideDivider={tabArr->Array.length === 0}
       showDisclaimer={accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
       ->Option.getOr(NORMAL) !== NORMAL}
     />
     {nativeProp.configuration.appearance.layout === Tab

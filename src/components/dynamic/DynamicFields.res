@@ -38,9 +38,9 @@ let make = (
     <UIUtils.RenderIf condition={isCardPayment && fields->Array.length > 0}>
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-        customerPaymentMethodData->Option.map(data => data.isGuestCustomer)->Option.getOr(true),
+        customerPaymentMethodData->Option.map(data => data.is_guest_customer)->Option.getOr(true),
         accountPaymentMethodData
-        ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+        ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
         ->Option.getOr(NORMAL),
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
@@ -61,11 +61,11 @@ let make = (
       | _ => React.null
       }}
       {switch (
-        customerPaymentMethodData->Option.map(data => data.isGuestCustomer)->Option.getOr(true),
+        customerPaymentMethodData->Option.map(data => data.is_guest_customer)->Option.getOr(true),
         isNicknameSelected,
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
         accountPaymentMethodData
-        ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+        ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
         ->Option.getOr(NORMAL),
       ) {
       | (false, _, true, NEW_MANDATE | NORMAL) =>

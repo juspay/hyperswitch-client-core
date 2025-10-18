@@ -47,7 +47,7 @@ let make = () => {
   let firstPaymentMethod = {
     let pmList =
       customerPaymentMethodData->Option.map(customerPaymentMethodTypes =>
-        customerPaymentMethodTypes.customerPaymentMethodTypes
+        customerPaymentMethodTypes.customer_payment_methods
       )
     let platform = ReactNative.Platform.os
 
@@ -57,9 +57,9 @@ let make = () => {
 
       let shouldUseNext = switch (platform, first) {
       | (#android, Some(customerPaymentMethodTypes)) =>
-        customerPaymentMethodTypes.paymentMethodTypeWallet == SdkTypes.APPLE_PAY
+        customerPaymentMethodTypes.payment_method_type_wallet == SdkTypes.APPLE_PAY
       | (#ios, Some(customerPaymentMethodTypes)) =>
-        customerPaymentMethodTypes.paymentMethodTypeWallet == SdkTypes.GOOGLE_PAY
+        customerPaymentMethodTypes.payment_method_type_wallet == SdkTypes.GOOGLE_PAY
       | _ => false
       }
 
@@ -75,8 +75,8 @@ let make = () => {
   let cardScheme =
     firstPaymentMethod
     ->Option.map(x =>
-      switch x.paymentMethod {
-      | CARD => x.card->Option.map(card => card.cardNetwork)->Option.getOr("NotCard")
+      switch x.payment_method {
+      | CARD => x.card->Option.map(card => card.card_network)->Option.getOr("NotCard")
       | _ => "NotCard"
       }
     )
@@ -84,9 +84,9 @@ let make = () => {
 
   let (pmToken, walletType: SdkTypes.paymentMethodTypeWallet) = switch firstPaymentMethod {
   | Some(customerPaymentMethodType) => (
-      switch customerPaymentMethodType.mandateId {
-      | Some(mandateId) => mandateId
-      | None => customerPaymentMethodType.paymentToken
+      switch customerPaymentMethodType.mandate_id {
+      | Some(mandate_id) => mandate_id
+      | None => customerPaymentMethodType.payment_token
       },
       NONE,
     )
@@ -99,9 +99,9 @@ let make = () => {
   }
 
   let _processExpressCheckoutApiRequest = (
-    ~paymentMethod,
-    ~paymentMethodData,
-    ~paymentMethodType,
+    ~payment_method,
+    ~payment_method_data,
+    ~payment_method_type,
     ~email=?,
     (),
   ) => {
@@ -112,7 +112,7 @@ let make = () => {
         ~value="ECW API Error",
         ~category=USER_EVENT,
         ~eventName=PAYMENT_FAILED,
-        ~paymentMethod=paymentMethodType,
+        ~paymentMethod=payment_method_type,
         (),
       )
 
@@ -129,7 +129,7 @@ let make = () => {
         ~value="ECW API Response Data Filled",
         ~category=USER_EVENT,
         ~eventName=PAYMENT_DATA_FILLED,
-        ~paymentMethod=paymentMethodType,
+        ~paymentMethod=payment_method_type,
         (),
       )
       logger(
@@ -137,7 +137,7 @@ let make = () => {
         ~value="ECW API Attempt",
         ~category=USER_EVENT,
         ~eventName=PAYMENT_ATTEMPT,
-        ~paymentMethod=paymentMethodType,
+        ~paymentMethod=payment_method_type,
         (),
       )
       switch paymentStatus {
@@ -147,7 +147,7 @@ let make = () => {
             ~value="ECW API Success",
             ~category=USER_EVENT,
             ~eventName=PAYMENT_SUCCESS,
-            ~paymentMethod=paymentMethodType,
+            ~paymentMethod=payment_method_type,
             (),
           )
           setLoading(PaymentSuccess)
@@ -167,34 +167,34 @@ let make = () => {
     }
 
     let body: PaymentConfirmTypes.redirectType = {
-      clientSecret: nativeProp.clientSecret,
-      returnUrl: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
+      client_secret: nativeProp.clientSecret,
+      return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
       ?email,
-      paymentMethod,
-      paymentMethodType,
-      paymentMethodData,
-      customerAcceptance: ?(
+      payment_method,
+      payment_method_type,
+      payment_method_data,
+      customer_acceptance: ?(
         if (
           true
           //allApiData.additionalPMLData.mandateType->PaymentUtils.checkIfMandate &&
           //  !savedPaymentMethodsData.isGuestCustomer
         ) {
           Some({
-            acceptanceType: "online",
-            acceptedAt: Date.now()->Date.fromTime->Date.toISOString,
+            acceptance_type: "online",
+            accepted_at: Date.now()->Date.fromTime->Date.toISOString,
             online: {
-              userAgent: ?nativeProp.hyperParams.userAgent,
+              user_agent: ?nativeProp.hyperParams.userAgent,
             },
           })
         } else {
           None
         }
       ),
-      browserInfo: {
-        userAgent: ?nativeProp.hyperParams.userAgent,
-        deviceModel: ?nativeProp.hyperParams.deviceModel,
-        osType: ?nativeProp.hyperParams.osType,
-        osVersion: ?nativeProp.hyperParams.osVersion,
+      browser_info: {
+        user_agent: ?nativeProp.hyperParams.userAgent,
+        device_model: ?nativeProp.hyperParams.device_model,
+        os_type: ?nativeProp.hyperParams.os_type,
+        os_version: ?nativeProp.hyperParams.os_version,
       },
     }
 
@@ -204,7 +204,7 @@ let make = () => {
       ~clientSecret=nativeProp.clientSecret,
       ~errorCallback,
       ~responseCallback,
-      ~paymentMethod=paymentMethodType,
+      ~paymentMethod=payment_method_type,
       (),
     )
   }
@@ -305,7 +305,7 @@ let make = () => {
   React.useEffect1(_ => {
     let widgetHeight = {
       switch firstPaymentMethod {
-      | Some(pm) => pm.requiresCvv ? 290 : 150
+      | Some(pm) => pm.requires_cvv ? 290 : 150
       | _ => 150
       }
     }
@@ -344,7 +344,7 @@ let make = () => {
         switch obj.card {
         | Some(card) =>
           <TextWrapper
-            text={`${localeObj.cardExpiresText} ${card.expiryMonth}/${card.expiryYear->String.sliceToEnd(
+            text={`${localeObj.cardExpiresText} ${card.expiry_month}/${card.expiry_year->String.sliceToEnd(
                 ~start=-2,
               )}`}
             textType={ModalTextLight}
@@ -357,7 +357,7 @@ let make = () => {
     </View>
     {switch firstPaymentMethod {
     | Some(pm) =>
-      pm.requiresCvv
+      pm.requires_cvv
         ? <SavedPaymentMethod.CVVComponent savedCardCvv setSavedCardCvv cardScheme />
         : React.null
     | _ => React.null

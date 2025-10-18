@@ -71,10 +71,10 @@ let make = (~data: PaymentConfirmTypes.achCreditTransfer) => {
         borderColor: useThemeBasedStyle().silverBorderColor,
         gap: 12.->dp,
       })}>
-      <DetailsView title=localeObject.accountNumberText value={data.accountNumber} />
-      <DetailsView title=localeObject.bankName value={data.bankName} />
-      <DetailsView title=localeObject.formFieldACHRoutingNumberLabel value={data.routingNumber} />
-      <DetailsView title=localeObject.swiftCode value={data.swiftCode} />
+      <DetailsView title=localeObject.accountNumberText value={data.account_number} />
+      <DetailsView title=localeObject.bankName value={data.bank_name} />
+      <DetailsView title=localeObject.formFieldACHRoutingNumberLabel value={data.routing_number} />
+      <DetailsView title=localeObject.swiftCode value={data.swift_code} />
     </View>
     <Space height=18.0 />
     <View
@@ -114,19 +114,19 @@ let make = (~data: PaymentConfirmTypes.achCreditTransfer) => {
           let textToCopy =
             localeObject.accountNumberText ++
             " : " ++
-            data.accountNumber ++
+            data.account_number ++
             "\n" ++
             localeObject.bankName ++
             " : " ++
-            data.bankName ++
+            data.bank_name ++
             "\n" ++
             localeObject.bankName ++
             " : " ++
-            data.routingNumber ++
+            data.routing_number ++
             "\n" ++
             localeObject.swiftCode ++
             " : " ++
-            data.swiftCode
+            data.swift_code
           // let copyToClipboard = () => {
           //  Clipboard.setString(textToCopy)
           RNClipboard.setString(textToCopy)

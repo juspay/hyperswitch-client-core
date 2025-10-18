@@ -53,8 +53,8 @@ let usePayment = (
       }, 5000)
       HyperModule.launchApplePay(
         [
-          ("sessionTokenData", sessionObject.sessionTokenData),
-          ("paymentRequestData", sessionObject.paymentRequestData),
+          ("session_token_data", sessionObject.session_token_data),
+          ("payment_request_data", sessionObject.payment_request_data),
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
@@ -77,8 +77,8 @@ let usePayment = (
     } else {
       webkitLaunchApplePay(
         [
-          ("sessionTokenData", sessionObject.sessionTokenData),
-          ("paymentRequestData", sessionObject.paymentRequestData),
+          ("session_token_data", sessionObject.session_token_data),
+          ("payment_request_data", sessionObject.payment_request_data),
         ]
         ->Dict.fromArray
         ->JSON.Encode.object
@@ -108,7 +108,7 @@ let usePayment = (
     let (body, paymentMethodType) = (
       PaymentUtils.generateSavedCardConfirmBody(
         ~nativeProp,
-        ~paymentToken=activePaymentToken,
+        ~payment_token=activePaymentToken,
         ~savedCardCvv,
       ),
       "card",
@@ -135,8 +135,8 @@ let usePayment = (
     let (body, paymentMethodType) = (
       PaymentUtils.generateWalletConfirmBody(
         ~nativeProp,
-        ~paymentMethodType=activeWalletName->SdkTypes.walletTypeToStrMapper,
-        ~paymentToken=activePaymentToken,
+        ~payment_method_type=activeWalletName->SdkTypes.walletTypeToStrMapper,
+        ~payment_token=activePaymentToken,
       ),
       "wallet",
     )

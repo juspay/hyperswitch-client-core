@@ -44,17 +44,17 @@ let make = (
       }
     }
 
-    let paymentMethodDataDict = switch paymentMethodData.paymentMethod {
+    let paymentMethodDataDict = switch paymentMethodData.payment_method {
     | CARD =>
       switch nickname {
       | Some(name) =>
         [
           (
-            "paymentMethodData",
+            "payment_method_data",
             [
               (
-                paymentMethodData.paymentMethodStr,
-                [("nickName", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                paymentMethodData.payment_method_str,
+                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
               ),
             ]
             ->Dict.fromArray
@@ -66,14 +66,14 @@ let make = (
     | pm =>
       [
         (
-          "paymentMethodData",
+          "payment_method_data",
           [
             (
-              paymentMethodData.paymentMethodStr,
+              paymentMethodData.payment_method_str,
               [
                 (
-                  paymentMethodData.paymentMethodType ++ (
-                    pm === PAY_LATER || paymentMethodData.paymentMethodTypeWallet === PAYPAL
+                  paymentMethodData.payment_method_type ++ (
+                    pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL
                       ? "_redirect"
                       : ""
                   ),
@@ -92,30 +92,30 @@ let make = (
 
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,
-      ~paymentMethodStr=paymentMethodData.paymentMethodStr,
-      ~paymentMethodType=paymentMethodData.paymentMethodType,
-      ~paymentMethodData=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
-        "paymentMethodData",
+      ~payment_method_str=paymentMethodData.payment_method_str,
+      ~payment_method_type=paymentMethodData.payment_method_type,
+      ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
+        "payment_method_data",
       ),
-      ~paymentType=accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+      ~payment_type=accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
       ->Option.getOr(NORMAL),
       ~appURL=?{
         accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirectUrl
+          accountPaymentMethods.redirect_url
         )
       },
       ~isSaveCardCheckboxVisible={
-        paymentMethodData.paymentMethod === CARD &&
+        paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
       ~isGuestCustomer=customerPaymentMethodData
-      ->Option.map(customerPaymentMethods => customerPaymentMethods.isGuestCustomer)
+      ->Option.map(customerPaymentMethods => customerPaymentMethods.is_guest_customer)
       ->Option.getOr(true),
       ~isNicknameSelected,
       ~email?,
-      ~screenHeight=viewPortContants.screenHeight,
-      ~screenWidth=viewPortContants.screenWidth,
+      ~screen_height=viewPortContants.screenHeight,
+      ~screen_width=viewPortContants.screenWidth,
       (),
     )
 
@@ -125,9 +125,9 @@ let make = (
       ~clientSecret=nativeProp.clientSecret,
       ~errorCallback,
       ~responseCallback,
-      ~paymentMethod=paymentMethodData.paymentMethodType,
-      ~paymentExperience=paymentMethodData.paymentExperience,
-      ~isCardPayment={paymentMethodData.paymentMethod === CARD},
+      ~paymentMethod=paymentMethodData.payment_method_type,
+      ~paymentExperience=paymentMethodData.payment_experience,
+      ~isCardPayment={paymentMethodData.payment_method === CARD},
       (),
     )->ignore
   }

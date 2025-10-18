@@ -121,7 +121,7 @@ let useBrowserHook = () => {
       Utils.getReturnUrl(
         ~appId=nativeProp.hyperParams.appId,
         ~appURL=accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirectUrl
+          accountPaymentMethods.redirect_url
         ),
       ),
       intervalId,
@@ -207,11 +207,11 @@ let useRedirectHook = () => {
 
     let handleThirdPartySDKSessionFlow = (~nextAction) => {
       // TODO: add event loggers for analytics
-      let sessionToken = Option.getOr(nextAction, defaultNextAction).sessionToken
+      let sessionToken = Option.getOr(nextAction, defaultNextAction).session_token
       let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
       switch sessionToken {
       | Some(token) =>
-        Plaid.create({token: token.openBankingSessionToken})
+        Plaid.create({token: token.open_banking_session_token})
         Plaid.open_(openProps)->ignore
       | None => ()
       }

@@ -74,16 +74,16 @@ let make = (
 
     let paymentMethodType = PaymentUtils.generateSavedCardConfirmBody(
       ~nativeProp,
-      ~paymentToken=token.paymentToken,
+      ~payment_token=token.payment_token,
       ~savedCardCvv,
       ~appURL=?{
         accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirectUrl
+          accountPaymentMethods.redirect_url
         )
       },
       ~billing=token.billing,
-      ~screenHeight=viewPortContants.screenHeight,
-      ~screenWidth=viewPortContants.screenWidth,
+      ~screen_height=viewPortContants.screenHeight,
+      ~screen_width=viewPortContants.screenWidth,
     )
 
     redirectHook(
@@ -124,17 +124,17 @@ let make = (
       }
     }
 
-    let paymentMethodDataDict = switch paymentMethodData.paymentMethod {
+    let paymentMethodDataDict = switch paymentMethodData.payment_method {
     | CARD =>
       switch nickname {
       | Some(name) =>
         [
           (
-            "paymentMethodData",
+            "payment_method_data",
             [
               (
-                paymentMethodData.paymentMethodStr,
-                [("nickName", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                paymentMethodData.payment_method_str,
+                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
               ),
             ]
             ->Dict.fromArray
@@ -146,14 +146,14 @@ let make = (
     | pm =>
       [
         (
-          "paymentMethodData",
+          "payment_method_data",
           [
             (
-              paymentMethodData.paymentMethodStr,
+              paymentMethodData.payment_method_str,
               [
                 (
-                  paymentMethodData.paymentMethodType ++ (
-                    pm === PAY_LATER || paymentMethodData.paymentMethodTypeWallet === PAYPAL
+                  paymentMethodData.payment_method_type ++ (
+                    pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL
                       ? "_redirect"
                       : ""
                   ),
@@ -172,30 +172,30 @@ let make = (
 
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,
-      ~paymentMethodStr=paymentMethodData.paymentMethodStr,
-      ~paymentMethodType=paymentMethodData.paymentMethodType,
-      ~paymentMethodData=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
-        "paymentMethodData",
+      ~payment_method_str=paymentMethodData.payment_method_str,
+      ~payment_method_type=paymentMethodData.payment_method_type,
+      ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
+        "payment_method_data",
       ),
-      ~paymentType=accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+      ~payment_type=accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
       ->Option.getOr(NORMAL),
       ~appURL=?{
         accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirectUrl
+          accountPaymentMethods.redirect_url
         )
       },
       ~isSaveCardCheckboxVisible={
-        paymentMethodData.paymentMethod === CARD &&
+        paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
       ~isGuestCustomer=customerPaymentMethodData
-      ->Option.map(customerPaymentMethods => customerPaymentMethods.isGuestCustomer)
+      ->Option.map(customerPaymentMethods => customerPaymentMethods.is_guest_customer)
       ->Option.getOr(true),
       ~isNicknameSelected=false,
       ~email?,
-      ~screenHeight=viewPortContants.screenHeight,
-      ~screenWidth=viewPortContants.screenWidth,
+      ~screen_height=viewPortContants.screenHeight,
+      ~screen_width=viewPortContants.screenWidth,
       (),
     )
 
@@ -205,9 +205,9 @@ let make = (
       ~clientSecret=nativeProp.clientSecret,
       ~errorCallback,
       ~responseCallback,
-      ~paymentMethod=paymentMethodData.paymentMethodType,
-      ~paymentExperience=paymentMethodData.paymentExperience,
-      ~isCardPayment={paymentMethodData.paymentMethod === CARD},
+      ~paymentMethod=paymentMethodData.payment_method_type,
+      ~paymentExperience=paymentMethodData.payment_experience,
+      ~isCardPayment={paymentMethodData.payment_method === CARD},
       (),
     )->ignore
   }
@@ -242,7 +242,7 @@ let make = (
   //   switch paymentMethodData {
   //   | Some(paymentMethodData) =>
   //     if formData->Dict.toArray->Array.length > 0 {
-  //       let eligibleConnectors = switch paymentMethodData.paymentMethod {
+  //       let eligibleConnectors = switch paymentMethodData.payment_method {
   //       | CARD =>
   //         paymentMethodData.card_networks
   //         ->Array.get(0)
@@ -254,10 +254,10 @@ let make = (
   //       }
 
   //       let configParams: SuperpositionTypes.superpositionBaseContext = {
-  //         paymentMethod: paymentMethodData.paymentMethodStr,
-  //         paymentMethodType: paymentMethodData.paymentMethodType,
+  //         payment_method: paymentMethodData.payment_method_str,
+  //         payment_method_type: paymentMethodData.payment_method_type,
   //         mandate_type: accountPaymentMethodData
-  //         ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+  //         ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
   //         ->Option.getOr(NORMAL) === NORMAL
   //           ? "non_mandate"
   //           : "mandate",
@@ -284,8 +284,8 @@ let make = (
     switch accountPaymentMethodData {
     | Some(accountPaymentMethods) =>
       let paymentMethodData =
-        accountPaymentMethods.paymentMethods->Array.find(paymentMethodType =>
-          paymentMethodType.paymentMethodTypeWallet === GOOGLE_PAY
+        accountPaymentMethods.payment_methods->Array.find(paymentMethodType =>
+          paymentMethodType.payment_method_type_wallet === GOOGLE_PAY
         )
       switch paymentMethodData {
       | Some(paymentMethodData) =>
@@ -315,19 +315,19 @@ let make = (
     switch accountPaymentMethodData {
     | Some(accountPaymentMethods) =>
       let paymentMethodData =
-        accountPaymentMethods.paymentMethods->Array.find(paymentMethodType =>
-          paymentMethodType.paymentMethodTypeWallet === APPLE_PAY
+        accountPaymentMethods.payment_methods->Array.find(paymentMethodType =>
+          paymentMethodType.payment_method_type_wallet === APPLE_PAY
         )
 
       switch paymentMethodData {
       | Some(paymentMethodData) =>
         logger(
           ~logType=DEBUG,
-          ~value=paymentMethodData.paymentMethodType,
+          ~value=paymentMethodData.payment_method_type,
           ~category=USER_EVENT,
-          ~paymentMethod=paymentMethodData.paymentMethodType,
+          ~paymentMethod=paymentMethodData.payment_method_type,
           ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
-          ~paymentExperience=paymentMethodData.paymentExperience,
+          ~paymentExperience=paymentMethodData.payment_experience,
           (),
         )
 
@@ -363,7 +363,7 @@ let make = (
 
   React.useEffect1(() => {
     switch selectedToken->Option.map(customerPaymentMethodType =>
-      customerPaymentMethodType.paymentMethodTypeWallet
+      customerPaymentMethodType.payment_method_type_wallet
     ) {
     | Some(APPLE_PAY) => Window.registerEventListener("applePayData", confirmApplePay)
     | Some(GOOGLE_PAY) => Window.registerEventListener("googlePayData", confirmGPay)
@@ -375,20 +375,20 @@ let make = (
 
   let showDisclaimer =
     accountPaymentMethodData
-    ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+    ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
     ->Option.getOr(NORMAL) !== NORMAL
 
   let handlePress = _ => {
-    switch (selectedToken, showDisclaimer && isSaveCardCheckboxSelected) {
+    switch (selectedToken, !showDisclaimer || (showDisclaimer && isSaveCardCheckboxSelected)) {
     | (Some(token), true) =>
-      switch token.paymentMethod {
+      switch token.payment_method {
       | CARD =>
-        token.requiresCvv &&
+        token.requires_cvv &&
         (savedCardCvv->Option.isNone ||
           !Validation.cvcNumberInRange(
             savedCardCvv->Option.getOr(""),
             token.card
-            ->Option.map(card => card.cardNetwork)
+            ->Option.map(card => card.card_network)
             ->Option.getOr(""),
           ))
           ? {
@@ -399,18 +399,18 @@ let make = (
             }
           : processRequestSaved(token)
       | WALLET =>
-        switch token.paymentMethodTypeWallet {
+        switch token.payment_method_type_wallet {
         | APPLE_PAY =>
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
             sessionData
-            ->Array.find(item => item.walletName == APPLE_PAY)
+            ->Array.find(item => item.wallet_name == APPLE_PAY)
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
           }
           if (
-            sessionObject.sessionTokenData == JSON.Encode.null ||
-              sessionObject.paymentRequestData == JSON.Encode.null
+            sessionObject.session_token_data == JSON.Encode.null ||
+              sessionObject.payment_request_data == JSON.Encode.null
           ) {
             setLoading(FillingDetails)
             showAlert(~errorType="warning", ~message="Waiting for Sessions API")
@@ -440,8 +440,8 @@ let make = (
             WebKit.platform === #ios
               ? HyperModule.launchApplePay(
                   [
-                    ("sessionTokenData", sessionObject.sessionTokenData),
-                    ("paymentRequestData", sessionObject.paymentRequestData),
+                    ("session_token_data", sessionObject.session_token_data),
+                    ("payment_request_data", sessionObject.payment_request_data),
                   ]
                   ->Dict.fromArray
                   ->JSON.Encode.object
@@ -463,8 +463,8 @@ let make = (
                 )
               : launchApplePay(
                   [
-                    ("sessionTokenData", sessionObject.sessionTokenData),
-                    ("paymentRequestData", sessionObject.paymentRequestData),
+                    ("session_token_data", sessionObject.session_token_data),
+                    ("payment_request_data", sessionObject.payment_request_data),
                   ]
                   ->Dict.fromArray
                   ->JSON.Encode.object
@@ -476,7 +476,7 @@ let make = (
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
             sessionData
-            ->Array.find(item => item.walletName == GOOGLE_PAY)
+            ->Array.find(item => item.wallet_name == GOOGLE_PAY)
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
           }
@@ -504,10 +504,10 @@ let make = (
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
-      paymentMethodType: selectedToken
-      ->Option.map(token => token.paymentMethodType)
+      payment_method_type: selectedToken
+      ->Option.map(token => token.payment_method_type)
       ->Option.getOr("Saved Payment"),
-      customerPaymentExperience: ?selectedToken->Option.map(token => token.paymentExperience),
+      customer_payment_experience: ?selectedToken->Option.map(token => token.payment_experience),
       errorText,
     }
     setConfirmButtonData(confirmButton)

@@ -35,7 +35,7 @@ module PaymentMethodTitle = {
   @react.component
   let make = (~pmDetails: CustomerPaymentMethodType.customerPaymentMethodType) => {
     let nickName = switch pmDetails.card {
-    | Some(obj) => obj.nickName
+    | Some(obj) => obj.nick_name
     | _ => None
     }
 
@@ -53,15 +53,15 @@ module PaymentMethodTitle = {
       | None => React.null
       }}
       <TextWrapper
-        text={switch pmDetails.paymentMethod {
-        | WALLET => pmDetails.paymentMethodType
+        text={switch pmDetails.payment_method {
+        | WALLET => pmDetails.payment_method_type
         | CARD =>
           pmDetails.card
-          ->Option.map(card => "●●●● "->String.concat(card.last4Digits))
+          ->Option.map(card => "●●●● "->String.concat(card.last4_digits))
           ->Option.getOr("")
         | _ => ""
         }}
-        textType={switch pmDetails.paymentMethod {
+        textType={switch pmDetails.payment_method {
         | WALLET => CardTextBold
         | _ => CardText
         }}
@@ -75,7 +75,7 @@ let make = (~pmDetails: CustomerPaymentMethodType.customerPaymentMethodType, ~ha
   let {component} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
 
-  let paymentMethodId = pmDetails.paymentMethodId
+  let paymentMethodId = pmDetails.payment_method_id
   <CustomPressable
     onPress={_ => handleDelete(paymentMethodId)}
     style={s({
@@ -90,9 +90,9 @@ let make = (~pmDetails: CustomerPaymentMethodType.customerPaymentMethodType, ~ha
     })}>
     <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center, flex: 4.})}>
       <Icon
-        name={switch pmDetails.paymentMethod {
-        | CARD => pmDetails.card->Option.map(card => card.cardNetwork)->Option.getOr("")
-        | WALLET => pmDetails.paymentMethodType
+        name={switch pmDetails.payment_method {
+        | CARD => pmDetails.card->Option.map(card => card.card_network)->Option.getOr("")
+        | WALLET => pmDetails.payment_method_type
         | _ => ""
         }}
         height=36.

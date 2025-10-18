@@ -152,7 +152,7 @@ let useLoggerHook = () => {
       | Some(paymentExperience: array<AccountPaymentMethodType.paymentExperience>) =>
         paymentExperience
         ->Array.get(0)
-        ->Option.map(paymentExperience => paymentExperience.paymentExperienceType)
+        ->Option.map(paymentExperience => paymentExperience.payment_experience_type)
       | None =>
         switch customerPaymentExperience {
         | Some(paymentExperience: array<PaymentMethodType.paymentExperienceType>) =>

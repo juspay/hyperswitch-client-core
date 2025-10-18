@@ -41,13 +41,13 @@ let make = () => {
       | (WidgetTabSheet, false)
       | (TabSheet, false) =>
         switch customerPaymentMethodData->Option.map(customerPaymentMethods =>
-          customerPaymentMethods.customerPaymentMethodTypes
+          customerPaymentMethods.customer_payment_methods
         ) {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
             customerPaymentMethods->Array.length > 0 &&
               accountPaymentMethodData
-              ->Option.map(data => data.paymentType)
+              ->Option.map(data => data.payment_type)
               ->Option.getOr(NORMAL) !== SETUP_MANDATE
           <>
             {isSavedPaymentScreen && showSavedScreen
@@ -55,7 +55,7 @@ let make = () => {
                   customerPaymentMethods
                   setConfirmButtonData
                   merchantName={accountPaymentMethodData
-                  ->Option.map(data => data.merchantName)
+                  ->Option.map(data => data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                 />
               : <PaymentSheet

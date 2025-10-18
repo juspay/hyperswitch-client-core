@@ -27,7 +27,7 @@ let useProcessPayButtonResult = () => {
           ->Utils.getDictFromJson
           ->WalletType.itemToObjMapper
         let billingAddress = switch paymentDataFromGPay.paymentMethodData.info {
-        | Some(info) => info.billingAddress
+        | Some(info) => info.billing_address
         | None => None
         }
         let shippingAddress = paymentDataFromGPay.shippingDetails
@@ -60,8 +60,8 @@ let useProcessPayButtonResult = () => {
           ) {
             Simulated
           } else {
-            let paymentData = var->Dict.get("paymentData")->Option.getOr(JSON.Encode.null)
-            let paymentMethod = var->Dict.get("paymentMethod")->Option.getOr(JSON.Encode.null)
+            let paymentData = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
+            let paymentMethod = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
             let billingAddress =
               var->AddressUtils.getApplePayBillingAddress(
@@ -73,8 +73,8 @@ let useProcessPayButtonResult = () => {
 
             let paymentData =
               [
-                ("paymentData", paymentData),
-                ("paymentMethod", paymentMethod),
+                ("payment_data", paymentData),
+                ("payment_method", paymentMethod),
                 ("transaction_identifier", transaction_identifier),
               ]->Dict.fromArray
 

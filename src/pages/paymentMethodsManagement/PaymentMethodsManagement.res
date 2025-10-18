@@ -27,7 +27,7 @@ let make = () => {
     paymentMethodId,
   ) => {
     savedMethods->Array.filter(pm => {
-      pm.paymentMethodId != paymentMethodId
+      pm.payment_method_id != paymentMethodId
     })
   }
 
@@ -43,7 +43,7 @@ let make = () => {
     //   switch res {
     //   | Some(data) => {
     //       let dict = data->Utils.getDictFromJson
-    //       let paymentMethodId = dict->Utils.getString("paymentMethodId", "")
+    //       let paymentMethodId = dict->Utils.getString("payment_method_id", "")
     //       let isDeleted = dict->Utils.getBool("deleted", false)
 
     //       if isDeleted {

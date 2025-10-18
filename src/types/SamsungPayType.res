@@ -66,7 +66,7 @@ let getSamsungPaySessionObject = (sessionData: option<array<SessionsType.session
   let sessionObject = switch sessionData {
   | Some(sessionData) =>
     sessionData
-    ->Array.find(item => item.walletName == SAMSUNG_PAY)
+    ->Array.find(item => item.wallet_name == SAMSUNG_PAY)
     ->Option.getOr(SessionsType.defaultToken)
   | _ => SessionsType.defaultToken
   }

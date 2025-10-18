@@ -27,9 +27,9 @@ let useAccountPaymentMethodModifier = () => {
         switch nativeProp.sdkState {
         | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet =>
           let customerPaymentMethods =
-            customerPaymentMethods.customerPaymentMethodTypes->Array.filter(
+            customerPaymentMethods.customer_payment_methods->Array.filter(
               customerPaymentMethodType =>
-                customerPaymentMethodType.paymentMethod !== WALLET,
+                customerPaymentMethodType.payment_method !== WALLET,
             )
           (
             customerPaymentMethods->Array.length > 0
@@ -42,7 +42,7 @@ let useAccountPaymentMethodModifier = () => {
                         customerPaymentMethods
                         setConfirmButtonData
                         merchantName={accountPaymentMethodData
-                        ->Option.map(data => data.merchantName)
+                        ->Option.map(data => data.merchant_name)
                         ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                         animated=false
                       />,
@@ -53,7 +53,7 @@ let useAccountPaymentMethodModifier = () => {
           )
         | ButtonSheet | WidgetButtonSheet => // elementArr->Array.push(
           //   <PaymentMethod
-          //     key={paymentMethodData.paymentMethodType}
+          //     key={paymentMethodData.payment_method_type}
           //     paymentMethodData
           //     sessionObject
           //     methodType=ELEMENT
@@ -70,29 +70,29 @@ let useAccountPaymentMethodModifier = () => {
 
     switch accountPaymentMethodData {
     | Some(accountPaymentMethodData) =>
-      accountPaymentMethodData.paymentMethods->Array.reduce((initialTabArr, initialElementArr), (
+      accountPaymentMethodData.payment_methods->Array.reduce((initialTabArr, initialElementArr), (
         (tabArr, elementArr): (array<hoc>, array<React.element>),
         paymentMethodData,
       ) => {
         let sessionObject = switch sessionTokenData {
         | Some(sessionData) =>
           sessionData
-          ->Array.find(item => item.walletName == paymentMethodData.paymentMethodTypeWallet)
+          ->Array.find(item => item.wallet_name == paymentMethodData.payment_method_type_wallet)
           ->Option.getOr(SessionsType.defaultToken)
         | _ => SessionsType.defaultToken
         }
 
         let exp =
-          paymentMethodData.paymentExperience->Array.find(
-            x => x.paymentExperienceTypeDecode === INVOKE_SDK_CLIENT,
+          paymentMethodData.payment_experience->Array.find(
+            x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
           )
 
-        let walletExperience = switch paymentMethodData.paymentMethodTypeWallet {
+        let walletExperience = switch paymentMethodData.payment_method_type_wallet {
         | APPLE_PAY =>
           WebKit.platform !== #android &&
           WebKit.platform !== #androidWebView &&
           WebKit.platform !== #next &&
-          sessionObject.walletName !== NONE &&
+          sessionObject.wallet_name !== NONE &&
           exp->Option.isSome
             ? Some()
             : None
@@ -100,7 +100,7 @@ let useAccountPaymentMethodModifier = () => {
           WebKit.platform !== #ios &&
           WebKit.platform !== #iosWebView &&
           WebKit.platform !== #next &&
-          sessionObject.walletName !== NONE &&
+          sessionObject.wallet_name !== NONE &&
           sessionObject.connector !== "trustpay" &&
           exp->Option.isSome
             ? Some()
@@ -112,8 +112,8 @@ let useAccountPaymentMethodModifier = () => {
         | PAYPAL =>
           exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
             ? Some()
-            : switch paymentMethodData.paymentExperience->Array.find(
-                x => x.paymentExperienceTypeDecode === REDIRECT_TO_URL,
+            : switch paymentMethodData.payment_experience->Array.find(
+                x => x.payment_experience_type_decode === REDIRECT_TO_URL,
               ) {
               | Some(_) => Some()
               | None => None
@@ -124,31 +124,31 @@ let useAccountPaymentMethodModifier = () => {
         if walletExperience->Option.isSome {
           switch nativeProp.sdkState {
           | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
-            Types.defaultButtonElementArr->Array.includes(paymentMethodData.paymentMethodType)
+            Types.defaultButtonElementArr->Array.includes(paymentMethodData.payment_method_type)
               ? elementArr->Array.push(
                   <PaymentMethod
-                    key={paymentMethodData.paymentMethodType}
+                    key={paymentMethodData.payment_method_type}
                     paymentMethodData
                     sessionObject
                     methodType=ELEMENT
                   />,
                 )
               : tabArr->Array.push({
-                  name: paymentMethodData.paymentMethodType->CommonUtils.getDisplayName,
+                  name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
                   componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                     <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
                 })
 
           | TabSheet | WidgetTabSheet =>
             tabArr->Array.push({
-              name: paymentMethodData.paymentMethodType->CommonUtils.getDisplayName,
+              name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
               componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                 <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
             })
           | ButtonSheet | WidgetButtonSheet =>
             elementArr->Array.push(
               <PaymentMethod
-                key={paymentMethodData.paymentMethodType}
+                key={paymentMethodData.payment_method_type}
                 paymentMethodData
                 sessionObject
                 methodType=ELEMENT
@@ -212,27 +212,27 @@ let useAddWebPaymentButton = () => {
     if ReactNative.Platform.os === #web {
       switch accountPaymentMethodData {
       | Some(accountPaymentMethodData) =>
-        accountPaymentMethodData.paymentMethods->Array.forEach(paymentMethodData => {
+        accountPaymentMethodData.payment_methods->Array.forEach(paymentMethodData => {
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
             sessionData
-            ->Array.find(item => item.walletName == paymentMethodData.paymentMethodTypeWallet)
+            ->Array.find(item => item.wallet_name == paymentMethodData.payment_method_type_wallet)
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
           }
 
           let exp =
-            paymentMethodData.paymentExperience->Array.find(
-              x => x.paymentExperienceTypeDecode === INVOKE_SDK_CLIENT,
+            paymentMethodData.payment_experience->Array.find(
+              x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
             )
 
-          switch paymentMethodData.paymentMethodTypeWallet {
+          switch paymentMethodData.payment_method_type_wallet {
           | APPLE_PAY =>
             if (
               WebKit.platform !== #android &&
               WebKit.platform !== #androidWebView &&
               WebKit.platform !== #next &&
-              sessionObject.walletName !== NONE &&
+              sessionObject.wallet_name !== NONE &&
               exp->Option.isSome
             ) {
               Promise.make(
@@ -251,7 +251,7 @@ let useAddWebPaymentButton = () => {
               WebKit.platform !== #ios &&
               WebKit.platform !== #iosWebView &&
               WebKit.platform !== #next &&
-              sessionObject.walletName !== NONE &&
+              sessionObject.wallet_name !== NONE &&
               sessionObject.connector !== "trustpay" &&
               exp->Option.isSome
             ) {
@@ -283,22 +283,22 @@ let useWidgetListModifier = () => {
   //       let sessionObject = switch allApiData.sessions {
   //       | Some(sessionData) =>
   //         sessionData
-  //         ->Array.find(item => item.walletName == paymentMethodData.paymentMethodTypeWallet)
+  //         ->Array.find(item => item.wallet_name == paymentMethodData.payment_method_type_wallet)
   //         ->Option.getOr(SessionsType.defaultToken)
   //       | _ => SessionsType.defaultToken
   //       }
 
   //       let exp =
-  //         paymentMethodData.paymentExperience->Array.find(
-  //           x => x.paymentExperienceTypeDecode === INVOKE_SDK_CLIENT,
+  //         paymentMethodData.payment_experience->Array.find(
+  //           x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
   //         )
 
-  //       switch switch paymentMethodData.paymentMethodTypeWallet {
+  //       switch switch paymentMethodData.payment_method_type_wallet {
   //       | APPLE_PAY =>
   //         WebKit.platform !== #android &&
   //         WebKit.platform !== #androidWebView &&
   //         WebKit.platform !== #next &&
-  //         sessionObject.walletName !== NONE
+  //         sessionObject.wallet_name !== NONE
   //           ? {
   //               Promise.make(
   //                 (resolve, _) => {
@@ -317,7 +317,7 @@ let useWidgetListModifier = () => {
   //         WebKit.platform !== #ios &&
   //         WebKit.platform !== #iosWebView &&
   //         WebKit.platform !== #next &&
-  //         sessionObject.walletName !== NONE &&
+  //         sessionObject.wallet_name !== NONE &&
   //         sessionObject.connector !== "trustpay" &&
   //         exp->Option.isSome
   //           ? {
@@ -332,15 +332,15 @@ let useWidgetListModifier = () => {
   //       | PAYPAL =>
   //         exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
   //           ? exp
-  //           : paymentMethodData.paymentExperience->Array.find(
-  //               x => x.paymentExperienceTypeDecode === REDIRECT_TO_URL,
+  //           : paymentMethodData.payment_experience->Array.find(
+  //               x => x.payment_experience_type_decode === REDIRECT_TO_URL,
   //             )
   //       | _ => None
   //       } {
   //       | Some(_) =>
   //         widgetArr->Array.push(
   //           <PaymentMethod
-  //             key=paymentMethodData.paymentMethodType
+  //             key=paymentMethodData.payment_method_type
   //             paymentMethodData
   //             sessionObject
   //             methodType={WIDGET}

@@ -343,15 +343,15 @@ let getErrorFromResponse = data => {
 let generateWalletConfirmBody = (
   ~nativeProp,
   ~data: CustomerPaymentMethodType.customerPaymentMethodType,
-  ~paymentMethodData,
+  ~payment_method_data,
 ) => {
   [
     ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
     ("payment_method", "wallet"->JSON.Encode.string),
-    ("paymentMethodType", data.paymentMethodType->JSON.Encode.string),
-    ("paymentMethodData", paymentMethodData),
-    ("setupFutureUsage", "off_session"->JSON.Encode.string),
-    ("paymentType", "new_mandate"->JSON.Encode.string),
+    ("payment_method_type", data.payment_method_type->JSON.Encode.string),
+    ("payment_method_data", payment_method_data),
+    ("setup_future_usage", "off_session"->JSON.Encode.string),
+    ("payment_type", "new_mandate"->JSON.Encode.string),
     (
       "customer_acceptance",
       [

@@ -24,7 +24,7 @@ let make = (
           | Some(str) => str
           | None =>
             accountPaymentMethodData
-            ->Option.map(accountPaymentMethods => accountPaymentMethods.paymentType)
+            ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
             ->Option.getOr(NORMAL) !== NORMAL
               ? "Pay Now"
               : localeObject.payNowButton

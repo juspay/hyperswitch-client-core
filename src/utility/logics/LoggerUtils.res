@@ -37,9 +37,9 @@ let logFileToObj = logFile => {
     ("client_core_version", logFile.clientCoreVersion->JSON.Encode.string),
     ("value", logFile.value->JSON.Encode.string),
     ("internal_metadata", logFile.internalMetadata->JSON.Encode.string),
-    ("sessionId", logFile.sessionId->JSON.Encode.string),
-    ("merchantId", logFile.merchantId->JSON.Encode.string),
-    ("paymentId", logFile.paymentId->JSON.Encode.string),
+    ("session_id", logFile.sessionId->JSON.Encode.string),
+    ("merchant_id", logFile.merchantId->JSON.Encode.string),
+    ("payment_id", logFile.paymentId->JSON.Encode.string),
     (
       "app_id",
       logFile.appId
@@ -47,18 +47,18 @@ let logFileToObj = logFile => {
       ->JSON.Encode.string,
     ),
     ("platform", logFile.platform->Utils.convertToScreamingSnakeCase->JSON.Encode.string),
-    ("userAgent", logFile.userAgent->JSON.Encode.string),
-    ("eventName", logFile.eventName->eventToStrMapper->JSON.Encode.string),
-    ("firstEvent", (logFile.firstEvent ? "true" : "false")->JSON.Encode.string),
+    ("user_agent", logFile.userAgent->JSON.Encode.string),
+    ("event_name", logFile.eventName->eventToStrMapper->JSON.Encode.string),
+    ("first_event", (logFile.firstEvent ? "true" : "false")->JSON.Encode.string),
     (
-      "paymentMethod",
+      "payment_method",
       logFile.paymentMethod
       ->Option.getOr("")
       ->Utils.convertToScreamingSnakeCase
       ->JSON.Encode.string,
     ),
     (
-      "paymentExperience",
+      "payment_experience",
       switch logFile.paymentExperience {
       | None => ""
       | Some(exp) => exp

@@ -1,100 +1,100 @@
 open Utils
 
-type eligibleConnectors = array<JSON.t>
+type eligible_connectors = array<JSON.t>
 
 type cardNetworks = {
-  cardNetwork: string,
-  eligibleConnectors: eligibleConnectors,
+  card_network: string,
+  eligible_connectors: eligible_connectors,
 }
 
 type bankNames = {
-  bankName: array<string>,
-  eligibleConnectors: eligibleConnectors,
+  bank_name: array<string>,
+  eligible_connectors: eligible_connectors,
 }
 
 type paymentExperience = {
-  paymentExperienceType: string,
-  paymentExperienceTypeDecode: PaymentMethodType.paymentExperienceType,
-  eligibleConnectors: eligibleConnectors,
+  payment_experience_type: string,
+  payment_experience_type_decode: PaymentMethodType.paymentExperienceType,
+  eligible_connectors: eligible_connectors,
 }
 
 type paymentMethodType = {
-  paymentMethod: PaymentMethodType.paymentMethod,
-  paymentMethodStr: string,
-  paymentMethodType: string,
-  paymentMethodTypeWallet: SdkTypes.paymentMethodTypeWallet,
-  cardNetworks: array<cardNetworks>,
-  bankNames: array<bankNames>,
-  paymentExperience: array<paymentExperience>,
-  requiredFields: Dict.t<JSON.t>,
+  payment_method: PaymentMethodType.paymentMethod,
+  payment_method_str: string,
+  payment_method_type: string,
+  payment_method_type_wallet: SdkTypes.paymentMethodTypeWallet,
+  card_networks: array<cardNetworks>,
+  bank_names: array<bankNames>,
+  payment_experience: array<paymentExperience>,
+  required_fields: Dict.t<JSON.t>,
 }
 
 type paymentMethods = array<paymentMethodType>
 
 type accountPaymentMethods = {
-  paymentMethods: paymentMethods,
-  merchantName: string,
-  collectBillingDetailsFromWallets: bool,
-  collectShippingDetailsFromWallets: bool,
+  payment_methods: paymentMethods,
+  merchant_name: string,
+  collect_billing_details_from_wallets: bool,
+  collect_shipping_details_from_wallets: bool,
   currency: string,
-  paymentType: PaymentMethodType.mandateType,
-  mandatePayment: option<string>,
-  isTaxCalculationEnabled: bool,
-  redirectUrl: string,
-  requestExternalThreeDsAuthentication: bool,
-  showSurchargeBreakupScreen: bool,
+  payment_type: PaymentMethodType.mandateType,
+  mandate_payment: option<string>,
+  is_tax_calculation_enabled: bool,
+  redirect_url: string,
+  request_external_three_ds_authentication: bool,
+  show_surcharge_breakup_screen: bool,
 }
 
 let defaultAccountPaymentMethods = {
-  paymentMethods: [],
-  merchantName: "",
-  collectBillingDetailsFromWallets: false,
-  collectShippingDetailsFromWallets: false,
+  payment_methods: [],
+  merchant_name: "",
+  collect_billing_details_from_wallets: false,
+  collect_shipping_details_from_wallets: false,
   currency: "",
-  paymentType: NORMAL,
-  mandatePayment: None,
-  isTaxCalculationEnabled: false,
-  redirectUrl: "",
-  requestExternalThreeDsAuthentication: false,
-  showSurchargeBreakupScreen: false,
+  payment_type: NORMAL,
+  mandate_payment: None,
+  is_tax_calculation_enabled: false,
+  redirect_url: "",
+  request_external_three_ds_authentication: false,
+  show_surcharge_breakup_screen: false,
 }
 
 let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
   dict
-  ->getArray("cardNetworks")
+  ->getArray("card_networks")
   ->Array.map(item => {
     let itemDict = item->getDictFromJson
     {
-      cardNetwork: itemDict->getString("cardNetwork", ""),
-      eligibleConnectors: itemDict->getArray("eligibleConnectors"),
+      card_network: itemDict->getString("card_network", ""),
+      eligible_connectors: itemDict->getArray("eligible_connectors"),
     }
   })
 }
 
 let parseBankNames = (dict: Js.Dict.t<JSON.t>) => {
   dict
-  ->getArray("bankNames")
+  ->getArray("bank_names")
   ->Array.map(item => {
     let itemDict = item->getDictFromJson
     {
-      bankName: itemDict
-      ->getArray("bankName")
+      bank_name: itemDict
+      ->getArray("bank_name")
       ->Array.map(bankItem => bankItem->JSON.stringify),
-      eligibleConnectors: itemDict->getArray("eligibleConnectors"),
+      eligible_connectors: itemDict->getArray("eligible_connectors"),
     }
   })
 }
 
 let parsePaymentExperience = (dict: Js.Dict.t<JSON.t>) => {
   dict
-  ->getArray("paymentExperience")
+  ->getArray("payment_experience")
   ->Array.map(item => {
     let itemDict = item->getDictFromJson
-    let experienceTypeStr = itemDict->getString("paymentExperienceType", "")
+    let experienceTypeStr = itemDict->getString("payment_experience_type", "")
     {
-      paymentExperienceType: experienceTypeStr,
-      paymentExperienceTypeDecode: PaymentMethodType.getExperienceType(experienceTypeStr),
-      eligibleConnectors: itemDict->getArray("eligibleConnectors"),
+      payment_experience_type: experienceTypeStr,
+      payment_experience_type_decode: PaymentMethodType.getExperienceType(experienceTypeStr),
+      eligible_connectors: itemDict->getArray("eligible_connectors"),
     }
   })
 }
@@ -103,17 +103,17 @@ let parsePaymentMethodType = (
   paymentMethodDict: Js.Dict.t<JSON.t>,
   paymentMethodTypeDict: Js.Dict.t<JSON.t>,
 ) => {
-  let paymentMethodStr = paymentMethodDict->getString("paymentMethod", "")
-  let paymentMethodTypeStr = paymentMethodTypeDict->getString("paymentMethodType", "")
+  let paymentMethodStr = paymentMethodDict->getString("payment_method", "")
+  let paymentMethodTypeStr = paymentMethodTypeDict->getString("payment_method_type", "")
   {
-    paymentMethod: PaymentMethodType.getPaymentMethod(paymentMethodStr),
-    paymentMethodStr: paymentMethodStr,
-    paymentMethodType: paymentMethodTypeStr,
-    paymentMethodTypeWallet: PaymentMethodType.getWalletType(paymentMethodTypeStr),
-    cardNetworks: parseCardNetworks(paymentMethodTypeDict),
-    bankNames: parseBankNames(paymentMethodTypeDict),
-    paymentExperience: parsePaymentExperience(paymentMethodTypeDict),
-    requiredFields: paymentMethodTypeDict->getObj("requiredFields", Dict.make()),
+    payment_method: PaymentMethodType.getPaymentMethod(paymentMethodStr),
+    payment_method_str: paymentMethodStr,
+    payment_method_type: paymentMethodTypeStr,
+    payment_method_type_wallet: PaymentMethodType.getWalletType(paymentMethodTypeStr),
+    card_networks: parseCardNetworks(paymentMethodTypeDict),
+    bank_names: parseBankNames(paymentMethodTypeDict),
+    payment_experience: parsePaymentExperience(paymentMethodTypeDict),
+    required_fields: paymentMethodTypeDict->getObj("required_fields", Dict.make()),
   }
 }
 
@@ -132,17 +132,17 @@ let createKey = (paymentMethodStr: string, paymentMethodType: string) => {
 let mergePaymentMethods = (existing: paymentMethodType, new: paymentMethodType) => {
   {
     ...existing,
-    cardNetworks: existing.cardNetworks->Array.concat(new.cardNetworks),
-    bankNames: existing.bankNames->Array.concat(new.bankNames),
-    paymentExperience: existing.paymentExperience->Array.concat(new.paymentExperience),
-    requiredFields: existing.requiredFields->Dict.assign(new.requiredFields),
+    card_networks: existing.card_networks->Array.concat(new.card_networks),
+    bank_names: existing.bank_names->Array.concat(new.bank_names),
+    payment_experience: existing.payment_experience->Array.concat(new.payment_experience),
+    required_fields: existing.required_fields->Dict.assign(new.required_fields),
   }
 }
 
 let processPaymentMethods = (jsonArray: array<JSON.t>) => {
   let resultDict = jsonArray->Array.reduce(Dict.make(), (resultDict, item) => {
     let paymentMethodDict = item->getDictFromJson
-    let paymentMethodTypes = paymentMethodDict->getArray("paymentMethod_types")
+    let paymentMethodTypes = paymentMethodDict->getArray("payment_method_types")
 
     paymentMethodTypes->Array.reduce(resultDict, (accMap, paymentMethodType) => {
       let paymentMethodTypeDict = paymentMethodType->getDictFromJson
@@ -150,15 +150,15 @@ let processPaymentMethods = (jsonArray: array<JSON.t>) => {
 
       // Normalize the payment method type for card credit/debit
       let normalizedPaymentMethodType = normalizeCardType(
-        parsed.paymentMethodStr,
-        parsed.paymentMethodType,
+        parsed.payment_method_str,
+        parsed.payment_method_type,
       )
       let normalizedParsed = {
         ...parsed,
-        paymentMethodType: normalizedPaymentMethodType,
+        payment_method_type: normalizedPaymentMethodType,
       }
 
-      let key = createKey(parsed.paymentMethodStr, parsed.paymentMethodType)
+      let key = createKey(parsed.payment_method_str, parsed.payment_method_type)
 
       switch accMap->Dict.get(key) {
       | None => accMap->Dict.set(key, normalizedParsed)
@@ -176,8 +176,8 @@ let processPaymentMethods = (jsonArray: array<JSON.t>) => {
 let sortPaymentListArray = (plist: paymentMethods) => {
   plist->Array.sort((s1, s2) => {
     let intResult =
-      Types.priorityArr->Array.findIndex(x => x == s2.paymentMethodType) -
-        Types.priorityArr->Array.findIndex(x => x == s1.paymentMethodType)
+      Types.priorityArr->Array.findIndex(x => x == s2.payment_method_type) -
+        Types.priorityArr->Array.findIndex(x => x == s1.payment_method_type)
     intResult->Ordering.fromInt
   })
   plist
@@ -186,41 +186,41 @@ let sortPaymentListArray = (plist: paymentMethods) => {
 let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
   let accountPaymentMethodsDict = res->getDictFromJson
   {
-    paymentMethods: getArray(accountPaymentMethodsDict, "paymentMethods")
+    payment_methods: getArray(accountPaymentMethodsDict, "payment_methods")
     ->processPaymentMethods
     ->sortPaymentListArray,
-    merchantName: getString(accountPaymentMethodsDict, "merchantName", ""),
-    collectBillingDetailsFromWallets: getBool(
+    merchant_name: getString(accountPaymentMethodsDict, "merchant_name", ""),
+    collect_billing_details_from_wallets: getBool(
       accountPaymentMethodsDict,
-      "collectBillingDetailsFromWallets",
+      "collect_billing_details_from_wallets",
       false,
     ),
-    collectShippingDetailsFromWallets: getBool(
+    collect_shipping_details_from_wallets: getBool(
       accountPaymentMethodsDict,
-      "collectShippingDetailsFromWallets",
+      "collect_shipping_details_from_wallets",
       false,
     ),
     currency: getString(accountPaymentMethodsDict, "currency", ""),
-    paymentType: switch getString(accountPaymentMethodsDict, "paymentType", "") {
+    payment_type: switch getString(accountPaymentMethodsDict, "payment_type", "") {
     | "setup_mandate" => SETUP_MANDATE
     | "new_mandate" => NEW_MANDATE
     | _ => NORMAL
     },
-    mandatePayment: getOptionString(accountPaymentMethodsDict, "mandatePayment"),
-    isTaxCalculationEnabled: getBool(
+    mandate_payment: getOptionString(accountPaymentMethodsDict, "mandate_payment"),
+    is_tax_calculation_enabled: getBool(
       accountPaymentMethodsDict,
-      "isTaxCalculationEnabled",
+      "is_tax_calculation_enabled",
       false,
     ),
-    redirectUrl: getString(accountPaymentMethodsDict, "redirectUrl", ""),
-    requestExternalThreeDsAuthentication: getBool(
+    redirect_url: getString(accountPaymentMethodsDict, "redirect_url", ""),
+    request_external_three_ds_authentication: getBool(
       accountPaymentMethodsDict,
-      "requestExternalThreeDsAuthentication",
+      "request_external_three_ds_authentication",
       false,
     ),
-    showSurchargeBreakupScreen: getBool(
+    show_surcharge_breakup_screen: getBool(
       accountPaymentMethodsDict,
-      "showSurchargeBreakupScreen",
+      "show_surcharge_breakup_screen",
       false,
     ),
   }
@@ -228,14 +228,14 @@ let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
 
 let getEligibleConnectorFromCardNetwork = (cardNetworks: array<cardNetworks>) => {
   cardNetworks->Array.reduce([], (acc, item) => {
-    acc->Array.pushMany(item.eligibleConnectors)
+    acc->Array.pushMany(item.eligible_connectors)
     acc
   })
 }
 
 let getEligibleConnectorFromPaymentExperience = (paymentExperience: array<paymentExperience>) => {
   paymentExperience->Array.reduce([], (acc, item) => {
-    acc->Array.pushMany(item.eligibleConnectors)
+    acc->Array.pushMany(item.eligible_connectors)
     acc
   })
 }
