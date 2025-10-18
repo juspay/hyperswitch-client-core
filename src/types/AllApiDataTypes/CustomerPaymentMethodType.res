@@ -17,19 +17,19 @@ type savedCardType = {
   saved_to_locker: bool,
 }
 
-type customer_payment_method_type = {
+type customerPaymentMethodType = {
   payment_token: string,
   payment_method_id: string,
   customer_id: string,
   payment_method: PaymentMethodType.paymentMethod,
   payment_method_str: string,
   payment_method_type: string,
-  payment_method_type_wallet: SdkTypes.payment_method_type_wallet,
+  payment_method_type_wallet: SdkTypes.paymentMethodTypeWallet,
   payment_method_issuer: string,
   payment_method_issuer_code: option<string>,
   recurring_enabled: bool,
   installment_payment_enabled: bool,
-  payment_experience: array<PaymentMethodType.payment_experience_type>,
+  payment_experience: array<PaymentMethodType.paymentExperienceType>,
   card: option<savedCardType>,
   metadata: option<string>,
   created: string,
@@ -42,10 +42,10 @@ type customer_payment_method_type = {
   mandate_id?: string,
 }
 
-type customer_payment_methods = array<customer_payment_method_type>
+type customerPaymentMethodTypes = array<customerPaymentMethodType>
 
 type customerPaymentMethods = {
-  customer_payment_methods: customer_payment_methods,
+  customer_payment_methods: customerPaymentMethodTypes,
   is_guest_customer: bool,
 }
 

@@ -28,8 +28,8 @@ let useAccountPaymentMethodModifier = () => {
         | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet =>
           let customerPaymentMethods =
             customerPaymentMethods.customer_payment_methods->Array.filter(
-              customer_payment_method_type =>
-                customer_payment_method_type.payment_method !== WALLET,
+              customerPaymentMethodType =>
+                customerPaymentMethodType.payment_method !== WALLET,
             )
           (
             customerPaymentMethods->Array.length > 0

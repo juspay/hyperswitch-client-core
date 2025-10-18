@@ -15,7 +15,7 @@ type walletStatus =
   | Simulated
 
 let useProcessPayButtonResult = () => {
-  (walletType: SdkTypes.payment_method_type_wallet, var) => {
+  (walletType: SdkTypes.paymentMethodTypeWallet, var) => {
     switch walletType {
     | GOOGLE_PAY =>
       let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -60,8 +60,8 @@ let useProcessPayButtonResult = () => {
           ) {
             Simulated
           } else {
-            let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
-            let payment_method = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
+            let paymentData = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
+            let paymentMethod = var->Dict.get("payment_method")->Option.getOr(JSON.Encode.null)
 
             let billingAddress =
               var->AddressUtils.getApplePayBillingAddress(
@@ -73,8 +73,8 @@ let useProcessPayButtonResult = () => {
 
             let paymentData =
               [
-                ("payment_data", payment_data),
-                ("payment_method", payment_method),
+                ("payment_data", paymentData),
+                ("payment_method", paymentMethod),
                 ("transaction_identifier", transaction_identifier),
               ]->Dict.fromArray
 

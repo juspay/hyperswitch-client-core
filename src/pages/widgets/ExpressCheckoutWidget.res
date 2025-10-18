@@ -46,25 +46,25 @@ let make = () => {
 
   let firstPaymentMethod = {
     let pmList =
-      customerPaymentMethodData->Option.map(customerPaymentMethods =>
-        customerPaymentMethods.customer_payment_methods
+      customerPaymentMethodData->Option.map(customerPaymentMethodTypes =>
+        customerPaymentMethodTypes.customer_payment_methods
       )
     let platform = ReactNative.Platform.os
 
     pmList
-    ->Option.map(customer_payment_method_types => {
-      let first = customer_payment_method_types->Array.get(0)
+    ->Option.map(customerPaymentMethodTypes => {
+      let first = customerPaymentMethodTypes->Array.get(0)
 
       let shouldUseNext = switch (platform, first) {
-      | (#android, Some(customer_payment_method_type)) =>
-        customer_payment_method_type.payment_method_type_wallet == SdkTypes.APPLE_PAY
-      | (#ios, Some(customer_payment_method_type)) =>
-        customer_payment_method_type.payment_method_type_wallet == SdkTypes.GOOGLE_PAY
+      | (#android, Some(customerPaymentMethodTypes)) =>
+        customerPaymentMethodTypes.payment_method_type_wallet == SdkTypes.APPLE_PAY
+      | (#ios, Some(customerPaymentMethodTypes)) =>
+        customerPaymentMethodTypes.payment_method_type_wallet == SdkTypes.GOOGLE_PAY
       | _ => false
       }
 
-      if shouldUseNext && customer_payment_method_types->Array.length > 1 {
-        customer_payment_method_types->Array.get(1)
+      if shouldUseNext && customerPaymentMethodTypes->Array.length > 1 {
+        customerPaymentMethodTypes->Array.get(1)
       } else {
         first
       }
@@ -82,11 +82,11 @@ let make = () => {
     )
     ->Option.getOr("NotCard")
 
-  let (pmToken, walletType: SdkTypes.payment_method_type_wallet) = switch firstPaymentMethod {
-  | Some(customer_payment_method_type) => (
-      switch customer_payment_method_type.mandate_id {
+  let (pmToken, walletType: SdkTypes.paymentMethodTypeWallet) = switch firstPaymentMethod {
+  | Some(customerPaymentMethodType) => (
+      switch customerPaymentMethodType.mandate_id {
       | Some(mandate_id) => mandate_id
-      | None => customer_payment_method_type.payment_token
+      | None => customerPaymentMethodType.payment_token
       },
       NONE,
     )

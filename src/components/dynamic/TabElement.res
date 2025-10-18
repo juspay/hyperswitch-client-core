@@ -1,6 +1,6 @@
 @react.component
 let make = (
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: AccountPaymentMethodType.paymentMethodType,
   ~isScreenFocus,
   ~processRequest,
   ~setConfirmButtonData,

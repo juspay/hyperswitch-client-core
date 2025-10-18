@@ -34,7 +34,7 @@ type localeTypes =
 
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
-type payment_method_type_wallet =
+type paymentMethodTypeWallet =
   GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | KLARNA | SKRILL | PAY_SAFE_CARD | NONE
 
 let walletNameMapper = str => {
@@ -275,7 +275,7 @@ type sdkState =
   | WidgetTabSheet
   | HostedCheckout
   | CardWidget
-  | CustomWidget(payment_method_type_wallet)
+  | CustomWidget(paymentMethodTypeWallet)
   | ExpressCheckoutWidget
   | PaymentMethodsManagement
   | Headless

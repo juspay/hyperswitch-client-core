@@ -128,7 +128,7 @@ let usePayment = (
   }
 
   let initiateWalletPayment = (
-    ~activeWalletName: payment_method_type_wallet,
+    ~activeWalletName: paymentMethodTypeWallet,
     ~activePaymentToken: string,
     (),
   ) => {
@@ -155,7 +155,7 @@ let usePayment = (
   }
 
   let initiatePayment = (
-    ~activeWalletName: payment_method_type_wallet,
+    ~activeWalletName: paymentMethodTypeWallet,
     ~activePaymentToken: string,
     ~gPayResponseHandler: Dict.t<JSON.t> => unit,
     ~applePayResponseHandler: Dict.t<JSON.t> => unit,

@@ -70,14 +70,14 @@ let itemToObject = (data: SessionsType.sessions): paymentData => {
   shippingAddressParameters: data.shipping_address_parameters->transformKeysSnakeToCamel,
 }
 
-type assurance_details = {
+type assuranceDetails = {
   account_verified: bool,
   card_holder_authenticated: bool,
 }
 type info = {
   card_network: string,
   card_details: string,
-  assurance_details?: assurance_details,
+  assurance_details?: assuranceDetails,
   billing_address?: addressDetails,
 }
 type tokenizationData = {token: string, \"type": string}

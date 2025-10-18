@@ -1,7 +1,7 @@
 open SdkTypes
 
 type sessions = {
-  wallet_name: payment_method_type_wallet,
+  wallet_name: paymentMethodTypeWallet,
   session_token: string,
   session_id: string,
   merchant_info: JSON.t,

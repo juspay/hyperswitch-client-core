@@ -145,7 +145,7 @@ let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
 let getCardNetworks = cardNetworks => {
   switch cardNetworks {
   | Some(cardNetworks) =>
-    cardNetworks->Array.map((item: AccountPaymentMethodType.card_networks) => item.card_network)
+    cardNetworks->Array.map((item: AccountPaymentMethodType.cardNetworks) => item.card_network)
   | None => []
   }
 }

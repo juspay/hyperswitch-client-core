@@ -342,7 +342,7 @@ let getErrorFromResponse = data => {
 
 let generateWalletConfirmBody = (
   ~nativeProp,
-  ~data: CustomerPaymentMethodType.customer_payment_method_type,
+  ~data: CustomerPaymentMethodType.customerPaymentMethodType,
   ~payment_method_data,
 ) => {
   [

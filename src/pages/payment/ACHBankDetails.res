@@ -27,7 +27,7 @@ module DetailsView = {
 }
 
 @react.component
-let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
+let make = (~data: PaymentConfirmTypes.achCreditTransfer) => {
   let (clicked, setClicked) = React.useState(_ => false)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let localeObject = GetLocale.useGetLocalObj()

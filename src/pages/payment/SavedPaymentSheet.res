@@ -3,7 +3,7 @@ open Style
 
 @react.component
 let make = (
-  ~customerPaymentMethods: CustomerPaymentMethodType.customer_payment_methods,
+  ~customerPaymentMethods: CustomerPaymentMethodType.customerPaymentMethodTypes,
   ~setConfirmButtonData,
   ~merchantName,
   ~isScreenFocus=true,
@@ -50,7 +50,7 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
 
-  let processRequestSaved = (token: CustomerPaymentMethodType.customer_payment_method_type) => {
+  let processRequestSaved = (token: CustomerPaymentMethodType.customerPaymentMethodType) => {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -98,7 +98,7 @@ let make = (
   }
 
   let processRequest = (
-    paymentMethodData: AccountPaymentMethodType.payment_method_type,
+    paymentMethodData: AccountPaymentMethodType.paymentMethodType,
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
@@ -248,7 +248,7 @@ let make = (
   //         ->Array.get(0)
   //         ->Option.mapOr([], network => network.eligible_connectors)
   //       | _ =>
-  //         paymentMethodData.payment_experience
+  //         paymentMethodData.paymentExperience
   //         ->Array.get(0)
   //         ->Option.mapOr([], experience => experience.eligible_connectors)
   //       }
@@ -284,8 +284,8 @@ let make = (
     switch accountPaymentMethodData {
     | Some(accountPaymentMethods) =>
       let paymentMethodData =
-        accountPaymentMethods.payment_methods->Array.find(payment_method_type =>
-          payment_method_type.payment_method_type_wallet === GOOGLE_PAY
+        accountPaymentMethods.payment_methods->Array.find(paymentMethodType =>
+          paymentMethodType.payment_method_type_wallet === GOOGLE_PAY
         )
       switch paymentMethodData {
       | Some(paymentMethodData) =>
@@ -315,8 +315,8 @@ let make = (
     switch accountPaymentMethodData {
     | Some(accountPaymentMethods) =>
       let paymentMethodData =
-        accountPaymentMethods.payment_methods->Array.find(payment_method_type =>
-          payment_method_type.payment_method_type_wallet === APPLE_PAY
+        accountPaymentMethods.payment_methods->Array.find(paymentMethodType =>
+          paymentMethodType.payment_method_type_wallet === APPLE_PAY
         )
 
       switch paymentMethodData {
@@ -362,8 +362,8 @@ let make = (
   }
 
   React.useEffect1(() => {
-    switch selectedToken->Option.map(customer_payment_method_type =>
-      customer_payment_method_type.payment_method_type_wallet
+    switch selectedToken->Option.map(customerPaymentMethodType =>
+      customerPaymentMethodType.payment_method_type_wallet
     ) {
     | Some(APPLE_PAY) => Window.registerEventListener("applePayData", confirmApplePay)
     | Some(GOOGLE_PAY) => Window.registerEventListener("googlePayData", confirmGPay)

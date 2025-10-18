@@ -72,7 +72,7 @@ module CVVComponent = {
 }
 module PMWithNickNameComponent = {
   @react.component
-  let make = (~savedPaymentMethod: CustomerPaymentMethodType.customer_payment_method_type) => {
+  let make = (~savedPaymentMethod: CustomerPaymentMethodType.customerPaymentMethodType) => {
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
     let nickName = switch savedPaymentMethod.card {
     | Some(card) => card.nick_name
@@ -127,7 +127,7 @@ module PMWithNickNameComponent = {
 module PaymentMethodListView = {
   @react.component
   let make = (
-    ~savedPaymentMethod: CustomerPaymentMethodType.customer_payment_method_type,
+    ~savedPaymentMethod: CustomerPaymentMethodType.customerPaymentMethodType,
     ~isButtomBorder=true,
     ~savedCardCvv,
     ~setSavedCardCvv,
@@ -193,7 +193,7 @@ module PaymentMethodListView = {
 @react.component
 let make = (
   ~customerPaymentMethods,
-  ~selectedToken: option<CustomerPaymentMethodType.customer_payment_method_type>,
+  ~selectedToken: option<CustomerPaymentMethodType.customerPaymentMethodType>,
   ~setSelectedToken,
   ~savedCardCvv,
   ~setSavedCardCvv,

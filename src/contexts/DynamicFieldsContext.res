@@ -4,7 +4,7 @@ type dynamicFieldsData = {
   sheetType: sheetType,
   setSheetType: sheetType => unit,
   getRequiredFieldsForTabs: (
-    AccountPaymentMethodType.payment_method_type,
+    AccountPaymentMethodType.paymentMethodType,
     Dict.t<JSON.t>,
     bool,
   ) => (
@@ -15,7 +15,7 @@ type dynamicFieldsData = {
     bool,
   ),
   getRequiredFieldsForButton: (
-    AccountPaymentMethodType.payment_method_type,
+    AccountPaymentMethodType.paymentMethodType,
     RescriptCore.Dict.t<Core__JSON.t>,
     option<SdkTypes.addressDetails>,
     option<SdkTypes.addressDetails>,
@@ -32,8 +32,8 @@ type dynamicFieldsData = {
     PaymentMethodType.paymentMethod,
     string,
     string,
-    SdkTypes.payment_method_type_wallet,
-    array<AccountPaymentMethodType.payment_experience>,
+    SdkTypes.paymentMethodTypeWallet,
+    array<AccountPaymentMethodType.paymentExperience>,
   ),
   isNicknameSelected: bool,
   setIsNicknameSelected: bool => unit,
@@ -79,7 +79,7 @@ let make = (~children) => {
   }, [setCountry])
 
   let getRequiredFieldsForTabs = (
-    paymentMethodData: AccountPaymentMethodType.payment_method_type,
+    paymentMethodData: AccountPaymentMethodType.paymentMethodType,
     formData,
     isScreenFocus,
   ) => {
@@ -138,7 +138,7 @@ let make = (~children) => {
     (OTHERS: PaymentMethodType.paymentMethod),
     "",
     "",
-    (NONE: SdkTypes.payment_method_type_wallet),
+    (NONE: SdkTypes.paymentMethodTypeWallet),
     [],
   ))
 
@@ -151,9 +151,9 @@ let make = (~children) => {
       enabledCardSchemes,
       payment_method,
       payment_method_str,
-      payment_method_type,
-      payment_method_type_wallet,
-      payment_experience,
+      paymentMethodType,
+      paymentMethodTypeWallet,
+      paymentExperience,
     ) => {
       setWalletData(_ => (
         requiredFields,
@@ -163,16 +163,16 @@ let make = (~children) => {
         enabledCardSchemes,
         payment_method,
         payment_method_str,
-        payment_method_type,
-        payment_method_type_wallet,
-        payment_experience,
+        paymentMethodType,
+        paymentMethodTypeWallet,
+        paymentExperience,
       ))
     },
     [setWalletData],
   )
 
   let getRequiredFieldsForButton = (
-    paymentMethodData: AccountPaymentMethodType.payment_method_type,
+    paymentMethodData: AccountPaymentMethodType.paymentMethodType,
     walletDict,
     billingAddress,
     shippingAddress,

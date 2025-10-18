@@ -2,7 +2,7 @@ type methodType = TAB | ELEMENT | WIDGET
 
 @react.component
 let make = (
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: AccountPaymentMethodType.paymentMethodType,
   ~isScreenFocus: bool=false,
   ~setConfirmButtonData=_ => (),
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,

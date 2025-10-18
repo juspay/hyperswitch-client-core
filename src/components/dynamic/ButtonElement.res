@@ -3,7 +3,7 @@ open Style
 
 @react.component
 let make = (
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: AccountPaymentMethodType.paymentMethodType,
   ~sessionObject,
   ~processRequest,
 ) => {
@@ -57,14 +57,14 @@ let make = (
   //       ->Array.get(0)
   //       ->Option.mapOr([], network => network.eligible_connectors)
   //     | _ =>
-  //       paymentMethodData.payment_experience
+  //       paymentMethodData.paymentExperience
   //       ->Array.get(0)
   //       ->Option.mapOr([], experience => experience.eligible_connectors)
   //     }
 
   //     let configParams: SuperpositionTypes.superpositionBaseContext = {
   //       payment_method: paymentMethodData.payment_method_str,
-  //       payment_method_type: paymentMethodData.payment_method_type,
+  //       payment_method_type: paymentMethodData.paymentMethodType,
   //       mandate_type: accountPaymentMethodData
   //       ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
   //       ->Option.getOr(NORMAL) === NORMAL
@@ -202,7 +202,7 @@ let make = (
         ->Option.isSome
       ) {
         let redirectData = []->Dict.fromArray->JSON.Encode.object
-        let payment_method_data = [
+        let paymentMethodData = [
           (
             paymentMethodData.payment_method_str,
             [(paymentMethodData.payment_method_type ++ "_redirect", redirectData)]
@@ -211,7 +211,7 @@ let make = (
           ),
         ]->Dict.fromArray
 
-        processWalletData(payment_method_data)
+        processWalletData(paymentMethodData)
       } else {
         setLoading(FillingDetails)
         showAlert(~errorType="warning", ~message="Payment Method Unavailable")

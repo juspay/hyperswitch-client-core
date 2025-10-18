@@ -1,5 +1,5 @@
 type selectedPMObject = {
-  walletName: SdkTypes.payment_method_type_wallet,
+  walletName: SdkTypes.paymentMethodTypeWallet,
   token: option<string>,
 }
 

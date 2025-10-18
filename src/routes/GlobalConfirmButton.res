@@ -2,8 +2,8 @@ type confirmButtonData = {
   loading: bool,
   handlePress: ReactNative.Event.pressEvent => unit,
   payment_method_type: string,
-  payment_experience?: array<AccountPaymentMethodType.payment_experience>,
-  customer_payment_experience?: array<PaymentMethodType.payment_experience_type>,
+  payment_experience?: array<AccountPaymentMethodType.paymentExperience>,
+  customer_payment_experience?: array<PaymentMethodType.paymentExperienceType>,
   errorText: option<string>,
 }
 

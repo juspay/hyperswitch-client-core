@@ -55,7 +55,7 @@ let make = (~props) => {
 
   let confirmGPay = (
     var,
-    data: CustomerPaymentMethodType.customer_payment_method_type,
+    data: CustomerPaymentMethodType.customerPaymentMethodType,
     nativeProp,
   ) => {
     let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -107,7 +107,7 @@ let make = (~props) => {
 
   let confirmApplePay = (
     var,
-    data: CustomerPaymentMethodType.customer_payment_method_type,
+    data: CustomerPaymentMethodType.customerPaymentMethodType,
     nativeProp,
   ) => {
     switch var
@@ -182,7 +182,7 @@ let make = (~props) => {
 
   let processRequest = async (
     nativeProp,
-    data: CustomerPaymentMethodType.customer_payment_method_type,
+    data: CustomerPaymentMethodType.customerPaymentMethodType,
     response,
     sessions: option<array<SessionsType.sessions>>,
   ) => {
@@ -316,7 +316,7 @@ let make = (~props) => {
 
   let getPaymentSession = (
     nativeProp,
-    spmData: CustomerPaymentMethodType.customer_payment_methods,
+    spmData: CustomerPaymentMethodType.customerPaymentMethodTypes,
     sessions: option<array<SessionsType.sessions>>,
   ) => {
     if spmData->Array.length > 0 {
@@ -328,8 +328,8 @@ let make = (~props) => {
       }
 
       let lastUsedSpmData = switch spmData->Array.reduce(None, (
-        a: option<CustomerPaymentMethodType.customer_payment_method_type>,
-        b: CustomerPaymentMethodType.customer_payment_method_type,
+        a: option<CustomerPaymentMethodType.customerPaymentMethodType>,
+        b: CustomerPaymentMethodType.customerPaymentMethodType,
       ) => {
         let lastUsedAtA = switch a {
         | Some(a) => Some(a.last_used_at)

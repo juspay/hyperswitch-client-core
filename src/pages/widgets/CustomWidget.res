@@ -10,7 +10,7 @@ module WidgetError = {
 }
 
 @react.component
-let make = (~walletType as _: SdkTypes.payment_method_type_wallet) => {
+let make = (~walletType as _: SdkTypes.paymentMethodTypeWallet) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let (button, _setButton) = React.useState(_ => None)

@@ -13,13 +13,13 @@ type online = {
   os_version?: string,
 }
 
-type customer_acceptance = {
+type customerAcceptance = {
   acceptance_type: string,
   accepted_at: string,
   online: online,
 }
 
-type mandate_data = {customer_acceptance: customer_acceptance}
+type mandate_data = {customer_acceptance: customerAcceptance}
 
 type redirectType = {
   client_secret: string,
@@ -32,7 +32,7 @@ type redirectType = {
   payment_token?: string,
   mandate_data?: mandate_data,
   browser_info?: online,
-  customer_acceptance?: customer_acceptance,
+  customer_acceptance?: customerAcceptance,
   card_cvc?: string,
 }
 
@@ -53,20 +53,20 @@ type sessionToken = {
   wallet_name: string,
   open_banking_session_token: string,
 }
-type ach_credit_transfer = {
+type achCreditTransfer = {
   account_number: string,
   bank_name: string,
   routing_number: string,
   swift_code: string,
 }
-type bank_transfer_steps_and_charges_details = {ach_credit_transfer?: ach_credit_transfer}
+type bankTransferStepsAndChargesDetails = {ach_credit_transfer?: achCreditTransfer}
 
 type nextAction = {
   redirectToUrl: string,
   type_: string,
   threeDsData?: threeDsData,
   session_token?: sessionToken,
-  bank_transfer_steps_and_charges_detail?: bank_transfer_steps_and_charges_details,
+  bank_transfer_steps_and_charges_detail?: bankTransferStepsAndChargesDetails,
 }
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
@@ -96,7 +96,7 @@ let defaultSuccess = {
   code: "",
   message: "",
 }
-let getACH_bank_transfer = (data: option<bank_transfer_steps_and_charges_details>) => {
+let getACH_bank_transfer = (data: option<bankTransferStepsAndChargesDetails>) => {
   switch data {
   | Some(data) => data.ach_credit_transfer
   | None =>
@@ -109,7 +109,7 @@ let getACH_bank_transfer = (data: option<bank_transfer_steps_and_charges_details
   }
 }
 
-let getACH_details = (data: option<ach_credit_transfer>) => {
+let getACH_details = (data: option<achCreditTransfer>) => {
   data->Option.getOr({
     account_number: "",
     bank_name: "",

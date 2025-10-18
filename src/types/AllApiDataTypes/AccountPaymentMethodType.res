@@ -2,37 +2,37 @@ open Utils
 
 type eligible_connectors = array<JSON.t>
 
-type card_networks = {
+type cardNetworks = {
   card_network: string,
   eligible_connectors: eligible_connectors,
 }
 
-type bank_names = {
+type bankNames = {
   bank_name: array<string>,
   eligible_connectors: eligible_connectors,
 }
 
-type payment_experience = {
+type paymentExperience = {
   payment_experience_type: string,
-  payment_experience_type_decode: PaymentMethodType.payment_experience_type,
+  payment_experience_type_decode: PaymentMethodType.paymentExperienceType,
   eligible_connectors: eligible_connectors,
 }
 
-type payment_method_type = {
+type paymentMethodType = {
   payment_method: PaymentMethodType.paymentMethod,
   payment_method_str: string,
   payment_method_type: string,
-  payment_method_type_wallet: SdkTypes.payment_method_type_wallet,
-  card_networks: array<card_networks>,
-  bank_names: array<bank_names>,
-  payment_experience: array<payment_experience>,
+  payment_method_type_wallet: SdkTypes.paymentMethodTypeWallet,
+  card_networks: array<cardNetworks>,
+  bank_names: array<bankNames>,
+  payment_experience: array<paymentExperience>,
   required_fields: Dict.t<JSON.t>,
 }
 
-type payment_methods = array<payment_method_type>
+type paymentMethods = array<paymentMethodType>
 
 type accountPaymentMethods = {
-  payment_methods: payment_methods,
+  payment_methods: paymentMethods,
   merchant_name: string,
   collect_billing_details_from_wallets: bool,
   collect_shipping_details_from_wallets: bool,
@@ -129,7 +129,7 @@ let createKey = (paymentMethodStr: string, paymentMethodType: string) => {
   `${paymentMethodStr}:${normalizedType}`
 }
 
-let mergePaymentMethods = (existing: payment_method_type, new: payment_method_type) => {
+let mergePaymentMethods = (existing: paymentMethodType, new: paymentMethodType) => {
   {
     ...existing,
     card_networks: existing.card_networks->Array.concat(new.card_networks),
@@ -173,7 +173,7 @@ let processPaymentMethods = (jsonArray: array<JSON.t>) => {
   resultDict->Dict.toArray->Array.map(((_, paymentMethod)) => paymentMethod)
 }
 
-let sortPaymentListArray = (plist: payment_methods) => {
+let sortPaymentListArray = (plist: paymentMethods) => {
   plist->Array.sort((s1, s2) => {
     let intResult =
       Types.priorityArr->Array.findIndex(x => x == s2.payment_method_type) -
@@ -226,14 +226,14 @@ let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
   }
 }
 
-let getEligibleConnectorFromCardNetwork = (cardNetworks: array<card_networks>) => {
+let getEligibleConnectorFromCardNetwork = (cardNetworks: array<cardNetworks>) => {
   cardNetworks->Array.reduce([], (acc, item) => {
     acc->Array.pushMany(item.eligible_connectors)
     acc
   })
 }
 
-let getEligibleConnectorFromPaymentExperience = (paymentExperience: array<payment_experience>) => {
+let getEligibleConnectorFromPaymentExperience = (paymentExperience: array<paymentExperience>) => {
   paymentExperience->Array.reduce([], (acc, item) => {
     acc->Array.pushMany(item.eligible_connectors)
     acc

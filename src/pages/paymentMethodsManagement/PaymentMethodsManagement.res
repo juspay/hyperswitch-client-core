@@ -23,7 +23,7 @@ let make = () => {
   // }, [allApiData.savedPaymentMethods])
 
   let _filterPaymentMethod = (
-    savedMethods: array<CustomerPaymentMethodType.customer_payment_method_type>,
+    savedMethods: array<CustomerPaymentMethodType.customerPaymentMethodType>,
     paymentMethodId,
   ) => {
     savedMethods->Array.filter(pm => {
