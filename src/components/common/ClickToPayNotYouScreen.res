@@ -1,5 +1,6 @@
 open ReactNative
 open ReactNative.Style
+open EmailValidation
 
 @react.component
 let make = (
@@ -11,6 +12,8 @@ let make = (
   ~disabled: bool=false,
 ) => {
   let {borderRadius, component} = ThemebasedStyle.useThemeBasedStyle()
+
+  let (emailValidationState, setEmailValidationState) = React.useState(() => None)
 
   let supportedCardBrands = Utils.supportedCardBrands(cardBrands)
 
@@ -42,7 +45,10 @@ let make = (
     </Text>
     <TextInput
       value=newIdentifier
-      onChangeText={value => setNewIdentifier(_ => value)}
+      onChangeText={value => {
+        setNewIdentifier(_ => value)
+        setEmailValidationState(_ => isEmailValid(value))
+      }}
       placeholder="Enter email"
       keyboardType=#"email-address"
       autoCapitalize=#none
@@ -62,9 +68,9 @@ let make = (
       onPress={_ => {
         onSwitch(newIdentifier)
       }}
-      disabled={newIdentifier === "" || disabled}
+      disabled={emailValidationState != Some(true) || disabled}
       style={s({
-        backgroundColor: newIdentifier === "" || disabled ? "#CCC" : "#007AFF",
+        backgroundColor: emailValidationState == Some(true) && !disabled ? "#007AFF" : "#CCC",
         padding: 14.->dp,
         borderRadius,
         alignItems: #center,
