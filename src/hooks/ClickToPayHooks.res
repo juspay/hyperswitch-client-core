@@ -127,30 +127,46 @@ let useOTPManagement = (
       ->Option.forEach(input => input->ReactNative.TextInput.focus)
     }
 
+    let isOtpComplete = otp->Array.every(digit => digit !== "")
+
     if String.length(value) > 1 {
-      let digits =
-        value
-        ->String.split("")
-        ->Array.filter(d => d >= "0" && d <= "9")
-        ->Array.slice(~start=0, ~end=6)
-
-      let newOtp = otp->Array.mapWithIndex((_, i) => {
-        if i < Array.length(digits) {
-          digits[i]->Option.getOr("")
-        } else {
-          ""
+      if isOtpComplete {
+        let lastChar = value->String.charAt(String.length(value) - 1)
+        if lastChar >= "0" && lastChar <= "9" {
+          let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? lastChar : item)
+          setOtp(_ => newOtp)
         }
-      })
-      setOtp(_ => newOtp)
+      } else {
+        let digits =
+          value
+          ->String.split("")
+          ->Array.filter(d => d >= "0" && d <= "9")
+          ->Array.slice(~start=0, ~end=6)
 
-      let nextIndex = Array.length(digits) >= 6 ? 5 : Array.length(digits)
-      focusInput(nextIndex)
+        let newOtp = otp->Array.mapWithIndex((_, i) => {
+          if i < Array.length(digits) {
+            digits[i]->Option.getOr("")
+          } else {
+            ""
+          }
+        })
+        setOtp(_ => newOtp)
+
+        let nextIndex = Array.length(digits) >= 6 ? 5 : Array.length(digits)
+        focusInput(nextIndex)
+      }
     } else if String.length(value) == 1 && value >= "0" && value <= "9" {
       let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? value : item)
       setOtp(_ => newOtp)
 
-      if index < 5 {
+      if index < 5 && !isOtpComplete {
         focusInput(index + 1)
+      } else if index == 5 {
+        otpRefs
+        ->Array.get(5)
+        ->Option.flatMap(optRef => optRef)
+        ->Option.flatMap(ref => ref.current->Nullable.toOption)
+        ->Option.forEach(input => input->ReactNative.TextInput.blur)
       }
     } else if String.length(value) == 0 {
       let newOtp = otp->Array.mapWithIndex((item, i) => i === index ? "" : item)
