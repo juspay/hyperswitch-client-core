@@ -10,6 +10,9 @@ let getThreeDsNextActionObj = (
       threeDsAuthorizeUrl: "",
       messageVersion: "",
       directoryServerId: "",
+      threeDsMethodDetails: {
+        threeDsMethodData: "",
+      },
       pollConfig: {
         pollId: "",
         delayInSecs: 0,
@@ -27,6 +30,9 @@ let getThreeDsDataObj = (
     threeDsAuthorizeUrl: "",
     messageVersion: "",
     directoryServerId: "",
+    threeDsMethodDetails: {
+      threeDsMethodData: "",
+    },
     pollConfig: {
       pollId: "",
       delayInSecs: 0,
