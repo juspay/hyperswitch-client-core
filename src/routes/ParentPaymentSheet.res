@@ -79,7 +79,7 @@ let make = () => {
                   elementArr
                   isClickToPayNewCardFlow
                 />}
-            {showSavedScreen && (isSavedPaymentScreen || customerPaymentMethods->Array.length > 0)
+            {showSavedScreen && (isSavedPaymentScreen || customerPaymentMethods->Array.length > 0 || initializeClickToPay)
               ? <>
                   <ClickableTextElement
                     initialIconName="addwithcircle"
