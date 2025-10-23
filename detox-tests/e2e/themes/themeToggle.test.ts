@@ -8,6 +8,7 @@ import {
   createTestLogger,
   waitForDemoAppLoad,
   launchPaymentSheet,
+  closePaymentSheet,
 } from '../../utils/DetoxHelpers';
 import {CreateBody, setCreateBodyForTestAutomation} from '../../utils/APIUtils';
 import {
@@ -47,7 +48,12 @@ describe('Theme Toggle E2E Test', () => {
   });
 
   beforeEach(async () => {
-    // Reset to light theme before each test
+    // Restart app fresh for each test to ensure clean state
+    await device.launchApp({
+      launchArgs: { detoxEnableSynchronization: 1 },
+      newInstance: true,
+    });
+    await device.enableSynchronization();
     await resetToLightTheme();
   });
 
