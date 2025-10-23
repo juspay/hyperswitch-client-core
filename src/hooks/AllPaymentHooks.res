@@ -212,9 +212,9 @@ let useRedirectHook = () => {
       } else {
         // TODO: make this config driven, remove hardcoding
         let configuration: AuthenticationModule.configuration = {
+          publishableKey: nativeProp.publishableKey,
           provider: #cardinal,
-          jwtToken: Some(cardinalJwtToken),
-          netceteraSdkApiKey: None,
+          jwtToken: cardinalJwtToken,
         }
 
         handleModularThreeDS(

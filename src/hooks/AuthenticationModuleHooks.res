@@ -10,33 +10,15 @@ let initialisedAuthModuleOnce = (~configuration, ~sdkEnvironment) => {
   | None => {
       let promiseVal = Promise.make((resolve, _reject) => {
         AuthenticationModule.initializeThreeDS(
-          configuration,
-          sdkEnvironment->sdkEnvironmentToStrMapper,
-          status => resolve(status),
+          ~configuration,
+          ~hsSDKEnvironment=sdkEnvironment->sdkEnvironmentToStrMapper,
+          ~callback=status => resolve(status),
         )
       })
 
       isInitialisedPromiseRef := Some(promiseVal)
       promiseVal
     }
-  }
-}
-
-let useInitAuthenticationModule = () => {
-  let logger = LoggerHook.useLoggerHook()
-  (~configuration, ~sdkEnvironment: GlobalVars.envType) => {
-    initialisedAuthModuleOnce(~configuration, ~sdkEnvironment)
-    ->Promise.then(promiseVal => {
-      logger(
-        ~logType=INFO,
-        ~value=promiseVal->JSON.stringifyAny->Option.getOr(""),
-        ~category=USER_EVENT,
-        ~eventName=AUTHENTICATION_MODULE,
-        (),
-      )
-      Promise.resolve(promiseVal)
-    })
-    ->ignore
   }
 }
 
@@ -282,12 +264,12 @@ let useExternalThreeDs = () => {
       )
       Promise.make((resolve, reject) => {
         AuthenticationModule.recieveChallengeParamsFromRN(
-          challengeParams.acsSignedContent,
-          challengeParams.acsRefNumber,
-          challengeParams.acsTransactionId,
-          threeDSRequestorAppURL,
-          challengeParams.threeDSServerTransId,
-          status => {
+          ~acsSignedContent=challengeParams.acsSignedContent,
+          ~acsRefNumber=challengeParams.acsRefNumber,
+          ~acsTransactionId=challengeParams.acsTransactionId,
+          ~threeDSRequestorAppURL,
+          ~threeDSServerTransId=challengeParams.threeDSServerTransId,
+          ~callback=status => {
             logger(
               ~logType=INFO,
               ~value={
@@ -303,7 +285,7 @@ let useExternalThreeDs = () => {
             )
             if status->isStatusSuccess {
               AuthenticationModule.generateChallenge(
-                status => {
+                ~callback=status => {
                   logger(
                     ~logType=INFO,
                     ~value=status->JSON.stringifyAny->Option.getOr(""),
@@ -452,11 +434,11 @@ let useExternalThreeDs = () => {
         if statusInfo->isStatusSuccess {
           Promise.make((resolve, _reject) => {
             AuthenticationModule.generateAReqParams(
-              threeDsData.messageVersion,
-              // TODO: threeDsData.cardNetwork
-              Some(threeDsData.directoryServerId),
-              Some(threeDsData.directoryServerId),
-              (status, aReqParams) => {
+              ~messageVersion=threeDsData.messageVersion,
+              // TODO: threeDsData.cardNetwork getdetail from nextAction
+              ~directoryServerId=Some(threeDsData.directoryServerId),
+              ~cardBrand=Some(threeDsData.directoryServerId),
+              ~callback=(status, aReqParams) => {
                 logger(
                   ~logType=INFO,
                   ~value=status->JSON.stringifyAny->Option.getOr(""),
