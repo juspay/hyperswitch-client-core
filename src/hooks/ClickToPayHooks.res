@@ -302,7 +302,20 @@ let useClickToPayUI = () => {
             }
 
             let result = await clickToPay.checkout(checkoutParams)
-            result
+
+            let actionCode =
+              result
+              ->JSON.Decode.object
+              ->Option.flatMap(dict => dict->Dict.get("actionCode"))
+              ->Option.flatMap(JSON.Decode.string)
+
+            switch actionCode {
+            | Some("CHANGE_CARD") => {
+                setScreenState(_ => CARDS_DISPLAY)
+                JSON.Encode.null
+              }
+            | _ => result
+            }
           }
         | None => {
             setScreenState(_ => CARDS_DISPLAY)

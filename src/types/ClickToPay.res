@@ -2,7 +2,7 @@ module Types = {
   type environment = [#sandbox | #production]
   type provider = [#visa | #mastercard]
   type brand = [#visa | #mastercard]
-  type actionCode = [#SUCCESS | #PENDING_CONSUMER_IDV | #FAILED | #ERROR | #ADD_CARD]
+  type actionCode = [#SUCCESS | #PENDING_CONSUMER_IDV | #FAILED | #ERROR | #ADD_CARD | #CHANGE_CARD]
 
   type clickToPayConfig = {
     dpaId: string,

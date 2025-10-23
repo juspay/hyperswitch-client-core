@@ -414,58 +414,62 @@ let make = (
     if isClickToPaySelected {
       clickToPayUI.handleCheckout(selectedToken)
       ->Promise.then(checkoutResult => {
-        let clickToPaySessionObject = switch sessionTokenData {
-        | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
-        | _ => None
-        }
+        if checkoutResult->JSON.Classify.classify == Null {
+          Promise.resolve()
+        } else {
+          let clickToPaySessionObject = switch sessionTokenData {
+          | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
+          | _ => None
+          }
 
-        switch clickToPaySessionObject {
-        | Some(sessionObject) => {
-            let provider = sessionObject.provider->Option.getOr("")
-            let email = sessionObject.email->Option.getOr("")
+          switch clickToPaySessionObject {
+          | Some(sessionObject) => {
+              let provider = sessionObject.provider->Option.getOr("")
+              let email = sessionObject.email->Option.getOr("")
 
-            let body = PaymentUtils.generateClickToPayConfirmBody(
-              ~nativeProp,
-              ~checkoutResult,
-              ~provider,
-              ~email,
-            )
-            let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
-              if !closeSDK {
-                setLoading(FillingDetails)
-              }
-              handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-            }
-
-            let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
-              switch paymentStatus {
-              | PaymentSuccess => {
-                  setLoading(PaymentSuccess)
-                  setTimeout(() => {
-                    handleSuccessFailure(~apiResStatus=status, ())
-                  }, 300)->ignore
+              let body = PaymentUtils.generateClickToPayConfirmBody(
+                ~nativeProp,
+                ~checkoutResult,
+                ~provider,
+                ~email,
+              )
+              let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+                if !closeSDK {
+                  setLoading(FillingDetails)
                 }
-              | _ => handleSuccessFailure(~apiResStatus=status, ())
+                handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
               }
-            }
-            redirectHook(
-              ~body,
-              ~publishableKey=nativeProp.publishableKey,
-              ~clientSecret=nativeProp.clientSecret,
-              ~errorCallback,
-              ~responseCallback,
-              ~paymentMethod="click_to_pay",
-              ~isCardPayment=true,
-              (),
-            )
-          }
-        | None => {
-            setLoading(FillingDetails)
-            showAlert(~errorType="error", ~message="Click to Pay session not found")
-          }
-        }
 
-        Promise.resolve()
+              let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+                switch paymentStatus {
+                | PaymentSuccess => {
+                    setLoading(PaymentSuccess)
+                    setTimeout(() => {
+                      handleSuccessFailure(~apiResStatus=status, ())
+                    }, 300)->ignore
+                  }
+                | _ => handleSuccessFailure(~apiResStatus=status, ())
+                }
+              }
+              redirectHook(
+                ~body,
+                ~publishableKey=nativeProp.publishableKey,
+                ~clientSecret=nativeProp.clientSecret,
+                ~errorCallback,
+                ~responseCallback,
+                ~paymentMethod="click_to_pay",
+                ~isCardPayment=true,
+                (),
+              )
+            }
+          | None => {
+              setLoading(FillingDetails)
+              showAlert(~errorType="error", ~message="Click to Pay session not found")
+            }
+          }
+
+          Promise.resolve()
+        }
       })
       ->Promise.catch(_ => {
         setLoading(FillingDetails)
