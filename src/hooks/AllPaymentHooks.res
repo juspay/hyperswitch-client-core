@@ -159,7 +159,8 @@ let useRedirectHook = () => {
   let retrievePayment = useRetrieveHook()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let handleNetceteraThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let handleModularThreeDS = AuthenticationModuleHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
   let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
 
@@ -179,30 +180,67 @@ let useRedirectHook = () => {
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
 
     let handleInvokeThreeDSFlow = (~nextAction) => {
+      let threeDsData =
+        nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
-      handleNativeThreeDS(
-        ~baseUrl,
-        ~appId=nativeProp.hyperParams.appId,
-        ~netceteraSDKApiKey,
-        ~clientSecret,
-        ~publishableKey,
-        ~nextAction,
-        ~retrievePayment,
-        ~sdkEnvironment=nativeProp.env,
-        ~onSuccess=message => {
-          responseCallback(
-            ~paymentStatus=PaymentSuccess,
-            ~status={status: "succeeded", message, code: "", type_: ""},
-          )
-        },
-        ~onFailure=message => {
-          errorCallback(
-            ~errorMessage={status: "failed", message, type_: "", code: ""},
-            ~closeSDK={true},
-            (),
-          )
-        },
-      )
+      let cardinalJwtToken = threeDsData.threeDsMethodDetails.threeDsMethodData
+
+      if Netcetera3dsModule.isAvailable && netceteraSDKApiKey !== "" {
+        handleNetceteraThreeDS(
+          ~baseUrl,
+          ~appId=nativeProp.hyperParams.appId,
+          ~netceteraSDKApiKey,
+          ~clientSecret,
+          ~publishableKey,
+          ~nextAction,
+          ~retrievePayment,
+          ~sdkEnvironment=nativeProp.env,
+          ~onSuccess=message => {
+            responseCallback(
+              ~paymentStatus=PaymentSuccess,
+              ~status={status: "succeeded", message, code: "", type_: ""},
+            )
+          },
+          ~onFailure=message => {
+            errorCallback(
+              ~errorMessage={status: "failed", message, type_: "", code: ""},
+              ~closeSDK={true},
+              (),
+            )
+          },
+        )
+      } else {
+        // TODO: make this config driven, remove hardcoding
+        let configuration: AuthenticationModule.configuration = {
+          publishableKey: nativeProp.publishableKey,
+          provider: #cardinal,
+          jwtToken: cardinalJwtToken,
+        }
+
+        handleModularThreeDS(
+          ~baseUrl,
+          ~appId=nativeProp.hyperParams.appId,
+          ~configuration,
+          ~clientSecret,
+          ~publishableKey,
+          ~nextAction,
+          ~retrievePayment,
+          ~sdkEnvironment=nativeProp.env,
+          ~onSuccess=message => {
+            responseCallback(
+              ~paymentStatus=PaymentSuccess,
+              ~status={status: "succeeded", message, code: "", type_: ""},
+            )
+          },
+          ~onFailure=message => {
+            errorCallback(
+              ~errorMessage={status: "failed", message, type_: "", code: ""},
+              ~closeSDK={true},
+              (),
+            )
+          },
+        )
+      }
     }
 
     let handleThirdPartySDKSessionFlow = (~nextAction) => {
