@@ -138,8 +138,9 @@ type themeBasedStyleObj = {
   buttonBorderRadius: float,
   buttonBorderWidth: float,
   component: componentConfig,
-  locale: SdkTypes.localeTypes,
+  locale: LocaleDataType.localeTypes,
   fontFamily: SdkTypes.fontFamilyTypes,
+  fontScale: float,
   headingTextSizeAdjust: float,
   subHeadingTextSizeAdjust: float,
   placeholderTextSizeAdjust: float,
@@ -228,6 +229,7 @@ let darkRecord = {
   | #android | #androidWebView => DefaultAndroid
   | #web | #next => DefaultWeb
   },
+  fontScale: 1.,
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
   placeholderTextSizeAdjust: 0.,
@@ -314,6 +316,7 @@ let lightRecord = {
   | #android | #androidWebView => DefaultAndroid
   | #web | #next => DefaultWeb
   },
+  fontScale: 1.,
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
   placeholderTextSizeAdjust: 0.,
@@ -401,6 +404,7 @@ let minimal = {
   | #android | #androidWebView => DefaultAndroid
   | #web | #next => DefaultWeb
   },
+  fontScale: 1.,
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
   placeholderTextSizeAdjust: 0.,
@@ -488,6 +492,7 @@ let flatMinimal = {
   | #android | #androidWebView => DefaultAndroid
   | #web | #next => DefaultWeb
   },
+  fontScale: 1.,
   headingTextSizeAdjust: 0.,
   subHeadingTextSizeAdjust: 0.,
   placeholderTextSizeAdjust: 0.,
@@ -735,6 +740,14 @@ let itemToObj = (
       | None => themeObj.fontFamily
       }
     | None => themeObj.fontFamily
+    },
+    fontScale: switch appearance.font {
+    | Some(obj) =>
+      switch obj.scale {
+      | Some(scale) => scale
+      | None => 1.
+      }
+    | None => themeObj.fontScale
     },
     headingTextSizeAdjust: switch appearance.font {
     | Some(obj) =>

@@ -8,6 +8,8 @@ let make = (
   ~merchantName,
   ~isScreenFocus=true,
   ~animated=true,
+  ~maxVisibleItems=?,
+  ~style=empty,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
@@ -535,6 +537,7 @@ let make = (
           borderColor: component.borderColor,
           backgroundColor: component.background,
         }),
+        style,
       ])}>
       <SavedPaymentMethod
         customerPaymentMethods
@@ -544,9 +547,9 @@ let make = (
         setSavedCardCvv
         isScreenFocus
         animated
+        ?maxVisibleItems
       />
     </View>
-    <Space />
     {showDisclaimer
       ? <View style={s({paddingHorizontal: 2.->dp})}>
           <Space height=5. />

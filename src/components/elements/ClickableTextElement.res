@@ -26,6 +26,8 @@ let make = (
       initialIconName updateIconName isSelected fill={isLink ? linkColor : primaryColor} ?size
     />
     <Space width=gap />
-    <TextWrapper text textType overrideStyle={isLink ? Some(s({flex:1., color: linkColor})) : Some(s({flex:1.}))} />
+    <TextWrapper
+      text textType overrideStyle={Some(s({flex: 1., color: ?(isLink ? Some(linkColor) : None)}))}
+    />
   </CustomPressable>
 }

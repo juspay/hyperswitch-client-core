@@ -19,6 +19,7 @@ let getLocalString = displayName => {
   | "Phone Number" => localeObject.formFieldPhoneNumberLabel
   | "Email Address" => localeObject.emailLabel
   | "Sort Code" => localeObject.sortCodeText
+  | "Date of Birth" => localeObject.dateOfBirth
   | _ => displayName
   }
 }

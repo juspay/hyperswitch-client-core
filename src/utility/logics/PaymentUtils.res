@@ -61,7 +61,7 @@ let generateCardConfirmBody = (
     browser_info: {
       user_agent: ?nativeProp.hyperParams.userAgent,
       accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
-      language: SdkTypes.localeTypeToString(nativeProp.configuration.appearance.locale),
+      language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
       color_depth: 32,
       screen_height: ?screen_height->Option.map(Int.fromFloat),
       screen_width: ?screen_width->Option.map(Int.fromFloat),
@@ -114,7 +114,7 @@ let generateSavedCardConfirmBody = (
   browser_info: {
     user_agent: ?nativeProp.hyperParams.userAgent,
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
-    language: SdkTypes.localeTypeToString(nativeProp.configuration.appearance.locale),
+    language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
     color_depth: 32,
     screen_height: ?screen_height->Option.map(Int.fromFloat),
     screen_width: ?screen_width->Option.map(Int.fromFloat),

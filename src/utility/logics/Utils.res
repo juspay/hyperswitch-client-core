@@ -355,3 +355,22 @@ let getError = (err, defaultError) => {
   | None => defaultError->JSON.Encode.string
   }
 }
+
+let getDaysInMonth = (month: string, year: string) => {
+  switch (month, year) {
+  | ("", _) | (_, "") => 31
+  | (m, y) =>
+    let monthNum = m->Int.fromString->Option.getOr(1)
+    let yearNum = y->Int.fromString->Option.getOr(2024)
+    switch monthNum {
+    | 2 =>
+      if mod(yearNum, 4) == 0 && (mod(yearNum, 100) != 0 || mod(yearNum, 400) == 0) {
+        29
+      } else {
+        28
+      }
+    | 4 | 6 | 9 | 11 => 30
+    | _ => 31
+    }
+  }
+}

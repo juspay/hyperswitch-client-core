@@ -37,8 +37,7 @@ module MoreButton = {
   let make = (~handleMoreToggle) => {
     let {component, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
 
-    <View
-      style={s({flex: 1., alignItems: #center, justifyContent: #center, paddingVertical: 10.->dp})}>
+    <View style={s({flex: 1., alignItems: #center, justifyContent: #center, paddingTop: 10.->dp})}>
       <CustomPressable
         onPress={_ => handleMoreToggle()}
         style={array([

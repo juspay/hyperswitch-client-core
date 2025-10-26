@@ -3,27 +3,27 @@ type viewPortContants = {
   windowWidth: float,
   screenHeight: float,
   screenWidth: float,
-  navigationBarHeight: float,
-  maxPaymentSheetHeight: float,
+  bottomInset: float,
+  topInset: float,
 }
 
-let defaultNavbarHeight =
-  ReactNative.Platform.os === #ios || WebKit.platform === #iosWebView ? 0. : 20.
 let windowHeight = ReactNative.Dimensions.get(#window).height
 let windowWidth = ReactNative.Dimensions.get(#window).width
 let screenHeight = ReactNative.Dimensions.get(#screen).height
 let screenWidth = ReactNative.Dimensions.get(#screen).width
 let statusBarHeight = ReactNative.StatusBar.currentHeight
 
-let maxPaymentSheetHeight = 95. // pct
+let minTopInset = 50.
+
+let minBottomInset = WebKit.platform === #ios || WebKit.platform === #iosWebView ? 0. : 20.
 
 let defaultVal: viewPortContants = {
   windowHeight,
   windowWidth,
   screenHeight,
   screenWidth,
-  navigationBarHeight: defaultNavbarHeight,
-  maxPaymentSheetHeight,
+  bottomInset: minBottomInset,
+  topInset: minTopInset,
 }
 
 let viewPortContext = React.createContext((defaultVal, (_: viewPortContants) => ()))
@@ -32,13 +32,15 @@ module Provider = {
   let make = React.Context.provider(viewPortContext)
 }
 @react.component
-let make = (~children, ~bottomInset) => {
+let make = (~children, ~topInset, ~bottomInset) => {
   let (state, setState) = React.useState(_ => {
     ...defaultVal,
-    navigationBarHeight: (
-      WebKit.platform === #androidWebView ? 0. : bottomInset->Option.getOr(20.)
-    ) +.
-    defaultNavbarHeight,
+    bottomInset: WebKit.platform === #androidWebView
+      ? bottomInset->Option.getOr(0.) /. 2. +. minBottomInset
+      : bottomInset->Option.getOr(0.) +. minBottomInset,
+    topInset: WebKit.platform === #androidWebView
+      ? topInset->Option.getOr(0.) +. minTopInset
+      : topInset->Option.getOr(0.) +. minTopInset,
   })
 
   let setState = React.useCallback1(val => {

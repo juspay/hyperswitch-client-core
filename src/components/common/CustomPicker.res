@@ -18,6 +18,7 @@ let make = (
   ~showValue=false,
   ~onFocus,
   ~onBlur,
+  ~animate=?,
   ~accessible=?,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
@@ -39,6 +40,7 @@ let make = (
     borderWidth,
   } = ThemebasedStyle.useThemeBasedStyle()
   let (nativeProps, _) = React.useContext(NativePropContext.nativePropContext)
+  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let {bgTransparentColor} = ThemebasedStyle.useThemeBasedStyle()
   let transparentBG = nativeProps.sdkState == PaymentSheet ? bgTransparentColor : empty
 
@@ -76,6 +78,7 @@ let make = (
         pointerEvents={#none}
         onBlur
         onFocus
+        ?animate
         ?accessible
       />
     </CustomPressable>
@@ -84,22 +87,18 @@ let make = (
       transparent={true}
       animationType=#slide
       onShow={() => {
-        let _ = setTimeout(() => {
+        setTimeout(() => {
           switch searchInputRef.current->Nullable.toOption {
           | Some(input) => input->TextInputElement.focus
           | None => ()
           }
-        }, 300)
+        }, 300)->ignore
       }}>
       <View
         style={array([
           s({
             flex: 1.,
-            paddingTop: (
-              WebKit.platform === #androidWebView
-                ? 75.
-                : nativeProps.hyperParams.topInset->Option.getOr(75.)
-            )->dp,
+            paddingTop: viewPortContants.topInset->dp,
           }),
           transparentBG,
         ])}>
@@ -111,15 +110,15 @@ let make = (
               backgroundColor: component.background,
               justifyContent: #center,
               alignItems: #center,
-              borderTopLeftRadius: borderRadius,
-              borderTopRightRadius: borderRadius,
+              borderTopLeftRadius: 15.,
+              borderTopRightRadius: 15.,
               borderBottomLeftRadius: 0.,
               borderBottomRightRadius: 0.,
-              padding: 15.->dp,
               paddingHorizontal: 20.->dp,
             }),
             bgColor,
           ])}>
+          <Space />
           <View
             style={s({
               flexDirection: #row,
@@ -152,7 +151,6 @@ let make = (
             borderRightWidth=borderWidth
             ?accessible
           />
-          <Space />
           {isLoading
             ? <ActivityIndicator
                 size={Large}
@@ -168,21 +166,35 @@ let make = (
                   ->String.toLowerCase
                   ->String.includes(searchInput->Option.getOr("")->String.toLowerCase)
                 )}
-                style={s({flex: 1., width: 100.->pct, paddingHorizontal: 10.->dp})}
+                style={s({
+                  flex: 1.,
+                  width: 100.->pct,
+                  paddingHorizontal: 10.->dp,
+                  paddingTop: 10.->dp,
+                  paddingBottom: viewPortContants.bottomInset->dp,
+                })}
                 showsHorizontalScrollIndicator=false
                 keyExtractor={(_, i) => i->Int.toString}
                 horizontal=false
                 renderItem={({item, index}) =>
                   <CustomPressable
                     key={index->Int.toString}
-                    style={s({height: 32.->dp, margin: 1.->dp, justifyContent: #center})}
+                    style={s({height: 32.->dp, margin: 1.->dp, flexDirection: #row, gap: 6.->dp})}
                     onPress={_ => {
                       setValue(_ => Some(item.value))
                       setIsModalVisible(_ => false)
                     }}>
-                    <TextWrapper
-                      text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
-                    />
+                    {isCountryStateFields
+                      ? <TextWrapper
+                          text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
+                        />
+                      : <>
+                          {switch item.icon {
+                          | Some(name) => <Icon name />
+                          | None => React.null
+                          }}
+                          <TextWrapper text=item.label textType=ModalText />
+                        </>}
                   </CustomPressable>}
               />}
         </View>

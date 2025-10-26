@@ -17,13 +17,13 @@ let make = () => {
     }
   }, (bannerState.isVisible, setShouldRender))
 
-  shouldRender ? 
-    <FloatingBanner
-      message=bannerState.message
-      bannerType=bannerState.bannerType
-      isVisible=bannerState.isVisible
-      isConnected=isConnected
-      onDismiss={_ => hideBanner()}
-    />
-  : React.null
+  shouldRender
+    ? <FloatingBanner
+        message=bannerState.message
+        bannerType=bannerState.bannerType
+        isVisible=bannerState.isVisible
+        isConnected
+        onDismiss={_ => hideBanner()}
+      />
+    : React.null
 }

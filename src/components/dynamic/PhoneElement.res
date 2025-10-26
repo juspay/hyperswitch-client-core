@@ -27,8 +27,8 @@ let make = (
       (),
     )
 
-    React.useEffect0(() => {
-      let (code: string, phone) = switch countryStateData {
+    React.useEffect1(() => {
+      let (code, phone) = switch countryStateData {
       | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
         switch phoneCodeInput.value {
         | None | Some("") =>
@@ -36,30 +36,39 @@ let make = (
           | None | Some("") => (
               res.countries
               ->Array.find(countryData => countryData.country_code === country)
-              ->Option.map(country => country.phone_number_code)
-              ->Option.getOr(""),
-              "",
+              ->Option.map(country => country.phone_number_code),
+              None,
             )
           | Some(phoneNumber) =>
             switch PhoneNumberValidation.formatPhoneNumber(phoneNumber, res.countries) {
             | ("", phone) => (
                 res.countries
                 ->Array.find(countryData => countryData.country_code === country)
-                ->Option.map(country => country.phone_number_code)
-                ->Option.getOr(""),
-                phone,
+                ->Option.map(country => country.phone_number_code),
+                Some(phone),
               )
-            | (code, phone) => (code, phone)
+            | (code, phone) => (Some(code), Some(phone))
             }
           }
-        | Some(code) => (code, phoneNumberInput.value->Option.getOr(""))
+        | Some(code) => (Some(code), phoneNumberInput.value)
         }
-      | _ => ("", "")
+      | _ => (None, None)
       }
-      phoneCodeInput.onChange(code)
-      phoneNumberInput.onChange(phone)
-      None
-    })
+
+      let timeoutId = setTimeout(() => {
+        switch code {
+        | None | Some("") => ()
+        | Some(code) => phoneCodeInput.onChange(code)
+        }
+
+        switch phone {
+        | None | Some("") => ()
+        | Some(phone) => phoneNumberInput.onChange(phone)
+        }
+      }, 300)
+
+      Some(() => clearTimeout(timeoutId))
+    }, [countryStateData])
 
     <React.Fragment>
       <View style={s({marginBottom: 16.->dp})}>
@@ -69,7 +78,7 @@ let make = (
               phoneCodeInput.onChange(value()->Option.getOr(""))
             }
             <CustomPicker
-              style={s({flex: 0.36})}
+              style={s({flex: 0.36, minWidth: 85.->dp})}
               value=phoneCodeInput.value
               setValue=handlePickerChange
               items={switch countryStateData {

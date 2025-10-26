@@ -32,6 +32,6 @@ let useCustomFontFamily = () => {
     }
   | DefaultAndroid => "Roboto"
   | DefaultIOS => "System"
-  | DefaultWeb => "Inter,-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica Neue,Ubuntu,sans-serif"
+  | DefaultWeb => `-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Helvetica Neue","Ubuntu",sans-serif`
   }
 }

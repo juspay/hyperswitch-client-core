@@ -24,7 +24,7 @@ let make = (~children) => {
       justifyContent: #center,
     })}>
     <Animated.View style={s({maxHeight: 100.->pct})}>
-      {<CustomView.WidgetWrapper> {children} </CustomView.WidgetWrapper>}
+      <CustomView.WidgetWrapper> {children} </CustomView.WidgetWrapper>
     </Animated.View>
     <LoadingOverlay />
   </View>

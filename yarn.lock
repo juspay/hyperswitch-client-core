@@ -11902,6 +11902,7 @@ __metadata:
     ts-loader: ^9.5.1
     typescript: 5.0.4
     url-loader: ^4.1.1
+    use-latest-callback: ^0.3.1
     webpack: ^5.93.0
     webpack-cli: ^5.1.4
     webpack-dev-server: ^5.0.4
@@ -19756,6 +19757,15 @@ __metadata:
     file-loader:
       optional: true
   checksum: c1122a992c6cff70a7e56dfc2b7474534d48eb40b2cc75467cde0c6972e7597faf8e43acb4f45f93c2473645dfd803bcbc20960b57544dd1e4c96e77f72ba6fd
+  languageName: node
+  linkType: hard
+
+"use-latest-callback@npm:^0.3.1":
+  version: 0.3.1
+  resolution: "use-latest-callback@npm:0.3.1"
+  peerDependencies:
+    react: ">=16.8"
+  checksum: 743d3a9c9720c1846821cbb057ea669218d16e05ad38a6d8ff74733ee69ea1a2bb47ee670d37242e87abc1e02f66c2f35943425b2b19011d9214be32abc9aeca
   languageName: node
   linkType: hard
 

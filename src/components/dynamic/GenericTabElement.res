@@ -28,6 +28,22 @@ let make = (
     field: SuperpositionTypes.fieldConfig,
     {input, meta}: ReactFinalForm.Field.fieldProps,
   ) => {
+    React.useEffect0(() => {
+      switch field.fieldType {
+      | CountrySelect =>
+        let inputVal =
+          field.options->Array.includes(country)
+            ? country
+            : field.options->Array.get(0)->Option.getOr(AddressUtils.defaultCountry)
+        let timeoutId = setTimeout(() => {
+          input.onChange(inputVal)
+        }, 300)
+
+        Some(() => clearTimeout(timeoutId))
+      | _ => None
+      }
+    })
+
     let handleInputChange = (value: string) => {
       let formattedValue = value //formatValue(value, field.fieldType)
       input.onChange(formattedValue)
@@ -154,7 +170,9 @@ let make = (
           value=input.value
           setValue=handlePickerChange
           items={field.options->Array.map(opt => {
-            SdkTypes.label: opt,
+            SdkTypes.label: placeholder === "Language"
+              ? `${LocaleDataType.localeStringToLocaleName(opt)} - ${opt}`
+              : opt,
             value: opt,
           })}
           placeholderText=placeholder

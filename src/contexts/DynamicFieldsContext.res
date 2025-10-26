@@ -1,6 +1,7 @@
 type sheetType = ButtonSheet | DynamicFieldsSheet
 
 type dynamicFieldsData = {
+  formDataRef: option<React.ref<RescriptCore.Dict.t<JSON.t>>>,
   sheetType: sheetType,
   setSheetType: sheetType => unit,
   getRequiredFieldsForTabs: (
@@ -44,11 +45,12 @@ type dynamicFieldsData = {
 }
 
 let dynamicFieldsContext = React.createContext({
+  formDataRef: None,
   sheetType: ButtonSheet,
   setSheetType: _ => (),
   getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false),
   getRequiredFieldsForButton: (_, _, _, _, _) => (true, Dict.make()),
-  country: "",
+  country: AddressUtils.defaultCountry,
   setCountry: _ => (),
   walletData: ([], Dict.make(), Dict.make(), false, [], OTHERS, "", "", NONE, []),
   isNicknameSelected: false,
@@ -64,6 +66,7 @@ module Provider = {
 }
 @react.component
 let make = (~children) => {
+  let formDataRef = Some(React.useRef(Dict.make()))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let getSuperpositionFinalFields = ConfigurationService.useConfigurationService()
@@ -122,7 +125,13 @@ let make = (~children) => {
 
     (
       missingRequiredFields,
-      CommonUtils.mergeDict(initialValues, formData),
+      CommonUtils.mergeDict(
+        switch formDataRef {
+        | Some(ref) => CommonUtils.mergeDict(initialValues, ref.current)
+        | None => initialValues
+        },
+        formData,
+      ),
       paymentMethodData.payment_method === CARD,
       PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
       isScreenFocus,
@@ -283,6 +292,7 @@ let make = (~children) => {
 
   <Provider
     value={
+      formDataRef,
       sheetType,
       setSheetType,
       getRequiredFieldsForTabs,

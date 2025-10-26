@@ -19,7 +19,7 @@ let useGetS3AssetsVersion = () => {
     switch nativeProp.env {
     | PROD
     | SANDBOX
-    | INTEG => "/assets/v1"
+    | INTEG => "/assets/v2"
     }
   }
 }
