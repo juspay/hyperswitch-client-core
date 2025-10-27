@@ -61,6 +61,7 @@ let make = (
     shadowColor,
     shadowIntensity,
     placeholderTextSizeAdjust,
+    fontScale,
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
 
@@ -71,7 +72,12 @@ let make = (
 
   let shadowStyle = enableShadow ? getShadowStyle : empty
 
-  let animatedValue = AnimatedValue.useAnimatedValue(state != "" ? 1. : 0.)
+  let animatedValue = AnimatedValue.useAnimatedValue(0.)
+
+  React.useEffect1(() => {
+    animatedValue->Animated.Value.setValue(state === "" ? 0. : 1.)
+    None
+  }, [state])
 
   React.useEffect2(() => {
     Animated.timing(
@@ -159,7 +165,7 @@ let make = (
                     ->Animated.Interpolation.interpolate({
                       inputRange: [0., 1.],
                       outputRange: [
-                        fontSize +. placeholderTextSizeAdjust,
+                        (fontSize +. placeholderTextSizeAdjust) *. fontScale,
                         fontSize +. placeholderTextSizeAdjust -. 5.,
                       ]->Animated.Interpolation.fromFloatArray,
                     })
@@ -184,7 +190,7 @@ let make = (
               fontStyle: #normal,
               color: textColor,
               fontFamily,
-              fontSize: fontSize +. placeholderTextSizeAdjust,
+              fontSize: (fontSize +. placeholderTextSizeAdjust) *. fontScale,
               ?textAlign,
             }),
             s({padding: 0.->dp, height: (height -. 10.)->dp, width: 100.->pct}),

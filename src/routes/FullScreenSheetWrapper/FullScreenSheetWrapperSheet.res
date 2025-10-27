@@ -4,7 +4,7 @@ open Style
 @react.component
 let make = (~children, ~isLoading) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let onModalClose = React.useCallback0(() => {
     setLoading(PaymentCancelled)
@@ -58,12 +58,7 @@ let make = (~children, ~isLoading) => {
       alignContent: #"flex-end",
       backgroundColor: paymentSheetOverlay,
       justifyContent: #"flex-end",
-      paddingTop: (
-        WebKit.platform === #androidWebView
-          ? 75.
-          : nativeProp.hyperParams.topInset->Option.getOr(75.) +.
-              ViewportContext.defaultNavbarHeight
-      )->dp,
+      paddingTop: viewPortContants.topInset->dp,
     })}>
     <GlobalBanner />
     <Animated.View
@@ -71,6 +66,7 @@ let make = (~children, ~isLoading) => {
         transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
         flexGrow: {sheetFlex->Animated.StyleProp.float},
         maxHeight: 100.->pct,
+        minWidth: 302.->dp,
       })}>
       <CustomView onDismiss=onModalClose>
         <CustomView.Wrapper onModalClose isLoading> {children} </CustomView.Wrapper>

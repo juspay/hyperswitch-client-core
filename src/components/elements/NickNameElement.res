@@ -22,8 +22,6 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid, ~accessible) => {
 
   <>
     <Space />
-    // <TextWrapper text={localeObject.cardNickname} textType=SubheadingBold />
-    // <Space height=5. />
     <CustomInput
       state={nickname->Option.getOr("")}
       setState={str => onChange(str)}

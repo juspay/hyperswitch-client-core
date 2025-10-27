@@ -39,7 +39,7 @@ let useWebKit = () => {
       }
     | #androidWebView =>
       switch Window.androidInterface->Nullable.toOption {
-      | Some(interface) => interface.exitPaymentSheet(str)
+      | Some(interface) => interface.postMessage(`{"exitPaymentSheet": ${str}}`)
       | None => ()
       }
     | _ => Window.postMessageToParent(str, "*")
@@ -58,7 +58,7 @@ let useWebKit = () => {
       }
     | #androidWebView =>
       switch Window.androidInterface->Nullable.toOption {
-      | Some(interface) => interface.sdkInitialised(str)
+      | Some(interface) => interface.postMessage(`{"sdkInitialised": ${str}}`)
       | None => ()
       }
     | _ => Window.postMessageToParent(str, "*")
@@ -82,7 +82,7 @@ let useWebKit = () => {
     switch platform {
     | #androidWebView =>
       switch Window.androidInterface->Nullable.toOption {
-      | Some(interface) => interface.launchGPay(str)
+      | Some(interface) => interface.postMessage(`{"launchGPay": ${str}}`)
       | None => ()
       }
     | _ => Window.postMessageToParent(str, "*")

@@ -6,7 +6,7 @@ let make = () => {
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
+  let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
   let localeObject = GetLocale.useGetLocalObj()
 
   let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => true)
@@ -31,13 +31,20 @@ let make = () => {
       ) {
       | (PaymentSheet, true)
       | (WidgetPaymentSheet, true)
+      | (HostedCheckout, true)
       | (TabSheet, true)
       | (WidgetTabSheet, true)
       | (ButtonSheet, _)
       | (WidgetButtonSheet, _) =>
-        <PaymentSheet setConfirmButtonData isLoading=confirmButtonData.loading tabArr elementArr />
+        <>
+          <PaymentSheet
+            setConfirmButtonData isLoading=confirmButtonData.loading tabArr elementArr giftCardArr
+          />
+          <Space />
+        </>
       | (PaymentSheet, false)
       | (WidgetPaymentSheet, false)
+      | (HostedCheckout, false)
       | (WidgetTabSheet, false)
       | (TabSheet, false) =>
         switch customerPaymentMethodData->Option.map(customerPaymentMethods =>
@@ -57,12 +64,19 @@ let make = () => {
                   merchantName={accountPaymentMethodData
                   ->Option.map(data => data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
+                  maxVisibleItems=6
                 />
               : <PaymentSheet
-                  setConfirmButtonData isLoading=confirmButtonData.loading tabArr elementArr
+                  setConfirmButtonData
+                  isLoading=confirmButtonData.loading
+                  tabArr
+                  elementArr
+                  giftCardArr
                 />}
-            {showSavedScreen
+            <Space height=5. />
+            {showSavedScreen || true
               ? <>
+                  <Space />
                   <ClickableTextElement
                     initialIconName="addwithcircle"
                     updateIconName={Some("cardv1")}
@@ -78,7 +92,7 @@ let make = () => {
                 </>
               : React.null}
           </>
-        | None => <SavedPaymentSheetLoader />
+        | None => <InitialLoader />
         }
       | _ => React.null
       }

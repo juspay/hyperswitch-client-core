@@ -101,7 +101,7 @@ module SvgCss = {
     ~height: float,
     ~fill: string,
     ~onError: unit => unit,
-    ~onLoad: unit => unit,
+    ~onLoad: unit => unit=?,
   ) => React.element = "SvgCss"
 }
 
@@ -126,15 +126,14 @@ module SvgUri = {
     ~height: float,
     ~fill: string,
     ~onError: unit => unit,
-    ~onLoad: unit => unit,
+    ~onLoad: option<unit => unit>=?,
+    ~loadingComponent=React.null,
   ) => {
     let (xml, setXml) = React.useState(_ => None)
 
     React.useEffect1(() => {
       switch svgUriCache->Dict.get(uri) {
-      | Some(xml) =>
-        setXml(_ => Some(xml))
-        onLoad()
+      | Some(xml) => setXml(_ => Some(xml))
       | None =>
         Fetch.fetch(uri)
         ->Promise.then(Fetch.Response.text)
@@ -145,7 +144,6 @@ module SvgUri = {
           } else {
             svgUriCache->Dict.set(uri, text)
             setXml(_ => Some(text))
-            onLoad()
           }
           Promise.resolve()
         })
@@ -160,8 +158,8 @@ module SvgUri = {
     }, [uri])
 
     switch xml {
-    | Some(xml) => <SvgCss onError onLoad xml width height fill />
-    | None => React.null
+    | Some(xml) => <SvgCss onError ?onLoad xml width height fill />
+    | None => loadingComponent
     }
   }
 }

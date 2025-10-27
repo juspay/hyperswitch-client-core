@@ -15,7 +15,7 @@ let make = (~children, ~locale) => {
   React.useEffect0(() => {
     fetchDataFromS3WithGZipDecoding(
       ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
-      ~s3Path=`${path}/${SdkTypes.localeTypeToString(locale)}`,
+      ~s3Path=`${path}/${LocaleDataType.localeTypeToString(locale)}.json`,
     )
     ->Promise.then(res => {
       switch res {
@@ -28,7 +28,7 @@ let make = (~children, ~locale) => {
     ->Promise.catch(_ => {
       fetchDataFromS3WithGZipDecoding(
         ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
-        ~s3Path=`${path}/${SdkTypes.localeTypeToString(Some(En))}`,
+        ~s3Path=`${path}/${LocaleDataType.localeTypeToString(Some(En))}`,
       )
       ->Promise.then(
         res => {

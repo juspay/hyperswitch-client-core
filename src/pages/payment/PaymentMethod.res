@@ -44,50 +44,59 @@ let make = (
       }
     }
 
-    let paymentMethodDataDict = switch paymentMethodData.payment_method {
+    let (paymentMethodDataDict, tabDict) = switch paymentMethodData.payment_method {
     | CARD =>
       switch nickname {
-      | Some(name) =>
+      | Some(name) => (
+          [
+            (
+              "payment_method_data",
+              [
+                (
+                  paymentMethodData.payment_method_str,
+                  [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                ),
+              ]
+              ->Dict.fromArray
+              ->Js.Json.object_,
+            ),
+          ]->Dict.fromArray,
+          tabDict,
+        )
+      | None => (Dict.make(), tabDict)
+      }
+    | REWARD => (
+        [
+          ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
+        ]->Dict.fromArray,
+        Dict.make(),
+      )
+    | pm => (
         [
           (
             "payment_method_data",
             [
               (
                 paymentMethodData.payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                [
+                  (
+                    paymentMethodData.payment_method_type ++
+                    (pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL
+                      ? "_redirect"
+                      : "") ++ (paymentMethodData.payment_method_type === "cashapp" ? "_qr" : ""),
+                    walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                  ),
+                ]
+                ->Dict.fromArray
+                ->Js.Json.object_,
               ),
             ]
             ->Dict.fromArray
             ->Js.Json.object_,
           ),
-        ]->Dict.fromArray
-      | None => Dict.make()
-      }
-    | pm =>
-      [
-        (
-          "payment_method_data",
-          [
-            (
-              paymentMethodData.payment_method_str,
-              [
-                (
-                  paymentMethodData.payment_method_type ++ (
-                    pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL
-                      ? "_redirect"
-                      : ""
-                  ),
-                  walletDict->Option.getOr(Dict.make())->Js.Json.object_,
-                ),
-              ]
-              ->Dict.fromArray
-              ->Js.Json.object_,
-            ),
-          ]
-          ->Dict.fromArray
-          ->Js.Json.object_,
-        ),
-      ]->Dict.fromArray
+        ]->Dict.fromArray,
+        tabDict,
+      )
     }
 
     let body = PaymentUtils.generateCardConfirmBody(

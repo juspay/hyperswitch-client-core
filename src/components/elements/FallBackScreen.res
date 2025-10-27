@@ -9,13 +9,21 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
 
   switch level {
   | Top =>
-    <SafeAreaView style={s({flex: 1., alignItems: #center, justifyContent: #"flex-end"})}>
+    <SafeAreaView
+      style={s({
+        flex: 1.,
+        alignItems: #center,
+        justifyContent: #"flex-end",
+        backgroundColor: "#00000040",
+      })}>
       <View
         style={s({
           width: 100.->pct,
           alignItems: #center,
           backgroundColor: "white",
           padding: 20.->dp,
+          borderTopLeftRadius: 20.,
+          borderTopRightRadius: 20.,
         })}>
         <View style={s({alignItems: #"flex-end", width: 100.->pct})}>
           <CustomPressable
@@ -23,21 +31,30 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
             <Icon name="close" fill="black" height=20. width=20. />
           </CustomPressable>
         </View>
-        <View style={s({flexDirection: #row, padding: 20.->dp})}>
-          <Icon name="errorIcon" fill="black" height=60. width=60. />
-          <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
-            <TextWrapper textType={ErrorTextBold}>
-              {"Oops, something went wrong!"->React.string}
-            </TextWrapper>
-            <TextWrapper textType={ErrorText}>
-              {"We'll be back with you shortly :)"->React.string}
-            </TextWrapper>
-          </View>
+        <View
+          style={s({
+            flex: 1.,
+            alignItems: #center,
+            justifyContent: #center,
+            paddingVertical: 48.->dp,
+          })}>
+          <Icon name="brokenrobot" fill="black" height=60. width=60. />
+          <Space />
+          <TextWrapper text="Oops, Something went wrong!" textType=HeadingBold />
+          <Space height=10. />
+          <TextWrapper text="We'll be back with you shortly :)" textType=SubheadingBold />
         </View>
         <Space />
-        <CustomPressable onPress={_ => error.resetError()}>
-          <Icon name="refresh" fill="black" height=32. width=32. />
-        </CustomPressable>
+        <CustomButton
+          borderRadius=20.
+          buttonState=Normal
+          backgroundColor="#006DF9"
+          text="Retry"
+          leftIcon=CustomIcon(<Icon name="reload" fill="white" height=24. width=24. />)
+          onPress={_ => {
+            error.resetError()
+          }}
+        />
         <Space />
       </View>
     </SafeAreaView>
@@ -49,16 +66,18 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
         width: 100.->pct,
         padding: 20.->dp,
       })}>
-      <View style={s({flexDirection: #row, backgroundColor: "white"})}>
-        <Icon name="errorIcon" fill="black" height=60. width=60. />
-        <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
-          <TextWrapper textType={ErrorTextBold}>
-            {"Oops, something went wrong!"->React.string}
-          </TextWrapper>
-          <TextWrapper textType={ErrorText}>
-            {"Try another payment method :)"->React.string}
-          </TextWrapper>
-        </View>
+      <View
+        style={s({
+          flex: 1.,
+          alignItems: #center,
+          justifyContent: #center,
+          paddingVertical: 8.->dp,
+        })}>
+        <Icon name="brokenrobot" fill="black" height=60. width=60. />
+        <Space />
+        <TextWrapper text="Oops, Something went wrong!" textType=HeadingBold />
+        <Space height=10. />
+        <TextWrapper text="We'll be back with you shortly :)" textType=SubheadingBold />
       </View>
     </View>
   | Widget =>
@@ -70,13 +89,15 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
         justifyContent: #center,
         paddingHorizontal: 40.->dp,
       })}>
-      <View style={s({flexDirection: #row, backgroundColor: "white"})}>
-        <Icon name="errorIcon" fill="black" height=32. width=32. />
-        <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
-          <TextWrapper textType={ErrorTextBold}>
-            {"Oops, something went wrong!"->React.string}
-          </TextWrapper>
-        </View>
+      <View
+        style={s({
+          flexDirection: #row,
+          alignItems: #center,
+          justifyContent: #center,
+        })}>
+        <Icon name="connectionlost" fill="black" height=32. width=32. />
+        <Space width=5. />
+        <TextWrapper text="Oops, something went wrong!" textType=ErrorTextBold />
       </View>
     </View>
   }

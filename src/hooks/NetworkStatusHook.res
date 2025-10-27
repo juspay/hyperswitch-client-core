@@ -25,13 +25,11 @@ let useNetworkStatus = () => {
       if !connected {
         showConnected.current = true
         showBanner(~message="No internet connection", ~bannerType=#error)
+      } else if showConnected.current {
+        showBanner(~message="Back Online", ~bannerType=#success)
+        showConnected.current = false
       } else {
-        if showConnected.current {
-          showBanner(~message="Back Online", ~bannerType=#success)
-          showConnected.current = false
-        } else {
-          hideBanner()
-        }
+        hideBanner()
       }
     } catch {
     | _ =>

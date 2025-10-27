@@ -350,24 +350,28 @@ let make = (~props) => {
       | Some(x) => x->Utils.getJsonObjectFromRecord
       }
 
-      reRegisterCallback.contents = () => {
-        headlessModule.getPaymentSession(
-          defaultSpmData,
-          lastUsedSpmData,
-          spmData->Utils.getJsonObjectFromRecord,
-          response => {
-            switch response->Utils.getDictFromJson->Utils.getOptionString("paymentToken") {
-            | Some(token) =>
-              switch spmData->Array.find(x => x.payment_token == token) {
-              | Some(data) => processRequest(nativeProp, data, response, sessions)->ignore
-              | None =>
-                headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
-              }
-            | None => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
-            }
-          },
+      reRegisterCallback :=
+        (
+          () => {
+            headlessModule.getPaymentSession(
+              defaultSpmData,
+              lastUsedSpmData,
+              spmData->Utils.getJsonObjectFromRecord,
+              response => {
+                switch response->Utils.getDictFromJson->Utils.getOptionString("paymentToken") {
+                | Some(token) =>
+                  switch spmData->Array.find(x => x.payment_token == token) {
+                  | Some(data) => processRequest(nativeProp, data, response, sessions)->ignore
+                  | None =>
+                    headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
+                  }
+                | None =>
+                  headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
+                }
+              },
+            )
+          }
         )
-      }
 
       reRegisterCallback.contents()
     } else {

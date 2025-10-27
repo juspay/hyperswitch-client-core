@@ -29,20 +29,31 @@ let defaultProps = {
     // displaySavedPaymentMethods: false,
     appearance: {
       theme: 'Light',
-      colors:{
-        // background:"#3a1753",
-        // primary:"#8DBD00"
-        // componentBackground:"#00000000",
-      },
-      // primaryButton:{
+      // layout: 'accordion',
+      // colors:{
+      //   background:"rgb(58, 23, 84)",
+      //   primary:"#fff",
+      //   componentBorder: "#00000050",
+      //   componentBackground: "#00000030",
+      // },
       // shapes:{
-      //   borderRadius:20.0
-      // }}
-      locale: "en",
-      typography: {
-        family: 'montserrat',
-      },
+      //   borderRadius:8.0
+      // },
+      // primaryButton:{
+      //   shapes:{
+      //     borderRadius:8.0
+      //   },
+      //   colors: {
+      //     text: "#000"
+      //   }
+      // },
+      // locale: "fr",
+      // typography: {
+        // family: 'Montserrat',
+        // sizeScaleFactor: 0.9
+      // },
     },
+    displayMergedSavedMethods: true,
   },
   hyperParams: {
     ip: '13.232.74.226',
@@ -50,10 +61,17 @@ let defaultProps = {
       'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.',
     launchTime: Date.now(),
     // country: 'AT',
-    country: 'US',
   },
-  country: 'US',
+  from: 'rn',
   type: 'payment',
+
+    // | "payment" => PaymentSheet
+    // | "tabSheet" => TabSheet
+    // | "buttonSheet" => ButtonSheet
+    // | "widgetPaymentSheet" => WidgetPaymentSheet
+    // | "widgetTabSheet" => WidgetTabSheet
+    // | "widgetButtonSheet" => WidgetButtonSheet
+
 };
 const TRUSTED_ORIGINS = [
   'http://127.0.0.1:8082',
@@ -112,7 +130,7 @@ const initReactNativeWeb = async () => {
         if (statusElement) {
           statusElement.textContent = `Status: ${data.status} ${
             data.message ? 'Message: ' + data.message : ''
-          }`;
+          }`.toUpperCase();
         } else {
           console.error('Status element not found.');
         }

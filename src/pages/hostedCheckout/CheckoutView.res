@@ -1,172 +1,255 @@
 open ReactNative
 open Style
-module TermsView = {
-  @react.component
-  let make = () => {
-    <View style={s({flexDirection: #row, width: 100.->pct})}>
-      <TextWrapper text="Powerd by Hyperswitch" textType={ModalText} />
-      <Space />
-      <TextWrapper text="|" textType={ModalText} />
-      <Space />
-      <TextWrapper text="Terms" textType={ModalText} />
-      <Space />
-      <TextWrapper text="Privacy" textType={ModalText} />
-    </View>
-  }
-}
 
-module CheckoutHeader = {
+module LineItem = {
   @react.component
-  let make = (~toggleModal) => {
-    let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
-    let useMediaView = WindowDimension.useMediaView()()
+  let make = (~label, ~value, ~sublabel=?, ~subvalue=?) => {
+    let {textSecondary} = ThemebasedStyle.useThemeBasedStyle()
 
-    <View
-      style={array([
-        s({
-          flexDirection: #row,
-          alignItems: #center,
-          padding: 16.->dp,
-          justifyContent: #"space-between",
-        }),
-        bgColor,
-      ])}>
-      <View style={s({flexDirection: #row, alignItems: #center})}>
-        // <CustomPressable style={s(~padding=16.->dp, ())}>
-        //   <Icon name="back" height=24. width=20. fill="black" />
-        // </CustomPressable>
-        // <ReImage uri="" />
-        <Space width=10. />
-        <TextWrapper text="Powdur" textType={CardText} />
-        <Space width=10. />
+    <>
+      <View style={s({flexDirection: #row, justifyContent: #"space-between", alignItems: #center})}>
+        <TextWrapper text={label} textType={ModalTextBold} />
+        <TextWrapper text={value} textType={ModalTextBold} />
+      </View>
+      {switch (sublabel, subvalue) {
+      | (Some(sublabel), Some(subvalue)) =>
         <View
           style={s({
-            backgroundColor: "#ffdd93",
-            paddingHorizontal: 5.->dp,
-            paddingVertical: 2.->dp,
-            borderRadius: 3.,
+            flexDirection: #row,
+            justifyContent: #"space-between",
+            alignItems: #center,
+            marginTop: 4.->dp,
           })}>
-          <TextWrapper textType={ModalTextBold}> {"TEST MODE"->React.string} </TextWrapper>
+          <TextWrapper text={sublabel} textType={ModalText} overrideStyle={Some(textSecondary)} />
+          <TextWrapper text={subvalue} textType={ModalText} overrideStyle={Some(textSecondary)} />
         </View>
-      </View>
-      {useMediaView == Mobile
-        ? <View style={s({flexDirection: #row, alignItems: #center})}>
-            <CustomPressable
-              onPress={_ => toggleModal()} style={s({flexDirection: #row, alignItems: #center})}>
-              <TextWrapper text="Details" textType={ModalText} />
-              <Space width=10. />
-              <ChevronIcon width=15. height=15. fill="hsla(0,0%, 10% , 0.5 )" />
-            </CustomPressable>
-          </View>
-        : React.null}
-    </View>
+      | (Some(sublabel), None) =>
+        <View style={s({marginTop: 4.->dp})}>
+          <TextWrapper text={sublabel} textType={ModalText} overrideStyle={Some(textSecondary)} />
+        </View>
+      | _ => React.null
+      }}
+    </>
   }
 }
 
-module Cart = {
+module Divider = {
   @react.component
   let make = () => {
     <View
       style={s({
-        flexDirection: #row,
-        paddingHorizontal: 18.->dp,
-        justifyContent: #"space-between",
-      })}>
-      <View style={s({flexDirection: #row})}>
-        // <ReImage
-        //   style={s({width: 50.->dp, height: 50.->dp, borderRadius: 8.})}
-        //   uri=""
-        // />
-        <Space />
-        <View>
-          <TextWrapper text="The Pure Set" textType={ModalText} />
-          <TextWrapper text="Qty 1" textType={ModalText} />
-        </View>
-      </View>
-      <TextWrapper text="US$65.00" textType={CardText} />
-    </View>
+        height: 1.->dp,
+        backgroundColor: "#E5E5E5",
+        marginVertical: 16.->dp,
+      })}
+    />
   }
 }
-module CartView = {
-  @react.component
-  let make = (~slideAnimation) => {
-    let isMobileView = WindowDimension.useIsMobileView()
-    let style = isMobileView
-      ? s({transform: Animated.ValueXY.getTranslateTransform(slideAnimation)})
-      : empty
-    let {bgColor} = ThemebasedStyle.useThemeBasedStyle()
 
-    <Animated.View style={array([style, bgColor, s({elevation: 10.})])}>
-      <Space />
-      <Cart />
-      <Space />
-      <Cart />
-      <Space />
-      <View
-        style={s({
-          flexDirection: #row,
-          justifyContent: #"space-between",
-          paddingHorizontal: 20.->dp,
-        })}>
-        <TextWrapper text="Total" textType={ModalText} />
-        <TextWrapper text="US$129.00" textType={CardText} />
+module CheckoutDetails = {
+  @react.component
+  let make = (
+    ~accountPaymentMethodData: option<AccountPaymentMethodType.accountPaymentMethods>,
+    ~textSecondary,
+  ) => {
+    <>
+      <Space height={40.} />
+      {switch accountPaymentMethodData {
+      | Some(data) =>
+        <LineItem
+          label={`${data.merchant_name->String.toUpperCase} Subscription`}
+          value="$399.00"
+          sublabel="Billed monthly"
+          subvalue="$399.00 per seat"
+        />
+      | None => React.null
+      }}
+      <Divider />
+      <View style={s({flexDirection: #row, justifyContent: #"space-between", alignItems: #center})}>
+        <TextWrapper text="Subtotal" textType={ModalTextBold} />
+        <TextWrapper text="$399.00" textType={ModalTextBold} />
       </View>
-      <Space height=20. />
-    </Animated.View>
+      <Space height={16.} />
+      <View style={s({flexDirection: #row, justifyContent: #"space-between", alignItems: #center})}>
+        <View style={s({flexDirection: #row, alignItems: #center, gap: 6.->dp})}>
+          <TextWrapper text="Tax" textType={ModalTextBold} />
+          <Icon name="disclaimer" fill="#9CA3AF" width=16. height=16. />
+        </View>
+        <TextWrapper
+          text="Enter address to calculate" textType={ModalText} overrideStyle={Some(textSecondary)}
+        />
+      </View>
+      <Divider />
+      <View style={s({flexDirection: #row, justifyContent: #"space-between", alignItems: #center})}>
+        <TextWrapper
+          text="Total due today"
+          textType={ModalTextBold}
+          overrideStyle={Some(s({fontSize: 16., fontWeight: #600}))}
+        />
+        <TextWrapper
+          text="$399.00"
+          textType={ModalTextBold}
+          overrideStyle={Some(s({fontSize: 16., fontWeight: #600}))}
+        />
+      </View>
+    </>
   }
 }
 
 @react.component
-let make = () => {
-  let (modalKey, setModalKey) = React.useState(_ => false)
-  let (slideAnimation, _) = React.useState(_ => Animated.ValueXY.create({"x": 0., "y": -200.}))
-  let isMobileView = WindowDimension.useIsMobileView()
+let make = (~isDesktop) => {
+  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let {textSecondary} = ThemebasedStyle.useThemeBasedStyle()
 
-  let toggleModal = () => {
-    if modalKey {
-      Animated.timing(
-        slideAnimation["y"],
-        {
-          toValue: -200.->Animated.Value.Timing.fromRawValue,
-          duration: 300.,
-          useNativeDriver: false,
-        },
-      )
-      ->Animated.start(~endCallback=_ => setModalKey(_ => false))
-      ->ignore
-    } else {
-      setModalKey(_ => true)
-      Animated.timing(
-        slideAnimation["y"],
-        {
-          toValue: 1.->Animated.Value.Timing.fromRawValue,
-          duration: 300.,
-          useNativeDriver: false,
-        },
-      )
-      ->Animated.start
-      ->ignore
-    }
-  }
+  let (showDetails, setShowDetails) = React.useState(() => false)
+  let shadowStyle = ShadowHook.useGetShadowStyle(
+    ~shadowIntensity=100.,
+    ~shadowColor="#00000050",
+    (),
+  )
 
-  <View style={s({width: 100.->pct})}>
-    <CheckoutHeader toggleModal />
-    <Space height=30. />
-    <View style={isMobileView ? empty : empty}>
-      <CheckoutDetails toggleModal />
-      {isMobileView
-        ? <Modal
-            visible=modalKey
-            animationType={#none}
-            presentationStyle={#overFullScreen}
-            transparent=true
-            supportedOrientations=[#"portrait-upside-down"]>
-            <View style={s({backgroundColor: "rgba(0,0,0,0.2)", flex: 1.})}>
-              <CartView slideAnimation />
-              <CustomPressable style={s({flex: 1.})} onPress={_ => toggleModal()} />
+  <>
+    <FloatingBanner
+      message=""
+      bannerType=#info
+      isVisible=showDetails
+      isConnected=false
+      autoDismiss=false
+      onDismiss={_ => setShowDetails(v => !v)}>
+      <View
+        style={array([
+          s({
+            width: 100.->pct,
+            backgroundColor: "#FFFFFF",
+            padding: 20.->dp,
+            borderBottomLeftRadius: 20.,
+            borderBottomRightRadius: 20.,
+            zIndex: 999,
+          }),
+          shadowStyle,
+        ])}>
+        {switch accountPaymentMethodData {
+        | Some(data) =>
+          <View
+            style={s({
+              flexDirection: #row,
+              alignItems: #center,
+              justifyContent: isDesktop ? #center : #"space-between",
+              gap: (isDesktop ? 12. : 6.)->dp,
+            })}>
+            <View
+              style={s({
+                flexDirection: #row,
+                alignItems: #center,
+                gap: (isDesktop ? 12. : 6.)->dp,
+              })}>
+              <Icon
+                name="back"
+                fill="#9CA3AF"
+                width={isDesktop ? 24. : 18.}
+                height={isDesktop ? 24. : 18.}
+              />
+              <TextWrapper
+                text={data.merchant_name->String.toUpperCase}
+                textType={HeadingBold}
+                overrideStyle={Some(s({fontSize: isDesktop ? 32. : 24., fontWeight: #700}))}
+              />
             </View>
-          </Modal>
-        : <CartView slideAnimation />}
+            {isDesktop
+              ? React.null
+              : <CustomPressable onPress={_ => setShowDetails(v => !v)}>
+                  <TextWrapper
+                    text={"Close ^"}
+                    textType={Heading}
+                    overrideStyle={Some(s({fontSize: 14., fontWeight: #600}))}
+                  />
+                </CustomPressable>}
+          </View>
+        | None => React.null
+        }}
+        <CheckoutDetails accountPaymentMethodData textSecondary />
+        <Space />
+      </View>
+    </FloatingBanner>
+    <View
+      style={s({
+        flex: 1.,
+        backgroundColor: "#FFFFFF",
+        paddingHorizontal: 20.->dp,
+      })}>
+      <Space height={isDesktop ? 40. : 20.} />
+      {switch accountPaymentMethodData {
+      | Some(data) =>
+        <View
+          style={s({
+            flexDirection: #row,
+            alignItems: #center,
+            justifyContent: isDesktop ? #center : #"space-between",
+            gap: (isDesktop ? 12. : 6.)->dp,
+          })}>
+          <View
+            style={s({
+              flexDirection: #row,
+              alignItems: #center,
+              gap: (isDesktop ? 12. : 6.)->dp,
+            })}>
+            <Icon
+              name="back"
+              fill="#9CA3AF"
+              width={isDesktop ? 24. : 18.}
+              height={isDesktop ? 24. : 18.}
+            />
+            <TextWrapper
+              text={data.merchant_name->String.toUpperCase}
+              textType={HeadingBold}
+              overrideStyle={Some(s({fontSize: isDesktop ? 32. : 24., fontWeight: #700}))}
+            />
+          </View>
+          {isDesktop
+            ? React.null
+            : <CustomPressable onPress={_ => setShowDetails(v => !v)}>
+                <TextWrapper
+                  text={"Details v"}
+                  textType={Heading}
+                  overrideStyle={Some(s({fontSize: 14., fontWeight: #600}))}
+                />
+              </CustomPressable>}
+        </View>
+      | None => React.null
+      }}
+      <View style=?{isDesktop ? None : Some(s({alignItems: #center}))}>
+        <Space height={40.} />
+        {switch accountPaymentMethodData {
+        | Some(data) =>
+          <TextWrapper
+            text={`Subscribe to ${data.merchant_name} Subscription`}
+            textType={Subheading}
+            overrideStyle={Some(textSecondary)}
+          />
+        | None => React.null
+        }}
+        <Space height={12.} />
+        <View style={s({flexDirection: #row, alignItems: #"flex-end", gap: 8.->dp})}>
+          <TextWrapper
+            text="$399.00"
+            textType={HeadingBold}
+            overrideStyle={Some(s({fontSize: 48., fontWeight: #700, lineHeight: 56.}))}
+          />
+          <View style={s({paddingBottom: 8.->dp})}>
+            <TextWrapper
+              text="per"
+              textType={ModalText}
+              overrideStyle={Some(array([textSecondary, s({fontSize: 16.})]))}
+            />
+            <TextWrapper
+              text="month"
+              textType={ModalText}
+              overrideStyle={Some(array([textSecondary, s({fontSize: 16.})]))}
+            />
+          </View>
+        </View>
+      </View>
+      {isDesktop ? <CheckoutDetails accountPaymentMethodData textSecondary /> : React.null}
     </View>
-  </View>
+  </>
 }

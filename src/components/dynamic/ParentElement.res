@@ -4,6 +4,7 @@ type elementType =
   | FULLNAME(array<SuperpositionTypes.fieldConfig>)
   | PHONE(array<SuperpositionTypes.fieldConfig>)
   | EMAIL(array<SuperpositionTypes.fieldConfig>)
+  | DATE(array<SuperpositionTypes.fieldConfig>)
   | GENERIC(array<SuperpositionTypes.fieldConfig>)
 
 @react.component
@@ -26,6 +27,8 @@ let make = (
     <FullNameElement fields createFieldValidator formatValue isCardPayment ?accessible />
   | PHONE(fields) if fields->Array.length > 0 =>
     <PhoneElement fields createFieldValidator formatValue ?accessible />
+  | DATE(fields) if fields->Array.length > 0 =>
+    <DateElement fields createFieldValidator formatValue ?accessible />
   | GENERIC(fields) if fields->Array.length > 0 =>
     <GenericTabElement fields createFieldValidator formatValue ?accessible />
   | _ => React.null

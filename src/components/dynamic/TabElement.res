@@ -5,12 +5,13 @@ let make = (
   ~processRequest,
   ~setConfirmButtonData,
 ) => {
-  let {getRequiredFieldsForTabs, country, isNicknameValid} = React.useContext(
+  let {formDataRef, getRequiredFieldsForTabs, country, isNicknameValid} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
   )
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
   let setFormData = React.useCallback1(data => {
+    formDataRef->Option.map(ref => ref.current = data)->ignore
     setFormData(_ => data)
   }, [setFormData])
 

@@ -37,7 +37,7 @@ let make = (~onModalClose, ~isLoading=false) => {
     <View
       style={s({flexDirection: #row, flexWrap: #wrap, alignItems: #center, maxWidth: 40.->pct})}>
       {isLoading
-        ? React.null
+        ? <CustomLoader width="60" height="20" />
         : <>
             {nativeProp.env === GlobalVars.PROD
               ? React.null
