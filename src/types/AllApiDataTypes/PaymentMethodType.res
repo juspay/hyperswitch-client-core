@@ -38,9 +38,6 @@ let getWalletType = str =>
   | "apple_pay" => SdkTypes.APPLE_PAY
   | "paypal" => SdkTypes.PAYPAL
   | "samsung_pay" => SdkTypes.SAMSUNG_PAY
-  | "pay_safe_card" => SdkTypes.PAY_SAFE_CARD
-  | "skrill" => SdkTypes.SKRILL
-  | "klarna" => SdkTypes.KLARNA
   | _ => SdkTypes.NONE
   }
 

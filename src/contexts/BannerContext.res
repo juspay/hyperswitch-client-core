@@ -29,14 +29,14 @@ let make = (~children) => {
 
 let useBanner = () => {
   let (state, setState) = React.useContext(bannerContext)
-  
+
   let showBanner = (~message, ~bannerType=#info) => {
     setState({isVisible: true, message, bannerType})
   }
-  
+
   let hideBanner = () => {
     setState({...state, isVisible: false})
   }
-  
+
   (state, showBanner, hideBanner)
 }

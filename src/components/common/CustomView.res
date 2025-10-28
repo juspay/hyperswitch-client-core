@@ -77,7 +77,7 @@ module WidgetWrapper = {
         minHeight: 250.->dp,
         paddingHorizontal: sheetContentPadding->dp,
         paddingTop: sheetContentPadding->dp,
-        paddingBottom: viewPortContants.navigationBarHeight->dp,
+        paddingBottom: viewPortContants.bottomInset->dp,
       })}
       keyboardShouldPersistTaps={#handled}
       showsVerticalScrollIndicator=false
@@ -89,19 +89,32 @@ module WidgetWrapper = {
 module Wrapper = {
   @react.component
   let make = (~onModalClose, ~width=100.->pct, ~children=React.null, ~isLoading) => {
-    let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
+    let {bgColor, sheetContentPadding, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+
+    let style = React.useMemo0(() => {
+      let style = [s({flexGrow: 1., width}), bgColor]
+      if WebKit.platform === #androidWebView {
+        style->Array.push(
+          s({
+            borderRadius,
+            overflow: #hidden,
+          }),
+        )
+      }
+      array(style)
+    })
 
     <ScrollView
       contentContainerStyle={s({
         minHeight: 250.->dp,
         paddingHorizontal: sheetContentPadding->dp,
         paddingTop: sheetContentPadding->dp,
-        paddingBottom: viewPortContants.navigationBarHeight->dp,
+        paddingBottom: viewPortContants.bottomInset->dp,
       })}
       keyboardShouldPersistTaps={#handled}
       showsVerticalScrollIndicator=false
-      style={array([s({flexGrow: 1., width}), bgColor])}>
+      style>
       <ModalHeader onModalClose isLoading />
       children
     </ScrollView>

@@ -45,6 +45,7 @@ let useAccountPaymentMethodModifier = () => {
                         ->Option.map(data => data.merchant_name)
                         ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                         animated=false
+                        style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
                       />,
                   },
                 ]
@@ -70,95 +71,111 @@ let useAccountPaymentMethodModifier = () => {
 
     switch accountPaymentMethodData {
     | Some(accountPaymentMethodData) =>
-      accountPaymentMethodData.payment_methods->Array.reduce((initialTabArr, initialElementArr), (
-        (tabArr, elementArr): (array<hoc>, array<React.element>),
-        paymentMethodData,
-      ) => {
-        let sessionObject = switch sessionTokenData {
-        | Some(sessionData) =>
-          sessionData
-          ->Array.find(item => item.wallet_name == paymentMethodData.payment_method_type_wallet)
-          ->Option.getOr(SessionsType.defaultToken)
-        | _ => SessionsType.defaultToken
-        }
-
-        let exp =
-          paymentMethodData.payment_experience->Array.find(
-            x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
-          )
-
-        let walletExperience = switch paymentMethodData.payment_method_type_wallet {
-        | APPLE_PAY =>
-          WebKit.platform !== #android &&
-          WebKit.platform !== #androidWebView &&
-          WebKit.platform !== #next &&
-          sessionObject.wallet_name !== NONE &&
-          exp->Option.isSome
-            ? Some()
-            : None
-        | GOOGLE_PAY =>
-          WebKit.platform !== #ios &&
-          WebKit.platform !== #iosWebView &&
-          WebKit.platform !== #next &&
-          sessionObject.wallet_name !== NONE &&
-          sessionObject.connector !== "trustpay" &&
-          exp->Option.isSome
-            ? Some()
-            : None
-        | SAMSUNG_PAY =>
-          exp->Option.isSome && SamsungPayModule.isAvailable && samsungPayStatus == SamsungPay.Valid
-            ? Some()
-            : None
-        | PAYPAL =>
-          exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
-            ? Some()
-            : switch paymentMethodData.payment_experience->Array.find(
-                x => x.payment_experience_type_decode === REDIRECT_TO_URL,
-              ) {
-              | Some(_) => Some()
-              | None => None
-              }
-        | _ => Some()
-        }
-
-        if walletExperience->Option.isSome {
-          switch nativeProp.sdkState {
-          | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
-            Types.defaultButtonElementArr->Array.includes(paymentMethodData.payment_method_type)
-              ? elementArr->Array.push(
-                  <PaymentMethod
-                    key={paymentMethodData.payment_method_type}
-                    paymentMethodData
-                    sessionObject
-                    methodType=ELEMENT
-                  />,
-                )
-              : tabArr->Array.push({
-                  name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
-                  componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                    <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
-                })
-
-          | TabSheet | WidgetTabSheet =>
-            tabArr->Array.push({
-              name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
-              componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
-            })
-          | ButtonSheet | WidgetButtonSheet =>
-            elementArr->Array.push(
-              <PaymentMethod
-                key={paymentMethodData.payment_method_type}
-                paymentMethodData
-                sessionObject
-                methodType=ELEMENT
-              />,
-            )
-          | _ => ()
+      accountPaymentMethodData.payment_methods->Array.reduce(
+        (initialTabArr, initialElementArr, []),
+        (
+          (tabArr, elementArr, giftCardArr): (
+            array<hoc>,
+            array<React.element>,
+            array<AccountPaymentMethodType.payment_method_type>,
+          ),
+          paymentMethodData,
+        ) => {
+          let sessionObject = switch sessionTokenData {
+          | Some(sessionData) =>
+            sessionData
+            ->Array.find(item => item.wallet_name == paymentMethodData.payment_method_type_wallet)
+            ->Option.getOr(SessionsType.defaultToken)
+          | _ => SessionsType.defaultToken
           }
-        }
-        (tabArr, elementArr)
-      })
+
+          let exp =
+            paymentMethodData.payment_experience->Array.find(
+              x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
+            )
+
+          let walletExperience = switch paymentMethodData.payment_method_type_wallet {
+          | APPLE_PAY =>
+            WebKit.platform !== #android &&
+            WebKit.platform !== #androidWebView &&
+            WebKit.platform !== #next &&
+            sessionObject.wallet_name !== NONE &&
+            exp->Option.isSome
+              ? Some()
+              : None
+          | GOOGLE_PAY =>
+            WebKit.platform !== #ios &&
+            WebKit.platform !== #iosWebView &&
+            WebKit.platform !== #next &&
+            sessionObject.wallet_name !== NONE &&
+            sessionObject.connector !== "trustpay" &&
+            exp->Option.isSome
+              ? Some()
+              : None
+          | SAMSUNG_PAY =>
+            exp->Option.isSome &&
+            SamsungPayModule.isAvailable &&
+            samsungPayStatus == SamsungPay.Valid
+              ? Some()
+              : None
+          | PAYPAL =>
+            exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
+              ? Some()
+              : switch paymentMethodData.payment_experience->Array.find(
+                  x => x.payment_experience_type_decode === REDIRECT_TO_URL,
+                ) {
+                | Some(_) => Some()
+                | None => None
+                }
+          | NONE =>
+            switch paymentMethodData.payment_method {
+            | GIFT_CARD =>
+              giftCardArr->Array.push(paymentMethodData)
+              None
+            | CARD_REDIRECT => None
+            | _ => Some()
+            }
+          }
+
+          if walletExperience->Option.isSome {
+            switch nativeProp.sdkState {
+            | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
+              Types.defaultButtonElementArr->Array.includes(paymentMethodData.payment_method_type)
+                ? elementArr->Array.push(
+                    <PaymentMethod
+                      key={paymentMethodData.payment_method_type}
+                      paymentMethodData
+                      sessionObject
+                      methodType=ELEMENT
+                    />,
+                  )
+                : tabArr->Array.push({
+                    name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                    componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
+                      <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                  })
+
+            | TabSheet | WidgetTabSheet =>
+              tabArr->Array.push({
+                name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
+                  <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+              })
+            | ButtonSheet | WidgetButtonSheet =>
+              elementArr->Array.push(
+                <PaymentMethod
+                  key={paymentMethodData.payment_method_type}
+                  paymentMethodData
+                  sessionObject
+                  methodType=ELEMENT
+                />,
+              )
+            | _ => ()
+            }
+          }
+          (tabArr, elementArr, giftCardArr)
+        },
+      )
     | None =>
       let loadingTabElement = {
         name: "loading",
@@ -174,9 +191,11 @@ let useAccountPaymentMethodModifier = () => {
       | PaymentSheet | WidgetPaymentSheet => (
           [loadingTabElement, loadingTabElement, loadingTabElement, loadingTabElement],
           [<CustomLoader key="1" />, <Space key="2" />],
+          [],
         )
       | TabSheet | WidgetTabSheet => (
           [loadingTabElement, loadingTabElement, loadingTabElement, loadingTabElement],
+          [],
           [],
         )
       | ButtonSheet | WidgetButtonSheet => (
@@ -192,8 +211,9 @@ let useAccountPaymentMethodModifier = () => {
             <Space key="8" />,
             <CustomLoader key="9" />,
           ],
+          [],
         )
-      | _ => ([], [])
+      | _ => ([], [], [])
       }
     }
   }, (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData))

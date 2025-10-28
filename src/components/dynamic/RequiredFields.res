@@ -14,7 +14,7 @@ let make = (
   ~onSubmit=?,
 ) => {
   let categorizedFields = React.useMemo1(() => {
-    fields->Array.reduce(([], [], [], [], [], [], []), (
+    fields->Array.reduce(([], [], [], [], [], [], [], []), (
       (
         cardFields,
         emailFields,
@@ -22,6 +22,7 @@ let make = (
         billingPhoneFields,
         billingOtherFields,
         cryptoFields,
+        datePickerFields,
         otherFields,
       ),
       fieldConfig: SuperpositionTypes.fieldConfig,
@@ -45,6 +46,8 @@ let make = (
         billingOtherFields->Array.push(fieldConfig)
       } else if fieldName->String.includes("crypto.") {
         cryptoFields->Array.push(fieldConfig)
+      } else if fieldConfig.fieldType === DatePicker {
+        datePickerFields->Array.push(fieldConfig)
       } else {
         otherFields->Array.push(fieldConfig)
       }
@@ -55,6 +58,7 @@ let make = (
         billingPhoneFields,
         billingOtherFields,
         cryptoFields,
+        datePickerFields,
         otherFields,
       )
     })
@@ -67,10 +71,17 @@ let make = (
     billingPhoneFields,
     billingOtherFields,
     cryptoFields,
+    datePickerFields,
     otherFields,
   ) = categorizedFields
 
-  let elements = [CARD(cardFields), GENERIC(otherFields), CRYPTO(cryptoFields), EMAIL(emailFields)]
+  let elements = [
+    CARD(cardFields),
+    GENERIC(otherFields),
+    CRYPTO(cryptoFields),
+    EMAIL(emailFields),
+    DATE(datePickerFields),
+  ]
 
   let addressElements = [
     FULLNAME(billingNameFields),

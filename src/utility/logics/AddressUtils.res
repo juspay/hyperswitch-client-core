@@ -1,19 +1,22 @@
 open SdkTypes
 open Utils
 
+let defaultCountry = "US"
+
 let parseBillingAddress = (billingDetailsDict: Js.Dict.t<JSON.t>) => {
   let addressDict = getOptionalObj(billingDetailsDict, "address")
 
   {
     address: addressDict->Option.map(addressDict => {
-      first_name: ?getOptionString(addressDict, "city"),
-      last_name: ?getOptionString(addressDict, "city"),
-      city: ?getOptionString(addressDict, "city"),
-      country: ?getOptionString(addressDict, "country"),
+      first_name: ?getOptionString(addressDict, "first_name"),
+      last_name: ?getOptionString(addressDict, "last_name"),
       line1: ?getOptionString(addressDict, "line1"),
       line2: ?getOptionString(addressDict, "line2"),
-      zip: ?getOptionString(addressDict, "postalCode"),
+      line3: ?getOptionString(addressDict, "line3"),
+      city: ?getOptionString(addressDict, "city"),
       state: ?getOptionString(addressDict, "state"),
+      country: ?getOptionString(addressDict, "country"),
+      zip: ?getOptionString(addressDict, "postalCode"),
     }),
     phone: Some({
       country_code: ?getOptionString(billingDetailsDict, "country_code"),
@@ -35,13 +38,13 @@ let getGooglePayBillingAddress = (dict, str) => {
       address: Some({
         first_name,
         last_name,
-        city: ?getOptionString(json, "locality"),
-        ?country,
         line1: ?getOptionString(json, "address1"),
         line2: ?getOptionString(json, "address2"),
         line3: ?getOptionString(json, "address3"),
-        zip: ?getOptionString(json, "postalCode"),
+        city: ?getOptionString(json, "locality"),
         state: ?getOptionString(json, "administrativeArea"),
+        ?country,
+        zip: ?getOptionString(json, "postalCode"),
       }),
       email: getOptionString(json, "email"),
       phone: Some({
@@ -95,13 +98,13 @@ let getApplePayBillingAddress = (dict, str, shipping: option<string>) => {
       address: Some({
         first_name: ?getOptionString(name, "givenName"),
         last_name: ?getOptionString(name, "familyName"),
-        city: ?getOptionString(postalAddress, "city"),
-        ?country,
         ?line1,
         ?line2,
         ?line3,
-        zip: ?getOptionString(postalAddress, "postalCode"),
+        city: ?getOptionString(postalAddress, "city"),
         state: ?getOptionString(postalAddress, "state"),
+        ?country,
+        zip: ?getOptionString(postalAddress, "postalCode"),
       }),
       email,
       phone: Some({
@@ -129,7 +132,7 @@ let getFlatAddressDict = (
     addressDict->Dict.set(
       "payment_method_data.billing.address.line1",
       address.line1->Option.getOr(""),
-    )  
+    )
     addressDict->Dict.set(
       "payment_method_data.billing.address.line2",
       address.line2->Option.getOr(""),
@@ -137,7 +140,7 @@ let getFlatAddressDict = (
     addressDict->Dict.set(
       "payment_method_data.billing.address.line3",
       address.line3->Option.getOr(""),
-    )    
+    )
     addressDict->Dict.set(
       "payment_method_data.billing.address.city",
       address.city->Option.getOr(""),

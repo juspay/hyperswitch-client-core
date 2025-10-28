@@ -124,6 +124,35 @@ module PMWithNickNameComponent = {
   }
 }
 
+module MoreButton = {
+  @react.component
+  let make = (~handleMoreToggle) => {
+    let {component, borderRadius, linkColor} = ThemebasedStyle.useThemeBasedStyle()
+
+    <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
+      <CustomPressable
+        onPress={_ => handleMoreToggle()}
+        style={array([
+          s({
+            width: 100.->pct,
+            flexDirection: #row,
+            alignItems: #center,
+            justifyContent: #"flex-start",
+            borderColor: component.borderColor,
+            minWidth: 115.->dp,
+            paddingHorizontal: 14.->dp,
+            paddingVertical: 20.->dp,
+            borderRadius,
+          }),
+        ])}>
+        <ChevronIcon width=12. height=12. fill=linkColor />
+        <Space height=5. />
+        <TextWrapper text="Show More" textType=LinkText />
+      </CustomPressable>
+    </View>
+  }
+}
+
 module PaymentMethodListView = {
   @react.component
   let make = (
@@ -158,6 +187,7 @@ module PaymentMethodListView = {
           alignItems: #center,
           justifyContent: #"space-between",
           paddingHorizontal: 12.->dp,
+          gap: 8.->dp,
         })}>
         <View style={s({flexDirection: #row, alignItems: #center, maxWidth: 60.->pct})}>
           <CustomRadioButton size=20.5 selected=isPaymentMethodSelected color=primaryColor />
@@ -171,6 +201,7 @@ module PaymentMethodListView = {
                 ~start=-2,
               )}`}
             textType={ModalTextLight}
+            overrideStyle={Some(s({marginLeft: auto}))}
           />
         | None => React.null
         }}
@@ -197,33 +228,28 @@ let make = (
   ~setSelectedToken,
   ~savedCardCvv,
   ~setSavedCardCvv,
-  ~isScreenFocus,
+  ~isScreenFocus as _,
   ~animated,
+  ~maxVisibleItems: int=3,
 ) => {
-  let animatedHeight = AnimatedValue.useAnimatedValue(100.)
+  let (showMore, setShowMore) = React.useState(_ => true)
 
-  let setDynamicHeight = React.useCallback0(newHeight => {
-    Animated.timing(
-      animatedHeight,
-      {
-        toValue: newHeight->Animated.Value.Timing.fromRawValue,
-        isInteraction: true,
-        useNativeDriver: false,
-        delay: 0.,
-        duration: 300.,
-        easing: Easing.ease,
-      },
-    )->Animated.start
-  })
+  let visiblePaymentMethods = if (
+    customerPaymentMethods->Array.length > maxVisibleItems && showMore
+  ) {
+    customerPaymentMethods->Array.slice(~start=0, ~end=maxVisibleItems)
+  } else {
+    customerPaymentMethods
+  }
 
   let savedPaymentMethods =
-    customerPaymentMethods
+    visiblePaymentMethods
     ->Array.mapWithIndex((savedPaymentMethod, i) => {
       <PaymentMethodListView
         key={savedPaymentMethod.payment_method_id}
         savedPaymentMethod
-        isButtomBorder={Some(customerPaymentMethods)->Option.getOr([])->Array.length - 1 === i
-          ? false
+        isButtomBorder={visiblePaymentMethods->Array.length - 1 === i
+          ? customerPaymentMethods->Array.length > maxVisibleItems && showMore
           : true}
         savedCardCvv
         setSavedCardCvv
@@ -235,13 +261,22 @@ let make = (
     })
     ->React.array
 
+  let content =
+    <>
+      {savedPaymentMethods}
+      <UIUtils.RenderIf
+        condition={customerPaymentMethods->Array.length > maxVisibleItems && showMore}>
+        <MoreButton
+          handleMoreToggle={() => {
+            setShowMore(_ => false)
+          }}
+        />
+      </UIUtils.RenderIf>
+    </>
+
   animated
     ? <ScrollView keyboardShouldPersistTaps=#handled showsVerticalScrollIndicator=false>
-        <Animated.View style={s({height: animatedHeight->Animated.StyleProp.size})}>
-          <TopTabScreenWrapper setDynamicHeight isScreenFocus width=Some(100.->pct)>
-            {savedPaymentMethods}
-          </TopTabScreenWrapper>
-        </Animated.View>
+        {content}
       </ScrollView>
-    : savedPaymentMethods
+    : content
 }

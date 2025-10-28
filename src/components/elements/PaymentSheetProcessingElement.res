@@ -18,11 +18,7 @@ let make = () => {
       setPaymentProcessingText(_ => newState)
     }, 800)
 
-    Some(
-      () => {
-        clearTimeout(intervalId)
-      },
-    )
+    Some(() => clearTimeout(intervalId))
   }, [paymentProcessingText])
 
   <View

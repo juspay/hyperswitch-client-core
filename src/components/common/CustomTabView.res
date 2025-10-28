@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+
 @react.component
 let make = (
   ~hocComponentArr: array<AllApiDataModifier.hoc>=[],
@@ -10,19 +11,56 @@ let make = (
   let setIndexInFocus = React.useCallback1(index => {
     setIndexInFocus(_ => index)
   }, [setIndexInFocus])
-  let sceneMap = Map.make()
+
+  let {sheetContentPadding, primaryColor, iconColor} = ThemebasedStyle.useThemeBasedStyle()
+
+  let (renderScene, descriptorDict) = React.useMemo3(() => {
+    let map = Map.make()
+    let descriptorDict: Dict.t<TabViewType.tabDescriptor> = Dict.make()
+
+    hocComponentArr->Array.forEachWithIndex((hoc, index) => {
+      map->Map.set(
+        index->Int.toString,
+        _ => {
+          hoc.componentHoc(~isScreenFocus=indexInFocus === index, ~setConfirmButtonData)
+        },
+      )
+
+      descriptorDict->Dict.set(
+        index->Int.toString,
+        {
+          icon: _ =>
+            isLoading
+              ? <CustomLoader height="18" width="18" />
+              : <Icon
+                  name=hoc.name
+                  width=18.
+                  height=18.
+                  fill={indexInFocus === index ? primaryColor : iconColor}
+                />,
+          label: _ =>
+            isLoading
+              ? <CustomLoader height="18" width="40" />
+              : <TextWrapper
+                  text=hoc.name
+                  textType={switch indexInFocus === index {
+                  | true => CardTextBold
+                  | _ => CardText
+                  }}
+                />,
+        },
+      )
+    })
+
+    (SceneMap.sceneMap(map), descriptorDict)
+  }, (hocComponentArr, indexInFocus, isLoading))
 
   <UIUtils.RenderIf condition={hocComponentArr->Array.length > 0}>
     {
       let routes = hocComponentArr->Array.mapWithIndex((hoc, index) => {
-        sceneMap->Map.set(index, (~route as _, ~position as _, ~jumpTo as _) =>
-          hoc.componentHoc(~isScreenFocus=indexInFocus == index, ~setConfirmButtonData)
-        )
-
         let route: TabViewType.route = {
-          key: index,
+          key: index->Int.toString,
           title: hoc.name,
-          componentHoc: hoc.componentHoc,
         }
         route
       })
@@ -35,20 +73,23 @@ let make = (
           }
 
       <TabView
-        sceneContainerStyle={s({padding: 10.->dp})}
-        style={s({marginHorizontal: -10.->dp})}
-        indexInFocus
-        routes
+        navigationState={
+          index: indexInFocus,
+          routes,
+        }
         onIndexChange=setIndexInFocus
-        renderTabBar={(~indexInFocus, ~routes as _, ~position as _, ~layout as _, ~jumpTo) => {
+        renderTabBar={(~position, ~jumpTo, ~navigationState, ~options) =>
           isScrollBarOnlyCards
-            ? React.null
-            : <ScrollableCustomTopBar
-                hocComponentArr indexInFocus setIndexToScrollParentFlatList={jumpTo}
-              />
+            ? <Space height=24. />
+            : <TabBar isLoading position jumpTo navigationState ?options scrollEnabled=true />}
+        renderScene
+        style={s({
+          marginHorizontal: -.sheetContentPadding->dp,
+        })}
+        options=descriptorDict
+        commonOptions={{
+          sceneStyle: s({marginHorizontal: sheetContentPadding->dp}),
         }}
-        renderScene={SceneMap.sceneMap(sceneMap)}
-        isLoading
       />
     }
   </UIUtils.RenderIf>

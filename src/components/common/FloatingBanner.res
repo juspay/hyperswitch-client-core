@@ -10,9 +10,10 @@ let make = (
   ~isConnected=true,
   ~autoDismiss: bool=true,
   ~dismissTimeout: int=10000,
+  ~children=?,
 ) => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (slideAnim, _) = React.useState(_ => Animated.Value.create(-200.))
+  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+  let (slideAnim, _) = React.useState(_ => Animated.Value.create(-300.))
   let {toastColorConfig} = ThemebasedStyle.useThemeBasedStyle()
 
   React.useEffect(() => {
@@ -39,7 +40,7 @@ let make = (
       Animated.timing(
         slideAnim,
         {
-          toValue: -200.->Animated.Value.Timing.fromRawValue,
+          toValue: -300.->Animated.Value.Timing.fromRawValue,
           duration: 300.,
           useNativeDriver: false,
           easing: Easing.ease,
@@ -71,42 +72,46 @@ let make = (
           width: 100.->pct,
           top: 0.->dp,
           paddingTop: (
-            WebKit.platform === #web
-              ? 10.
-              : WebKit.platform === #androidWebView
-              ? 75.
-              : nativeProp.hyperParams.topInset->Option.getOr(75.)
+            WebKit.platform === #web ? 0. : viewPortContants.topInset -. ViewportContext.minTopInset
           )->dp,
           zIndex: 9999,
-          backgroundColor,
-          shadowColor: "#000000",
-          shadowOffset: {width: 0., height: 2.},
-          shadowOpacity: 0.25,
-          shadowRadius: 4.,
-          elevation: 5.,
-          alignItems: #center,
         }),
+        children->Option.isNone
+          ? s({
+              backgroundColor,
+              shadowColor: "#000000",
+              shadowOffset: {width: 0., height: 2.},
+              shadowOpacity: 0.25,
+              shadowRadius: 4.,
+              elevation: 5.,
+              alignItems: #center,
+            })
+          : empty,
         s({transform: [translateY(~translateY=slideAnim->Animated.StyleProp.size)]}),
       ])}>
-      <CustomPressable
-        style={s({
-          display: #flex,
-          padding: 20.->dp,
-        })}>
-        <View
+      {switch children {
+      | Some(children) => children
+      | None =>
+        <CustomPressable
           style={s({
-            flexDirection: #row,
-            alignItems: #center,
-            justifyContent: #"space-between",
-            marginHorizontal: 10.->dp,
+            display: #flex,
+            padding: 20.->dp,
           })}>
-          <Icon name={isConnected ? "wifi" : "wifioff"} width=24. height=24. />
-          <Space width=15. />
-          <TextWrapper
-            text=message textType={HeadingBold} overrideStyle={Some(s({color: textColor}))}
-          />
-        </View>
-      </CustomPressable>
+          <View
+            style={s({
+              flexDirection: #row,
+              alignItems: #center,
+              justifyContent: #"space-between",
+              marginHorizontal: 10.->dp,
+            })}>
+            <Icon name={isConnected ? "wifi" : "wifioff"} width=24. height=24. />
+            <Space width=15. />
+            <TextWrapper
+              text=message textType={HeadingBold} overrideStyle={Some(s({color: textColor}))}
+            />
+          </View>
+        </CustomPressable>
+      }}
     </Animated.View>
   </UIUtils.RenderIf>
 }

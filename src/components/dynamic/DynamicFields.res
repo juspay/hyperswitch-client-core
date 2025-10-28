@@ -6,6 +6,7 @@ let make = (
   ~setIsFormValid,
   ~setFormMethods,
   ~isCardPayment=false,
+  ~isGiftCardPayment=false,
   ~enabledCardSchemes=[],
   ~accessible: bool,
 ) => {
@@ -35,7 +36,7 @@ let make = (
         accessible
       />
     </UIUtils.RenderIf>
-    <UIUtils.RenderIf condition={isCardPayment && fields->Array.length > 0}>
+    <UIUtils.RenderIf condition={isCardPayment && !isGiftCardPayment && fields->Array.length > 0}>
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
         customerPaymentMethodData->Option.map(data => data.is_guest_customer)->Option.getOr(true),
@@ -44,8 +45,8 @@ let make = (
         ->Option.getOr(NORMAL),
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
-        <ReactNative.View style=ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})>
-          <Space height=5. />
+        <ReactNative.View
+          style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
@@ -56,7 +57,6 @@ let make = (
             textType={ModalText}
             // disableScreenSwitch=true
           />
-          <Space height=5. />
         </ReactNative.View>
       | _ => React.null
       }}
@@ -77,7 +77,7 @@ let make = (
       | _ => React.null
       }}
     </UIUtils.RenderIf>
-    <UIUtils.RenderIf condition={!isCardPayment}>
+    <UIUtils.RenderIf condition={!isCardPayment && !isGiftCardPayment}>
       <UIUtils.RenderIf
         condition={fields->Array.length == 0 && nativeProp.configuration.appearance.layout === Tab}>
         <Space />

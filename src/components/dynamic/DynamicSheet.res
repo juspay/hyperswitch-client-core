@@ -3,7 +3,6 @@ open Style
 
 @react.component
 let make = (~children, ~handlePress) => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
   let {
     bgColor,
@@ -53,12 +52,7 @@ let make = (~children, ~handlePress) => {
         alignContent: #center,
         backgroundColor: paymentSheetOverlay,
         justifyContent: #center,
-        paddingTop: (
-          WebKit.platform === #androidWebView
-            ? 75.
-            : nativeProp.hyperParams.topInset->Option.getOr(75.) +.
-                ViewportContext.defaultNavbarHeight
-        )->dp,
+        paddingTop: viewPortContants.topInset->dp,
       })}>
       <Animated.View
         style={s({
@@ -91,7 +85,7 @@ let make = (~children, ~handlePress) => {
                 minHeight: 250.->dp,
                 paddingHorizontal: sheetContentPadding->dp,
                 paddingTop: sheetContentPadding->dp,
-                paddingBottom: viewPortContants.navigationBarHeight->dp,
+                paddingBottom: viewPortContants.bottomInset->dp,
               })}
               keyboardShouldPersistTaps={#handled}
               showsVerticalScrollIndicator=false

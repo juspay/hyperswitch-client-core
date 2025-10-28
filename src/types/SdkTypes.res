@@ -1,41 +1,8 @@
 open Utils
 
-type localeTypes =
-  | En
-  | He
-  | Fr
-  | En_GB
-  | Ar
-  | Ja
-  | De
-  | Fr_BE
-  | Es
-  | Ca
-  | Pt
-  | It
-  | Pl
-  | Nl
-  | NI_BE
-  | Sv
-  | Ru
-  | Lt
-  | Cs
-  | Sk
-  | Ls
-  | Cy
-  | El
-  | Et
-  | Fi
-  | Nb
-  | Bs
-  | Da
-  | Ms
-  | Tr_CY
-
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
-type payment_method_type_wallet =
-  GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | KLARNA | SKRILL | PAY_SAFE_CARD | NONE
+type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE
 
 let walletNameMapper = str => {
   switch str {
@@ -200,7 +167,7 @@ type themeType = Default | Light | Dark | Minimal | FlatMinimal
 type layoutType = Tab | Accordion | SpacedAccordion
 
 type appearance = {
-  locale: option<localeTypes>,
+  locale: option<LocaleDataType.localeTypes>,
   colors: option<colorType>,
   shapes: option<shapes>,
   font: option<font>,
@@ -468,75 +435,7 @@ let getPrimaryButtonColorFromDict = (primaryButtonColorDict, keys: NativeSdkProp
     border: retOptionalStr(getProp(keys.primaryButton_border, primaryButtonColorDict)),
   }
 }
-let localeTypeToString = locale => {
-  switch locale {
-  | Some(En) => "en"
-  | Some(He) => "he"
-  | Some(Fr) => "fr"
-  | Some(En_GB) => "en-GB"
-  | Some(Ar) => "ar"
-  | Some(Ja) => "ja"
-  | Some(De) => "de"
-  | Some(Fr_BE) => "fr-BE"
-  | Some(Es) => "es"
-  | Some(Ca) => "ca"
-  | Some(Pt) => "pt"
-  | Some(It) => "it"
-  | Some(Pl) => "pl"
-  | Some(Nl) => "nl"
-  | Some(NI_BE) => "nI-BE"
-  | Some(Sv) => "sv"
-  | Some(Ru) => "ru"
-  | Some(Lt) => "lt"
-  | Some(Cs) => "cs"
-  | Some(Sk) => "sk"
-  | Some(Ls) => "ls"
-  | Some(Cy) => "cy"
-  | Some(El) => "el"
-  | Some(Et) => "et"
-  | Some(Fi) => "fi"
-  | Some(Nb) => "nb"
-  | Some(Bs) => "bs"
-  | Some(Da) => "da"
-  | Some(Ms) => "ms"
-  | Some(Tr_CY) => "tr-CY"
-  | None => "en"
-  }
-}
-let localeStringToType = locale => {
-  switch locale {
-  | "he" => Some(He)
-  | "fr" => Some(Fr)
-  | "en-GB" => Some(En_GB)
-  | "ar" => Some(Ar)
-  | "ja" => Some(Ja)
-  | "de" => Some(De)
-  | "fr-BE" => Some(Fr_BE)
-  | "es" => Some(Es)
-  | "ca" => Some(Ca)
-  | "pt" => Some(Pt)
-  | "it" => Some(It)
-  | "pl" => Some(Pl)
-  | "nl" => Some(Nl)
-  | "nI-BE" => Some(NI_BE)
-  | "sv" => Some(Sv)
-  | "ru" => Some(Ru)
-  | "lt" => Some(Lt)
-  | "cs" => Some(Cs)
-  | "sk" => Some(Sk)
-  | "ls" => Some(Ls)
-  | "cy" => Some(Cy)
-  | "el" => Some(El)
-  | "et" => Some(Et)
-  | "fi" => Some(Fi)
-  | "nb" => Some(Nb)
-  | "bs" => Some(Bs)
-  | "da" => Some(Da)
-  | "ms" => Some(Ms)
-  | "tr-CY" => Some(Tr_CY)
-  | _ => Some(En)
-  }
-}
+
 let getAppearanceObj = (
   appearanceDict: Dict.t<JSON.t>,
   keys: NativeSdkPropsKeys.keys,
@@ -557,7 +456,7 @@ let getAppearanceObj = (
 
   {
     locale: switch retOptionalStr(getProp(keys.locale, appearanceDict)) {
-    | Some(str) => localeStringToType(str)
+    | Some(str) => LocaleDataType.localeStringToType(str)
     | _ => Some(En)
     },
     colors: from == "rn" || from == "flutter"

@@ -99,6 +99,15 @@ const replaceConfiguration = {
   ],
 };
 
+const excludeConfiguration = {
+  test: /^(?!.*\.(jsx?|tsx?|json|s?css|html|svg|png|jpe?g|gif|woff2?|ttf|eot)$).*/i,
+  type: 'asset/resource',
+  generator: {
+    filename: '[name][ext]',
+    emit: false,
+  },
+};
+
 module.exports = {
   entry: {
     app: path.join(__dirname, 'index.web.js'),
@@ -149,6 +158,7 @@ module.exports = {
   },
   module: {
     rules: [
+      excludeConfiguration,
       babelLoaderConfiguration,
       imageLoaderConfiguration,
       svgLoaderConfiguration,

@@ -109,9 +109,7 @@ let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type, 
         alignItems: #center,
         flex: 1.,
       })}>
-      <TextWrapper
-        text={localeObject.deletePaymentMethod->Option.getOr("Delete")} textType=LinkText
-      />
+      <TextWrapper text={localeObject.deletePaymentMethod} textType=LinkText />
     </View>
   </CustomPressable>
 }

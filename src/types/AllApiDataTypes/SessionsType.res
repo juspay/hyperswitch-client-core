@@ -59,7 +59,6 @@ let getWallet = str => {
   switch str {
   | "apple_pay" => APPLE_PAY
   | "paypal" => PAYPAL
-  | "klarna" => KLARNA
   | "google_pay" => GOOGLE_PAY
   | "samsung_pay" => SAMSUNG_PAY
   | _ => NONE

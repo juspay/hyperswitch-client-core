@@ -341,9 +341,9 @@ let make = (
           />,
         )
       | PAYPAL => Some(<GenericButtonElement buttonName width=80. color=paypalButonColor />)
-      | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)
-      | PAY_SAFE_CARD => Some(<GenericButtonElement buttonName width=92. color="#008ac9" />)
-      | KLARNA => Some(<GenericButtonElement buttonName width=92. height=32. color="#0B051D" />)
+      // | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)
+      // | PAY_SAFE_CARD => Some(<GenericButtonElement buttonName width=92. color="#008ac9" />)
+      // | KLARNA => Some(<GenericButtonElement buttonName width=92. height=32. color="#0B051D" />)
       | _ => None
       }}
     </CustomButton>

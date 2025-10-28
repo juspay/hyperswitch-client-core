@@ -1,11 +1,93 @@
+open ReactNative
+
+@module("use-latest-callback") external useLatestCallback: 't => 't = "default"
+type isRTL = {isRTL: bool}
+type i18nManager = {getConstants: unit => isRTL}
+@val @scope("ReactNative") external i18nManager: i18nManager = "I18nManager"
+
+type tabSize = [#auto | #dp(float) | #pct(float) | #none]
+
+let parseSize = (size, key) => {
+  let attr = size->Dict.get(key)->Option.getOr(JSON.Null)
+
+  switch attr->JSON.Classify.classify {
+  | Number(num) => Float.isFinite(num) ? #dp(num) : #none
+  | String(str) =>
+    if str === "auto" {
+      #auto
+    } else if str->String.endsWith("%") {
+      let width = Float.parseFloat(str)
+      Float.isFinite(width) ? #pct(width) : #dp(0.)
+    } else {
+      #none
+    }
+  | _ => #none
+  }
+}
+
+let getSizeFromTabSize = tabSize => {
+  switch tabSize {
+  | #dp(num) => num->Style.dp->Some
+  | #pct(num) => num->Style.pct->Some
+  | #auto => Style.auto->Some
+  | #none => None
+  }
+}
+
+type localeDirection = [#ltr | #rtl]
+
+let localeDirectionToString = direction =>
+  switch direction {
+  | #ltr => "ltr"
+  | #rtl => "rtl"
+  }
+
+type keyboardDismissMode = [#none | #"on-drag" | #auto]
+
 type route = {
-  key: int,
+  key: string,
   icon?: string,
-  title: string,
+  title?: string,
   accessible?: bool,
   accessibilityLabel?: string,
   testID?: string,
-  componentHoc: AllApiDataModifier.componentHoc,
+}
+
+type labelProps = {
+  route: route,
+  labelText?: string,
+  focused: bool,
+  color: Color.t,
+  allowFontScaling?: bool,
+  style?: Style.t,
+}
+
+type iconProps = {
+  route: route,
+  focused: bool,
+  color: Color.t,
+  size: int,
+}
+
+type badgeProps = {route: route}
+
+type tabDescriptor = {
+  accessibilityLabel?: string,
+  accessible?: bool,
+  testID?: string,
+  labelText?: string,
+  labelAllowFontScaling?: bool,
+  href?: string,
+  label?: React.component<labelProps>,
+  labelStyle?: Style.t,
+  icon?: React.component<iconProps>,
+  badge?: React.component<badgeProps>,
+  sceneStyle?: Style.t,
+}
+
+type event = {
+  mutable defaultPrevented: bool,
+  preventDefault: unit => unit,
 }
 
 type scene = {route: route}
@@ -15,64 +97,18 @@ type navigationState = {
   routes: array<route>,
 }
 
-type listener = int => unit
-
-type sceneRendererProps = {
-  layout: ReactNative.Event.LayoutEvent.layout,
-  position: ReactNative.Animated.Interpolation.t,
-  jumpTo: string => unit,
+type layout = {
+  width: float,
+  height: float,
 }
 
-type eventEmitterProps = {addEnterListener: (listener, unit) => unit}
-
-type onPageScrollEventData = {
-  position: float,
-  offset: float,
+type listenerEvent = {
+  \"type": [#enter],
+  index: int,
 }
 
-type onPageSelectedEventData = {position: float, offset: float}
+type listener = listenerEvent => unit
 
-type pageScrollState = [#idle | #dragging | #settling]
+type eventEmitterProps = {subscribe: listener => unit => unit}
 
-type onPageScrollStateChangedEventData = {pageScrollState: pageScrollState}
-
-type localeDirection = [#ltr | #rtl]
-
-type orientation = [#horizontal | #vertical]
-
-type overScrollMode = [#auto | #always | #never]
-
-type keyboardDismissMode = [#auto | #none | #"on-drag"]
-
-type tabBarPosition = [#top | #bottom]
-
-type pagerViewProps = {
-  scrollEnabled: option<bool>,
-  layoutDirection: option<localeDirection>,
-  initialPage: option<int>,
-  orientation: option<orientation>,
-  offscreenPageLimit: option<int>,
-  pageMargin: option<int>,
-  overScrollMode: option<overScrollMode>,
-  overdrag: option<bool>,
-  keyboardDismissMode: option<keyboardDismissMode>,
-  onPageScroll: onPageScrollEventData => unit,
-  onPageSelected: onPageSelectedEventData => unit,
-  onPageScrollStateChanged: onPageScrollStateChangedEventData => unit,
-}
-
-type pagerProps = {
-  scrollEnabled: option<bool>,
-  layoutDirection: option<localeDirection>,
-  initialPage: option<int>,
-  orientation: option<orientation>,
-  offscreenPageLimit: option<int>,
-  pageMargin: option<int>,
-  overScrollMode: option<overScrollMode>,
-  overdrag: option<bool>,
-  keyboardDismissMode: option<keyboardDismissMode>,
-  swipeEnabled: option<bool>,
-  animationEnabled: option<bool>,
-  onSwipeStart: unit => unit,
-  onSwipeEnd: unit => unit,
-}
+type tabSelect = {index: int}
