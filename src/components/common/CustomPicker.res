@@ -151,6 +151,7 @@ let make = (
             borderRightWidth=borderWidth
             ?accessible
           />
+          <Space />
           {isLoading
             ? <ActivityIndicator
                 size={Large}

@@ -3,7 +3,10 @@ open Style
 
 module GiftCardComponent = {
   @react.component
-  let make = React.memo((~giftCardArr: array<AccountPaymentMethodType.payment_method_type>) => {
+  let make = React.memo((
+    ~giftCardArr: array<AccountPaymentMethodType.payment_method_type>,
+    ~setContentHeight,
+  ) => {
     let (selectedGiftCardType, setSelectedGiftCardType) = React.useState(() =>
       giftCardArr
       ->Array.get(0)
@@ -50,7 +53,11 @@ module GiftCardComponent = {
       }
     }, (selectedGiftCardType, getRequiredFieldsForTabs, country))
 
-    <View>
+    <View
+      onLayout={(event: Event.layoutEvent) => {
+        let height = event.nativeEvent.layout.height
+        setContentHeight(_ => height)
+      }}>
       <Space height=30. />
       <CustomPicker
         value=selectedGiftCardType
@@ -89,6 +96,25 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
     shadowIntensity,
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+
+  let (contentHeight, setContentHeight) = React.useState(_ => 0.)
+  let animatedHeight = React.useRef(Animated.Value.create(0.))
+
+  React.useEffect2(() => {
+    let toValue = (expandGiftCard ? contentHeight : 0.)->Animated.Value.Timing.fromRawValue
+
+    Animated.timing(
+      animatedHeight.current,
+      {
+        toValue,
+        duration: 300.,
+        useNativeDriver: false,
+        easing: Easing.ease,
+      },
+    )->Animated.start
+
+    None
+  }, (expandGiftCard, contentHeight))
 
   {
     !isLoading && giftCardArr->Array.length === 0
@@ -130,9 +156,13 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
                   </View>
                   <Icon name="chevron" width=14. height=14. fill="#525866" />
                 </CustomPressable>
-                <UIUtils.RenderIf condition=expandGiftCard>
-                  <GiftCardComponent giftCardArr />
-                </UIUtils.RenderIf>
+                <Animated.View
+                  style={s({
+                    height: animatedHeight.current->Animated.StyleProp.size,
+                    overflow: #hidden,
+                  })}>
+                  <GiftCardComponent giftCardArr setContentHeight />
+                </Animated.View>
               </View>}
         </>
   }
