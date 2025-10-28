@@ -4,15 +4,15 @@ open EmailValidation
 
 @react.component
 let make = (
-  ~newIdentifier: string,
-  ~setNewIdentifier: (string => string) => unit,
   ~onBack: unit => unit,
   ~onSwitch: string => unit,
   ~cardBrands: array<string>=[],
   ~disabled: bool=false,
+  ~showBackButton: bool=true,
 ) => {
   let {borderRadius, component} = ThemebasedStyle.useThemeBasedStyle()
 
+  let (newIdentifier, setNewIdentifier) = React.useState(() => "")
   let (emailValidationState, setEmailValidationState) = React.useState(() => None)
 
   let supportedCardBrands = Utils.supportedCardBrands(cardBrands)
@@ -32,9 +32,11 @@ let make = (
       })
       ->React.array}
     </View>
-    <TouchableOpacity onPress={_ => onBack()} style={s({marginBottom: 16.->dp})}>
-      <Text style={s({fontSize: 14., color: "#007AFF"})}> {"← Back"->React.string} </Text>
-    </TouchableOpacity>
+    {showBackButton
+      ? <TouchableOpacity onPress={_ => onBack()} style={s({marginBottom: 16.->dp})}>
+          <Text style={s({fontSize: 14., color: "#007AFF"})}> {"← Back"->React.string} </Text>
+        </TouchableOpacity>
+      : React.null}
     <Text
       style={s({
         fontSize: 14.,

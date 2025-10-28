@@ -202,6 +202,8 @@ let make = (
           handleKeyPress=clickToPayUI.handleKeyPress
           onSubmit={() => clickToPayUI.submitOtp()->ignore}
           onNotYouPress={() => {
+            clickToPayUI.setOtp(_ => ["", "", "", "", "", ""])
+            clickToPayUI.setOtpError(_ => "NONE")
             clickToPayUI.setPreviousScreenState(_ => ClickToPayHooks.OTP_INPUT)
             clickToPayUI.setScreenState(_ => ClickToPayHooks.NOT_YOU)
           }}
@@ -270,12 +272,11 @@ let make = (
           }),
         ])}>
         <ClickToPayNotYouScreen
-          newIdentifier=clickToPayUI.newIdentifier
-          setNewIdentifier=clickToPayUI.setNewIdentifier
           onBack={() => clickToPayUI.setScreenState(_ => clickToPayUI.previousScreenState)}
           onSwitch={email => clickToPayUI.switchIdentity(email)->ignore}
           cardBrands
           disabled={clickToPayUI.screenState == ClickToPayHooks.LOADING}
+          showBackButton={clickToPayUI.previousScreenState != ClickToPayHooks.NONE}
         />
       </View>
     | _ => React.null

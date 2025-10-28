@@ -17,11 +17,7 @@ type otpManagementState = {
   resendOtp: unit => promise<unit>,
 }
 
-type identityManagementState = {
-  newIdentifier: string,
-  setNewIdentifier: (string => string) => unit,
-  switchIdentity: string => promise<unit>,
-}
+type identityManagementState = {switchIdentity: string => promise<unit>}
 
 type clickToPayUIState = {
   screenState: screenState,
@@ -43,8 +39,6 @@ type clickToPayUIState = {
   otpError: string,
   setOtpError: (string => string) => unit,
   handleCheckout: option<CustomerPaymentMethodType.customer_payment_method_type> => promise<JSON.t>,
-  newIdentifier: string,
-  setNewIdentifier: (string => string) => unit,
   userIdentity: option<ClickToPay.Types.userIdentity>,
   setUserIdentity: (
     option<ClickToPay.Types.userIdentity> => option<ClickToPay.Types.userIdentity>
@@ -237,12 +231,16 @@ let useIdentityManagement = (
   ~setUserIdentity: (
     option<ClickToPay.Types.userIdentity> => option<ClickToPay.Types.userIdentity>
   ) => unit,
+  ~setOtp: (array<string> => array<string>) => unit,
+  ~setOtpError: (string => string) => unit,
+  ~setResendTimer: (int => int) => unit,
 ) => {
-  let (newIdentifier, setNewIdentifier) = React.useState(() => "")
-
   let switchIdentity = async (newEmail: string) => {
     try {
       setScreenState(_ => LOADING)
+      setOtp(_ => ["", "", "", "", "", ""])
+      setOtpError(_ => "NONE")
+      setResendTimer(_ => 0)
 
       let newUserIdentity: ClickToPay.Types.userIdentity = {
         value: newEmail,
@@ -260,17 +258,13 @@ let useIdentityManagement = (
       | (_, Some(cards)) if cards->Array.length > 0 => setScreenState(_ => CARDS_DISPLAY)
       | _ => setScreenState(_ => NONE)
       }
-
-      setNewIdentifier(_ => "")
     } catch {
     | _ => setScreenState(_ => NOT_YOU)
     }
   }
 
   {
-    newIdentifier,
-    setNewIdentifier,
-    switchIdentity,
+    switchIdentity: switchIdentity,
   }
 }
 
@@ -314,6 +308,11 @@ let useClickToPayUI = () => {
                 setScreenState(_ => CARDS_DISPLAY)
                 JSON.Encode.null
               }
+            | Some("SWITCH_CONSUMER") => {
+                setPreviousScreenState(_ => NONE)
+                setScreenState(_ => NOT_YOU)
+                JSON.Encode.null
+              }
             | _ => result
             }
           }
@@ -337,6 +336,9 @@ let useClickToPayUI = () => {
     ~setScreenState,
     ~setMaskedChannel,
     ~setUserIdentity,
+    ~setOtp=otpManagement.setOtp,
+    ~setOtpError=otpManagement.setOtpError,
+    ~setResendTimer=otpManagement.setResendTimer,
   )
 
   {
@@ -359,8 +361,6 @@ let useClickToPayUI = () => {
     handleCheckout,
     otpError: otpManagement.otpError,
     setOtpError: otpManagement.setOtpError,
-    newIdentifier: identityManagement.newIdentifier,
-    setNewIdentifier: identityManagement.setNewIdentifier,
     userIdentity,
     setUserIdentity,
     handleOtpChange: otpManagement.handleOtpChange,

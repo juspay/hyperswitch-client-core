@@ -90,13 +90,12 @@ let make = (
               <TextWrapper text={`•••• ${last4_digits}`} textType={CardTextBold} />
             </View>
           </View>
-          <TextWrapper
-            text={`${expiryMonth}/${expiryYear->String.slice(
-                ~start=-2,
-                ~end=String.length(expiryYear),
-              )}`}
-            textType={ModalTextLight}
-          />
+          {String.length(expiryMonth) > 0 && String.length(expiryYear) > 0
+            ? <TextWrapper
+                text={`${expiryMonth}/${expiryYear->String.sliceToEnd(~start=-2)}`}
+                textType={ModalTextLight}
+              />
+            : React.null}
         </View>
       </TouchableOpacity>
     })
