@@ -33,36 +33,34 @@ git submodule update --init --recursive
 
 ---
 
-## 4. Install iOS Dependencies
+## 4. Integrate Hyperswitch SDK into Your App
 
-```bash
-cd ios
-pod install
-cd ..
+The Hyperswitch SDK provides payment UI and APIs for handling card and wallet transactions within your app.
+
+In your **own iOS app project**, add the Hyperswitch SDK using CocoaPods:
+
+```ruby
+target 'YourAppTargetName' do
+  use_frameworks!
+  pod 'hyperswitch-sdk-ios'
+end
 ```
 
-> **Note:** This step installs the Hyperswitch SDK and its dependencies. No separate SDK installation is required, CocoaPods handles it automatically.
+Then install the dependencies:
+
+```bash
+pod install
+```
+
+> **Note:**  
+> You don’t need to open the Hyperswitch SDK project directly.  
+> Instead, open your app’s `.xcworkspace` file — the Hyperswitch SDK will be included automatically through CocoaPods.
 
 ---
 
-## 5. Open Project in Xcode
+## 5. Initialize the SDK in Your App
 
-1. Open `hyperswitch.xcworkspace` in Xcode  
-2. Select the target device or simulator  
-3. Wait for dependencies to load
-
----
-
-## 6. Run the App
-
-1. Choose a simulator or connect a real device  
-2. Click the Run button (▶) in Xcode or press `Cmd + R`
-
----
-
-## 7. Initialize the SDK
-
-Use the SDK as shown in the example app:
+In your app’s view controller, initialize and present the payment sheet:
 
 ```swift
 import Hyperswitch
@@ -85,22 +83,22 @@ paymentSession.presentPaymentSheet(viewController: self, configuration: configur
 
 ---
 
-## 8. Common Issues & Solutions
+## 6. Common Issues & Solutions
 
-| Issue                 | Solution                                         |
-|-----------------------|-------------------------------------------------|
-| Pod install fails      | Run `pod repo update` then `pod install` again |
-| Simulator not starting | Restart Xcode or the simulator                  |
-| Build errors           | Clean build folder: `Shift + Cmd + K`          |
+| Issue | Solution |
+|-------|-----------|
+| Pod install fails | Run `pod repo update` then `pod install` again |
+| Simulator not starting | Restart Xcode or the simulator |
+| Build errors | Clean build folder: `Shift + Cmd + K` |
 
 ---
 
-## 9. Tips
+## 7. Tips
 
-- Use **Xcode 14+**  
-- Always run `git submodule update --init --recursive` after cloning  
-- Rebuild the SDK if you make changes:
+- Use **Xcode 14+**
+- Always run `git submodule update --init --recursive` after cloning
+- Rebuild SDK only if you're contributing to the SDK itself:
 
 ```bash
-yarn run build:ios:detox
+yarn run build:ios
 ```

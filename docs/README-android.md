@@ -28,11 +28,11 @@ cd hyperswitch-client-core
 git submodule update --init --recursive
 ```
 
-2. Build the SDK locally (used mainly for detox testing):
+2. Build the SDK locally
 
 ```bash
-# This step is required only if you need local SDK artifacts for tests or detox
-yarn run build:android:detox
+# Build the Android SDK locally for integration
+yarn build:android
 ```
 ---
 
@@ -92,7 +92,7 @@ val appearance = PaymentSheet.Appearance().apply {
 
 val configuration = PaymentSheet.Configuration.Builder("Hyperswitch Demo")
     .appearance(appearance)
-    .primaryButtonLabel("Purchase ($2.00)")
+    .primaryButtonLabel("Purchase (₹200.00)")
     .displaySavedPaymentMethods(true)
     .build()
 
