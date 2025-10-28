@@ -41,6 +41,10 @@ type dynamicFieldsData = {
   setNickname: option<string> => unit,
   isNicknameValid: bool,
   setIsNicknameValid: bool => unit,
+  saveClickToPay: bool,
+  clickToPayRememberMe: bool,
+  setSaveClickToPay: bool => unit,
+  setClickToPayRememberMe: bool => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -57,6 +61,10 @@ let dynamicFieldsContext = React.createContext({
   setNickname: _ => (),
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
+  saveClickToPay: false,
+  clickToPayRememberMe: false,
+  setSaveClickToPay: _ => (),
+  setClickToPayRememberMe: _ => (),
 })
 
 module Provider = {
@@ -273,6 +281,16 @@ let make = (~children) => {
     setIsNicknameValid(_ => val)
   }, [setIsNicknameValid])
 
+  let (saveClickToPay, setSaveClickToPay) = React.useState(_ => false)
+  let setSaveClickToPay = React.useCallback1(val => {
+    setSaveClickToPay(_ => val)
+  }, [setSaveClickToPay])
+
+  let (clickToPayRememberMe, setClickToPayRememberMe) = React.useState(_ => false)
+  let setClickToPayRememberMe = React.useCallback1(val => {
+    setClickToPayRememberMe(_ => val)
+  }, [setClickToPayRememberMe])
+
   React.useEffect(() => {
     if isNicknameSelected == false {
       setNickname(None)
@@ -296,6 +314,10 @@ let make = (~children) => {
       setNickname,
       isNicknameValid,
       setIsNicknameValid,
+      saveClickToPay,
+      clickToPayRememberMe,
+      setSaveClickToPay,
+      setClickToPayRememberMe,
     }>
     children
   </Provider>

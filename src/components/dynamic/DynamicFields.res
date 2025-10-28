@@ -8,6 +8,7 @@ let make = (
   ~isCardPayment=false,
   ~enabledCardSchemes=[],
   ~accessible: bool,
+  ~renderClickToPay=false,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
@@ -19,6 +20,10 @@ let make = (
     nickname,
     setNickname,
     setIsNicknameValid,
+    clickToPayRememberMe,
+    saveClickToPay,
+    setClickToPayRememberMe,
+    setSaveClickToPay,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -44,7 +49,8 @@ let make = (
         ->Option.getOr(NORMAL),
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
-        <ReactNative.View style=ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})>
+        <ReactNative.View
+          style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
           <Space height=5. />
           <ClickableTextElement
             disabled={false}
@@ -76,6 +82,34 @@ let make = (
         <NickNameElement nickname setNickname setIsNicknameValid accessible />
       | _ => React.null
       }}
+      {renderClickToPay
+        ? <ReactNative.View
+            style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
+            <Space height=5. />
+            // TODO: Add the click to pay icon here
+            <Space height=5. />
+            <ClickableTextElement
+              disabled={false}
+              initialIconName="checkboxClicked"
+              updateIconName=Some("checkboxNotClicked")
+              text="Save with click to Pay"
+              isSelected=saveClickToPay
+              setIsSelected=setSaveClickToPay
+              textType={ModalText}
+            />
+            <Space height=5. />
+            // TODO: Add full name and mobile number here
+            <ClickableTextElement
+              disabled={false}
+              initialIconName="checkboxClicked"
+              updateIconName=Some("checkboxNotClicked")
+              text="Rememeber Me"
+              isSelected=clickToPayRememberMe
+              setIsSelected=setClickToPayRememberMe
+              textType={ModalText}
+            />
+          </ReactNative.View>
+        : React.null}
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={!isCardPayment}>
       <UIUtils.RenderIf

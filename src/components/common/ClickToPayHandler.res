@@ -7,14 +7,10 @@ type clickToPayUIState = {screenState: ClickToPayHooks.screenState}
 let make = (
   ~sessionTokenData: option<array<SessionsType.sessions>>,
   ~onStateChange: clickToPayUIState => unit,
-  ~onRequiresNewCard: unit => unit,
   ~selectedToken: option<CustomerPaymentMethodType.customer_payment_method_type>,
   ~setSelectedToken: option<CustomerPaymentMethodType.customer_payment_method_type> => unit,
   ~clickToPayUI: ClickToPayHooks.clickToPayUIState,
 ) => {
-  let hasValidated = React.useRef(false)
-  let showAlert = AlertHook.useAlerts()
-
   let (userEmail, maskedPhone) = React.useMemo2(() => {
     switch (clickToPayUI.userIdentity, clickToPayUI.maskedChannel) {
     | (Some(identity), Some(channel)) =>
@@ -72,103 +68,6 @@ let make = (
     }
   | None => #visa
   }
-
-  React.useEffect1(() => {
-    switch clickToPaySessionObject {
-    | Some(sessionObject) =>
-      let cardBrands =
-        sessionObject.card_brands
-        ->Array.map(brand => brand->JSON.Decode.string->Option.getOr(""))
-        ->Array.filter(brand => brand != "")
-        ->Array.join(",")
-
-      let clickToPayConfig: ClickToPay.Types.clickToPayConfig = {
-        dpaId: sessionObject.dpa_id->Option.getOr(""),
-        environment: #sandbox,
-        provider,
-        locale: ?sessionObject.locale,
-        cardBrands: cardBrands != "" ? cardBrands : "visa,mastercard",
-        clientId: ?sessionObject.dpa_name,
-        transactionAmount: ?sessionObject.transaction_amount,
-        transactionCurrency: ?sessionObject.transaction_currency_code,
-      }
-
-      if clickToPayUI.clickToPay.config->Nullable.isNullable {
-        clickToPayUI.setScreenState(_ => ClickToPayHooks.LOADING)
-
-        clickToPayUI.clickToPay.initialize(clickToPayConfig)
-        ->Promise.then(() => {
-          Promise.resolve()
-        })
-        ->Promise.catch(_ => {
-          clickToPayUI.setScreenState(_ => ClickToPayHooks.NONE)
-          Promise.resolve()
-        })
-        ->ignore
-      }
-    | None => ()
-    }
-
-    None
-  }, [clickToPaySessionObject])
-
-  React.useEffect2(() => {
-    let clickToPaySessionObject = switch sessionTokenData {
-    | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
-    | _ => None
-    }
-
-    switch clickToPaySessionObject {
-    | Some(sessionObject) =>
-      if (
-        !clickToPayUI.clickToPay.isLoading &&
-        !(clickToPayUI.clickToPay.config->Nullable.isNullable) &&
-        !hasValidated.current
-      ) {
-        hasValidated.current = true
-
-        let emailValue = sessionObject.email->Option.getOr("")
-
-        if emailValue != "" {
-          let userIdentity: ClickToPay.Types.userIdentity = {
-            value: emailValue,
-            type_: "EMAIL_ADDRESS",
-          }
-
-          clickToPayUI.setUserIdentity(_ => Some(userIdentity))
-
-          clickToPayUI.clickToPay.validate(userIdentity)
-          ->Promise.then(result => {
-            switch (result.requiresOTP, result.requiresNewCard, result.cards) {
-            | (Some(true), _, _) => {
-                clickToPayUI.setMaskedChannel(_ => result.maskedValidationChannel)
-                clickToPayUI.setScreenState(_ => ClickToPayHooks.OTP_INPUT)
-              }
-            | (_, Some(true), _) => onRequiresNewCard()
-            | (_, _, Some(cards)) if cards->Array.length > 0 =>
-              clickToPayUI.setScreenState(_ => ClickToPayHooks.CARDS_DISPLAY)
-            | _ => {
-                clickToPayUI.setScreenState(_ => ClickToPayHooks.NONE)
-                showAlert(~errorType="warning", ~message="No cards found")
-              }
-            }
-
-            Promise.resolve()
-          })
-          ->Promise.catch(_ => {
-            clickToPayUI.setScreenState(_ => ClickToPayHooks.NONE)
-            Promise.resolve()
-          })
-          ->ignore
-        } else {
-          clickToPayUI.setScreenState(_ => ClickToPayHooks.NONE)
-        }
-      }
-    | None => ()
-    }
-
-    None
-  }, (clickToPayUI.clickToPay.isLoading, sessionTokenData))
 
   React.useEffect1(() => {
     let state: clickToPayUIState = {

@@ -6,7 +6,6 @@ let make = () => {
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
   let localeObject = GetLocale.useGetLocalObj()
 
   let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => true)
@@ -31,6 +30,16 @@ let make = () => {
   }, [setIsClickToPayNewCardFlow])
 
   let initializeClickToPay = ClickToPayHandler.shouldShowClickToPay(sessionTokenData)
+
+  let clickToPayUI = ClickToPayHooks.useClickToPayUI(
+    sessionTokenData,
+    ~setIsSavedPaymentScreen,
+    ~setIsClickToPayNewCardFlow,
+  )
+
+  let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier(
+    ~isClickToPayNewUser=clickToPayUI.isNewUser,
+  )
 
   <FullScreenSheetWrapper isLoading=confirmButtonData.loading>
     {switch sheetType {
@@ -68,9 +77,8 @@ let make = () => {
                   merchantName={accountPaymentMethodData
                   ->Option.map(data => data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
-                  setIsSavedPaymentScreen
-                  setIsClickToPayNewCardFlow
                   shouldInitializeClickToPay={initializeClickToPay}
+                  clickToPayUI=Some(clickToPayUI)
                 />
               : <PaymentSheet
                   setConfirmButtonData
@@ -79,7 +87,10 @@ let make = () => {
                   elementArr
                   isClickToPayNewCardFlow
                 />}
-            {showSavedScreen && (isSavedPaymentScreen || customerPaymentMethods->Array.length > 0 || initializeClickToPay)
+            {showSavedScreen &&
+            (isSavedPaymentScreen ||
+            customerPaymentMethods->Array.length > 0 ||
+            initializeClickToPay)
               ? <>
                   <ClickableTextElement
                     initialIconName="addwithcircle"

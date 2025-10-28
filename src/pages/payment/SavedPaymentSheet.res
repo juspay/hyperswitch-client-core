@@ -6,11 +6,10 @@ let make = (
   ~customerPaymentMethods: CustomerPaymentMethodType.customer_payment_methods,
   ~setConfirmButtonData,
   ~merchantName,
-  ~setIsSavedPaymentScreen=?,
-  ~setIsClickToPayNewCardFlow=?,
   ~shouldInitializeClickToPay=false,
   ~isScreenFocus=true,
   ~animated=true,
+  ~clickToPayUI: option<ClickToPayHooks.clickToPayUIState>,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
@@ -57,19 +56,6 @@ let make = (
   let onClickToPayStateChange = React.useCallback1(state => {
     setClickToPayState(_ => state)
   }, [setClickToPayState])
-
-  let onRequiresNewCard = React.useCallback2(() => {
-    switch setIsSavedPaymentScreen {
-    | Some(setter) => setter(false)
-    | None => ()
-    }
-    switch setIsClickToPayNewCardFlow {
-    | Some(setter) => setter(true)
-    | None => ()
-    }
-  }, (setIsSavedPaymentScreen, setIsClickToPayNewCardFlow))
-
-  let clickToPayUI = ClickToPayHooks.useClickToPayUI()
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
@@ -412,71 +398,81 @@ let make = (
 
   let handlePress = _ => {
     if isClickToPaySelected {
-      clickToPayUI.handleCheckout(selectedToken)
-      ->Promise.then(checkoutResult => {
-        if checkoutResult->JSON.Classify.classify == Null {
-          Promise.resolve()
-        } else {
-          let clickToPaySessionObject = switch sessionTokenData {
-          | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
-          | _ => None
-          }
+      switch clickToPayUI {
+      | Some(ui) =>
+        ui.handleCheckout(selectedToken)
+        ->Promise.then(checkoutResult => {
+          if checkoutResult->JSON.Classify.classify == Null {
+            Promise.resolve()
+          } else {
+            let clickToPaySessionObject = switch sessionTokenData {
+            | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
+            | _ => None
+            }
 
-          switch clickToPaySessionObject {
-          | Some(sessionObject) => {
-              let provider = sessionObject.provider->Option.getOr("")
-              let email = sessionObject.email->Option.getOr("")
+            switch clickToPaySessionObject {
+            | Some(sessionObject) => {
+                let provider = sessionObject.provider->Option.getOr("")
+                let email = sessionObject.email->Option.getOr("")
 
-              let body = PaymentUtils.generateClickToPayConfirmBody(
-                ~nativeProp,
-                ~checkoutResult,
-                ~provider,
-                ~email,
-              )
-              let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
-                if !closeSDK {
-                  setLoading(FillingDetails)
-                }
-                handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-              }
-
-              let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
-                switch paymentStatus {
-                | PaymentSuccess => {
-                    setLoading(PaymentSuccess)
-                    setTimeout(() => {
-                      handleSuccessFailure(~apiResStatus=status, ())
-                    }, 300)->ignore
+                let body = PaymentUtils.generateClickToPayConfirmBody(
+                  ~nativeProp,
+                  ~checkoutResult,
+                  ~provider,
+                  ~email,
+                )
+                let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+                  if !closeSDK {
+                    setLoading(FillingDetails)
                   }
-                | _ => handleSuccessFailure(~apiResStatus=status, ())
+                  handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
                 }
-              }
-              redirectHook(
-                ~body,
-                ~publishableKey=nativeProp.publishableKey,
-                ~clientSecret=nativeProp.clientSecret,
-                ~errorCallback,
-                ~responseCallback,
-                ~paymentMethod="click_to_pay",
-                ~isCardPayment=true,
-                (),
-              )
-            }
-          | None => {
-              setLoading(FillingDetails)
-              showAlert(~errorType="error", ~message="Click to Pay session not found")
-            }
-          }
 
+                let responseCallback = (
+                  ~paymentStatus: LoadingContext.sdkPaymentState,
+                  ~status,
+                ) => {
+                  switch paymentStatus {
+                  | PaymentSuccess => {
+                      setLoading(PaymentSuccess)
+                      setTimeout(() => {
+                        handleSuccessFailure(~apiResStatus=status, ())
+                      }, 300)->ignore
+                    }
+                  | _ => handleSuccessFailure(~apiResStatus=status, ())
+                  }
+                }
+                redirectHook(
+                  ~body,
+                  ~publishableKey=nativeProp.publishableKey,
+                  ~clientSecret=nativeProp.clientSecret,
+                  ~errorCallback,
+                  ~responseCallback,
+                  ~paymentMethod="click_to_pay",
+                  ~isCardPayment=true,
+                  (),
+                )
+              }
+            | None => {
+                setLoading(FillingDetails)
+                showAlert(~errorType="error", ~message="Click to Pay session not found")
+              }
+            }
+
+            Promise.resolve()
+          }
+        })
+        ->Promise.catch(_ => {
+          setLoading(FillingDetails)
+          showAlert(~errorType="error", ~message="Click to Pay checkout failed")
           Promise.resolve()
+        })
+        ->ignore
+      | None => {
+          setLoading(FillingDetails)
+          showAlert(~errorType="error", ~message="Click to Pay UI not initialized")
         }
-      })
-      ->Promise.catch(_ => {
-        setLoading(FillingDetails)
-        showAlert(~errorType="error", ~message="Click to Pay checkout failed")
-        Promise.resolve()
-      })
-      ->ignore
+      }
     } else {
       switch (selectedToken, !showDisclaimer || (showDisclaimer && isSaveCardCheckboxSelected)) {
       | (Some(token), true) =>
@@ -631,17 +627,20 @@ let make = (
     <View style={s({position: #relative, flex: 1.})}>
       <Space />
       {shouldInitializeClickToPay
-        ? <>
-            <ClickToPayHandler
-              sessionTokenData
-              onStateChange=onClickToPayStateChange
-              onRequiresNewCard
-              selectedToken
-              setSelectedToken
-              clickToPayUI
-            />
-            {clickToPayState.screenState != ClickToPayHooks.NONE ? <Space /> : React.null}
-          </>
+        ? switch clickToPayUI {
+          | Some(ui) =>
+            <>
+              <ClickToPayHandler
+                sessionTokenData
+                onStateChange=onClickToPayStateChange
+                selectedToken
+                setSelectedToken
+                clickToPayUI=ui
+              />
+              {clickToPayState.screenState != ClickToPayHooks.NONE ? <Space /> : React.null}
+            </>
+          | None => React.null
+          }
         : React.null}
       {customerPaymentMethods->Array.length > 0
         ? <>

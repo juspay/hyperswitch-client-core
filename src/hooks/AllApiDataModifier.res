@@ -13,14 +13,14 @@ type walletProp = {
   sessionObject: SessionsType.sessions,
 }
 
-let useAccountPaymentMethodModifier = () => {
+let useAccountPaymentMethodModifier = (~isClickToPayNewUser) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
-  React.useMemo3(() => {
+  React.useMemo4(() => {
     let (initialTabArr, initialElementArr) = if nativeProp.configuration.displayMergedSavedMethods {
       customerPaymentMethodData
       ->Option.map(customerPaymentMethods => {
@@ -45,6 +45,7 @@ let useAccountPaymentMethodModifier = () => {
                         ->Option.map(data => data.merchant_name)
                         ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                         animated=false
+                        clickToPayUI=None
                       />,
                   },
                 ]
@@ -131,19 +132,24 @@ let useAccountPaymentMethodModifier = () => {
                     paymentMethodData
                     sessionObject
                     methodType=ELEMENT
+                    isClickToPayNewUser
                   />,
                 )
               : tabArr->Array.push({
                   name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
                   componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                    <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                    <PaymentMethod
+                      isScreenFocus paymentMethodData setConfirmButtonData isClickToPayNewUser
+                    />,
                 })
 
           | TabSheet | WidgetTabSheet =>
             tabArr->Array.push({
               name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
               componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                <PaymentMethod
+                  isScreenFocus paymentMethodData setConfirmButtonData isClickToPayNewUser
+                />,
             })
           | ButtonSheet | WidgetButtonSheet =>
             elementArr->Array.push(
@@ -152,6 +158,7 @@ let useAccountPaymentMethodModifier = () => {
                 paymentMethodData
                 sessionObject
                 methodType=ELEMENT
+                isClickToPayNewUser
               />,
             )
           | _ => ()
@@ -196,7 +203,7 @@ let useAccountPaymentMethodModifier = () => {
       | _ => ([], [])
       }
     }
-  }, (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData))
+  }, (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, isClickToPayNewUser))
 }
 
 let useAddWebPaymentButton = () => {

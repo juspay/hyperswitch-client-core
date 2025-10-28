@@ -10,7 +10,9 @@ let make = () => {
     setConfirmButtonData(_ => confirmButtonData)
   }, [setConfirmButtonData])
 
-  let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
+  let (tabArr, elementArr) = AllApiDataModifier.useAccountPaymentMethodModifier(
+    ~isClickToPayNewUser=false,
+  )
 
   <View style={s({maxWidth: 450.->dp, alignSelf: #center, width: 100.->pct})}>
     <Space height=20. />

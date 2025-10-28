@@ -48,6 +48,7 @@ type clickToPayUIState = {
   submitOtp: unit => promise<unit>,
   resendOtp: unit => promise<unit>,
   switchIdentity: string => promise<unit>,
+  isNewUser: bool,
 }
 
 let useOTPManagement = (
@@ -268,7 +269,11 @@ let useIdentityManagement = (
   }
 }
 
-let useClickToPayUI = () => {
+let useClickToPayUI = (
+  sessionTokenData: option<array<SessionsType.sessions>>,
+  ~setIsSavedPaymentScreen,
+  ~setIsClickToPayNewCardFlow,
+) => {
   let clickToPay = ClickToPay.useClickToPay()
 
   let (screenState, setScreenState) = React.useState(() => NONE)
@@ -277,8 +282,118 @@ let useClickToPayUI = () => {
 
   let (userIdentity, setUserIdentity) = React.useState(() => None)
   let (maskedChannel, setMaskedChannel) = React.useState(() => None)
+  let (isNewUser, setIsNewUser) = React.useState(() => false)
 
   let otpManagement = useOTPManagement(~clickToPay, ~userIdentity, ~setScreenState)
+
+  let (isClickToPayInitialized, setIsClickToPayInitialized) = React.useState(_ => false)
+
+  let clickToPaySessionObject = React.useMemo1(() => {
+    switch sessionTokenData {
+    | Some(sessionData) => sessionData->Array.find(item => item.wallet_name == CLICK_TO_PAY)
+    | _ => None
+    }
+  }, [sessionTokenData])
+
+  React.useEffect2(() => {
+    switch clickToPaySessionObject {
+    | Some(sessionObject) =>
+      if !isClickToPayInitialized {
+        let cardBrands =
+          sessionObject.card_brands
+          ->Array.map(brand => brand->JSON.Decode.string->Option.getOr(""))
+          ->Array.filter(brand => brand != "")
+          ->Array.join(",")
+
+        let provider = switch clickToPaySessionObject {
+        | Some(session) =>
+          switch session.provider {
+          | Some("mastercard") => #mastercard
+          | Some("visa") => #visa
+          | _ => #visa
+          }
+        | None => #visa
+        }
+
+        let clickToPayConfig: ClickToPay.Types.clickToPayConfig = {
+          dpaId: sessionObject.dpa_id->Option.getOr(""),
+          environment: #sandbox,
+          provider,
+          locale: ?sessionObject.locale,
+          cardBrands: cardBrands != "" ? cardBrands : "visa,mastercard",
+          clientId: ?sessionObject.dpa_name,
+          transactionAmount: ?sessionObject.transaction_amount,
+          transactionCurrency: ?sessionObject.transaction_currency_code,
+        }
+
+        if clickToPay.config->Nullable.isNullable {
+          setScreenState(_ => LOADING)
+
+          clickToPay.initialize(clickToPayConfig)
+          ->Promise.then(() => {
+            setIsClickToPayInitialized(_ => true)
+            Promise.resolve()
+          })
+          ->Promise.catch(_ => {
+            setScreenState(_ => NONE)
+            Promise.resolve()
+          })
+          ->ignore
+        }
+      }
+    | None => ()
+    }
+
+    None
+  }, (clickToPaySessionObject, isClickToPayInitialized))
+
+  React.useEffect2(() => {
+    switch clickToPaySessionObject {
+    | Some(sessionObject) =>
+      if isClickToPayInitialized && !(clickToPay.config->Nullable.isNullable) {
+        let emailValue = sessionObject.email->Option.getOr("")
+
+        if emailValue != "" {
+          let userIdentity: ClickToPay.Types.userIdentity = {
+            value: emailValue,
+            type_: "EMAIL_ADDRESS",
+          }
+
+          setUserIdentity(_ => Some(userIdentity))
+
+          clickToPay.validate(userIdentity)
+          ->Promise.then(result => {
+            switch (result.requiresOTP, result.requiresNewCard, result.cards) {
+            | (Some(true), _, _) => {
+                setMaskedChannel(_ => result.maskedValidationChannel)
+                setScreenState(_ => OTP_INPUT)
+              }
+            | (_, Some(true), _) => {
+                setScreenState(_ => NONE)
+                setIsNewUser(_ => true)
+                setIsSavedPaymentScreen(false)
+                setIsClickToPayNewCardFlow(true)
+              }
+            | (_, _, Some(cards)) if cards->Array.length > 0 => setScreenState(_ => CARDS_DISPLAY)
+            | _ => setScreenState(_ => NONE)
+            }
+
+            Promise.resolve()
+          })
+          ->Promise.catch(_ => {
+            setScreenState(_ => NONE)
+            Promise.resolve()
+          })
+          ->ignore
+        } else {
+          setScreenState(_ => NONE)
+        }
+      }
+    | None => ()
+    }
+
+    None
+  }, (clickToPaySessionObject, isClickToPayInitialized))
 
   let handleCheckout = React.useCallback3(
     async (selectedToken: option<CustomerPaymentMethodType.customer_payment_method_type>) => {
@@ -368,5 +483,6 @@ let useClickToPayUI = () => {
     submitOtp: otpManagement.submitOtp,
     resendOtp: otpManagement.resendOtp,
     switchIdentity: identityManagement.switchIdentity,
+    isNewUser,
   }
 }

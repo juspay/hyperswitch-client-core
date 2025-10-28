@@ -60,6 +60,8 @@ module Types = {
     currency: string,
     orderId: string,
     rememberMe?: bool,
+    mobileNumber?: string,
+    mobileCountryCode?: string,
   }
 
   type clickToPayHook = {

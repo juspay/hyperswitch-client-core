@@ -4,12 +4,17 @@ let make = (
   ~isScreenFocus,
   ~processRequest,
   ~setConfirmButtonData,
+  ~isClickToPayNewUser,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let {getRequiredFieldsForTabs, country, isNicknameValid} = React.useContext(
-    DynamicFieldsContext.dynamicFieldsContext,
-  )
+  let {
+    getRequiredFieldsForTabs,
+    country,
+    isNicknameValid,
+    saveClickToPay,
+    clickToPayRememberMe,
+  } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (_, _, sessionTokenData) = React.useContext(AllApiDataContextNew.allApiDataContext)
 
@@ -53,10 +58,9 @@ let make = (
 
   let handlePress = async _ => {
     if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      let shouldEncryptWithClickToPay =
-        clickToPaySession !== None && paymentMethodData.payment_method === CARD
-
-      if shouldEncryptWithClickToPay {
+      let isClickToPay =
+        clickToPaySession !== None && paymentMethodData.payment_method === CARD && saveClickToPay
+      if isClickToPay {
         try {
           let paymentMethodData =
             formData->Dict.get("payment_method_data")->Option.flatMap(JSON.Decode.object)
@@ -108,7 +112,9 @@ let make = (
             amount: "100.00", // TODO: Get from payment intent
             currency: "USD", // TODO: Get from payment intent
             orderId: "order-" ++ Js.Date.now()->Float.toString,
-            rememberMe: ?Some(true),
+            rememberMe: clickToPayRememberMe,
+            mobileNumber: "9438082823", // TODO: Get from user input
+            mobileCountryCode: "91", // TODO: Get from user input
           }
 
           Console.log2("cardData: ", cardData)
@@ -219,5 +225,6 @@ let make = (
     isCardPayment
     enabledCardSchemes
     accessible
+    renderClickToPay={clickToPaySession->Option.isSome && isClickToPayNewUser}
   />
 }
