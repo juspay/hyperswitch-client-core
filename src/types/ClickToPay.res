@@ -4,6 +4,11 @@ module Types = {
   type brand = [#visa | #mastercard]
   type actionCode = [#SUCCESS | #PENDING_CONSUMER_IDV | #FAILED | #ERROR | #ADD_CARD | #CHANGE_CARD]
 
+  type phoneValue = {
+    phoneCode: string,
+    phoneNumber: string,
+  }
+
   type clickToPayConfig = {
     dpaId: string,
     environment: environment,

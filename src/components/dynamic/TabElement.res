@@ -14,6 +14,11 @@ let make = (
     isNicknameValid,
     saveClickToPay,
     clickToPayRememberMe,
+    clickToPayCardholderName,
+    clickToPayPhoneNumber,
+    isClickToPayCardholderNameValid,
+    isClickToPayPhoneNumberValid,
+    setShowClickToPayErrors,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (_, _, sessionTokenData) = React.useContext(AllApiDataContextNew.allApiDataContext)
@@ -57,9 +62,23 @@ let make = (
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
   let handlePress = async _ => {
-    if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      let isClickToPay =
-        clickToPaySession !== None && paymentMethodData.payment_method === CARD && saveClickToPay
+    let isClickToPayActive =
+      clickToPaySession !== None &&
+      paymentMethodData.payment_method === CARD &&
+      (saveClickToPay || !isClickToPayNewUser)
+
+    let areClickToPayFieldsValid =
+      !isClickToPayActive || (isClickToPayCardholderNameValid && isClickToPayPhoneNumberValid)
+
+    if (
+      isNicknameValid &&
+      (isFormValid || requiredFields->Array.length === 0) &&
+      areClickToPayFieldsValid
+    ) {
+      if isClickToPayActive {
+        setShowClickToPayErrors(false)
+      }
+      let isClickToPay = isClickToPayActive
       if isClickToPay {
         try {
           let paymentMethodData =
@@ -98,7 +117,23 @@ let make = (
             ->Option.flatMap(cd => cd->Dict.get("card_cvc")->Option.flatMap(JSON.Decode.string))
             ->Option.getOr("")
 
-          let cardHolderName = "test user" // TO DO: cardHolder name from pml and formdata
+          let cardHolderName = clickToPayCardholderName
+
+          let amount =
+            clickToPaySession
+            ->Option.flatMap(session => session.transaction_amount)
+            ->Option.getOr("")
+
+          let currency =
+            clickToPaySession
+            ->Option.flatMap(session => session.transaction_currency_code)
+            ->Option.getOr("")
+
+          let orderId =
+            String.split(nativeProp.clientSecret, "_secret_")
+            ->Array.get(0)
+            ->Option.getOr("")
+            ->String.replace("pay_", "")
 
           let cardData: ClickToPay.Types.cardData = {
             primaryAccountNumber,
@@ -109,15 +144,13 @@ let make = (
           }
           let checkoutParams: ClickToPay.Types.checkoutParams = {
             cardData: ?Some(cardData),
-            amount: "100.00", // TODO: Get from payment intent
-            currency: "USD", // TODO: Get from payment intent
-            orderId: "order-" ++ Js.Date.now()->Float.toString,
+            amount,
+            currency,
+            orderId,
             rememberMe: clickToPayRememberMe,
-            mobileNumber: "9438082823", // TODO: Get from user input
-            mobileCountryCode: "91", // TODO: Get from user input
+            mobileNumber: clickToPayPhoneNumber.phoneNumber,
+            mobileCountryCode: clickToPayPhoneNumber.phoneCode,
           }
-
-          Console.log2("cardData: ", cardData)
 
           let encryptedResult = await clickToPay.checkout(checkoutParams)
 
@@ -183,6 +216,9 @@ let make = (
         )
       }
     } else {
+      if isClickToPayActive && !areClickToPayFieldsValid {
+        setShowClickToPayErrors(true)
+      }
       switch formMethods {
       | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
       | None => ()
@@ -214,6 +250,10 @@ let make = (
     formMethods,
     isNicknameValid,
     clickToPaySession !== None,
+    isClickToPayCardholderNameValid,
+    isClickToPayPhoneNumberValid,
+    saveClickToPay,
+    isClickToPayNewUser,
   ))
 
   <DynamicFields
@@ -225,6 +265,7 @@ let make = (
     isCardPayment
     enabledCardSchemes
     accessible
-    renderClickToPay={clickToPaySession->Option.isSome && isClickToPayNewUser}
+    hasCTP={clickToPaySession->Option.isSome}
+    isNewCTPUser=isClickToPayNewUser
   />
 }
