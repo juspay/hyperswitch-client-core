@@ -29,3 +29,8 @@ paths = [
     "hyperswitch/hyperWrapper/Resources",
 ]
 regexes = ["hyperswitch.bundle"]
+
+[[allowlists]]
+description = "Ignore debug JWT files in iOS"
+commits = ["923500c696857c408e3650125438421432e7f52f"]
+regexes = ["/.*eyJhbGciOiJQUzI1NiIsIng1YyI6Wy.*/"]
