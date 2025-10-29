@@ -13,7 +13,9 @@ module ContextWrapper = {
             <LocaleStringDataContext locale=nativeProp.configuration.appearance.locale>
               <CountryStateDataContext>
                 <LoadingContext>
-                  <BannerContext> children </BannerContext>
+                  <BannerContext>
+                      <ClickToPayContext> children </ClickToPayContext>
+                    </BannerContext>
                 </LoadingContext>
               </CountryStateDataContext>
             </LocaleStringDataContext>

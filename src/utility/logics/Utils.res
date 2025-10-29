@@ -407,3 +407,21 @@ let rec pruneUnusedFieldsFromDict = (
 
   newDict
 }
+
+let getIconName = brand => {
+  switch brand {
+  | "AmericanExpress" => "americanexpress"
+  | "DinersClub" => "discoverc2p"
+  | "Visa" => "visac2p"
+  | "Mastercard" => "mastercardc2p"
+  | _ => ""
+  }
+}
+
+let supportedCardBrands = cardBrands =>
+  cardBrands->Array.filter(brand => {
+    switch brand {
+    | "AmericanExpress" | "DinersClub" | "Visa" | "Mastercard" => true
+    | _ => false
+    }
+  })

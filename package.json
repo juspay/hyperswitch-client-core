@@ -44,7 +44,8 @@
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",
     "react-native-inappbrowser-reborn": "^3.7.0",
-    "react-native-svg": "^15.6.0"
+    "react-native-svg": "^15.6.0",
+    "react-native-webview": "^13.16.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
