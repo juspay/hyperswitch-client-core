@@ -2815,6 +2815,36 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:0.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 999db0bd8e7b96ca850062c25ae7c734d43cc9c3348f3daeffde9ef3125e22d4dfa8c4ad9d9ca8f08406b24b60bb1e16cc5b4b24e1900272923b3717570a1cdc
+  languageName: node
+  linkType: hard
+
+"@juspay-tech/react-native-hyperswitch-samsung-pay@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@juspay-tech/react-native-hyperswitch-samsung-pay@npm:0.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 9db05e1fc02ec35ffbc561e07b06af9f6f851dbe9616b1440a4f2e3a42781bcb9a6fa5f67210f3bc87483ead290c31bef63cbd402e9348a643e08032050a0200
+  languageName: node
+  linkType: hard
+
+"@juspay-tech/react-native-hyperswitch-scancard@npm:^0.1.0":
+  version: 0.1.0
+  resolution: "@juspay-tech/react-native-hyperswitch-scancard@npm:0.1.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: be8d73d28148183e6f4d2e3bce91c2cd18118c8baa7b015d06cf1c5faf910a83033e6305dd110a012f5f3cf2c1c535397240d100f303fc8e94413dcbca70e7e6
+  languageName: node
+  linkType: hard
+
 "@leichtgewicht/ip-codec@npm:^2.0.1":
   version: 2.0.5
   resolution: "@leichtgewicht/ip-codec@npm:2.0.5"
@@ -11833,6 +11863,9 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@commitlint/cli": ^17.0.3
     "@commitlint/config-conventional": ^17.0.3
+    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.1.0
+    "@juspay-tech/react-native-hyperswitch-samsung-pay": ^0.1.0
+    "@juspay-tech/react-native-hyperswitch-scancard": ^0.1.0
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
     "@react-native-community/cli": 18.0.0
     "@react-native-community/cli-platform-android": 18.0.0
@@ -11885,9 +11918,6 @@ __metadata:
     react-native: ^0.79.1
     react-native-bundle-visualizer: ^3.1.3
     react-native-dotenv: ^3.4.11
-    react-native-hyperswitch-netcetera-3ds: ^0.1.3
-    react-native-hyperswitch-samsung-pay: 0.1.5
-    react-native-hyperswitch-scancard: ^0.3.2
     react-native-inappbrowser-reborn: ^3.7.0
     react-native-svg: ^15.6.0
     react-native-web: ^0.20.0
@@ -16716,36 +16746,6 @@ __metadata:
   peerDependencies:
     "@babel/runtime": ^7.20.6
   checksum: 3ebac2c2ed79dd7e4920fd3fc2da9187413b7190231618e4858b46c47833677838b96d531afe7bd5c4b0a60454dba40cb8708722210df5d522e30aefbf41da05
-  languageName: node
-  linkType: hard
-
-"react-native-hyperswitch-netcetera-3ds@npm:^0.1.3":
-  version: 0.1.3
-  resolution: "react-native-hyperswitch-netcetera-3ds@npm:0.1.3"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: 69350fd05a9fb5d80a746800642ec72f0549240d31e81906fee44bd57c7bfa79a0f4ad64cf4ad79c0e7b23ced070a55b200597fb5a8c4763a0692a3049135cbd
-  languageName: node
-  linkType: hard
-
-"react-native-hyperswitch-samsung-pay@npm:0.1.5":
-  version: 0.1.5
-  resolution: "react-native-hyperswitch-samsung-pay@npm:0.1.5"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: d869ddb5a59b972198aa18acc53a0348d81b6fa1c4f7497b0a9791c4f2bfba831e5dd9baeda2da502e2399ff7087f242324e400040e63a3b5a777c64162f290c
-  languageName: node
-  linkType: hard
-
-"react-native-hyperswitch-scancard@npm:^0.3.2":
-  version: 0.3.2
-  resolution: "react-native-hyperswitch-scancard@npm:0.3.2"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-  checksum: f27857b494bccddac2cc7ccdc2b5b49e51910751e991ffc8ea66638f3ca93befc09123df5407c31f47397a255a5762c46ea72be642f2c55304247c2513f48337
   languageName: node
   linkType: hard
 
