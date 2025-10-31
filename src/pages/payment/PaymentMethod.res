@@ -7,6 +7,7 @@ let make = (
   ~setConfirmButtonData=_ => (),
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
   ~methodType=TAB,
+  ~isClickToPayNewUser=false,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
@@ -16,7 +17,49 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let {nickname, isNicknameSelected} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {nickname, isNicknameSelected, setClickToPayCardholderName} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
+
+  let defaultCardholderName = React.useMemo(() => {
+    accountPaymentMethodData
+    ->Option.flatMap(data => {
+      data.payment_methods->Array.find(pm => pm.payment_method === PaymentMethodType.CARD)
+    })
+    ->Option.flatMap(cardPaymentMethod => {
+      let firstName =
+        cardPaymentMethod.required_fields
+        ->Dict.get("billing.address.first_name")
+        ->Option.flatMap(json => json->JSON.Decode.object)
+        ->Option.flatMap(obj => obj->Dict.get("value"))
+        ->Option.flatMap(JSON.Decode.string)
+        ->Option.getOr("")
+
+      let lastName =
+        cardPaymentMethod.required_fields
+        ->Dict.get("billing.address.last_name")
+        ->Option.flatMap(json => json->JSON.Decode.object)
+        ->Option.flatMap(obj => obj->Dict.get("value"))
+        ->Option.flatMap(JSON.Decode.string)
+        ->Option.getOr("")
+
+      if firstName != "" && lastName != "" {
+        Some(`${firstName} ${lastName}`)
+      } else if firstName != "" {
+        Some(firstName)
+      } else {
+        None
+      }
+    })
+    ->Option.getOr("")
+  }, [accountPaymentMethodData])
+
+  React.useEffect(() => {
+    if defaultCardholderName != "" {
+      setClickToPayCardholderName(defaultCardholderName)
+    }
+    None
+  }, [defaultCardholderName])
 
   let processRequest = (
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
@@ -144,7 +187,10 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     {switch methodType {
     | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
-    | TAB => <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonData />
+    | TAB =>
+      <TabElement
+        paymentMethodData processRequest isScreenFocus setConfirmButtonData isClickToPayNewUser
+      />
     | _ => React.null
     }}
   </ErrorBoundary>
