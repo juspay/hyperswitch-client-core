@@ -128,6 +128,7 @@ let useAccountPaymentMethodModifier = (~isClickToPayNewUser) => {
                 | Some(_) => Some()
                 | None => None
                 }
+          | CLICK_TO_PAY
           | NONE =>
             switch paymentMethodData.payment_method {
             | GIFT_CARD =>

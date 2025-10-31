@@ -80,14 +80,77 @@ module Types = {
   }
 }
 
+let clickToPayPackage = %raw(`
+  (() => {
+    try {
+      return require("@juspay-tech/react-native-hyperswitch-click-to-pay");
+    } catch (e) {
+      return null;
+    }
+  })()
+`)
+
 module Provider = {
-  @react.component @module("react-native-hyperswitch-click-to-pay")
-  external make: (
-    ~children: React.element,
-    ~onCookiesExtracted: option<string => unit>=?,
-    ~initialCookies: option<string>=?,
-  ) => React.element = "ClickToPayProvider"
+  @react.component
+  let make = (~children, ~onCookiesExtracted=?, ~initialCookies=?) => {
+    let renderProvider: (
+      React.element,
+      option<string => unit>,
+      option<string>,
+    ) => React.element = %raw(`
+      (children, onCookiesExtracted, initialCookies) => {
+        const pkg = clickToPayPackage;
+        if (pkg && pkg.ClickToPayProvider) {
+          const React = require('react');
+          return React.createElement(
+            pkg.ClickToPayProvider,
+            {
+              children: children,
+              onCookiesExtracted: onCookiesExtracted,
+              initialCookies: initialCookies,
+            }
+          );
+        }
+        return children;
+      }
+    `)
+    renderProvider(children, onCookiesExtracted, initialCookies)
+  }
 }
 
-@module("react-native-hyperswitch-click-to-pay")
-external useClickToPay: unit => Types.clickToPayHook = "useClickToPay"
+let isClickToPayAvailable = %raw(`
+  (() => {
+    const pkg = clickToPayPackage;
+    if (pkg) {
+      return true;
+    }
+    return false;
+  })()
+`)
+
+let useClickToPay = (): Types.clickToPayHook => {
+  %raw(`
+    (() => {
+      const pkg = clickToPayPackage;
+      if (pkg && pkg.useClickToPay) {
+        return pkg.useClickToPay();
+      }
+      // Return a default/no-op implementation
+      return {
+        isLoading: false,
+        cards: [],
+        config: null,
+        initialize: (_config) => Promise.resolve(),
+        validate: (_identity) => Promise.resolve({
+          actionCode: undefined,
+          cards: undefined,
+          requiresOTP: undefined,
+          requiresNewCard: undefined,
+          maskedValidationChannel: undefined,
+        }),
+        authenticate: (_otp) => Promise.resolve([]),
+        checkout: (_params) => Promise.resolve(null),
+      };
+    })()
+  `)
+}
