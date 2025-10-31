@@ -3,12 +3,10 @@ module Types = {
   type provider = [#visa | #mastercard]
   type brand = [#visa | #mastercard]
   type actionCode = [#SUCCESS | #PENDING_CONSUMER_IDV | #FAILED | #ERROR | #ADD_CARD | #CHANGE_CARD]
-
   type phoneValue = {
     phoneCode: string,
     phoneNumber: string,
   }
-
   type clickToPayConfig = {
     dpaId: string,
     environment: environment,
@@ -22,9 +20,7 @@ module Types = {
     debug?: bool,
     recognitionToken?: string,
   }
-
   type digitalCardData = {descriptorName: option<string>}
-
   type clickToPayCard = {
     id: string,
     maskedPan: string,
@@ -35,12 +31,10 @@ module Types = {
     paymentCardDescriptor: string,
     digitalCardData: digitalCardData,
   }
-
   type userIdentity = {
     value: string,
     @as("type") type_: string,
   }
-
   type validateResult = {
     actionCode?: actionCode,
     cards?: array<clickToPayCard>,
@@ -48,7 +42,6 @@ module Types = {
     requiresNewCard?: bool,
     maskedValidationChannel?: string,
   }
-
   type cardData = {
     primaryAccountNumber: string,
     panExpirationMonth: string,
@@ -56,7 +49,6 @@ module Types = {
     cardSecurityCode: string,
     cardHolderName?: string,
   }
-
   type checkoutParams = {
     srcDigitalCardId?: string,
     encryptedCard?: string,
@@ -68,7 +60,6 @@ module Types = {
     mobileNumber?: string,
     mobileCountryCode?: string,
   }
-
   type clickToPayHook = {
     isLoading: bool,
     cards: array<clickToPayCard>,
@@ -79,15 +70,70 @@ module Types = {
     checkout: checkoutParams => Promise.t<JSON.t>,
   }
 }
-
+let clickToPayPackage = () =>
+  %raw(`
+  (() => {
+    try {
+      return require("react-native-hyperswitch-click-to-pay");
+    } catch (e) {
+      return null;
+    }
+  })()
+`)
 module Provider = {
-  @react.component @module("react-native-hyperswitch-click-to-pay")
-  external make: (
-    ~children: React.element,
-    ~onCookiesExtracted: option<string => unit>=?,
-    ~initialCookies: option<string>=?,
-  ) => React.element = "ClickToPayProvider"
+  @react.component
+  let make = (~children, ~onCookiesExtracted=?, ~initialCookies=?) => {
+    let renderProvider: (
+      React.element,
+      option<string => unit>,
+      option<string>,
+    ) => React.element = %raw(`
+      (children, onCookiesExtracted, initialCookies) => {
+        const pkg = clickToPayPackage();
+        if (pkg && pkg.ClickToPayProvider) {
+          const React = require('react');
+          return React.createElement(
+            pkg.ClickToPayProvider,
+            {
+              children: children,
+              onCookiesExtracted: onCookiesExtracted,
+              initialCookies: initialCookies,
+            }
+          );
+        }
+        return children;
+      }
+    `)
+    renderProvider(children, onCookiesExtracted, initialCookies)
+  }
 }
-
-@module("react-native-hyperswitch-click-to-pay")
-external useClickToPay: unit => Types.clickToPayHook = "useClickToPay"
+let isClickToPayAvailable = () => {
+  Console.log2("ClickToPay Package: ", clickToPayPackage())
+  %raw(`(clickToPayPackage()) ? true : false`)
+}
+let useClickToPay = (): Types.clickToPayHook => {
+  %raw(`
+    (() => {
+      const pkg = clickToPayPackage();
+      if (pkg && pkg.useClickToPay) {
+        return pkg.useClickToPay();
+      }
+      // Return a default/no-op implementation
+      return {
+        isLoading: false,
+        cards: [],
+        config: null,
+        initialize: (_config) => Promise.resolve(),
+        validate: (_identity) => Promise.resolve({
+          actionCode: undefined,
+          cards: undefined,
+          requiresOTP: undefined,
+          requiresNewCard: undefined,
+          maskedValidationChannel: undefined,
+        }),
+        authenticate: (_otp) => Promise.resolve([]),
+        checkout: (_params) => Promise.resolve(null),
+      };
+    })()
+  `)
+}
