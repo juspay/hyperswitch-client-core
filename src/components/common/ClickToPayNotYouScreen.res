@@ -70,9 +70,19 @@ let make = (
       onPress={_ => {
         onSwitch(newIdentifier)
       }}
-      disabled={emailValidationState != Some(true) || disabled}
+      disabled={switch emailValidationState {
+      | Some(true) => false
+      | _ => true
+      } ||
+      disabled}
       style={s({
-        backgroundColor: emailValidationState == Some(true) && !disabled ? "#007AFF" : "#CCC",
+        backgroundColor: switch emailValidationState {
+        | Some(true) => false
+        | _ => true
+        } &&
+        !disabled
+          ? "#007AFF"
+          : "#CCC",
         padding: 14.->dp,
         borderRadius,
         alignItems: #center,

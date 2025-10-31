@@ -74,7 +74,7 @@ let clickToPayPackage = () =>
   %raw(`
   (() => {
     try {
-      return require("react-native-hyperswitch-click-to-pay");
+      return require("@juspay-tech/react-native-hyperswitch-click-to-pay");
     } catch (e) {
       return null;
     }
