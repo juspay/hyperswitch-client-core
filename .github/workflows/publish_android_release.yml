@@ -85,10 +85,11 @@ jobs:
             notifications
             jdks
 
-      - name: Remove demo-app from settings.gradle
+      - name: Remove demo-app and demo-app-lite from settings.gradle
         working-directory: ./android
         run: |
-          sed -i "s/include ':app', ':demo-app', ':hyperswitch-sdk-android-lite'/include ':app', ':hyperswitch-sdk-android-lite'/" settings.gradle
+          sed -i "s/, ':demo-app'//g" settings.gradle
+          sed -i "s/, ':demo-app-lite'//g" settings.gradle
 
       - name: Replace the ota endpoint
         working-directory: ./android
