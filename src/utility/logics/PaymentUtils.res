@@ -149,3 +149,122 @@ let getCardNetworks = cardNetworks => {
   | None => []
   }
 }
+
+let generateClickToPayConfirmBody = (
+  ~nativeProp: SdkTypes.nativeProp,
+  ~checkoutResult: JSON.t,
+  ~provider: string,
+  ~email: string,
+): string => {
+  open Utils
+
+  let dict = checkoutResult->getDictFromJson
+
+  let ctpServiceDetails = switch provider->String.toLowerCase {
+  | "mastercard" => {
+      let headers = dict->getJsonObjectFromDict("headers")->getDictFromJson
+      let merchantTransactionId = headers->getString("merchant-transaction-id", "")
+      let xSrcFlowId = headers->getString("x-src-cx-flow-id", "")
+      let checkoutResponseData =
+        dict->getJsonObjectFromDict("checkoutResponseData")->getDictFromJson
+      let correlationId = checkoutResponseData->getString("srcCorrelationId", "")
+
+      [
+        ("merchant_transaction_id", merchantTransactionId->JSON.Encode.string),
+        ("correlation_id", correlationId->JSON.Encode.string),
+        ("x_src_flow_id", xSrcFlowId->JSON.Encode.string),
+        ("provider", "mastercard"->JSON.Encode.string),
+      ]->Dict.fromArray
+    }
+  | "visa" => {
+      let encryptedPayload = dict->getString("checkoutResponse", "")
+
+      [
+        ("encrypted_payload", encryptedPayload->JSON.Encode.string),
+        ("provider", "visa"->JSON.Encode.string),
+      ]->Dict.fromArray
+    }
+  | _ => Dict.make()
+  }
+  let paymentMethod = dict->getString("payment_method", "card")
+  let paymentMethodType = dict->getString("payment_method_type", "debit")
+  let confirmBody = [
+    ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+    ("payment_method", paymentMethod->JSON.Encode.string),
+    ("payment_method_type", paymentMethodType->JSON.Encode.string),
+    ("ctp_service_details", ctpServiceDetails->JSON.Encode.object),
+  ]
+  let confirmBodyWithEmail = if provider->String.toLowerCase === "visa" {
+    Array.concat(confirmBody, [("email", email->JSON.Encode.string)])
+  } else {
+    confirmBody
+  }
+
+  confirmBodyWithEmail->Dict.fromArray->JSON.Encode.object->JSON.stringify
+}
+
+let convertClickToPayCardToCustomerMethod = (
+  clickToPayCard: ClickToPay.Types.clickToPayCard,
+  clickToPayProvider: ClickToPay.Types.provider,
+): CustomerPaymentMethodType.customer_payment_method_type => {
+  let cardScheme = switch clickToPayProvider {
+  | #visa =>
+    clickToPayCard.paymentCardDescriptor->String.toLowerCase === "mastercard"
+      ? "Mastercard"
+      : "Visa"
+  | #mastercard =>
+    switch clickToPayCard.paymentCardDescriptor->String.toLowerCase {
+    | "amex" => "AmericanExpress"
+    | "mastercard" => "Mastercard"
+    | "visa" => "Visa"
+    | "discover" => "Discover"
+    | other =>
+      other
+      ->String.charAt(0)
+      ->String.toUpperCase
+      ->String.concat(other->String.sliceToEnd(~start=1)->String.toLowerCase)
+    }
+  }
+
+  let cardData: CustomerPaymentMethodType.savedCardType = {
+    scheme: cardScheme,
+    issuer_country: "",
+    last4_digits: clickToPayCard.maskedPan,
+    expiry_month: clickToPayCard.expiryMonth->Option.getOr(""),
+    expiry_year: clickToPayCard.expiryYear->Option.getOr(""),
+    card_token: Some(clickToPayCard.digitalCardId),
+    card_holder_name: "",
+    card_fingerprint: None,
+    nick_name: clickToPayCard.digitalCardData.descriptorName,
+    card_network: cardScheme,
+    card_isin: "",
+    card_issuer: "",
+    card_type: "",
+    saved_to_locker: false,
+  }
+
+  {
+    payment_token: clickToPayCard.digitalCardId,
+    payment_method_id: clickToPayCard.digitalCardId,
+    customer_id: "",
+    payment_method: PaymentMethodType.CARD,
+    payment_method_str: "card",
+    payment_method_type: "click_to_pay",
+    payment_method_type_wallet: SdkTypes.CLICK_TO_PAY,
+    payment_method_issuer: "",
+    payment_method_issuer_code: None,
+    recurring_enabled: true,
+    installment_payment_enabled: false,
+    payment_experience: [],
+    card: Some(cardData),
+    metadata: None,
+    created: Js.Date.make()->Js.Date.toISOString,
+    bank: None,
+    surcharge_details: None,
+    requires_cvv: false,
+    last_used_at: Js.Date.make()->Js.Date.toISOString,
+    default_payment_method_set: false,
+    billing: None,
+    mandate_id: "",
+  }
+}
