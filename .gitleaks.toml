@@ -3,17 +3,72 @@ title = "Gitleaks configuration"
 [extend]
 useDefault = true
 
+#######################################################
+# Custom Rules for Payment API Keys and Secrets
+#######################################################
+
+[[rules]]
+id = "juspay-api-key"
+description = "Juspay API key (publishable or secret) detected"
+regex = '''(?i)(secret_key|publishable_key)\s*=\s*["']?[A-Za-z0-9_\-]{16,}["']?'''
+tags = ["juspay", "api", "key"]
+
+[[rules]]
+id = "netcetera-certificate"
+description = "Netcetera certificate detected"
+regex = '''(?i)(nca_root_certificate|netcetera_cert|netcetera_private_key).*'''
+tags = ["certificate", "netcetera", "security"]
+
+[[rules]]
+id = "aws-secret-access-key"
+description = "AWS Secret Access Key detected"
+regex = '''(?i)aws(.{0,20})?(secret|access)?(.{0,20})?['|"]([0-9a-zA-Z/+]{40})['|"]'''
+tags = ["aws", "key"]
+
+[[rules]]
+id = "razorpay-api-key"
+description = "Razorpay API Key detected"
+regex = '''rzp_(test|live)_[0-9a-zA-Z]{24}'''
+tags = ["razorpay", "api", "key"]
+
+[[rules]]
+id = "google-api-key"
+description = "Google API Key detected"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+tags = ["google", "api", "key"]
+
+[[rules]]
+id = "twilio-api-key"
+description = "Twilio API Key detected"
+regex = '''SK[0-9a-fA-F]{32}'''
+tags = ["twilio", "api", "key"]
+
+[[rules]]
+id = "generic-bearer-token"
+description = "Generic Bearer Token detected"
+regex = '''Bearer\s+[A-Za-z0-9\-._~+/]+=*'''
+tags = ["token", "bearer", "auth"]
+
+[[rules]]
+id = "github-personal-access-token"
+description = "GitHub Personal Access Token detected"
+regex = '''ghp_[0-9a-zA-Z]{36}'''
+tags = ["github", "token"]
+
+#######################################################
+# Allow Lists (Pre-existing)
+#######################################################
+
 [[allowlists]]
 description = "Ignore all .env files"
 paths = ['''\.env''']
-#regexes = ["publishableKey","clientSecret"]
 
 [[allowlists]]
 description = "Ignore .p12 files in ThreeDS SDK xcframework"
 paths = [
-    "ios/frameworkgen/3ds/Frameworks/ThreeDS_SDK.xcframework",
-    "ios/build/Build/Products/Debug-iphonesimulator/hyperswitch.app/Frameworks/ThreeDS_SDK.framework",
-    "ios/build/Build/Products/Debug-iphonesimulator/XCFrameworkIntermediates/react-native-hyperswitch-netcetera-3ds/ThreeDS_SDK.framework"
+  "ios/frameworkgen/3ds/Frameworks/ThreeDS_SDK.xcframework",
+  "ios/build/Build/Products/Debug-iphonesimulator/hyperswitch.app/Frameworks/ThreeDS_SDK.framework",
+  "ios/build/Build/Products/Debug-iphonesimulator/XCFrameworkIntermediates/react-native-hyperswitch-netcetera-3ds/ThreeDS_SDK.framework"
 ]
 regexes = ["(^|/).*\\.p12$"]
 
@@ -25,8 +80,8 @@ regexes = ["/.*DAUQKXLDPDx6NYRkqrgFLRc3qDrayg6rrCb.*/", "/.*_e.minKey=_e.mergeU=
 [[allowlists]]
 description = "Ignore .bundle files in iOS"
 paths = [
-    "hyperswitchSDK/Core/Resources",
-    "hyperswitch/hyperWrapper/Resources",
+  "hyperswitchSDK/Core/Resources",
+  "hyperswitch/hyperWrapper/Resources"
 ]
 regexes = ["hyperswitch.bundle"]
 
