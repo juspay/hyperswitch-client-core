@@ -184,8 +184,8 @@ let make = (
 }
 
 let shouldShowClickToPay = (sessionTokenData: option<array<SessionsType.sessions>>) => {
-  switch sessionTokenData {
-  | Some(sessionData) => sessionData->Array.some(item => item.wallet_name == CLICK_TO_PAY)
+  switch (sessionTokenData, ClickToPay.isClickToPayAvailable()) {
+  | (Some(sessionData), true) => sessionData->Array.some(item => item.wallet_name == CLICK_TO_PAY)
   | _ => false
   }
 }

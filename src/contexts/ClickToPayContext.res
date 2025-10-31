@@ -7,7 +7,7 @@ let make = (~children) => {
   }, [setClickToPayCookies])
 
   <ClickToPay.Provider
-    onCookiesExtracted=Some(handleCookiesExtracted) initialCookies=clickToPayCookies>
+    onCookiesExtracted=(handleCookiesExtracted) initialCookies={clickToPayCookies->Option.getOr("")}>
     children
   </ClickToPay.Provider>
 }
