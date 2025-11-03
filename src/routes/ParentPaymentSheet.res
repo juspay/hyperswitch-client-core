@@ -74,7 +74,7 @@ let make = () => {
                   giftCardArr
                 />}
             <Space height=5. />
-            {showSavedScreen || true
+            {showSavedScreen
               ? <>
                   <Space />
                   <ClickableTextElement
