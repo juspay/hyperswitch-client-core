@@ -16,18 +16,18 @@ const colors = {
 };
 
 const logger = {
-  info: (message) => {
+  info: message => {
     console.info(`${colors.bold}${colors.cyan}info${colors.reset} ${message}`);
   },
   error: (message, error = null) => {
     console.error(
       `${colors.bold}${colors.red}error${colors.reset} ${colors.red}${message}${colors.reset}`,
-      error ? `\n${colors.reset}${JSON.stringify(error, null, 2)}` : ''
+      error ? `\n${colors.reset}${JSON.stringify(error, null, 2)}` : '',
     );
   },
-  warn: (message) => {
+  warn: message => {
     console.warn(
-      `${colors.bold}${colors.yellow}warn${colors.reset} ${message}`
+      `${colors.bold}${colors.yellow}warn${colors.reset} ${message}`,
     );
   },
   debug: (message, data = null) => {
@@ -36,7 +36,7 @@ const logger = {
         `${colors.bold}${colors.green}debug ${colors.reset}${message}`,
         data
           ? `\n${colors.dim}${JSON.stringify(data, null, 2)}${colors.reset}`
-          : ''
+          : '',
       );
     }
   },
@@ -74,11 +74,11 @@ const makeHyperswitchRequest = async (endpoint, options = {}) => {
 
   if (!response.ok) {
     const error = new Error(`HTTP ${response.status}`);
-    error.response = { status: response.status, data };
+    error.response = {status: response.status, data};
     throw error;
   }
 
-  return { data };
+  return {data};
 };
 
 app.get('/health', (req, res) => {
@@ -123,7 +123,7 @@ app.get('/create-payment-intent', async (req, res) => {
   } catch (error) {
     logger.error(
       'Error creating payment intent',
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
 
     res.status(error.response?.status || 500).json({
@@ -164,7 +164,7 @@ app.post('/create-payment-intent', async (req, res) => {
   } catch (error) {
     logger.error(
       'Error creating payment intent',
-      error.response?.data || error.message
+      error.response?.data || error.message,
     );
 
     res.status(error.response?.status || 500).json({
@@ -182,13 +182,9 @@ app.post('/create-authentication', async (req, res) => {
       currency: 'USD',
       customer_details: {
         id: process.env.CTP_CUSTOMER_ID,
-        name: process.env.CTP_CUSTOMER_NAME,
         email: process.env.CTP_CUSTOMER_EMAIL,
-        phone: process.env.CTP_CUSTOMER_PHONE,
-        phone_country_code: process.env.CTP_CUSTOMER_PHONE_COUNTRY_CODE,
       },
       authentication_connector: 'ctp_visa',
-      profile_id: process.env.CTP_PROFILE_ID,
       ...req.body,
     };
 
@@ -199,7 +195,7 @@ app.post('/create-authentication', async (req, res) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'api-key': process.env.HYPERSWITCH_SECRET_KEY,
         'x-feature': 'router-custom-be',
         'x-profile-id': process.env.PROFILE_ID,
@@ -225,10 +221,7 @@ app.post('/create-authentication', async (req, res) => {
       merchantId: data.merchant_id,
     });
   } catch (error) {
-    logger.error(
-      'Error creating authentication',
-      error.message
-    );
+    logger.error('Error creating authentication', error.message);
 
     res.status(500).json({
       error: 'Failed to create authentication',
@@ -260,14 +253,14 @@ app
     logger.info(`🚀 Hyperswitch server running on port ${PORT}`);
     logger.info(`📋 Health check: http://localhost:${PORT}/health`);
     logger.info(
-      `💳 Create payment: POST http://localhost:${PORT}/create-payment-intent`
+      `💳 Create payment: POST http://localhost:${PORT}/create-payment-intent`,
     );
     logger.info(`🌐 Environment: ${HYPERSWITCH_BASE_URL}`);
     logger.info(
-      `📱 Server accessible from Android simulator via 10.0.2.2:${PORT}`
+      `📱 Server accessible from Android simulator via 10.0.2.2:${PORT}`,
     );
   })
-  .on('error', (err) => {
+  .on('error', err => {
     if (err.code === 'EADDRINUSE') {
       logger.error(`❌ Port ${PORT} is already in use!`);
       process.exit(1);
