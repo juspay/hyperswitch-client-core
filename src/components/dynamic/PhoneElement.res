@@ -78,7 +78,7 @@ let make = (
               phoneCodeInput.onChange(value()->Option.getOr(""))
             }
             <CustomPicker
-              style={s({flex: 0.36, minWidth: 85.->dp})}
+              style={s({flex: 0.36, minWidth: 25.->dp})}
               value=phoneCodeInput.value
               setValue=handlePickerChange
               items={switch countryStateData {
