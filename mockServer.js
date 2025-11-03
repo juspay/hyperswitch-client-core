@@ -175,6 +175,69 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
+app.post('/create-authentication', async (req, res) => {
+  try {
+    const authenticationData = {
+      amount: 1000,
+      currency: 'USD',
+      customer_details: {
+        id: process.env.CTP_CUSTOMER_ID,
+        name: process.env.CTP_CUSTOMER_NAME,
+        email: process.env.CTP_CUSTOMER_EMAIL,
+        phone: process.env.CTP_CUSTOMER_PHONE,
+        phone_country_code: process.env.CTP_CUSTOMER_PHONE_COUNTRY_CODE,
+      },
+      authentication_connector: 'ctp_visa',
+      profile_id: process.env.CTP_PROFILE_ID,
+      ...req.body,
+    };
+
+    logger.debug('Creating authentication with data', authenticationData);
+
+    const url = `${HYPERSWITCH_BASE_URL}/authentication`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'api-key': process.env.HYPERSWITCH_SECRET_KEY,
+        'x-feature': 'router-custom-be',
+        'x-profile-id': process.env.PROFILE_ID,
+      },
+      body: JSON.stringify(authenticationData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${JSON.stringify(data)}`);
+    }
+
+    logger.debug('Authentication created successfully', {
+      authentication_id: data.authentication_id,
+    });
+
+    res.json({
+      publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
+      clientSecret: data.client_secret,
+      profileId: data.profile_id,
+      authenticationId: data.authentication_id,
+      merchantId: data.merchant_id,
+    });
+  } catch (error) {
+    logger.error(
+      'Error creating authentication',
+      error.message
+    );
+
+    res.status(500).json({
+      error: 'Failed to create authentication',
+      details: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 app.use((error, req, res, next) => {
   logger.error('Unhandled error', error);
   res.status(500).json({

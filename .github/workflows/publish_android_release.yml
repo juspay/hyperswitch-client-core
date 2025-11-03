@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-utils
-          ref: main
+          ref: superposition
           path: shared-code
 
       - name: Check android subrepo branch and commit message
@@ -88,8 +88,8 @@ jobs:
       - name: Remove demo-app and demo-app-lite from settings.gradle
         working-directory: ./android
         run: |
-          sed -i "s/, ':demo-app'//g" settings.gradle
-          sed -i "s/, ':demo-app-lite'//g" settings.gradle
+          sed -i "/include ':demo-app'/d" settings.gradle
+          sed -i "/include ':demo-app-lite'/d" settings.gradle
 
       - name: Replace the ota endpoint
         working-directory: ./android

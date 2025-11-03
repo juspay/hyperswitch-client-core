@@ -88,4 +88,9 @@ regexes = ["hyperswitch.bundle"]
 [[allowlists]]
 description = "Ignore debug JWT files in iOS"
 commits = ["923500c696857c408e3650125438421432e7f52f"]
-regexes = ["/.*eyJhbGciOiJQUzI1NiIsIng1YyI6Wy.*/"]
+regexes = ["(?i)(nca_root_certificate|netcetera_cert|netcetera_private_key).*"]
+
+[[allowlists]]
+description = "Ignore debug JWT files in iOS"
+commits = ["da5875b308465bdc7767ed90a366db92ed8fb9c7", "dc35c40649dae1a4798bc8c8ed008b8861cb5cb7"]
+regexes = ["(?i)(nca_root_certificate|SECRET_KEY|PUBLISHABLE_KEY|Bearer Token).*"]

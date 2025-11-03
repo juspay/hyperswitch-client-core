@@ -30,8 +30,8 @@ const compileNodeModules = [
   'react-native-svg',
   'react-native-tab-view',
   'react-content-loader',
-  'react-native-hyperswitch-netcetera-3ds',
-  'react-native-scan-card',
+  '@juspay-tech/react-native-hyperswitch-netcetera-3ds',
+  '@juspay-tech/react-native-scan-card',
   '@react-native-clipboard/clipboard',
 ].map(moduleName =>
   path.resolve(appDirectory, `../node_modules/${moduleName}`),
@@ -146,7 +146,8 @@ module.exports = {
       '@sentry/react-native': '@sentry/react',
       'react-native-hyperswitch-paypal': 'react-native-web',
       'react-native-hyperswitch-kount': 'react-native-web',
-      'react-native-hyperswitch-netcetera-3ds': 'react-native-web',
+      '@juspay-tech/react-native-hyperswitch-netcetera-3ds': 'react-native-web',
+      '@juspay-tech/react-native-hyperswitch-samsung-pay': 'react-native-web',
       'react-native-plaid-link-sdk': 'react-native-web',
       '@react-native-clipboard/clipboard':
         'react-native-web/dist/exports/Clipboard',
