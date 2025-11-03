@@ -1,3 +1,15 @@
+# [1.9.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.8.0...v1.9.0) (2025-11-03)
+
+
+### Bug Fixes
+
+* added redirect from saved screen to return back to the app ([#377](https://github.com/juspay/hyperswitch-client-core/issues/377)) ([fea4161](https://github.com/juspay/hyperswitch-client-core/commit/fea4161030a233efd259271096dec61b6733dfe0))
+
+
+### Features
+
+* android v1.2.0 release ([ddb6202](https://github.com/juspay/hyperswitch-client-core/commit/ddb620277c02b6928d4109283c489c8a90894fbb))
+
 # [1.8.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.2...v1.8.0) (2025-09-25)
 
 
