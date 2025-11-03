@@ -108,7 +108,6 @@ module Provider = {
   }
 }
 let isClickToPayAvailable = () => {
-  Console.log2("ClickToPay Package: ", clickToPayPackage())
   %raw(`(clickToPayPackage()) ? true : false`)
 }
 let useClickToPay = (): Types.clickToPayHook => {
