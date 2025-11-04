@@ -34,9 +34,14 @@ let make = () => {
         } else if accountPaymentMethodData == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          setAccountPaymentMethodData(_ => Some(
-            AccountPaymentMethodType.jsonToAccountPaymentMethodType(accountPaymentMethodData),
-          ))
+          let pmlResponse = AccountPaymentMethodType.jsonToAccountPaymentMethodType(
+            accountPaymentMethodData,
+          )
+          if pmlResponse.payment_methods->Array.length === 0 {
+            errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
+          } else {
+            setAccountPaymentMethodData(_ => Some(pmlResponse))
+          }
         }
       }
 

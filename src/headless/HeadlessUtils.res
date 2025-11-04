@@ -271,6 +271,7 @@ let errorOnApiCalls = (inputKey: ErrorUtils.errorKey, ~dynamicStr="") => {
   | USED_CL(var) => var
   | INVALID_CL(var) => var
   | NO_DATA(var) => var
+  | NO_PML_DATA(var) => var
   }
   switch (type_, str) {
   | (Error, Static(string)) =>

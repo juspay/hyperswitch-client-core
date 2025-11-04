@@ -29,8 +29,13 @@ let make = (
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
 
+  let (errorText, setErrorText) = React.useState(_ => None)
+
   let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
   let setSaveCardChecboxSelected = React.useCallback1(isSelected => {
+    if(isSelected) {
+      setErrorText(_ => None)
+    }
     setSaveCardChecboxSelected(_ => isSelected)
   }, [setSaveCardChecboxSelected])
 
@@ -40,8 +45,6 @@ let make = (
   let setSelectedToken = React.useCallback1(token => {
     setSelectedToken(_ => token)
   }, [setSelectedToken])
-
-  let (errorText, setErrorText) = React.useState(_ => None)
 
   let {
     borderWidth,
@@ -502,7 +505,7 @@ let make = (
     }
   }
 
-  React.useEffect6(() => {
+  React.useEffect7(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -522,6 +525,7 @@ let make = (
     selectedToken,
     savedCardCvv,
     errorText,
+    isSaveCardCheckboxSelected
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
@@ -552,7 +556,7 @@ let make = (
     </View>
     {showDisclaimer
       ? <View style={s({paddingHorizontal: 2.->dp})}>
-          <Space height=5. />
+          <Space />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"

@@ -14,6 +14,7 @@ type errorKey =
   | USED_CL(errorTupple)
   | INVALID_CL(errorTupple)
   | NO_DATA(errorTupple)
+  | NO_PML_DATA(errorTupple)
 
 type errorWarning = {
   invalidPk: errorKey,
@@ -28,6 +29,7 @@ type errorWarning = {
   usedCL: errorKey,
   invalidCL: errorKey,
   noData: errorKey,
+  noPMLData: errorKey,
 }
 
 let isError = (res: JSON.t) => {
@@ -119,4 +121,5 @@ let errorWarning = {
   usedCL: USED_CL(Error, Static("Data Error: The client secret has been already used.")),
   invalidCL: INVALID_CL(Error, Static("Data Error: The client secret is invalid.")),
   noData: NO_DATA(Error, Static("There is no customer default saved payment method data")),
+  noPMLData: NO_PML_DATA(Error, Static("No Payment Method available")),
 }

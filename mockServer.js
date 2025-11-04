@@ -50,12 +50,14 @@ const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
 const PROFILE_ID = process.env.PROFILE_ID;
 const HYPERSWITCH_BASE_URL =
   process.env.HYPERSWITCH_SANDBOX_URL || 'https://sandbox.hyperswitch.io';
+const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY
 
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('Missing required environment variables');
   logger.warn('HYPERSWITCH_PUBLISHABLE_KEY: ' + !!HYPERSWITCH_PUBLISHABLE_KEY);
   logger.warn('HYPERSWITCH_SECRET_KEY: ' + !!HYPERSWITCH_SECRET_KEY);
   logger.warn('PROFILE_ID: ' + !!PROFILE_ID);
+  logger.warn('PROFILE_ID: ' + !!NETCETERA_SDK_API_KEY);
   process.exit(1);
 }
 
@@ -185,6 +187,7 @@ app.post('/create-authentication', async (req, res) => {
         email: process.env.CTP_CUSTOMER_EMAIL,
       },
       authentication_connector: 'ctp_visa',
+      profile_id: process.env.PROFILE_ID,
       ...req.body,
     };
 
@@ -226,6 +229,20 @@ app.post('/create-authentication', async (req, res) => {
     res.status(500).json({
       error: 'Failed to create authentication',
       details: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.get('/netcetera-sdk-api-key', (_, res) => {
+  if(!!NETCETERA_SDK_API_KEY) {
+    res.status(200).json({
+      netceteraApiKey: NETCETERA_SDK_API_KEY,
+      timestamp: new Date().toISOString(),
+    });
+  } else {
+    res.status(500).json({
+      error: 'Not Configured',
       timestamp: new Date().toISOString(),
     });
   }
