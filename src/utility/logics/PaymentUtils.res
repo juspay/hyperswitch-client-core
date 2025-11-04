@@ -209,11 +209,21 @@ let convertClickToPayCardToCustomerMethod = (
 ): CustomerPaymentMethodType.customer_payment_method_type => {
   let cardScheme = switch clickToPayProvider {
   | #visa =>
-    clickToPayCard.paymentCardDescriptor->String.toLowerCase === "mastercard"
-      ? "Mastercard"
-      : "Visa"
+    switch clickToPayCard.paymentCardDescriptor
+    ->Option.getOr("waitcard")
+    ->String.toLowerCase {
+    | "mastercard" => "Mastercard"
+    | "visa" => "Visa"
+    | "discover" => "Discover"
+    | "amex" => "AmericanExpress"
+    | other =>
+      other
+      ->String.charAt(0)
+      ->String.toUpperCase
+      ->String.concat(other->String.sliceToEnd(~start=1)->String.toLowerCase)
+    }
   | #mastercard =>
-    switch clickToPayCard.paymentCardDescriptor->String.toLowerCase {
+    switch clickToPayCard.paymentCardDescriptor->Option.getOr("waitcard")->String.toLowerCase {
     | "amex" => "AmericanExpress"
     | "mastercard" => "Mastercard"
     | "visa" => "Visa"
@@ -229,13 +239,16 @@ let convertClickToPayCardToCustomerMethod = (
   let cardData: CustomerPaymentMethodType.savedCardType = {
     scheme: cardScheme,
     issuer_country: "",
-    last4_digits: clickToPayCard.maskedPan,
+    last4_digits: clickToPayCard.maskedPan->Option.getOr(""),
     expiry_month: clickToPayCard.expiryMonth->Option.getOr(""),
     expiry_year: clickToPayCard.expiryYear->Option.getOr(""),
-    card_token: Some(clickToPayCard.digitalCardId),
+    card_token: clickToPayCard.digitalCardId,
     card_holder_name: "",
     card_fingerprint: None,
-    nick_name: clickToPayCard.digitalCardData.descriptorName,
+    nick_name: switch clickToPayCard.digitalCardData {
+    | Some(digitalCardData) => digitalCardData.descriptorName
+    | None => None
+    },
     card_network: cardScheme,
     card_isin: "",
     card_issuer: "",
@@ -244,8 +257,10 @@ let convertClickToPayCardToCustomerMethod = (
   }
 
   {
-    payment_token: clickToPayCard.digitalCardId,
-    payment_method_id: clickToPayCard.digitalCardId,
+    payment_token: clickToPayCard.digitalCardId->Option.getOr(Js.Date.make()->Js.Date.toISOString),
+    payment_method_id: clickToPayCard.digitalCardId->Option.getOr(
+      clickToPayCard.id->Option.getOr(""),
+    ),
     customer_id: "",
     payment_method: PaymentMethodType.CARD,
     payment_method_str: "card",
