@@ -9,6 +9,8 @@ let make = (
   ~isGiftCardPayment=false,
   ~enabledCardSchemes=[],
   ~accessible: bool,
+  ~hasCTP=false,
+  ~isNewCTPUser=false,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
@@ -20,6 +22,17 @@ let make = (
     nickname,
     setNickname,
     setIsNicknameValid,
+    clickToPayRememberMe,
+    saveClickToPay,
+    setClickToPayRememberMe,
+    setSaveClickToPay,
+    clickToPayCardholderName,
+    setClickToPayCardholderName,
+    setIsClickToPayCardholderNameValid,
+    clickToPayPhoneNumber,
+    setClickToPayPhoneNumber,
+    setIsClickToPayPhoneNumberValid,
+    showClickToPayErrors,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -37,6 +50,27 @@ let make = (
       />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={isCardPayment && !isGiftCardPayment && fields->Array.length > 0}>
+      {hasCTP && !isNewCTPUser
+        ? <>
+            <FullNameInput
+              cardholderName=clickToPayCardholderName
+              setCardholderName=setClickToPayCardholderName
+              setIsCardholderNameValid=setIsClickToPayCardholderNameValid
+              showErrors=showClickToPayErrors
+              accessible
+            />
+            <Space height=4. />
+            <PhoneInput
+              value=clickToPayPhoneNumber
+              onChange=setClickToPayPhoneNumber
+              onValidationChange=setIsClickToPayPhoneNumberValid
+              phoneCodePlaceholder="Code"
+              phoneNumberPlaceholder={localeObject.formFieldPhoneNumberLabel}
+              showErrors=showClickToPayErrors
+              accessible
+            />
+          </>
+        : React.null}
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
         customerPaymentMethodData->Option.map(data => data.is_guest_customer)->Option.getOr(true),
@@ -45,19 +79,21 @@ let make = (
         ->Option.getOr(NORMAL),
       ) {
       | (true, false, NEW_MANDATE | NORMAL) =>
-        <ReactNative.View
-          style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
-          <ClickableTextElement
-            disabled={false}
-            initialIconName="checkboxClicked"
-            updateIconName=Some("checkboxNotClicked")
-            text=localeObject.saveCardDetails
-            isSelected=isNicknameSelected
-            setIsSelected=setIsNicknameSelected
-            textType={ModalText}
-            // disableScreenSwitch=true
-          />
-        </ReactNative.View>
+        hasCTP && !isNewCTPUser
+          ? React.null
+          : <ReactNative.View
+              style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
+              <ClickableTextElement
+                disabled={false}
+                initialIconName="checkboxClicked"
+                updateIconName=Some("checkboxNotClicked")
+                text=localeObject.saveCardDetails
+                isSelected=isNicknameSelected
+                setIsSelected=setIsNicknameSelected
+                textType={ModalText}
+                // disableScreenSwitch=true
+              />
+            </ReactNative.View>
       | _ => React.null
       }}
       {switch (
@@ -76,6 +112,76 @@ let make = (
         <NickNameElement nickname setNickname setIsNicknameValid accessible />
       | _ => React.null
       }}
+      {hasCTP && isNewCTPUser
+        ? <ReactNative.View
+            style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
+            <Space height=5. />
+            // TODO: Add the click to pay icon here
+            <Space height=5. />
+            <ClickableTextElement
+              disabled={false}
+              initialIconName="checkboxClicked"
+              updateIconName=Some("checkboxNotClicked")
+              text="Save my information with click to pay for faster and secure payments"
+              isSelected=saveClickToPay
+              setIsSelected=setSaveClickToPay
+              textType={ModalText}
+            />
+            {saveClickToPay
+              ? <>
+                  <FullNameInput
+                    cardholderName=clickToPayCardholderName
+                    setCardholderName=setClickToPayCardholderName
+                    setIsCardholderNameValid=setIsClickToPayCardholderNameValid
+                    showErrors=showClickToPayErrors
+                    accessible
+                  />
+                  <Space height=4. />
+                  <PhoneInput
+                    value=clickToPayPhoneNumber
+                    onChange=setClickToPayPhoneNumber
+                    onValidationChange=setIsClickToPayPhoneNumberValid
+                    phoneCodePlaceholder="Code"
+                    phoneNumberPlaceholder={localeObject.formFieldPhoneNumberLabel}
+                    showErrors=showClickToPayErrors
+                    accessible
+                  />
+                </>
+              : React.null}
+            <Space height=5. />
+            <ReactNative.View style={ReactNative.Style.s({paddingLeft: 28.->ReactNative.Style.dp})}>
+              <TextWrapper textType={ModalTextLight}>
+                {"Your email or mobile number will be used to verify you. Message/data rates may apply."->React.string}
+              </TextWrapper>
+            </ReactNative.View>
+            <Space height=5. />
+            <ReactNative.View
+              style={ReactNative.Style.s({
+                flexDirection: #row,
+                alignItems: #center,
+              })}>
+              <ClickableTextElement
+                disabled={false}
+                initialIconName="checkboxClicked"
+                updateIconName=Some("checkboxNotClicked")
+                text="Remember Me"
+                isSelected=clickToPayRememberMe
+                setIsSelected=setClickToPayRememberMe
+                textType={ModalText}
+              />
+              <Space width=4. />
+              <RememberMeTooltip />
+            </ReactNative.View>
+            <Space height=8. />
+            <ReactNative.View style={ReactNative.Style.s({paddingLeft: 28.->ReactNative.Style.dp})}>
+              <TextWrapper textType={ModalTextLight}>
+                {"By continuing, you agree to Terms "->React.string}
+                {" and understand your data will be processed according to the Privacy Notice"->React.string}
+                {"."->React.string}
+              </TextWrapper>
+            </ReactNative.View>
+          </ReactNative.View>
+        : React.null}
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={!isCardPayment && !isGiftCardPayment}>
       <UIUtils.RenderIf

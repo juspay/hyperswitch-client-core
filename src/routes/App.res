@@ -14,7 +14,9 @@ module ContextWrapper = {
               <CountryStateDataContext>
                 <LoadingContext>
                   <DynamicFieldsContext>
-                    <BannerContext> children </BannerContext>
+                    <BannerContext>
+                      <ClickToPayContext> children </ClickToPayContext>
+                    </BannerContext>
                   </DynamicFieldsContext>
                 </LoadingContext>
               </CountryStateDataContext>

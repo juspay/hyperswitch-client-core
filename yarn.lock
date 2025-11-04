@@ -2815,6 +2815,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@juspay-tech/react-native-hyperswitch-click-to-pay@npm:^0.2.1":
+  version: 0.2.1
+  resolution: "@juspay-tech/react-native-hyperswitch-click-to-pay@npm:0.2.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-webview: "*"
+  checksum: c07410714031a2b928817af648185bdeb33e18e7af9318c5dc15c692e14a67c841d25feafe9cea9afc9712e5511eb3aa9d91696039e5117d093d9c99d34dde06
+  languageName: node
+  linkType: hard
+
 "@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:^0.2.1":
   version: 0.2.1
   resolution: "@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:0.2.1"
@@ -11854,6 +11865,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@commitlint/cli": ^17.0.3
     "@commitlint/config-conventional": ^17.0.3
+    "@juspay-tech/react-native-hyperswitch-click-to-pay": ^0.2.1
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.1
     "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.1
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
@@ -11911,6 +11923,7 @@ __metadata:
     react-native-inappbrowser-reborn: ^3.7.0
     react-native-svg: ^15.6.0
     react-native-web: ^0.20.0
+    react-native-webview: ^13.16.0
     react-test-renderer: 19.0.0
     rescript: ^11.1.4
     rescript-react-native: ^0.77.3
@@ -12197,7 +12210,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.4":
+"invariant@npm:2.2.4, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -16781,6 +16794,19 @@ __metadata:
     react: ^18.0.0 || ^19.0.0
     react-dom: ^18.0.0 || ^19.0.0
   checksum: 8a75802b8f281466ff07547de34df434c918c7102b7de4cbca19bd532e38c692e70fc318bc0f8f5507b6d00c64c46540c65e926f757dd74ae7f6d279d98a6ed8
+  languageName: node
+  linkType: hard
+
+"react-native-webview@npm:^13.16.0":
+  version: 13.16.0
+  resolution: "react-native-webview@npm:13.16.0"
+  dependencies:
+    escape-string-regexp: ^4.0.0
+    invariant: 2.2.4
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: a6fefc1bc977c1d121057c91696edb08ca170421a6d6ad5a9bcda279a20eca84aaaf553eca3a8e51b621e22fd473afa8bc994888807fb7db154eb9d7acb87928
   languageName: node
   linkType: hard
 
