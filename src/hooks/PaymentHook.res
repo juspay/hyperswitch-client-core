@@ -11,8 +11,6 @@ let usePayment = (
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let logger = LoggerHook.useLoggerHook()
-  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let showAlert = AlertHook.useAlerts()
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
   let {launchGPay: webkitLaunchGPay, launchApplePay: webkitLaunchApplePay} = WebKit.useWebKit()
 
@@ -39,18 +37,6 @@ let usePayment = (
     (),
   ) => {
     if WebKit.platform === #ios {
-      let timerId = setTimeout(() => {
-        setLoading(FillingDetails)
-        showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-        logger(
-          ~logType=DEBUG,
-          ~value="apple_pay",
-          ~category=USER_EVENT,
-          ~paymentMethod="apple_pay",
-          ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-          (),
-        )
-      }, 5000)
       HyperModule.launchApplePay(
         [
           ("session_token_data", sessionObject.session_token_data),
@@ -59,20 +45,7 @@ let usePayment = (
         ->Dict.fromArray
         ->JSON.Encode.object
         ->JSON.stringify,
-        applePayResponseHandler,
-        _ => {
-          logger(
-            ~logType=DEBUG,
-            ~value="apple_pay",
-            ~category=USER_EVENT,
-            ~paymentMethod="apple_pay",
-            ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-            (),
-          )
-        },
-        _ => {
-          clearTimeout(timerId)
-        },
+        applePayResponseHandler
       )
     } else {
       webkitLaunchApplePay(
