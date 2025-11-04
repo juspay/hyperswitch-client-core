@@ -22,14 +22,14 @@ module Types = {
   }
   type digitalCardData = {descriptorName: option<string>}
   type clickToPayCard = {
-    id: string,
-    maskedPan: string,
-    brand: string,
-    expiryMonth?: string,
-    expiryYear?: string,
-    digitalCardId: string,
-    paymentCardDescriptor: string,
-    digitalCardData: digitalCardData,
+    id: option<string>,
+    maskedPan: option<string>,
+    brand: option<string>,
+    expiryMonth: option<string>,
+    expiryYear: option<string>,
+    digitalCardId: option<string>,
+    paymentCardDescriptor: option<string>,
+    digitalCardData: option<digitalCardData>,
   }
   type userIdentity = {
     value: string,
