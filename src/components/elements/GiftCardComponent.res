@@ -54,6 +54,7 @@ module GiftCardComponent = {
     }, (selectedGiftCardType, getRequiredFieldsForTabs, country))
 
     <View
+      style={s({position: #absolute, width: 100.->pct, paddingHorizontal: 2.->dp})}
       onLayout={(event: Event.layoutEvent) => {
         let height = event.nativeEvent.layout.height
         setContentHeight(_ => height)

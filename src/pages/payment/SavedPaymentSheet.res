@@ -384,7 +384,7 @@ let make = (
     ->Option.getOr(NORMAL) !== NORMAL
 
   let handlePress = _ => {
-    switch (selectedToken, !showDisclaimer || (showDisclaimer && isSaveCardCheckboxSelected)) {
+    switch (selectedToken, !showDisclaimer || (showDisclaimer && (isSaveCardCheckboxSelected || savedCardCvv->Option.isNone))) {
     | (Some(token), true) =>
       switch token.payment_method {
       | CARD =>
@@ -554,7 +554,7 @@ let make = (
         ?maxVisibleItems
       />
     </View>
-    {showDisclaimer
+    {showDisclaimer && savedCardCvv->Option.isSome
       ? <View style={s({paddingHorizontal: 2.->dp})}>
           <Space />
           <ClickableTextElement
