@@ -60,7 +60,7 @@
     "@commitlint/cli": "^17.0.3",
     "@commitlint/config-conventional": "^17.0.3",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
-    "@react-native-community/cli": "18.0.0",
+    "@react-native-community/cli": "20.0.0",
     "@react-native-community/cli-platform-android": "18.0.0",
     "@react-native-community/cli-platform-ios": "18.0.0",
     "@react-native/babel-preset": "0.79.1",
