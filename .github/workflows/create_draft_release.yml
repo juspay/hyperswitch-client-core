@@ -192,7 +192,6 @@ jobs:
           
           # Update all submodules to their latest commits on their default branches
           git submodule update --init --recursive
-          git submodule foreach 'git fetch origin && git checkout main && git pull origin main'
 
       - name: Build and Update Bundles
         if: env.RELEASE_PERFORMED == 'true'
