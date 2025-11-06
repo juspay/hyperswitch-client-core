@@ -119,3 +119,6 @@ next-env.d.ts
 *.log
 *.trace.json
 *.detox.jsonl
+
+#mockData
+mockData.js

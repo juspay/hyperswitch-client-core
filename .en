@@ -1,18 +1,24 @@
+# Hyperswitch API URLs for different environments
 HYPERSWITCH_PRODUCTION_URL=""
-HYPERSWITCH_INTEG_URL=""
 HYPERSWITCH_SANDBOX_URL=""
+HYPERSWITCH_INTEG_URL=""
+
+# Path for SDK logs
 HYPERSWITCH_LOGS_PATH="/logs/sdk"
+
+# Asset endpoints for different environments
 PROD_ASSETS_END_POINT=""
 SANDBOX_ASSETS_END_POINT=""
-INTEG_ASSETS_END_POINT=""
+INTEG_ASSETS_END_POINT="" 
 
-# sdk env   
+# Hyperswitch API keys
 HYPERSWITCH_PUBLISHABLE_KEY=""
 HYPERSWITCH_SECRET_KEY=""
-HYPERSWITCH_SERVER_URL=""
+
+# Profile and monitoring configuration
 PROFILE_ID=""
 SENTRY_DSN=""
 SENTRY_ENV=""
+
+# Netcetera SDK configuration
 NETCETERA_SDK_API_KEY=""
-CTP_CUSTOMER_EMAIL=""
-CTP_CUSTOMER_ID=""

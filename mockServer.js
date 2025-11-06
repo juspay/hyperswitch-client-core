@@ -5,6 +5,15 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5252;
 
+let mockData;
+try {
+  mockData = require("./mockData.js");
+} catch (_) {
+  mockData = {
+    paymentIntentBody: {}
+  };
+}
+
 const colors = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
@@ -101,6 +110,7 @@ app.get('/health', (req, res) => {
 app.get('/create-payment-intent', async (req, res) => {
   try {
     const paymentData = {
+      ...mockData.paymentIntentBody,
       amount: 100,
       currency: 'USD',
     };
@@ -141,8 +151,7 @@ app.get('/create-payment-intent', async (req, res) => {
 app.post('/create-payment-intent', async (req, res) => {
   try {
     const paymentData = {
-      amount: 100,
-      currency: 'USD',
+      ...mockData.paymentIntentBody,
       ...req.body,
     };
 
