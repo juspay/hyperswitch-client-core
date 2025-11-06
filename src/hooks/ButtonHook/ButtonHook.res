@@ -47,8 +47,14 @@ let useProcessPayButtonResult = () => {
       ->JSON.Decode.string
       ->Option.getOr("") {
       | "Cancelled" => Cancelled
-      | "Failed" => Failed("Failed")
-      | "Error" => Failed("Error")
+      | "Failed" | "Error" =>
+        Failed(
+          var
+          ->Dict.get("status")
+          ->Option.getOr(JSON.Encode.null)
+          ->JSON.Decode.string
+          ->Option.getOr("Failed"),
+        )
       | _ => {
           let transaction_identifier =
             var->Dict.get("transaction_identifier")->Option.getOr(JSON.Encode.null)

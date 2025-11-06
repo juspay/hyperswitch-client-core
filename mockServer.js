@@ -49,8 +49,11 @@ const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
 const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
 const PROFILE_ID = process.env.PROFILE_ID;
 const HYPERSWITCH_BASE_URL =
-  process.env.HYPERSWITCH_SANDBOX_URL || 'https://sandbox.hyperswitch.io';
-const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY
+  process.env.HYPERSWITCH_PRODUCTION_URL ||
+  process.env.HYPERSWITCH_SANDBOX_URL ||
+  process.env.HYPERSWITCH_INTEG_URL ||
+  'https://sandbox.hyperswitch.io';
+const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
 
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('Missing required environment variables');
@@ -100,7 +103,6 @@ app.get('/create-payment-intent', async (req, res) => {
     const paymentData = {
       amount: 100,
       currency: 'USD',
-      ...req.body,
     };
 
     if (process.env.PROFILE_ID) {
@@ -235,7 +237,7 @@ app.post('/create-authentication', async (req, res) => {
 });
 
 app.get('/netcetera-sdk-api-key', (_, res) => {
-  if(!!NETCETERA_SDK_API_KEY) {
+  if (!!NETCETERA_SDK_API_KEY) {
     res.status(200).json({
       netceteraApiKey: NETCETERA_SDK_API_KEY,
       timestamp: new Date().toISOString(),
