@@ -40,8 +40,8 @@
     "lint:secrets": "gitleaks detect --source . --no-banner --verbose"
   },
   "dependencies": {
-    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.1",
-    "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.1",
+    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
+    "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.2",
     "@sentry/react-native": "^6.13.0",
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",

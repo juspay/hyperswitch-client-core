@@ -2815,24 +2815,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:0.2.1"
+"@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:0.2.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 70c0f3e4351845c47870b0b767686c10e92231b1115c16fe85a83d43a0949bb832b1ebe8683153e3898211a8fe6d6569a6231444ba67170364e39688add07bcb
+  checksum: d22a9415704ca265e3b18d935be02737da2614e2290e63f70cd8e9f5cb8776aa7ac38425ac1fa76b805adf48999c2d60eee06d7d4581bbba46f95a3e76465236
   languageName: node
   linkType: hard
 
-"@juspay-tech/react-native-hyperswitch-scancard@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "@juspay-tech/react-native-hyperswitch-scancard@npm:0.2.1"
+"@juspay-tech/react-native-hyperswitch-scancard@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "@juspay-tech/react-native-hyperswitch-scancard@npm:0.2.2"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-webview: "*"
-  checksum: bc8a75a73ced6e6c34d2e9ce9f12e39df9eeba2cdc342828b8dc77cbbf422f97717c5fe2fbbf7317b58ae9673a5dddf1da30ee7023c22128b910696b65c82ff1
+  checksum: eb4313490c1253017eabf68afde13b025ff20f09b4129b75c09002159455c8e6893a82d8d2b9832028f6e2bffcb1929c155020680381f7775a3ff92dc5741884
   languageName: node
   linkType: hard
 
@@ -11854,8 +11854,8 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@commitlint/cli": ^17.0.3
     "@commitlint/config-conventional": ^17.0.3
-    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.1
-    "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.1
+    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.2
+    "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.2
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
     "@react-native-community/cli": 18.0.0
     "@react-native-community/cli-platform-android": 18.0.0
