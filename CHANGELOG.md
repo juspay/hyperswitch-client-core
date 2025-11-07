@@ -1,3 +1,10 @@
+## [1.8.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.8.1...v1.8.2) (2025-11-07)
+
+
+### Bug Fixes
+
+* payment type added ([af41203](https://github.com/juspay/hyperswitch-client-core/commit/af41203e430fa139cb6183ab0410478811bdb910))
+
 # [1.8.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.7.2...v1.8.0) (2025-09-25)
 
 
