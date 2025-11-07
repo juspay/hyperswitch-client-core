@@ -3,6 +3,11 @@ name: Create Draft Release
 on:
   workflow_dispatch:
     inputs:
+      shared_code: 
+        description: 'Branch name for the shared-code'
+        required: true
+        type: string
+        default: "main"
       versioning_type:
         description: 'Versioning Type'
         required: true
@@ -192,7 +197,10 @@ jobs:
           
           # Update all submodules to their latest commits on their default branches
           git submodule update --init --recursive
-
+          SHARED_CODE_BRANCH="${{ github.event.inputs.shared_code }}"
+          cd shared-code
+          git checkout $SHARED_CODE_BRANCH
+          cd ..
       - name: Build and Update Bundles
         if: env.RELEASE_PERFORMED == 'true'
         env:
@@ -210,7 +218,8 @@ jobs:
           cd android
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+          git checkout main
+          git pull origin main
           git add ./app/src/main/assets/hyperswitch.bundle
           
           if ! git diff --staged --quiet; then
@@ -221,6 +230,8 @@ jobs:
           
           # Update iOS bundle only
           cd ios
+          git checkout main
+          git pull origin main
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
