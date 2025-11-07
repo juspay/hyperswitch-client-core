@@ -38,6 +38,7 @@ type accountPaymentMethods = {
   collect_shipping_details_from_wallets: bool,
   currency: string,
   payment_type: PaymentMethodType.mandateType,
+  payment_type_str: option<string>,
   mandate_payment: option<string>,
   is_tax_calculation_enabled: bool,
   redirect_url: string,
@@ -52,6 +53,7 @@ let defaultAccountPaymentMethods = {
   collect_shipping_details_from_wallets: false,
   currency: "",
   payment_type: NORMAL,
+  payment_type_str: None,
   mandate_payment: None,
   is_tax_calculation_enabled: false,
   redirect_url: "",
@@ -206,6 +208,7 @@ let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
     | "new_mandate" => NEW_MANDATE
     | _ => NORMAL
     },
+    payment_type_str: getOptionString(accountPaymentMethodsDict, "payment_type"),
     mandate_payment: getOptionString(accountPaymentMethodsDict, "mandate_payment"),
     is_tax_calculation_enabled: getBool(
       accountPaymentMethodsDict,

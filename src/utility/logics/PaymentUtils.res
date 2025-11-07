@@ -20,6 +20,7 @@ let generateCardConfirmBody = (
   ~payment_method_type: string,
   ~payment_method_data=?,
   ~payment_type: PaymentMethodType.mandateType,
+  ~payment_type_str=?,
   ~appURL: option<string>=?,
   ~isNicknameSelected=false,
   ~payment_token=?,
@@ -39,7 +40,7 @@ let generateCardConfirmBody = (
     ?payment_method_data,
     ?payment_token,
     ?email,
-    // payment_type: payment_type_str,
+    payment_type: ?payment_type_str,
     customer_acceptance: ?(
       payment_token->Option.isNone &&
       ((isNicknameSelected && isMandate) ||
@@ -96,6 +97,7 @@ let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
   ~savedCardCvv,
+  ~payment_type_str,
   ~appURL: option<string>=?,
   ~screen_height=?,
   ~screen_width=?,
@@ -111,6 +113,7 @@ let generateSavedCardConfirmBody = (
     ->Dict.fromArray
     ->JSON.Encode.object
   ),
+  payment_type: ?payment_type_str,
   browser_info: {
     user_agent: ?nativeProp.hyperParams.userAgent,
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
@@ -130,11 +133,13 @@ let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_token,
   ~payment_method_type,
+  ~payment_type_str,
 ): PaymentConfirmTypes.redirectType => {
   client_secret: nativeProp.clientSecret,
   payment_token,
   payment_method: "wallet",
   payment_method_type,
+  payment_type: ?payment_type_str,
 }
 
 let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {

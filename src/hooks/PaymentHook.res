@@ -104,12 +104,13 @@ let usePayment = (
     SamsungPayModule.presentSamsungPayPaymentSheet(samsungPayResponseHandler)
   }
 
-  let initiateSavedCardPayment = (~activePaymentToken: string, ()) => {
+  let initiateSavedCardPayment = (~activePaymentToken: string, ~payment_type_str, ()) => {
     let (body, paymentMethodType) = (
       PaymentUtils.generateSavedCardConfirmBody(
         ~nativeProp,
         ~payment_token=activePaymentToken,
         ~savedCardCvv,
+        ~payment_type_str,
       ),
       "card",
     )
@@ -130,6 +131,7 @@ let usePayment = (
   let initiateWalletPayment = (
     ~activeWalletName: payment_method_type_wallet,
     ~activePaymentToken: string,
+    ~payment_type_str: option<string>,
     (),
   ) => {
     let (body, paymentMethodType) = (
@@ -137,6 +139,7 @@ let usePayment = (
         ~nativeProp,
         ~payment_method_type=activeWalletName->SdkTypes.walletTypeToStrMapper,
         ~payment_token=activePaymentToken,
+        ~payment_type_str,
       ),
       "wallet",
     )
@@ -157,6 +160,7 @@ let usePayment = (
   let initiatePayment = (
     ~activeWalletName: payment_method_type_wallet,
     ~activePaymentToken: string,
+    ~payment_type_str,
     ~gPayResponseHandler: Dict.t<JSON.t> => unit,
     ~applePayResponseHandler: Dict.t<JSON.t> => unit,
     // ~samsungPayResponseHandler: (
@@ -178,8 +182,8 @@ let usePayment = (
     | GOOGLE_PAY => initiateGooglePay(~sessionObject, ~gPayResponseHandler, ())
     | APPLE_PAY => initiateApplePay(~sessionObject, ~applePayResponseHandler, ())
     // | SAMSUNG_PAY => initiateSamsungPay(~samsungPayResponseHandler, ())
-    | NONE => initiateSavedCardPayment(~activePaymentToken, ())
-    | _ => initiateWalletPayment(~activeWalletName, ~activePaymentToken, ())
+    | NONE => initiateSavedCardPayment(~activePaymentToken, ~payment_type_str, ())
+    | _ => initiateWalletPayment(~activeWalletName, ~activePaymentToken, ~payment_type_str, ())
     }
   }
   initiatePayment

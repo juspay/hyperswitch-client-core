@@ -32,6 +32,7 @@ type redirectType = {
   payment_token?: string,
   mandate_data?: mandate_data,
   browser_info?: online,
+  payment_type?: string,
   customer_acceptance?: customer_acceptance,
   card_cvc?: string,
 }

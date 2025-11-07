@@ -345,6 +345,7 @@ let generateWalletConfirmBody = (
   ~nativeProp,
   ~data: CustomerPaymentMethodType.customer_payment_method_type,
   ~payment_method_data,
+  ~payment_type_str=?,
 ) => {
   [
     ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
@@ -352,7 +353,7 @@ let generateWalletConfirmBody = (
     ("payment_method_type", data.payment_method_type->JSON.Encode.string),
     ("payment_method_data", payment_method_data),
     ("setup_future_usage", "off_session"->JSON.Encode.string),
-    ("payment_type", "new_mandate"->JSON.Encode.string),
+    ("payment_type", payment_type_str->Option.map(JSON.Encode.string)->Option.getOr(JSON.Null)),
     (
       "customer_acceptance",
       [

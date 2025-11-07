@@ -109,6 +109,7 @@ let make = (
       ~payment_type=accountPaymentMethodData
       ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
       ->Option.getOr(NORMAL),
+      ~payment_type_str=?accountPaymentMethodData->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)->Option.getOr(None),
       ~appURL=?{
         accountPaymentMethodData->Option.map(accountPaymentMethods =>
           accountPaymentMethods.redirect_url

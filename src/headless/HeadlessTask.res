@@ -90,7 +90,7 @@ let make = (~props) => {
         ->Dict.fromArray
         ->JSON.Encode.object
 
-      generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
+      generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data, ~payment_type_str=data.payment_method_str)
       ->confirmCall(nativeProp)
       ->ignore
     | "Cancel" => reRegisterCallback.contents()
@@ -173,7 +173,7 @@ let make = (~props) => {
           ->Dict.fromArray
           ->JSON.Encode.object
 
-        generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
+        generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data, ~payment_type_str=data.payment_method_str)
         ->confirmCall(nativeProp)
         ->ignore
       }
