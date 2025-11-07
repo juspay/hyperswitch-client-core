@@ -198,8 +198,9 @@ jobs:
           # Update all submodules to their latest commits on their default branches
           git submodule update --init --recursive
           SHARED_CODE_BRANCH="${{ github.event.inputs.shared_code }}"
+          cd shared-code
           git checkout $SHARED_CODE_BRANCH
-
+          cd ..
       - name: Build and Update Bundles
         if: env.RELEASE_PERFORMED == 'true'
         env:
