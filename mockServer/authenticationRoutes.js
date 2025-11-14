@@ -99,6 +99,8 @@ router.get('/authentication', async (req, res) => {
       method: 'POST',
       body: JSON.stringify(authData),
       headers: {
+        'Content-Type': 'application/json',
+        'api-key': process.env.HYPERSWITCH_SECRET_KEY,
         ...(PROFILE_ID && {'X-Profile-Id': PROFILE_ID}),
       },
     });
@@ -124,9 +126,9 @@ router.get('/authentication', async (req, res) => {
   }
 });
 
-router.get('/authentication/:auth-session-id/eligibility', async (req, res) => {
+router.get('/authentication/:authSessionId/eligibility', async (req, res) => {
   try {
-    const authSessionId = req.params['auth-session-id'];
+    const authSessionId = req.params.authSessionId;
 
     const eligibilityData = {
       payment_method: 'card',
@@ -173,41 +175,38 @@ router.get('/authentication/:auth-session-id/eligibility', async (req, res) => {
   }
 });
 
-router.post(
-  '/authentication/:auth-session-id/authenticate',
-  async (req, res) => {
-    try {
-      const authSessionId = req.params['auth-session-id'];
-      const payload = req.body;
+router.post('/authentication/:authSessionId/authenticate', async (req, res) => {
+  try {
+    const authSessionId = req.params.authSessionId;
+    const payload = req.body;
 
-      logger.debug('Authenticating session', {authSessionId});
+    logger.debug('Authenticating session', {authSessionId});
 
-      const response = await makeHyperswitchRequest(
-        `/authentication/${authSessionId}/authenticate`,
-        {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        },
-      );
+    const response = await makeHyperswitchRequest(
+      `/authentication/${authSessionId}/authenticate`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+    );
 
-      logger.info('Authentication successful', {
-        authentication_id: authSessionId,
-      });
+    logger.info('Authentication successful', {
+      authentication_id: authSessionId,
+    });
 
-      res.json(response.data);
-    } catch (error) {
-      logger.error(
-        'Error authenticating session',
-        error.response?.data || error.message,
-      );
+    res.json(response.data);
+  } catch (error) {
+    logger.error(
+      'Error authenticating session',
+      error.response?.data || error.message,
+    );
 
-      res.status(error.response?.status || 500).json({
-        error: 'Failed to authenticate',
-        details: error.response?.data || error.message,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  },
-);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to authenticate',
+      details: error.response?.data || error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
 
 module.exports = router;

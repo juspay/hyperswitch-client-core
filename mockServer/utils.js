@@ -1,5 +1,6 @@
 const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
-const HYPERSWITCH_BASE_URL = 
+const HYPERSWITCH_BASE_URL =
+  process.env.HYPERSWITCH_SERVER_URL ||
   process.env.HYPERSWITCH_SANDBOX_URL || 'https://sandbox.hyperswitch.io';
 
 const makeHyperswitchRequest = async (endpoint, options = {}) => {

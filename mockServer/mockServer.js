@@ -55,7 +55,8 @@ app.get('/create-payment-intent', async (req, res) => {
   try {
     const paymentData = {
       ...mockData.paymentIntentBody,
-      ...req.body,
+      amount: 100,
+      currency: 'USD',
     };
 
     if (process.env.PROFILE_ID) {
