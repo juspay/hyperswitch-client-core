@@ -1,0 +1,527 @@
+open ExternalThreeDsTypes
+open ThreeDsUtils
+open SdkStatusMessages
+
+let isInitialisedPromiseRef = ref(None)
+
+let initialisedAuthModuleOnce = (~configuration, ~sdkEnvironment) => {
+  switch isInitialisedPromiseRef.contents {
+  | Some(promiseVal) => promiseVal
+  | None => {
+      let promiseVal = Promise.make((resolve, _reject) => {
+        AuthenticationModule.initializeThreeDS(
+          ~configuration,
+          ~hsSDKEnvironment=sdkEnvironment->sdkEnvironmentToStrMapper,
+          ~callback=status => resolve(status),
+        )
+      })
+
+      isInitialisedPromiseRef := Some(promiseVal)
+      promiseVal
+    }
+  }
+}
+
+type postAReqParamsGenerationDecision = RetrieveAgain | Make3DsCall(AuthenticationModule.aReqParams)
+type threeDsAuthCallDecision =
+  | GenerateChallenge({challengeParams: ExternalThreeDsTypes.authCallResponse})
+  | FrictionlessFlow
+
+let useExternalThreeDs = () => {
+  let logger = LoggerHook.useLoggerHook()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+
+  (
+    ~baseUrl,
+    ~appId,
+    ~configuration,
+    ~clientSecret,
+    ~publishableKey,
+    ~nextAction,
+    ~sdkEnvironment: GlobalVars.envType,
+    ~retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
+    ~onSuccess: string => unit,
+    ~onFailure: string => unit,
+  ) => {
+    let threeDsData =
+      nextAction->ThreeDsUtils.getThreeDsNextActionObj->ThreeDsUtils.getThreeDsDataObj
+
+    let rec shortPollExternalThreeDsAuthStatus = (
+      ~pollConfig: PaymentConfirmTypes.pollConfig,
+      ~pollCount,
+      ~onPollCompletion: (~isFinalRetrieve: bool=?) => unit,
+    ) => {
+      if pollCount >= pollConfig.frequency {
+        onPollCompletion()
+      } else {
+        setLoading(ProcessingPayments)
+        let uri = `${baseUrl}/poll/status/${pollConfig.pollId}`
+        apiLogWrapper(
+          ~logType=INFO,
+          ~eventName=POLL_STATUS_CALL_INIT,
+          ~url=uri,
+          ~statusCode="",
+          ~apiLogType=Request,
+          ~data=JSON.Encode.null,
+          (),
+        )
+
+        let logInfo = (~statusCode, ~apiLogType, ~data) => {
+          apiLogWrapper(
+            ~logType=INFO,
+            ~eventName=POLL_STATUS_CALL,
+            ~url=uri,
+            ~statusCode,
+            ~apiLogType,
+            ~data,
+            (),
+          )
+        }
+        let logError = (~statusCode, ~apiLogType, ~data) => {
+          apiLogWrapper(
+            ~logType=ERROR,
+            ~eventName=POLL_STATUS_CALL,
+            ~url=uri,
+            ~statusCode,
+            ~apiLogType,
+            ~data,
+            (),
+          )
+        }
+
+        let headers = getAuthCallHeaders(publishableKey)
+        APIUtils.fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
+        ->Promise.then(data => {
+          let statusCode = data->Fetch.Response.status->string_of_int
+          if statusCode->String.charAt(0) === "2" {
+            data
+            ->Fetch.Response.json
+            ->Promise.then(res => {
+              let pollResponse =
+                res
+                ->Utils.getDictFromJson
+                ->ExternalThreeDsTypes.pollResponseItemToObjMapper
+
+              let logData =
+                [
+                  ("url", uri->JSON.Encode.string),
+                  ("statusCode", statusCode->JSON.Encode.string),
+                  ("response", pollResponse.status->JSON.Encode.string),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object
+              logInfo(~statusCode, ~apiLogType=Response, ~data=logData)
+              if pollResponse.status === "completed" {
+                Promise.resolve()
+              } else {
+                Promise.make(
+                  (_resolve, _reject) => {
+                    setTimeout(
+                      () => {
+                        shortPollExternalThreeDsAuthStatus(
+                          ~pollConfig,
+                          ~pollCount=pollCount + 1,
+                          ~onPollCompletion,
+                        )
+                      },
+                      pollConfig.delayInSecs * 1000,
+                    )->ignore
+                  },
+                )
+              }
+            })
+          } else {
+            data
+            ->Fetch.Response.json
+            ->Promise.thenResolve(res => {
+              logError(~statusCode, ~apiLogType=Err, ~data=res)
+            })
+            ->ignore
+            Promise.resolve()
+          }
+        })
+        ->Promise.catch(err => {
+          logError(
+            ~statusCode="504",
+            ~apiLogType=NoResponse,
+            ~data=err->Utils.getError(`Authentication Error`),
+          )
+          Promise.resolve()
+        })
+        ->Promise.finally(_ => {
+          onPollCompletion()
+        })
+        ->ignore
+      }
+    }
+
+    let rec retrieveAndShowStatus = (~isFinalRetrieve=?) => {
+      apiLogWrapper(
+        ~logType=INFO,
+        ~eventName=RETRIEVE_CALL_INIT,
+        ~url=baseUrl,
+        ~statusCode="",
+        ~apiLogType=Request,
+        ~data=JSON.Encode.null,
+        (),
+      )
+      setLoading(ProcessingPayments)
+
+      retrievePayment(Types.Payment, clientSecret, publishableKey)
+      ->Promise.then(res => {
+        if res == JSON.Encode.null {
+          onFailure(retrievePaymentStatus.apiCallFailure)
+        } else {
+          let status = res->Utils.getDictFromJson->Utils.getString("status", "")
+          let isFinalRetrieve = isFinalRetrieve->Option.getOr(true)
+          switch status {
+          | "processing" | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
+          | "failed" => onFailure(retrievePaymentStatus.errorMsg)
+          | _ =>
+            if isFinalRetrieve {
+              onFailure(retrievePaymentStatus.errorMsg)
+            } else {
+              shortPollExternalThreeDsAuthStatus(
+                ~pollConfig=threeDsData.pollConfig,
+                ~pollCount=0,
+                ~onPollCompletion=retrieveAndShowStatus,
+              )
+            }
+          }
+        }->ignore
+        Promise.resolve()
+      })
+      ->Promise.catch(_ => {
+        onFailure(retrievePaymentStatus.apiCallFailure)
+        Promise.resolve()
+      })
+      ->ignore
+    }
+
+    let hsAuthorizeCall = (~authorizeUrl) => {
+      apiLogWrapper(
+        ~logType=INFO,
+        ~eventName=AUTHORIZE_CALL_INIT,
+        ~url=authorizeUrl,
+        ~statusCode="",
+        ~apiLogType=Request,
+        ~data=JSON.Encode.null,
+        (),
+      )
+      let headers = [("Content-Type", "application/json")]->Dict.fromArray
+      APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
+      ->Promise.then(async data => {
+        setLoading(ProcessingPayments)
+        let statusCode = data->Fetch.Response.status->string_of_int
+        if statusCode->String.charAt(0) === "2" {
+          apiLogWrapper(
+            ~logType=INFO,
+            ~eventName=AUTHORIZE_CALL,
+            ~url=authorizeUrl,
+            ~statusCode,
+            ~apiLogType=Response,
+            ~data=JSON.Encode.null,
+            (),
+          )
+        } else {
+          await data
+          ->Fetch.Response.json
+          ->Promise.thenResolve(error => {
+            apiLogWrapper(
+              ~logType=ERROR,
+              ~eventName=AUTHORIZE_CALL,
+              ~url=authorizeUrl,
+              ~statusCode,
+              ~apiLogType=Err,
+              ~data=error,
+              (),
+            )
+          })
+        }
+        false
+      })
+      ->Promise.catch(err => {
+        apiLogWrapper(
+          ~logType=ERROR,
+          ~eventName=AUTHORIZE_CALL,
+          ~url=authorizeUrl,
+          ~statusCode="504",
+          ~apiLogType=NoResponse,
+          ~data=err->Utils.getError(`Authentication Error`),
+          (),
+        )
+        Promise.resolve(true)
+      })
+    }
+
+    let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
+      let threeDSRequestorAppURL = Utils.getReturnUrl(
+        ~appId,
+        ~appURL=challengeParams.threeDSRequestorAppURL,
+        ~useAppUrl=true,
+      )
+
+      Promise.make((resolve, reject) => {
+        AuthenticationModule.recieveChallengeParamsFromRN(
+          ~acsSignedContent=challengeParams.acsSignedContent,
+          ~acsRefNumber=challengeParams.acsRefNumber,
+          ~acsTransactionId=challengeParams.acsTransactionId,
+          ~threeDSRequestorAppURL,
+          ~threeDSServerTransId=challengeParams.threeDSServerTransId,
+          ~callback=status => {
+            logger(
+              ~logType=INFO,
+              ~value={
+                "status": status.status,
+                "message": status.message,
+                "threeDSRequestorAppURL": threeDSRequestorAppURL,
+              }
+              ->JSON.stringifyAny
+              ->Option.getOr(""),
+              ~category=USER_EVENT,
+              ~eventName=AUTHENTICATION_MODULE,
+              (),
+            )
+            if status->isStatusSuccess {
+              AuthenticationModule.generateChallenge(
+                ~callback=status => {
+                  logger(
+                    ~logType=INFO,
+                    ~value=status->JSON.stringifyAny->Option.getOr(""),
+                    ~category=USER_EVENT,
+                    ~eventName=AUTHENTICATION_MODULE,
+                    (),
+                  )
+
+                  resolve()
+                },
+              )
+            } else {
+              retrieveAndShowStatus()
+              reject()
+            }
+          },
+        )
+      })
+    }
+
+    let generateAuthenticationCallBody = (
+      clientSecret,
+      aReqParams: AuthenticationModule.aReqParams,
+    ) => {
+      let ephemeralKeyDict =
+        aReqParams.sdkEphemeralKey
+        ->Option.getOr(JSON.Encode.null)
+        ->JSON.Decode.string
+        ->Option.getOr("")
+        ->JSON.parseExn
+        ->JSON.Decode.object
+        ->Option.getOr(Dict.make())
+
+      let body: authCallBody = {
+        client_secret: clientSecret,
+        device_channel: "APP",
+        threeds_method_comp_ind: "N",
+        sdk_information: {
+          sdk_app_id: aReqParams.sdkAppId->Option.getOr(""),
+          sdk_enc_data: aReqParams.deviceData->Option.getOr(""),
+          sdk_ephem_pub_key: {
+            kty: ephemeralKeyDict->Utils.getString("kty", ""),
+            crv: ephemeralKeyDict->Utils.getString("crv", ""),
+            x: ephemeralKeyDict->Utils.getString("x", ""),
+            y: ephemeralKeyDict->Utils.getString("y", ""),
+          },
+          sdk_trans_id: aReqParams.sdkTransId->Option.getOr(""),
+          sdk_reference_number: aReqParams.sdkReferenceNo->Option.getOr(""),
+          sdk_max_timeout: 15,
+        },
+      }
+
+      let stringifiedBody = body->JSON.stringifyAny->Option.getOr("")
+      stringifiedBody
+    }
+
+    let hsThreeDsAuthCall = (aReqParams: AuthenticationModule.aReqParams) => {
+      let uri = threeDsData.threeDsAuthenticationUrl
+      let headers = getAuthCallHeaders(publishableKey)
+      let bodyStr = generateAuthenticationCallBody(clientSecret, aReqParams)
+
+      apiLogWrapper(
+        ~logType=INFO,
+        ~eventName=AUTHENTICATION_CALL_INIT,
+        ~url=uri,
+        ~statusCode="",
+        ~apiLogType=Request,
+        ~data=JSON.Encode.null,
+        (),
+      )
+
+      APIUtils.fetchApi(~uri, ~bodyStr, ~headers, ~method_=Post, ())
+      ->Promise.then(data => {
+        let statusCode = data->Fetch.Response.status->string_of_int
+        if statusCode->String.charAt(0) === "2" {
+          data
+          ->Fetch.Response.json
+          ->Promise.thenResolve(res => {
+            apiLogWrapper(
+              ~logType=INFO,
+              ~eventName=AUTHENTICATION_CALL,
+              ~url=uri,
+              ~statusCode,
+              ~apiLogType=Response,
+              ~data=JSON.Encode.null,
+              (),
+            )
+
+            let authResponse = res->authResponseItemToObjMapper
+
+            switch authResponse {
+            | AUTH_RESPONSE(challengeParams) =>
+              logger(
+                ~logType=INFO,
+                ~value=challengeParams.transStatus,
+                ~category=USER_EVENT,
+                ~eventName=DISPLAY_THREE_DS_SDK,
+                (),
+              )
+              switch challengeParams.transStatus {
+              | "C" => GenerateChallenge({challengeParams: challengeParams})
+              | _ => FrictionlessFlow
+              }
+            | AUTH_ERROR(errObj) => {
+                logger(
+                  ~logType=ERROR,
+                  ~value=errObj.errorMessage,
+                  ~category=USER_EVENT,
+                  ~eventName=DISPLAY_THREE_DS_SDK,
+                  (),
+                )
+                FrictionlessFlow
+              }
+            }
+          })
+        } else {
+          data
+          ->Fetch.Response.json
+          ->Promise.thenResolve(err => {
+            apiLogWrapper(
+              ~logType=ERROR,
+              ~eventName=AUTHENTICATION_CALL,
+              ~url=uri,
+              ~statusCode,
+              ~apiLogType=Err,
+              ~data=err,
+              (),
+            )
+
+            // MARK: Why do we resolve error as frictionless flow, kept it likewise to netcetera hooks?
+            FrictionlessFlow
+          })
+        }
+      })
+      ->Promise.catch(err => {
+        apiLogWrapper(
+          ~logType=ERROR,
+          ~eventName=AUTHENTICATION_CALL,
+          ~url=uri,
+          ~statusCode="504",
+          ~apiLogType=NoResponse,
+          ~data=err->Utils.getError(`Authentication Error`),
+          (),
+        )
+        Promise.resolve(FrictionlessFlow)
+      })
+    }
+
+    let startAuthentication3DSFlow = () => {
+      initialisedAuthModuleOnce(~configuration, ~sdkEnvironment)
+      ->Promise.then(statusInfo => {
+        logger(
+          ~logType=INFO,
+          ~value=statusInfo->JSON.stringifyAny->Option.getOr(""),
+          ~category=USER_EVENT,
+          ~eventName=AUTHENTICATION_MODULE,
+          (),
+        )
+
+        if statusInfo->isStatusSuccess {
+          Promise.make((resolve, _reject) => {
+            AuthenticationModule.generateAReqParams(
+              ~messageVersion=threeDsData.messageVersion,
+              ~directoryServerId=Some(threeDsData.directoryServerId),
+              ~cardBrand=Some(threeDsData.cardNetwork),
+              ~callback=(status, aReqParams) => {
+                logger(
+                  ~logType=INFO,
+                  ~value=status->JSON.stringifyAny->Option.getOr(""),
+                  ~category=USER_EVENT,
+                  ~eventName=AUTHENTICATION_MODULE,
+                  (),
+                )
+                if status->isStatusSuccess {
+                  resolve(Make3DsCall(aReqParams))
+                } else {
+                  resolve(RetrieveAgain)
+                }
+              },
+            )
+          })
+        } else {
+          Promise.resolve(RetrieveAgain)
+        }
+      })
+      ->Promise.catch(_ => Promise.resolve(RetrieveAgain))
+      ->Promise.then(decision => {
+        Promise.make((resolve, reject) => {
+          switch decision {
+          | RetrieveAgain =>
+            retrieveAndShowStatus()
+            reject()
+          | Make3DsCall(aReqParams) => resolve(aReqParams)
+          }
+        })
+      })
+    }
+
+    let checkSDKPresence = () => {
+      Promise.make((resolve, reject) => {
+        if !AuthenticationModule.isAvailable {
+          logger(
+            ~logType=DEBUG,
+            ~value="Authentication module not available",
+            ~category=USER_EVENT,
+            ~eventName=AUTHENTICATION_MODULE,
+            (),
+          )
+          onFailure(externalThreeDsModuleStatus.errorMsg)
+          reject()
+        } else {
+          resolve()
+        }
+      })
+    }
+
+    let handleNativeThreeDs = async () => {
+      let isFinalRetrieve = try {
+        await checkSDKPresence()
+        let aReqParams = await startAuthentication3DSFlow()
+        let authCallDecision = await hsThreeDsAuthCall(aReqParams)
+
+        switch authCallDecision {
+        | GenerateChallenge({challengeParams}) =>
+          await sendChallengeParamsAndGenerateChallenge(~challengeParams)
+
+        | FrictionlessFlow => ()
+        }
+        await hsAuthorizeCall(~authorizeUrl=threeDsData.threeDsAuthorizeUrl)
+      } catch {
+      | _ => true
+      }
+
+      retrieveAndShowStatus(~isFinalRetrieve)
+    }
+
+    handleNativeThreeDs()->ignore
+  }
+}
