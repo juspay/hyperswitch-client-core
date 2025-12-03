@@ -28,7 +28,7 @@ let make = (~children, ~locale) => {
     ->Promise.catch(_ => {
       fetchDataFromS3WithGZipDecoding(
         ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
-        ~s3Path=`${path}/${LocaleDataType.localeTypeToString(Some(En))}`,
+        ~s3Path=`${path}/${LocaleDataType.localeTypeToString(Some(En))}.json`,
       )
       ->Promise.then(
         res => {
