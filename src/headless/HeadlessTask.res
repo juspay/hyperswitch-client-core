@@ -164,7 +164,10 @@ let make = (~props) => {
             ),
             (
               "billing",
-              switch var->AddressUtils.getGooglePayBillingAddress("billing_contact") {
+              switch var->AddressUtils.getApplePayBillingAddress(
+                "billing_contact",
+                Some("shipping_contact"),
+              ) {
               | Some(billing) => billing->Utils.getJsonObjectFromRecord
               | None => JSON.Encode.null
               },
