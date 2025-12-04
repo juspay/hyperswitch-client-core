@@ -109,6 +109,7 @@ let useAccountPaymentMethodModifier = () => {
             WebKit.platform !== #next &&
             sessionObject.wallet_name !== NONE &&
             sessionObject.connector !== "trustpay" &&
+            nativeProp.hyperParams.gPaySupport &&
             exp->Option.isSome
               ? Some()
               : None
