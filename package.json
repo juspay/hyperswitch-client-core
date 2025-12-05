@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "react-native start --reset-cache --client-logs",
-    "server": "node mockServer.js",
+    "server": "node mockServer/mockServer.js",
     "re:start": "rescript build -w",
     "re:format": "rescript format -all",
     "web": "NODE_ENV=development webpack serve --mode=development --config reactNativeWeb/webpack.config.js",
