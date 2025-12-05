@@ -509,7 +509,7 @@ let make = (
     }
   }
 
-  React.useEffect7(() => {
+  React.useEffect(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -525,6 +525,7 @@ let make = (
   }, (
     accountPaymentMethodData,
     customerPaymentMethods,
+    sessionTokenData,
     setConfirmButtonData,
     selectedToken,
     savedCardCvv,
