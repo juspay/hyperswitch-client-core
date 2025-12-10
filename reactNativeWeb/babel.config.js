@@ -3,8 +3,7 @@ module.exports = {
     [
       'module:@react-native/babel-preset',
       { useTransformReactJSXExperimental: true },
-    ],
-    "next/babel"
+    ]
   ],
   plugins: [
     ['react-native-web'],
