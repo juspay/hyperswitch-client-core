@@ -221,15 +221,13 @@ let useRedirectHook = () => {
       } else {
         let configuration: AuthenticationModule.configuration = {
           publishableKey: nativeProp.publishableKey,
-          provider: threeDsProvider,
-          netceteraSdkApiKey: switch threeDsProvider {
+          threeDSProvider: threeDsProvider,
+          threeDSProviderApiKey: switch threeDsProvider {
             | #netcetera => Some(netceteraSDKApiKey)
+            | #cardinal => Some(cardinalJwtToken)
+            | #trident => None
             | _ => None
           },
-          jwtToken: switch threeDsProvider {
-            | #cardinal => Some(cardinalJwtToken)
-            | _ => None
-          }
         }
 
         handleModularThreeDS(

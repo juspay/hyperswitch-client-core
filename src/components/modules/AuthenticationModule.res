@@ -13,9 +13,8 @@ type threeDSProvider = [#netcetera | #trident | #cardinal]
 
 type configuration = {
   publishableKey: string,
-  provider: threeDSProvider,
-  jwtToken?: option<string>,
-  netceteraSdkApiKey?: option<string>,
+  threeDSProvider: threeDSProvider,
+  threeDSProviderApiKey: option<string>,
 }
 
 type module_ = {
