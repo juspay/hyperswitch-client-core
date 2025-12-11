@@ -31,6 +31,7 @@ const compileNodeModules = [
   'react-native-tab-view',
   'react-content-loader',
   '@juspay-tech/react-native-hyperswitch-netcetera-3ds',
+  '@juspay-tech/react-native-hyperswitch-3ds',
   '@juspay-tech/react-native-scan-card',
   '@react-native-clipboard/clipboard',
 ].map(moduleName =>
