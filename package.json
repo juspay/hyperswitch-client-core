@@ -1,6 +1,6 @@
 {
   "name": "hyperswitch",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "private": true,
   "scripts": {
     "start": "react-native start --reset-cache --client-logs",
