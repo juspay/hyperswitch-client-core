@@ -13,9 +13,15 @@ module ContextWrapper = {
             <LocaleStringDataContext locale=nativeProp.configuration.appearance.locale>
               <CountryStateDataContext>
                 <LoadingContext>
-                  <DynamicFieldsContext>
-                    <BannerContext> children </BannerContext>
-                  </DynamicFieldsContext>
+                <BannerContext>
+                  <AllApiDataContextNew>
+                    // TODO: Pass DynamicFieldsContext to only required components. 
+                    // GO to NavigatorRouter.res and wrap only the components which DynamicFieldsContext.
+                    <DynamicFieldsContext>
+                       children 
+                    </DynamicFieldsContext>
+                  </AllApiDataContextNew>
+                  </BannerContext>
                 </LoadingContext>
               </CountryStateDataContext>
             </LocaleStringDataContext>

@@ -1,7 +1,7 @@
 @react.component
 let make = (~setConfirmButtonData) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+  let {accountPaymentMethodData, customerPaymentMethodData} = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)

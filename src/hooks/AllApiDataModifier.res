@@ -15,7 +15,7 @@ type walletProp = {
 
 let useAccountPaymentMethodModifier = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
+  let {accountPaymentMethodData, customerPaymentMethodData, sessionTokenData} = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
@@ -220,7 +220,7 @@ let useAccountPaymentMethodModifier = () => {
 }
 
 let useAddWebPaymentButton = () => {
-  let (accountPaymentMethodData, _, sessionTokenData) = React.useContext(
+  let {accountPaymentMethodData, sessionTokenData} = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (addApplePay, addGooglePay) =

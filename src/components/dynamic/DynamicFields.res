@@ -11,7 +11,7 @@ let make = (
   ~accessible: bool,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+  let {accountPaymentMethodData, customerPaymentMethodData} = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {

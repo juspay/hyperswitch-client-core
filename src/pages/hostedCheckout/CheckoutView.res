@@ -98,7 +98,7 @@ module CheckoutDetails = {
 
 @react.component
 let make = (~isDesktop) => {
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let {accountPaymentMethodData} = React.useContext(AllApiDataContextNew.allApiDataContext)
   let {textSecondary} = ThemebasedStyle.useThemeBasedStyle()
 
   let (showDetails, setShowDetails) = React.useState(() => false)
