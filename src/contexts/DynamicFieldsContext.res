@@ -68,7 +68,7 @@ module Provider = {
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let {accountPaymentMethodData} = React.useContext(AllApiDataContextNew.allApiDataContext)
   let getSuperpositionFinalFields = ConfigurationService.useConfigurationService()
 
   let (sheetType, setSheetType) = React.useState(_ => ButtonSheet)
@@ -93,6 +93,17 @@ let make = (~children) => {
       paymentMethodData.payment_experience->AccountPaymentMethodType.getEligibleConnectorFromPaymentExperience
     }
 
+    let requiredFieldsFromPML = SuperpositionHelper.extractFieldValuesFromPML(
+      paymentMethodData.required_fields,
+    )
+
+    let currentCountry = switch requiredFieldsFromPML->Dict.get(
+      "payment_method_data.billing.address.country",
+    ) {
+    | Some("") | None => country
+    | Some(country) => country
+    }
+
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
       payment_method_type: paymentMethodData.payment_method_type,
@@ -101,12 +112,8 @@ let make = (~children) => {
       ->Option.getOr("non_mandate"),
       collect_billing_details_from_wallet_connector: "required",
       collect_shipping_details_from_wallet_connector: "required",
-      country,
+      country: currentCountry,
     }
-
-    let requiredFieldsFromPML = SuperpositionHelper.extractFieldValuesFromPML(
-      paymentMethodData.required_fields,
-    )
 
     switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
     | None | Some("") =>
@@ -237,7 +244,12 @@ let make = (~children) => {
         : "mandate",
       collect_billing_details_from_wallet_connector: "required",
       collect_shipping_details_from_wallet_connector: "required",
-      country,
+      country: switch requiredFieldsFromSource->Dict.get(
+        "payment_method_data.billing.address.country",
+      ) {
+      | Some("") | None => country
+      | Some(country) => country
+      },
     }
 
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(

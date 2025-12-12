@@ -7,7 +7,7 @@ open LoggerTypes
 let make = () => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
-  let (_, customerPaymentMethodData, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let {customerPaymentMethodData} = React.useContext(AllApiDataContextNew.allApiDataContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (confirm, setConfirm) = React.useState(_ => false)
   let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
