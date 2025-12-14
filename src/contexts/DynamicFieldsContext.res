@@ -130,6 +130,25 @@ let make = (~children) => {
       requiredFieldsFromPML,
     )
 
+    // Validate CountrySelect fields against their allowed options
+    missingRequiredFields->Array.forEach(field => {
+      switch field.fieldType {
+      | CountrySelect => {
+          let currentCountry = initialValues
+            ->Dict.get(field.outputPath)
+            ->Option.flatMap(JSON.Decode.string)
+            ->Option.getOr(country)
+          
+          let validatedCountry = field.options->Array.includes(currentCountry)
+            ? currentCountry
+            : field.options->Array.get(0)->Option.getOr(AddressUtils.defaultCountry)
+          
+          initialValues->Dict.set(field.outputPath, JSON.Encode.string(validatedCountry))
+        }
+      | _ => ()
+      }
+    })
+
     (
       missingRequiredFields,
       CommonUtils.mergeDict(
