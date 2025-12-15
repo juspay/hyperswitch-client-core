@@ -60,11 +60,11 @@ jobs:
 
       - name: Start server
         run: |
-          nohup node server.js &
+          nohup npm run server &
 
       - name: Check Server
         run: |
-          curl http://localhost:5252/create-payment-intent
+          curl http://localhost:5252/health
 
       - name: Setup Java
         uses: actions/setup-java@v4
