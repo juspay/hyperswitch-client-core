@@ -100,21 +100,25 @@ let make = () => {
   ConfigurationService.useConfigurationService()->ignore
 
   <AllApiDataContextNew accountPaymentMethodData customerPaymentMethodData sessionTokenData>
-    {switch nativeProp.sdkState {
-    | PaymentSheet
-    | TabSheet
-    | ButtonSheet
-    | WidgetPaymentSheet
-    | WidgetTabSheet
-    | WidgetButtonSheet =>
-      <ParentPaymentSheet />
-    | HostedCheckout => <HostedCheckout />
-    | CardWidget => <CardWidget />
-    | CustomWidget(walletType) => <CustomWidget walletType />
-    | ExpressCheckoutWidget => <ExpressCheckoutWidget />
-    | Headless
-    | NoView
-    | PaymentMethodsManagement => React.null
-    }}
+    // TODO: Pass DynamicFieldsContext to only required components.
+    // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
+    <DynamicFieldsContext>
+      {switch nativeProp.sdkState {
+      | PaymentSheet
+      | TabSheet
+      | ButtonSheet
+      | WidgetPaymentSheet
+      | WidgetTabSheet
+      | WidgetButtonSheet =>
+        <ParentPaymentSheet />
+      | HostedCheckout => <HostedCheckout />
+      | CardWidget => <CardWidget />
+      | CustomWidget(walletType) => <CustomWidget walletType />
+      | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+      | Headless
+      | NoView
+      | PaymentMethodsManagement => React.null
+      }}
+    </DynamicFieldsContext>
   </AllApiDataContextNew>
 }
