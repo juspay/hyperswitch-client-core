@@ -7,31 +7,63 @@ let make = (~setConfirmButtonData) => {
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
-  let {walletData, nickname, isNicknameSelected} = React.useContext(
-    DynamicFieldsContext.dynamicFieldsContext,
-  )
+  let {
+    formDataRef,
+    walletData,
+    nickname,
+    isNicknameSelected,
+    getRequiredFieldsForButton,
+    country,
+  } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let (
-    fields,
+  let {
+    missingRequiredFields,
     initialValues,
     walletDict,
     isCardPayment,
     enabledCardSchemes,
-    payment_method,
-    payment_method_str,
-    payment_method_type,
-    payment_method_type_wallet,
-    payment_experience,
-  ) = walletData
+    paymentMethodData,
+    billingAddress,
+    shippingAddress,
+    useIntentData,
+  } = walletData
+  let payment_method = paymentMethodData.payment_method
+  let payment_method_str = paymentMethodData.payment_method_str
+  let payment_method_type = paymentMethodData.payment_method_type
+  let payment_method_type_wallet = paymentMethodData.payment_method_type_wallet
+  let payment_experience = paymentMethodData.payment_experience
 
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
-  let (formData, setFormData) = React.useState(_ => Dict.make())
+  let (formData, setFormDataState) = React.useState(_ =>
+    formDataRef->Option.mapOr(Dict.make(), ref => ref.current)
+  )
+
   let setFormData = React.useCallback1(data => {
-    setFormData(_ => data)
-  }, [setFormData])
+    formDataRef->Option.forEach(ref => ref.current = data)
+    setFormDataState(_ => data)
+  }, [formDataRef])
+
+  // Merge initial values with persisted form data only when initialValues change
+  let mergedInitialValues = React.useMemo2(() => {
+    let currentFormData = formDataRef->Option.mapOr(Dict.make(), ref => ref.current)
+    CommonUtils.mergeDict(initialValues, currentFormData)
+  }, (initialValues, formDataRef))
+
+  // This useEffect is to re-evaluate the value of required fields when country changes, this in turn will
+  // update the required_fields comming in walletData
+  React.useEffect1(() => {
+    let _ = getRequiredFieldsForButton(
+      paymentMethodData,
+      walletDict,
+      billingAddress,
+      shippingAddress,
+      useIntentData,
+    )
+    None
+  }, [country])
 
   let (isFormValid, setIsFormValid) = React.useState(_ => false)
   let setIsFormValid = React.useCallback1(isValid => {
@@ -160,9 +192,9 @@ let make = (~setConfirmButtonData) => {
   }
 
   let handlePress = _ => {
-    if isFormValid || fields->Array.length === 0 {
+    if isFormValid || missingRequiredFields->Array.length === 0 {
       processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
+        mergedInitialValues,
         Some(walletDict),
         formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
       )
@@ -191,8 +223,8 @@ let make = (~setConfirmButtonData) => {
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>
     <Space />
     <DynamicFields
-      fields
-      initialValues
+      fields=missingRequiredFields
+      initialValues=mergedInitialValues
       setFormData
       setIsFormValid
       setFormMethods

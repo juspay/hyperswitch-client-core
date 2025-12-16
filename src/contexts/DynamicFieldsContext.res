@@ -1,3 +1,15 @@
+type walletDataRecord = {
+  missingRequiredFields: array<SuperpositionTypes.fieldConfig>,
+  initialValues: Dict.t<JSON.t>,
+  walletDict: Dict.t<JSON.t>,
+  isCardPayment: bool,
+  enabledCardSchemes: array<string>,
+  paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  billingAddress: option<SdkTypes.addressDetails>,
+  shippingAddress: option<SdkTypes.addressDetails>,
+  useIntentData: bool,
+}
+
 type sheetType = ButtonSheet | DynamicFieldsSheet
 
 type dynamicFieldsData = {
@@ -24,18 +36,7 @@ type dynamicFieldsData = {
   ) => (bool, RescriptCore.Dict.t<Core__JSON.t>),
   country: string,
   setCountry: string => unit,
-  walletData: (
-    array<SuperpositionTypes.fieldConfig>,
-    Dict.t<JSON.t>,
-    Dict.t<JSON.t>,
-    bool,
-    array<string>,
-    PaymentMethodType.paymentMethod,
-    string,
-    string,
-    SdkTypes.payment_method_type_wallet,
-    array<AccountPaymentMethodType.payment_experience>,
-  ),
+  walletData: walletDataRecord,
   isNicknameSelected: bool,
   setIsNicknameSelected: bool => unit,
   nickname: option<string>,
@@ -52,7 +53,26 @@ let dynamicFieldsContext = React.createContext({
   getRequiredFieldsForButton: (_, _, _, _, _) => (true, Dict.make()),
   country: AddressUtils.defaultCountry,
   setCountry: _ => (),
-  walletData: ([], Dict.make(), Dict.make(), false, [], OTHERS, "", "", NONE, []),
+  walletData: {
+    missingRequiredFields: [],
+    initialValues: Dict.make(),
+    walletDict: Dict.make(),
+    isCardPayment: false,
+    enabledCardSchemes: [],
+    paymentMethodData: {
+      payment_method: OTHERS,
+      payment_method_str: "",
+      payment_method_type: "",
+      payment_method_type_wallet: NONE,
+      card_networks: [],
+      bank_names: [],
+      payment_experience: [],
+      required_fields: Dict.make(),
+    },
+    billingAddress: None,
+    shippingAddress: None,
+    useIntentData: false,
+  },
   isNicknameSelected: false,
   setIsNicknameSelected: _ => (),
   nickname: None,
@@ -166,44 +186,50 @@ let make = (~children) => {
     )
   }
 
-  let (walletData, setWalletData) = React.useState(_ => (
-    [],
-    Dict.make(),
-    Dict.make(),
-    false,
-    [],
-    (OTHERS: PaymentMethodType.paymentMethod),
-    "",
-    "",
-    (NONE: SdkTypes.payment_method_type_wallet),
-    [],
-  ))
+  let (walletData, setWalletData) = React.useState(_ => {
+    missingRequiredFields: [],
+    initialValues: Dict.make(),
+    walletDict: Dict.make(),
+    isCardPayment: false,
+    enabledCardSchemes: [],
+    paymentMethodData: {
+      payment_method: OTHERS,
+      payment_method_str: "",
+      payment_method_type: "",
+      payment_method_type_wallet: NONE,
+      card_networks: [],
+      bank_names: [],
+      payment_experience: [],
+      required_fields: Dict.make(),
+    },
+    billingAddress: None,
+    shippingAddress: None,
+    useIntentData: false,
+  })
 
   let setWalletData = React.useCallback1(
     (
-      requiredFields,
-      initialValues,
-      walletDict,
-      isCardPayment,
-      enabledCardSchemes,
-      payment_method,
-      payment_method_str,
-      payment_method_type,
-      payment_method_type_wallet,
-      payment_experience,
+      ~missingRequiredFields,
+      ~initialValues,
+      ~walletDict,
+      ~isCardPayment,
+      ~enabledCardSchemes,
+      ~paymentMethodData,
+      ~billingAddress,
+      ~shippingAddress,
+      ~useIntentData,
     ) => {
-      setWalletData(_ => (
-        requiredFields,
+      setWalletData(_ => {
+        missingRequiredFields,
         initialValues,
         walletDict,
         isCardPayment,
         enabledCardSchemes,
-        payment_method,
-        payment_method_str,
-        payment_method_type,
-        payment_method_type_wallet,
-        payment_experience,
-      ))
+        paymentMethodData,
+        billingAddress,
+        shippingAddress,
+        useIntentData,
+      })
     },
     [setWalletData],
   )
@@ -283,16 +309,15 @@ let make = (~children) => {
 
     if isFieldsMissing {
       setWalletData(
-        missingRequiredFields,
-        initialValues,
-        walletDict,
-        paymentMethodData.payment_method === CARD,
-        PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
-        paymentMethodData.payment_method,
-        paymentMethodData.payment_method_str,
-        paymentMethodData.payment_method_type,
-        paymentMethodData.payment_method_type_wallet,
-        paymentMethodData.payment_experience,
+        ~missingRequiredFields,
+        ~initialValues,
+        ~walletDict,
+        ~isCardPayment=paymentMethodData.payment_method === CARD,
+        ~enabledCardSchemes=PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
+        ~paymentMethodData,
+        ~billingAddress,
+        ~shippingAddress,
+        ~useIntentData,
       )
       setSheetType(DynamicFieldsSheet)
     }
