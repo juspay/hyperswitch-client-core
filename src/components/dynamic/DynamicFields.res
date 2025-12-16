@@ -20,6 +20,7 @@ let make = (
     nickname,
     setNickname,
     setIsNicknameValid,
+    sheetType
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -77,7 +78,7 @@ let make = (
       | _ => React.null
       }}
     </UIUtils.RenderIf>
-    <UIUtils.RenderIf condition={!isCardPayment && !isGiftCardPayment}>
+    <UIUtils.RenderIf condition={!isCardPayment && !isGiftCardPayment && sheetType !== DynamicFieldsSheet}>
       <UIUtils.RenderIf
         condition={fields->Array.length == 0 && nativeProp.configuration.appearance.layout === Tab}>
         <Space />
