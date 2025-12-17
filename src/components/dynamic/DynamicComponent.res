@@ -194,7 +194,7 @@ let make = (~setConfirmButtonData) => {
   let handlePress = _ => {
     if isFormValid || missingRequiredFields->Array.length === 0 {
       processRequest(
-        mergedInitialValues,
+        CommonUtils.mergeDict(initialValues, formData),
         Some(walletDict),
         formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
       )
