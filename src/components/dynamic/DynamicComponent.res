@@ -37,13 +37,8 @@ let make = (~setConfirmButtonData) => {
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
-  let (formData, setFormDataState) = React.useState(_ =>
-    formDataRef->Option.mapOr(Dict.make(), ref => ref.current)
-  )
-
   let setFormData = React.useCallback1(data => {
     formDataRef->Option.forEach(ref => ref.current = data)
-    setFormDataState(_ => data)
   }, [formDataRef])
 
   // Merge initial values with persisted form data only when initialValues change
@@ -193,10 +188,11 @@ let make = (~setConfirmButtonData) => {
 
   let handlePress = _ => {
     if isFormValid || missingRequiredFields->Array.length === 0 {
+      let currentFormData = formDataRef->Option.mapOr(Dict.make(), ref => ref.current)
       processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
+        CommonUtils.mergeDict(initialValues, currentFormData),
         Some(walletDict),
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+        currentFormData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
       )
     } else {
       switch formMethods {
