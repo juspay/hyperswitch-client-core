@@ -1,4 +1,5 @@
 type walletDataRecord = {
+  requiredFields: array<SuperpositionTypes.fieldConfig>,
   missingRequiredFields: array<SuperpositionTypes.fieldConfig>,
   initialValues: Dict.t<JSON.t>,
   walletDict: Dict.t<JSON.t>,
@@ -54,6 +55,7 @@ let dynamicFieldsContext = React.createContext({
   country: AddressUtils.defaultCountry,
   setCountry: _ => (),
   walletData: {
+    requiredFields: [],
     missingRequiredFields: [],
     initialValues: Dict.make(),
     walletDict: Dict.make(),
@@ -187,6 +189,7 @@ let make = (~children) => {
   }
 
   let (walletData, setWalletData) = React.useState(_ => {
+    requiredFields: [],
     missingRequiredFields: [],
     initialValues: Dict.make(),
     walletDict: Dict.make(),
@@ -209,6 +212,7 @@ let make = (~children) => {
 
   let setWalletData = React.useCallback1(
     (
+      ~requiredFields,
       ~missingRequiredFields,
       ~initialValues,
       ~walletDict,
@@ -220,6 +224,7 @@ let make = (~children) => {
       ~useIntentData,
     ) => {
       setWalletData(_ => {
+        requiredFields,
         missingRequiredFields,
         initialValues,
         walletDict,
@@ -309,6 +314,7 @@ let make = (~children) => {
 
     if isFieldsMissing {
       setWalletData(
+        ~requiredFields=_requiredFields,
         ~missingRequiredFields,
         ~initialValues,
         ~walletDict,

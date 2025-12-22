@@ -17,6 +17,7 @@ let make = (~setConfirmButtonData) => {
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let {
+    requiredFields,
     missingRequiredFields,
     initialValues,
     walletDict,
@@ -82,6 +83,10 @@ let make = (~setConfirmButtonData) => {
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
   ) => {
+    let requiredFieldPaths = requiredFields->Array.map(field => field.outputPath)
+
+    Utils.pruneUnusedFields(tabDict, "", requiredFieldPaths)
+
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -206,7 +211,7 @@ let make = (~setConfirmButtonData) => {
     }
   }
 
-  React.useEffect2(() => {
+  React.useEffect3(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -217,7 +222,7 @@ let make = (~setConfirmButtonData) => {
     setConfirmButtonData(confirmButton)
 
     None
-  }, (walletData, isFormValid))
+  }, (walletData, isFormValid, formData))
 
   <ReactNative.View
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>

@@ -374,3 +374,29 @@ let getDaysInMonth = (month: string, year: string) => {
     }
   }
 }
+
+let rec pruneUnusedFields = (
+  dict: Dict.t<JSON.t>,
+  parentPath: string,
+  requiredPaths: array<string>,
+) => {
+  dict
+  ->Dict.toArray
+  ->Array.forEach(((key, value)) => {
+    let fullPath = parentPath === "" ? key : parentPath ++ "." ++ key
+
+    let isExact = requiredPaths->Array.some(path => path === fullPath)
+    let isPrefix = requiredPaths->Array.some(path => path->String.startsWith(fullPath ++ "."))
+
+    if isExact {
+      ()
+    } else if isPrefix {
+      switch value->JSON.Decode.object {
+      | Some(innerDict) => pruneUnusedFields(innerDict, fullPath, requiredPaths)
+      | None => ()
+      }
+    } else {
+      dict->Dict.delete(key)
+    }
+  })
+}
