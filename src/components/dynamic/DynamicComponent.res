@@ -8,7 +8,6 @@ let make = (~setConfirmButtonData) => {
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let {
-    formDataRef,
     walletData,
     nickname,
     isNicknameSelected,
@@ -37,31 +36,25 @@ let make = (~setConfirmButtonData) => {
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
 
-  let (formData, setFormDataState) = React.useState(_ =>
-    formDataRef->Option.mapOr(Dict.make(), ref => ref.current)
-  )
+  let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
   let setFormData = React.useCallback1(data => {
-    formDataRef->Option.forEach(ref => ref.current = data)
     setFormDataState(_ => data)
-  }, [formDataRef])
-
-  // Merge initial values with persisted form data only when initialValues change
-  let mergedInitialValues = React.useMemo2(() => {
-    let currentFormData = formDataRef->Option.mapOr(Dict.make(), ref => ref.current)
-    CommonUtils.mergeDict(initialValues, currentFormData)
-  }, (initialValues, formDataRef))
+  }, [setFormDataState])
 
   // This useEffect is to re-evaluate the value of required fields when country changes, this in turn will
   // update the required_fields comming in walletData
   React.useEffect1(() => {
-    let _ = getRequiredFieldsForButton(
-      paymentMethodData,
-      walletDict,
-      billingAddress,
-      shippingAddress,
-      useIntentData,
-    )
+    if !(formData->Utils.isEmptyDict) {
+      let _ = getRequiredFieldsForButton(
+        paymentMethodData,
+        walletDict,
+        billingAddress,
+        shippingAddress,
+        useIntentData,
+        Some(formData),
+      )
+    }
     None
   }, [country])
 
@@ -206,7 +199,7 @@ let make = (~setConfirmButtonData) => {
     }
   }
 
-  React.useEffect2(() => {
+  React.useEffect3(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -217,14 +210,14 @@ let make = (~setConfirmButtonData) => {
     setConfirmButtonData(confirmButton)
 
     None
-  }, (walletData, isFormValid))
+  }, (walletData, isFormValid, formData))
 
   <ReactNative.View
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>
     <Space />
     <DynamicFields
       fields=missingRequiredFields
-      initialValues=mergedInitialValues
+      initialValues
       setFormData
       setIsFormValid
       setFormMethods

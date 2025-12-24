@@ -1,8 +1,6 @@
 open SdkTypes
 open Utils
 
-let defaultCountry = "US"
-
 let parseBillingAddress = (billingDetailsDict: Js.Dict.t<JSON.t>) => {
   let addressDict = getOptionalObj(billingDetailsDict, "address")
 

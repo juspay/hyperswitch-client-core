@@ -4,6 +4,8 @@ type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | Defaul
 
 type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE
 
+let defaultCountry = "US"
+
 let walletNameMapper = str => {
   switch str {
   | "google_pay" => "Google Pay"
@@ -318,6 +320,7 @@ type nativeProp = {
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
 }
+
 let defaultAppearance: appearance = {
   locale: None,
   colors: switch WebKit.platform {
@@ -885,7 +888,10 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     configuration: parseConfigurationDict(configurationDict, from),
     hyperParams: {
       appId: ?getOptionString(hyperParams, "appId"),
-      country: getString(hyperParams, "country", "US"),
+      country: switch getOptionString(hyperParams, "country") {
+      | Some("") | None => defaultCountry
+      | Some(country) => country
+      },
       disableBranding: getBool(hyperParams, "disableBranding", false),
       userAgent: getOptionString(hyperParams, "user-agent"),
       confirm: getBool(hyperParams, "confirm", false),

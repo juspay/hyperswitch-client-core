@@ -35,6 +35,7 @@ let make = (
       billingAddress,
       shippingAddress,
       useIntentData,
+      None,
     )
 
     if !isFieldsMissing {
@@ -325,7 +326,7 @@ let make = (
         Some(
           <ApplePayButtonView
             style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
-            cornerRadius=buttonBorderRadius
+            // cornerRadius=buttonBorderRadius
             buttonType=nativeProp.configuration.appearance.applePay.buttonType
             buttonStyle=applePayButtonColor
           />,

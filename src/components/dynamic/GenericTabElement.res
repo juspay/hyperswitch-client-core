@@ -9,6 +9,7 @@ let make = (
   ~formatValue as _,
   ~accessible=?,
 ) => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {country, setCountry} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
@@ -33,14 +34,14 @@ let make = (
       input.onChange(formattedValue)
     }
     let handlePickerChange = (value: unit => option<string>) => {
-      let data = value()->Option.getOr("")
+      let data = value()
       switch field.fieldType {
       | CountrySelect =>
-        setCountry(data)
+        setCountry(Some(data->Option.getOr(nativeProp.hyperParams.country)))
         setTimeout(() => {
-          input.onChange(data)
+          input.onChange(data->Option.getOr(nativeProp.hyperParams.country))
         }, 0)->ignore
-      | _ => input.onChange(data)
+      | _ => input.onChange(data->Option.getOr(""))
       }
     }
 
@@ -124,7 +125,7 @@ let make = (
     | StateSelect =>
       let items = switch countryStateData {
       | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
-        AddressUtils.getStateData(statesAndCountryVal.states, country)
+        AddressUtils.getStateData(statesAndCountryVal.states, country->Option.getOr(nativeProp.hyperParams.country))
       | _ => []
       }
       <>
