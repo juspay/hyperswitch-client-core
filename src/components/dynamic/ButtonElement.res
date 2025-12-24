@@ -21,7 +21,9 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
-  let {getRequiredFieldsForButton} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {getRequiredFieldsForButton, setInitialValueCountry} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
 
   let processWalletData = (
     walletDict,
@@ -29,7 +31,7 @@ let make = (
     ~shippingAddress=?,
     ~useIntentData=false,
   ) => {
-    let (isFieldsMissing, initialValues) = getRequiredFieldsForButton(
+    let (isFieldsMissing, initialValues, defaultCountry) = getRequiredFieldsForButton(
       paymentMethodData,
       walletDict,
       billingAddress,
@@ -37,6 +39,7 @@ let make = (
       useIntentData,
       None,
     )
+    setInitialValueCountry(defaultCountry)
 
     if !isFieldsMissing {
       processRequest(

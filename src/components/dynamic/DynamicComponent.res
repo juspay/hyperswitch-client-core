@@ -13,6 +13,7 @@ let make = (~setConfirmButtonData) => {
     isNicknameSelected,
     getRequiredFieldsForButton,
     country,
+    setInitialValueCountry,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let {
@@ -46,7 +47,7 @@ let make = (~setConfirmButtonData) => {
   // update the required_fields comming in walletData
   React.useEffect1(() => {
     if !(formData->Utils.isEmptyDict) {
-      let _ = getRequiredFieldsForButton(
+      let (_, _, defaultCountry) = getRequiredFieldsForButton(
         paymentMethodData,
         walletDict,
         billingAddress,
@@ -54,6 +55,7 @@ let make = (~setConfirmButtonData) => {
         useIntentData,
         Some(formData),
       )
+      setInitialValueCountry(defaultCountry)
     }
     None
   }, [country])

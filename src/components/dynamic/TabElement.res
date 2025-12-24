@@ -5,9 +5,13 @@ let make = (
   ~processRequest,
   ~setConfirmButtonData,
 ) => {
-  let {formDataRef, getRequiredFieldsForTabs, country, isNicknameValid} = React.useContext(
-    DynamicFieldsContext.dynamicFieldsContext,
-  )
+  let {
+    formDataRef,
+    getRequiredFieldsForTabs,
+    country,
+    isNicknameValid,
+    setInitialValueCountry,
+  } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
   let setFormData = React.useCallback1(data => {
@@ -31,6 +35,7 @@ let make = (
     isCardPayment,
     enabledCardSchemes,
     accessible,
+    defaultCountry,
   ) = React.useMemo4(_ => {
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
@@ -49,6 +54,11 @@ let make = (
       }
     }
   }
+
+  React.useEffect1(() => {
+    setInitialValueCountry(defaultCountry)
+    None
+  }, [defaultCountry])
 
   React.useEffect(() => {
     if isScreenFocus {

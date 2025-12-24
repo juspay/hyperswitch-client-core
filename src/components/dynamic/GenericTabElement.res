@@ -125,7 +125,7 @@ let make = (
     | StateSelect =>
       let items = switch countryStateData {
       | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
-        AddressUtils.getStateData(statesAndCountryVal.states, country->Option.getOr(nativeProp.hyperParams.country))
+        AddressUtils.getStateData(statesAndCountryVal.states, country)
       | _ => []
       }
       <>

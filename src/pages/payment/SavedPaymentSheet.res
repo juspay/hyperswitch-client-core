@@ -33,7 +33,7 @@ let make = (
 
   let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
   let setSaveCardChecboxSelected = React.useCallback1(isSelected => {
-    if(isSelected) {
+    if isSelected {
       setErrorText(_ => None)
     }
     setSaveCardChecboxSelected(_ => isSelected)
@@ -229,7 +229,7 @@ let make = (
     ~billingAddress=?,
     ~shippingAddress=?,
   ) => {
-    let (isFieldsMissing, initialValues) = getRequiredFieldsForButton(
+    let (isFieldsMissing, initialValues, _) = getRequiredFieldsForButton(
       paymentMethodData,
       walletDict,
       billingAddress,

@@ -8,7 +8,6 @@ let make = (
   ~formatValue as _,
   ~accessible=?,
 ) => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
@@ -37,7 +36,7 @@ let make = (
           | None | Some("") => (
               res.countries
               ->Array.find(countryData =>
-                countryData.country_code === country->Option.getOr(nativeProp.hyperParams.country)
+                countryData.country_code === country
               )
               ->Option.map(country => country.phone_number_code),
               None,
@@ -47,7 +46,7 @@ let make = (
             | ("", phone) => (
                 res.countries
                 ->Array.find(countryData =>
-                  countryData.country_code === country->Option.getOr(nativeProp.hyperParams.country)
+                  countryData.country_code === country
                 )
                 ->Option.map(country => country.phone_number_code),
                 Some(phone),

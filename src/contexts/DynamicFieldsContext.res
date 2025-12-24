@@ -26,6 +26,7 @@ type dynamicFieldsData = {
     bool,
     array<string>,
     bool,
+    string,
   ),
   getRequiredFieldsForButton: (
     AccountPaymentMethodType.payment_method_type,
@@ -34,9 +35,10 @@ type dynamicFieldsData = {
     option<SdkTypes.addressDetails>,
     bool,
     option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
-  ) => (bool, RescriptCore.Dict.t<Core__JSON.t>),
-  country: option<string>,
+  ) => (bool, RescriptCore.Dict.t<Core__JSON.t>, string),
+  country: string,
   setCountry: option<string> => unit,
+  setInitialValueCountry: string => unit,
   walletData: walletDataRecord,
   isNicknameSelected: bool,
   setIsNicknameSelected: bool => unit,
@@ -50,10 +52,11 @@ let dynamicFieldsContext = React.createContext({
   formDataRef: None,
   sheetType: ButtonSheet,
   setSheetType: _ => (),
-  getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false),
-  getRequiredFieldsForButton: (_, _, _, _, _, _) => (true, Dict.make()),
-  country: Some(SdkTypes.defaultCountry),
+  getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false, ""),
+  getRequiredFieldsForButton: (_, _, _, _, _, _) => (true, Dict.make(), ""),
+  country: SdkTypes.defaultCountry,
   setCountry: _ => (),
+  setInitialValueCountry: _ => (),
   walletData: {
     missingRequiredFields: [],
     initialValues: Dict.make(),
@@ -98,10 +101,17 @@ let make = (~children) => {
   }, [setSheetType])
 
   let (country, setCountry) = React.useState(_ => None)
+  let (initialValueCountry, setInitialValueCountry) = React.useState(_ =>
+    nativeProp.hyperParams.country
+  )
 
   let setCountry = React.useCallback1(country => {
     setCountry(_ => country)
   }, [setCountry])
+
+  let setInitialValueCountry = React.useCallback1(country => {
+    setInitialValueCountry(_ => country)
+  }, [setInitialValueCountry])
 
   let getRequiredFieldsForTabs = (
     paymentMethodData: AccountPaymentMethodType.payment_method_type,
@@ -188,6 +198,7 @@ let make = (~children) => {
       paymentMethodData.payment_method === CARD,
       PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
       isScreenFocus,
+      defaultCountry,
     )
   }
 
@@ -347,7 +358,7 @@ let make = (~children) => {
       setSheetType(DynamicFieldsSheet)
     }
 
-    (isFieldsMissing, initialValues)
+    (isFieldsMissing, initialValues, defaultCountry)
   }
 
   let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
@@ -380,8 +391,9 @@ let make = (~children) => {
       setSheetType,
       getRequiredFieldsForTabs,
       getRequiredFieldsForButton,
-      country,
+      country: country->Option.getOr(initialValueCountry),
       setCountry,
+      setInitialValueCountry,
       walletData,
       isNicknameSelected,
       setIsNicknameSelected,

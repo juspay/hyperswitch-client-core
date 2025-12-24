@@ -39,17 +39,24 @@ module GiftCardComponent = {
       setFormMethods(_ => formSubmit)
     }, [setFormMethods])
 
-    let (requiredFields, initialValues, _, enabledCardSchemes, accessible) = React.useMemo3(_ => {
+    let (
+      requiredFields,
+      initialValues,
+      _,
+      enabledCardSchemes,
+      accessible,
+      _,
+    ) = React.useMemo3(_ => {
       switch selectedGiftCardType {
       | Some(selectedGiftCardType) =>
         switch giftCardArr->Array.find(
           payment_method_type => payment_method_type.payment_method_type === selectedGiftCardType,
         ) {
         | Some(data) => getRequiredFieldsForTabs(data, formData, true)
-        | None => ([], Dict.make(), false, [], true)
+        | None => ([], Dict.make(), false, [], true, "")
         }
 
-      | None => ([], Dict.make(), false, [], true)
+      | None => ([], Dict.make(), false, [], true, "")
       }
     }, (selectedGiftCardType, getRequiredFieldsForTabs, country))
 
