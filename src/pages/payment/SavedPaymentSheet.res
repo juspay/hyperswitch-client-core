@@ -33,7 +33,7 @@ let make = (
 
   let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
   let setSaveCardChecboxSelected = React.useCallback1(isSelected => {
-    if(isSelected) {
+    if isSelected {
       setErrorText(_ => None)
     }
     setSaveCardChecboxSelected(_ => isSelected)
@@ -86,7 +86,9 @@ let make = (
           accountPaymentMethods.redirect_url
         )
       },
-      ~payment_type_str=accountPaymentMethodData->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)->Option.getOr(None),
+      ~payment_type_str=accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+      ->Option.getOr(None),
       ~billing=token.billing,
       ~screen_height=viewPortContants.screenHeight,
       ~screen_width=viewPortContants.screenWidth,
@@ -227,12 +229,13 @@ let make = (
     ~billingAddress=?,
     ~shippingAddress=?,
   ) => {
-    let (isFieldsMissing, initialValues) = getRequiredFieldsForButton(
+    let (isFieldsMissing, initialValues, _) = getRequiredFieldsForButton(
       paymentMethodData,
       walletDict,
       billingAddress,
       shippingAddress,
       false,
+      None,
     )
 
     if !isFieldsMissing {
@@ -388,7 +391,11 @@ let make = (
     ->Option.getOr(NORMAL) !== NORMAL
 
   let handlePress = _ => {
-    switch (selectedToken, !showDisclaimer || (showDisclaimer && (isSaveCardCheckboxSelected || savedCardCvv->Option.isNone))) {
+    switch (
+      selectedToken,
+      !showDisclaimer ||
+      (showDisclaimer && (isSaveCardCheckboxSelected || savedCardCvv->Option.isNone)),
+    ) {
     | (Some(token), true) =>
       switch token.payment_method {
       | CARD =>
@@ -530,7 +537,7 @@ let make = (
     selectedToken,
     savedCardCvv,
     errorText,
-    isSaveCardCheckboxSelected
+    isSaveCardCheckboxSelected,
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>

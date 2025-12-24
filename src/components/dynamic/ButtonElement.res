@@ -21,7 +21,9 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
-  let {getRequiredFieldsForButton} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {getRequiredFieldsForButton, setInitialValueCountry} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
 
   let processWalletData = (
     walletDict,
@@ -29,13 +31,15 @@ let make = (
     ~shippingAddress=?,
     ~useIntentData=false,
   ) => {
-    let (isFieldsMissing, initialValues) = getRequiredFieldsForButton(
+    let (isFieldsMissing, initialValues, defaultCountry) = getRequiredFieldsForButton(
       paymentMethodData,
       walletDict,
       billingAddress,
       shippingAddress,
       useIntentData,
+      None,
     )
+    setInitialValueCountry(defaultCountry)
 
     if !isFieldsMissing {
       processRequest(
@@ -325,7 +329,7 @@ let make = (
         Some(
           <ApplePayButtonView
             style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
-            cornerRadius=buttonBorderRadius
+            // cornerRadius=buttonBorderRadius
             buttonType=nativeProp.configuration.appearance.applePay.buttonType
             buttonStyle=applePayButtonColor
           />,

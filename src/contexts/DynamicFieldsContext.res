@@ -26,6 +26,7 @@ type dynamicFieldsData = {
     bool,
     array<string>,
     bool,
+    string,
   ),
   getRequiredFieldsForButton: (
     AccountPaymentMethodType.payment_method_type,
@@ -33,9 +34,11 @@ type dynamicFieldsData = {
     option<SdkTypes.addressDetails>,
     option<SdkTypes.addressDetails>,
     bool,
-  ) => (bool, RescriptCore.Dict.t<Core__JSON.t>),
+    option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
+  ) => (bool, RescriptCore.Dict.t<Core__JSON.t>, string),
   country: string,
-  setCountry: string => unit,
+  setCountry: option<string> => unit,
+  setInitialValueCountry: string => unit,
   walletData: walletDataRecord,
   isNicknameSelected: bool,
   setIsNicknameSelected: bool => unit,
@@ -49,10 +52,11 @@ let dynamicFieldsContext = React.createContext({
   formDataRef: None,
   sheetType: ButtonSheet,
   setSheetType: _ => (),
-  getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false),
-  getRequiredFieldsForButton: (_, _, _, _, _) => (true, Dict.make()),
-  country: AddressUtils.defaultCountry,
+  getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false, ""),
+  getRequiredFieldsForButton: (_, _, _, _, _, _) => (true, Dict.make(), ""),
+  country: SdkTypes.defaultCountry,
   setCountry: _ => (),
+  setInitialValueCountry: _ => (),
   walletData: {
     missingRequiredFields: [],
     initialValues: Dict.make(),
@@ -96,10 +100,18 @@ let make = (~children) => {
     setSheetType(_ => val)
   }, [setSheetType])
 
-  let (country, setCountry) = React.useState(_ => nativeProp.hyperParams.country)
+  let (country, setCountry) = React.useState(_ => None)
+  let (initialValueCountry, setInitialValueCountry) = React.useState(_ =>
+    nativeProp.hyperParams.country
+  )
+
   let setCountry = React.useCallback1(country => {
     setCountry(_ => country)
   }, [setCountry])
+
+  let setInitialValueCountry = React.useCallback1(country => {
+    setInitialValueCountry(_ => country)
+  }, [setInitialValueCountry])
 
   let getRequiredFieldsForTabs = (
     paymentMethodData: AccountPaymentMethodType.payment_method_type,
@@ -117,10 +129,10 @@ let make = (~children) => {
       paymentMethodData.required_fields,
     )
 
-    let currentCountry = switch requiredFieldsFromPML->Dict.get(
+    let defaultCountry = switch requiredFieldsFromPML->Dict.get(
       "payment_method_data.billing.address.country",
     ) {
-    | Some("") | None => country
+    | Some("") | None => nativeProp.hyperParams.country
     | Some(country) => country
     }
 
@@ -132,7 +144,10 @@ let make = (~children) => {
       ->Option.getOr("non_mandate"),
       collect_billing_details_from_wallet_connector: "required",
       collect_shipping_details_from_wallet_connector: "required",
-      country: currentCountry,
+      country: switch country {
+      | Some(val) => val
+      | None => defaultCountry
+      },
     }
 
     switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
@@ -158,12 +173,12 @@ let make = (~children) => {
             initialValues
             ->Dict.get(field.outputPath)
             ->Option.flatMap(JSON.Decode.string)
-            ->Option.getOr(country)
+            ->Option.getOr(country->Option.getOr(nativeProp.hyperParams.country))
 
           let validatedCountry =
             field.options->Array.includes(currentCountry)
               ? currentCountry
-              : field.options->Array.get(0)->Option.getOr(AddressUtils.defaultCountry)
+              : field.options->Array.get(0)->Option.getOr(SdkTypes.defaultCountry)
 
           initialValues->Dict.set(field.outputPath, JSON.Encode.string(validatedCountry))
         }
@@ -183,6 +198,7 @@ let make = (~children) => {
       paymentMethodData.payment_method === CARD,
       PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
       isScreenFocus,
+      defaultCountry,
     )
   }
 
@@ -240,6 +256,7 @@ let make = (~children) => {
     billingAddress,
     shippingAddress,
     useIntentData,
+    formData,
   ) => {
     let eligibleConnectors = switch paymentMethodData.payment_method {
     | CARD =>
@@ -265,7 +282,10 @@ let make = (~children) => {
       }
       switch requiredFieldsFromWallet->Dict.get("payment_method_data.billing.address.country") {
       | Some("") | None =>
-        requiredFieldsFromWallet->Dict.set("payment_method_data.billing.address.country", country)
+        requiredFieldsFromWallet->Dict.set(
+          "payment_method_data.billing.address.country",
+          country->Option.getOr(nativeProp.hyperParams.country),
+        )
       | _ => ()
       }
       requiredFieldsFromWallet
@@ -275,10 +295,20 @@ let make = (~children) => {
       )
       switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
       | Some("") | None =>
-        requiredFieldsFromPML->Dict.set("payment_method_data.billing.address.country", country)
+        requiredFieldsFromPML->Dict.set(
+          "payment_method_data.billing.address.country",
+          country->Option.getOr(nativeProp.hyperParams.country),
+        )
       | _ => ()
       }
       requiredFieldsFromPML
+    }
+
+    let defaultCountry = switch requiredFieldsFromSource->Dict.get(
+      "payment_method_data.billing.address.country",
+    ) {
+    | Some("") | None => nativeProp.hyperParams.country
+    | Some(country) => country
     }
 
     let configParams: SuperpositionTypes.superpositionBaseContext = {
@@ -291,11 +321,9 @@ let make = (~children) => {
         : "mandate",
       collect_billing_details_from_wallet_connector: "required",
       collect_shipping_details_from_wallet_connector: "required",
-      country: switch requiredFieldsFromSource->Dict.get(
-        "payment_method_data.billing.address.country",
-      ) {
-      | Some("") | None => country
-      | Some(country) => country
+      country: switch country {
+      | Some(val) => val
+      | None => defaultCountry
       },
     }
 
@@ -310,7 +338,15 @@ let make = (~children) => {
     if isFieldsMissing {
       setWalletData(
         ~missingRequiredFields,
-        ~initialValues,
+        ~initialValues=switch formData {
+        | Some(data) =>
+          Utils.pruneUnusedFieldsFromDict(
+            data,
+            "",
+            _requiredFields->Array.map(field => field.outputPath),
+          )
+        | None => initialValues
+        },
         ~walletDict,
         ~isCardPayment=paymentMethodData.payment_method === CARD,
         ~enabledCardSchemes=PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
@@ -322,7 +358,7 @@ let make = (~children) => {
       setSheetType(DynamicFieldsSheet)
     }
 
-    (isFieldsMissing, initialValues)
+    (isFieldsMissing, initialValues, defaultCountry)
   }
 
   let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
@@ -355,8 +391,9 @@ let make = (~children) => {
       setSheetType,
       getRequiredFieldsForTabs,
       getRequiredFieldsForButton,
-      country,
+      country: country->Option.getOr(initialValueCountry),
       setCountry,
+      setInitialValueCountry,
       walletData,
       isNicknameSelected,
       setIsNicknameSelected,

@@ -73,6 +73,8 @@ let convertToScreamingSnakeCase = text => {
   text->String.trim->String.replaceRegExp(%re("/ /g"), "_")->String.toUpperCase
 }
 
+let isEmptyDict = (dict: Dict.t<'a>) => dict->Dict.keysToArray->Array.length === 0
+
 // TODO subtraction 365 days can be done in exactly one year way
 
 // let formattedDateTimeFloat = (dateTime: Date.t, format: string) => {
@@ -373,4 +375,35 @@ let getDaysInMonth = (month: string, year: string) => {
     | _ => 31
     }
   }
+}
+
+let rec pruneUnusedFieldsFromDict = (
+  dict: Dict.t<JSON.t>,
+  parentPath: string,
+  requiredPaths: array<string>,
+) => {
+  let newDict = Dict.make()
+
+  dict
+  ->Dict.toArray
+  ->Array.forEach(((key, value)) => {
+    let fullPath = parentPath === "" ? key : parentPath ++ "." ++ key
+
+    let isExact = requiredPaths->Array.some(path => path === fullPath)
+    let isPrefix = requiredPaths->Array.some(path => path->String.startsWith(fullPath ++ "."))
+
+    if isExact {
+      newDict->Dict.set(key, value)
+    } else if isPrefix {
+      switch value->JSON.Decode.object {
+      | Some(innerDict) => {
+          let prunedInner = pruneUnusedFieldsFromDict(innerDict, fullPath, requiredPaths)
+          newDict->Dict.set(key, prunedInner->JSON.Encode.object)
+        }
+      | None => ()
+      }
+    }
+  })
+
+  newDict
 }

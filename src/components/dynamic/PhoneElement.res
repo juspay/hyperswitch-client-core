@@ -35,7 +35,9 @@ let make = (
           switch phoneNumberInput.value {
           | None | Some("") => (
               res.countries
-              ->Array.find(countryData => countryData.country_code === country)
+              ->Array.find(countryData =>
+                countryData.country_code === country
+              )
               ->Option.map(country => country.phone_number_code),
               None,
             )
@@ -43,7 +45,9 @@ let make = (
             switch PhoneNumberValidation.formatPhoneNumber(phoneNumber, res.countries) {
             | ("", phone) => (
                 res.countries
-                ->Array.find(countryData => countryData.country_code === country)
+                ->Array.find(countryData =>
+                  countryData.country_code === country
+                )
                 ->Option.map(country => country.phone_number_code),
                 Some(phone),
               )
