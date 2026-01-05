@@ -116,12 +116,12 @@ let make = (
       | Some(child) => child
       | _ =>
         <>
-          <UIUtils.RenderIf condition={buttonState == LoadingButton}>
-            {
-              fillButton()
-              <Animated.View style={array([fillStyle, widthStyle])} />
-            }
-          </UIUtils.RenderIf>
+          {if buttonState == LoadingButton {
+            fillButton()
+            <Animated.View style={array([fillStyle, widthStyle])} />
+          } else {
+            React.null
+          }}
           {switch text {
           | Some(textStr) if textStr !== "" =>
             <View
