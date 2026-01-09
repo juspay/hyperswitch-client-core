@@ -9,7 +9,7 @@ const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin'
 const appDirectory = path.resolve(__dirname);
 const {presets, plugins} = require(`${appDirectory}/babel.config.js`);
 const isDevelopment = process.env.NODE_ENV == 'development';
-const repoVersion = require('./version.json').version;
+const repoVersion = require('../package.json').version;
 const majorVersion = 'v' + repoVersion.split('.')[0];
 const repoPublicPath = isDevelopment ? `` : `/mobile/${repoVersion}`;
 
