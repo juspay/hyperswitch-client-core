@@ -22,7 +22,7 @@ let make = (
     nickname,
     setNickname,
     setIsNicknameValid,
-    sheetType
+    sheetType,
     clickToPayRememberMe,
     saveClickToPay,
     setClickToPayRememberMe,
