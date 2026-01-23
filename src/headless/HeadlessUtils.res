@@ -142,6 +142,8 @@ let handleApiCall = async (
   try {
     let initEventName = LoggerTypes.getApiInitEvent(eventName)
     switch initEventName {
+    | Some(CONFIRM_CALL_INIT) =>
+      apiLogWrapper(~eventName=PAYMENT_ATTEMPT, ~uri, ~paymentId, ~nativeProp)
     | Some(eventName) => apiLogWrapper(~eventName, ~uri, ~paymentId, ~nativeProp)
 
     | _ => ()
