@@ -12,7 +12,6 @@ const createPaymentBody = {
             line2: 'Harrison Street',
             line3: 'Harrison Street',
             city: 'San Fransico',
-
             state: 'California',
             zip: '94122',
             country: 'US',
@@ -73,4 +72,5 @@ const setCreateBodyForTestAutomation = async (body) => {
         body: JSON.stringify(body),
     })
 }
+
 export { setCreateBodyForTestAutomation, CreateBody }
