@@ -47,7 +47,29 @@ export async function enterCardDetails(cardNumber: string, expiryDate: string, c
   await cvcInput.typeText(cvc);
 }
 
+export async function dismissKeyboard(): Promise<void> {
+  if (device.getPlatform() === 'android') {
+    try {
+      await element(by.text('Test Mode')).tap();
+    } catch (e) {
+      try {
+        await device.pressBack();
+      } catch (backError) {
+      }
+    }
+  } else {
+    try {
+      await element(by.text('Test Mode')).tap();
+    } catch (e) {
+      await waitForUIStabilization(300);
+    }
+  }
+  await waitForUIStabilization(500);
+}
+
 export async function completePayment(testIds: any): Promise<void> {
+  await dismissKeyboard();
+  
   const payNowButton = element(by.id(testIds.payButtonTestId));
   await payNowButton.tap();
 
@@ -61,10 +83,8 @@ export async function completePayment(testIds: any): Promise<void> {
 
   if (device.getPlatform() === "ios") {
     await waitForVisibility(element(by.text(/.*(Payment complete|Somthing went wrong|payment failed|This payment method is blocked|Missing required param: browser_info.accept_header).*/i)), LONG_TIMEOUT);
-    // await waitForVisibility(element(by.text('Payment complete')), LONG_TIMEOUT);
   } else {
     await waitForVisibility(element(by.text(/^(succeeded|processing|Somthing went wrong|payment failed|This payment method is blocked|Missing required param: browser_info.accept_header)$/i)), LONG_TIMEOUT)
-    // await waitForVisibility(element(by.text(/^(succeeded|processing)$/i)), LONG_TIMEOUT)
   }
 }
 

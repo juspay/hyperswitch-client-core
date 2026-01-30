@@ -60,7 +60,7 @@ jobs:
 
       - name: Start server
         run: |
-          nohup node server.js &
+          nohup node mockServer.js &
 
       - name: Check Server
         run: |
@@ -96,6 +96,20 @@ jobs:
           path: android
           fetch-depth: 0
 
+      - name: Inject DemoApplication for Detox CI
+        run: |
+          DEMO_APP_MANIFEST="android/demo-app/src/main/AndroidManifest.xml"
+          DEMO_APP_KOTLIN_DIR="android/demo-app/src/main/kotlin/io/hyperswitch/demoapp"
+          DEMO_APP_APPLICATION_FILE="$DEMO_APP_KOTLIN_DIR/DemoApplication.kt"
+
+          mkdir -p "$DEMO_APP_KOTLIN_DIR"
+          cp .github/ci/android/DemoApplication.kt "$DEMO_APP_APPLICATION_FILE"
+
+          if ! grep -q 'android:name=".DemoApplication"' "$DEMO_APP_MANIFEST"; then
+            sed -i '/<application/a\        android:name=".DemoApplication"' "$DEMO_APP_MANIFEST"
+            sed -i 's/android:usesCleartextTraffic="true">/android:usesCleartextTraffic="true"\n        tools:replace="android:name">/' "$DEMO_APP_MANIFEST"
+          fi
+
       - name: Generate DS Root Certificate for Netcetera SDK
         run: |
           CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
@@ -126,7 +140,11 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: medium_phone
-          script: adb devices && npx detox test --configuration android.emu.ci.debug --record-videos failing --take-screenshots failing --headless # --loglevel trace --record-logs all
+          script: |
+            adb wait-for-device
+            sleep 15
+            adb devices
+            npx detox test --configuration android.emu.ci.debug --record-videos failing --take-screenshots failing --headless
 
       - name: Upload Test Artifact - GitHub Action
         if: always()
