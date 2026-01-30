@@ -1,16 +1,17 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const defaultPaymentData = require('./mockServer/defaultPaymentData.js');
 
 const app = express();
 const PORT = process.env.PORT || 5252;
 
 let mockData;
 try {
-  mockData = require("./mockData.js");
+  mockData = require('./mockData.js');
 } catch (_) {
   mockData = {
-    paymentIntentBody: {}
+    paymentIntentBody: {},
   };
 }
 
@@ -50,10 +51,8 @@ const logger = {
     }
   },
 };
-
 app.use(cors());
 app.use(express.json());
-
 const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
 const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
 const PROFILE_ID = process.env.PROFILE_ID;
@@ -63,6 +62,8 @@ const HYPERSWITCH_BASE_URL =
   'https://sandbox.hyperswitch.io';
 const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
 
+let testAutomationPaymentBody = {};
+
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('Missing required environment variables');
   logger.warn('HYPERSWITCH_PUBLISHABLE_KEY: ' + !!HYPERSWITCH_PUBLISHABLE_KEY);
@@ -71,7 +72,6 @@ if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('PROFILE_ID: ' + !!NETCETERA_SDK_API_KEY);
   process.exit(1);
 }
-
 const makeHyperswitchRequest = async (endpoint, options = {}) => {
   const url = `${HYPERSWITCH_BASE_URL}${endpoint}`;
   const config = {
@@ -81,19 +81,15 @@ const makeHyperswitchRequest = async (endpoint, options = {}) => {
     },
     ...options,
   };
-
   const response = await fetch(url, config);
   const data = await response.json();
-
   if (!response.ok) {
     const error = new Error(`HTTP ${response.status}`);
     error.response = {status: response.status, data};
     throw error;
   }
-
   return {data};
 };
-
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -105,13 +101,12 @@ app.get('/health', (req, res) => {
     },
   });
 });
-
 app.get('/create-payment-intent', async (req, res) => {
   try {
     const paymentData = {
+      ...defaultPaymentData,
       ...mockData.paymentIntentBody,
-      amount: 100,
-      currency: 'USD',
+      ...testAutomationPaymentBody,
     };
 
     if (process.env.PROFILE_ID) {
@@ -149,9 +144,14 @@ app.get('/create-payment-intent', async (req, res) => {
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
-    const paymentData = {
-      ...mockData.paymentIntentBody,
+    testAutomationPaymentBody = {
       ...req.body,
+    };
+
+    const paymentData = {
+      ...defaultPaymentData,
+      ...mockData.paymentIntentBody,
+      ...testAutomationPaymentBody,
     };
 
     if (process.env.PROFILE_ID) {

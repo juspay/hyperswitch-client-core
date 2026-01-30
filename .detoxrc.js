@@ -9,6 +9,29 @@ module.exports = {
       setupTimeout: 120000,
     },
   },
+
+  artifacts: {
+    rootDir: 'artifacts',
+    plugins: {
+      screenshot: {
+        enabled: true,
+        shouldTakeAutomaticSnapshots: true,
+        keepOnlyFailedTestsArtifacts: true,
+        takeWhen: {
+          testStart: false,
+          testDone: true,
+        },
+      },
+      video: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: true,
+      },
+      log: {
+        enabled: true,
+        keepOnlyFailedTestsArtifacts: true,  
+      },
+    },
+  },
   apps: {
     'ios.debug': {
       type: 'ios.app',
@@ -44,7 +67,13 @@ module.exports = {
     simulator: {
       type: 'ios.simulator',
       device: {
-        type: 'iPhone 16 Pro Max',
+        type: 'iPhone 16 Pro',
+      },
+    },
+    ciSimulator: {
+      type: 'ios.simulator',
+      device: {
+        type: 'iPhone 16 Pro',
       },
     },
     attached: {
@@ -74,6 +103,10 @@ module.exports = {
     'ios.sim.release': {
       device: 'simulator',
       app: 'ios.release',
+    },
+    'ios.sim.ci.debug': {
+      device: 'ciSimulator',
+      app: 'ios.debug',
     },
     'android.att.debug': {
       device: 'attached',

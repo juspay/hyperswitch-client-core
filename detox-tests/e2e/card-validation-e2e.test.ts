@@ -10,7 +10,8 @@ import {
   typeTextInInput,
   waitForVisibility,
   waitForUIStabilization,
-  isElementVisible
+  isElementVisible,
+  dismissKeyboard
 } from "../utils/DetoxHelpers";
 import { CreateBody, setCreateBodyForTestAutomation } from "../utils/APIUtils";
 
@@ -97,6 +98,8 @@ describe('Card Validation E2E Test', () => {
         testIds
       );
 
+      await dismissKeyboard();
+
       const payButton = element(by.id(testIds.payButtonTestId));
       await waitForVisibility(payButton);
 
@@ -117,6 +120,8 @@ describe('Card Validation E2E Test', () => {
         netceteraTestCard.cvc,
         testIds
       );
+
+      await dismissKeyboard();
 
       const payButton = element(by.id(testIds.payButtonTestId));
       await waitForVisibility(payButton);
@@ -170,6 +175,8 @@ describe('Card Validation E2E Test', () => {
         testIds
       );
 
+      await dismissKeyboard();
+
       const payButton = element(by.id(testIds.payButtonTestId));
       await waitForVisibility(payButton);
 
@@ -201,6 +208,8 @@ describe('Card Validation E2E Test', () => {
 
       await waitForUIStabilization();
       
+      await dismissKeyboard();
+      
       // Click Purchase button to trigger validation
       const payButton = element(by.id(testIds.payButtonTestId));
       await payButton.tap();
@@ -230,6 +239,8 @@ describe('Card Validation E2E Test', () => {
         testIds
       );
 
+      await dismissKeyboard();
+
       const payButton = element(by.id(testIds.payButtonTestId));
       await waitForVisibility(payButton);
 
@@ -247,6 +258,8 @@ describe('Card Validation E2E Test', () => {
       await navigateToNormalPaymentSheet();
 
       await waitForUIStabilization();
+      
+      await dismissKeyboard();
       
       // Click Purchase button to trigger validation
       const payButton = element(by.id(testIds.payButtonTestId));
@@ -275,6 +288,8 @@ describe('Card Validation E2E Test', () => {
       await cardNumberInput.tap();
       await typeTextInInput(cardNumberInput,visaSandboxCard.cardNumber);
 
+      await dismissKeyboard();
+      
       const payButton=element(by.id(testIds.payButtonTestId));
       await payButton.tap();
 
@@ -305,6 +320,8 @@ describe('Card Validation E2E Test', () => {
       await expiryInput.tap();
       await typeTextInInput(expiryInput,visaSandboxCard.expiryDate);
 
+      await dismissKeyboard();
+      
       const payButton =element(by.id(testIds.payButtonTestId));
       await payButton.tap();
 
@@ -346,6 +363,8 @@ describe('Card Validation E2E Test', () => {
       const cvcInput = element(by.id(testIds.cvcInputTestId));
       await cvcInput.tap();
       await typeTextInInput(cvcInput, visaSandboxCard.cvc);
+
+      await dismissKeyboard();
 
       const payButton = element(by.id(testIds.payButtonTestId));
       await waitForVisibility(payButton);
