@@ -140,20 +140,27 @@ let useAccountPaymentMethodModifier = () => {
           if walletExperience->Option.isSome {
             switch nativeProp.sdkState {
             | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
-              Types.defaultButtonElementArr->Array.includes(paymentMethodData.payment_method_type)
-                ? elementArr->Array.push(
-                    <PaymentMethod
-                      key={paymentMethodData.payment_method_type}
-                      paymentMethodData
-                      sessionObject
-                      methodType=ELEMENT
-                    />,
-                  )
-                : tabArr->Array.push({
-                    name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
-                    componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                      <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
-                  })
+              let showOneClickWalletsOnTop =
+                nativeProp.configuration.appearance.layout.showOneClickWalletsOnTop
+              let isWalletPaymentMethod =
+                Types.defaultButtonElementArr->Array.includes(paymentMethodData.payment_method_type)
+
+              if isWalletPaymentMethod && showOneClickWalletsOnTop {
+                elementArr->Array.push(
+                  <PaymentMethod
+                    key={paymentMethodData.payment_method_type}
+                    paymentMethodData
+                    sessionObject
+                    methodType=ELEMENT
+                  />,
+                )
+              } else {
+                tabArr->Array.push({
+                  name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                  componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
+                    <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                })
+              }
 
             | TabSheet | WidgetTabSheet =>
               tabArr->Array.push({
