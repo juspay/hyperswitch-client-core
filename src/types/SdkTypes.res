@@ -166,7 +166,6 @@ type applePayConfiguration = {
 }
 
 type themeType = Default | Light | Dark | Minimal | FlatMinimal
-type layoutType = Tab | Accordion | SpacedAccordion
 
 type appearance = {
   locale: option<LocaleDataType.localeTypes>,
@@ -177,7 +176,7 @@ type appearance = {
   googlePay: googlePayConfiguration,
   applePay: applePayConfiguration,
   theme: themeType,
-  layout: layoutType,
+  layout: LayoutTypes.layout,
 }
 
 type address = {
@@ -412,7 +411,16 @@ let defaultAppearance: appearance = {
     buttonStyle: None,
   },
   theme: Default,
-  layout: Tab,
+  layout: {
+    layoutType: Tab,
+    showOneClickWalletsOnTop: true,
+    paymentMethodsArrangementForTabs: ArrangementDefault,
+    defaultCollapsed: false,
+    radios: false,
+    spacedAccordionItems: false,
+    maxAccordionItems: 4,
+    savedMethodCustomization: {groupingBehavior: GroupingDefault},
+  },
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
@@ -700,12 +708,7 @@ let getAppearanceObj = (
     | "FlatMinimal" => FlatMinimal
     | _ => Default
     },
-    layout: switch getString(appearanceDict, "layout", "") {
-    | "tabs" => Tab
-    | "accordion" => Accordion
-    | "spacedAccordion" => SpacedAccordion
-    | _ => Tab
-    },
+    layout: LayoutTypes.parseLayout(appearanceDict),
   }
 }
 
