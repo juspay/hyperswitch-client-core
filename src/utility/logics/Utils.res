@@ -30,7 +30,25 @@ let getString = (dict, key, default) => {
 let getBool = (dict, key, default) => {
   dict
   ->Dict.get(key)
-  ->Option.flatMap(JSON.Decode.bool)
+  ->Option.flatMap(value => {
+    // Flutter method channel converts bools to 0/1
+    switch JSON.Decode.bool(value) {
+    | Some(b) => Some(b)
+    | None =>
+      switch JSON.Decode.float(value) {
+      | Some(num) => Some(num != 0.0)
+      | None => None
+      }
+    }
+  })
+  ->Option.getOr(default)
+}
+
+let getInt = (dict, key, default) => {
+  dict
+  ->Dict.get(key)
+  ->Option.flatMap(JSON.Decode.float)
+  ->Option.map(Float.toInt)
   ->Option.getOr(default)
 }
 
