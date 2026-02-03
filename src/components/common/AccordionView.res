@@ -25,7 +25,7 @@ let make = (
   ~contentStyle: option<ReactNative.Style.t>=?,
   ~animationDuration: int=300,
   ~allowMultipleExpanded: bool=false,
-  ~layout: SdkTypes.layoutType,
+  ~spacedAccordionItems: bool=false,
 ) => {
   let isExpanded = (sectionKey: int) => {
     expandedSections->Array.includes(sectionKey)
@@ -48,7 +48,7 @@ let make = (
       <View
         key={section.key->Int.toString}
         style={array([
-          layout === SpacedAccordion
+          spacedAccordionItems
             ? s({
                 marginBottom: 10.->dp,
                 borderWidth,
