@@ -33,13 +33,11 @@ let make = (
     let {input: currencyInput, meta: currencyMeta} = ReactFinalForm.useField(
       currencyConfig.outputPath,
       ~config={validate: createFieldValidator(Validation.Required)},
-      (),
     )
 
     let {input: networkInput, meta: networkMeta} = ReactFinalForm.useField(
       networkConfig.outputPath,
       ~config={validate: createFieldValidator(Validation.Required)},
-      (),
     )
 
     <>

@@ -24,6 +24,7 @@
   "bs-dependencies": [
     "@rescript/react",
     "rescript-react-native",
-    "@rescript/core"
+    "@rescript/core",
+    "@glennsl/rescript-fetch"
   ]
 }

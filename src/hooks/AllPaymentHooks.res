@@ -50,7 +50,7 @@ let useRetrieveHook = () => {
         )
       }
 
-      APIUtils.fetchApiWrapper(~uri, ~method=Get, ~headers, ~eventName, ~apiLogWrapper)
+      APIUtils.fetchApiWrapper(~uri, ~method=#GET, ~headers, ~eventName, ~apiLogWrapper)
     }
   }
 }
@@ -67,7 +67,7 @@ let usePaymentMethodHook = (~customerLevel=false) => {
         ~uri=`${baseUrl}/${customerLevel
             ? "customers"
             : "account"}/payment_methods?client_secret=${nativeProp.clientSecret}`,
-        ~method=Fetch.Get,
+        ~method=#GET,
         ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
         ~eventName={customerLevel ? CUSTOMER_PAYMENT_METHODS_CALL : PAYMENT_METHODS_CALL},
         ~apiLogWrapper,
@@ -90,7 +90,7 @@ let useSessionTokenHook = () => {
           ~clientSecret=nativeProp.clientSecret,
           ~wallet,
         ),
-        ~method=Fetch.Post,
+        ~method=#POST,
         ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
         ~eventName=LoggerTypes.SESSIONS_CALL,
         ~apiLogWrapper,
@@ -304,7 +304,7 @@ let useGetSavedPMHook = () => {
     | _ =>
       APIUtils.fetchApiWrapper(
         ~uri=`${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`,
-        ~method=Fetch.Get,
+        ~method=#GET,
         ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
         ~eventName=LoggerTypes.CUSTOMER_PAYMENT_METHODS_CALL,
         ~apiLogWrapper,
@@ -333,7 +333,7 @@ let useDeleteSavedPaymentMethod = () => {
     if nativeProp.ephemeralKey->Option.isSome {
       APIUtils.fetchApiWrapper(
         ~uri,
-        ~method=Fetch.Delete,
+        ~method=#DELETE,
         ~headers=Utils.getHeader(
           nativeProp.ephemeralKey->Option.getOr(""),
           nativeProp.hyperParams.appId,
@@ -358,7 +358,7 @@ let useSavePaymentMethod = () => {
 
     APIUtils.fetchApiWrapper(
       ~uri,
-      ~method=Fetch.Post,
+      ~method=#POST,
       ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
       ~eventName=LoggerTypes.ADD_PAYMENT_METHOD_CALL,
       ~body=body->JSON.stringifyAny->Option.getOr(""),

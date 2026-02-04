@@ -135,7 +135,9 @@ module SvgUri = {
       switch svgUriCache->Dict.get(uri) {
       | Some(xml) => setXml(_ => Some(xml))
       | None =>
-        Fetch.fetch(uri)
+        Fetch.fetch(uri, {
+          method: #GET,
+        })
         ->Promise.then(Fetch.Response.text)
         ->Promise.then(text => {
           if text === "" || text->String.trim->String.sliceToEnd(~start=-6) !== "</svg>" {

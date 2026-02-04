@@ -78,11 +78,10 @@ let sendLogs = (logFile, uri: option<string>, publishableKey, appId) => {
       let data = logFile->logFileToObj->JSON.stringify
       APIUtils.fetchApi(
         ~uri,
-        ~method_=Post,
+        ~method_=#POST,
         ~bodyStr=data,
         ~headers=Utils.getHeader(publishableKey, appId),
-        ~mode=NoCORS,
-        (),
+        ~mode=#"no-cors",
       )
       ->Promise.then(res => res->Fetch.Response.json)
       ->Promise.catch(_ => {

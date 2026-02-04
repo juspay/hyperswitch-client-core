@@ -57,6 +57,7 @@
     "@babel/runtime": "^7.25.0",
     "@commitlint/cli": "^17.0.3",
     "@commitlint/config-conventional": "^17.0.3",
+    "@glennsl/rescript-fetch": "0.2.3",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@react-native-community/cli": "18.0.1",
     "@react-native-community/cli-platform-android": "18.0.0",

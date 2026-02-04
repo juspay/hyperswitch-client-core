@@ -108,7 +108,7 @@ let useExternalThreeDs = () => {
         }
 
         let headers = getAuthCallHeaders(publishableKey)
-        APIUtils.fetchApi(~uri, ~headers, ~method_=Fetch.Get, ())
+        APIUtils.fetchApi(~uri, ~headers, ~method_=#GET)
         ->Promise.then(data => {
           let statusCode = data->Fetch.Response.status->string_of_int
           if statusCode->String.charAt(0) === "2" {
@@ -227,7 +227,7 @@ let useExternalThreeDs = () => {
         (),
       )
       let headers = [("Content-Type", "application/json")]->Dict.fromArray
-      APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=Fetch.Post, ())
+      APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=#POST)
       ->Promise.then(async data => {
         setLoading(ProcessingPayments)
         let statusCode = data->Fetch.Response.status->string_of_int
@@ -336,7 +336,7 @@ let useExternalThreeDs = () => {
         (),
       )
 
-      APIUtils.fetchApi(~uri, ~bodyStr, ~headers, ~method_=Post, ())
+      APIUtils.fetchApi(~uri, ~bodyStr, ~headers, ~method_=#POST)
       ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
