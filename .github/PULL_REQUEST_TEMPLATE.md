@@ -3,7 +3,8 @@
 - [ ] Bugfix
 - [ ] Feature
 - [ ] Refactor
-- [ ] Chore / Infra
+- [ ] Chore
+- [ ] CI/CD
 - [ ] Docs
 
 ---
