@@ -46,6 +46,20 @@ type dynamicFieldsData = {
   setNickname: option<string> => unit,
   isNicknameValid: bool,
   setIsNicknameValid: bool => unit,
+  saveClickToPay: bool,
+  clickToPayRememberMe: bool,
+  setSaveClickToPay: bool => unit,
+  setClickToPayRememberMe: bool => unit,
+  clickToPayCardholderName: string,
+  setClickToPayCardholderName: string => unit,
+  isClickToPayCardholderNameValid: bool,
+  setIsClickToPayCardholderNameValid: bool => unit,
+  clickToPayPhoneNumber: ClickToPay.Types.phoneValue,
+  setClickToPayPhoneNumber: ClickToPay.Types.phoneValue => unit,
+  isClickToPayPhoneNumberValid: bool,
+  setIsClickToPayPhoneNumberValid: bool => unit,
+  showClickToPayErrors: bool,
+  setShowClickToPayErrors: bool => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -83,6 +97,20 @@ let dynamicFieldsContext = React.createContext({
   setNickname: _ => (),
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
+  saveClickToPay: false,
+  clickToPayRememberMe: false,
+  setSaveClickToPay: _ => (),
+  setClickToPayRememberMe: _ => (),
+  clickToPayCardholderName: "",
+  setClickToPayCardholderName: _ => (),
+  isClickToPayCardholderNameValid: false,
+  setIsClickToPayCardholderNameValid: _ => (),
+  clickToPayPhoneNumber: {phoneCode: "", phoneNumber: ""},
+  setClickToPayPhoneNumber: _ => (),
+  isClickToPayPhoneNumberValid: false,
+  setIsClickToPayPhoneNumberValid: _ => (),
+  showClickToPayErrors: false,
+  setShowClickToPayErrors: _ => (),
 })
 
 module Provider = {
@@ -376,6 +404,46 @@ let make = (~children) => {
     setIsNicknameValid(_ => val)
   }, [setIsNicknameValid])
 
+  let (saveClickToPay, setSaveClickToPay) = React.useState(_ => false)
+  let setSaveClickToPay = React.useCallback1(val => {
+    setSaveClickToPay(_ => val)
+  }, [setSaveClickToPay])
+
+  let (clickToPayRememberMe, setClickToPayRememberMe) = React.useState(_ => false)
+  let setClickToPayRememberMe = React.useCallback1(val => {
+    setClickToPayRememberMe(_ => val)
+  }, [setClickToPayRememberMe])
+
+  let (clickToPayCardholderName, setClickToPayCardholderName) = React.useState(_ => "")
+  let setClickToPayCardholderName = React.useCallback1(val => {
+    setClickToPayCardholderName(_ => val)
+  }, [setClickToPayCardholderName])
+
+  let (isClickToPayCardholderNameValid, setIsClickToPayCardholderNameValid) = React.useState(_ =>
+    false
+  )
+  let setIsClickToPayCardholderNameValid = React.useCallback1(val => {
+    setIsClickToPayCardholderNameValid(_ => val)
+  }, [setIsClickToPayCardholderNameValid])
+
+  let (
+    clickToPayPhoneNumber,
+    setClickToPayPhoneNumber,
+  ) = React.useState((_): ClickToPay.Types.phoneValue => {phoneCode: "", phoneNumber: ""})
+  let setClickToPayPhoneNumber = React.useCallback1(val => {
+    setClickToPayPhoneNumber(_ => val)
+  }, [setClickToPayPhoneNumber])
+
+  let (isClickToPayPhoneNumberValid, setIsClickToPayPhoneNumberValid) = React.useState(_ => false)
+  let setIsClickToPayPhoneNumberValid = React.useCallback1(val => {
+    setIsClickToPayPhoneNumberValid(_ => val)
+  }, [setIsClickToPayPhoneNumberValid])
+
+  let (showClickToPayErrors, setShowClickToPayErrors) = React.useState(_ => false)
+  let setShowClickToPayErrors = React.useCallback1(val => {
+    setShowClickToPayErrors(_ => val)
+  }, [setShowClickToPayErrors])
+
   React.useEffect(() => {
     if isNicknameSelected == false {
       setNickname(None)
@@ -383,6 +451,16 @@ let make = (~children) => {
     }
     None
   }, [isNicknameSelected])
+
+  React.useEffect(() => {
+    if saveClickToPay == false {
+      setClickToPayCardholderName("")
+      setIsClickToPayCardholderNameValid(false)
+      setClickToPayPhoneNumber({phoneCode: "", phoneNumber: ""})
+      setIsClickToPayPhoneNumberValid(false)
+    }
+    None
+  }, [saveClickToPay])
 
   <Provider
     value={
@@ -401,6 +479,20 @@ let make = (~children) => {
       setNickname,
       isNicknameValid,
       setIsNicknameValid,
+      saveClickToPay,
+      clickToPayRememberMe,
+      setSaveClickToPay,
+      setClickToPayRememberMe,
+      clickToPayCardholderName,
+      setClickToPayCardholderName,
+      isClickToPayCardholderNameValid,
+      setIsClickToPayCardholderNameValid,
+      clickToPayPhoneNumber,
+      setClickToPayPhoneNumber,
+      isClickToPayPhoneNumberValid,
+      setIsClickToPayPhoneNumberValid,
+      showClickToPayErrors,
+      setShowClickToPayErrors,
     }>
     children
   </Provider>

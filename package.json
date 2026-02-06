@@ -38,13 +38,15 @@
     "lint:secrets": "gitleaks detect --source . --no-banner --verbose"
   },
   "dependencies": {
+    "@juspay-tech/react-native-hyperswitch-click-to-pay": "^0.2.1",
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
     "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.2",
     "@sentry/react-native": "^6.13.0",
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",
     "react-native-inappbrowser-reborn": "^3.7.0",
-    "react-native-svg": "^15.6.0"
+    "react-native-svg": "^15.6.0",
+    "react-native-webview": "^13.16.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
