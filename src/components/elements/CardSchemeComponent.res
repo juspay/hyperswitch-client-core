@@ -29,7 +29,8 @@ module CardSchemeSelectionPopoverElement = {
             onPress={_ => {
               setCardBrand(item)
               toggleVisibility()
-            }}>
+            }}
+          >
             <View style={s({flexDirection: #row, alignItems: #center, paddingVertical: 5.->dp})}>
               <Icon name={item} height=30. width=30. fill="black" fallbackIcon="waitcard" />
               <Space />
@@ -172,7 +173,8 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
       maxWidth=200.
       maxHeight=180.
       renderContent={toggleVisibility =>
-        <CardSchemeSelectionPopoverElement eligibleCardSchemes setCardBrand toggleVisibility />}>
+        <CardSchemeSelectionPopoverElement eligibleCardSchemes setCardBrand toggleVisibility />}
+    >
       <View
         style={s({
           height: 46.->dp,
@@ -180,12 +182,14 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
           flexDirection: #row,
           justifyContent: #center,
           alignItems: #center,
-        })}>
+        })}
+      >
         <Animated.View
           style={s({
             opacity: fadeAnim->Animated.StyleProp.float,
             transform: [scale(~scale=scaleAnim->Animated.StyleProp.float)],
-          })}>
+          })}
+        >
           <Icon
             name={cardBrand === "" ? cardBrandForShow : cardBrand}
             height=32.

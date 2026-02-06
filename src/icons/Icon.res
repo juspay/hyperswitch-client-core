@@ -41,7 +41,7 @@ module Icon = {
     ~fallbackIcon: option<string>=?,
   ) => {
     let getIconName = name =>
-      name->String.replaceRegExp(%re("/ /g"), "")->String.replaceAll("/", "")->String.toLowerCase
+      name->String.replaceRegExp(/ /g, "")->String.replaceAll("/", "")->String.toLowerCase
 
     let (iconName, setIconName) = React.useState(_ => name->getIconName)
 

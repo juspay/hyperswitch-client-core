@@ -4,9 +4,9 @@ let useGetShadowStyle = (~shadowIntensity, ~shadowColor="black", ()) => {
   let shadowOffsetWidth = 0.->Float.toString
 
   let processedColor = ReactNative.Color.processColor(shadowColor)->Int.fromString->Option.getOr(0)
-  let r = processedColor->lsr(16)->land(255)->Int.toString
-  let g = processedColor->lsr(8)->land(255)->Int.toString
-  let b = processedColor->land(255)->Int.toString
+  let r = processedColor->Int.Bitwise.lsr(16)->Int.Bitwise.land(255)->Int.toString
+  let g = processedColor->Int.Bitwise.lsr(8)->Int.Bitwise.land(255)->Int.toString
+  let b = processedColor->Int.Bitwise.land(255)->Int.toString
 
   let a: JsxDOMStyle.t = {
     boxShadow: `${shadowOffsetWidth} ${shadowOffsetWidth} ${shadowOffsetHeight}px rgba(${r}, ${g}, ${b}, ${shadowOpacity})`,

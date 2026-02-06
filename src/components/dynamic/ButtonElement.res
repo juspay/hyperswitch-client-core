@@ -238,19 +238,19 @@ let make = (
           (),
         )
 
-        let timerId = setTimeout(() => {
-          setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-          logger(
-            ~logType=DEBUG,
-            ~value=paymentMethodData.payment_method_type,
-            ~category=USER_EVENT,
-            ~paymentMethod=paymentMethodData.payment_method_type,
-            ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-            ~paymentExperience=paymentMethodData.payment_experience,
-            (),
-          )
-        }, 5000)
+        // let timerId = setTimeout(() => {
+        //   setLoading(FillingDetails)
+        //   showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+        //   logger(
+        //     ~logType=DEBUG,
+        //     ~value=paymentMethodData.payment_method_type,
+        //     ~category=USER_EVENT,
+        //     ~paymentMethod=paymentMethodData.payment_method_type,
+        //     ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+        //     ~paymentExperience=paymentMethodData.payment_experience,
+        //     (),
+        //   )
+        // }, 5000)
 
         HyperModule.launchApplePay(
           [
@@ -261,20 +261,17 @@ let make = (
           ->JSON.Encode.object
           ->JSON.stringify,
           confirmApplePay,
-          _ => {
-            logger(
-              ~logType=DEBUG,
-              ~value=paymentMethodData.payment_method_type,
-              ~category=USER_EVENT,
-              ~paymentMethod=paymentMethodData.payment_method_type,
-              ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-              ~paymentExperience=paymentMethodData.payment_experience,
-              (),
-            )
-          },
-          _ => {
-            clearTimeout(timerId)
-          },
+          // _ => {
+          //   logger(
+          //     ~logType=DEBUG,
+          //     ~value=paymentMethodData.payment_method_type,
+          //     ~category=USER_EVENT,
+          //     ~paymentMethod=paymentMethodData.payment_method_type,
+          //     ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+          //     ~paymentExperience=paymentMethodData.payment_experience,
+          //     (),
+          //   )
+          // }
         )
       }
     | SAMSUNG_PAY =>
@@ -309,7 +306,8 @@ let make = (
       text={paymentMethodData.payment_method_type->CommonUtils.getDisplayName}
       borderRadius=buttonBorderRadius
       leftIcon=CustomIcon(<Icon name=buttonName width=24. height=32. fill=payNowButtonTextColor />)
-      onPress={_ => pressHandler()}>
+      onPress={_ => pressHandler()}
+    >
       {switch paymentMethodData.payment_method_type_wallet {
       | SAMSUNG_PAY =>
         Some(
@@ -321,7 +319,8 @@ let make = (
               justifyContent: #center,
               width: 100.->pct,
               height: 100.->pct,
-            })}>
+            })}
+          >
             <Icon name=buttonName width=240. height=60. />
           </View>,
         )

@@ -61,7 +61,7 @@ let defaultAccountPaymentMethods = {
   show_surcharge_breakup_screen: false,
 }
 
-let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
+let parseCardNetworks = (dict: dict<JSON.t>) => {
   dict
   ->getArray("card_networks")
   ->Array.map(item => {
@@ -73,7 +73,7 @@ let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
   })
 }
 
-let parseBankNames = (dict: Js.Dict.t<JSON.t>) => {
+let parseBankNames = (dict: dict<JSON.t>) => {
   dict
   ->getArray("bank_names")
   ->Array.map(item => {
@@ -87,7 +87,7 @@ let parseBankNames = (dict: Js.Dict.t<JSON.t>) => {
   })
 }
 
-let parsePaymentExperience = (dict: Js.Dict.t<JSON.t>) => {
+let parsePaymentExperience = (dict: dict<JSON.t>) => {
   dict
   ->getArray("payment_experience")
   ->Array.map(item => {
@@ -102,8 +102,8 @@ let parsePaymentExperience = (dict: Js.Dict.t<JSON.t>) => {
 }
 
 let parsePaymentMethodType = (
-  paymentMethodDict: Js.Dict.t<JSON.t>,
-  paymentMethodTypeDict: Js.Dict.t<JSON.t>,
+  paymentMethodDict: dict<JSON.t>,
+  paymentMethodTypeDict: dict<JSON.t>,
 ) => {
   let paymentMethodStr = paymentMethodDict->getString("payment_method", "")
   let paymentMethodTypeStr = paymentMethodTypeDict->getString("payment_method_type", "")

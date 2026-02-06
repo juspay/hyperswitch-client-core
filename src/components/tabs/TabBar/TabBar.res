@@ -8,7 +8,7 @@ type calculationOptions = {
   layoutWidth: float,
   gap: option<float>,
   scrollEnabled: option<bool>,
-  tabWidths: Js.Dict.t<float>,
+  tabWidths: dict<float>,
   flattenedPaddingStart: option<Style.size>,
   flattenedPaddingEnd: option<Style.size>,
   flattenedTabWidth: option<Style.size>,
@@ -60,7 +60,7 @@ let getComputedTabWidth = (
   ~layoutWidth: float,
   ~routes: array<route>,
   ~scrollEnabled: option<bool>,
-  ~tabWidths: Js.Dict.t<float>,
+  ~tabWidths: dict<float>,
   ~flattenedTabWidth: tabSize,
   ~flattenedPaddingStart: tabSize,
   ~flattenedPaddingEnd: tabSize,
@@ -69,7 +69,7 @@ let getComputedTabWidth = (
   switch switch flattenedTabWidth {
   | #auto =>
     switch routes[index] {
-    | Some(route) => Some(tabWidths->Js.Dict.get(route.key)->Option.getOr(0.))
+    | Some(route) => Some(tabWidths->Dict.get(route.key)->Option.getOr(0.))
     | None => Some(0.)
     }
   | #dp(num) => Some(num)
@@ -122,7 +122,7 @@ let getTabBarWidth = (
   ~flattenedTabWidth: tabSize,
   ~flattenedPaddingStart: tabSize,
   ~flattenedPaddingEnd: tabSize,
-  ~tabWidths: Js.Dict.t<float>,
+  ~tabWidths: dict<float>,
 ) => {
   let paddingsWidth = Math.max(
     0.,
@@ -152,7 +152,7 @@ let normalizeScrollValue = (
   ~routes: array<route>,
   ~gap: option<float>,
   ~scrollEnabled: option<bool>,
-  ~tabWidths: Js.Dict.t<float>,
+  ~tabWidths: dict<float>,
   ~value: float,
   ~flattenedTabWidth: tabSize,
   ~flattenedPaddingStart: tabSize,
@@ -186,7 +186,7 @@ let getScrollAmount = (
   ~gap: option<float>,
   ~scrollEnabled: option<bool>,
   ~flattenedTabWidth: tabSize,
-  ~tabWidths: Js.Dict.t<float>,
+  ~tabWidths: dict<float>,
   ~flattenedPaddingStart: tabSize,
   ~flattenedPaddingEnd: tabSize,
   ~direction: localeDirection,
@@ -265,17 +265,17 @@ let make = (
   ~tabStyle=?,
   ~testID=?,
   ~android_ripple=?,
-  ~options: option<Js.Dict.t<tabDescriptor>>=?,
+  ~options: option<dict<tabDescriptor>>=?,
   ~isLoading,
 ) => {
   let containerRef = React.useRef(Nullable.null)
   let (layout, onLayout) = MeasureLayoutHook.useMeasureLayout(containerRef)
 
-  let (tabWidths, setTabWidths) = React.useState(() => Js.Dict.empty())
+  let (tabWidths, setTabWidths) = React.useState(() => Dict.make())
   let flatListRef = React.useRef(Nullable.null)
   let isFirst = React.useRef(true)
   let scrollAmount = AnimatedValue.useAnimatedValue(0.)
-  let measuredTabWidths = React.useRef(Js.Dict.empty())
+  let measuredTabWidths = React.useRef(Dict.make())
 
   let {routes} = navigationState
   let flattenedTabWidth = getFlattenedTabWidth(tabStyle)
@@ -300,7 +300,7 @@ let make = (
     layout.width != 0. &&
       routes
       ->Array.slice(~start=0, ~end=navigationState.index)
-      ->Array.every(r => tabWidths->Js.Dict.get(r.key)->Option.isSome)
+      ->Array.every(r => tabWidths->Dict.get(r.key)->Option.isSome)
 
   React.useEffect4(() => {
     if isFirst.current {
@@ -332,7 +332,7 @@ let make = (
 
   let renderItem: VirtualizedList.renderItemCallback<route> = React.useCallback(
     ({item: route, index}: VirtualizedList.renderItemProps<route>) => {
-      let descriptor = options->Option.flatMap(opts => opts->Js.Dict.get(route.key))
+      let descriptor = options->Option.flatMap(opts => opts->Dict.get(route.key))
 
       let testID =
         descriptor
@@ -357,19 +357,17 @@ let make = (
       let onLayoutHandler = isWidthDynamic
         ? Some(
             (event: Event.layoutEvent) => {
-              measuredTabWidths.current->Js.Dict.set(route.key, event.nativeEvent.layout.width)
+              measuredTabWidths.current->Dict.set(route.key, event.nativeEvent.layout.width)
               if (
                 routes->Array.length > measurePerBatch &&
                 index === measurePerBatch &&
                 routes
                 ->Array.slice(~start=0, ~end=measurePerBatch)
-                ->Array.every(r => measuredTabWidths.current->Js.Dict.get(r.key)->Option.isSome)
+                ->Array.every(r => measuredTabWidths.current->Dict.get(r.key)->Option.isSome)
               ) {
                 setTabWidths(_ => measuredTabWidths.current)
               } else if (
-                routes->Array.every(r =>
-                  measuredTabWidths.current->Js.Dict.get(r.key)->Option.isSome
-                )
+                routes->Array.every(r => measuredTabWidths.current->Dict.get(r.key)->Option.isSome)
               ) {
                 setTabWidths(_ => measuredTabWidths.current)
               }
@@ -526,7 +524,8 @@ let make = (
   <Animated.View
     ref={containerRef->ReactNative.Ref.value}
     onLayout
-    style={array([s({zIndex: 1}), style->Option.getOr(empty)])}>
+    style={array([s({zIndex: 1}), style->Option.getOr(empty)])}
+  >
     <View style={s({overflow: #scroll})}>
       <Animated.FlatList
         data={routes}

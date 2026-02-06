@@ -32,8 +32,8 @@ module WrapperProvider = {
         countryStateDataHook(~decodeJsonToRecord=S3ApiHook.decodeJsonTocountryStateData, ~s3Path)
         ->Promise.then(res => {
           let fetchedData = res->Option.getExn
-          if fetchedData.countries->Js.Array2.length == 0 {
-            Promise.reject(Exn.raiseError("API call failed"))
+          if fetchedData.countries->Array.length == 0 {
+            Promise.reject(JsError.throwWithMessage("API call failed"))
           } else {
             setState(_ => FetchData(fetchedData))
             Promise.resolve()

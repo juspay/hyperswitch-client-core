@@ -22,7 +22,8 @@ let make = (~children) => {
       alignContent: #center,
       backgroundColor: "transparent",
       justifyContent: #center,
-    })}>
+    })}
+  >
     <Animated.View style={s({maxHeight: 100.->pct})}>
       <CustomView.WidgetWrapper> {children} </CustomView.WidgetWrapper>
     </Animated.View>

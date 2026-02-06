@@ -2,7 +2,7 @@ type linkLogLevel = DEBUG | INFO | WARN | ERROR
 
 type commonPlaidLinkOptions = {
   logLevel?: linkLogLevel,
-  extras?: Js.Dict.t<Js.Json.t>,
+  extras?: dict<JSON.t>,
 }
 
 type linkTokenConfiguration = {

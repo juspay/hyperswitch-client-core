@@ -30,7 +30,8 @@ let make = () => {
         height: 100.->pct,
         width: 100.->pct,
       }),
-    ])}>
+    ])}
+  >
     <TubeSpinner size=60. />
     <Space />
     <View style={s({display: #flex, flexDirection: #row})}>

@@ -56,7 +56,8 @@ let make = (~height="45", ~width="100%", ~speed=1.3, ~radius=None, ~style) => {
     // viewBox
     ?style
     backgroundColor=loadingBgColor
-    foregroundColor=loadingFgColor>
+    foregroundColor=loadingFgColor
+  >
     <Rect x="0" y="0" rx={br->Float.toString} ry={br->Float.toString} width height />
   </ContentLoader>
 }

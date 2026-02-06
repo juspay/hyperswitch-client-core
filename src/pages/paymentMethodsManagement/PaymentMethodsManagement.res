@@ -93,7 +93,8 @@ let make = () => {
           flex: 1.,
           justifyContent: #center,
           alignItems: #center,
-        })}>
+        })}
+      >
         <TextWrapper text={"Loading ..."} textType={CardText} />
       </View>
     : savedMethods->Array.length > 0
@@ -120,7 +121,8 @@ let make = () => {
             borderBottomColor: component.borderColor,
             backgroundColor: component.background,
             alignItems: #center,
-          })}>
+          })}
+        >
           <TextWrapper text={"No saved payment methods available."} textType={ModalTextLight} />
         </View>
         <PaymentMethodListItem.AddPaymentMethodButton />

@@ -122,3 +122,6 @@ next-env.d.ts
 
 #mockData
 mockData.js
+
+
+lib/*

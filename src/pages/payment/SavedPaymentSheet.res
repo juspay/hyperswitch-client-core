@@ -142,11 +142,11 @@ let make = (
             [
               (
                 paymentMethodData.payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                [("nick_name", name->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object,
               ),
             ]
             ->Dict.fromArray
-            ->Js.Json.object_,
+            ->JSON.Encode.object,
           ),
         ]->Dict.fromArray
       | None => Dict.make()
@@ -165,15 +165,15 @@ let make = (
                       ? "_redirect"
                       : ""
                   ),
-                  walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                  walletDict->Option.getOr(Dict.make())->JSON.Encode.object,
                 ),
               ]
               ->Dict.fromArray
-              ->Js.Json.object_,
+              ->JSON.Encode.object,
             ),
           ]
           ->Dict.fromArray
-          ->Js.Json.object_,
+          ->JSON.Encode.object,
         ),
       ]->Dict.fromArray
     }
@@ -440,18 +440,18 @@ let make = (
               (),
             )
 
-            let timerId = setTimeout(() => {
-              setLoading(FillingDetails)
-              showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-              logger(
-                ~logType=DEBUG,
-                ~value="apple_pay",
-                ~category=USER_EVENT,
-                ~paymentMethod="apple_pay",
-                ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-                (),
-              )
-            }, 5000)
+            // let timerId = setTimeout(() => {
+            //   setLoading(FillingDetails)
+            //   showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+            //   logger(
+            //     ~logType=DEBUG,
+            //     ~value="apple_pay",
+            //     ~category=USER_EVENT,
+            //     ~paymentMethod="apple_pay",
+            //     ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+            //     (),
+            //   )
+            // }, 5000)
 
             WebKit.platform === #ios
               ? HyperModule.launchApplePay(
@@ -463,19 +463,19 @@ let make = (
                   ->JSON.Encode.object
                   ->JSON.stringify,
                   confirmApplePay,
-                  _ => {
-                    logger(
-                      ~logType=DEBUG,
-                      ~value="apple_pay",
-                      ~category=USER_EVENT,
-                      ~paymentMethod="apple_pay",
-                      ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                      (),
-                    )
-                  },
-                  _ => {
-                    clearTimeout(timerId)
-                  },
+                  // _ => {
+                  //   logger(
+                  //     ~logType=DEBUG,
+                  //     ~value="apple_pay",
+                  //     ~category=USER_EVENT,
+                  //     ~paymentMethod="apple_pay",
+                  //     ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+                  //     (),
+                  //   )
+                  // },
+                  // _ => {
+                  //   clearTimeout(timerId)
+                  // },
                 )
               : launchApplePay(
                   [

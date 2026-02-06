@@ -66,13 +66,15 @@ let make = (
                 borderColor: component.borderColor,
               }),
           sectionStyle->Option.getOr(empty),
-        ])}>
+        ])}
+      >
         <CustomPressable
           onPress={_ => handleSectionPress(section.key)}
           style=?headerStyle
           focusable={section.accessible->Option.getOr(true)}
           accessibilityLabel={section.accessibilityLabel->Option.getOr("")}
-          testID={section.testID->Option.getOr("")}>
+          testID={section.testID->Option.getOr("")}
+        >
           {renderSectionHeader(~section, ~isExpanded=expanded)}
         </CustomPressable>
         <UIUtils.RenderIf condition={expanded}>
@@ -83,7 +85,8 @@ let make = (
                 paddingHorizontal: 24.->dp,
               }),
               contentStyle->Option.getOr(empty),
-            ])}>
+            ])}
+          >
             {renderSectionContent(~section)}
           </View>
         </UIUtils.RenderIf>

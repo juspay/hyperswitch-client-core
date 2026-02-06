@@ -133,7 +133,8 @@ module TabBarItemInternal = {
             style={array([
               StyleSheet.absoluteFill,
               s({opacity: activeOpacity->Animated.StyleProp.float}),
-            ])}>
+            ])}
+          >
             {activeIcon}
           </Animated.View>
         </View>
@@ -220,7 +221,8 @@ module TabBarItemInternal = {
           borderRadius,
         }),
         tabContainerStyle->Option.getOr(empty),
-      ])}>
+      ])}
+    >
       <View pointerEvents=#none ?style>
         {iconElement}
         <Space height=2. />
@@ -232,7 +234,8 @@ module TabBarItemInternal = {
             style={array([
               StyleSheet.absoluteFill,
               s({opacity: activeOpacity->Animated.StyleProp.float}),
-            ])}>
+            ])}
+          >
             {renderLabel(true)}
           </Animated.View>
         </View>

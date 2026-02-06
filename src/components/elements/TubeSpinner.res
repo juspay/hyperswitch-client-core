@@ -43,11 +43,13 @@ let make = (~loaderColor=?, ~size=?) => {
   }, [rotateSpin])
   <View>
     <Animated.View
-      style={s({transform: [rotate(~rotate=angleSpinValue->Animated.StyleProp.angle)]})}>
+      style={s({transform: [rotate(~rotate=angleSpinValue->Animated.StyleProp.angle)]})}
+    >
       <Svg width=size height=size viewBox="0 0 200 200">
         <Defs>
           <RadialGradient
-            id="a12" cx="0.66" fx="0.66" cy="0.3125" fy="0.3125" gradientTransform="scale(1.5)">
+            id="a12" cx="0.66" fx="0.66" cy="0.3125" fy="0.3125" gradientTransform="scale(1.5)"
+          >
             <Stop offset="0" stopColor={iconColor} />
             <Stop offset="0.3" stopColor={iconColor} stopOpacity="0.9" />
             <Stop offset="0.6" stopColor={iconColor} stopOpacity="0.6" />

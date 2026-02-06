@@ -59,7 +59,8 @@ let make = (~children, ~isLoading) => {
       backgroundColor: paymentSheetOverlay,
       justifyContent: #"flex-end",
       paddingTop: viewPortContants.topInset->dp,
-    })}>
+    })}
+  >
     <GlobalBanner />
     <Animated.View
       style={s({
@@ -67,7 +68,8 @@ let make = (~children, ~isLoading) => {
         flexGrow: {sheetFlex->Animated.StyleProp.float},
         maxHeight: 100.->pct,
         minWidth: 302.->dp,
-      })}>
+      })}
+    >
       <CustomView onDismiss=onModalClose>
         <CustomView.Wrapper onModalClose isLoading> {children} </CustomView.Wrapper>
       </CustomView>

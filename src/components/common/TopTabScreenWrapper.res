@@ -19,7 +19,8 @@ let make = (~children, ~setDynamicHeight, ~isScreenFocus, ~width=None) => {
   }, (viewHeight, setDynamicHeight, isScreenFocus))
   <View
     onLayout=updateTabHeight
-    style={s({width: width->Option.getOr(Dimensions.get(#window).width->dp)})}>
+    style={s({width: width->Option.getOr(Dimensions.get(#window).width->dp)})}
+  >
     children
   </View>
 }

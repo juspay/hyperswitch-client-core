@@ -16,7 +16,8 @@ module AddPaymentMethodButton = {
         borderBottomColor: component.borderColor,
         flexDirection: #row,
         flexWrap: #nowrap,
-      })}>
+      })}
+    >
       <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center, flex: 1.})}>
         <Icon
           name={"addwithcircle"}
@@ -87,7 +88,8 @@ let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type, 
       alignItems: #center,
       justifyContent: #"space-between",
       flex: 1.,
-    })}>
+    })}
+  >
     <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center, flex: 4.})}>
       <Icon
         name={switch pmDetails.payment_method {
@@ -108,7 +110,8 @@ let make = (~pmDetails: CustomerPaymentMethodType.customer_payment_method_type, 
         flexWrap: #nowrap,
         alignItems: #center,
         flex: 1.,
-      })}>
+      })}
+    >
       <TextWrapper text={localeObject.deletePaymentMethod} textType=LinkText />
     </View>
   </CustomPressable>

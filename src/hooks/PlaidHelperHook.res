@@ -5,7 +5,7 @@ let usePlaidProps = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   let getOpenProps = (
-    retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
+    retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<JSON.t>,
     responseCallback: (~paymentStatus: sdkPaymentState, ~status: error) => unit,
     errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
   ) => {

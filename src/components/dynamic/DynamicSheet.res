@@ -53,13 +53,15 @@ let make = (~children, ~handlePress) => {
         backgroundColor: paymentSheetOverlay,
         justifyContent: #center,
         paddingTop: viewPortContants.topInset->dp,
-      })}>
+      })}
+    >
       <Animated.View
         style={s({
           // transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
           // flexGrow: {sheetFlex->Animated.StyleProp.float},
           maxHeight: 100.->pct,
-        })}>
+        })}
+      >
         <View style={s({flex: 1., alignItems: #center, justifyContent: #"flex-end"})}>
           <CustomPressable
             style={s({
@@ -79,7 +81,8 @@ let make = (~children, ~handlePress) => {
               maxHeight: 100.->pct,
               alignItems: #center,
               justifyContent: #center,
-            })}>
+            })}
+          >
             <ScrollView
               contentContainerStyle={s({
                 minHeight: 250.->dp,
@@ -89,7 +92,8 @@ let make = (~children, ~handlePress) => {
               })}
               keyboardShouldPersistTaps={#handled}
               showsVerticalScrollIndicator=false
-              style={array([s({flexGrow: 1., width: 100.->pct}), bgColor])}>
+              style={array([s({flexGrow: 1., width: 100.->pct}), bgColor])}
+            >
               <View
                 style={array([
                   s({
@@ -98,14 +102,16 @@ let make = (~children, ~handlePress) => {
                     backgroundColor: component.background,
                   }),
                   bgColor,
-                ])}>
+                ])}
+              >
                 <View
                   style={s({
                     flexDirection: #row,
                     alignItems: #center,
                     justifyContent: #"space-between",
                     paddingVertical: 16.->dp,
-                  })}>
+                  })}
+                >
                   <TextWrapper text="Additional Fields" textType={HeadingBold} />
                 </View>
                 {children}

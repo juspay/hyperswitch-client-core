@@ -93,7 +93,8 @@ let make = (
           | None => ()
           }
         }, 300)->ignore
-      }}>
+      }}
+    >
       <View
         style={array([
           s({
@@ -101,7 +102,8 @@ let make = (
             paddingTop: viewPortContants.topInset->dp,
           }),
           transparentBG,
-        ])}>
+        ])}
+      >
         <View
           style={array([
             s({
@@ -117,7 +119,8 @@ let make = (
               paddingHorizontal: 20.->dp,
             }),
             bgColor,
-          ])}>
+          ])}
+        >
           <Space />
           <View
             style={s({
@@ -125,10 +128,12 @@ let make = (
               width: 100.->pct,
               alignItems: #center,
               justifyContent: #"space-between",
-            })}>
+            })}
+          >
             <TextWrapper text=placeholderText textType={HeadingBold} />
             <CustomPressable
-              onPress={_ => setIsModalVisible(prev => !prev)} style={s({padding: 14.->dp})}>
+              onPress={_ => setIsModalVisible(prev => !prev)} style={s({padding: 14.->dp})}
+            >
               <Icon name="close" width=20. height=20. fill=iconColor />
             </CustomPressable>
           </View>
@@ -184,7 +189,8 @@ let make = (
                     onPress={_ => {
                       setValue(_ => Some(item.value))
                       setIsModalVisible(_ => false)
-                    }}>
+                    }}
+                  >
                     {isCountryStateFields
                       ? <TextWrapper
                           text={item.icon->Option.getOr("") ++ item.label} textType=ModalText
@@ -209,7 +215,8 @@ let make = (
             opacity: 0.6,
             width: 100.->pct,
             height: 100.->pct,
-          })}>
+          })}
+        >
           <CustomLoader />
         </View>
       : React.null}

@@ -14,7 +14,8 @@ module WalletDisclaimer = {
           alignContent: #center,
           flexDirection: #row,
           alignItems: #center,
-        })}>
+        })}
+      >
         <Icon name="lock" fill="#767676" style={s({marginEnd: 5.->dp})} />
         <TextWrapper text={localeObject.walletDisclaimer} textType={ModalText} />
       </View>

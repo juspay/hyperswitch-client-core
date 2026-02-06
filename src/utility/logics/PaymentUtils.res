@@ -64,8 +64,8 @@ let generateCardConfirmBody = (
       accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
       language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
       color_depth: 32,
-      screen_height: ?screen_height->Option.map(Int.fromFloat),
-      screen_width: ?screen_width->Option.map(Int.fromFloat),
+      screen_height: ?(screen_height->Option.map(Int.fromFloat)),
+      screen_width: ?(screen_width->Option.map(Int.fromFloat)),
       time_zone: Date.make()->Date.getTimezoneOffset,
       java_enabled: true,
       java_script_enabled: true,
@@ -108,10 +108,12 @@ let generateSavedCardConfirmBody = (
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
   return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
-  payment_method_data: ?billing->Option.map(address =>
-    [("billing", address->Utils.getJsonObjectFromRecord)]
-    ->Dict.fromArray
-    ->JSON.Encode.object
+  payment_method_data: ?(
+    billing->Option.map(address =>
+      [("billing", address->Utils.getJsonObjectFromRecord)]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    )
   ),
   payment_type: ?payment_type_str,
   browser_info: {
@@ -119,8 +121,8 @@ let generateSavedCardConfirmBody = (
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
     language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
     color_depth: 32,
-    screen_height: ?screen_height->Option.map(Int.fromFloat),
-    screen_width: ?screen_width->Option.map(Int.fromFloat),
+    screen_height: ?(screen_height->Option.map(Int.fromFloat)),
+    screen_width: ?(screen_width->Option.map(Int.fromFloat)),
     time_zone: Date.make()->Date.getTimezoneOffset,
     java_enabled: true,
     java_script_enabled: true,

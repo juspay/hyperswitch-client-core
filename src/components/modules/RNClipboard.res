@@ -1,5 +1,5 @@
 type clipboard = {
-  getString: unit => Js.Promise.t<string>,
+  getString: unit => promise<string>,
   setString: string => unit,
 }
 

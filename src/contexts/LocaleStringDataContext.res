@@ -22,7 +22,7 @@ let make = (~children, ~locale) => {
       | Some(data) =>
         setState(_ => data)
         Promise.resolve()
-      | _ => Promise.reject(Exn.raiseError("API Failed"))
+      | _ => Promise.reject(JsError.throwWithMessage("API Failed"))
       }
     })
     ->Promise.catch(_ => {
@@ -36,7 +36,7 @@ let make = (~children, ~locale) => {
           | Some(data) =>
             setState(_ => data)
             Promise.resolve()
-          | _ => Promise.reject(Exn.raiseError("API Failed"))
+          | _ => Promise.reject(JsError.throwWithMessage("API Failed"))
           }
         },
       )

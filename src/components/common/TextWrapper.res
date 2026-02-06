@@ -167,7 +167,8 @@ let make = (
   <Text
     style={array([s({fontFamily: fontFamily}), renderStyle, overrideStyle])}
     ellipsizeMode
-    numberOfLines>
+    numberOfLines
+  >
     {switch text {
     | Some(text) => React.string(text)
     | None => React.null

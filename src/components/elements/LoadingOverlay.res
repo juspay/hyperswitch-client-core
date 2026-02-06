@@ -23,7 +23,8 @@ let make = () => {
             borderRadius,
           }),
           loading === ProcessingPaymentsWithOverlay ? bgColor : s({backgroundColor: "transparent"}),
-        ])}>
+        ])}
+      >
         {switch nativeProps.sdkState {
         | CardWidget | CustomWidget(_) =>
           <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
@@ -38,7 +39,8 @@ let make = () => {
               alignItems: #center,
               justifyContent: #center,
               marginHorizontal: 5.->dp,
-            })}>
+            })}
+          >
             <CustomLoader height="100%" />
           </View>
         | _ =>

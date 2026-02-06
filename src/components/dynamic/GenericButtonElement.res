@@ -16,7 +16,8 @@ let make = (~buttonName, ~color, ~width, ~height=?) => {
       justifyContent: #center,
       width: 100.->pct,
       backgroundColor: isDarkMode ? "#fff" : color,
-    })}>
+    })}
+  >
     {height->Option.isNone
       ? <Icon name=buttonName width=24. height=24. fill={isDarkMode ? color : "#fff"} />
       : React.null}

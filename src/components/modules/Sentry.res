@@ -23,7 +23,7 @@ external newSentryReplay: unit => integration = "Replay"
 external reactNativeTracingIntegration: unit => integration = "reactNativeTracingIntegration"
 
 type fallbackArg = {
-  error: Exn.t,
+  error: JsExn.t,
   componentStack: array<string>,
   resetError: unit => unit,
 }

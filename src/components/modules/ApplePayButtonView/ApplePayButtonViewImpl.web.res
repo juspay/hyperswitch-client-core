@@ -6,7 +6,7 @@ let make = (~cornerRadius: float, ~style: Style.t) => {
     style
     ->JSON.stringifyAny
     ->Option.getOr("")
-    ->Js.Json.parseExn
+    ->JSON.parseExn
     ->Utils.getDictFromJson
 
   let height =

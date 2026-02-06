@@ -40,7 +40,7 @@ let make = (
   let calculateTooltipPosition = _ => {
     setTooltipPosition(_ => None)
     toggleVisibility()
-    switch renderedElement.current->Js.Nullable.toOption {
+    switch renderedElement.current->Nullable.toOption {
     | Some(element) =>
       element->View.measure((~x as _, ~y as _, ~width as _, ~height, ~pageX, ~pageY) => {
         let x: TooltipTypes.positionX = if viewPortContants.screenWidth -. pageX < maxWidth {

@@ -8,7 +8,8 @@ module ContextWrapper = {
     <NativePropContext nativeProp>
       <LoggerContext>
         <ViewportContext
-          topInset=nativeProp.hyperParams.topInset bottomInset=nativeProp.hyperParams.bottomInset>
+          topInset=nativeProp.hyperParams.topInset bottomInset=nativeProp.hyperParams.bottomInset
+        >
           <ThemeContext appearance=nativeProp.configuration.appearance>
             <LocaleStringDataContext locale=nativeProp.configuration.appearance.locale>
               <CountryStateDataContext>

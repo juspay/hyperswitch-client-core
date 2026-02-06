@@ -79,7 +79,8 @@ module DatePicker = {
             fontSize: (13. +. placeholderTextSizeAdjust) *. fontScale,
             color: placeholderColor,
           }),
-        ])}>
+        ])}
+      >
         {React.string(placeholder)}
       </Text>
       <Space height=8. />
@@ -146,7 +147,8 @@ let make = (
     <React.Fragment key={field.outputPath}>
       <View style={s({marginBottom: 16.->dp})}>
         <ReactFinalForm.Field
-          name=field.outputPath validate=Some(createFieldValidator(Validation.Required))>
+          name=field.outputPath validate=Some(createFieldValidator(Validation.Required))
+        >
           {fieldProps => <DatePicker fieldProps placeholder accessible />}
         </ReactFinalForm.Field>
       </View>

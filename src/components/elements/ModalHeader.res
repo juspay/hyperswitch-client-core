@@ -14,11 +14,13 @@ let make = (~onModalClose, ~isLoading=false) => {
       flexDirection: #row,
       alignItems: #center,
       justifyContent: #"space-between",
-    })}>
+    })}
+  >
     {if sheetType !== ButtonSheet {
       <CustomPressable
         style={s({maxWidth: 60.->pct, flexDirection: #row, alignItems: #center})}
-        onPress={_ => setSheetType(ButtonSheet)}>
+        onPress={_ => setSheetType(ButtonSheet)}
+      >
         <Icon name="back" fill="#000" />
         <Space width=5. />
         <TextWrapper text={"Back"} textType={ModalTextBold} />
@@ -35,7 +37,8 @@ let make = (~onModalClose, ~isLoading=false) => {
       }
     }}
     <View
-      style={s({flexDirection: #row, flexWrap: #wrap, alignItems: #center, maxWidth: 40.->pct})}>
+      style={s({flexDirection: #row, flexWrap: #wrap, alignItems: #center, maxWidth: 40.->pct})}
+    >
       {isLoading
         ? <CustomLoader width="60" height="20" />
         : <>
@@ -47,7 +50,8 @@ let make = (~onModalClose, ~isLoading=false) => {
                     marginHorizontal: 5.->dp,
                     padding: 5.->dp,
                     borderRadius: 5.,
-                  })}>
+                  })}
+                >
                   <TextWrapper
                     textType={ModalTextBold}
                     text="Test Mode"

@@ -323,7 +323,8 @@ let make = () => {
       borderRadius: 5.,
       paddingHorizontal: 5.->dp,
       paddingVertical: 3.->dp,
-    })}>
+    })}
+  >
     <LoadingOverlay />
     <View
       style={s({
@@ -334,7 +335,8 @@ let make = () => {
         paddingHorizontal: 15.->dp,
         alignItems: #center,
         justifyContent: #"space-between",
-      })}>
+      })}
+    >
       {switch firstPaymentMethod {
       | Some(_pmDetails) => React.null //<SavedPaymentMethod.PMWithNickNameComponent savedPaymentMethod={pmDetails} />
       | None => React.null

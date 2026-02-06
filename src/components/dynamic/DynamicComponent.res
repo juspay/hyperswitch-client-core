@@ -108,11 +108,11 @@ let make = (~setConfirmButtonData) => {
             [
               (
                 payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                [("nick_name", name->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object,
               ),
             ]
             ->Dict.fromArray
-            ->Js.Json.object_,
+            ->JSON.Encode.object,
           ),
         ]->Dict.fromArray
       | None => Dict.make()
@@ -129,15 +129,15 @@ let make = (~setConfirmButtonData) => {
                   payment_method_type ++ (
                     pm === PAY_LATER || payment_method_type_wallet === PAYPAL ? "_redirect" : ""
                   ),
-                  walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                  walletDict->Option.getOr(Dict.make())->JSON.Encode.object,
                 ),
               ]
               ->Dict.fromArray
-              ->Js.Json.object_,
+              ->JSON.Encode.object,
             ),
           ]
           ->Dict.fromArray
-          ->Js.Json.object_,
+          ->JSON.Encode.object,
         ),
       ]->Dict.fromArray
     }
@@ -215,7 +215,8 @@ let make = (~setConfirmButtonData) => {
   }, (walletData, isFormValid, formData))
 
   <ReactNative.View
-    style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>
+    style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}
+  >
     <Space />
     <DynamicFields
       fields=missingRequiredFields

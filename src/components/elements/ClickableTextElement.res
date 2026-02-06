@@ -21,7 +21,8 @@ let make = (
   <CustomPressable
     disabled
     style={s({flexDirection: #row, alignItems: #center})}
-    onPress={_ => setIsSelected(!isSelected)}>
+    onPress={_ => setIsSelected(!isSelected)}
+  >
     <CustomSelectBox
       initialIconName updateIconName isSelected fill={isLink ? linkColor : primaryColor} ?size
     />

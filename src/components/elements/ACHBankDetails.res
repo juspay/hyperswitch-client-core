@@ -11,7 +11,8 @@ module DetailsView = {
           fontSize: 10.,
           fontWeight: #400,
           color: useThemeBasedStyle().detailsViewTextKeyColor,
-        })}>
+        })}
+      >
         {React.string(title ++ ":")}
       </Text>
       <Text
@@ -19,7 +20,8 @@ module DetailsView = {
           fontSize: 12.,
           fontWeight: #400,
           color: useThemeBasedStyle().detailsViewTextValueColor,
-        })}>
+        })}
+      >
         {React.string(value)}
       </Text>
     </View>
@@ -70,7 +72,8 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
         borderWidth: 0.5,
         borderColor: useThemeBasedStyle().silverBorderColor,
         gap: 12.->dp,
-      })}>
+      })}
+    >
       <DetailsView title=localeObject.accountNumberText value={data.account_number} />
       <DetailsView title=localeObject.bankName value={data.bank_name} />
       <DetailsView title=localeObject.formFieldACHRoutingNumberLabel value={data.routing_number} />
@@ -85,7 +88,8 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
         paddingHorizontal: 12.->dp,
         borderRadius: 8.,
         backgroundColor: useThemeBasedStyle().disclaimerBackgroundColor,
-      })}>
+      })}
+    >
       <Icon name={"disclaimer"} height=20. width=20. />
       <Text
         style={s({
@@ -93,7 +97,8 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
           fontWeight: #400,
           lineHeight: 18.,
           color: useThemeBasedStyle().disclaimerTextColor,
-        })}>
+        })}
+      >
         {React.string(localeObject.disclaimerTextAchTransfer)}
       </Text>
     </View>
@@ -136,7 +141,8 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
     />
     <Space height=14.0 />
     <View
-      style={s({flexDirection: #row, alignItems: #center, justifyContent: #center, gap: 4.->dp})}>
+      style={s({flexDirection: #row, alignItems: #center, justifyContent: #center, gap: 4.->dp})}
+    >
       <TextWrapper
         textType={Heading}
         overrideStyle={Some(
@@ -146,7 +152,8 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
             lineHeight: 12.,
             color: useThemeBasedStyle().poweredByTextColor,
           }),
-        )}>
+        )}
+      >
         {localeObject.poweredBy->React.string}
       </TextWrapper>
     </View>

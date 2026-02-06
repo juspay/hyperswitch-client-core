@@ -7,4 +7,18 @@ type props = {
   style?: Style.t,
 }
 
-let make: React.component<props> = NativeModules.requireNativeComponent("ApplePayView")
+// let make: React.component<props> = if HyperModule.isTurboModuleEnabled() {
+//     let turboApplePayButton = %raw(
+//       "require('../HyperModules/spec/views/ApplePayButtonNativeComponent.ts')"
+//     )
+//     turboApplePayButton["default"]
+// } else {
+//   ReactNative.NativeModules.requireNativeComponent("ApplePayView")
+// }
+
+let make: React.component<props> =  {
+    let turboApplePayButton = %raw(
+      "require('../HyperModules/spec/views/ApplePayButtonNativeComponent.ts')"
+    )
+    turboApplePayButton["default"]
+} 

@@ -15,7 +15,8 @@ module SectionHeader = {
             minWidth: 115.->dp,
             padding: 20.->dp,
           }),
-        ])}>
+        ])}
+      >
         <CustomRadioButton size=20.5 selected=isExpanded color=primaryColor />
         <Space height=5. />
         {section.title === "loading"
@@ -52,7 +53,8 @@ module MoreButton = {
             padding: 20.->dp,
             borderRadius,
           }),
-        ])}>
+        ])}
+      >
         <ChevronIcon width=12. height=12. fill="grey" />
         <Space height=5. />
         <TextWrapper text="More" textType=CardTextBold />

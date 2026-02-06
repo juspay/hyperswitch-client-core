@@ -4,7 +4,7 @@ open Style
 module WidgetError = {
   @react.component
   let make = () => {
-    Exn.raiseError("Payment Method not available")->ignore
+    JsError.throwWithMessage("Payment Method not available")->ignore
     React.null
   }
 }
@@ -71,7 +71,8 @@ let make = (~walletType as _: SdkTypes.payment_method_type_wallet) => {
 
   <ErrorBoundary level={FallBackScreen.Widget} rootTag=nativeProp.rootTag>
     <View
-      style={s({flex: 1., width: 100.->pct, maxHeight: 45.->dp, backgroundColor: "transparent"})}>
+      style={s({flex: 1., width: 100.->pct, maxHeight: 45.->dp, backgroundColor: "transparent"})}
+    >
       {switch button {
       | Some(component) => component === React.null ? <WidgetError /> : component
       | None => <LoadingOverlay />

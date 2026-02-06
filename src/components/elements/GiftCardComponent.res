@@ -65,7 +65,8 @@ module GiftCardComponent = {
       onLayout={(event: Event.layoutEvent) => {
         let height = event.nativeEvent.layout.height
         setContentHeight(_ => height)
-      }}>
+      }}
+    >
       <Space height=30. />
       <CustomPicker
         value=selectedGiftCardType
@@ -143,21 +144,24 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
                     borderRadius,
                   }),
                   style,
-                ])}>
+                ])}
+              >
                 <CustomPressable
                   onPress={_ => setExpandGiftCard(v => !v)}
                   style={s({
                     flexDirection: #row,
                     alignItems: #center,
                     justifyContent: #"space-between",
-                  })}>
+                  })}
+                >
                   <View
                     style={s({
                       flexDirection: #row,
                       alignItems: #center,
                       justifyContent: #center,
                       textAlign: #center,
-                    })}>
+                    })}
+                  >
                     <Icon name="gift" width=22. height=22. />
                     <Space width=10. />
                     <TextWrapper text="Have a gift card?" textType=TextWrapper.Subheading />
@@ -168,7 +172,8 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
                   style={s({
                     height: animatedHeight.current->Animated.StyleProp.size,
                     overflow: #hidden,
-                  })}>
+                  })}
+                >
                   <GiftCardComponent giftCardArr setContentHeight />
                 </Animated.View>
               </View>}

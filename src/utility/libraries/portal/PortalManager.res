@@ -40,7 +40,8 @@ let make = React.forwardRef((ref: Js.Nullable.t<React.ref<Nullable.t<portals>>>)
         key={key->Int.toString}
         collapsable=false
         pointerEvents=#"box-none"
-        style=ReactNative.StyleSheet.absoluteFill>
+        style=ReactNative.StyleSheet.absoluteFill
+      >
         {children}
       </ReactNative.View>
     )

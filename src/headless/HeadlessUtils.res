@@ -154,7 +154,7 @@ let handleApiCall = async (
       ~bodyStr=body->Option.getOr("")
     )
 
-    let statusCode = data->Fetch.Response.status->string_of_int
+    let statusCode = data->Fetch.Response.status->Int.toString
 
     if statusCode->String.charAt(0) === "2" {
       let json = await data->Fetch.Response.json

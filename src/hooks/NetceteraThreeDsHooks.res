@@ -57,7 +57,7 @@ let useExternalThreeDs = () => {
     ~publishableKey,
     ~nextAction,
     ~sdkEnvironment: GlobalVars.envType,
-    ~retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
+    ~retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<JSON.t>,
     ~onSuccess: string => unit,
     ~onFailure: string => unit,
   ) => {
@@ -110,7 +110,7 @@ let useExternalThreeDs = () => {
         let headers = getAuthCallHeaders(publishableKey)
         APIUtils.fetchApi(~uri, ~headers, ~method_=#GET)
         ->Promise.then(data => {
-          let statusCode = data->Fetch.Response.status->string_of_int
+          let statusCode = data->Fetch.Response.status->Int.toString
           if statusCode->String.charAt(0) === "2" {
             data
             ->Fetch.Response.json
@@ -230,7 +230,7 @@ let useExternalThreeDs = () => {
       APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=#POST)
       ->Promise.then(async data => {
         setLoading(ProcessingPayments)
-        let statusCode = data->Fetch.Response.status->string_of_int
+        let statusCode = data->Fetch.Response.status->Int.toString
         if statusCode->String.charAt(0) === "2" {
           apiLogWrapper(
             ~logType=INFO,
@@ -338,7 +338,7 @@ let useExternalThreeDs = () => {
 
       APIUtils.fetchApi(~uri, ~bodyStr, ~headers, ~method_=#POST)
       ->Promise.then(data => {
-        let statusCode = data->Fetch.Response.status->string_of_int
+        let statusCode = data->Fetch.Response.status->Int.toString
         if statusCode->String.charAt(0) === "2" {
           data
           ->Fetch.Response.json

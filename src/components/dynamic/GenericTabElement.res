@@ -180,7 +180,8 @@ let make = (
       <View style={s({marginBottom: 16.->dp})}>
         <ReactFinalForm.Field
           name=field.outputPath
-          validate=Some(createFieldValidator(getValidationRuleFromFieldType(field.fieldType)))>
+          validate=Some(createFieldValidator(getValidationRuleFromFieldType(field.fieldType)))
+        >
           {fieldProps => renderFieldInput(field, fieldProps)}
         </ReactFinalForm.Field>
       </View>

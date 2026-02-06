@@ -60,7 +60,8 @@ let make = (
         maxHeight: 100.->pct,
         alignItems: #center,
         justifyContent: #center,
-      })}>
+      })}
+    >
       {children}
     </CustomKeyboardAvoidingView>
     // </TouchableWithoutFeedback>
@@ -81,7 +82,8 @@ module WidgetWrapper = {
       })}
       keyboardShouldPersistTaps={#handled}
       showsVerticalScrollIndicator=false
-      style={array([s({flexGrow: 1., width}), bgColor])}>
+      style={array([s({flexGrow: 1., width}), bgColor])}
+    >
       children
     </ScrollView>
   }
@@ -114,7 +116,8 @@ module Wrapper = {
       })}
       keyboardShouldPersistTaps={#handled}
       showsVerticalScrollIndicator=false
-      style>
+      style
+    >
       <ModalHeader onModalClose isLoading />
       children
     </ScrollView>

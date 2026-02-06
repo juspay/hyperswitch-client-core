@@ -99,6 +99,7 @@ let make = (~props) => {
     //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
     // )
     | err =>
+      ()
       headlessModule.exitHeadless(
         {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
       )
@@ -120,14 +121,14 @@ let make = (~props) => {
     // headlessModule.exitHeadless(
     //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
     // )
-    | "Failed" =>
-      headlessModule.exitHeadless(
-        {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
-      )
-    | "Error" =>
-      headlessModule.exitHeadless(
-        {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
-      )
+    | "Failed" => ()
+    // headlessModule.exitHeadless(
+    //   {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
+    // )
+    | "Error" => ()
+    // headlessModule.exitHeadless(
+    //   {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
+    // )
     | _ =>
       let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
 
@@ -141,9 +142,10 @@ let make = (~props) => {
           "Simulated Identifier",
         ) == "Simulated Identifier"
       ) {
-        headlessModule.exitHeadless(
-          {message: "Simulated Identifier", status: "failed"}->HyperModule.stringifiedResStatus,
-        )
+        ()
+        // headlessModule.exitHeadless(
+        //   {message: "Simulated Identifier", status: "failed"}->HyperModule.stringifiedResStatus,
+        // )
       } else {
         let paymentData =
           [
@@ -246,28 +248,28 @@ let make = (~props) => {
           )
         }
       | APPLE_PAY =>
-        let timerId = setTimeout(() => {
-          logWrapper(
-            ~logType=DEBUG,
-            ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-            ~url="",
-            ~customLogUrl=nativeProp.customLogUrl,
-            ~env=nativeProp.env,
-            ~category=API,
-            ~statusCode="",
-            ~apiLogType=None,
-            ~data=JSON.Encode.null,
-            ~publishableKey=nativeProp.publishableKey,
-            ~paymentId="",
-            ~paymentMethod=None,
-            ~paymentExperience=None,
-            ~timestamp=0.,
-            ~latency=0.,
-            ~version=nativeProp.hyperParams.sdkVersion,
-            (),
-          )
-          headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
-        }, 5000)
+        // let timerId = setTimeout(() => {
+        //   logWrapper(
+        //     ~logType=DEBUG,
+        //     ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+        //     ~url="",
+        //     ~customLogUrl=nativeProp.customLogUrl,
+        //     ~env=nativeProp.env,
+        //     ~category=API,
+        //     ~statusCode="",
+        //     ~apiLogType=None,
+        //     ~data=JSON.Encode.null,
+        //     ~publishableKey=nativeProp.publishableKey,
+        //     ~paymentId="",
+        //     ~paymentMethod=None,
+        //     ~paymentExperience=None,
+        //     ~timestamp=0.,
+        //     ~latency=0.,
+        //     ~version=nativeProp.hyperParams.sdkVersion,
+        //     (),
+        //   )
+        //   headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
+        // }, 5000)
         let applePayCallback = async var => {
           try {
             confirmApplePay(var, data, nativeProp)
@@ -286,30 +288,30 @@ let make = (~props) => {
           var => {
             applePayCallback(var)->ignore
           },
-          _ => {
-            logWrapper(
-              ~logType=DEBUG,
-              ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-              ~url="",
-              ~customLogUrl=nativeProp.customLogUrl,
-              ~env=nativeProp.env,
-              ~category=API,
-              ~statusCode="",
-              ~apiLogType=None,
-              ~data=JSON.Encode.null,
-              ~publishableKey=nativeProp.publishableKey,
-              ~paymentId="",
-              ~paymentMethod=None,
-              ~paymentExperience=None,
-              ~timestamp=0.,
-              ~latency=0.,
-              ~version=nativeProp.hyperParams.sdkVersion,
-              (),
-            )
-          },
-          _ => {
-            clearTimeout(timerId)
-          },
+          // _ => {
+          //   logWrapper(
+          //     ~logType=DEBUG,
+          //     ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+          //     ~url="",
+          //     ~customLogUrl=nativeProp.customLogUrl,
+          //     ~env=nativeProp.env,
+          //     ~category=API,
+          //     ~statusCode="",
+          //     ~apiLogType=None,
+          //     ~data=JSON.Encode.null,
+          //     ~publishableKey=nativeProp.publishableKey,
+          //     ~paymentId="",
+          //     ~paymentMethod=None,
+          //     ~paymentExperience=None,
+          //     ~timestamp=0.,
+          //     ~latency=0.,
+          //     ~version=nativeProp.hyperParams.sdkVersion,
+          //     (),
+          //   )
+          // },
+          // _ => {
+          //   clearTimeout(timerId)
+          // },
         )
       | _ => ()
       }
@@ -341,8 +343,8 @@ let make = (~props) => {
         lastUsedAtA
         ->Option.map(date =>
           compare(
-            Date.fromString(date)->Js.Date.getTime,
-            Date.fromString(b.last_used_at)->Js.Date.getTime,
+            Date.fromString(date)->Date.getTime,
+            Date.fromString(b.last_used_at)->Date.getTime,
           ) < 0
             ? Some(b)
             : a
@@ -451,15 +453,19 @@ let make = (~props) => {
   let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
 
   let isClientSecretValid = RegExp.test(
-    `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
+    `.+_secret_[A-Za-z0-9]+`->RegExp.fromString,
     nativeProp.clientSecret,
   )
 
-  if isPublishableKeyValid && isClientSecretValid {
-    apiHandler(nativeProp)->ignore
-  } else if !isPublishableKeyValid {
-    errorOnApiCalls(INVALID_PK(Error, Static("")))->getDefaultPaymentSession
-  } else if !isClientSecretValid {
-    errorOnApiCalls(INVALID_CL(Error, Static("")))->getDefaultPaymentSession
-  }
+  React.useEffect0(() => {
+    if isPublishableKeyValid && isClientSecretValid {
+      apiHandler(nativeProp)->ignore
+    } else if !isPublishableKeyValid {
+      errorOnApiCalls(INVALID_PK(Error, Static("")))->getDefaultPaymentSession
+    } else if !isClientSecretValid {
+      errorOnApiCalls(INVALID_CL(Error, Static("")))->getDefaultPaymentSession
+    }
+    None
+  })
+  React.null
 }

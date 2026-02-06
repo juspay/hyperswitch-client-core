@@ -302,7 +302,8 @@ let make = (
 
   children(~position, ~subscribe, ~jumpTo, ~render=children => {
     <View
-      ref={containerRef->ReactNative.Ref.value} onLayout style={s({flex: 1., overflow: #hidden})}>
+      ref={containerRef->ReactNative.Ref.value} onLayout style={s({flex: 1., overflow: #hidden})}
+    >
       <Animated.View
         style={array([
           s({
@@ -331,7 +332,8 @@ let make = (
         onResponderTerminate={panHandlers->PanResponder.onResponderTerminate}
         onResponderStart={panHandlers->PanResponder.onResponderStart}
         onResponderTerminationRequest={panHandlers->PanResponder.onResponderTerminationRequest}
-        onResponderEnd={panHandlers->PanResponder.onResponderEnd}>
+        onResponderEnd={panHandlers->PanResponder.onResponderEnd}
+      >
         {children
         ->Array.mapWithIndex((child, i) => {
           switch routes[i] {
@@ -349,7 +351,8 @@ let make = (
                   Some(StyleSheet.absoluteFill)
                 } else {
                   None
-                }}>
+                }}
+              >
                 <View
                   onLayout={(event: Event.layoutEvent) => {
                     if route.title->Option.getOr("") !== "loading" {
@@ -366,7 +369,8 @@ let make = (
                         }
                       }
                     }
-                  }}>
+                  }}
+                >
                   {child}
                 </View>
               </View>

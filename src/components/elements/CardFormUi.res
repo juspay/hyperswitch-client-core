@@ -62,7 +62,8 @@ let make = (
         alignItems: #center,
         justifyContent: #center,
         flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
-      })}>
+      })}
+    >
       <View
         style={array([
           s({
@@ -75,7 +76,8 @@ let make = (
             flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
           }),
           bgColor,
-        ])}>
+        ])}
+      >
         {String.length(cardNumber) !== 0
           ? String.length(cvv) == 0
               ? <Icon
@@ -255,7 +257,8 @@ let make = (
                 justifyContent: #center,
                 flexDirection: #row,
                 height: 100.->pct,
-              })}>
+              })}
+            >
               <Animated.View
                 style={s({flex: {buttomFlex->Animated.StyleProp.float}, height: 100.->dp})}
               />

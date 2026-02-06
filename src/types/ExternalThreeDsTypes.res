@@ -30,7 +30,7 @@ type aReqParams = {
   messageVersion: string,
   sdkTransId: string,
   sdkAppId: string,
-  sdkEphemeralKey: Js.Json.t,
+  sdkEphemeralKey: JSON.t,
   sdkReferenceNo: string,
 }
 type authCallResponse = {

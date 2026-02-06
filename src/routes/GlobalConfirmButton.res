@@ -21,7 +21,8 @@ let make = (~confirmButtonData) => {
 
   <UIUtils.RenderIf
     condition={sheetType === DynamicFieldsSheet ||
-      (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet)}>
+      (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet)}
+  >
     <ConfirmButton
       loading=confirmButtonData.loading
       handlePress=confirmButtonData.handlePress

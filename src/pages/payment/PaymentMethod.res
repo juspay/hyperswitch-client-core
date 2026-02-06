@@ -54,11 +54,11 @@ let make = (
               [
                 (
                   paymentMethodData.payment_method_str,
-                  [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                  [("nick_name", name->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object,
                 ),
               ]
               ->Dict.fromArray
-              ->Js.Json.object_,
+              ->JSON.Encode.object,
             ),
           ]->Dict.fromArray,
           tabDict,
@@ -67,7 +67,7 @@ let make = (
       }
     | REWARD => (
         [
-          ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
+          ("payment_method_data", paymentMethodData.payment_method_str->JSON.Encode.string),
         ]->Dict.fromArray,
         Dict.make(),
       )
@@ -84,15 +84,15 @@ let make = (
                     (pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL
                       ? "_redirect"
                       : "") ++ (paymentMethodData.payment_method_type === "cashapp" ? "_qr" : ""),
-                    walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                    walletDict->Option.getOr(Dict.make())->JSON.Encode.object,
                   ),
                 ]
                 ->Dict.fromArray
-                ->Js.Json.object_,
+                ->JSON.Encode.object,
               ),
             ]
             ->Dict.fromArray
-            ->Js.Json.object_,
+            ->JSON.Encode.object,
           ),
         ]->Dict.fromArray,
         tabDict,

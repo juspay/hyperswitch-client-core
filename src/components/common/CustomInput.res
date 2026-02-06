@@ -130,7 +130,8 @@ let make = (
         }),
         shadowStyle,
         // bgColor,
-      ])}>
+      ])}
+    >
       {switch iconLeft {
       | CustomIcon(element) => <View style={s({paddingRight: 10.->dp})}> element </View>
       | NoIcon => React.null
@@ -141,7 +142,8 @@ let make = (
           position: #relative,
           height: 100.->pct,
           justifyContent: animate ? #"flex-end" : #center,
-        })}>
+        })}
+      >
         {animate
           ? <Animated.View
               pointerEvents=#none
@@ -155,7 +157,8 @@ let make = (
                 })
                 ->Animated.StyleProp.size,
                 justifyContent: #center,
-              })}>
+              })}
+            >
               <Animated.Text
                 style={array([
                   s({
@@ -172,7 +175,8 @@ let make = (
                     ->Animated.StyleProp.float,
                     color: placeholderTextColor->Option.getOr(placeholderColor),
                   }),
-                ])}>
+                ])}
+              >
                 {React.string({
                   if isFocused || state != "" {
                     animateLabel->Option.getOr(placeholder) ++ (mandatory ? "*" : "")
@@ -237,7 +241,8 @@ let make = (
         ? {
             <CustomPressable
               style={s({height: 100.->pct, justifyContent: #center, paddingLeft: 5.->dp})}
-              onPress={_ => {setShowPass(prev => !prev)}}>
+              onPress={_ => {setShowPass(prev => !prev)}}
+            >
               <TextWrapper textType={PlaceholderText}> {"eye"->React.string} </TextWrapper>
             </CustomPressable>
           }

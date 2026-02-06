@@ -230,14 +230,22 @@ let toCamelCase = str => {
   } else {
     str
     ->String.toLowerCase
-    ->Js.String2.unsafeReplaceBy0(%re(`/([-_][a-z])/g`), (letter, _, _) => {
+    ->String.unsafeReplaceRegExpBy0(%re(`/([-_][a-z])/g`), (
+      ~match as letter,
+      ~offset as _,
+      ~input as _,
+    ) => {
       letter->String.toUpperCase
     })
     ->String.replaceRegExp(%re(`/[^a-zA-Z]/g`), "")
   }
 }
 let toSnakeCase = str => {
-  str->Js.String2.unsafeReplaceBy0(%re("/[A-Z]/g"), (letter, _, _) =>
+  str->String.unsafeReplaceRegExpBy0(%re("/[A-Z]/g"), (
+    ~match as letter,
+    ~offset as _,
+    ~input as _,
+  ) =>
     `_${letter->String.toLowerCase}`
   )
 }
@@ -352,8 +360,8 @@ let getStringFromRecord = record => record->JSON.stringifyAny->Option.getOr("")
 let getJsonObjectFromRecord = record => record->Obj.magic
 
 let getError = (err, defaultError) => {
-  switch err->Exn.asJsExn {
-  | Some(exn) => exn->Exn.message->Option.getOr(defaultError)->JSON.Encode.string
+  switch err->JsExn.fromException {
+  | Some(exn) => exn->JsExn.message->Option.getOr(defaultError)->JSON.Encode.string
   | None => defaultError->JSON.Encode.string
   }
 }

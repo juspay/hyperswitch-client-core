@@ -19,7 +19,8 @@ module LineItem = {
             justifyContent: #"space-between",
             alignItems: #center,
             marginTop: 4.->dp,
-          })}>
+          })}
+        >
           <TextWrapper text={sublabel} textType={ModalText} overrideStyle={Some(textSecondary)} />
           <TextWrapper text={subvalue} textType={ModalText} overrideStyle={Some(textSecondary)} />
         </View>
@@ -115,7 +116,8 @@ let make = (~isDesktop) => {
       isVisible=showDetails
       isConnected=false
       autoDismiss=false
-      onDismiss={_ => setShowDetails(v => !v)}>
+      onDismiss={_ => setShowDetails(v => !v)}
+    >
       <View
         style={array([
           s({
@@ -127,7 +129,8 @@ let make = (~isDesktop) => {
             zIndex: 999,
           }),
           shadowStyle,
-        ])}>
+        ])}
+      >
         {switch accountPaymentMethodData {
         | Some(data) =>
           <View
@@ -136,13 +139,15 @@ let make = (~isDesktop) => {
               alignItems: #center,
               justifyContent: isDesktop ? #center : #"space-between",
               gap: (isDesktop ? 12. : 6.)->dp,
-            })}>
+            })}
+          >
             <View
               style={s({
                 flexDirection: #row,
                 alignItems: #center,
                 gap: (isDesktop ? 12. : 6.)->dp,
-              })}>
+              })}
+            >
               <Icon
                 name="back"
                 fill="#9CA3AF"
@@ -176,7 +181,8 @@ let make = (~isDesktop) => {
         flex: 1.,
         backgroundColor: "#FFFFFF",
         paddingHorizontal: 20.->dp,
-      })}>
+      })}
+    >
       <Space height={isDesktop ? 40. : 20.} />
       {switch accountPaymentMethodData {
       | Some(data) =>
@@ -186,13 +192,15 @@ let make = (~isDesktop) => {
             alignItems: #center,
             justifyContent: isDesktop ? #center : #"space-between",
             gap: (isDesktop ? 12. : 6.)->dp,
-          })}>
+          })}
+        >
           <View
             style={s({
               flexDirection: #row,
               alignItems: #center,
               gap: (isDesktop ? 12. : 6.)->dp,
-            })}>
+            })}
+          >
             <Icon
               name="back"
               fill="#9CA3AF"

@@ -11,7 +11,8 @@ let make = () => {
   <ScrollView
     keyboardShouldPersistTaps={#handled}
     showsVerticalScrollIndicator=false
-    contentContainerStyle={array([s({flexGrow: 1., alignItems: #center})])}>
+    contentContainerStyle={array([s({flexGrow: 1., alignItems: #center})])}
+  >
     {isDesktop
       ? <View
           style={array([
@@ -34,7 +35,8 @@ let make = () => {
           width: isDesktop ? auto : 100.->pct,
           gap: {isDesktop ? 100. : 10.}->dp,
         }),
-      ])}>
+      ])}
+    >
       <View style={s({zIndex: 999})}>
         <CheckoutView isDesktop />
       </View>

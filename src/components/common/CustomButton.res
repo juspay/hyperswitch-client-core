@@ -101,7 +101,8 @@ let make = (
     onPress={ev => {
       Keyboard.dismiss()
       onPress(ev)
-    }}>
+    }}
+  >
     <View
       style={array([
         getShadowStyle,
@@ -111,7 +112,8 @@ let make = (
           flexDirection: #row,
         }),
       ])}
-      pointerEvents={Platform.os === #web ? #auto : #none}>
+      pointerEvents={Platform.os === #web ? #auto : #none}
+    >
       {switch children {
       | Some(child) => child
       | _ =>
@@ -131,7 +133,8 @@ let make = (
                 alignItems: #center,
                 justifyContent: #center,
                 gap: 12.->dp,
-              })}>
+              })}
+            >
               {switch leftIcon {
               | CustomIcon(element) => element
               | NoIcon => React.null
@@ -158,7 +161,8 @@ let make = (
                 alignItems: #center,
                 justifyContent: #center,
                 gap: 12.->dp,
-              })}>
+              })}
+            >
               {switch leftIcon {
               | CustomIcon(element) => element
               | NoIcon => React.null

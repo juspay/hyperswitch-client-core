@@ -80,7 +80,8 @@ let make = (
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={!isCardPayment && !isGiftCardPayment && sheetType !== DynamicFieldsSheet}>
       <UIUtils.RenderIf
-        condition={fields->Array.length == 0 && nativeProp.configuration.appearance.layout === Tab}>
+        condition={fields->Array.length == 0 && nativeProp.configuration.appearance.layout === Tab}
+      >
         <Space />
       </UIUtils.RenderIf>
       <RedirectionText />

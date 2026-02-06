@@ -18,7 +18,7 @@ let useNetworkStatus = () => {
         ~dontUseDefaultHeader=true
       )
 
-      let statusCode = response->Fetch.Response.status->string_of_int
+      let statusCode = response->Fetch.Response.status->Int.toString
       let connected = statusCode->String.charAt(0) === "2"
       setIsConnected(_ => connected)
 

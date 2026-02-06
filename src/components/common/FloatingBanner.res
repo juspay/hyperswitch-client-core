@@ -88,7 +88,8 @@ let make = (
             })
           : empty,
         s({transform: [translateY(~translateY=slideAnim->Animated.StyleProp.size)]}),
-      ])}>
+      ])}
+    >
       {switch children {
       | Some(children) => children
       | None =>
@@ -96,14 +97,16 @@ let make = (
           style={s({
             display: #flex,
             padding: 20.->dp,
-          })}>
+          })}
+        >
           <View
             style={s({
               flexDirection: #row,
               alignItems: #center,
               justifyContent: #"space-between",
               marginHorizontal: 10.->dp,
-            })}>
+            })}
+          >
             <Icon name={isConnected ? "wifi" : "wifioff"} width=24. height=24. />
             <Space width=15. />
             <TextWrapper

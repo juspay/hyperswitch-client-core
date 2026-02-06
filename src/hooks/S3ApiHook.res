@@ -1,8 +1,8 @@
 open CountryStateDataHookTypes
 
-let decodeCountryArray: array<Js.Json.t> => array<country> = data => {
+let decodeCountryArray: array<JSON.t> => array<country> = data => {
   data->Array.map(item => {
-    switch item->Js.Json.decodeObject {
+    switch item->JSON.Decode.object {
     | Some(res) => {
         country_code: Utils.getString(res, "country_code", ""),
         country_name: Utils.getString(res, "country_name", ""),
@@ -18,10 +18,10 @@ let decodeCountryArray: array<Js.Json.t> => array<country> = data => {
   })
 }
 
-let decodeStateJson: Js.Json.t => Dict.t<array<state>> = data => {
+let decodeStateJson: JSON.t => Dict.t<array<state>> = data => {
   data
   ->Utils.getDictFromJson
-  ->Js.Dict.entries
+  ->Dict.toArray
   ->Array.map(item => {
     let (key, val) = item
     let newVal =
@@ -38,23 +38,23 @@ let decodeStateJson: Js.Json.t => Dict.t<array<state>> = data => {
       })
     (key, newVal)
   })
-  ->Js.Dict.fromArray
+  ->Dict.fromArray
 }
 
 let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
-  switch jsonData->Js.Json.decodeObject {
+  switch jsonData->JSON.Decode.object {
   | Some(res) => {
       let countryArr =
         res
-        ->Js.Dict.get("country")
+        ->Dict.get("country")
         ->Option.getOr([]->Js.Json.Array)
-        ->Js.Json.decodeArray
+        ->JSON.Decode.array
         ->Option.getOr([])
 
       let statesDict =
         res
-        ->Js.Dict.get("states")
-        ->Option.getOr(Js.Json.Object(Js.Dict.empty()))
+        ->Dict.get("states")
+        ->Option.getOr(Js.Json.Object(Dict.make()))
       {
         countries: decodeCountryArray(countryArr),
         states: decodeStateJson(statesDict),
@@ -62,13 +62,13 @@ let decodeJsonTocountryStateData: JSON.t => countryStateData = jsonData => {
     }
   | None => {
       countries: [],
-      states: Js.Dict.empty(),
+      states: Dict.make(),
     }
   }
 }
 open LocaleDataType
-let getLocaleStrings: Js.Json.t => localeStrings = data => {
-  switch data->Js.Json.decodeObject {
+let getLocaleStrings: JSON.t => localeStrings = data => {
+  switch data->JSON.Decode.object {
   | Some(res) => {
       locale: Utils.getString(res, "locale", defaultLocale.locale),
       localeDirection: Utils.getString(res, "localeDirection", defaultLocale.localeDirection),
@@ -665,8 +665,8 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
   }
 }
 
-let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
-  switch jsonData->Js.Json.decodeObject {
+let getLocaleStringsFromJson: JSON.t => localeStrings = jsonData => {
+  switch jsonData->JSON.Decode.object {
   | Some(res) => getLocaleStrings(res->Utils.getJsonObjectFromRecord)
   | None => defaultLocale
   }
@@ -681,7 +681,7 @@ let useFetchDataFromS3WithGZipDecoding = () => {
     let endpoint = if cache {
       `${baseUrl}${s3Path}`
     } else {
-      let timestamp = Js.Date.now()->Float.toString
+      let timestamp = Date.now()->Float.toString
       `${baseUrl}${s3Path}?v=${timestamp}`
     }
     logger(

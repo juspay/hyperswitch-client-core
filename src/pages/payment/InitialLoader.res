@@ -25,7 +25,8 @@ let make = () => {
           borderColor: component.borderColor,
           backgroundColor: component.background,
         }),
-      ])}>
+      ])}
+    >
       {["loading1", "loading2"]
       ->Array.mapWithIndex((key, i) => {
         <View
@@ -36,14 +37,16 @@ let make = () => {
             borderBottomWidth: {i < 1 ? 1.0 : 0.},
             borderBottomColor: component.borderColor,
             justifyContent: #center,
-          })}>
+          })}
+        >
           <View
             style={s({
               flexDirection: #row,
               flexWrap: #wrap,
               alignItems: #center,
               justifyContent: #"space-between",
-            })}>
+            })}
+          >
             <View style={s({flexDirection: #row, alignItems: #center, maxWidth: 60.->pct})}>
               <CustomLoader height="24" width="24" radius=Some(50.) />
               <Space />

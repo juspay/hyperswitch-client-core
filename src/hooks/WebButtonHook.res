@@ -104,7 +104,8 @@ let usePayButton = () => {
                 ->JSON.stringify,
               )
             } catch {
-            | ex => AlertHook.alert(ex->Exn.asJsExn->JSON.stringifyAny->Option.getOr("failed"))
+            | ex =>
+              AlertHook.alert(ex->JsExn.fromException->JSON.stringifyAny->Option.getOr("failed"))
             }
           }
         | _ => ()

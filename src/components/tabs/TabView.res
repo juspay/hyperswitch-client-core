@@ -25,7 +25,7 @@ let make = (
     ~jumpTo: string => unit,
     ~position: Animated.Interpolation.t,
   ) => React.element,
-  ~options as sceneOptions: option<Js.Dict.t<TabViewType.tabDescriptor>>=?,
+  ~options as sceneOptions: option<dict<TabViewType.tabDescriptor>>=?,
   ~commonOptions: option<TabViewType.tabDescriptor>=?,
 ) => {
   if (
@@ -46,28 +46,28 @@ let make = (
   }
 
   let options = React.useMemo3(() => {
-    let dict = Js.Dict.empty()
+    let dict = Dict.make()
 
     navigationState.routes->Array.forEach(route => {
-      let routeOptions = sceneOptions->Option.flatMap(opts => opts->Js.Dict.get(route.key))
+      let routeOptions = sceneOptions->Option.flatMap(opts => opts->Dict.get(route.key))
       let merged: option<TabViewType.tabDescriptor> = switch (commonOptions, routeOptions) {
       | (Some(common), Some(routeOpt)) =>
         Some({
-          accessibilityLabel: ?routeOpt.accessibilityLabel->Option.orElse(
-            common.accessibilityLabel,
+          accessibilityLabel: ?(
+            routeOpt.accessibilityLabel->Option.orElse(common.accessibilityLabel)
           ),
-          accessible: ?routeOpt.accessible->Option.orElse(common.accessible),
-          testID: ?routeOpt.testID->Option.orElse(common.testID),
-          labelText: ?routeOpt.labelText->Option.orElse(common.labelText),
-          labelAllowFontScaling: ?routeOpt.labelAllowFontScaling->Option.orElse(
-            common.labelAllowFontScaling,
+          accessible: ?(routeOpt.accessible->Option.orElse(common.accessible)),
+          testID: ?(routeOpt.testID->Option.orElse(common.testID)),
+          labelText: ?(routeOpt.labelText->Option.orElse(common.labelText)),
+          labelAllowFontScaling: ?(
+            routeOpt.labelAllowFontScaling->Option.orElse(common.labelAllowFontScaling)
           ),
-          href: ?routeOpt.href->Option.orElse(common.href),
-          label: ?routeOpt.label->Option.orElse(common.label),
-          labelStyle: ?routeOpt.labelStyle->Option.orElse(common.labelStyle),
-          icon: ?routeOpt.icon->Option.orElse(common.icon),
-          badge: ?routeOpt.badge->Option.orElse(common.badge),
-          sceneStyle: ?routeOpt.sceneStyle->Option.orElse(common.sceneStyle),
+          href: ?(routeOpt.href->Option.orElse(common.href)),
+          label: ?(routeOpt.label->Option.orElse(common.label)),
+          labelStyle: ?(routeOpt.labelStyle->Option.orElse(common.labelStyle)),
+          icon: ?(routeOpt.icon->Option.orElse(common.icon)),
+          badge: ?(routeOpt.badge->Option.orElse(common.badge)),
+          sceneStyle: ?(routeOpt.sceneStyle->Option.orElse(common.sceneStyle)),
         })
       | (Some(common), None) => Some(common)
       | (None, Some(routeOpt)) => Some(routeOpt)
@@ -75,7 +75,7 @@ let make = (
       }
 
       switch merged {
-      | Some(opt) => dict->Js.Dict.set(route.key, opt)
+      | Some(opt) => dict->Dict.set(route.key, opt)
       | None => ()
       }
     })
@@ -97,7 +97,7 @@ let make = (
         navigationState.routes->Array.mapWithIndex((route, i) => {
           let sceneStyle =
             options
-            ->Option.flatMap(opts => opts->Js.Dict.get(route.key))
+            ->Option.flatMap(opts => opts->Dict.get(route.key))
             ->Option.flatMap(opt => opt.sceneStyle)
 
           let isLazy = switch lazy_ {
@@ -111,7 +111,8 @@ let make = (
             lazy_=isLazy
             lazyPreloadDistance
             navigationState
-            style=?sceneStyle>
+            style=?sceneStyle
+          >
             {({loading}) =>
               loading ? renderLazyPlaceholder(~route) : renderScene(~route, ~position, ~jumpTo)}
           </SceneView>
@@ -134,7 +135,8 @@ let make = (
       ?onTabSelect
       animationEnabled
       layoutDirection=direction
-      style=?pagerStyle>
+      style=?pagerStyle
+    >
       {renderContent}
     </Pager>
   </Animated.View>

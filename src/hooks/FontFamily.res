@@ -1,7 +1,7 @@
 let convertFontToGoogleFontURL = fontName => {
   let normalizedFontName =
     fontName
-    ->String.splitByRegExp(%re("/[_\s]+/"))
+    ->String.splitByRegExp(/[_\s]+/)
     ->Array.map(word =>
       switch word {
       | Some(word) =>

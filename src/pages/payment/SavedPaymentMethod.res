@@ -26,7 +26,8 @@ module CVVComponent = {
           alignItems: #center,
           paddingHorizontal: 47.5->dp,
           marginTop: 10.->dp,
-        })}>
+        })}
+      >
         <View style={s({width: {50.->dp}})}>
           <TextWrapper text="CVC:" textType={ModalText} />
         </View>
@@ -63,7 +64,8 @@ module CVVComponent = {
               flexDirection: #row,
               alignItems: #center,
               paddingLeft: 100.->dp,
-            })}>
+            })}
+          >
             <ErrorText text=errorMsgText />
           </View>
         : React.null}
@@ -144,7 +146,8 @@ module MoreButton = {
             paddingVertical: 20.->dp,
             borderRadius,
           }),
-        ])}>
+        ])}
+      >
         <ChevronIcon width=12. height=12. fill=linkColor />
         <Space height=5. />
         <TextWrapper text="Show More" textType=LinkText />
@@ -179,7 +182,8 @@ module PaymentMethodListView = {
         borderBottomWidth: {isButtomBorder ? 1.0 : 0.},
         borderBottomColor: component.borderColor,
         justifyContent: #center,
-      })}>
+      })}
+    >
       <View
         style={s({
           flexDirection: #row,
@@ -188,7 +192,8 @@ module PaymentMethodListView = {
           justifyContent: #"space-between",
           paddingHorizontal: 12.->dp,
           gap: 8.->dp,
-        })}>
+        })}
+      >
         <View style={s({flexDirection: #row, alignItems: #center, maxWidth: 60.->pct})}>
           <CustomRadioButton size=20.5 selected=isPaymentMethodSelected color=primaryColor />
           <Space />
@@ -265,7 +270,8 @@ let make = (
     <>
       {savedPaymentMethods}
       <UIUtils.RenderIf
-        condition={customerPaymentMethods->Array.length > maxVisibleItems && showMore}>
+        condition={customerPaymentMethods->Array.length > maxVisibleItems && showMore}
+      >
         <MoreButton
           handleMoreToggle={() => {
             setShowMore(_ => false)

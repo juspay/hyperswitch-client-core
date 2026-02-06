@@ -49,7 +49,7 @@ type customerPaymentMethods = {
   is_guest_customer: bool,
 }
 
-let parseSavedCard = (cardDict: Js.Dict.t<JSON.t>) => {
+let parseSavedCard = (cardDict: dict<JSON.t>) => {
   {
     scheme: cardDict->getString("scheme", ""),
     issuer_country: cardDict->getString("issuer_country", ""),
@@ -142,8 +142,8 @@ let sortPaymentListArray = plist => {
     if normalizedPriority1 !== normalizedPriority2 {
       Int.compare(normalizedPriority2, normalizedPriority1)
     } else {
-      let time1 = Date.fromString(s1.last_used_at)->Js.Date.valueOf
-      let time2 = Date.fromString(s2.last_used_at)->Js.Date.valueOf
+      let time1 = Date.fromString(s1.last_used_at)->Date.getTime
+      let time2 = Date.fromString(s2.last_used_at)->Date.getTime
       Float.compare(time2, time1)->Float.toInt->Ordering.fromInt
     }
   })

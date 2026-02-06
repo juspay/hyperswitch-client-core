@@ -282,7 +282,8 @@ let make = (
               style={s({
                 width: 100.->pct,
                 flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
-              })}>
+              })}
+            >
               <View style={s({width: 50.->pct})}>
                 <CustomInput
                   name={TestUtils.expiryInputTestId}
@@ -370,7 +371,8 @@ let make = (
                         flexDirection: #row,
                         justifyContent: #center,
                         alignItems: #center,
-                      })}>
+                      })}
+                    >
                       <Icon
                         name="cvv"
                         height=32.
