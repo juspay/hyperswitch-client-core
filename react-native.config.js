@@ -7,9 +7,4 @@ module.exports = {
       automaticPodsInstallation: true,
     },
   },
-  dependencies: {
-    'react-native-lib-demo': {
-      root: path.join(__dirname, '.', 'react-native-lib-demo'),
-    },
-  },
 };

@@ -10,6 +10,37 @@ const __dirname = path.dirname(__filename);
 
 const optionalDependencies = [/react-native-lib-demo/];
 
+// Patterns to exclude from being generated in appAssets folder
+const excludeFromAppAssets = [
+  /react-native-lib-demo/,
+  /shared-code_assets_v1_icons_mobile_/,  // Exclude mobile icons (v1)
+  /shared-code_assets_v2_icons_/,  // Exclude v2 icons
+  /shared-code_assets_v1_jsons_locales_/,  // Exclude locale jsons (v1)
+  /shared-code_assets_/,
+  /shared-code_github_/,
+  /shared-code_assets_v1_jsons_location_/,
+  /shared-code_assets_v1_configs_/,
+  /shared-code_assets_v2_jsons_location_/,  // Exclude locale jsons (v2)
+  /shared-code_assets_v1_jsons-gzips_locales_/,  // Exclude locale gzips (v1)
+  /_svg\.chunk\.bundle$/,  // Exclude SVG chunk bundles
+  /_gif\.chunk\.bundle$/,  // Exclude GIF chunk bundles
+  /_jpeg\.chunk\.bundle$/,  // Exclude JPEG chunk bundles
+  /shared-code_assets_README/,  // Exclude README files
+  /shared-code_LICENCE/,  // Exclude LICENCE files
+  /shared-code_README/,  // Exclude README files
+  /\.map$/,  // Exclude sourcemap files
+  /^[0-9a-f]{16}$/,  // Exclude hash-named files (sourcemap references)
+];
+
+// Patterns to clean up from raw/ and drawable-mdpi/ directories
+const cleanupRawPatterns = [
+  /sharedcode_assets_v1_icons_mobile_/,  // Remove mobile icons (v1)
+  /sharedcode_assets_v2_icons_/,  // Remove v2 icons
+  /\.svg$/,  // Remove all SVG files
+  /\.yml$/,  // Remove YML files
+  /sharedcode_github_/,  // Remove github workflow files
+];
+
 export default Repack.defineRspackConfig(env => {
   const { platform, mode } = env;
 
@@ -29,7 +60,9 @@ export default Repack.defineRspackConfig(env => {
       : path.resolve(__dirname, 'react-native-lib-demo/ios/resources');
 
   return {
+
     entry: './index.js',
+
     resolve: {
       ...Repack.getResolveOptions(platform),
       extensions: [
@@ -47,11 +80,6 @@ export default Repack.defineRspackConfig(env => {
         '.tsx',
         '.json',
       ],
-      alias: {
-        'shared-code/assets': false,
-        'shared-code/.github': false,
-        'shared-code/.git': false,
-      },
     },
     module: {
       rules: [
@@ -65,34 +93,65 @@ export default Repack.defineRspackConfig(env => {
           use: {
             loader: '@callstack/repack/babel-swc-loader',
             parallel: true,
-            options: {}
+            options: {
+              cacheDirectory: true,
+            }
           },
         },
         {
           test: /\.json$/,
           type: 'json',
+          include: [
+            path.resolve(__dirname, 'shared-code/sdk-utils'),
+            path.resolve(__dirname, 'shared-code/assets'),
+          ],
+        },
+
+        {
+          test: /\.[cm]?[jt]sx?$/,
+          type: 'javascript/auto',
+          use: {
+            loader: '@callstack/repack/babel-swc-loader',
+            parallel: true,
+            options: {},
+          },
+        },
+        {
+          test: /\.(res|resi|ml|mli)$/,
+          loader: 'ignore-loader'
         },
         {
           test: /\.svg$/,
           loader: 'ignore-loader',
         },
         {
-          test: /\.jpeg|.png|.jpg|.gif|.webp|.md|$/,
-          loader: 'ignore-loader',
+          test: /\.json$/,
+          type: 'json'
         },
         {
-          test: /shared-code\/assets\/.*\/jsons\/.*$/,
-          loader: 'ignore-loader',
+          test: /shared-code\/assets\/v1\/icons\/mobile\/.*$/,
+          loader: 'ignore-loader'
         },
         {
-          test: /shared-code\/assets\/.*\/jsons-gzips\/.*$/,
-          loader: 'ignore-loader',
+          test: /shared-code\/assets\/v2\/icons\/.*$/,
+          loader: 'ignore-loader'
+        }, {
+          test: /shared-code\/assets\/v2\/jsons\/.*$/,
+          type: 'json'
+        },
+        {
+          test: /shared-code\/assets\/v1\/jsons\/.*$/,
+          type: 'json'
+        },
+        {
+          test: /shared-code\/assets\/v1\/jsons-gzips\/.*$/,
+          type: 'asset/resource'
+        },
+        {
+          test: [/shared-code\/assets\/README.md/, /shared-code\/README.md/, /shared-code\/LICENCE/, /shared-code\/.github\/.*$/],
+          loader: 'ignore-loader'
+        },
 
-        },
-        {
-          test: /\.(res|resi|ml|mli)$/,
-          loader: 'ignore-loader',
-        },
         ...Repack.getAssetTransformRules(),
       ],
     },
@@ -103,6 +162,7 @@ export default Repack.defineRspackConfig(env => {
         chunkFilename: '[name].chunk.bundle',
         clean: true,
       },
+      devtool: false,  // Disable sourcemaps in production
     }),
     plugins: [
       new Repack.RepackPlugin(
@@ -117,7 +177,7 @@ export default Repack.defineRspackConfig(env => {
               {
                 exclude: optionalDependencies,
                 type: 'remote',
-                outputPath: appAssets,
+                outputPath: appAssetsGenerated,  // Output to build folder first, MoveAssetsPlugin will copy wanted files
               },
             ],
           }
@@ -130,7 +190,8 @@ export default Repack.defineRspackConfig(env => {
         ? [
           new MoveAssetsPlugin({
             appAssetsPath: appAssets,
-            patterns: optionalDependencies,
+            patterns: excludeFromAppAssets,
+            cleanupRawPatterns: cleanupRawPatterns,
           }),
         ]
         : []),

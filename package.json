@@ -3,7 +3,7 @@
   "version": "1.8.8",
   "private": true,
   "scripts": {
-    "start": "react-native start --reset-cache --client-logs",
+    "start": "react-native start --reset-cache",
     "server": "node mockServer.js",
     "re:start": "rescript watch",
     "re:format": "rescript format -all",
@@ -13,7 +13,7 @@
     "ios": "react-native run-ios",
     "run:ios": "bundle && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
-    "bundle:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
+    "bundle:android": "npx react-native bundle --entry-file index.js --platform android --dev false",
     "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
     "build:web": "rm -rf reactNativeWeb/dist/ && webpack --mode=production --config reactNativeWeb/webpack.config.js",
     "build:lib": "android/build-lib.sh",

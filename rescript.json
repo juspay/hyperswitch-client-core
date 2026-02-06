@@ -13,10 +13,6 @@
       "subdirs": true
     },
     {
-      "dir": "web",
-      "subdirs": true
-    },
-    {
       "dir": "./shared-code/sdk-utils",
       "subdirs": true
     }

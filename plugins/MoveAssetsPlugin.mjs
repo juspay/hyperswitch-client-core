@@ -7,7 +7,7 @@ export class MoveAssetsPlugin {
   }
 
   apply(compiler) {
-    const { appAssetsPath, patterns } = this.options;
+    const { appAssetsPath, patterns, cleanupRawPatterns } = this.options;
 
     compiler.hooks.afterEmit.tapPromise('MoveAssetsPlugin', async (compilation) => {
       const outputPath = compilation.outputOptions.path;
@@ -35,6 +35,41 @@ export class MoveAssetsPlugin {
           await fs.promises.copyFile(originalPath, targetPath);
         }
       }
+
+      // Clean up raw/ directory - remove files matching cleanup patterns
+      if (cleanupRawPatterns && cleanupRawPatterns.length > 0) {
+        const rawPath = path.join(appAssetsPath, 'raw');
+        const drawablePath = path.join(appAssetsPath, 'drawable-mdpi');
+        
+        await this.cleanupDirectory(rawPath, cleanupRawPatterns);
+        await this.cleanupDirectory(drawablePath, cleanupRawPatterns);
+      }
     });
+  }
+
+  async cleanupDirectory(dirPath, patterns) {
+    if (!fs.existsSync(dirPath)) return;
+
+    try {
+      const files = await fs.promises.readdir(dirPath);
+      
+      for (const file of files) {
+        const shouldRemove = patterns.some(pattern => {
+          if (pattern instanceof RegExp) return pattern.test(file);
+          return file.includes(pattern);
+        });
+
+        if (shouldRemove) {
+          const filePath = path.join(dirPath, file);
+          try {
+            await fs.promises.unlink(filePath);
+          } catch (err) {
+            console.warn(`Failed to remove ${filePath}: ${err.message}`);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn(`Failed to cleanup directory ${dirPath}: ${err.message}`);
+    }
   }
 }
