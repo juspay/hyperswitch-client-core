@@ -38,6 +38,7 @@
     "lint:secrets": "gitleaks detect --source . --no-banner --verbose"
   },
   "dependencies": {
+    "@juspay-tech/react-native-hyperswitch-scancard": "workspace:*",
     "@sentry/react-native": "^7.8.0",
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",
@@ -219,15 +220,16 @@
     "node": ">=20"
   },
   "workspaces": [
-    "detox-tests"
+    "detox-tests",
+    "react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch-scancard"
   ],
   "packageManager": "yarn@3.6.4",
   "codegenConfig": {
-    "name": "HyperswitchSpec",
+    "name": "hyperswitchSDK",
     "type": "all",
     "jsSrcsDir": "src/components/modules/HyperModules/spec",
     "android": {
-      "javaPackageName": "com.hyperswitchsdk"
+      "javaPackageName": "io.hyperswitch"
     },
     "ios": {
       "componentProvider": {

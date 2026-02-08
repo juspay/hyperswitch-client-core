@@ -10,3 +10,6 @@
 	path = shared-code
 	url = git@github.com:juspay/hyperswitch-sdk-utils.git
 	branch = main
+[submodule "react-native-hyperswitch"]
+	path = react-native-hyperswitch
+	url = git@github.com:juspay/react-native-hyperswitch.git

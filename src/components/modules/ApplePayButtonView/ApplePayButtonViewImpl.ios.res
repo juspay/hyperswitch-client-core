@@ -18,7 +18,7 @@ type props = {
 
 let make: React.component<props> =  {
     let turboApplePayButton = %raw(
-      "require('../HyperModules/spec/views/ApplePayButtonNativeComponent.ts')"
+      "require('../HyperModules/spec/ApplePayButtonComponent.ts')"
     )
     turboApplePayButton["default"]
 } 
