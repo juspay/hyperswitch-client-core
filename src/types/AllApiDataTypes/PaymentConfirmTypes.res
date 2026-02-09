@@ -42,12 +42,20 @@ type pollConfig = {
   delayInSecs: int,
   frequency: int,
 }
+
+type threeDsMethodDetails = {
+  threeDsMethodData: string,
+}
+
 type threeDsData = {
   threeDsAuthenticationUrl: string,
   threeDsAuthorizeUrl: string,
   messageVersion: string,
   directoryServerId: string,
   pollConfig: pollConfig,
+  threeDsMethodDetails: threeDsMethodDetails,
+  cardNetwork: string,
+  threeDSConnector: string,
 }
 
 type sessionToken = {
@@ -165,6 +173,15 @@ let getNextAction = (dict, str) => {
         threeDsAuthenticationUrl: getString(threeDSDataDict, "three_ds_authentication_url", ""),
         messageVersion: getString(threeDSDataDict, "message_version", ""),
         directoryServerId: getString(threeDSDataDict, "directory_server_id", ""),
+        cardNetwork: getString(threeDSDataDict, "card_network", ""),
+        threeDSConnector: getString(threeDSDataDict, "three_ds_connector", ""),
+        threeDsMethodDetails: {
+          threeDsMethodData: threeDSDataDict
+          ->Dict.get("three_ds_method_details")
+          ->Option.flatMap(JSON.Decode.object)
+          ->Option.map(dict => getString(dict, "three_ds_method_data", ""))
+          ->Option.getOr(""),
+        },
         pollConfig: {
           pollId: getString(pollConfigDict, "poll_id", ""),
           delayInSecs: getOptionFloat(pollConfigDict, "delay_in_secs")
