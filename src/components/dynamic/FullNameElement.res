@@ -9,6 +9,7 @@ let make = (
   ~accessible=?,
 ) => {
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let localeObject = GetLocale.useGetLocalObj()
   switch (fields->Array.get(0), fields->Array.get(1)) {
   | (Some(firstNameConfig), Some(lastNameConfig)) =>
     let {input: firstNameInput, meta: firstNameMeta} = ReactFinalForm.useField(
@@ -69,6 +70,10 @@ let make = (
                 (lastNameMeta.active || lastNameMeta.error->Option.isNone || !lastNameMeta.touched)
                 ? component.color
                 : dangerColor}
+              accessibilityLabel={(isCardPayment ? "Card Holder Name" : "Full Name") ++
+              ", " ++
+              localeObject.requiredText}
+              accessibilityHint="Enter your first and last name"
               ?accessible
             />
             {switch (firstNameMeta.error, lastNameMeta.touched, lastNameMeta.active) {
