@@ -7,15 +7,15 @@ let useNetworkStatus = () => {
 
   let checkConnectivity = async () => {
     try {
-      let response = await Fetch.fetchWithInit(
-        `${baseUrl}/health`,
-        Fetch.RequestInit.make(
-          ~method_=Get,
-          ~mode=CORS,
-          ~cache=NoCache,
-          ~headers=Fetch.HeadersInit.make({"Cache-Control": "no-cache"}),
-          (),
-        ),
+      let headers = Dict.make()
+      headers->Dict.set("Cache-Control", "no-cache")
+      
+      let response = await APIUtils.fetchApi(
+        ~uri=`${baseUrl}/health`,
+        ~method_=#GET,
+        ~headers,
+        ~mode=#cors,
+        ~dontUseDefaultHeader=true
       )
 
       let statusCode = response->Fetch.Response.status->string_of_int

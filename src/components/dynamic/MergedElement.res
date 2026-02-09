@@ -13,8 +13,7 @@ let make = (
   let fieldData = fields->Array.map(fieldConfig => {
     let {input, meta} = ReactFinalForm.useField(
       fieldConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.Email)},
-      (),
+      ~config={validate: createFieldValidator(Validation.Email)}
     )
     (input, meta)
   })

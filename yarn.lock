@@ -2097,6 +2097,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@glennsl/rescript-fetch@npm:0.2.3":
+  version: 0.2.3
+  resolution: "@glennsl/rescript-fetch@npm:0.2.3"
+  checksum: 9087a3e115873ab49a5043948840a51d751c0071c8a096109446880722a08a99dc647c9bac4996a7985021d083f05b983d517827fd572e5e2d037e2820c609ae
+  languageName: node
+  linkType: hard
+
 "@hapi/hoek@npm:^9.0.0, @hapi/hoek@npm:^9.3.0":
   version: 9.3.0
   resolution: "@hapi/hoek@npm:9.3.0"
@@ -10264,6 +10271,7 @@ __metadata:
     "@babel/runtime": ^7.25.0
     "@commitlint/cli": ^17.0.3
     "@commitlint/config-conventional": ^17.0.3
+    "@glennsl/rescript-fetch": 0.2.3
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.2
     "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.2
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15

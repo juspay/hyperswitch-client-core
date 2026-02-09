@@ -13,13 +13,11 @@ let make = (
   | (Some(firstNameConfig), Some(lastNameConfig)) =>
     let {input: firstNameInput, meta: firstNameMeta} = ReactFinalForm.useField(
       firstNameConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.FirstName)},
-      (),
+      ~config={validate: createFieldValidator(Validation.FirstName)}
     )
     let {input: lastNameInput, meta: lastNameMeta} = ReactFinalForm.useField(
       lastNameConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.LastName)},
-      (),
+      ~config={validate: createFieldValidator(Validation.LastName)}
     )
     <React.Fragment>
       <View style={s({marginBottom: 16.->dp})}>

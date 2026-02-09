@@ -18,13 +18,11 @@ let make = (
     let {input: phoneCodeInput, meta: phoneCodeMeta} = ReactFinalForm.useField(
       phoneCodeConfig.outputPath,
       ~config={validate: createFieldValidator(Validation.Required)},
-      (),
     )
 
     let {input: phoneNumberInput, meta: phoneNumberMeta} = ReactFinalForm.useField(
       phoneNumberConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.Phone)},
-      (),
+      ~config={validate: createFieldValidator(Validation.Phone)}
     )
 
     React.useEffect1(() => {

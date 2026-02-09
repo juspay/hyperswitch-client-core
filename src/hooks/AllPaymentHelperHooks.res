@@ -91,7 +91,7 @@ module RedirectionHooks = {
           ~body,
           ~eventName=LoggerTypes.CONFIRM_CALL,
           ~headers,
-          ~method=Fetch.Post,
+          ~method=#POST,
           ~uri,
           ~apiLogWrapper,
         )

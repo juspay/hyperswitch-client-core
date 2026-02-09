@@ -693,7 +693,7 @@ let useFetchDataFromS3WithGZipDecoding = () => {
     )
     let headers = Dict.make()
     headers->Dict.set("Accept-Encoding", "br, gzip")
-    apiFunction(~uri=endpoint, ~method_=Get, ~headers, ~dontUseDefaultHeader=true, ())
+    apiFunction(~uri=endpoint, ~method_=#GET, ~headers, ~dontUseDefaultHeader=true)
     ->Promise.then(resp => resp->Fetch.Response.json)
     ->Promise.then(data => {
       let countryStaterecord = decodeJsonToRecord(data)

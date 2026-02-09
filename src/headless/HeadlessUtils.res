@@ -15,11 +15,10 @@ let sendLogs = async (logFile, customLogUrl, env: GlobalVars.envType) => {
     try {
       let _ = await APIUtils.fetchApi(
         ~uri,
-        ~method_=Post,
+        ~method_=#POST,
         ~bodyStr=data,
         ~headers=Dict.make(),
-        ~mode=NoCORS,
-        (),
+        ~mode=#"no-cors",
       )
     } catch {
     | _ => ()
@@ -152,8 +151,7 @@ let handleApiCall = async (
       ~uri,
       ~method_=method,
       ~headers,
-      ~bodyStr=body->Option.getOr(""),
-      (),
+      ~bodyStr=body->Option.getOr("")
     )
 
     let statusCode = data->Fetch.Response.status->string_of_int
@@ -205,7 +203,7 @@ let savedPaymentMethodAPICall = nativeProp => {
     ~uri,
     ~nativeProp,
     ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
-    ~method=Get,
+    ~method=#GET,
     ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
     ~processSuccess=json => Some(json),
     ~processError=error => Some(error),
@@ -230,7 +228,7 @@ let sessionAPICall = nativeProp => {
 
   handleApiCall(
     ~uri,
-    ~method=Post,
+    ~method=#POST,
     ~nativeProp,
     ~eventName=SESSIONS_CALL,
     ~headers,
@@ -248,7 +246,7 @@ let confirmAPICall = (nativeProp, body) => {
 
   handleApiCall(
     ~uri,
-    ~method=Post,
+    ~method=#POST,
     ~headers,
     ~nativeProp,
     ~eventName=CONFIRM_CALL,
