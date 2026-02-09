@@ -13,6 +13,7 @@ module DatePicker = {
     let (year, setYear) = React.useState(_ => "")
 
     let fontFamily = FontFamily.useCustomFontFamily()
+    let localeObject = GetLocale.useGetLocalObj()
     let {
       placeholderColor,
       placeholderTextSizeAdjust,
@@ -94,6 +95,7 @@ module DatePicker = {
             isLoading=false
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
+            accessibilityLabel={placeholder ++ " day, " ++ localeObject.requiredText}
             ?accessible
           />
         </View>
@@ -107,6 +109,7 @@ module DatePicker = {
             isLoading=false
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
+            accessibilityLabel={placeholder ++ " month, " ++ localeObject.requiredText}
             ?accessible
           />
         </View>
@@ -120,6 +123,7 @@ module DatePicker = {
             isLoading=false
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
+            accessibilityLabel={placeholder ++ " year, " ++ localeObject.requiredText}
             ?accessible
           />
         </View>
