@@ -56,6 +56,7 @@ let make = (
             isSelected=isNicknameSelected
             setIsSelected=setIsNicknameSelected
             textType={ModalText}
+            isCheckbox=true
             // disableScreenSwitch=true
           />
         </ReactNative.View>

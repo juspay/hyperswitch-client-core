@@ -10,6 +10,7 @@ let make = (
   ~accessible=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let localeObject = GetLocale.useGetLocalObj()
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {country, setCountry} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
@@ -46,6 +47,7 @@ let make = (
     }
 
     let placeholder = GetLocale.getLocalString(field.displayName)
+    let accessibilityLabel = placeholder ++ (field.required ? ", " ++ localeObject.requiredText : "")
 
     switch field.fieldType {
     | CardNumberTextInput
@@ -62,6 +64,7 @@ let make = (
           state={input.value->Option.getOr("")}
           setState=handleInputChange
           placeholder
+          accessibilityLabel
           enableCrossIcon=false
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           onFocus={_ => input.onFocus()}
@@ -87,6 +90,7 @@ let make = (
           | _ => []
           }}
           placeholderText=placeholder
+          accessibilityLabel
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
@@ -110,6 +114,7 @@ let make = (
           | _ => []
           }}
           placeholderText=placeholder
+          accessibilityLabel
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
@@ -138,6 +143,7 @@ let make = (
           setValue=handlePickerChange
           items
           placeholderText=placeholder
+          accessibilityLabel
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
@@ -161,6 +167,7 @@ let make = (
             value: opt,
           })}
           placeholderText=placeholder
+          accessibilityLabel
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}

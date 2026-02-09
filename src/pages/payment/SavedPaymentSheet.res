@@ -577,6 +577,7 @@ let make = (
             isSelected={isSaveCardCheckboxSelected}
             setIsSelected={setSaveCardChecboxSelected}
             textType={TextWrapper.ModalText}
+            isCheckbox=true
           />
           <Space height=5. />
         </View>

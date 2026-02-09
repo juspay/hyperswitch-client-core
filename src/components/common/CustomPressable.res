@@ -11,6 +11,7 @@ let make = (
   ~accessibilityRole=?,
   ~accessibilityState=?,
   ~accessibilityLabel=?,
+  ~accessibilityHint=?,
   ~testID=?,
   ~focusable=false,
   ~accessible=false,
@@ -27,6 +28,7 @@ let make = (
     ?accessibilityRole
     ?accessibilityState
     ?accessibilityLabel
+    ?accessibilityHint
     ?testID
     accessible
     focusable

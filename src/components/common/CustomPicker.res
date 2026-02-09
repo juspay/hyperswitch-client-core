@@ -20,6 +20,8 @@ let make = (
   ~onBlur,
   ~animate=?,
   ~accessible=?,
+  ~accessibilityLabel=?,
+  ~accessibilityHint=?,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -49,7 +51,15 @@ let make = (
     None
   }, [isModalVisible])
   <View ?style>
-    <CustomPressable disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+    <CustomPressable
+      disabled
+      accessible={accessible->Option.getOr(true)}
+      accessibilityRole=#button
+      accessibilityLabel={accessibilityLabel->Option.getOr(placeholderText)}
+      ?accessibilityHint
+      accessibilityState={expanded: isModalVisible}
+      onPress={_ => setIsModalVisible(prev => !prev)}
+    >
       <CustomInput
         state={switch items->Array.find(x =>
           x.value == value->Option.getOr("") || x.label == value->Option.getOr("")
@@ -71,7 +81,7 @@ let make = (
         editable=false
         textColor=component.color
         iconRight=CustomIcon(
-          <CustomPressable disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+          <CustomPressable disabled accessible={false} onPress={_ => setIsModalVisible(prev => !prev)}>
             <ChevronIcon width=13. height=13. fill=iconColor />
           </CustomPressable>,
         )
@@ -79,7 +89,7 @@ let make = (
         onBlur
         onFocus
         ?animate
-        ?accessible
+        accessible={false}
       />
     </CustomPressable>
     <Modal
@@ -128,6 +138,9 @@ let make = (
             })}>
             <TextWrapper text=placeholderText textType={HeadingBold} />
             <CustomPressable
+              accessible={true}
+              accessibilityRole=#button
+              accessibilityLabel={"Close " ++ placeholderText ++ " list"}
               onPress={_ => setIsModalVisible(prev => !prev)} style={s({padding: 14.->dp})}>
               <Icon name="close" width=20. height=20. fill=iconColor />
             </CustomPressable>
@@ -149,7 +162,8 @@ let make = (
             borderBottomWidth=borderWidth
             borderLeftWidth=borderWidth
             borderRightWidth=borderWidth
-            ?accessible
+            accessible={true}
+            accessibilityLabel={"Search " ++ placeholderText}
           />
           <Space />
           {isLoading
@@ -180,6 +194,9 @@ let make = (
                 renderItem={({item, index}) =>
                   <CustomPressable
                     key={index->Int.toString}
+                    accessible={true}
+                    accessibilityRole=#button
+                    accessibilityLabel={item.label}
                     style={s({height: 32.->dp, margin: 1.->dp, flexDirection: #row, gap: 6.->dp})}
                     onPress={_ => {
                       setValue(_ => Some(item.value))

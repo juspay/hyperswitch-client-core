@@ -50,6 +50,8 @@ let make = (
   ~name="",
   ~style=?,
   ~accessible=?,
+  ~accessibilityLabel=?,
+  ~accessibilityHint=?,
 ) => {
   let {
     placeholderColor,
@@ -225,7 +227,9 @@ let make = (
           }}
           editable
           pointerEvents
-          ?accessible
+          accessible={accessible->Option.getOr(true)}
+          accessibilityLabel={accessibilityLabel->Option.getOr(placeholder)}
+          ?accessibilityHint
         />
       </View>
       {switch iconRight {
