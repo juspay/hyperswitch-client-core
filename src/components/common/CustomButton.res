@@ -84,7 +84,10 @@ let make = (
 
   <CustomPressable
     disabled
+    accessible={true}
     testID={testID->Option.getOr("")}
+    accessibilityLabel={text->Option.getOr("Button")}
+    accessibilityRole=#button
     style={array([
       s({
         height: primaryButtonHeight->dp,
