@@ -14,7 +14,7 @@
     "run:ios": "bundle && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
     "bundle:android": "npx react-native bundle --entry-file index.js --platform android --dev false",
-    "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
+    "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle  --bundler webpack",
     "build:web": "rm -rf reactNativeWeb/dist/ && webpack --mode=production --config reactNativeWeb/webpack.config.js",
     "build:lib": "android/build-lib.sh",
     "clean": "rm -rf node_modules && rm -rf package-lock.json && rm -rf yarn.lock && yarn run clean:gradle && yarn run clean:pod",
@@ -38,7 +38,6 @@
     "lint:secrets": "gitleaks detect --source . --no-banner --verbose"
   },
   "dependencies": {
-    "@juspay-tech/react-native-hyperswitch-scancard": "workspace:*",
     "@sentry/react-native": "^7.8.0",
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",
@@ -220,8 +219,7 @@
     "node": ">=20"
   },
   "workspaces": [
-    "detox-tests",
-    "react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch-scancard"
+    "detox-tests"
   ],
   "packageManager": "yarn@3.6.4",
   "codegenConfig": {
