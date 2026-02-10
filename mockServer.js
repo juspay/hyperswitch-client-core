@@ -50,18 +50,18 @@ const logger = {
     }
   },
 };
-
 app.use(cors());
 app.use(express.json());
-
 const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
 const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
 const PROFILE_ID = process.env.PROFILE_ID;
 const HYPERSWITCH_BASE_URL =
-  process.env.HYPERSWITCH_SANDBOX_URL ||
-  process.env.HYPERSWITCH_INTEG_URL ||
-  'https://sandbox.hyperswitch.io';
+    process.env.HYPERSWITCH_SANDBOX_URL ||
+    process.env.HYPERSWITCH_INTEG_URL ||
+    'https://sandbox.hyperswitch.io';
 const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
+
+let testAutomationPaymentBody = null;
 
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('Missing required environment variables');
@@ -71,7 +71,6 @@ if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('PROFILE_ID: ' + !!NETCETERA_SDK_API_KEY);
   process.exit(1);
 }
-
 const makeHyperswitchRequest = async (endpoint, options = {}) => {
   const url = `${HYPERSWITCH_BASE_URL}${endpoint}`;
   const config = {
@@ -81,19 +80,15 @@ const makeHyperswitchRequest = async (endpoint, options = {}) => {
     },
     ...options,
   };
-
   const response = await fetch(url, config);
   const data = await response.json();
-
   if (!response.ok) {
     const error = new Error(`HTTP ${response.status}`);
     error.response = {status: response.status, data};
     throw error;
   }
-
   return {data};
 };
-
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -105,13 +100,39 @@ app.get('/health', (req, res) => {
     },
   });
 });
-
 app.get('/create-payment-intent', async (req, res) => {
   try {
-    const paymentData = {
-      ...mockData.paymentIntentBody,
+    const defaultPaymentData = {
       amount: 100,
       currency: 'USD',
+      confirm: false,
+      authentication_type: 'no_three_ds',
+      capture_method: 'automatic',
+      customer_id: 'hyperswitch_demo_custdgfdgomer_id_qwertyasdf',
+      email: 'abcd@gmail.com',
+      name: 'John Doe',
+      phone: '999999999',
+      phone_country_code: '+65',
+      description: 'Its my first payment request',
+      request_external_three_ds_authentication:true,
+      billing: {
+        address: {
+          line1: '1467',
+          line2: 'Harrison Street',
+          line3: 'Harrison Street',
+          city: 'San Fransico',
+          state: 'CA',
+          zip: '94122',
+          country: 'US',
+          first_name: 'PiX',
+          last_name: 'Juspay',
+        },
+      },
+    };
+
+    const paymentData = {
+      ...defaultPaymentData,
+      ...testAutomationPaymentBody,
     };
 
     if (process.env.PROFILE_ID) {

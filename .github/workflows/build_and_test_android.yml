@@ -45,7 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-utils
-          ref: main
+          ref: superposition
           path: shared-code
 
       - name: Setup Node.js
@@ -60,7 +60,7 @@ jobs:
 
       - name: Start server
         run: |
-          nohup node server.js &
+          nohup node mockServer.js &
 
       - name: Check Server
         run: |
@@ -92,7 +92,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-android
-          ref: main
+          ref: detox_test_purpose
           path: android
           fetch-depth: 0
 
@@ -126,7 +126,11 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: medium_phone
-          script: adb devices && npx detox test --configuration android.emu.ci.debug --record-videos failing --take-screenshots failing --headless # --loglevel trace --record-logs all
+          script: |
+            adb wait-for-device
+            sleep 15
+            adb devices
+            npx detox test --configuration android.emu.ci.debug --record-videos failing --take-screenshots failing --headless
 
       - name: Upload Test Artifact - GitHub Action
         if: always()

@@ -73,4 +73,5 @@ const setCreateBodyForTestAutomation = async (body) => {
         body: JSON.stringify(body),
     })
 }
+
 export { setCreateBodyForTestAutomation, CreateBody }
