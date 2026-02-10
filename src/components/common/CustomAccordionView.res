@@ -120,7 +120,7 @@ let make = (
       style={s({marginHorizontal: -10.->dp})}
       sectionStyle={s({marginHorizontal: 10.->dp})}
       allowMultipleExpanded
-      layout=nativeProp.configuration.appearance.layout
+      spacedAccordionItems=nativeProp.configuration.appearance.layout.spacedAccordionItems
     />
     <UIUtils.RenderIf condition={allSections->Array.length > maxVisibleItems && showMore}>
       <MoreButton
