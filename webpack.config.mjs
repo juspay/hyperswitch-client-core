@@ -45,7 +45,6 @@ export default Repack.defineWebpackConfig(env => {
                     ? ['.ios.js', '.ios.ts', '.ios.tsx']
                     : []),
                 '.native.js',
-
                 // base
                 '.bs.js',
                 '.js',
@@ -80,10 +79,12 @@ export default Repack.defineWebpackConfig(env => {
                     use: {
                         loader: '@callstack/repack/babel-swc-loader',
                     },
-                },
-                ...Repack.getAssetTransformRules(),
+                }
             ],
         },
         plugins: [new Repack.RepackPlugin()],
+        output: {
+            filename: 'hyperswitch.bundle',
+        }
     }
 });
