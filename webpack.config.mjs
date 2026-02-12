@@ -18,6 +18,10 @@ export default Repack.defineWebpackConfig(env => {
         context: __dirname,
         entry: './index.js',
         resolve: {
+            alias: {
+                react: path.resolve(__dirname, 'node_modules/react'),
+                'react-native': path.resolve(__dirname, 'node_modules/react-native'),
+            },
             ...Repack.getResolveOptions(),
             extensions: [
                 ...(platform === 'android'
@@ -52,7 +56,6 @@ export default Repack.defineWebpackConfig(env => {
             ],
         },
         module: {
-
             rules: [
                 {
                     test: /\.json$/,
@@ -66,11 +69,11 @@ export default Repack.defineWebpackConfig(env => {
                     test: /\.svg$/,
                     loader: 'ignore-loader',
                 },
-                // {
-                //     test: /shared-code\/.*$/,
-                //     exclude: /\.json$/,
-                //     loader: 'ignore-loader',
-                // },
+                {
+                    test: /shared-code\/.*$/,
+                    exclude: /\.(bs\.js|js|json)$/,
+                    loader: 'ignore-loader',
+                },
                 {
                     test: /\.[cm]?[jt]sx?$/,
                     type: 'javascript/auto',
