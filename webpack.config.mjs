@@ -66,11 +66,11 @@ export default Repack.defineWebpackConfig(env => {
                     test: /\.svg$/,
                     loader: 'ignore-loader',
                 },
-                {
-                    test: /shared-code\/.*$/,
-                    exclude: /\.json$/,
-                    loader: 'ignore-loader',
-                },
+                // {
+                //     test: /shared-code\/.*$/,
+                //     exclude: /\.json$/,
+                //     loader: 'ignore-loader',
+                // },
                 {
                     test: /\.[cm]?[jt]sx?$/,
                     type: 'javascript/auto',

@@ -1,7 +1,7 @@
 open SdkTypes
 open Utils
 
-let parseBillingAddress = (billingDetailsDict: Js.Dict.t<JSON.t>) => {
+let parseBillingAddress = (billingDetailsDict: Dict.t<JSON.t>) => {
   let addressDict = getOptionalObj(billingDetailsDict, "address")
 
   {

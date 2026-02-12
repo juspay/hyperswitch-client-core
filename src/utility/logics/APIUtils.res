@@ -80,7 +80,7 @@ let handleApiCall = async (
 
     let data = await fetchApi(~uri, ~method_=method, ~headers, ~bodyStr=body->Option.getOr(""))
 
-    let statusCode = data->Fetch.Response.status->string_of_int
+    let statusCode = data->Fetch.Response.status->Int.toString
 
     if statusCode->String.charAt(0) === "2" {
       apiLogWrapper(
