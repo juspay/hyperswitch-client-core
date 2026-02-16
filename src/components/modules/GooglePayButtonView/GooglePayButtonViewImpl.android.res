@@ -9,7 +9,7 @@ let make: React.component<props> = {
   // if HyperModule.isTurboModuleEnabled()
 
   let turboGooglePayButton = %raw(
-    "require('../HyperModules/spec/GooglePayButtonComponent.ts')"
+    "require('../HyperModules/spec/GooglePayNativeComponent.ts')"
   )
   turboGooglePayButton["default"]
 }

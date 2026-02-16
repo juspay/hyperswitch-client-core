@@ -3,6 +3,8 @@ type data =
   | FetchData(CountryStateDataHookTypes.countryStateData)
   | Loading
 
+@val external require: string => RescriptCore.JSON.t = "require"
+
 let countryStateDataContext = React.createContext((Loading, () => ()))
 
 module Provider = {
@@ -64,7 +66,7 @@ let make = (~children) => {
   let s3Path = "/jsons/location/en.json"
   let (state, setState) = React.useState(_ => None)
   React.useEffect0(() => {
-    ConfigurationService.importJSON(`../../shared-code/assets/v2/${s3Path}`)
+    Promise.resolve(require("../../shared-code/assets/v2/jsons/location/en.json"))
     ->Promise.then(res => {
       setState(_ => Some(S3ApiHook.decodeJsonTocountryStateData(res)))
       Promise.resolve()
