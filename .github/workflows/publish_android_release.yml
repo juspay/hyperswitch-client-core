@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: juspay/hyperswitch-sdk-utils
-          ref: superposition
+          ref: main
           path: shared-code
 
       - name: Check android subrepo branch and commit message
