@@ -106,6 +106,13 @@ app.get('/health', (req, res) => {
   });
 });
 
+const superpositionConfig = require('./shared-code/assets/v1/configs/superposition.config.json');
+
+app.get('/get-config', (req, res) => {
+  logger.info('GET /get-config requested');
+  res.json(superpositionConfig);
+});
+
 app.get('/create-payment-intent', async (req, res) => {
   try {
     const paymentData = {
