@@ -304,6 +304,10 @@ type hyperParams = {
   rightInset: option<float>,
 }
 
+type superpositionConfig = {
+  configJson: option<JSON.t>,
+}
+
 type nativeProp = {
   publishableKey: string,
   clientSecret: string,
@@ -319,6 +323,7 @@ type nativeProp = {
   rootTag: int,
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
+  superpositionConfig: superpositionConfig,   // TODO: Move this inside hyperParams
 }
 
 let defaultAppearance: appearance = {
@@ -844,6 +849,21 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   let configurationDict = getObj(dictfromNative, "configuration", Dict.make())
   let from = getOptionString(dictfromNative, "from")->Option.getOr("native")
 
+  let superpositionConfig = {
+    let rawConfigStr = getOptionString(dictfromNative, "superpositionConfigRaw")
+    let configJson = switch rawConfigStr {
+    | Some(jsonStr) =>
+      try {
+        let parsed = jsonStr->JSON.parseExn
+        Some(parsed)
+      } catch {
+      | _ => None
+      }
+    | None => None
+    }
+    {configJson: configJson}
+  }
+
   let publishableKey = getString(dictfromNative, "publishableKey", "")
   let customBackendUrl = switch getOptionString(dictfromNative, "customBackendUrl") {
   | Some("") => None
@@ -907,5 +927,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       rightInset: getOptionFloat(hyperParams, "rightInset"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
+    superpositionConfig, 
   }
 }
