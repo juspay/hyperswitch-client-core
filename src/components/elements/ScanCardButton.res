@@ -41,10 +41,10 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
         alignItems: #"flex-start",
         justifyContent: #center,
       })}
-      onPress={_pressEvent => {
-        ScanCardModule.launchScanCard(scanCardCallback)
-        logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
-      }}
+  onPress={_pressEvent => {
+    ScanCardModule.launchScanCard(scanCardCallback)->ignore
+    logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+  }}
     >
       <Icon name={"CAMERA"} height=26. width=26. fill=primaryColor />
     </CustomPressable>

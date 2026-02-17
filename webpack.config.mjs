@@ -13,10 +13,32 @@ const __dirname = path.dirname(__filename);
  */
 
 export default Repack.defineWebpackConfig(env => {
-    const { platform } = env;
+    const { platform, mode } = env;
     return {
         context: __dirname,
         entry: './index.js',
+        ...(mode === "production"
+            ? {
+                output: {
+                    filename: 'hyperswitch.bundle',
+                    chunkFilename: "[name].bundle",
+                },
+                optimization: {
+                    splitChunks: {
+                        cacheGroups: {
+                            scancard: {
+                                test: /@juspay-tech\/react-native-hyperswitch-scancard/,
+                                name: 'react-native-hyperswitch-scancard',
+                                chunks: 'async',
+                                enforce: true,
+                            },
+                        },
+                    },
+                }
+            }
+            : {
+            }
+        ),
         resolve: {
             alias: {
                 react: path.resolve(__dirname, 'node_modules/react'),
@@ -56,6 +78,7 @@ export default Repack.defineWebpackConfig(env => {
         },
         module: {
             rules: [
+                ...Repack.getAssetTransformRules(),
                 {
                     test: /\.json$/,
                     type: 'json',
@@ -79,12 +102,15 @@ export default Repack.defineWebpackConfig(env => {
                     use: {
                         loader: '@callstack/repack/babel-swc-loader',
                     },
+                    parser: {
+                        javascript: {
+                            importMeta: true,
+                            dynamicImport: true,
+                        }
+                    }
                 }
             ],
         },
         plugins: [new Repack.RepackPlugin()],
-        output: {
-            filename: 'hyperswitch.bundle',
-        }
     }
 });

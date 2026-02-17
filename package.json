@@ -99,6 +99,7 @@
     "ignore-loader": "^0.1.2",
     "jest": "^29.6.3",
     "next": "^15.1",
+    "null-loader": "^4.0.1",
     "patch-package": "^8.0.1",
     "prettier": "2.8.8",
     "react": "19.1.1",
@@ -219,7 +220,8 @@
     "node": ">=20"
   },
   "workspaces": [
-    "detox-tests"
+    "detox-tests",
+    "react-native-hyperswitch"
   ],
   "packageManager": "yarn@3.6.4",
   "codegenConfig": {

@@ -8,7 +8,6 @@ type viewType = PaymentSheet | CardForm(cardFormType)
 module CardBrandAndScanCardIcon = {
   @react.component
   let make = (
-    ~isScanCardAvailable,
     ~eligibleCardSchemes,
     ~showCardSchemeDropDown,
     ~cardNumberFilled,
@@ -18,6 +17,17 @@ module CardBrandAndScanCardIcon = {
     ~cardBrand,
     ~setCardBrand,
   ) => {
+    let (isScanCardAvailable, setIsScanCardAvailable) = React.useState(_ => false)
+    
+    React.useEffect0(() => {
+      ScanCardModule.isScanCardAvailable()
+      ->Promise.thenResolve(available => {
+        setIsScanCardAvailable(_ => available)
+      })
+      ->ignore
+      None
+    })
+
     <View style={s({flexDirection: #row, alignItems: #center})}>
       <CardSchemeComponent eligibleCardSchemes showCardSchemeDropDown cardBrand setCardBrand />
       <UIUtils.RenderIf condition={isScanCardAvailable && !cardNumberFilled}>
@@ -243,7 +253,6 @@ let make = (
                 enableCrossIcon=false
                 iconRight=CustomInput.CustomIcon(
                   <CardBrandAndScanCardIcon
-                    isScanCardAvailable=ScanCardModule.isAvailable
                     eligibleCardSchemes
                     showCardSchemeDropDown
                     cardNumberFilled={switch cardNumberInput.value {

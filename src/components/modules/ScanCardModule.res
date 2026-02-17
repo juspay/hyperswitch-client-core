@@ -3,23 +3,41 @@ type scanCardData = {
   expiryMonth: string,
   expiryYear: string,
 }
+
 type scanCardReturnType = {
   status: string,
   data: scanCardData,
 }
-type scanCardReturnStatus = Succeeded(scanCardData) | Failed | Cancelled | None
-type module_ = {launchScanCard: (scanCardReturnType => unit) => unit, isAvailable: bool}
 
-@val external require: string => module_ = "require"
+type scanCardReturnStatus =
+  | Succeeded(scanCardData)
+  | Failed
+  | Cancelled
+  | None
 
-let (launchScanCardMod, isAvailable) = switch try {
-  require("@juspay-tech/react-native-hyperswitch-scancard")->Some
-} catch {
-| _ => None
-} {
-| Some(mod) => (mod.launchScanCard, mod.isAvailable)
-| None => (_ => (), false)
+type module_ = {
+  launchScanCard: (scanCardReturnType => unit) => unit,
+  isAvailable: bool,
 }
+
+/*
+  Lazy load ScanCard module (creates chunk)
+  Safe if dependency not installed
+  Using %raw to preserve webpack magic comment
+*/
+let loadScanCard = (): promise<option<module_>> => {
+  %raw(`import(/* webpackChunkName: "react-native-hyperswitch-scancard" */ "@juspay-tech/react-native-hyperswitch-scancard")`)
+  ->Promise.then(moduleObj => {
+    let mod: option<module_> = Some(moduleObj["default"])
+    Promise.resolve(mod)
+  })
+  ->Promise.catch(_err => {
+    let mod: option<module_> = None
+    Promise.resolve(mod)
+  })
+}
+
+/* convert native result → internal type */
 let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
   switch scanCardReturnType.status {
   | "Succeeded" =>
@@ -33,10 +51,36 @@ let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
   | _ => None
   }
 }
-let launchScanCard = (callback: scanCardReturnStatus => unit) => {
-  try {
-    launchScanCardMod(data => callback(data->dictToScanCardReturnType))
-  } catch {
-  | _ => ()
+
+/*
+  Launch ScanCard safely
+*/
+let launchScanCard = async (callback: scanCardReturnStatus => unit) => {
+  let modResult = await loadScanCard()
+  switch modResult {
+  | Some(mod) =>
+      if mod.isAvailable {
+        try {
+          mod.launchScanCard(data =>
+            callback(data->dictToScanCardReturnType)
+          )
+        } catch {
+        | _ => callback(None)
+        }
+      } else {
+        callback(None)
+      }
+
+  | None =>
+      callback(None)
+  }
+}
+
+/* helper */
+let isScanCardAvailable = async () => {
+  let modResult = await loadScanCard()
+  switch modResult {
+  | Some(mod) => mod.isAvailable
+  | None => false
   }
 }
