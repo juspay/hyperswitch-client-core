@@ -28,7 +28,7 @@ type module_ = {
 let loadScanCard = (): promise<option<module_>> => {
   %raw(`import(/* webpackChunkName: "react-native-hyperswitch-scancard" */ "@juspay-tech/react-native-hyperswitch-scancard")`)
   ->Promise.then(moduleObj => {
-    let mod: option<module_> = Some(moduleObj["default"])
+    let mod: option<module_> = Some(moduleObj)
     Promise.resolve(mod)
   })
   ->Promise.catch(_err => {
@@ -59,26 +59,24 @@ let launchScanCard = async (callback: scanCardReturnStatus => unit) => {
   let modResult = await loadScanCard()
   switch modResult {
   | Some(mod) =>
-      if mod.isAvailable {
-        try {
-          mod.launchScanCard(data =>
-            callback(data->dictToScanCardReturnType)
-          )
-        } catch {
-        | _ => callback(None)
-        }
-      } else {
-        callback(None)
+    if mod.isAvailable {
+      try {
+        mod.launchScanCard(data => callback(data->dictToScanCardReturnType))
+      } catch {
+      | _ => callback(None)
       }
-
-  | None =>
+    } else {
       callback(None)
+    }
+
+  | None => callback(None)
   }
 }
 
 /* helper */
 let isScanCardAvailable = async () => {
   let modResult = await loadScanCard()
+  Console.log2("ScanCard module load result:", modResult)
   switch modResult {
   | Some(mod) => mod.isAvailable
   | None => false

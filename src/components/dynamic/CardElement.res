@@ -22,6 +22,7 @@ module CardBrandAndScanCardIcon = {
     React.useEffect0(() => {
       ScanCardModule.isScanCardAvailable()
       ->Promise.thenResolve(available => {
+        Console.log2("ScanCard availability:", available)
         setIsScanCardAvailable(_ => available)
       })
       ->ignore
