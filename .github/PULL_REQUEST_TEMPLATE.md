@@ -15,6 +15,12 @@
 
 ---
 
+## Screenshots / Recordings
+
+<!-- Screenshots / Recordings of the change -->
+
+---
+
 ## Affected Area & Impact
 
 <!-- Select all that apply -->
