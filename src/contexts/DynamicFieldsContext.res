@@ -1,9 +1,37 @@
-type sheetType = ButtonSheet | DynamicFieldsSheet
+type sheetType =
+  | ButtonSheet
+  | DynamicFieldsSheet
+  | UpiAppSelectionSheet
+  | UpiTimerSheet
+  | UpiQrSheet
+
+type upiFlowType =
+  | UpiIntent
+  | UpiCollect
+  | UpiQr
+
+type upiData = {
+  sdkUri: option<string>,
+  displayFromTimestamp: option<float>,
+  displayToTimestamp: option<float>,
+  pollConfig: option<PaymentConfirmTypes.waitScreenPollConfig>,
+  flowType: option<upiFlowType>,
+}
+
+let defaultUpiData = {
+  sdkUri: None,
+  displayFromTimestamp: None,
+  displayToTimestamp: None,
+  pollConfig: None,
+  flowType: None,
+}
 
 type dynamicFieldsData = {
   formDataRef: option<React.ref<RescriptCore.Dict.t<JSON.t>>>,
   sheetType: sheetType,
   setSheetType: sheetType => unit,
+  upiData: upiData,
+  setUpiData: upiData => unit,
   getRequiredFieldsForTabs: (
     AccountPaymentMethodType.payment_method_type,
     Dict.t<JSON.t>,
@@ -48,6 +76,8 @@ let dynamicFieldsContext = React.createContext({
   formDataRef: None,
   sheetType: ButtonSheet,
   setSheetType: _ => (),
+  upiData: defaultUpiData,
+  setUpiData: _ => (),
   getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false),
   getRequiredFieldsForButton: (_, _, _, _, _) => (true, Dict.make()),
   country: AddressUtils.defaultCountry,
@@ -108,12 +138,20 @@ let make = (~children) => {
       paymentMethodData.required_fields,
     )
 
+    // Only add default country if required_fields has data
+    // if requiredFieldsFromPML->Dict.toArray->Array.length > 0 {
+    //   switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
+    //   | None | Some("") =>
+    //     requiredFieldsFromPML->Dict.set(
+    //       "payment_method_data.billing.address.country",
+    //       nativeProp.hyperParams.country,
+    //     )
+    //   | _ => ()
+    //   }
+    // }
     switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
     | None | Some("") =>
-      requiredFieldsFromPML->Dict.set(
-        "payment_method_data.billing.address.country",
-        nativeProp.hyperParams.country,
-      )
+      requiredFieldsFromPML->Dict.set("payment_method_data.billing.address.country", "IN")
     | _ => ()
     }
 
@@ -219,6 +257,17 @@ let make = (~children) => {
       let requiredFieldsFromPML = SuperpositionHelper.extractFieldValuesFromPML(
         paymentMethodData.required_fields,
       )
+
+      // Only add default country if required_fields has data
+      //   if requiredFieldsFromPML->Dict.toArray->Array.length > 0 {
+      //     switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
+      //     | Some("") | None =>
+      //       requiredFieldsFromPML->Dict.set("payment_method_data.billing.address.country", country)
+      //     | _ => ()
+      //     }
+      //   }
+      //   requiredFieldsFromPML
+      // }
       switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
       | Some("") | None =>
         requiredFieldsFromPML->Dict.set("payment_method_data.billing.address.country", country)
@@ -282,6 +331,11 @@ let make = (~children) => {
     setIsNicknameValid(_ => val)
   }, [setIsNicknameValid])
 
+  let (upiData, setUpiData) = React.useState(_ => defaultUpiData)
+  let setUpiData = React.useCallback1(val => {
+    setUpiData(_ => val)
+  }, [setUpiData])
+
   React.useEffect(() => {
     if isNicknameSelected == false {
       setNickname(None)
@@ -295,6 +349,8 @@ let make = (~children) => {
       formDataRef,
       sheetType,
       setSheetType,
+      upiData,
+      setUpiData,
       getRequiredFieldsForTabs,
       getRequiredFieldsForButton,
       country,

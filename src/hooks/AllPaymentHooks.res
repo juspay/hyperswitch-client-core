@@ -1,5 +1,6 @@
 open PaymentConfirmTypes
 open AllPaymentHelperHooks
+// open DynamicFieldsContext
 
 let useHandleSuccessFailure = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -155,6 +156,7 @@ let useBrowserHook = () => {
 let useRedirectHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let {setSheetType, setUpiData} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let browserRedirectionHandler = useBrowserHook()
   let retrievePayment = useRetrieveHook()
   let logger = LoggerHook.useLoggerHook()
@@ -162,6 +164,7 @@ let useRedirectHook = () => {
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
   let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
+  let handleSuccessFailure = useHandleSuccessFailure()
 
   (
     ~body: string,
@@ -174,6 +177,29 @@ let useRedirectHook = () => {
     ~isCardPayment=false,
     (),
   ) => {
+    // // ============================================================================
+    // // TEMPORARY HARDCODED DATA FOR UPI INTENT TESTING
+    // // ============================================================================
+    // if paymentMethod === "upi_intent" {
+    //   // Hardcoded UPI Intent response - bypasses API call
+    //   setLoading(FillingDetails) // Clear any loading state to prevent native loading crash
+    //   let now = Date.now()
+    //   let fiveMinutesInMs = 5.0 *. 60.0 *. 1000.0
+    //   setUpiData({
+    //     sdkUri: Some(
+    //       "upi://pay?pa=upi@razopay&pn=MWSolutions&tr=IyGdZuu9AghBbD0&tn=razorpay&am=1&cu=INR&mc=5411",
+    //     ),
+    //     displayFromTimestamp: Some(now *. 1_000_000.0), // Current time in nanoseconds
+    //     displayToTimestamp: Some((now +. fiveMinutesInMs) *. 1_000_000.0), // 5 minutes from now in nanoseconds
+    //     pollConfig: Some({delay_in_secs: 2, frequency: 5}), // Poll every 5 seconds with 2s delay
+    //   })
+    //   setSheetType(UpiAppSelectionSheet) // Navigate to UPI app selection screen
+    //   Promise.resolve()
+    // } else {
+    // ============================================================================
+    // END TEMPORARY HARDCODED DATA FOR UPI INTENT TESTING
+    // ============================================================================
+
     let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
     let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
@@ -221,6 +247,30 @@ let useRedirectHook = () => {
       switch nextAction {
       | None => ()
       | Some(_data) => setLoading(ProcessingPayments)
+      }
+    }
+
+    let handleUpiFlow = (~nextAction, ~flowType, ~sheetType) => {
+      Console.log2("nextt", nextAction)
+      switch nextAction {
+      | None => ()
+      | Some(data) =>
+        setLoading(FillingDetails)
+
+        setUpiData({
+          sdkUri: data.upiInformation->Option.map(info => info.sdk_uri),
+          displayFromTimestamp: data.waitScreenInformation->Option.map(info =>
+            info.display_from_timestamp
+          ),
+          displayToTimestamp: data.waitScreenInformation->Option.map(info =>
+            info.display_to_timestamp
+          ),
+          pollConfig: data.waitScreenInformation->Option.map(info => info.poll_config),
+          flowType: Some(flowType),
+        })
+
+        setSheetType(sheetType)
+      // setSheetType(UpiAppSelectionSheet)
       }
     }
 
@@ -286,6 +336,16 @@ let useRedirectHook = () => {
       | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
       | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
       | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
+      | "invoke_upi_intent_sdk" => {
+          Console.log("invoke_upi_intent_sdk flow")
+          handleUpiFlow(~nextAction, ~flowType=UpiIntent, ~sheetType=UpiAppSelectionSheet)
+        }
+      | "invoke_upi_qr_flow" =>
+        handleUpiFlow(~nextAction, ~flowType=UpiQr, ~sheetType=DynamicFieldsContext.UpiQrSheet)
+      | "wait_screen_information" =>
+        // handleUpiFlow(~nextAction, ~flowType=UpiCollect, ~sheetType=UpiTimerSheet)
+        handleUpiFlow(~nextAction, ~flowType=UpiIntent, ~sheetType=UpiAppSelectionSheet)
+
       | _ => handleDefaultPaymentFlows(~status, ~reUri, ~error)
       }
     }
@@ -293,6 +353,7 @@ let useRedirectHook = () => {
     redirectionHandler(~body, ~errorCallback, ~handleApiRes, ~headers, ~uri)->ignore
   }
 }
+// }
 
 let useGetSavedPMHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)

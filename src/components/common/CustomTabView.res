@@ -12,13 +12,43 @@ let make = (
     setIndexInFocus(_ => index)
   }, [setIndexInFocus])
 
+  let processedTabs = React.useMemo1(() => {
+    let upiTabs = []
+    let result = []
+
+    hocComponentArr->Array.forEach(hoc => {
+      switch hoc.group {
+      | UPI => upiTabs->Array.push(hoc)->ignore
+      | None => result->Array.push(hoc)->ignore
+      }
+    })
+
+    if upiTabs->Array.length > 0 {
+      result
+      ->Array.push({
+        name: "UPI",
+        componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
+          <CustomAccordionView
+            hocComponentArr=upiTabs
+            isLoading=false
+            isParentTabFocused=isScreenFocus
+            setConfirmButtonData
+          />,
+        group: None,
+      })
+      ->ignore
+    }
+
+    result
+  }, [hocComponentArr])
+
   let {sheetContentPadding, primaryColor, iconColor} = ThemebasedStyle.useThemeBasedStyle()
 
   let (renderScene, descriptorDict) = React.useMemo3(() => {
     let map = Map.make()
     let descriptorDict: Dict.t<TabViewType.tabDescriptor> = Dict.make()
 
-    hocComponentArr->Array.forEachWithIndex((hoc, index) => {
+    processedTabs->Array.forEachWithIndex((hoc, index) => {
       map->Map.set(
         index->Int.toString,
         _ => {
@@ -53,11 +83,11 @@ let make = (
     })
 
     (SceneMap.sceneMap(map), descriptorDict)
-  }, (hocComponentArr, indexInFocus, isLoading))
+  }, (processedTabs, indexInFocus, isLoading))
 
-  <UIUtils.RenderIf condition={hocComponentArr->Array.length > 0}>
+  <UIUtils.RenderIf condition={processedTabs->Array.length > 0}>
     {
-      let routes = hocComponentArr->Array.mapWithIndex((hoc, index) => {
+      let routes = processedTabs->Array.mapWithIndex((hoc, index) => {
         let route: TabViewType.route = {
           key: index->Int.toString,
           title: hoc.name,
@@ -66,8 +96,8 @@ let make = (
       })
 
       let isScrollBarOnlyCards =
-        hocComponentArr->Array.length == 1 &&
-          switch hocComponentArr->Array.get(0) {
+        processedTabs->Array.length == 1 &&
+          switch processedTabs->Array.get(0) {
           | Some({name}) => name == "Card"
           | None => true
           }

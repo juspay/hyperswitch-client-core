@@ -1,5 +1,7 @@
 open ReactNative
 open Style
+// open PaymentMethodTypes
+open AllApiDataModifier
 
 module SectionHeader = {
   @react.component
@@ -18,15 +20,17 @@ module SectionHeader = {
         ])}>
         <CustomRadioButton size=20.5 selected=isExpanded color=primaryColor />
         <Space height=5. />
-        {section.title === "loading"
-          ? <CustomLoader height="18" width="18" />
-          : <Icon
-              name=section.title width=18. height=18. fill={isExpanded ? primaryColor : iconColor}
-            />}
-        <Space height=5. />
-        {section.title === "loading"
-          ? <CustomLoader height="18" width="40" />
-          : <TextWrapper text=section.title textType=CardTextBold />}
+        <View style={s({flex: 1., flexDirection: #row, alignItems: #center})}>
+          {section.title === "loading"
+            ? <CustomLoader height="18" width="18" />
+            : <Icon
+                name=section.title width=18. height=18. fill={isExpanded ? primaryColor : iconColor}
+              />}
+          <Space height=5. />
+          {section.title === "loading"
+            ? <CustomLoader height="18" width="40" />
+            : <TextWrapper text=section.title textType=CardTextBold />}
+        </View>
       </View>
     </View>
   }
@@ -63,11 +67,12 @@ module MoreButton = {
 
 @react.component
 let make = (
-  ~hocComponentArr: array<AllApiDataModifier.hoc>=[],
+  ~hocComponentArr: array<hoc>=[],
   ~isLoading=true,
   ~setConfirmButtonData,
+  ~isParentTabFocused: bool=true,
   ~allowMultipleExpanded: bool=false,
-  ~maxVisibleItems: int=2,
+  ~maxVisibleItems: int=3,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (expandedSections, setExpandedSections) = React.useState(_ => [0])
@@ -105,7 +110,7 @@ let make = (
   }
 
   let renderSectionContent = (~section: AccordionView.accordionSection) => {
-    let isScreenFocus = expandedSections->Array.includes(section.key)
+    let isScreenFocus = isParentTabFocused && expandedSections->Array.includes(section.key)
     section.componentHoc(~isScreenFocus, ~setConfirmButtonData)
   }
 

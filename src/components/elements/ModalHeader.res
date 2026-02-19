@@ -4,7 +4,9 @@ open Style
 @react.component
 let make = (~onModalClose, ~isLoading=false) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let {sheetType, setSheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {sheetType, setSheetType, upiData} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
 
   <View
@@ -15,23 +17,42 @@ let make = (~onModalClose, ~isLoading=false) => {
       alignItems: #center,
       justifyContent: #"space-between",
     })}>
-    {if sheetType !== ButtonSheet {
-      <CustomPressable
-        style={s({maxWidth: 60.->pct, flexDirection: #row, alignItems: #center})}
-        onPress={_ => setSheetType(ButtonSheet)}>
-        <Icon name="back" fill="#000" />
-        <Space width=5. />
-        <TextWrapper text={"Back"} textType={ModalTextBold} />
-      </CustomPressable>
+    {if (
+      sheetType !== ButtonSheet && sheetType !== UpiAppSelectionSheet && sheetType !== UpiQrSheet
+    ) {
+      let shouldShowBack =
+        sheetType !== UpiTimerSheet || upiData.flowType == Some(DynamicFieldsContext.UpiIntent)
+
+      shouldShowBack
+        ? <CustomPressable
+            style={s({maxWidth: 60.->pct, flexDirection: #row, alignItems: #center})}
+            onPress={_ =>
+              setSheetType(sheetType == UpiTimerSheet ? UpiAppSelectionSheet : ButtonSheet)}>
+            <Icon name="back" fill="#000" />
+            <Space width=5. />
+            <TextWrapper text={"Back"} textType={ModalTextBold} />
+          </CustomPressable>
+        : <View />
     } else if isLoading {
       <View />
     } else {
-      switch nativeProp.configuration.paymentSheetHeaderText {
-      | Some(var) =>
+      switch sheetType {
+      | UpiAppSelectionSheet =>
         <View style={s({maxWidth: 60.->pct})}>
-          <TextWrapper text={var} textType={HeadingBold} />
+          <TextWrapper text="Select UPI App" textType={HeadingBold} />
         </View>
-      | _ => <View />
+      | UpiQrSheet =>
+        <View style={s({maxWidth: 60.->pct})}>
+          <TextWrapper text="Pay by scanning QR Code" textType={HeadingBold} />
+        </View>
+      | _ =>
+        switch nativeProp.configuration.paymentSheetHeaderText {
+        | Some(var) =>
+          <View style={s({maxWidth: 60.->pct})}>
+            <TextWrapper text={var} textType={HeadingBold} />
+          </View>
+        | _ => <View />
+        }
       }
     }}
     <View

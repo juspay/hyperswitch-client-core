@@ -660,6 +660,8 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
       swiftCode: Utils.getString(res, "swiftCode", defaultLocale.swiftCode),
       doneText: Utils.getString(res, "doneText", defaultLocale.doneText),
       copyToClipboard: Utils.getString(res, "copyToClipboard", defaultLocale.copyToClipboard),
+      payByUpiApp: Utils.getString(res, "payByUpiApp", defaultLocale.payByUpiApp),
+      andMore: Utils.getString(res, "andMore", defaultLocale.andMore),
     }
   | None => defaultLocale
   }

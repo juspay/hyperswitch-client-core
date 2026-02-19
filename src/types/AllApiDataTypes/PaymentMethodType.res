@@ -10,6 +10,7 @@ type paymentMethod =
   | CRYPTO
   | REWARD
   | GIFT_CARD
+  | UPI
   | OTHERS
 
 type payment_experience_type = INVOKE_SDK_CLIENT | REDIRECT_TO_URL | NONE
@@ -29,6 +30,7 @@ let getPaymentMethod = str =>
   | "crypto" => CRYPTO
   | "reward" => REWARD
   | "gift_card" => GIFT_CARD
+  | "upi" => UPI
   | _ => OTHERS
   }
 

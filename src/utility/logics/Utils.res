@@ -143,7 +143,7 @@ let getHeader = (apiKey, appId, ~redirectUri=?) => {
     ("api-key", apiKey),
     ("x-app-id", Js.String.replace(".hyperswitch://", "", appId->Option.getOr(""))),
     ("x-redirect-uri", redirectUri->Option.getOr("")),
-    // ("x-feature", "router-custom-be"),
+    ("x-feature", "router-custom-be"),
   ]->Dict.fromArray
 }
 

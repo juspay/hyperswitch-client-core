@@ -1,11 +1,18 @@
+// open PaymentMethodTypes
+
 type componentHoc = (
   ~isScreenFocus: bool,
   ~setConfirmButtonData: GlobalConfirmButton.confirmButtonData => unit,
 ) => React.element
 
+type paymentMethodGroup =
+  | None
+  | UPI
+
 type hoc = {
   name: string,
   componentHoc: componentHoc,
+  group: paymentMethodGroup,
 }
 
 type walletProp = {
@@ -47,6 +54,7 @@ let useAccountPaymentMethodModifier = () => {
                         animated=false
                         style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
                       />,
+                    group: None,
                   },
                 ]
               : [],
@@ -68,10 +76,13 @@ let useAccountPaymentMethodModifier = () => {
     } else {
       ([], [])
     }
-
     switch accountPaymentMethodData {
     | Some(accountPaymentMethodData) =>
-      accountPaymentMethodData.payment_methods->Array.reduce(
+      let (
+        finalTabArr,
+        finalElementArr,
+        finalGiftCardArr,
+      ) = accountPaymentMethodData.payment_methods->Array.reduce(
         (initialTabArr, initialElementArr, []),
         (
           (tabArr, elementArr, giftCardArr): (
@@ -93,6 +104,8 @@ let useAccountPaymentMethodModifier = () => {
             paymentMethodData.payment_experience->Array.find(
               x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
             )
+
+          let paymentGroup = paymentMethodData.payment_method === UPI ? UPI : None
 
           let walletExperience = switch paymentMethodData.payment_method_type_wallet {
           | APPLE_PAY =>
@@ -153,6 +166,7 @@ let useAccountPaymentMethodModifier = () => {
                     name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                    group: paymentGroup,
                   })
 
             | TabSheet | WidgetTabSheet =>
@@ -160,6 +174,7 @@ let useAccountPaymentMethodModifier = () => {
                 name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
                 componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                   <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                group: paymentGroup,
               })
             | ButtonSheet | WidgetButtonSheet =>
               elementArr->Array.push(
@@ -176,6 +191,8 @@ let useAccountPaymentMethodModifier = () => {
           (tabArr, elementArr, giftCardArr)
         },
       )
+
+      (finalTabArr, finalElementArr, finalGiftCardArr)
     | None =>
       let loadingTabElement = {
         name: "loading",
@@ -185,6 +202,7 @@ let useAccountPaymentMethodModifier = () => {
           <Space height=10. />
           <CustomLoader />
         </>,
+        group: None,
       }
 
       switch nativeProp.sdkState {

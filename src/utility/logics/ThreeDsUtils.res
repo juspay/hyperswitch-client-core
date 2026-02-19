@@ -71,7 +71,7 @@ let getAuthCallHeaders = publishableKey => {
     ("Content-Type", "application/json"),
     ("api-key", publishableKey),
     ("Accept", "application/json"),
-    // ("x-feature", "router-custom-be"),
+    ("x-feature", "router-custom-be"),
   ]->Dict.fromArray
 }
 

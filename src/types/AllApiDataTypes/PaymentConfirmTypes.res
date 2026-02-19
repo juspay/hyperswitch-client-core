@@ -61,12 +61,27 @@ type ach_credit_transfer = {
 }
 type bank_transfer_steps_and_charges_details = {ach_credit_transfer?: ach_credit_transfer}
 
+type upiInformation = {sdk_uri: string}
+
+type waitScreenPollConfig = {
+  delay_in_secs: int,
+  frequency: int,
+}
+
+type waitScreenInformation = {
+  display_from_timestamp: float,
+  display_to_timestamp: float,
+  poll_config: waitScreenPollConfig,
+}
+
 type nextAction = {
   redirectToUrl: string,
   type_: string,
   threeDsData?: threeDsData,
   session_token?: sessionToken,
   bank_transfer_steps_and_charges_detail?: bank_transfer_steps_and_charges_details,
+  upiInformation?: upiInformation,
+  waitScreenInformation?: waitScreenInformation,
 }
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
@@ -117,77 +132,110 @@ let getACH_details = (data: option<ach_credit_transfer>) => {
     swift_code: "",
   })
 }
+let getDict = (json, key) =>
+  json
+  ->Dict.get(key)
+  ->Option.getOr(JSON.Encode.null)
+  ->JSON.Decode.object
+  ->Option.getOr(Dict.make())
 
-let getNextAction = (dict, str) => {
-  dict
-  ->Dict.get(str)
-  ->Option.flatMap(JSON.Decode.object)
-  ->Option.map(json => {
-    let threeDSDataDict =
-      json
-      ->Dict.get("three_ds_data")
-      ->Option.getOr(JSON.Encode.null)
-      ->JSON.Decode.object
-      ->Option.getOr(Dict.make())
+let parseThreeDSData = json => {
+  let threeDSDataDict = getDict(json, "three_ds_data")
+  let pollConfigDict = getDict(threeDSDataDict, "poll_config")
 
-    let pollConfigDict =
-      threeDSDataDict
-      ->Dict.get("poll_config")
-      ->Option.getOr(JSON.Encode.null)
-      ->JSON.Decode.object
-      ->Option.getOr(Dict.make())
-
-    let sessionTokenDict =
-      json
-      ->Dict.get("session_token")
-      ->Option.getOr(JSON.Encode.null)
-      ->JSON.Decode.object
-      ->Option.getOr(Dict.make())
-    let bankTransferStepsAndChargesDetailsDict =
-      json
-      ->Dict.get("bank_transfer_steps_and_charges_details")
-      ->Option.getOr(JSON.Encode.null)
-      ->JSON.Decode.object
-      ->Option.getOr(Dict.make())
-    let achCreditTransferDict =
-      bankTransferStepsAndChargesDetailsDict
-      ->Dict.get("ach_credit_transfer")
-      ->Option.getOr(JSON.Encode.null)
-      ->JSON.Decode.object
-      ->Option.getOr(Dict.make())
-
-    {
-      redirectToUrl: getString(json, "redirect_to_url", ""),
-      type_: getString(json, "type", ""),
-      threeDsData: {
-        threeDsAuthorizeUrl: getString(threeDSDataDict, "three_ds_authorize_url", ""),
-        threeDsAuthenticationUrl: getString(threeDSDataDict, "three_ds_authentication_url", ""),
-        messageVersion: getString(threeDSDataDict, "message_version", ""),
-        directoryServerId: getString(threeDSDataDict, "directory_server_id", ""),
-        pollConfig: {
-          pollId: getString(pollConfigDict, "poll_id", ""),
-          delayInSecs: getOptionFloat(pollConfigDict, "delay_in_secs")
-          ->Option.getOr(0.)
-          ->Int.fromFloat,
-          frequency: getOptionFloat(pollConfigDict, "frequency")->Option.getOr(0.)->Int.fromFloat,
-        },
-      },
-      bank_transfer_steps_and_charges_detail: {
-        ach_credit_transfer: {
-          account_number: getString(achCreditTransferDict, "account_number", ""),
-          bank_name: getString(achCreditTransferDict, "bank_name", ""),
-          routing_number: getString(achCreditTransferDict, "routing_number", ""),
-          swift_code: getString(achCreditTransferDict, "swift_code", ""),
-        },
-      },
-      session_token: {
-        wallet_name: getString(sessionTokenDict, "wallet_name", ""),
-        open_banking_session_token: getString(sessionTokenDict, "open_banking_session_token", ""),
-      },
-    }
-  })
-  ->Option.getOr(defaultNextAction)
+  {
+    threeDsAuthorizeUrl: getString(threeDSDataDict, "three_ds_authorize_url", ""),
+    threeDsAuthenticationUrl: getString(threeDSDataDict, "three_ds_authentication_url", ""),
+    messageVersion: getString(threeDSDataDict, "message_version", ""),
+    directoryServerId: getString(threeDSDataDict, "directory_server_id", ""),
+    pollConfig: {
+      pollId: getString(pollConfigDict, "poll_id", ""),
+      delayInSecs: getOptionFloat(pollConfigDict, "delay_in_secs")->Option.getOr(0.)->Int.fromFloat,
+      frequency: getOptionFloat(pollConfigDict, "frequency")->Option.getOr(0.)->Int.fromFloat,
+    },
+  }
 }
+
+let parseBankTransferDetails = json => {
+  let stepsDict = getDict(json, "bank_transfer_steps_and_charges_details")
+  let achCreditDict = getDict(stepsDict, "ach_credit_transfer")
+
+  {
+    ach_credit_transfer: {
+      account_number: getString(achCreditDict, "account_number", ""),
+      bank_name: getString(achCreditDict, "bank_name", ""),
+      routing_number: getString(achCreditDict, "routing_number", ""),
+      swift_code: getString(achCreditDict, "swift_code", ""),
+    },
+  }
+}
+
+let parseSessionToken = json => {
+  let sessionDict = getDict(json, "session_token")
+
+  {
+    wallet_name: getString(sessionDict, "wallet_name", ""),
+    open_banking_session_token: getString(sessionDict, "open_banking_session_token", ""),
+  }
+}
+
+// let parseUpiIntent = json => {
+//   let upiDict = json->Dict.get("sdk_uri")->Option.isSome ? json : Dict.make()
+
+//   upiDict->Dict.get("sdk_uri")->Option.isSome
+//     ? Some({
+//         sdk_uri: getString(upiDict, "sdk_uri", ""),
+//       })
+//     : None
+// }
+
+let parseUpiInformation = json => {
+  let uri = switch json->Dict.get("sdk_uri") {
+  | Some(_) => getString(json, "sdk_uri", "")
+  | None =>
+    switch json->Dict.get("qr_code_url") {
+    | Some(_) => getString(json, "qr_code_url", "")
+    | None => ""
+    }
+  }
+
+  {sdk_uri: uri}
+}
+
+let parseWaitScreenInformation = json => {
+  let pollConfigDict = getDict(json, "poll_config")
+  {
+    display_from_timestamp: getOptionFloat(json, "display_from_timestamp")->Option.getOr(0.),
+    display_to_timestamp: getOptionFloat(json, "display_to_timestamp")->Option.getOr(0.),
+    poll_config: {
+      delay_in_secs: getOptionFloat(pollConfigDict, "delay_in_secs")
+      ->Option.getOr(0.)
+      ->Int.fromFloat,
+      frequency: getOptionFloat(pollConfigDict, "frequency")
+      ->Option.getOr(0.)
+      ->Int.fromFloat,
+    },
+  }
+}
+
+let buildNextAction = json => {
+  {
+    redirectToUrl: getString(json, "redirect_to_url", ""),
+    type_: getString(json, "type", ""),
+    threeDsData: parseThreeDSData(json),
+    bank_transfer_steps_and_charges_detail: parseBankTransferDetails(json),
+    session_token: parseSessionToken(json),
+    upiInformation: parseUpiInformation(json),
+    waitScreenInformation: parseWaitScreenInformation(json),
+  }
+}
+
+let getNextAction = (dict, key) =>
+  dict
+  ->Dict.get(key)
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.map(buildNextAction)
+  ->Option.getOr(defaultNextAction)
 
 let itemToObjMapper = dict => {
   let errorDict =

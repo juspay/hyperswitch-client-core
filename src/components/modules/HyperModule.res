@@ -12,6 +12,15 @@ type hyperModule = {
   onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
+  // getInstalledUpiApps: unit => Promise.t<array<upiAppInfo>>,
+
+  getInstalledUpiApps: (
+    // ~knownApps: array<{"appName": string, "urlScheme": string}>=?,
+    ~knownApps: string=?,
+  ) => // unit,
+  Promise.t<array<UpiTypes.upiAppInfo>>,
+  getInstalledUpiAppsIOS: (string, array<UpiTypes.upiAppInfo> => unit) => unit,
+  openUpiApp: (string, string) => Promise.t<bool>,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -51,6 +60,21 @@ let hyperModule = {
     _,
   ) => ()),
   updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
+  getInstalledUpiApps: getFunctionFromModule(hyperModuleDict, "getInstalledUpiApps", (
+    ~knownApps=?,
+  ) =>
+    // (),
+    Promise.resolve([])
+  ),
+  // getInstalledUpiApps: getFunctionFromModule(hyperModuleDict, "getInstalledUpiApps", () =>
+  //   Promise.resolve([])
+  // ),
+  getInstalledUpiAppsIOS: getFunctionFromModule(hyperModuleDict, "getInstalledUpiApps", (_, _) =>
+    ()
+  ),
+  openUpiApp: getFunctionFromModule(hyperModuleDict, "openUpiApp", (_, _) =>
+    Promise.resolve(false)
+  ),
 }
 
 let sendMessageToNative = str => {
@@ -167,4 +191,24 @@ let launchWidgetPaymentSheet = (requestObj: string, callback) => {
 
 let updateWidgetHeight = (height: int) => {
   hyperModule.updateWidgetHeight(height)
+}
+
+let getInstalledUpiApps = (~knownApps: array<UpiTypes.upiApp>=[]) => {
+  switch ReactNative.Platform.os {
+  | #ios =>
+    let knownAppsForNative = knownApps->Array.map(app =>
+      {
+        "appName": app.appName,
+        "urlScheme": app.urlScheme,
+      }
+    )
+    let knownAppsJson = knownAppsForNative->JSON.stringifyAny->Option.getOr("[]")
+    Console.log2("[UPI] Known UPI apps for iOS detection:", knownAppsJson)
+    hyperModule.getInstalledUpiApps(~knownApps=knownAppsJson)
+  | _ => hyperModule.getInstalledUpiApps()
+  }
+}
+
+let openUpiApp = (packageName: string, upiUri: string) => {
+  hyperModule.openUpiApp(packageName, upiUri)
 }
