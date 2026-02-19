@@ -17,7 +17,7 @@
 
 ## Screenshots / Recordings
 
-<!-- Screenshots / Recordings of the change -->
+<!-- Screenshots / Recordings of the change if applicable -->
 
 ---
 
