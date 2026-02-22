@@ -12,7 +12,7 @@ let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
           netceteraSDKApiKey,
           sdkEnvironment->sdkEnvironmentToStrMapper,
           status => resolve(status),
-        )
+        )->ignore
       })
 
       isInitialisedPromiseRef := Some(promiseVal)
@@ -308,16 +308,15 @@ let useExternalThreeDs = () => {
                   ~eventName=NETCETERA_SDK,
                   (),
                 )
-
                 resolve()
-              })
+              })->ignore
             } else {
               retrieveAndShowStatus()
               reject()
             }
           },
           threeDSRequestorAppURL,
-        )
+        )->ignore
       })
     }
 
@@ -426,7 +425,7 @@ let useExternalThreeDs = () => {
             Netcetera3dsModule.generateAReqParams(
               threeDsData.messageVersion,
               threeDsData.directoryServerId,
-              (status, aReqParams) => {
+              (aReqParams, status) => {
                 logger(
                   ~logType=INFO,
                   ~value=status->JSON.stringifyAny->Option.getOr(""),
@@ -440,7 +439,7 @@ let useExternalThreeDs = () => {
                   resolve(RetrieveAgain)
                 }
               },
-            )
+            )->ignore
           })
         } else {
           Promise.resolve(RetrieveAgain)
@@ -459,22 +458,19 @@ let useExternalThreeDs = () => {
       })
     }
 
-    let checkSDKPresence = () => {
-      Promise.make((resolve, reject) => {
-        if !Netcetera3dsModule.isAvailable {
-          logger(
-            ~logType=DEBUG,
-            ~value="Netcetera SDK dependency not added",
-            ~category=USER_EVENT,
-            ~eventName=NETCETERA_SDK,
-            (),
-          )
-          onFailure(externalThreeDsModuleStatus.errorMsg)
-          reject()
-        } else {
-          resolve()
-        }
-      })
+    let checkSDKPresence = async () => {
+      let isAvailable = await Netcetera3dsModule.isNetcetera3dsAvailable()
+      if !isAvailable {
+        logger(
+          ~logType=DEBUG,
+          ~value="Netcetera SDK dependency not added",
+          ~category=USER_EVENT,
+          ~eventName=NETCETERA_SDK,
+          (),
+        )
+      onFailure(externalThreeDsModuleStatus.errorMsg)
+      throw(Not_found)
+      }
     }
     let handleNativeThreeDs = async () => {
       let isFinalRetrieve = try {

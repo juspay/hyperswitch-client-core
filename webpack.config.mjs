@@ -32,6 +32,12 @@ export default Repack.defineWebpackConfig(env => {
                                 chunks: 'async',
                                 enforce: true,
                             },
+                            netcetera3ds: {
+                                test: /@juspay-tech\/react-native-hyperswitch-netcetera-3ds/,
+                                name: 'react-native-hyperswitch-netcetera-3ds',
+                                chunks: 'async',
+                                enforce: true,
+                            },
                         },
                     },
                 }
