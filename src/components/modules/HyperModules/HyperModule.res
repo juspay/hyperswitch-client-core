@@ -4,14 +4,14 @@ open NativeModulesType
 external hyperTurboModule: Js.Nullable.t<Js.Dict.t<unknown>> = "default"
 
 let hyperNativeModule: Js.Nullable.t<Js.Dict.t<unknown>> =
-  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModules")
+  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
   ->Option.map(m => Obj.magic(m))
   ->Js.Nullable.fromOption
 
 let moduleSource: Js.Nullable.t<
   Js.Dict.t<unknown>,
 > = switch hyperTurboModule->Js.Nullable.toOption {
-| Some(_) => hyperTurboModule
+| Some(_) => NewArchUtils.isTurboModuleEnabled() ? hyperTurboModule : hyperNativeModule
 | None => hyperNativeModule
 }
 

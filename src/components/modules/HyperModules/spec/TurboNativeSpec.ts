@@ -10,22 +10,22 @@ export interface Spec extends TurboModule {
 
   launchApplePay(
     requestObj: string,
-    callback: (result: Record<string, unknown>) => void,
+    callback: (result: Object) => void,
   ): void;
 
   startApplePay(
     requestObj: string,
-    callback: (result: Record<string, unknown>) => void,
+    callback: (result: Object) => void,
   ): void;
 
   presentApplePay(
     requestObj: string,
-    callback: (result: Record<string, unknown>) => void,
+    callback: (result: Object) => void,
   ): void;
 
   launchGPay(
     requestObj: string,
-    callback: (result: Record<string, unknown>) => void,
+    callback: (result: Object) => void,
   ): void;
 
   exitPaymentsheet(rootTag: number, result: string, reset: boolean): void;
@@ -44,7 +44,7 @@ export interface Spec extends TurboModule {
 
   launchWidgetPaymentSheet(
     requestObj: string,
-    callback: (result: Record<string, unknown>) => void,
+    callback: (result: Object) => void,
   ): void;
 
   updateWidgetHeight(height: number): void;
@@ -57,6 +57,6 @@ export interface Spec extends TurboModule {
  * This allows Turbo → Legacy fallback safely.
  * This allows the TurboModule to be optional, and the app can still run without it without crashing.
  */
-const TurboModule = TurboModuleRegistry.get<Spec>('HyperModules');
+const hyperModule = TurboModuleRegistry.get<Spec>('HyperModule');
 
-export default TurboModule;
+export default hyperModule;
