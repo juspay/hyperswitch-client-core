@@ -1,3 +1,4 @@
+open NewArchUtils
 type props = {
   buttonType?: SdkTypes.googlePayButtonType,
   borderRadius?: float,
@@ -6,6 +7,10 @@ type props = {
   allowedPaymentMethods?: string,
 }
 
-let make: React.component<props> = ReactNative.NativeModules.requireNativeComponent(
-  "GooglePayButton",
-)
+@module("../HyperModules/spec/GooglePayNativeComponent") @val
+external googlePayButton: React.component<props> = "default"
+let make: React.component<props> = if isTurboModuleEnabled() {
+  googlePayButton
+} else {
+  ReactNative.NativeModules.requireNativeComponent("GooglePayButton")
+}

@@ -1,5 +1,5 @@
 open ReactNative
-
+open NewArchUtils
 type props = {
   buttonType?: SdkTypes.applePayButtonType,
   buttonStyle?: SdkTypes.applePayButtonStyle,
@@ -7,4 +7,11 @@ type props = {
   style?: Style.t,
 }
 
-let make: React.component<props> = NativeModules.requireNativeComponent("ApplePayView")
+@module("../HyperModules/spec/ApplePayNativeComponent") @val
+external applePayButton: React.component<props> = "default"
+
+let make: React.component<props> = if isTurboModuleEnabled() {
+  applePayButton
+} else {
+  NativeModules.requireNativeComponent("ApplePayView")
+}
