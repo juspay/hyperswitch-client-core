@@ -9,4 +9,4 @@ export interface NativeProps extends ViewProps {
   allowedPaymentMethods?: string;
 }
 
-export default codegenNativeComponent<NativeProps>('GooglePayView') as HostComponent<NativeProps>;
+export default codegenNativeComponent<NativeProps>('GooglePayButton') as HostComponent<NativeProps>;
