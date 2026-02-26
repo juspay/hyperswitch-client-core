@@ -7,10 +7,12 @@ type props = {
   allowedPaymentMethods?: string,
 }
 
-@module("../HyperModules/spec/GooglePayNativeComponent") @val
-external googlePayButton: React.component<props> = "default"
-let make: React.component<props> = if isTurboModuleEnabled() {
-  googlePayButton
+
+let make: React.component<props> = if isFabricEnabled() {
+  let turboGooglePayButton = %raw(
+      "require('../HyperModules/spec/GooglePayNativeComponent.ts')"
+    )
+    turboGooglePayButton["default"]
 } else {
   ReactNative.NativeModules.requireNativeComponent("GooglePayButton")
 }

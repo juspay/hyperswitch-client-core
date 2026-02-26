@@ -6,12 +6,11 @@ type props = {
   cornerRadius?: float,
   style?: Style.t,
 }
-
-@module("../HyperModules/spec/ApplePayNativeComponent") @val
-external applePayButton: React.component<props> = "default"
-
-let make: React.component<props> = if isTurboModuleEnabled() {
-  applePayButton
+let make: React.component<props> = if isFabricEnabled() {
+    let turboApplePayButton = %raw(
+      "require('../HyperModules/spec/ApplePayNativeComponent')"
+    )
+    turboApplePayButton["default"]
 } else {
   NativeModules.requireNativeComponent("ApplePayView")
 }
