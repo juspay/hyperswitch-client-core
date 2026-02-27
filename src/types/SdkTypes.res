@@ -233,6 +233,7 @@ type configurationType = {
   displayDefaultSavedPaymentIcon: bool,
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
+  disableBranding: bool,
 }
 
 type sdkState =
@@ -290,7 +291,6 @@ type hyperParams = {
   confirm: bool,
   appId?: string,
   country: string,
-  disableBranding: bool,
   userAgent: option<string>,
   launchTime?: float,
   sdkVersion: string,
@@ -835,6 +835,7 @@ let parseConfigurationDict = (configObj, from) => {
       cvv: getString(placeholderDict, "cvv", "CVC"),
     },
     displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
+    disableBranding: getBool(configObj, "disableBranding", false),
   }
   configuration
 }
@@ -892,7 +893,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       | Some("") | None => defaultCountry
       | Some(country) => country
       },
-      disableBranding: getBool(hyperParams, "disableBranding", false),
       userAgent: getOptionString(hyperParams, "user-agent"),
       confirm: getBool(hyperParams, "confirm", false),
       launchTime: ?getOptionFloat(hyperParams, "launchTime"),

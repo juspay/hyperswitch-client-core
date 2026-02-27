@@ -5,7 +5,7 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (themeType, _) = React.useContext(ThemeContext.themeContext)
 
-  <UIUtils.RenderIf condition={!nativeProp.hyperParams.disableBranding}>
+  <UIUtils.RenderIf condition={!nativeProp.configuration.disableBranding}>
     <Space />
     <View style={s({alignItems: #center})}>
       <Icon
