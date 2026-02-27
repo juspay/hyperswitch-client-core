@@ -17,8 +17,12 @@ let make = (~onModalClose, ~isLoading=false) => {
     })}>
     {if sheetType !== ButtonSheet {
       <CustomPressable
+        accessible={true}
         style={s({maxWidth: 60.->pct, flexDirection: #row, alignItems: #center})}
-        onPress={_ => setSheetType(ButtonSheet)}>
+        onPress={_ => setSheetType(ButtonSheet)}
+        accessibilityLabel="Back"
+        accessibilityRole=#button
+      >
         <Icon name="back" fill="#000" />
         <Space width=5. />
         <TextWrapper text={"Back"} textType={ModalTextBold} />
@@ -54,7 +58,12 @@ let make = (~onModalClose, ~isLoading=false) => {
                     overrideStyle=Some(s({color: "black"}))
                   />
                 </View>}
-            <CustomPressable onPress={_ => onModalClose()}>
+            <CustomPressable
+              accessible={true}
+              onPress={_ => onModalClose()}
+              accessibilityLabel="Close payment sheet"
+              accessibilityRole=#button
+            >
               <Icon name="close" width=16. height=16. fill=iconColor />
             </CustomPressable>
           </>}

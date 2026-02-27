@@ -54,6 +54,8 @@ module CVVComponent = {
               ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
               : <Icon name="cvvempty" height=35. width=35. fill="black" />
           })
+          accessibilityLabel={localeObject.cvcTextLabel ++ ", " ++ localeObject.requiredText}
+          accessibilityHint="Enter security code for saved card"
         />
       </View>
       {errorMsgText->Option.isSome

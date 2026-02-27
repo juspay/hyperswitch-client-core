@@ -132,6 +132,8 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.cardNumberLabel ++ ", " ++ localeObject.requiredText}
+            accessibilityHint="Enter your card number"
           />
         </Animated.View>
         <Animated.View style={s({flex: {expireInputFlex->Animated.StyleProp.float}})}>
@@ -167,6 +169,8 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.validThruText ++ ", " ++ localeObject.requiredText}
+            accessibilityHint="Format: month month slash year year"
           />
         </Animated.View>
         <Animated.View style={s({flex: {cvvInputFlex->Animated.StyleProp.float}})}>
@@ -204,6 +208,8 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.cvcTextLabel ++ ", " ++ localeObject.requiredText}
+            accessibilityHint="3 or 4 digit security code"
           />
         </Animated.View>
         {isZipAvailable
@@ -240,6 +246,8 @@ let make = (
                     }
                   }
                 }}
+                accessibilityLabel={localeObject.postalCodeLabel ++ ", " ++ localeObject.requiredText}
+                accessibilityHint="Enter your billing zip code"
               />
             </Animated.View>
           : React.null}

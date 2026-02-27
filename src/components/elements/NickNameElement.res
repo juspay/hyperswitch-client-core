@@ -47,6 +47,8 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid, ~accessible) => {
       borderRightWidth=borderWidth
       animateLabel=localeObject.nicknamePlaceholder
       maxLength=Some(12)
+      accessibilityLabel={localeObject.nicknamePlaceholder}
+      accessibilityHint="Optional nickname for this card"
       accessible
     />
     {switch errorMessage {
