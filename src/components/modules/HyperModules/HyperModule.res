@@ -1,60 +1,45 @@
-type hyperModule = {
-  sendMessageToNative: string => unit,
-  launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  startApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  presentApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  launchGPay: (string, Dict.t<JSON.t> => unit) => unit,
-  exitPaymentsheet: (int, string, bool) => unit,
-  exitPaymentMethodManagement: (int, string, bool) => unit,
-  exitWidget: (string, string) => unit,
-  exitCardForm: string => unit,
-  launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
-  onAddPaymentMethod: string => unit,
-  exitWidgetPaymentsheet: (int, string, bool) => unit,
-  updateWidgetHeight: int => unit,
+open NativeModulesType
+
+@module("./spec/TurboNativeSpec")
+external hyperTurboModule: Js.Nullable.t<Js.Dict.t<unknown>> = "default"
+
+let hyperNativeModule: Js.Nullable.t<Js.Dict.t<unknown>> =
+  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
+  ->Option.map(m => Obj.magic(m))
+  ->Js.Nullable.fromOption
+
+let moduleSource: Js.Nullable.t<
+  Js.Dict.t<unknown>,
+> = switch hyperTurboModule->Js.Nullable.toOption {
+| Some(_) => NewArchUtils.isTurboModuleEnabled() ? hyperTurboModule : hyperNativeModule
+| None => hyperNativeModule
 }
 
-let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
-  switch dict->Dict.get(key) {
-  | Some(fn) => Obj.magic(fn)
-  | None => default
+let getFn = (moduleObj, key, fallback) => {
+  switch moduleObj->Js.Nullable.toOption {
+  | None => fallback
+  | Some(m) =>
+    switch Js.Dict.get(m, key) {
+    | Some(fn) => Obj.magic(fn)
+    | None => fallback
+    }
   }
 }
 
-let hyperModuleDict =
-  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
-  ->Option.flatMap(JSON.Decode.object)
-  ->Option.getOr(Dict.make())
-
-let hyperModule = {
-  sendMessageToNative: getFunctionFromModule(hyperModuleDict, "sendMessageToNative", _ => ()),
-  launchApplePay: getFunctionFromModule(hyperModuleDict, "launchApplePay", (_, _) => ()),
-  startApplePay: getFunctionFromModule(hyperModuleDict, "startApplePay", (_, _) => ()),
-  presentApplePay: getFunctionFromModule(hyperModuleDict, "presentApplePay", (_, _) => ()),
-  launchGPay: getFunctionFromModule(hyperModuleDict, "launchGPay", (_, _) => ()),
-  exitPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitPaymentsheet", (_, _, _) => ()),
-  exitPaymentMethodManagement: getFunctionFromModule(
-    hyperModuleDict,
-    "exitPaymentMethodManagement",
-    (_, _, _) => (),
-  ),
-  exitWidget: getFunctionFromModule(hyperModuleDict, "exitWidget", (_, _) => ()),
-  exitCardForm: getFunctionFromModule(hyperModuleDict, "exitCardForm", _ => ()),
-  launchWidgetPaymentSheet: getFunctionFromModule(hyperModuleDict, "launchWidgetPaymentSheet", (
-    _,
-    _,
-  ) => ()),
-  onAddPaymentMethod: getFunctionFromModule(hyperModuleDict, "onAddPaymentMethod", _ => ()),
-  exitWidgetPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitWidgetPaymentsheet", (
-    _,
-    _,
-    _,
-  ) => ()),
-  updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
-}
-
-let sendMessageToNative = str => {
-  hyperModule.sendMessageToNative(str)
+let hyperModule: hyperModule = {
+  sendMessageToNative: getFn(moduleSource, "sendMessageToNative", _ => ()),
+  launchApplePay: getFn(moduleSource, "launchApplePay", (_, _) => ()),
+  startApplePay: getFn(moduleSource, "startApplePay", (_, _) => ()),
+  presentApplePay: getFn(moduleSource, "presentApplePay", (_, _) => ()),
+  launchGPay: getFn(moduleSource, "launchGPay", (_, _) => ()),
+  exitPaymentsheet: getFn(moduleSource, "exitPaymentsheet", (_, _, _) => ()),
+  exitPaymentMethodManagement: getFn(moduleSource, "exitPaymentMethodManagement", (_, _, _) => ()),
+  exitWidget: getFn(moduleSource, "exitWidget", (_, _) => ()),
+  exitCardForm: getFn(moduleSource, "exitCardForm", _ => ()),
+  launchWidgetPaymentSheet: getFn(moduleSource, "launchWidgetPaymentSheet", (_, _) => ()),
+  onAddPaymentMethod: getFn(moduleSource, "onAddPaymentMethod", _ => ()),
+  exitWidgetPaymentsheet: getFn(moduleSource, "exitWidgetPaymentsheet", (_, _, _) => ()),
+  updateWidgetHeight: getFn(moduleSource, "updateWidgetHeight", _ => ()),
 }
 
 let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
@@ -74,10 +59,29 @@ let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
   ->JSON.stringify
 }
 
-type useExitPaymentsheetReturnType = {
-  exit: (PaymentConfirmTypes.error, bool) => unit,
-  simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
+let sendMessageToNative = str => hyperModule.sendMessageToNative(str)
+
+let startApplePay = (requestObj: string, callback) =>
+  hyperModule.startApplePay(requestObj, callback)
+
+let presentApplePay = (requestObj: string, callback) =>
+  hyperModule.presentApplePay(requestObj, callback)
+
+let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
+  hyperModule.startApplePay("", startCallback)
+  hyperModule.presentApplePay("", presentCallback)
+  hyperModule.launchApplePay(requestObj, callback)
 }
+
+let launchGPay = (requestObj: string, callback) => hyperModule.launchGPay(requestObj, callback)
+
+let launchWidgetPaymentSheet = (requestObj: string, callback) =>
+  hyperModule.launchWidgetPaymentSheet(requestObj, callback)
+
+let updateWidgetHeight = (height: int) => hyperModule.updateWidgetHeight(height)
+
+let onAddPaymentMethod = (message: string) => hyperModule.onAddPaymentMethod(message)
+
 let useExitPaymentsheet = () => {
   // let (ref, _) = React.useContext(ReactNativeWrapperContext.reactNativeWrapperContext)
   let logger = LoggerHook.useLoggerHook()
@@ -149,22 +153,4 @@ let useExitWidget = () => {
   (exitMode, widgetType: string) => {
     hyperModule.exitWidget(exitMode->stringifiedResStatus, widgetType)
   }
-}
-
-let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
-  hyperModule.startApplePay("", startCallback)
-  hyperModule.presentApplePay("", presentCallback)
-  hyperModule.launchApplePay(requestObj, callback)
-}
-
-let launchGPay = (requestObj: string, callback) => {
-  hyperModule.launchGPay(requestObj, callback)
-}
-
-let launchWidgetPaymentSheet = (requestObj: string, callback) => {
-  hyperModule.launchWidgetPaymentSheet(requestObj, callback)
-}
-
-let updateWidgetHeight = (height: int) => {
-  hyperModule.updateWidgetHeight(height)
 }
