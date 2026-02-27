@@ -302,6 +302,7 @@ type hyperParams = {
   topInset: option<float>,
   leftInset: option<float>,
   rightInset: option<float>,
+  superpositionConfigRaw: option<JSON.t>,
 }
 
 type nativeProp = {
@@ -905,6 +906,13 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       topInset: getOptionFloat(hyperParams, "topInset"),
       leftInset: getOptionFloat(hyperParams, "leftInset"),
       rightInset: getOptionFloat(hyperParams, "rightInset"),
+      superpositionConfigRaw: switch getOptionString(hyperParams, "superpositionConfigRaw") {
+      | Some(jsonStr) =>
+        try {Some(jsonStr->JSON.parseExn)} catch {
+        | _ => None
+        }
+      | None => None
+      },
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }
