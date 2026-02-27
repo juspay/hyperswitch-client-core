@@ -1,0 +1,36 @@
+module.exports = {
+  amount: 2999,
+  currency: 'USD',
+  authentication_type: 'three_ds',
+  customer_id: 'hyperswitch_demo_customer_id',
+  setup_future_usage: 'off_session',
+  capture_method: 'automatic',
+  request_external_three_ds_authentication: true,
+  email: 'abc@gmail.com',
+  billing: {
+    address: {
+      line1: '1467',
+      line2: 'Harrison Street',
+      line3: 'Harrison Street',
+      city: 'San Fransico',
+      state: 'California',
+      zip: '94122',
+      country: 'US',
+      first_name: 'joseph',
+      last_name: 'Doe',
+    },
+  },
+  shipping: {
+    address: {
+      line1: '1467',
+      line2: 'Harrison Street',
+      line3: 'Harrison Street',
+      city: 'San Fransico',
+      state: 'California',
+      zip: '94122',
+      country: 'US',
+      first_name: 'joseph',
+      last_name: 'Doe',
+    },
+  },
+};
