@@ -10,11 +10,16 @@ let getThreeDsNextActionObj = (
       threeDsAuthorizeUrl: "",
       messageVersion: "",
       directoryServerId: "",
+      threeDsMethodDetails: {
+        threeDsMethodData: "",
+      },
       pollConfig: {
         pollId: "",
         delayInSecs: 0,
         frequency: 0,
       },
+      cardNetwork: "",
+      threeDSConnector: "",
     },
   })
 }
@@ -27,15 +32,23 @@ let getThreeDsDataObj = (
     threeDsAuthorizeUrl: "",
     messageVersion: "",
     directoryServerId: "",
+    threeDsMethodDetails: {
+      threeDsMethodData: "",
+    },
     pollConfig: {
       pollId: "",
       delayInSecs: 0,
       frequency: 0,
     },
+    cardNetwork: "",
+    threeDSConnector: "",
   })
 }
 
-let generateAuthenticationCallBody = (clientSecret, aReqParams) => {
+let generateAuthenticationCallBody = (
+  clientSecret,
+  aReqParams: ExternalThreeDsTypes.aReqParams,
+) => {
   let ephemeralKeyDict =
     aReqParams.sdkEphemeralKey
     ->JSON.Decode.string
