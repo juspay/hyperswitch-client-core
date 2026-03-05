@@ -38,7 +38,7 @@ let hyperModule: hyperModule = {
   exitCardForm: getFn(moduleSource, "exitCardForm", _ => ()),
   launchWidgetPaymentSheet: getFn(moduleSource, "launchWidgetPaymentSheet", (_, _) => ()),
   onAddPaymentMethod: getFn(moduleSource, "onAddPaymentMethod", _ => ()),
-  exitWidgetPaymentsheet: getFn(moduleSource, "exitWidgetPaymentsheet", (_, _, _) => ()),
+  exitWidgetPaymentsheet: getFn(moduleSource, "exitWidgetPaymentsheet", (_, _, _, _) => ()),
   updateWidgetHeight: getFn(moduleSource, "updateWidgetHeight", _ => ()),
 }
 
@@ -105,6 +105,7 @@ let useExitPaymentsheet = () => {
           | WidgetPaymentSheet | WidgetButtonSheet =>
             hyperModule.exitWidgetPaymentsheet(
               nativeProp.rootTag,
+              nativeProp.widgetId,
               apiResStatus->stringifiedResStatus,
               reset,
             )
@@ -137,7 +138,7 @@ let useExitPaymentsheet = () => {
         //   )
         exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
-      ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
+      ? hyperModule.exitWidgetPaymentsheet(rootTag, nativeProp.widgetId, apiResStatus->stringifiedResStatus, reset)
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }
   {exit, simplyExit}

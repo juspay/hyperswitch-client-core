@@ -40,7 +40,7 @@ export interface Spec extends TurboModule {
 
   exitCardForm(result: string): void;
 
-  exitWidgetPaymentsheet(rootTag: number, result: string, reset: boolean): void;
+  exitWidgetPaymentsheet(rootTag: number, widgetId: string, result: string, reset: boolean): void;
 
   launchWidgetPaymentSheet(
     requestObj: string,
