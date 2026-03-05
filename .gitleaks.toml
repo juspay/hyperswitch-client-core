@@ -94,3 +94,18 @@ regexes = ["(?i)(nca_root_certificate|netcetera_cert|netcetera_private_key).*"]
 description = "Ignore debug JWT files in iOS"
 commits = ["da5875b308465bdc7767ed90a366db92ed8fb9c7", "dc35c40649dae1a4798bc8c8ed008b8861cb5cb7"]
 regexes = ["(?i)(nca_root_certificate|SECRET_KEY|PUBLISHABLE_KEY|Bearer Token).*"]
+
+[[allowlists]]
+description = "Ignore bundle in Android"
+commits = ["b93ce25effbd72ad6b7fe55ce7673eb9fff46939", "f6ceadb53bc196f9bef4f808e3bed1c7fcb5a1f7"]
+regexes = [".*t.compileToken=t.compileUnsafe=t.compile=void.*"]
+
+[[allowlists]]
+description = "Ignore bundle in Android"
+commits = ["b93ce25effbd72ad6b7fe55ce7673eb9fff46939", "f6ceadb53bc196f9bef4f808e3bed1c7fcb5a1f7"]
+regexes = [".*t.compileToken=t.compileUnsafe=t.compile=void.*"]
+
+[[allowlists]]
+description = "Ignore keys on iOS"
+commits = ["6bf2569aed49c444fb036f3f74d353ceb1477c14"]
+regexes = [".*ZeYpcB05LhwoIg7CL.*"]

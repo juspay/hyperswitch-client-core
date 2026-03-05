@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.8.8...v1.9.0) (2026-02-27)
+
+
+### Features
+
+* moved fetch rescript type def from local to external package, converge on shared-code ([#415](https://github.com/juspay/hyperswitch-client-core/issues/415)) ([dfaf428](https://github.com/juspay/hyperswitch-client-core/commit/dfaf428166c04312188b8414a0f5cf787269739b))
+
 ## [1.8.2](https://github.com/juspay/hyperswitch-client-core/compare/v1.8.1...v1.8.2) (2025-11-07)
 
 
