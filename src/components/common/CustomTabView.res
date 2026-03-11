@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+open PaymentEvents
 
 @react.component
 let make = (
@@ -11,6 +12,24 @@ let make = (
   let setIndexInFocus = React.useCallback1(index => {
     setIndexInFocus(_ => index)
   }, [setIndexInFocus])
+
+  let emitter = PaymentEvents.usePaymentEventEmitter()
+
+  React.useEffect2(() => {
+    switch hocComponentArr->Array.get(indexInFocus) {
+    | Some(hoc) =>
+      if hoc.name !== "loading" {
+        let event = PaymentEvents.buildPaymentMethodStatusEvent(
+          ~paymentMethod=hoc.name,
+          ~paymentMethodType=?Some(hoc.paymentMethodType),
+          ~isSavedPaymentMethod=false,
+        )
+        emitter.emitPaymentMethodStatus(~event)
+      }
+    | None => ()
+    }
+    None
+  }, (indexInFocus, hocComponentArr))
 
   let {sheetContentPadding, primaryColor, iconColor} = ThemebasedStyle.useThemeBasedStyle()
 

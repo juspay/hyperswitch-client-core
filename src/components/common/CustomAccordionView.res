@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+open PaymentEvents
 
 module SectionHeader = {
   @react.component
@@ -73,6 +74,8 @@ let make = (
   let (expandedSections, setExpandedSections) = React.useState(_ => [0])
   let (showMore, setShowMore) = React.useState(_ => true)
 
+  let emitter = PaymentEvents.usePaymentEventEmitter()
+
   let handleSectionToggle = (sectionKey: int) => {
     setExpandedSections(prevExpanded => {
       if allowMultipleExpanded {
@@ -108,6 +111,26 @@ let make = (
     let isScreenFocus = expandedSections->Array.includes(section.key)
     section.componentHoc(~isScreenFocus, ~setConfirmButtonData)
   }
+
+  React.useEffect2(() => {
+    switch expandedSections->Array.get(0) {
+    | Some(sectionKey) =>
+      switch hocComponentArr->Array.get(sectionKey) {
+      | Some(hoc) =>
+        if hoc.name !== "loading" {
+          let event = PaymentEvents.buildPaymentMethodStatusEvent(
+            ~paymentMethod=hoc.name,
+            ~paymentMethodType=?Some(hoc.paymentMethodType),
+            ~isSavedPaymentMethod=false,
+          )
+          emitter.emitPaymentMethodStatus(~event)
+        }
+      | None => ()
+      }
+    | None => ()
+    }
+    None
+  }, (expandedSections, hocComponentArr))
 
   <UIUtils.RenderIf condition={hocComponentArr->Array.length > 0}>
     <Space />

@@ -24,6 +24,11 @@ let make = (
     setIsFormValid(_ => isValid)
   }, [setIsFormValid])
 
+  let (isPristine, setIsPristine) = React.useState(_ => true)
+  let setIsPristine = React.useCallback1(pristine => {
+    setIsPristine(_ => pristine)
+  }, [setIsPristine])
+
   let (formMethods, setFormMethods) = React.useState(_ => None)
   let setFormMethods = React.useCallback1(formSubmit => {
     setFormMethods(_ => formSubmit)
@@ -60,6 +65,13 @@ let make = (
     None
   }, [defaultCountry])
 
+  FormStatusEmitter.useFormStatusEmitter(
+    ~isFocused=isScreenFocus,
+    ~hasRequiredFields=requiredFields->Array.length > 0,
+    ~isFormValid,
+    ~isPristine,
+  )
+
   React.useEffect(() => {
     if isScreenFocus {
       let confirmButton = {
@@ -88,9 +100,11 @@ let make = (
     initialValues
     setFormData
     setIsFormValid
+    setIsPristine=?Some(setIsPristine)
     setFormMethods
     isCardPayment
     enabledCardSchemes
     accessible
+    isFocused=isScreenFocus
   />
 }

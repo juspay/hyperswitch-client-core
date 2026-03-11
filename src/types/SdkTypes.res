@@ -319,6 +319,8 @@ type nativeProp = {
   rootTag: int,
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
+  subscribedEvents: array<string>,
+  widgetId: option<string>,
 }
 
 let defaultAppearance: appearance = {
@@ -906,6 +908,15 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       leftInset: getOptionFloat(hyperParams, "leftInset"),
       rightInset: getOptionFloat(hyperParams, "rightInset"),
     },
+    widgetId: getOptionString(dictfromNative, "widgetId"),
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
+    subscribedEvents: switch dictfromNative->Dict.get("subscribedEvents") {
+    | Some(json) =>
+      json
+      ->JSON.Decode.array
+      ->Option.getOr([])
+      ->Array.map(event => event->JSON.Decode.string->Option.getOr(""))
+    | None => []
+    },
   }
 }

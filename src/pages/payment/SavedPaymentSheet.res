@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+open PaymentEvents
 
 @react.component
 let make = (
@@ -45,6 +46,10 @@ let make = (
   let setSelectedToken = React.useCallback1(token => {
     setSelectedToken(_ => token)
   }, [setSelectedToken])
+
+  let emitter = PaymentEvents.usePaymentEventEmitter()
+
+  let prevStatusRef = React.useRef(None)
 
   let {
     borderWidth,
@@ -515,6 +520,54 @@ let make = (
       }
     }
   }
+
+  React.useEffect1(() => {
+    switch selectedToken {
+    | Some(token) =>
+      let event = PaymentEvents.buildPaymentMethodStatusEvent(
+        ~paymentMethod=token.payment_method_str,
+        ~paymentMethodType=?Some(token.payment_method_type),
+        ~isSavedPaymentMethod=true,
+      )
+      emitter.emitPaymentMethodStatus(~event)
+    | None => ()
+    }
+    None
+  }, [selectedToken])
+
+  React.useEffect2(() => {
+    switch selectedToken {
+    | Some(token) =>
+      let isFormComplete = switch token.payment_method {
+      | CARD =>
+        if token.requires_cvv {
+          switch savedCardCvv {
+          | Some(cvv) =>
+            cvv->String.length > 0 &&
+              Validation.cvcNumberInRange(
+                cvv,
+                token.card->Option.map(c => c.card_network)->Option.getOr(""),
+              )
+          | None => false
+          }
+        } else {
+          true
+        }
+      | _ => true
+      }
+
+      let status = isFormComplete ? PaymentEventTypes.Complete : PaymentEventTypes.Filling
+      let statusStr = PaymentEventTypes.formStatusValueToString(status)
+
+      if prevStatusRef.current !== Some(statusStr) {
+        prevStatusRef.current = Some(statusStr)
+        let event = PaymentEvents.buildFormStatusEvent(~status)
+        emitter.emitFormStatus(~event)
+      }
+    | None => ()
+    }
+    None
+  }, (selectedToken, savedCardCvv))
 
   React.useEffect(() => {
     let confirmButton = {
