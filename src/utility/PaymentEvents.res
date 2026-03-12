@@ -18,7 +18,7 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   let emitCardInfo = (~info: cardInfo) => {
     if shouldEmitEvent(~eventType=PaymentMethodInfoCard, ~subscribedEvents) {
       emitToNative(
-        ~widgetId=nativeProp.widgetId->Option.getOr(""),
+        ~widgetId=nativeProp.widgetId,
         ~eventType=PaymentEventTypes.toString(PaymentMethodInfoCard),
         ~payload=cardInfoToJson(info),
       )
@@ -28,7 +28,7 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   let emitPaymentMethodStatus = (~event: paymentMethodStatusEvent) => {
     if shouldEmitEvent(~eventType=PaymentMethodStatus, ~subscribedEvents) {
       emitToNative(
-        ~widgetId=nativeProp.widgetId->Option.getOr(""),
+        ~widgetId=nativeProp.widgetId,
         ~eventType=PaymentEventTypes.toString(PaymentMethodStatus),
         ~payload=paymentMethodStatusEventToJson(event),
       )
@@ -38,7 +38,7 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   let emitFormStatus = (~event: formStatusEvent) => {
     if shouldEmitEvent(~eventType=FormStatus, ~subscribedEvents) {
       emitToNative(
-        ~widgetId=nativeProp.widgetId->Option.getOr(""),
+        ~widgetId=nativeProp.widgetId,
         ~eventType=PaymentEventTypes.toString(FormStatus),
         ~payload=formStatusEventToJson(event),
       )
@@ -48,7 +48,7 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   let emitPaymentMethodInfoAddress = (~info: paymentMethodInfoAddress) => {
     if shouldEmitEvent(~eventType=PaymentMethodInfoAddress, ~subscribedEvents) {
       emitToNative(
-        ~widgetId=nativeProp.widgetId->Option.getOr(""),
+        ~widgetId=nativeProp.widgetId,
         ~eventType=PaymentEventTypes.toString(PaymentMethodInfoAddress),
         ~payload=paymentMethodInfoAddressToJson(info),
       )

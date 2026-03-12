@@ -320,7 +320,7 @@ type nativeProp = {
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
   subscribedEvents: array<string>,
-  widgetId: option<string>,
+  widgetId: string,
 }
 
 let defaultAppearance: appearance = {
@@ -871,7 +871,8 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
     customBackendUrl,
     customLogUrl,
-    sessionId: "",
+    sessionId: getString(dictfromNative, "sessionId", ""),
+    widgetId: getString(dictfromNative, "widgetId", ""),
     sdkState: switch getString(dictfromNative, "type", "") {
     | "payment" => PaymentSheet
     | "tabSheet" => TabSheet
@@ -908,7 +909,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       leftInset: getOptionFloat(hyperParams, "leftInset"),
       rightInset: getOptionFloat(hyperParams, "rightInset"),
     },
-    widgetId: getOptionString(dictfromNative, "widgetId"),
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
     subscribedEvents: switch dictfromNative->Dict.get("subscribedEvents") {
     | Some(json) =>
