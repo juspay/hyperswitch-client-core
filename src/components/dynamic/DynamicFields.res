@@ -4,11 +4,13 @@ let make = (
   ~initialValues,
   ~setFormData,
   ~setIsFormValid,
+  ~setIsPristine=?,
   ~setFormMethods,
   ~isCardPayment=false,
   ~isGiftCardPayment=false,
   ~enabledCardSchemes=[],
   ~accessible: bool,
+  ~isFocused: bool=false,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
@@ -20,7 +22,7 @@ let make = (
     nickname,
     setNickname,
     setIsNicknameValid,
-    sheetType
+    sheetType,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -31,10 +33,12 @@ let make = (
         initialValues
         setFormData
         setIsFormValid
+        ?setIsPristine
         setFormMethods
         isCardPayment
         enabledCardSchemes
         accessible
+        isFocused
       />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={isCardPayment && !isGiftCardPayment && fields->Array.length > 0}>
@@ -78,7 +82,8 @@ let make = (
       | _ => React.null
       }}
     </UIUtils.RenderIf>
-    <UIUtils.RenderIf condition={!isCardPayment && !isGiftCardPayment && sheetType !== DynamicFieldsSheet}>
+    <UIUtils.RenderIf
+      condition={!isCardPayment && !isGiftCardPayment && sheetType !== DynamicFieldsSheet}>
       <UIUtils.RenderIf
         condition={fields->Array.length == 0 && nativeProp.configuration.appearance.layout === Tab}>
         <Space />

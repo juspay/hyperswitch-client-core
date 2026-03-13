@@ -65,6 +65,11 @@ let make = (~setConfirmButtonData) => {
     setIsFormValid(_ => isValid)
   }, [setIsFormValid])
 
+  let (isPristine, setIsPristine) = React.useState(_ => true)
+  let setIsPristine = React.useCallback1(pristine => {
+    setIsPristine(_ => pristine)
+  }, [setIsPristine])
+
   let (formMethods: option<ReactFinalForm.Form.formMethods>, setFormMethods) = React.useState(_ =>
     None
   )
@@ -201,6 +206,13 @@ let make = (~setConfirmButtonData) => {
     }
   }
 
+  FormStatusEmitter.useFormStatusEmitter(
+    ~isFocused=true,
+    ~hasRequiredFields=missingRequiredFields->Array.length > 0,
+    ~isFormValid,
+    ~isPristine,
+  )
+
   React.useEffect3(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
@@ -222,6 +234,7 @@ let make = (~setConfirmButtonData) => {
       initialValues
       setFormData
       setIsFormValid
+      setIsPristine=?Some(setIsPristine)
       setFormMethods
       isCardPayment
       enabledCardSchemes
