@@ -176,7 +176,7 @@ module PaymentMethodListView = {
         setSelectedToken(Some(savedPaymentMethod))
         let event = PaymentEvents.buildPaymentMethodStatusEvent(
           ~paymentMethod=savedPaymentMethod.payment_method_str,
-          ~paymentMethodType=?Some(savedPaymentMethod.payment_method_type),
+          ~paymentMethodType=savedPaymentMethod.payment_method_type,
           ~isSavedPaymentMethod=true,
         )
         emitter.emitPaymentMethodStatus(~event)

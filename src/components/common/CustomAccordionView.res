@@ -120,7 +120,7 @@ let make = (
         if hoc.name !== "loading" {
           let event = PaymentEvents.buildPaymentMethodStatusEvent(
             ~paymentMethod=hoc.name,
-            ~paymentMethodType=?Some(hoc.paymentMethodType),
+            ~paymentMethodType=hoc.paymentMethodType,
             ~isSavedPaymentMethod=false,
           )
           emitter.emitPaymentMethodStatus(~event)

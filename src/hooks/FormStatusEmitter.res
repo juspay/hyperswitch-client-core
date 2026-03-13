@@ -9,13 +9,6 @@ let useFormStatusEmitter = (
   let emitter = PaymentEvents.usePaymentEventEmitter()
   let prevStatusRef = React.useRef(None)
 
-  React.useEffect1(() => {
-    if isFocused {
-      prevStatusRef.current = None
-    }
-    None
-  }, [isFocused])
-
   React.useEffect(() => {
     if isFocused {
       let status = computeFormStatus(~hasRequiredFields, ~isFormValid, ~isPristine)

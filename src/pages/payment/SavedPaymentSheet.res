@@ -526,7 +526,7 @@ let make = (
     | Some(token) =>
       let event = PaymentEvents.buildPaymentMethodStatusEvent(
         ~paymentMethod=token.payment_method_str,
-        ~paymentMethodType=?Some(token.payment_method_type),
+        ~paymentMethodType=token.payment_method_type,
         ~isSavedPaymentMethod=true,
       )
       emitter.emitPaymentMethodStatus(~event)
@@ -563,6 +563,20 @@ let make = (
         prevStatusRef.current = Some(statusStr)
         let event = PaymentEvents.buildFormStatusEvent(~status)
         emitter.emitFormStatus(~event)
+      }
+
+      switch token.card {
+      | Some(card) =>
+        let info = PaymentEvents.buildCardInfoFromSavedCard(
+          ~bin=card.card_isin,
+          ~last4=card.last4_digits,
+          ~brand=card.card_network,
+          ~expiryMonth=card.expiry_month,
+          ~expiryYear=card.expiry_year,
+          ~isCvcComplete=isFormComplete,
+        )
+        emitter.emitCardInfo(~info)
+      | None => ()
       }
     | None => ()
     }
