@@ -40,6 +40,7 @@ let hyperModule: hyperModule = {
   onAddPaymentMethod: getFn(moduleSource, "onAddPaymentMethod", _ => ()),
   exitWidgetPaymentsheet: getFn(moduleSource, "exitWidgetPaymentsheet", (_, _, _, _) => ()),
   updateWidgetHeight: getFn(moduleSource, "updateWidgetHeight", _ => ()),
+  onWidgetStateChange: getFn(moduleSource, "onWidgetStateChange", (_, _) => ()),
 }
 
 let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
@@ -154,4 +155,58 @@ let useExitWidget = () => {
   (exitMode, widgetType: string) => {
     hyperModule.exitWidget(exitMode->stringifiedResStatus, widgetType)
   }
+}
+
+// Emit widget state changes to native layer
+let emitWidgetStateChange = (~widgetId: string, ~isReady: bool, ~isLoading: bool, ~isConfirmDisabled: bool) => {
+  // Only emit if widgetId is not empty
+  if widgetId !== "" {
+    let stateJson = 
+      [
+        ("widgetId", widgetId->JSON.Encode.string),
+        ("isReady", isReady->JSON.Encode.bool),
+        ("isLoading", isLoading->JSON.Encode.bool),
+        ("isConfirmDisabled", isConfirmDisabled->JSON.Encode.bool),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+      ->JSON.stringify
+    
+    hyperModule.onWidgetStateChange(widgetId, stateJson)
+  }
+}
+
+// Hook to emit widget state changes when they change
+let useEmitWidgetState = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (loading, _) = React.useContext(LoadingContext.loadingContext)
+  
+  // Check if we have a valid widget ID
+  let hasWidgetId = nativeProp.widgetId !== ""
+  
+  React.useEffect(() => {
+    if hasWidgetId {
+      let isReady = switch loading {
+      | LoadingContext.PaymentSuccess => true
+      | _ => false
+      }
+      let isLoading = switch loading {
+      | LoadingContext.ProcessingPayments
+      | LoadingContext.ProcessingPaymentsWithOverlay => true
+      | _ => false
+      }
+      // For now, assume confirm is enabled unless processing
+      let isConfirmDisabled = isLoading
+      
+      emitWidgetStateChange(
+        ~widgetId=nativeProp.widgetId,
+        ~isReady,
+        ~isLoading,
+        ~isConfirmDisabled,
+      )
+    }
+    None
+  }, [nativeProp.widgetId, loading, hasWidgetId])
+  
+  emitWidgetStateChange
 }

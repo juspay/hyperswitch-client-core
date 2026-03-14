@@ -21,6 +21,9 @@ let make = () => {
     setConfirmButtonData(_ => confirmButtonData)
   }, [setConfirmButtonData])
 
+  // Setup widget action listeners for goBack and confirmPayment
+  UseWidgetActions.useWidgetActions()->ignore
+
   <FullScreenSheetWrapper isLoading=confirmButtonData.loading>
     {switch sheetType {
     | ButtonSheet =>

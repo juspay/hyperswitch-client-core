@@ -234,6 +234,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  hideConfirmButton: bool,
 }
 
 type sdkState =
@@ -316,7 +317,7 @@ type nativeProp = {
   from: string,
   configuration: configurationType,
   env: GlobalVars.envType,
-  sdkState: sdkState,
+  sdkState: sdk_state,
   rootTag: int,
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
@@ -837,6 +838,7 @@ let parseConfigurationDict = (configObj, from) => {
     },
     displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
     disableBranding: getBool(configObj, "disableBranding", false),
+    hideConfirmButton: getBool(configObj, "hideConfirmButton", false),
   }
   configuration
 }
@@ -909,5 +911,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       rightInset: getOptionFloat(hyperParams, "rightInset"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
+    hideConfirmButton: getBool(dictfromNative, "hideConfirmButton", false),
   }
 }

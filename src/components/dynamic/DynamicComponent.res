@@ -201,6 +201,12 @@ let make = (~setConfirmButtonData) => {
     }
   }
 
+  // Register handlePress for widget confirmPayment API
+  React.useEffect(() => {
+    UseWidgetActions.registerConfirmButtonHandler(handlePress)
+    None
+  }, [handlePress])
+
   React.useEffect3(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
