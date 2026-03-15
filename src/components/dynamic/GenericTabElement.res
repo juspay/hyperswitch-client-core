@@ -48,14 +48,13 @@ let make = (
 
     let placeholder = GetLocale.getLocalString(field.displayName)
     let accessibilityLabel = placeholder ++ (field.required ? ", " ++ localeObject.requiredText : "")
-    // TODO: localize accessibilityHint strings in Phase 2
     let accessibilityHint = switch field.fieldType {
-    | EmailInput => "Enter a valid email address"
-    | PhoneInput => "Enter your phone number including area code"
-    | CvcPasswordInput => "3 or 4 digit security code on your card"
+    | EmailInput => localeObject.accessibilityHintEmail
+    | PhoneInput => localeObject.accessibilityHintPhoneNumber
+    | CvcPasswordInput => localeObject.accessibilityHintCvc
     | CountrySelect | StateSelect | CountryCodeSelect | CurrencySelect | DropdownSelect =>
-      "Opens " ++ placeholder ++ " selection list"
-    | _ => "Enter " ++ placeholder
+      "Opens " ++ placeholder ++ " selection list" // dynamic field name — partially localized
+    | _ => "Enter " ++ placeholder // dynamic field name — partially localized
     }
 
     switch field.fieldType {

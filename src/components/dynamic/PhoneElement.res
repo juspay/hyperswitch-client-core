@@ -99,7 +99,7 @@ let make = (
               isCountryStateFields=true
               showValue=true
               accessibilityLabel={phoneCodeConfig.displayName ++ ", " ++ localeObject.requiredText}
-              accessibilityHint="Opens country phone code selection list" // TODO: localize in Phase 2
+              accessibilityHint=localeObject.accessibilityHintPhoneCode
               ?accessible
             />
           }
@@ -132,7 +132,7 @@ let make = (
               accessibilityLabel={GetLocale.getLocalString(phoneNumberConfig.displayName) ++
               ", " ++
               localeObject.requiredText}
-              accessibilityHint="Enter your phone number" // TODO: localize in Phase 2
+              accessibilityHint=localeObject.accessibilityHintPhoneNumber
               ?accessible
             />
           }

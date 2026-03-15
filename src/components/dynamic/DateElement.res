@@ -97,7 +97,7 @@ module DatePicker = {
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
             accessibilityLabel={placeholder ++ " day, " ++ localeObject.requiredText}
-            accessibilityHint="Opens day selection list" // TODO: localize in Phase 2
+            accessibilityHint=localeObject.accessibilityHintPickerDay
             ?accessible
           />
         </View>
@@ -112,7 +112,7 @@ module DatePicker = {
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
             accessibilityLabel={placeholder ++ " month, " ++ localeObject.requiredText}
-            accessibilityHint="Opens month selection list" // TODO: localize in Phase 2
+            accessibilityHint=localeObject.accessibilityHintPickerMonth
             ?accessible
           />
         </View>
@@ -127,7 +127,7 @@ module DatePicker = {
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
             accessibilityLabel={placeholder ++ " year, " ++ localeObject.requiredText}
-            accessibilityHint="Opens year selection list" // TODO: localize in Phase 2
+            accessibilityHint=localeObject.accessibilityHintPickerYear
             ?accessible
           />
         </View>

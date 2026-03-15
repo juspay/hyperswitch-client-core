@@ -75,7 +75,7 @@ let make = (
                 : localeObject.fullNameLabel) ++
               ", " ++
               localeObject.requiredText}
-              accessibilityHint="Enter your first and last name" // TODO: localize in Phase 2
+              accessibilityHint=localeObject.accessibilityHintFullName
               ?accessible
             />
             {switch (firstNameMeta.error, lastNameMeta.touched, lastNameMeta.active) {
