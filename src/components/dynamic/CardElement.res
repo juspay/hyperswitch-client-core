@@ -276,7 +276,7 @@ let make = (
                 }}
                 animateLabel=localeObject.cardNumberLabel
                 accessibilityLabel={localeObject.cardNumberLabel ++ ", " ++ localeObject.requiredText}
-                accessibilityHint="Enter your 16-digit card number"
+                accessibilityHint="Enter your 16-digit card number" // TODO: localize in Phase 2
                 ?accessible
               />
             </View>
@@ -329,7 +329,7 @@ let make = (
                   }}
                   animateLabel=localeObject.validThruText
                   accessibilityLabel={localeObject.validThruText ++ ", " ++ localeObject.requiredText}
-                  accessibilityHint="Format: month month slash year year"
+                  accessibilityHint="Format: MM/YY, e.g. 01/26" // TODO: localize in Phase 2
                   ?accessible
                 />
               </View>
@@ -401,7 +401,7 @@ let make = (
                   }}
                   animateLabel=localeObject.cvcTextLabel
                   accessibilityLabel={localeObject.cvcTextLabel ++ ", " ++ localeObject.requiredText}
-                  accessibilityHint="3 or 4 digit security code on your card"
+                  accessibilityHint="3 or 4 digit security code on your card" // TODO: localize in Phase 2
                   ?accessible
                 />
               </View>

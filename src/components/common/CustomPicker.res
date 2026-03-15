@@ -50,12 +50,22 @@ let make = (
     setSearchInput(_ => None)
     None
   }, [isModalVisible])
+  let selectedLabel =
+    items
+    ->Array.find(x => x.value == value->Option.getOr("") || x.label == value->Option.getOr(""))
+    ->Option.map(x => x.label)
+    ->Option.getOr("")
+  let triggerLabel = {
+    let base = accessibilityLabel->Option.getOr(placeholderText)
+    selectedLabel != "" ? base ++ ", " ++ selectedLabel : base
+  }
+
   <View ?style>
     <CustomPressable
       disabled
       accessible={accessible->Option.getOr(true)}
       accessibilityRole=#button
-      accessibilityLabel={accessibilityLabel->Option.getOr(placeholderText)}
+      accessibilityLabel=triggerLabel
       ?accessibilityHint
       accessibilityState={expanded: isModalVisible}
       onPress={_ => setIsModalVisible(prev => !prev)}
@@ -96,6 +106,7 @@ let make = (
       visible={isModalVisible}
       transparent={true}
       animationType=#slide
+      onRequestClose={() => setIsModalVisible(_ => false)}
       onShow={() => {
         setTimeout(() => {
           switch searchInputRef.current->Nullable.toOption {
@@ -113,6 +124,7 @@ let make = (
           transparentBG,
         ])}>
         <View
+          accessibilityViewIsModal={true}
           style={array([
             s({
               flex: 1.,
@@ -191,12 +203,16 @@ let make = (
                 showsHorizontalScrollIndicator=false
                 keyExtractor={(_, i) => i->Int.toString}
                 horizontal=false
-                renderItem={({item, index}) =>
+                renderItem={({item, index}) => {
+                  let isSelected =
+                    item.value == value->Option.getOr("") ||
+                      item.label == value->Option.getOr("")
                   <CustomPressable
                     key={index->Int.toString}
                     accessible={true}
                     accessibilityRole=#button
                     accessibilityLabel={item.label}
+                    accessibilityState={selected: isSelected}
                     style={s({height: 32.->dp, margin: 1.->dp, flexDirection: #row, gap: 6.->dp})}
                     onPress={_ => {
                       setValue(_ => Some(item.value))
@@ -213,7 +229,8 @@ let make = (
                           }}
                           <TextWrapper text=item.label textType=ModalText />
                         </>}
-                  </CustomPressable>}
+                  </CustomPressable>
+                }}
               />}
         </View>
       </View>

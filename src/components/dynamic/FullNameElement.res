@@ -54,7 +54,7 @@ let make = (
             <CustomInput
               state=inputValue
               setState=handleInputChange
-              placeholder={isCardPayment ? "Card Holder Name" : "Full Name"}
+              placeholder={isCardPayment ? localeObject.cardHolderName : localeObject.fullNameLabel}
               enableCrossIcon=false
               isValid={firstNameMeta.error->Option.isNone ||
               !lastNameMeta.touched ||
@@ -70,10 +70,12 @@ let make = (
                 (lastNameMeta.active || lastNameMeta.error->Option.isNone || !lastNameMeta.touched)
                 ? component.color
                 : dangerColor}
-              accessibilityLabel={(isCardPayment ? "Card Holder Name" : "Full Name") ++
+              accessibilityLabel={(isCardPayment
+                ? localeObject.cardHolderName
+                : localeObject.fullNameLabel) ++
               ", " ++
               localeObject.requiredText}
-              accessibilityHint="Enter your first and last name"
+              accessibilityHint="Enter your first and last name" // TODO: localize in Phase 2
               ?accessible
             />
             {switch (firstNameMeta.error, lastNameMeta.touched, lastNameMeta.active) {
