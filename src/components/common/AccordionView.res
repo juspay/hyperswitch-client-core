@@ -71,7 +71,9 @@ let make = (
           onPress={_ => handleSectionPress(section.key)}
           style=?headerStyle
           focusable={section.accessible->Option.getOr(true)}
-          accessibilityLabel={section.accessibilityLabel->Option.getOr("")}
+          accessibilityRole=#button
+          accessibilityLabel={section.accessibilityLabel->Option.getOr(section.title)}
+          accessibilityState={expanded: expanded}
           testID={section.testID->Option.getOr("")}>
           {renderSectionHeader(~section, ~isExpanded=expanded)}
         </CustomPressable>

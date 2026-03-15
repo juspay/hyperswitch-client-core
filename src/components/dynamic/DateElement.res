@@ -6,13 +6,14 @@ module DatePicker = {
   let make = (
     ~fieldProps as {input, meta}: ReactFinalForm.Field.fieldProps,
     ~placeholder,
-    ~accessible,
+    ~accessible=?,
   ) => {
     let (day, setDay) = React.useState(_ => "")
     let (month, setMonth) = React.useState(_ => "")
     let (year, setYear) = React.useState(_ => "")
 
     let fontFamily = FontFamily.useCustomFontFamily()
+    let localeObject = GetLocale.useGetLocalObj()
     let {
       placeholderColor,
       placeholderTextSizeAdjust,
@@ -62,9 +63,10 @@ module DatePicker = {
         {label: "Nov", value: "11"},
         {label: "Dec", value: "12"},
       ]
+      let currentYear = Js.Date.make()->Js.Date.getFullYear->Float.toInt
       let yearItems = []
       Belt.Range.forEach(0, 125, y => {
-        let yearStr = (2025 - y)->Int.toString
+        let yearStr = (currentYear - y)->Int.toString
         yearItems->Array.push({SdkTypes.label: yearStr, value: yearStr})
       })
       (dayItems, monthItems, yearItems)
@@ -94,6 +96,8 @@ module DatePicker = {
             isLoading=false
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
+            accessibilityLabel={placeholder ++ " day, " ++ localeObject.requiredText}
+            accessibilityHint=localeObject.accessibilityHintPickerDay
             ?accessible
           />
         </View>
@@ -107,6 +111,8 @@ module DatePicker = {
             isLoading=false
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
+            accessibilityLabel={placeholder ++ " month, " ++ localeObject.requiredText}
+            accessibilityHint=localeObject.accessibilityHintPickerMonth
             ?accessible
           />
         </View>
@@ -120,6 +126,8 @@ module DatePicker = {
             isLoading=false
             onFocus={_ => input.onFocus()}
             onBlur={_ => input.onBlur()}
+            accessibilityLabel={placeholder ++ " year, " ++ localeObject.requiredText}
+            accessibilityHint=localeObject.accessibilityHintPickerYear
             ?accessible
           />
         </View>
@@ -147,7 +155,7 @@ let make = (
       <View style={s({marginBottom: 16.->dp})}>
         <ReactFinalForm.Field
           name=field.outputPath validate=Some(createFieldValidator(Validation.Required))>
-          {fieldProps => <DatePicker fieldProps placeholder accessible />}
+          {fieldProps => <DatePicker fieldProps placeholder ?accessible />}
         </ReactFinalForm.Field>
       </View>
     </React.Fragment>
