@@ -50,6 +50,31 @@ jobs:
       - name: Dependency Install
         run: npm install
 
+      - name: Patch ApplePayViewManager for Detox compatibility
+        run: |
+          # Remove the iOS 26.0 availability check that causes build issues in Detox
+          # Keep only the else branch (PKPaymentButton with paymentButtonType)
+          python3 << 'EOF'
+          import re
+
+          file_path = 'ios/hyperswitchSDK/Core/ApplePay/ApplePayViewManager.swift'
+          with open(file_path, 'r') as f:
+              content = f.read()
+
+          # Pattern to match the if-else block for iOS 26.0 availability check
+          pattern = r'''if #available\(iOS 26\.0, \*\) \{[^\n]*\n\s*button = PKPaymentButton\(type: type, style: style, disableCardArt: true\)\n\s*\} else \{\n\s*(button = PKPaymentButton\(paymentButtonType: type, paymentButtonStyle: style\))\n\s*\}'''
+
+          # Replace with just the else branch content
+          replacement = r'\1'
+
+          new_content = re.sub(pattern, replacement, content)
+
+          with open(file_path, 'w') as f:
+              f.write(new_content)
+
+          print("Patched ApplePayViewManager.swift for Detox compatibility")
+          EOF
+
       - name: Generate DS Root Certificate for Netcetera SDK
         run: |
           CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
@@ -59,15 +84,19 @@ jobs:
             echo "-----BEGIN CERTIFICATE-----"
             echo "$CERTIFICATE_STRING"
             echo "-----END CERTIFICATE-----"
-          } > "$OUTPUT_PATH"          
+          } > "$OUTPUT_PATH/$OUTPUT_FILE"
           echo "Content has been successfully transferred to $OUTPUT_FILE."
 
       - name: Start server
         run: |
-          nohup node server.js &
+          nohup node mockServer.js &
+          sleep 2  # Give server time to start
 
       - name: Check Server
         run: |
+          for i in {1..5}; do
+            curl -sf http://localhost:5252/health && break || sleep 2
+          done
           curl http://localhost:5252/create-payment-intent
 
       - name: Install macOS dependencies
@@ -78,22 +107,32 @@ jobs:
           HOMEBREW_NO_AUTO_UPDATE: 1
           HOMEBREW_NO_INSTALL_CLEANUP: 1
 
-      # - name: Setup Ruby, JRuby and TruffleRuby
-      #   uses: ruby/setup-ruby@v1.204.0
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
 
-      # - name: Cache CocoaPods
-      #   id: cache-cocoapods
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: ios/Pods
-      #     key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pods-
+      - name: Cache CocoaPods
+        id: cache-cocoapods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: ${{ runner.os }}-pods-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
 
       - name: Install CocoaPods
         run: |
-          npm run bundle
+          cd ios
+          if [ ! -d "Pods" ] || [ "${{ steps.cache-cocoapods.outputs.cache-hit }}" != "true" ]; then
+            rm -rf Pods Podfile.lock
+            pod install --repo-update
+          fi
           cd ..
+          npm run bundle
 
       - name: Detox rebuild framework cache
         run: npx detox rebuild-framework-cache
@@ -105,21 +144,24 @@ jobs:
       - name: Start Metro
         run: |
           nohup npm run start &
+          sleep 5  # Wait for Metro to initialize
 
       - name: Cache Detox build
         id: cache-detox-build
         uses: actions/cache@v4
         with:
-          path: ios/build
-          key: ${{ runner.os }}-detox-build
+          path: |
+            ios/build
+            ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-detox-build-${{ hashFiles('ios/Podfile.lock', 'ios/**/*.swift', 'ios/**/*.m', 'ios/**/*.h') }}
           restore-keys: |
-            ${{ runner.os }}-detox-build
+            ${{ runner.os }}-detox-build-
 
       - name: Detox build
-        run: npx detox build --configuration ios.sim.debug
+        run: npx detox build --configuration ios.sim.ci.debug
 
       - name: Detox test
-        run: applesimutils -l && npx detox test --configuration ios.sim.debug --record-videos failing --take-screenshots failing --headless # --loglevel trace --record-logs all
+        run: applesimutils -l && npx detox test --configuration ios.sim.ci.debug --record-videos failing --take-screenshots failing --headless
 
       - name: Upload Test Artifact - GitHub Action
         if: always()
