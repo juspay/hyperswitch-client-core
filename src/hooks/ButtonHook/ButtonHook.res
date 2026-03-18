@@ -89,14 +89,32 @@ let useProcessPayButtonResult = () => {
         }
       }
     | PAYPAL =>
-      let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
-      switch paymentData.error {
-      | "" =>
-        let json = paymentData.paymentMethodData->JSON.Encode.string
-        let paymentData = [("token", json)]->Dict.fromArray
-        Success(paymentData, None, None)
-      | "User has canceled" => Cancelled
-      | err => Failed(err)
+      let status = var
+        ->Dict.get("status")
+        ->Option.flatMap(JSON.Decode.string)
+        ->Option.getOr("")
+      switch status->PaypalTypes.parseStatus {
+      | Success =>
+        let orderId = var
+          ->Dict.get("orderId")
+          ->Option.flatMap(JSON.Decode.string)
+          ->Option.getOr("")
+        let payerId = var
+          ->Dict.get("payerId")
+          ->Option.flatMap(JSON.Decode.string)
+          ->Option.getOr("")
+        let paymentDataDict = [
+          ("token", orderId->JSON.Encode.string),
+          ("payerId", payerId->JSON.Encode.string),
+        ]->Dict.fromArray
+        Success(paymentDataDict, None, None)
+      | Cancelled => Cancelled
+      | Failed =>
+        let errorMessage = var
+          ->Dict.get("error_message")
+          ->Option.flatMap(JSON.Decode.string)
+          ->Option.getOr("PayPal payment failed")
+        Failed(errorMessage)
       }
     | SAMSUNG_PAY =>
       let status =
