@@ -12,9 +12,18 @@ type hyperModule = {
   onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int,string, string, bool) => unit,
   updateWidgetHeight: int => unit,
+  onWidgetStateChange: (string, string) => unit,
 }
 
 type useExitPaymentsheetReturnType = {
   exit: (PaymentConfirmTypes.error, bool) => unit,
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
+}
+
+// Widget state event types
+type widgetStateEvent = {
+  widgetId: string,
+  isReady: bool,
+  isLoading: bool,
+  isConfirmDisabled: bool,
 }

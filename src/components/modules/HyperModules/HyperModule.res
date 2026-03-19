@@ -40,6 +40,7 @@ let hyperModule: hyperModule = {
   onAddPaymentMethod: getFn(moduleSource, "onAddPaymentMethod", _ => ()),
   exitWidgetPaymentsheet: getFn(moduleSource, "exitWidgetPaymentsheet", (_, _, _, _) => ()),
   updateWidgetHeight: getFn(moduleSource, "updateWidgetHeight", _ => ()),
+  onWidgetStateChange: getFn(moduleSource, "onWidgetStateChange", (_, _) => ()),
 }
 
 let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
@@ -154,4 +155,86 @@ let useExitWidget = () => {
   (exitMode, widgetType: string) => {
     hyperModule.exitWidget(exitMode->stringifiedResStatus, widgetType)
   }
+}
+
+// Emit widget state changes to native layer
+let emitWidgetStateChange = (~widgetId: string, ~isReady: bool, ~isLoading: bool, ~isConfirmDisabled: bool) => {
+  // Only emit if widgetId is not empty
+  if widgetId !== "" {
+    let stateJson = 
+      [
+        ("widgetId", widgetId->JSON.Encode.string),
+        ("isReady", isReady->JSON.Encode.bool),
+        ("isLoading", isLoading->JSON.Encode.bool),
+        ("isConfirmDisabled", isConfirmDisabled->JSON.Encode.bool),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+      ->JSON.stringify
+    
+    hyperModule.onWidgetStateChange(widgetId, stateJson)
+  }
+}
+
+// Hook to emit widget state changes when they change
+let useEmitWidgetState = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (loading, _) = React.useContext(LoadingContext.loadingContext)
+  
+  // Track previous state to avoid duplicate emissions
+  let (prevState, setPrevState) = React.useState(_ => None)
+  
+  // Check if we have a valid widget ID
+  let hasWidgetId = nativeProp.widgetId !== ""
+  
+  React.useEffect(() => {
+    if hasWidgetId {
+      // Widget is ready when SDK is not in error state and not still loading initial data
+      let isLoading = switch loading {
+      | LoadingContext.ProcessingPayments
+      | LoadingContext.ProcessingPaymentsWithOverlay => true
+      | _ => false
+      }
+      
+      let isReady = true
+      
+      // Confirm is disabled when currently processing
+      let isConfirmDisabled = isLoading
+      
+      // Only emit if state has changed
+      let currentState = (isReady, isLoading, isConfirmDisabled)
+      let shouldEmit = switch prevState {
+      | Some((prevReady, prevLoading, prevDisabled)) =>
+        prevReady != isReady || prevLoading != isLoading || prevDisabled != isConfirmDisabled
+      | None => true
+      }
+      
+      if shouldEmit {
+        setPrevState(_ => Some(currentState))
+        emitWidgetStateChange(
+          ~widgetId=nativeProp.widgetId,
+          ~isReady,
+          ~isLoading,
+          ~isConfirmDisabled,
+        )
+      }
+    }
+    None
+  }, (nativeProp.widgetId, hasWidgetId, loading, ))
+  
+  // Also emit on mount to set initial state
+  React.useEffect(() => {
+    if hasWidgetId {
+      // Emit initial ready state immediately
+      emitWidgetStateChange(
+        ~widgetId=nativeProp.widgetId,
+        ~isReady=true,
+        ~isLoading=false,
+        ~isConfirmDisabled=false,
+      )
+    }
+    None
+  }, (hasWidgetId, nativeProp.widgetId))
+  
+  emitWidgetStateChange
 }

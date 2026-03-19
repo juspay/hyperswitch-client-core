@@ -234,6 +234,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  hideConfirmButton: bool,
 }
 
 type sdkState =
@@ -837,6 +838,7 @@ let parseConfigurationDict = (configObj, from) => {
     },
     displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
     disableBranding: getBool(configObj, "disableBranding", false),
+    hideConfirmButton: getBool(configObj, "hideConfirmButton", false),
   }
   configuration
 }
