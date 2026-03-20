@@ -185,19 +185,19 @@ let emitWidgetStateChange = (
 
 let useEmitWidgetState = (~confirmButtonData:GlobalConfirmButton.confirmButtonData) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (loading, _ ) = React.useContext(LoadingContext.loadingContext)
   let (prevState, setPrevState) = React.useState(_ => None)
   let hasWidgetId = nativeProp.widgetId !== ""
 
   React.useEffect(() => {
     if hasWidgetId {
       let isReady = true
-
-      let isConfirmDisabled = confirmButtonData.loading
-
-      let currentState = (isReady, confirmButtonData.loading , isConfirmDisabled)
+      let isLoading = loading === ProcessingPaymentsWithOverlay || loading === ProcessingPayments
+      let isConfirmDisabled = confirmButtonData.loading || isLoading
+      let currentState = (isReady, isLoading, isConfirmDisabled)
       let shouldEmit = switch prevState {
       | Some((prevReady, prevLoading, prevDisabled)) =>
-        prevReady != isReady || prevLoading != confirmButtonData.loading || prevDisabled != isConfirmDisabled
+        prevReady != isReady || prevLoading != isLoading || prevDisabled != isConfirmDisabled
       | None => true
       }
 
@@ -206,25 +206,12 @@ let useEmitWidgetState = (~confirmButtonData:GlobalConfirmButton.confirmButtonDa
         emitWidgetStateChange(
           ~widgetId=nativeProp.widgetId,
           ~isReady,
-          ~isLoading=confirmButtonData.loading,
+          ~isLoading,
           ~isConfirmDisabled,
         )
       }
     }
     None
-  }, (nativeProp.widgetId, hasWidgetId, confirmButtonData))
-
-  React.useEffect(() => {
-    if hasWidgetId {
-      emitWidgetStateChange(
-        ~widgetId=nativeProp.widgetId,
-        ~isReady=true,
-        ~isLoading=confirmButtonData.loading,
-        ~isConfirmDisabled=confirmButtonData.loading,
-      )
-    }
-    None
-  }, (nativeProp.widgetId, hasWidgetId, nativeProp.widgetId, confirmButtonData))
-
+  }, (nativeProp.widgetId, hasWidgetId, confirmButtonData.loading, confirmButtonData.handlePress, loading))
   emitWidgetStateChange
 }
