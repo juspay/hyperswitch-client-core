@@ -183,6 +183,39 @@ let make = (~props) => {
     }
   }
 
+  let confirmPaze = (
+    var,
+    data: CustomerPaymentMethodType.customer_payment_method_type,
+    nativeProp,
+  ) => {
+    let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
+    switch paymentData.error {
+    | "" =>
+      let completeResponse = paymentData.paymentMethodData
+
+      let payment_method_data =
+        [
+          (
+            "wallet",
+            [("paze", [("complete_response", completeResponse->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object)]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+
+      generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
+      ->confirmCall(nativeProp)
+      ->ignore
+    | "Cancel" => reRegisterCallback.contents()
+    | err =>
+      headlessModule.exitHeadless(
+        {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
+      )
+    }
+  }
+
   let processRequest = async (
     nativeProp,
     data: CustomerPaymentMethodType.customer_payment_method_type,
@@ -311,6 +344,35 @@ let make = (~props) => {
             clearTimeout(timerId)
           },
         )
+      | PAZE => {
+          let pazeCallback = async var => {
+            try {
+              confirmPaze(var, data, nativeProp)
+            } catch {
+            | _ => confirmPaze(var, data, nativeProp)
+            }
+          }
+          let pazeRequestObj =
+            [
+              ("client_id", session.client_id->JSON.Encode.string),
+              ("client_name", session.client_name->JSON.Encode.string),
+              ("client_profile_id", session.client_profile_id->JSON.Encode.string),
+              ("email_address", session.email_address->JSON.Encode.string),
+              ("transaction_amount", session.transaction_amount->JSON.Encode.string),
+              ("transaction_currency_code", session.transaction_currency_code->JSON.Encode.string),
+              ("session_id", session.session_id->JSON.Encode.string),
+              ("publishable_key", nativeProp.publishableKey->JSON.Encode.string),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object
+            ->JSON.stringify
+          HyperModule.launchPaze(
+            pazeRequestObj,
+            var => {
+              pazeCallback(var)->ignore
+            },
+          )
+        }
       | _ => ()
       }
     | _ => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
@@ -389,14 +451,14 @@ let make = (~props) => {
       let spmData = obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType
       let sessionSpmData = spmData.customer_payment_methods->Array.filter(data => {
         switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
-        | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
+        | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) | (PAZE, _) => true
         | _ => false
         }
       })
 
       let walletSpmData = spmData.customer_payment_methods->Array.filter(data => {
         switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
-        | (GOOGLE_PAY, _) | (APPLE_PAY, _) => false
+        | (GOOGLE_PAY, _) | (APPLE_PAY, _) | (PAZE, _) => false
         | _ => true
         }
       })

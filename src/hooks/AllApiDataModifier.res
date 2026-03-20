@@ -127,6 +127,12 @@ let useAccountPaymentMethodModifier = () => {
                 | Some(_) => Some()
                 | None => None
                 }
+          | PAZE =>
+            WebKit.platform !== #next &&
+            sessionObject.wallet_name !== NONE &&
+            exp->Option.isSome
+              ? Some()
+              : None
           | NONE =>
             switch paymentMethodData.payment_method {
             | GIFT_CARD =>

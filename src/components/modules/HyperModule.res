@@ -4,6 +4,7 @@ type hyperModule = {
   startApplePay: (string, Dict.t<JSON.t> => unit) => unit,
   presentApplePay: (string, Dict.t<JSON.t> => unit) => unit,
   launchGPay: (string, Dict.t<JSON.t> => unit) => unit,
+  launchPaze: (string, Dict.t<JSON.t> => unit) => unit,
   exitPaymentsheet: (int, string, bool) => unit,
   exitPaymentMethodManagement: (int, string, bool) => unit,
   exitWidget: (string, string) => unit,
@@ -32,6 +33,7 @@ let hyperModule = {
   startApplePay: getFunctionFromModule(hyperModuleDict, "startApplePay", (_, _) => ()),
   presentApplePay: getFunctionFromModule(hyperModuleDict, "presentApplePay", (_, _) => ()),
   launchGPay: getFunctionFromModule(hyperModuleDict, "launchGPay", (_, _) => ()),
+  launchPaze: getFunctionFromModule(hyperModuleDict, "launchPaze", (_, _) => ()),
   exitPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitPaymentsheet", (_, _, _) => ()),
   exitPaymentMethodManagement: getFunctionFromModule(
     hyperModuleDict,
@@ -159,6 +161,10 @@ let launchApplePay = (requestObj: string, callback, startCallback, presentCallba
 
 let launchGPay = (requestObj: string, callback) => {
   hyperModule.launchGPay(requestObj, callback)
+}
+
+let launchPaze = (requestObj: string, callback) => {
+  hyperModule.launchPaze(requestObj, callback)
 }
 
 let launchWidgetPaymentSheet = (requestObj: string, callback) => {
