@@ -214,6 +214,12 @@ type placeholder = {
   cvv: string,
 }
 
+type alias = {
+  paymentMethodName: string,
+  aliasName: string,
+}
+type customMethodNames = array<alias>
+
 type configurationType = {
   allowsDelayedPaymentMethods: bool,
   appearance: appearance,
@@ -234,6 +240,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  customMethodNames: customMethodNames,
 }
 
 type sdkState =
@@ -836,6 +843,41 @@ let parseConfigurationDict = (configObj, from) => {
     },
     displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
     disableBranding: getBool(configObj, "disableBranding", false),
+    customMethodNames: {
+      // Android passes customMethodNames as a JSON string; iOS passes it as a native array.
+      // Handle both cases gracefully.
+      let rawValue = configObj->Dict.get("customMethodNames")
+      let jsonArr = switch rawValue {
+      | Some(v) =>
+        switch JSON.Decode.array(v) {
+        | Some(arr) => arr
+        | None =>
+          // Try to parse as a JSON string (Android bundle path)
+          switch JSON.Decode.string(v) {
+          | Some(str) =>
+            let parsedValue = switch try {
+              Some(JSON.parseExn(str))
+            } catch {
+            | _ => None
+            } {
+            | value => value
+            }
+            switch parsedValue->Option.flatMap(JSON.Decode.array) {
+            | Some(arr) => arr
+            | _ => []
+            }
+          | None => []
+          }
+        }
+      | None => []
+      }
+      jsonArr
+      ->Belt.Array.keepMap(JSON.Decode.object)
+      ->Array.map(json => {
+        paymentMethodName: getString(json, "paymentMethodName", ""),
+        aliasName: getString(json, "aliasName", ""),
+      })
+    },
   }
   configuration
 }
