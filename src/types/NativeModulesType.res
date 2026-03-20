@@ -26,14 +26,13 @@ type widgetActionType =
   | UnknownEvent
 
 let widgetActionEventObjectMapper = var=> {
-  let nativeObject = var
-  let actionType = Utils.getOptionString(nativeObject, "actionType")
+  let actionType = Utils.getOptionString(var, "actionType")
   switch actionType {
   | Some("goBack") => GoBack({
-      widgetId: Utils.getOptionString(nativeObject, "widgetId")->Option.getOr("")
+      widgetId: Utils.getOptionString(var, "widgetId")->Option.getOr("")
     })
   | Some("confirmPayment") => ConfirmPayment({
-      widgetId: Utils.getOptionString(nativeObject, "widgetId")->Option.getOr("")
+      widgetId: Utils.getOptionString(var, "widgetId")->Option.getOr("")
     })
   | _ => UnknownEvent
 }
