@@ -215,7 +215,8 @@ let make = (
         processWalletData(payment_method_data)
       } else if (
         sessionObject.session_token !== "" &&
-        WebKit.platform == #android &&
+        (WebKit.platform == #android ||
+        WebKit.platform == #ios)&&
         PaypalModule.payPalModule->Option.isSome &&
         paymentMethodData.payment_experience
         ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
