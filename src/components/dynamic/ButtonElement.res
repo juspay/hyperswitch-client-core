@@ -304,12 +304,15 @@ let make = (
 
   let buttonName = paymentMethodData.payment_method_type->CommonUtils.getDisplayName
 
+  let isReadOnly = nativeProp.configuration.readOnly
+
   <>
     <CustomButton
       text={paymentMethodData.payment_method_type->CommonUtils.getDisplayName}
       borderRadius=buttonBorderRadius
       leftIcon=CustomIcon(<Icon name=buttonName width=24. height=32. fill=payNowButtonTextColor />)
-      onPress={_ => pressHandler()}>
+      onPress={_ => pressHandler()}
+      buttonState={isReadOnly ? Disabled : Normal}>
       {switch paymentMethodData.payment_method_type_wallet {
       | SAMSUNG_PAY =>
         Some(

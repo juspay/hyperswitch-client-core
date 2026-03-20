@@ -8,9 +8,12 @@ let make = (
   ~setConfirmButtonData,
 ) => {
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
-  let setIndexInFocus = React.useCallback1(index => {
-    setIndexInFocus(_ => index)
-  }, [setIndexInFocus])
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let setIndexInFocus = React.useCallback2(index => {
+    if !nativeProp.configuration.readOnly {
+      setIndexInFocus(_ => index)
+    }
+  }, (setIndexInFocus, nativeProp.configuration.readOnly))
 
   let {sheetContentPadding, primaryColor, iconColor} = ThemebasedStyle.useThemeBasedStyle()
 
@@ -81,7 +84,15 @@ let make = (
         renderTabBar={(~position, ~jumpTo, ~navigationState, ~options) =>
           isScrollBarOnlyCards
             ? <Space height=24. />
-            : <TabBar isLoading position jumpTo navigationState ?options scrollEnabled=true />}
+            : <TabBar
+                isLoading
+                position
+                jumpTo
+                navigationState
+                ?options
+                scrollEnabled=true
+                readOnly=nativeProp.configuration.readOnly
+              />}
         renderScene
         style={s({
           marginHorizontal: -.sheetContentPadding->dp,

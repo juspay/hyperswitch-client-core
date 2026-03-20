@@ -7,6 +7,7 @@ let make = (
   ~paymentExperience=?,
   ~customerPaymentExperience=?,
   ~displayText="Pay Now",
+  ~disabled=false,
   (),
 ) => {
   let localeObject = GetLocale.useGetLocalObj()
@@ -39,9 +40,10 @@ let make = (
       borderWidth=buttonBorderWidth
       borderRadius=buttonBorderRadius
       borderColor=payNowButtonBorderColor
-      buttonState={switch loading {
-      | ProcessingPayments | ProcessingPaymentsWithOverlay => LoadingButton
-      | PaymentSuccess => Completed
+      buttonState={switch (disabled, loading) {
+      | (true, _) => Disabled
+      | (false, ProcessingPayments | ProcessingPaymentsWithOverlay) => LoadingButton
+      | (false, PaymentSuccess) => Completed
       | _ => Normal
       }}
       loadingText="Processing..."
