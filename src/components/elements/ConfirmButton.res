@@ -11,15 +11,18 @@ let make = (
   let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
+  let isReadOnly = nativeProp.configuration.readOnly
+
   <>
     {errorText->Option.isSome ? <ErrorText text={errorText} /> : React.null}
     {loading
       ? <CustomLoader />
       : <ConfirmButtonAnimation
-          handlePress
+          handlePress={handlePress}
           paymentMethod
           ?paymentExperience
           ?customerPaymentExperience
+          disabled=isReadOnly
           displayText={switch nativeProp.configuration.primaryButtonLabel {
           | Some(str) => str
           | None =>

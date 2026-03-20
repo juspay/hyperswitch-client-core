@@ -267,6 +267,7 @@ let make = (
   ~android_ripple=?,
   ~options: option<Js.Dict.t<tabDescriptor>>=?,
   ~isLoading,
+  ~readOnly=false,
 ) => {
   let containerRef = React.useRef(Nullable.null)
   let (layout, onLayout) = MeasureLayoutHook.useMeasureLayout(containerRef)
@@ -378,20 +379,24 @@ let make = (
         : None
 
       let onPress = _ => {
-        let rec event: event = {
-          defaultPrevented: false,
-          preventDefault: () => {
-            event.defaultPrevented = true
-          },
-        }
+        if readOnly {
+          ()
+        } else {
+          let rec event: event = {
+            defaultPrevented: false,
+            preventDefault: () => {
+              event.defaultPrevented = true
+            },
+          }
 
-        switch onTabPress {
-        | Some(fn) => fn(({route: route}: TabViewType.scene))
-        | None => ()
-        }
+          switch onTabPress {
+          | Some(fn) => fn(({route: route}: TabViewType.scene))
+          | None => ()
+          }
 
-        if !event.defaultPrevented {
-          jumpTo(route.key)
+          if !event.defaultPrevented {
+            jumpTo(route.key)
+          }
         }
       }
 
