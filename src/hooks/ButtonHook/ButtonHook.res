@@ -123,6 +123,17 @@ let useProcessPayButtonResult = () => {
       } else {
         Failed(message)
       }
+    | PAZE =>
+      let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
+      switch paymentData.error {
+      | "" =>
+        let completeResponse = paymentData.paymentMethodData
+        let pazeData =
+          [("complete_response", completeResponse->JSON.Encode.string)]->Dict.fromArray
+        Success(pazeData, None, None)
+      | "Cancel" => Cancelled
+      | err => Failed(err)
+      }
     | _ => Cancelled
     }
   }
