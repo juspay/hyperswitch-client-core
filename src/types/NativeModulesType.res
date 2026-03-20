@@ -20,10 +20,21 @@ type useExitPaymentsheetReturnType = {
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
 
-// Widget state event types
-type widgetStateEvent = {
-  widgetId: string,
-  isReady: bool,
-  isLoading: bool,
-  isConfirmDisabled: bool,
+type widgetActionType = 
+  | GoBack({widgetId: string})
+  | ConfirmPayment({widgetId : string})
+  | UnknownEvent
+
+let widgetActionEventObjectMapper = var=> {
+  let nativeObject = var
+  let actionType = Utils.getOptionString(nativeObject, "actionType")
+  switch actionType {
+  | Some("goBack") => GoBack({
+      widgetId: Utils.getOptionString(nativeObject, "widgetId")->Option.getOr("")
+    })
+  | Some("confirmPayment") => ConfirmPayment({
+      widgetId: Utils.getOptionString(nativeObject, "widgetId")->Option.getOr("")
+    })
+  | _ => UnknownEvent
+}
 }

@@ -75,80 +75,18 @@ type goBackEvent = {
 
 type confirmPaymentEvent = {
   widgetId: string,
-  params: Js.Json.t,
+  action: string
 }
+type actionType = GoBack | ConfirmPayment
 
-// Parse JSON string to event objects
-let parseGoBackEvent = (jsonString: string): option<goBackEvent> => {
-  try {
-    let parsed = Js.Json.parseExn(jsonString)
-    let dict = parsed->Js.Json.decodeObject
-    switch dict {
-    | Some(d) =>
-      let widgetId = d->Dict.get("widgetId")->Option.flatMap(x => Js.Json.decodeString(x))->Option.getOr("")
-      let action = d->Dict.get("action")->Option.flatMap(x => Js.Json.decodeString(x))->Option.getOr("")
-      Some({widgetId, action})
-    | None => None
-    }
-  } catch {
-  | _ => None
-  }
-}
-
-let parseConfirmPaymentEvent = (jsonString: string): option<confirmPaymentEvent> => {
-  try {
-    let parsed = Js.Json.parseExn(jsonString)
-    let dict = parsed->Js.Json.decodeObject
-    switch dict {
-    | Some(d) =>
-      let widgetId = d->Dict.get("widgetId")->Option.flatMap(x => Js.Json.decodeString(x))->Option.getOr("")
-      let params = d->Dict.get("params")->Option.getOr(Js.Json.null)
-      Some({widgetId, params})
-    | None => None
-    }
-  } catch {
-  | _ => None
-  }
-}
-
-// Setup listeners for widget actions with widgetId filtering
-let setupWidgetGoBackListener = (
-  ~currentWidgetId: string,
-  ~onGoBack: unit => unit,
-) => {
-  setupNativeEventListener("WidgetGoBack", var => {
-    let eventJson = switch Js.Json.decodeString(var) {
-    | Some(str) => str
-    | None => ""
-    }
-    switch parseGoBackEvent(eventJson) {
-    | Some(event) =>
-      // Only handle event if widgetId matches
-      if event.widgetId === currentWidgetId {
-        onGoBack()
-      }
-    | None => ()
-    }
-  })
-}
-
-let setupWidgetConfirmPaymentListener = (
-  ~currentWidgetId: string,
-  ~onConfirmPayment: Js.Json.t => unit,
-) => {
-  setupNativeEventListener("WidgetConfirmPayment", var => {
-    Console.log2("Received WidgetConfirmPayment event from native", var)
-    let eventJson = switch Js.Json.decodeString(var) {
-    | Some(str) => str
-    | None => ""
-    }
-    switch parseConfirmPaymentEvent(eventJson) {
-    | Some(event) =>
-      // Only handle event if widgetId matches
-      if event.widgetId === currentWidgetId {
-        onConfirmPayment(event.params)
-      }
-    | None => ()
+let setupWidgetActionListener = (~currentWidgetId: string, ~actionType=GoBack,  ~handler: () => unit) => {
+  setupNativeEventListener("triggerWidgetAction", var => {
+    let eventData = var->NativeModulesType.widgetActionEventObjectMapper
+    switch (eventData, actionType) {
+    | (GoBack({widgetId}), GoBack) => 
+      if widgetId === currentWidgetId { handler() } else { () }
+    | (ConfirmPayment({widgetId}), ConfirmPayment) => if widgetId === currentWidgetId { handler() } else { () }
+    | _ => ()
     }
   })
 }

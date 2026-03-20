@@ -18,14 +18,6 @@ let defaultConfirmButtonData = {
 let make = (~confirmButtonData) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
-
-  React.useEffect(() => {
-    // Wrap the handler to match unit => unit signature
-    UseWidgetActions.registerConfirmButtonHandler((_) => {
-      confirmButtonData.handlePress(%raw(`null`))
-    })
-    None
-  }, [confirmButtonData.handlePress])
   <UIUtils.RenderIf
     condition={!nativeProp.configuration.hideConfirmButton && (sheetType == DynamicFieldsSheet ||
       (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet))}>

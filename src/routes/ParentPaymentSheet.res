@@ -21,11 +21,8 @@ let make = () => {
     setConfirmButtonData(_ => confirmButtonData)
   }, [setConfirmButtonData])
 
-  // Setup widget action listeners for goBack and confirmPayment
-  UseWidgetActions.useWidgetActions()->ignore
-
-  // Emit widget state changes to native layer
-  HyperModule.useEmitWidgetState()->ignore
+  UseWidgetActions.useWidgetActions(~confirmButtonData=confirmButtonData)->ignore
+  HyperModule.useEmitWidgetState(~confirmButtonData=confirmButtonData)->ignore
 
   <FullScreenSheetWrapper isLoading=confirmButtonData.loading>
     {switch sheetType {
