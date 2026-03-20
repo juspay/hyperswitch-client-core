@@ -69,6 +69,16 @@ let useAccountPaymentMethodModifier = () => {
       ([], [])
     }
 
+    let customMethodNames = nativeProp.configuration.customMethodNames
+
+    // Returns the merchant-defined alias name for a payment method, or the default display name.
+    let resolveDisplayName = (paymentMethodType, defaultName) => {
+      customMethodNames
+      ->Array.find((alias: SdkTypes.alias) => alias.paymentMethodName === paymentMethodType)
+      ->Option.map((alias: SdkTypes.alias) => alias.aliasName)
+      ->Option.getOr(defaultName)
+    }
+
     switch accountPaymentMethodData {
     | Some(accountPaymentMethodData) =>
       accountPaymentMethodData.payment_methods->Array.reduce(
@@ -150,14 +160,20 @@ let useAccountPaymentMethodModifier = () => {
                     />,
                   )
                 : tabArr->Array.push({
-                    name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                    name: resolveDisplayName(
+                      paymentMethodData.payment_method_type,
+                      paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                    ),
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
                   })
 
             | TabSheet | WidgetTabSheet =>
               tabArr->Array.push({
-                name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                name: resolveDisplayName(
+                  paymentMethodData.payment_method_type,
+                  paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                ),
                 componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                   <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
               })
