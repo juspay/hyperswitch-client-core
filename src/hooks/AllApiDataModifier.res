@@ -31,7 +31,41 @@ let useAccountPaymentMethodModifier = () => {
               customer_payment_method_type =>
                 customer_payment_method_type.payment_method !== WALLET,
             )
-          (
+
+          let groupingBehavior =
+            nativeProp.configuration.appearance.layout.savedMethodCustomization.groupingBehavior
+
+          let savedTabs = switch groupingBehavior {
+          | GroupByPaymentMethods =>
+            let groupedMethods: Dict.t<
+              CustomerPaymentMethodType.customer_payment_methods,
+            > = Dict.make()
+            customerPaymentMethods->Array.forEach(method => {
+              let key = method.payment_method_type
+              let existing = groupedMethods->Dict.get(key)->Option.getOr([])
+              existing->Array.push(method)
+              groupedMethods->Dict.set(key, existing)
+            })
+
+            groupedMethods
+            ->Dict.toArray
+            ->Array.map(((methodType, methods)) => {
+              {
+                name: methodType->CommonUtils.getDisplayName,
+                componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
+                  <SavedPaymentSheet
+                    isScreenFocus
+                    customerPaymentMethods=methods
+                    setConfirmButtonData
+                    merchantName={accountPaymentMethodData
+                    ->Option.map(data => data.merchant_name)
+                    ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
+                    animated=false
+                    style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
+                  />,
+              }
+            })
+          | GroupingDefault =>
             customerPaymentMethods->Array.length > 0
               ? [
                   {
@@ -49,9 +83,9 @@ let useAccountPaymentMethodModifier = () => {
                       />,
                   },
                 ]
-              : [],
-            [],
-          )
+              : []
+          }
+          (savedTabs, [])
         | ButtonSheet | WidgetButtonSheet => // elementArr->Array.push(
           //   <PaymentMethod
           //     key={paymentMethodData.payment_method_type}
