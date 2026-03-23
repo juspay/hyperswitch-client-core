@@ -152,7 +152,7 @@ module MoreButton = {
         ])}>
         <ChevronIcon width=12. height=12. fill=linkColor />
         <Space height=5. />
-        <TextWrapper text="Show More" textType=LinkText />
+        <TextWrapper text=localeObj.morePaymentMethods textType=LinkText />
       </CustomPressable>
     </View>
   }

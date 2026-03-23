@@ -23,6 +23,7 @@ let make = (
   ~testID=?,
 ) => {
   let fillAnimation = AnimatedValue.useAnimatedValue(0.)
+  let localeObject = GetLocale.useGetLocalObj()
   let {
     payNowButtonColor,
     payNowButtonTextColor,
@@ -84,8 +85,8 @@ let make = (
 
   let a11yLabel = switch buttonState {
   | LoadingButton => loadingText
-  | Completed => "Complete"
-  | _ => text->Option.getOr("Button")
+  | Completed => localeObject.completedText
+  | _ => text->Option.getOr(localeObject.payNowButton)
   }
   let a11yState: Accessibility.state = {disabled: disabled}
 
@@ -150,7 +151,7 @@ let make = (
               <TextWrapper
                 text={switch buttonState {
                 | LoadingButton => loadingText
-                | Completed => "Complete"
+                | Completed => localeObject.completedText
                 | _ => textStr
                 }}
                 // textType=CardText

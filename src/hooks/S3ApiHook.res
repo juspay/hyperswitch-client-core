@@ -720,6 +720,12 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "accessibilityHintSavedCardCvc",
         defaultLocale.accessibilityHintSavedCardCvc,
       ),
+      accessibilityHintNickname: Utils.getString(
+        res,
+        "accessibilityHintNickname",
+        defaultLocale.accessibilityHintNickname,
+      ),
+      completedText: Utils.getString(res, "completedText", defaultLocale.completedText),
     }
   | None => defaultLocale
   }

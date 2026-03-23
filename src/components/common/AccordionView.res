@@ -70,7 +70,7 @@ let make = (
         <CustomPressable
           onPress={_ => handleSectionPress(section.key)}
           style=?headerStyle
-          focusable={section.accessible->Option.getOr(true)}
+          accessible={section.accessible->Option.getOr(true)}
           accessibilityRole=#button
           accessibilityLabel={section.accessibilityLabel->Option.getOr(section.title)}
           accessibilityState={expanded: expanded}

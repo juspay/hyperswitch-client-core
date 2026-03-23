@@ -64,7 +64,7 @@ let make = (
     <CustomPressable
       disabled
       accessible={accessible->Option.getOr(true)}
-      accessibilityRole=#button
+      accessibilityRole=#combobox
       accessibilityLabel=triggerLabel
       ?accessibilityHint
       accessibilityState={expanded: isModalVisible}
