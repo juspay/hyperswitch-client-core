@@ -36,6 +36,25 @@ let make = (~setConfirmButtonData) => {
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let localeObject = GetLocale.useGetLocalObj()
+
+  let (showInstallments, setShowInstallments) = React.useState(_ => false)
+  let (selectedInstallmentPlan, setSelectedInstallmentPlan) = React.useState(_ => None)
+  let (installmentsError, setInstallmentsError) = React.useState(_ => "")
+
+  let installmentOptions =
+    accountPaymentMethodData
+    ->Option.flatMap(data => data.intent_data)
+    ->Option.flatMap(intentData => intentData.installment_options)
+    ->Option.getOr([])
+
+  let installmentCurrency =
+    accountPaymentMethodData
+    ->Option.flatMap(data => data.intent_data)
+    ->Option.map(intentData => intentData.currency)
+    ->Option.getOr(
+      accountPaymentMethodData->Option.map(data => data.currency)->Option.getOr(""),
+    )
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
@@ -77,6 +96,13 @@ let make = (~setConfirmButtonData) => {
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
   ) => {
+    if (
+      isCardPayment &&
+        showInstallments &&
+        selectedInstallmentPlan->Option.isNone
+    ) {
+      setInstallmentsError(_ => localeObject.installmentSelectPlanError)
+    } else {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -170,6 +196,7 @@ let make = (~setConfirmButtonData) => {
       ~email?,
       ~screen_height=viewPortContants.screenHeight,
       ~screen_width=viewPortContants.screenWidth,
+      ~installment_data=?showInstallments ? selectedInstallmentPlan : None,
       (),
     )
 
@@ -184,6 +211,7 @@ let make = (~setConfirmButtonData) => {
       ~isCardPayment={payment_method === CARD},
       (),
     )->ignore
+    }
   }
 
   let handlePress = _ => {
@@ -201,7 +229,7 @@ let make = (~setConfirmButtonData) => {
     }
   }
 
-  React.useEffect3(() => {
+  React.useEffect(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -212,7 +240,7 @@ let make = (~setConfirmButtonData) => {
     setConfirmButtonData(confirmButton)
 
     None
-  }, (walletData, isFormValid, formData))
+  }, (walletData, isFormValid, formData, showInstallments, selectedInstallmentPlan))
 
   <ReactNative.View
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>
@@ -227,5 +255,18 @@ let make = (~setConfirmButtonData) => {
       enabledCardSchemes
       accessible=true
     />
+    <UIUtils.RenderIf condition=isCardPayment>
+      <InstallmentOptions
+        installmentOptions
+        currency=installmentCurrency
+        paymentMethod="card"
+        selectedInstallmentPlan
+        setSelectedInstallmentPlan
+        showInstallments
+        setShowInstallments
+        errorString=installmentsError
+        setErrorString=setInstallmentsError
+      />
+    </UIUtils.RenderIf>
   </ReactNative.View>
 }

@@ -31,6 +31,29 @@ type payment_method_type = {
 
 type payment_methods = array<payment_method_type>
 
+type installmentAmountDetails = {
+  amount_per_installment: float,
+  total_amount: float,
+}
+
+type installmentPlan = {
+  interest_rate: float,
+  number_of_installments: int,
+  billing_frequency: string,
+  amount_details: installmentAmountDetails,
+}
+
+type installmentOption = {
+  payment_method: string,
+  available_plans: array<installmentPlan>,
+}
+
+type intentData = {
+  installment_options: option<array<installmentOption>>,
+  currency: string,
+  amount: float,
+}
+
 type accountPaymentMethods = {
   payment_methods: payment_methods,
   merchant_name: string,
@@ -44,6 +67,7 @@ type accountPaymentMethods = {
   redirect_url: string,
   request_external_three_ds_authentication: bool,
   show_surcharge_breakup_screen: bool,
+  intent_data: option<intentData>,
 }
 
 let defaultAccountPaymentMethods = {
@@ -59,6 +83,7 @@ let defaultAccountPaymentMethods = {
   redirect_url: "",
   request_external_three_ds_authentication: false,
   show_surcharge_breakup_screen: false,
+  intent_data: None,
 }
 
 let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
@@ -185,6 +210,52 @@ let sortPaymentListArray = (plist: payment_methods) => {
   plist
 }
 
+let parseAmountDetails = (dict: Js.Dict.t<JSON.t>) => {
+  {
+    amount_per_installment: getOptionFloat(dict, "amount_per_installment")->Option.getOr(0.0),
+    total_amount: getOptionFloat(dict, "total_amount")->Option.getOr(0.0),
+  }
+}
+
+let parseInstallmentPlan = (dict: Js.Dict.t<JSON.t>) => {
+  {
+    interest_rate: getOptionFloat(dict, "interest_rate")->Option.getOr(0.0),
+    number_of_installments: getOptionFloat(dict, "number_of_installments")
+    ->Option.getOr(0.0)
+    ->Int.fromFloat,
+    billing_frequency: getString(dict, "billing_frequency", "month"),
+    amount_details: dict
+    ->Dict.get("amount_details")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.map(parseAmountDetails)
+    ->Option.getOr({amount_per_installment: 0.0, total_amount: 0.0}),
+  }
+}
+
+let parseInstallmentOption = (dict: Js.Dict.t<JSON.t>) => {
+  {
+    payment_method: getString(dict, "payment_method", ""),
+    available_plans: dict
+    ->Dict.get("available_plans")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.getOr([])
+    ->Array.filterMap(plan => plan->JSON.Decode.object->Option.map(parseInstallmentPlan)),
+  }
+}
+
+let parseIntentData = (dict: Js.Dict.t<JSON.t>) => {
+  {
+    installment_options: dict
+    ->Dict.get("installment_options")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.map(arr =>
+      arr->Array.filterMap(opt => opt->JSON.Decode.object->Option.map(parseInstallmentOption))
+    ),
+    currency: getString(dict, "currency", ""),
+    amount: getOptionFloat(dict, "amount")->Option.getOr(0.0),
+  }
+}
+
 let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
   let accountPaymentMethodsDict = res->getDictFromJson
   {
@@ -226,6 +297,10 @@ let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
       "show_surcharge_breakup_screen",
       false,
     ),
+    intent_data: accountPaymentMethodsDict
+    ->Dict.get("intent_data")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.map(parseIntentData),
   }
 }
 

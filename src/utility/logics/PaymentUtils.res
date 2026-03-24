@@ -14,6 +14,27 @@ let showUseExisitingSavedCardsBtn = (
   displaySavedPaymentMethods
 }
 
+let filterInstallmentPlansByPaymentMethod = (
+  installmentOptions: array<AccountPaymentMethodType.installmentOption>,
+  paymentMethod: string,
+) => {
+  installmentOptions
+  ->Array.find(option => option.payment_method === paymentMethod)
+  ->Option.map(option => option.available_plans)
+  ->Option.getOr([])
+}
+
+let installmentBody = (plan: option<AccountPaymentMethodType.installmentPlan>) => {
+  plan->Option.map(p =>
+    [
+      ("number_of_installments", p.number_of_installments->Int.toFloat->JSON.Encode.float),
+      ("billing_frequency", p.billing_frequency->JSON.Encode.string),
+    ]
+    ->Dict.fromArray
+    ->JSON.Encode.object
+  )
+}
+
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_method_str: string,
@@ -29,6 +50,7 @@ let generateCardConfirmBody = (
   ~email=?,
   ~screen_height=?,
   ~screen_width=?,
+  ~installment_data: option<AccountPaymentMethodType.installmentPlan>=?,
   (),
 ): PaymentConfirmTypes.redirectType => {
   let isMandate = payment_type !== NORMAL
@@ -59,6 +81,7 @@ let generateCardConfirmBody = (
           })
         : None
     ),
+    installment_data: ?installmentBody(installment_data),
     browser_info: {
       user_agent: ?nativeProp.hyperParams.userAgent,
       accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
@@ -102,6 +125,7 @@ let generateSavedCardConfirmBody = (
   ~screen_height=?,
   ~screen_width=?,
   ~billing=?,
+  ~installment_data: option<AccountPaymentMethodType.installmentPlan>=?,
 ): PaymentConfirmTypes.redirectType => {
   client_secret: nativeProp.clientSecret,
   payment_method: "card",
@@ -114,6 +138,7 @@ let generateSavedCardConfirmBody = (
     ->JSON.Encode.object
   ),
   payment_type: ?payment_type_str,
+  installment_data: ?installmentBody(installment_data),
   browser_info: {
     user_agent: ?nativeProp.hyperParams.userAgent,
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",

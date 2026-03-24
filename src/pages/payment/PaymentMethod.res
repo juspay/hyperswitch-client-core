@@ -17,12 +17,38 @@ let make = (
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let {nickname, isNicknameSelected} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let localeObject = GetLocale.useGetLocalObj()
+
+  let (showInstallments, setShowInstallments) = React.useState(_ => false)
+  let (selectedInstallmentPlan, setSelectedInstallmentPlan) = React.useState(_ => None)
+  let (installmentsError, setInstallmentsError) = React.useState(_ => "")
+
+  let installmentOptions =
+    accountPaymentMethodData
+    ->Option.flatMap(data => data.intent_data)
+    ->Option.flatMap(intentData => intentData.installment_options)
+    ->Option.getOr([])
+
+  let installmentCurrency =
+    accountPaymentMethodData
+    ->Option.flatMap(data => data.intent_data)
+    ->Option.map(intentData => intentData.currency)
+    ->Option.getOr(
+      accountPaymentMethodData->Option.map(data => data.currency)->Option.getOr(""),
+    )
 
   let processRequest = (
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
   ) => {
+    if (
+      paymentMethodData.payment_method === CARD &&
+        showInstallments &&
+        selectedInstallmentPlan->Option.isNone
+    ) {
+      setInstallmentsError(_ => localeObject.installmentSelectPlanError)
+    } else {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -126,6 +152,7 @@ let make = (
       ~email?,
       ~screen_height=viewPortContants.screenHeight,
       ~screen_width=viewPortContants.screenWidth,
+      ~installment_data=?showInstallments ? selectedInstallmentPlan : None,
       (),
     )
 
@@ -140,6 +167,7 @@ let make = (
       ~isCardPayment={paymentMethodData.payment_method === CARD},
       (),
     )->ignore
+    }
   }
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
@@ -148,5 +176,18 @@ let make = (
     | TAB => <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonData />
     | _ => React.null
     }}
+    <UIUtils.RenderIf condition={paymentMethodData.payment_method === CARD}>
+      <InstallmentOptions
+        installmentOptions
+        currency=installmentCurrency
+        paymentMethod="card"
+        selectedInstallmentPlan
+        setSelectedInstallmentPlan
+        showInstallments
+        setShowInstallments
+        errorString=installmentsError
+        setErrorString=setInstallmentsError
+      />
+    </UIUtils.RenderIf>
   </ErrorBoundary>
 }
