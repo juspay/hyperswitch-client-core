@@ -13,13 +13,13 @@ type emitterFunctions = {
 
 let usePaymentEventEmitter = (): emitterFunctions => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let subscribedEvents = nativeProp.subscribedEvents
+  let subscribedEvents = nativeProp.subscribedEvents->Array.map(PaymentEventTypes.eventFromString)
 
   let emitCardInfo = (~info: cardInfo) => {
     if shouldEmitEvent(~eventType=PaymentMethodInfoCard, ~subscribedEvents) {
       emitToNative(
         ~widgetId=nativeProp.widgetId,
-        ~eventType=PaymentEventTypes.toString(PaymentMethodInfoCard),
+        ~eventType=PaymentEventTypes.eventToString(PaymentMethodInfoCard),
         ~payload=cardInfoToJson(info),
       )
     }
@@ -29,8 +29,13 @@ let usePaymentEventEmitter = (): emitterFunctions => {
     if shouldEmitEvent(~eventType=PaymentMethodStatus, ~subscribedEvents) {
       emitToNative(
         ~widgetId=nativeProp.widgetId,
-        ~eventType=PaymentEventTypes.toString(PaymentMethodStatus),
-        ~payload=paymentMethodStatusEventToJson(event),
+        ~eventType=PaymentEventTypes.eventToString(PaymentMethodStatus),
+        ~payload=paymentMethodStatusEventToJson(
+          ~paymentMethod=event.paymentMethod,
+          ~paymentMethodType=event.paymentMethodType,
+          ~isSavedPaymentMethod=event.isSavedPaymentMethod,
+          ~isOneClickWallet=event.isOneClickWallet,
+        ),
       )
     }
   }
@@ -39,18 +44,22 @@ let usePaymentEventEmitter = (): emitterFunctions => {
     if shouldEmitEvent(~eventType=FormStatus, ~subscribedEvents) {
       emitToNative(
         ~widgetId=nativeProp.widgetId,
-        ~eventType=PaymentEventTypes.toString(FormStatus),
-        ~payload=formStatusEventToJson(event),
+        ~eventType=PaymentEventTypes.eventToString(FormStatus),
+        ~payload=formStatusEventToJson(~status=event.status->PaymentEventTypes.formStatusValueFromString),
       )
     }
   }
 
   let emitPaymentMethodInfoAddress = (~info: paymentMethodInfoAddress) => {
-    if shouldEmitEvent(~eventType=PaymentMethodInfoAddress, ~subscribedEvents) {
+    if shouldEmitEvent(~eventType=PaymentMethodInfoBillingAddress, ~subscribedEvents) {
       emitToNative(
         ~widgetId=nativeProp.widgetId,
-        ~eventType=PaymentEventTypes.toString(PaymentMethodInfoAddress),
-        ~payload=paymentMethodInfoAddressToJson(info),
+        ~eventType=PaymentEventTypes.eventToString(PaymentMethodInfoBillingAddress),
+        ~payload=paymentMethodInfoAddressToJson(
+          ~country=info.country,
+          ~state=info.state,
+          ~postalCode=info.postalCode,
+        ),
       )
     }
   }
