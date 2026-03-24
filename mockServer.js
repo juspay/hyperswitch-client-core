@@ -63,6 +63,8 @@ const HYPERSWITCH_BASE_URL =
   'https://sandbox.hyperswitch.io';
 const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
 
+let testAutomationPaymentBody = {};
+
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('Missing required environment variables');
   logger.warn('HYPERSWITCH_PUBLISHABLE_KEY: ' + !!HYPERSWITCH_PUBLISHABLE_KEY);
@@ -109,9 +111,8 @@ app.get('/health', (req, res) => {
 app.get('/create-payment-intent', async (req, res) => {
   try {
     const paymentData = {
+      ...testAutomationPaymentBody,
       ...mockData.paymentIntentBody,
-      amount: 100,
-      currency: 'USD',
     };
 
     if (process.env.PROFILE_ID) {
@@ -149,9 +150,13 @@ app.get('/create-payment-intent', async (req, res) => {
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
-    const paymentData = {
-      ...mockData.paymentIntentBody,
+    testAutomationPaymentBody = {
       ...req.body,
+    };
+
+    const paymentData = {
+      ...testAutomationPaymentBody,
+      ...mockData.paymentIntentBody,
     };
 
     if (process.env.PROFILE_ID) {
