@@ -21,6 +21,9 @@ let make = () => {
     setConfirmButtonData(_ => confirmButtonData)
   }, [setConfirmButtonData])
 
+  UseWidgetActions.useWidgetActions(~confirmButtonData=confirmButtonData)->ignore
+  HyperModule.useEmitWidgetState(~confirmButtonData=confirmButtonData)->ignore
+
   <FullScreenSheetWrapper isLoading=confirmButtonData.loading>
     {switch sheetType {
     | ButtonSheet =>
@@ -99,6 +102,6 @@ let make = () => {
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
     <GlobalConfirmButton confirmButtonData />
-    <Space height=15. />
+    {nativeProp.sdkState === WidgetPaymentSheet ? React.null : <Space height=15. />}
   </FullScreenSheetWrapper>
 }

@@ -66,3 +66,27 @@ let setupExpressCheckoutListener = (
     onExpressCheckoutConfirm(responseFromJava)
   })
 }
+
+// Widget action event types
+type goBackEvent = {
+  widgetId: string,
+  action: string,
+}
+
+type confirmPaymentEvent = {
+  widgetId: string,
+  action: string
+}
+type actionType = GoBack | ConfirmPayment
+
+let setupWidgetActionListener = (~currentWidgetId: string, ~actionType=GoBack,  ~handler: () => unit) => {
+  setupNativeEventListener("triggerWidgetAction", var => {
+    let eventData = var->NativeModulesType.widgetActionEventObjectMapper
+    switch (eventData, actionType) {
+    | (GoBack({widgetId}), GoBack) => 
+      if widgetId === currentWidgetId { handler() } else { () }
+    | (ConfirmPayment({widgetId}), ConfirmPayment) => if widgetId === currentWidgetId { handler() } else { () }
+    | _ => ()
+    }
+  })
+}
