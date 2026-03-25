@@ -66,13 +66,20 @@ let generateAuthenticationCallBody = (clientSecret, aReqParams) => {
   stringifiedBody
 }
 
-let getAuthCallHeaders = publishableKey => {
-  [
-    ("Content-Type", "application/json"),
-    ("api-key", publishableKey),
-    ("Accept", "application/json"),
-    // ("x-feature", "router-custom-be"),
-  ]->Dict.fromArray
+let getAuthCallHeaders = (~publishableKey, ~sdkAuthorization="", ()) => {
+  if sdkAuthorization->String.length > 0 {
+    [
+      ("Content-Type", "application/json"),
+      ("Authorization", sdkAuthorization),
+      ("Accept", "application/json"),
+    ]->Dict.fromArray
+  } else {
+    [
+      ("Content-Type", "application/json"),
+      ("api-key", publishableKey),
+      ("Accept", "application/json"),
+    ]->Dict.fromArray
+  }
 }
 
 let isStatusSuccess = (status: statusType) => {

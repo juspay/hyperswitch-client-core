@@ -319,6 +319,7 @@ type nativeProp = {
   rootTag: int,
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
+  sdkAuthorization: option<string>,
 }
 
 let defaultAppearance: appearance = {
@@ -855,6 +856,21 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   | val => val
   }
 
+  let sdkAuthorization = switch getOptionString(dictfromNative, "sdkAuthorization") {
+  | Some("") => None
+  | val => val
+  }
+  Js.log2("sdkAuthorization", sdkAuthorization)
+
+  let clientSecret = switch sdkAuthorization {
+  | Some(sdkAuth) => {
+      let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
+      sdkAuthData.clientSecret->Option.getOr(getString(dictfromNative, "clientSecret", ""))
+    }
+  | None => getString(dictfromNative, "clientSecret", "")
+  }
+  Js.log2("clientSecret", clientSecret)
+
   let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
 
   {
@@ -862,13 +878,14 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     env: GlobalVars.checkEnv(publishableKey),
     rootTag,
     publishableKey,
-    clientSecret: getString(dictfromNative, "clientSecret", ""),
-    paymentMethodId: String.split(getString(dictfromNative, "clientSecret", ""), "_secret_")
+    clientSecret,
+    paymentMethodId: String.split(clientSecret, "_secret_")
     ->Array.get(0)
     ->Option.getOr(""),
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
     customBackendUrl,
     customLogUrl,
+    sdkAuthorization,
     sessionId: "",
     sdkState: switch getString(dictfromNative, "type", "") {
     | "payment" => PaymentSheet
