@@ -247,6 +247,7 @@ type sdkState =
   | CardWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
+  | CvcWidget
   | PaymentMethodsManagement
   | Headless
   | NoView
@@ -281,6 +282,7 @@ let sdkStateToStrMapper = sdkState => {
   | CardWidget => "CARD_FORM"
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
+  | CvcWidget => "CVC_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
@@ -319,6 +321,8 @@ type nativeProp = {
   rootTag: int,
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
+  subscribedEvents: array<PaymentEventTypes.events>,
+  widgetId: string,
 }
 
 let defaultAppearance: appearance = {
@@ -869,7 +873,8 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
     customBackendUrl,
     customLogUrl,
-    sessionId: "",
+    sessionId: getString(dictfromNative, "sessionId", ""),
+    widgetId: getString(dictfromNative, "widgetId", ""),
     sdkState: switch getString(dictfromNative, "type", "") {
     | "payment" => PaymentSheet
     | "tabSheet" => TabSheet
@@ -883,6 +888,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "card" => CardWidget
     | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
+    | "cvcWidget" => CvcWidget
     | "headless" => Headless
     | _ => NoView
     },
@@ -907,5 +913,15 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       rightInset: getOptionFloat(hyperParams, "rightInset"),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
+    subscribedEvents: switch dictfromNative->Dict.get("subscribedEvents") {
+    | Some(json) =>
+      json
+      ->JSON.Decode.array
+      ->Option.getOr([])
+      ->Array.map(event => 
+        event->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString
+      )
+    | None => []
+    },
   }
 }

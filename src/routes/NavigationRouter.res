@@ -115,6 +115,7 @@ let make = () => {
       | CardWidget => <CardWidget />
       | CustomWidget(walletType) => <CustomWidget walletType />
       | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+      | CvcWidget => <CvcWidget />
       | Headless
       | NoView
       | PaymentMethodsManagement => React.null

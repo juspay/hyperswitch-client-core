@@ -5,6 +5,7 @@ type componentHoc = (
 
 type hoc = {
   name: string,
+  paymentMethodType: string,
   componentHoc: componentHoc,
 }
 
@@ -36,6 +37,7 @@ let useAccountPaymentMethodModifier = () => {
               ? [
                   {
                     name: "Saved",
+                    paymentMethodType: "saved_payment_method",
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <SavedPaymentSheet
                         isScreenFocus
@@ -151,6 +153,7 @@ let useAccountPaymentMethodModifier = () => {
                   )
                 : tabArr->Array.push({
                     name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                    paymentMethodType: paymentMethodData.payment_method_type,
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
                   })
@@ -158,6 +161,7 @@ let useAccountPaymentMethodModifier = () => {
             | TabSheet | WidgetTabSheet =>
               tabArr->Array.push({
                 name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                paymentMethodType: paymentMethodData.payment_method_type,
                 componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                   <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
               })
@@ -179,6 +183,7 @@ let useAccountPaymentMethodModifier = () => {
     | None =>
       let loadingTabElement = {
         name: "loading",
+        paymentMethodType: "loading",
         componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) => <>
           <Space height=20. />
           <CustomLoader />
