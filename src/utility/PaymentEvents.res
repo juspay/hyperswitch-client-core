@@ -9,11 +9,12 @@ type emitterFunctions = {
   emitPaymentMethodStatus: (~event: paymentMethodStatusEvent) => unit,
   emitFormStatus: (~event: formStatusEvent) => unit,
   emitPaymentMethodInfoAddress: (~info: paymentMethodInfoAddress) => unit,
+  emitCvcStatus: (~event: cvcStatusEvent) => unit,
 }
 
 let usePaymentEventEmitter = (): emitterFunctions => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let subscribedEvents = nativeProp.subscribedEvents->Array.map(PaymentEventTypes.eventFromString)
+  let subscribedEvents = nativeProp.subscribedEvents
 
   let emitCardInfo = (~info: cardInfo) => {
     if shouldEmitEvent(~eventType=PaymentMethodInfoCard, ~subscribedEvents) {
@@ -64,5 +65,15 @@ let usePaymentEventEmitter = (): emitterFunctions => {
     }
   }
 
-  {emitCardInfo, emitPaymentMethodStatus, emitFormStatus, emitPaymentMethodInfoAddress}
+  let emitCvcStatus = (~event: cvcStatusEvent) => {
+    if shouldEmitEvent(~eventType=CvcStatus, ~subscribedEvents) {
+      emitToNative(
+        ~widgetId=nativeProp.widgetId,
+        ~eventType=PaymentEventTypes.eventToString(CvcStatus),
+        ~payload=cvcStatusEventToJson(event),
+      )
+    }
+  }
+
+  {emitCardInfo, emitPaymentMethodStatus, emitFormStatus, emitPaymentMethodInfoAddress, emitCvcStatus}
 }
