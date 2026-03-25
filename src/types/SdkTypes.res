@@ -860,7 +860,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   | Some("") => None
   | val => val
   }
-  Js.log2("sdkAuthorization", sdkAuthorization)
 
   let clientSecret = switch sdkAuthorization {
   | Some(sdkAuth) => {
@@ -869,7 +868,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     }
   | None => getString(dictfromNative, "clientSecret", "")
   }
-  Js.log2("clientSecret", clientSecret)
 
   let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
 
