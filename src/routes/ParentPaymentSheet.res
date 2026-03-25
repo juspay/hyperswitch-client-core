@@ -99,6 +99,6 @@ let make = () => {
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
     <GlobalConfirmButton confirmButtonData />
-    <Space height=15. />
+    {nativeProp.sdkState === WidgetPaymentSheet ? React.null : <Space height=15. />}
   </FullScreenSheetWrapper>
 }

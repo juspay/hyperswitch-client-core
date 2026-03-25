@@ -312,6 +312,7 @@ type nativeProp = {
   customBackendUrl: option<string>,
   customLogUrl: option<string>,
   sessionId: string,
+  widgetId: string,
   from: string,
   configuration: configurationType,
   env: GlobalVars.envType,
@@ -869,7 +870,8 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
     customBackendUrl,
     customLogUrl,
-    sessionId: "",
+    sessionId: getString(dictfromNative, "sessionId", ""),
+    widgetId: getString(dictfromNative, "widgetId", ""),
     sdkState: switch getString(dictfromNative, "type", "") {
     | "payment" => PaymentSheet
     | "tabSheet" => TabSheet
