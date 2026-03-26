@@ -231,7 +231,6 @@ type configurationType = {
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
   enablePartialLoading: bool,
-  displayMergedSavedMethods: bool,
   disableBranding: bool,
   hideConfirmButton: bool,
 }
@@ -425,7 +424,9 @@ let defaultAppearance: appearance = {
     radios: false,
     spacedAccordionItems: false,
     maxAccordionItems: 4,
-    savedMethodCustomization: {groupingBehavior: GroupingDefault},
+    savedMethodCustomization: {
+      groupingBehavior: {displayInSeparateScreen: true, groupByPaymentMethods: false},
+    },
   },
 }
 
@@ -844,7 +845,6 @@ let parseConfigurationDict = (configObj, from) => {
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
       cvv: getString(placeholderDict, "cvv", "CVC"),
     },
-    displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
     disableBranding: getBool(configObj, "disableBranding", false),
   }
   configuration

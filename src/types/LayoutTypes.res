@@ -2,7 +2,10 @@ open Utils
 
 type layoutType = Tab | Accordion
 type paymentMethodsArrangement = ArrangementDefault | ArrangementGrid
-type groupingBehavior = GroupByPaymentMethods | GroupingDefault
+type groupingBehavior = {
+  displayInSeparateScreen: bool,
+  groupByPaymentMethods: bool,
+}
 
 type savedMethodCustomization = {
   groupingBehavior: groupingBehavior,
@@ -27,7 +30,9 @@ let defaultLayout: layout = {
   radios: false,
   spacedAccordionItems: false,
   maxAccordionItems: 4,
-  savedMethodCustomization: {groupingBehavior: GroupingDefault},
+  savedMethodCustomization: {
+    groupingBehavior: {displayInSeparateScreen: true, groupByPaymentMethods: false},
+  },
 }
 
 let parseLayout = (appearanceDict: Dict.t<JSON.t>) => {
@@ -60,11 +65,21 @@ let parseLayout = (appearanceDict: Dict.t<JSON.t>) => {
         savedMethodCustomization: {
           groupingBehavior: switch savedMethodCustomizationDict {
           | Some(smDict) =>
-            switch getString(smDict, "groupingBehavior", "default") {
-            | "groupByPaymentMethods" => GroupByPaymentMethods
-            | _ => GroupingDefault
+            switch smDict->Dict.get("groupingBehavior")->Option.flatMap(JSON.Decode.object) {
+            | Some(gbObj) => {
+                displayInSeparateScreen: getBool(gbObj, "displayInSeparateScreen", true),
+                groupByPaymentMethods: getBool(gbObj, "groupByPaymentMethods", false),
+              }
+            | None =>
+              switch getString(smDict, "groupingBehavior", "default") {
+              | "groupByPaymentMethods" => {
+                  displayInSeparateScreen: false,
+                  groupByPaymentMethods: true,
+                }
+              | _ => {displayInSeparateScreen: true, groupByPaymentMethods: false}
+              }
             }
-          | None => GroupingDefault
+          | None => {displayInSeparateScreen: true, groupByPaymentMethods: false}
           },
         },
       }
@@ -82,7 +97,9 @@ let parseLayout = (appearanceDict: Dict.t<JSON.t>) => {
       radios: false,
       spacedAccordionItems: false,
       maxAccordionItems: 4,
-      savedMethodCustomization: {groupingBehavior: GroupingDefault},
+      savedMethodCustomization: {
+        groupingBehavior: {displayInSeparateScreen: true, groupByPaymentMethods: false},
+      },
     }
   }
 }
