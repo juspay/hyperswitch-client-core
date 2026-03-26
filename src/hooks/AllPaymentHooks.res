@@ -102,6 +102,7 @@ let useSessionTokenHook = () => {
         ~uri=`${baseUrl}/payments/session_tokens`,
         ~body=PaymentUtils.generateSessionsTokenBody(
           ~clientSecret=nativeProp.clientSecret,
+          ~sdkAuthorization=?nativeProp.sdkAuthorization,
           ~wallet,
         ),
         ~method=#POST,

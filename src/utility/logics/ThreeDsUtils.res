@@ -35,7 +35,7 @@ let getThreeDsDataObj = (
   })
 }
 
-let generateAuthenticationCallBody = (clientSecret, aReqParams) => {
+let generateAuthenticationCallBody = (clientSecret, ~sdkAuthorization=?, aReqParams) => {
   let ephemeralKeyDict =
     aReqParams.sdkEphemeralKey
     ->JSON.Decode.string
@@ -45,7 +45,10 @@ let generateAuthenticationCallBody = (clientSecret, aReqParams) => {
     ->Option.getOr(Dict.make())
 
   let body: authCallBody = {
-    client_secret: clientSecret,
+    client_secret: ?switch sdkAuthorization->Utils.getNonEmptyOption {
+    | Some(_) => None
+    | None => Some(clientSecret)
+    },
     device_channel: "APP",
     threeds_method_comp_ind: "N",
     sdk_information: {

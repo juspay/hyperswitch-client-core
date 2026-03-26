@@ -367,8 +367,7 @@ let generateWalletConfirmBody = (
   ~payment_method_data,
   ~payment_type_str=?,
 ) => {
-  [
-    ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+  let baseArr = [
     ("payment_method", "wallet"->JSON.Encode.string),
     ("payment_method_type", data.payment_method_type->JSON.Encode.string),
     ("payment_method_data", payment_method_data),
@@ -390,6 +389,11 @@ let generateWalletConfirmBody = (
       ->JSON.Encode.object,
     ),
   ]
+  let bodyArr = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => baseArr
+  | None => baseArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+  }
+  bodyArr
   ->Dict.fromArray
   ->JSON.Encode.object
   ->JSON.stringify

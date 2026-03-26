@@ -327,7 +327,7 @@ let useExternalThreeDs = () => {
 
     let hsThreeDsAuthCall = (aReqParams: aReqParams) => {
       let uri = threeDsData.threeDsAuthenticationUrl
-      let bodyStr = generateAuthenticationCallBody(clientSecret, aReqParams)
+      let bodyStr = generateAuthenticationCallBody(clientSecret, ~sdkAuthorization, aReqParams)
       let headers = getAuthCallHeaders(~publishableKey, ~sdkAuthorization, ())
 
       apiLogWrapper(
