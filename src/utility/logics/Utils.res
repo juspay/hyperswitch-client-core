@@ -400,7 +400,7 @@ type sdkAuthorizationData = {
 }
 
 let getSdkAuthorizationData = (sdkAuthorization: string) => {
-  let arrOfKeys = sdkAuthorization->GlobalVars.atob->String.split(",")
+  let arrOfKeys = sdkAuthorization->Base64.decode->String.split(",")
 
   let getValueFromArrayOfKeys = keyName => {
     let keyStr = arrOfKeys->Array.find(key => key->String.includes(keyName))
