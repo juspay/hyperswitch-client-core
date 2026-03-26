@@ -50,6 +50,7 @@ let make = (
       Some(cardNetworkConfig),
     ) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+      let emitter = PaymentEvents.usePaymentEventEmitter()
       let (expireDate, setExpireDate) = React.useState(() => "")
 
       let {
@@ -70,27 +71,27 @@ let make = (
         ~config={
           validate: createFieldValidator(CardNumber),
           format: formatValue(CardNumber),
-        }
+        },
       )
 
       let {input: cardExpiryMonthInput, meta: _cardExpiryMonthMeta} = ReactFinalForm.useField(
         cardExpiryMonthConfig.outputPath,
-        ~config={validate: createFieldValidator(CardExpiry(expireDate))}
+        ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
       let {input: cardExpiryYearInput, meta: cardExpiryYearMeta} = ReactFinalForm.useField(
         cardExpiryYearConfig.outputPath,
-        ~config={validate: createFieldValidator(CardExpiry(expireDate))}
+        ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
       let {input: cardNetworkInput, meta: cardNetworkMeta} = ReactFinalForm.useField(
         cardNetworkConfig.outputPath,
-        ~config={validate: createFieldValidator(CardNetwork(enabledCardSchemes))}
+        ~config={validate: createFieldValidator(CardNetwork(enabledCardSchemes))},
       )
 
       let {input: cardCvcInput, meta: cardCvcMeta} = ReactFinalForm.useField(
         cardCvcConfig.outputPath,
-        ~config={validate: createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr("")))}
+        ~config={validate: createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr("")))},
       )
 
       let (
@@ -177,6 +178,16 @@ let make = (
           }
         }
       }
+
+      let cardNumber = cardNumberInput.value->Option.getOr("")
+      let cvc = cardCvcInput.value->Option.getOr("")
+      let brand = cardNetworkInput.value->Option.getOr("")
+
+      React.useEffect(() => {
+        let info = PaymentEvents.buildCardInfo(~cardNumber, ~expiry=expireDate, ~cvc, ~brand)
+        emitter.emitCardInfo(~info)
+        None
+      }, (cardNumber, expireDate, cvc, brand))
 
       let onScanCard = (
         pan,

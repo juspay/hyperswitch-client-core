@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+open PaymentEvents
 
 @react.component
 let make = (
@@ -24,6 +25,8 @@ let make = (
   let {getRequiredFieldsForButton, setInitialValueCountry} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
   )
+
+  let emitter = PaymentEvents.usePaymentEventEmitter()
 
   let processWalletData = (
     walletDict,
@@ -176,6 +179,14 @@ let make = (
   }
 
   let pressHandler = () => {
+    let event = buildPaymentMethodStatusEvent(
+      ~paymentMethod=paymentMethodData.payment_method_str,
+      ~paymentMethodType=paymentMethodData.payment_method_type,
+      ~isSavedPaymentMethod=false,
+      ~isOneClickWallet=true,
+    )
+    emitter.emitPaymentMethodStatus(~event)
+
     setLoading(ProcessingPayments)
     logger(
       ~logType=INFO,

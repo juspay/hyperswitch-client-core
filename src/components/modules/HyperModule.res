@@ -10,8 +10,9 @@ type hyperModule = {
   exitCardForm: string => unit,
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   onAddPaymentMethod: string => unit,
-  exitWidgetPaymentsheet: (int, string, bool) => unit,
+  exitWidgetPaymentsheet: (int, string, string, bool) => unit,
   updateWidgetHeight: int => unit,
+  emitPaymentEvent: (string, string, JSON.t) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -49,8 +50,10 @@ let hyperModule = {
     _,
     _,
     _,
+    _,
   ) => ()),
   updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
+  emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
 }
 
 let sendMessageToNative = str => {
@@ -78,6 +81,10 @@ type useExitPaymentsheetReturnType = {
   exit: (PaymentConfirmTypes.error, bool) => unit,
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
+let emitPaymentEvent = (widgetId: string, eventType: string, payload: JSON.t) => {
+  hyperModule.emitPaymentEvent(widgetId, eventType, payload)
+}
+
 let useExitPaymentsheet = () => {
   // let (ref, _) = React.useContext(ReactNativeWrapperContext.reactNativeWrapperContext)
   let logger = LoggerHook.useLoggerHook()
@@ -101,6 +108,7 @@ let useExitPaymentsheet = () => {
           | WidgetPaymentSheet | WidgetButtonSheet =>
             hyperModule.exitWidgetPaymentsheet(
               nativeProp.rootTag,
+              nativeProp.widgetId,
               apiResStatus->stringifiedResStatus,
               reset,
             )
@@ -133,7 +141,12 @@ let useExitPaymentsheet = () => {
         //   )
         exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
-      ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
+      ? hyperModule.exitWidgetPaymentsheet(
+        rootTag,
+        nativeProp.widgetId,
+        apiResStatus->stringifiedResStatus,
+        reset,
+      )
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }
   {exit, simplyExit}
