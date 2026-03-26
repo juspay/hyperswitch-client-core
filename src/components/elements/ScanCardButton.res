@@ -41,6 +41,7 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
         alignItems: #"flex-start",
         justifyContent: #center,
       })}
+      testID={TestUtils.scanCardButtonTestId}
       onPress={_pressEvent => {
         ScanCardModule.launchScanCard(scanCardCallback)
         logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
