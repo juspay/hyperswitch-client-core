@@ -21,7 +21,14 @@ let useAccountPaymentMethodModifier = () => {
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
   React.useMemo3(() => {
-    let (initialTabArr, initialElementArr) = if nativeProp.configuration.displayMergedSavedMethods {
+    let groupingBehavior =
+      nativeProp.configuration.appearance.layout.savedMethodCustomization.groupingBehavior
+
+    // Show a merged "Saved" tab only when displayInSeparateScreen=false AND groupByPaymentMethods=false
+    let showMergedSavedTab =
+      !groupingBehavior.displayInSeparateScreen && !groupingBehavior.groupByPaymentMethods
+
+    let (initialTabArr, initialElementArr) = if showMergedSavedTab {
       customerPaymentMethodData
       ->Option.map(customerPaymentMethods => {
         switch nativeProp.sdkState {
@@ -138,6 +145,18 @@ let useAccountPaymentMethodModifier = () => {
           }
 
           if walletExperience->Option.isSome {
+            let isGroupByPMCard =
+              !groupingBehavior.displayInSeparateScreen &&
+              groupingBehavior.groupByPaymentMethods &&
+              paymentMethodData.payment_method === CARD
+
+            let savedCardMethods =
+              customerPaymentMethodData
+              ->Option.map(cpm =>
+                cpm.customer_payment_methods->Array.filter(m => m.payment_method === CARD)
+              )
+              ->Option.getOr([])
+
             switch nativeProp.sdkState {
             | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
               Types.defaultButtonElementArr->Array.includes(paymentMethodData.payment_method_type)
@@ -151,15 +170,31 @@ let useAccountPaymentMethodModifier = () => {
                   )
                 : tabArr->Array.push({
                     name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
-                    componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                      <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                    componentHoc: isGroupByPMCard
+                      ? (~isScreenFocus, ~setConfirmButtonData) =>
+                          <SavedCardToggleTab
+                            isScreenFocus
+                            setConfirmButtonData
+                            paymentMethodData
+                            savedCardMethods
+                          />
+                      : (~isScreenFocus, ~setConfirmButtonData) =>
+                          <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
                   })
 
             | TabSheet | WidgetTabSheet =>
               tabArr->Array.push({
                 name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
-                componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                  <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                componentHoc: isGroupByPMCard
+                  ? (~isScreenFocus, ~setConfirmButtonData) =>
+                      <SavedCardToggleTab
+                        isScreenFocus
+                        setConfirmButtonData
+                        paymentMethodData
+                        savedCardMethods
+                      />
+                  : (~isScreenFocus, ~setConfirmButtonData) =>
+                      <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
               })
             | ButtonSheet | WidgetButtonSheet =>
               elementArr->Array.push(
