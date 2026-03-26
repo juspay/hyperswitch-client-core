@@ -12,6 +12,7 @@ type componentConfig = {
   dividerColor: ReactNative.Color.t,
   color: ReactNative.Color.t,
 }
+
 type statusColor = {
   green: statusColorConfig,
   orange: statusColorConfig,

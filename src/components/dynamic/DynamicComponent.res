@@ -226,6 +226,8 @@ let make = (~setConfirmButtonData) => {
       isCardPayment
       enabledCardSchemes
       accessible=true
+      paymentMethod=payment_method_str
+      paymentMethodType=payment_method_type
     />
   </ReactNative.View>
 }
