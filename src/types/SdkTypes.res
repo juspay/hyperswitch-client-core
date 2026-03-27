@@ -301,6 +301,7 @@ type hyperParams = {
   bottomInset: option<float>,
   topInset: option<float>,
   leftInset: option<float>,
+  gPaySupport: bool,
   rightInset: option<float>,
 }
 
@@ -905,6 +906,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       topInset: getOptionFloat(hyperParams, "topInset"),
       leftInset: getOptionFloat(hyperParams, "leftInset"),
       rightInset: getOptionFloat(hyperParams, "rightInset"),
+      gPaySupport: getBool(hyperParams, "gPaySupport", true),
     },
     customParams: getObj(dictfromNative, "customParams", Dict.make()),
   }
