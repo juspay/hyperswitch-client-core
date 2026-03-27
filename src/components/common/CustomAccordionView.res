@@ -36,10 +36,13 @@ module MoreButton = {
   @react.component
   let make = (~handleMoreToggle) => {
     let {component, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
+    let localeObj = GetLocale.useGetLocalObj()
 
     <View style={s({flex: 1., alignItems: #center, justifyContent: #center, paddingTop: 10.->dp})}>
       <CustomPressable
         onPress={_ => handleMoreToggle()}
+        accessibilityRole=#button
+        accessibilityLabel=localeObj.morePaymentMethods
         style={array([
           s({
             width: 100.->pct,

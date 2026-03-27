@@ -23,6 +23,7 @@ let make = (
   ~testID=?,
 ) => {
   let fillAnimation = AnimatedValue.useAnimatedValue(0.)
+  let localeObject = GetLocale.useGetLocalObj()
   let {
     payNowButtonColor,
     payNowButtonTextColor,
@@ -82,9 +83,20 @@ let make = (
     )->Animated.start
   }
 
+  let a11yLabel = switch buttonState {
+  | LoadingButton => loadingText
+  | Completed => localeObject.completedText
+  | _ => text->Option.getOr(localeObject.payNowButton)
+  }
+  let a11yState: Accessibility.state = {disabled: disabled}
+
   <CustomPressable
     disabled
+    accessible={true}
     testID={testID->Option.getOr("")}
+    accessibilityLabel=a11yLabel
+    accessibilityState=a11yState
+    accessibilityRole=#button
     style={array([
       s({
         height: primaryButtonHeight->dp,
@@ -139,7 +151,7 @@ let make = (
               <TextWrapper
                 text={switch buttonState {
                 | LoadingButton => loadingText
-                | Completed => "Complete"
+                | Completed => localeObject.completedText
                 | _ => textStr
                 }}
                 // textType=CardText

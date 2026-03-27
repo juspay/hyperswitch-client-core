@@ -9,6 +9,7 @@ let make = (
   ~accessible=?,
 ) => {
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let localeObject = GetLocale.useGetLocalObj()
   switch (fields->Array.get(0), fields->Array.get(1)) {
   | (Some(firstNameConfig), Some(lastNameConfig)) =>
     let {input: firstNameInput, meta: firstNameMeta} = ReactFinalForm.useField(
@@ -53,7 +54,7 @@ let make = (
             <CustomInput
               state=inputValue
               setState=handleInputChange
-              placeholder={isCardPayment ? "Card Holder Name" : "Full Name"}
+              placeholder={isCardPayment ? localeObject.cardHolderName : localeObject.fullNameLabel}
               enableCrossIcon=false
               isValid={firstNameMeta.error->Option.isNone ||
               !lastNameMeta.touched ||
@@ -69,6 +70,12 @@ let make = (
                 (lastNameMeta.active || lastNameMeta.error->Option.isNone || !lastNameMeta.touched)
                 ? component.color
                 : dangerColor}
+              accessibilityLabel={(isCardPayment
+                ? localeObject.cardHolderName
+                : localeObject.fullNameLabel) ++
+              ", " ++
+              localeObject.requiredText}
+              accessibilityHint=localeObject.accessibilityHintFullName
               ?accessible
             />
             {switch (firstNameMeta.error, lastNameMeta.touched, lastNameMeta.active) {

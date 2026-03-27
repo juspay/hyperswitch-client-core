@@ -54,6 +54,8 @@ module CVVComponent = {
               ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
               : <Icon name="cvvempty" height=35. width=35. fill="black" />
           })
+          accessibilityLabel={localeObject.cvcTextLabel ++ ", " ++ localeObject.requiredText}
+          accessibilityHint=localeObject.accessibilityHintSavedCardCvc
         />
       </View>
       {errorMsgText->Option.isSome
@@ -128,10 +130,13 @@ module MoreButton = {
   @react.component
   let make = (~handleMoreToggle) => {
     let {component, borderRadius, linkColor} = ThemebasedStyle.useThemeBasedStyle()
+    let localeObj = GetLocale.useGetLocalObj()
 
     <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
       <CustomPressable
         onPress={_ => handleMoreToggle()}
+        accessibilityRole=#button
+        accessibilityLabel=localeObj.morePaymentMethods
         style={array([
           s({
             width: 100.->pct,
@@ -147,7 +152,7 @@ module MoreButton = {
         ])}>
         <ChevronIcon width=12. height=12. fill=linkColor />
         <Space height=5. />
-        <TextWrapper text="Show More" textType=LinkText />
+        <TextWrapper text=localeObj.morePaymentMethods textType=LinkText />
       </CustomPressable>
     </View>
   }
@@ -166,6 +171,20 @@ module PaymentMethodListView = {
     let localeObj = GetLocale.useGetLocalObj()
     let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
 
+    let cardA11yLabel = switch savedPaymentMethod.card {
+    | Some(card) =>
+      card.card_network ++
+      " ending in " ++
+      card.last4_digits ++
+      ", " ++
+      localeObj.cardExpiresText ++
+      " " ++
+      card.expiry_month ++
+      "/" ++
+      card.expiry_year->String.sliceToEnd(~start=-2)
+    | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+    }
+
     <CustomPressable
       onPress={_ => {
         if !isPaymentMethodSelected {
@@ -173,6 +192,11 @@ module PaymentMethodListView = {
         }
         setSelectedToken(Some(savedPaymentMethod))
       }}
+      accessibilityRole=#radio
+      accessibilityLabel=cardA11yLabel
+      accessibilityState={
+        checked: isPaymentMethodSelected ? Accessibility.True : Accessibility.False,
+      }
       style={s({
         minHeight: 60.->dp,
         paddingVertical: 16.->dp,

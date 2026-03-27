@@ -660,6 +660,72 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
       swiftCode: Utils.getString(res, "swiftCode", defaultLocale.swiftCode),
       doneText: Utils.getString(res, "doneText", defaultLocale.doneText),
       copyToClipboard: Utils.getString(res, "copyToClipboard", defaultLocale.copyToClipboard),
+      accessibilityHintCardNumber: Utils.getString(
+        res,
+        "accessibilityHintCardNumber",
+        defaultLocale.accessibilityHintCardNumber,
+      ),
+      accessibilityHintCardExpiry: Utils.getString(
+        res,
+        "accessibilityHintCardExpiry",
+        defaultLocale.accessibilityHintCardExpiry,
+      ),
+      accessibilityHintCvc: Utils.getString(
+        res,
+        "accessibilityHintCvc",
+        defaultLocale.accessibilityHintCvc,
+      ),
+      accessibilityHintBillingZip: Utils.getString(
+        res,
+        "accessibilityHintBillingZip",
+        defaultLocale.accessibilityHintBillingZip,
+      ),
+      accessibilityHintFullName: Utils.getString(
+        res,
+        "accessibilityHintFullName",
+        defaultLocale.accessibilityHintFullName,
+      ),
+      accessibilityHintPhoneCode: Utils.getString(
+        res,
+        "accessibilityHintPhoneCode",
+        defaultLocale.accessibilityHintPhoneCode,
+      ),
+      accessibilityHintPhoneNumber: Utils.getString(
+        res,
+        "accessibilityHintPhoneNumber",
+        defaultLocale.accessibilityHintPhoneNumber,
+      ),
+      accessibilityHintPickerDay: Utils.getString(
+        res,
+        "accessibilityHintPickerDay",
+        defaultLocale.accessibilityHintPickerDay,
+      ),
+      accessibilityHintPickerMonth: Utils.getString(
+        res,
+        "accessibilityHintPickerMonth",
+        defaultLocale.accessibilityHintPickerMonth,
+      ),
+      accessibilityHintPickerYear: Utils.getString(
+        res,
+        "accessibilityHintPickerYear",
+        defaultLocale.accessibilityHintPickerYear,
+      ),
+      accessibilityHintEmail: Utils.getString(
+        res,
+        "accessibilityHintEmail",
+        defaultLocale.accessibilityHintEmail,
+      ),
+      accessibilityHintSavedCardCvc: Utils.getString(
+        res,
+        "accessibilityHintSavedCardCvc",
+        defaultLocale.accessibilityHintSavedCardCvc,
+      ),
+      accessibilityHintNickname: Utils.getString(
+        res,
+        "accessibilityHintNickname",
+        defaultLocale.accessibilityHintNickname,
+      ),
+      completedText: Utils.getString(res, "completedText", defaultLocale.completedText),
     }
   | None => defaultLocale
   }

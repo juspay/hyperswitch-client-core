@@ -275,6 +275,8 @@ let make = (
                   }
                 }}
                 animateLabel=localeObject.cardNumberLabel
+                accessibilityLabel={localeObject.cardNumberLabel ++ ", " ++ localeObject.requiredText}
+                accessibilityHint=localeObject.accessibilityHintCardNumber
                 ?accessible
               />
             </View>
@@ -326,6 +328,8 @@ let make = (
                     }
                   }}
                   animateLabel=localeObject.validThruText
+                  accessibilityLabel={localeObject.validThruText ++ ", " ++ localeObject.requiredText}
+                  accessibilityHint=localeObject.accessibilityHintCardExpiry
                   ?accessible
                 />
               </View>
@@ -396,6 +400,8 @@ let make = (
                     }
                   }}
                   animateLabel=localeObject.cvcTextLabel
+                  accessibilityLabel={localeObject.cvcTextLabel ++ ", " ++ localeObject.requiredText}
+                  accessibilityHint=localeObject.accessibilityHintCvc
                   ?accessible
                 />
               </View>
