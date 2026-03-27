@@ -590,7 +590,7 @@ let itemToObj = (
     ),
     loadingFgColor: getStrProp(
       ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.loaderBackground
+      | Some(obj) => obj.loaderForeground
       | _ => None
       },
       ~defaultProp=themeObj.loadingFgColor,
