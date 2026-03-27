@@ -7,6 +7,7 @@ let make = () => {
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
+
   let localeObject = GetLocale.useGetLocalObj()
 
   let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => true)
@@ -20,6 +21,8 @@ let make = () => {
   let setConfirmButtonData = React.useCallback1(confirmButtonData => {
     setConfirmButtonData(_ => confirmButtonData)
   }, [setConfirmButtonData])
+
+  UseWidgetActions.useWidgetActions(~confirmButtonData)
 
   <FullScreenSheetWrapper isLoading=confirmButtonData.loading>
     {switch sheetType {
