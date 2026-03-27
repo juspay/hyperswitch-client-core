@@ -302,10 +302,16 @@ let make = () => {
     None
   }, [confirm])
 
+  let hideCardExpiryForSavedCards = nativeProp.configuration.hideCardExpiryForSavedCards
+  let (cvcError, setCvcError) = React.useState(_ => None)
+
   React.useEffect1(_ => {
     let widgetHeight = {
       switch firstPaymentMethod {
-      | Some(pm) => pm.requires_cvv ? 290 : 150
+      | Some(pm) =>
+        pm.requires_cvv
+          ? hideCardExpiryForSavedCards ? 200 : 290
+          : 150
       | _ => 150
       }
     }
@@ -329,7 +335,7 @@ let make = () => {
       style={s({
         flex: 1.,
         flexDirection: #row,
-        flexWrap: #wrap,
+        flexWrap: hideCardExpiryForSavedCards ? #nowrap : #wrap,
         width: 100.->pct,
         paddingHorizontal: 15.->dp,
         alignItems: #center,
@@ -339,28 +345,68 @@ let make = () => {
       | Some(_pmDetails) => React.null //<SavedPaymentMethod.PMWithNickNameComponent savedPaymentMethod={pmDetails} />
       | None => React.null
       }}
-      {switch firstPaymentMethod {
-      | Some(obj) =>
-        switch obj.card {
-        | Some(card) =>
-          <TextWrapper
-            text={`${localeObj.cardExpiresText} ${card.expiry_month}/${card.expiry_year->String.sliceToEnd(
-                ~start=-2,
-              )}`}
-            textType={ModalTextLight}
-          />
-        | None => React.null
-        }
-
-      | None => React.null
-      }}
+      {!hideCardExpiryForSavedCards
+        ? switch firstPaymentMethod {
+          | Some(obj) =>
+            switch obj.card {
+            | Some(card) =>
+              <TextWrapper
+                text={`${localeObj.cardExpiresText} ${card.expiry_month}/${card.expiry_year->String.sliceToEnd(
+                    ~start=-2,
+                  )}`}
+                textType={ModalTextLight}
+              />
+            | None => React.null
+            }
+          | None => React.null
+          }
+        : React.null}
+      {hideCardExpiryForSavedCards
+        ? switch firstPaymentMethod {
+          | Some(pm) =>
+            pm.requires_cvv
+              ? <View style={s({marginStart: auto})}>
+                  <SavedPaymentMethod.CVVComponent
+                    savedCardCvv
+                    setSavedCardCvv
+                    cardScheme
+                    isInline=true
+                    onErrorTextChange={err => setCvcError(_ => err)}
+                  />
+                </View>
+              : React.null
+          | _ => React.null
+          }
+        : React.null}
     </View>
+    {!hideCardExpiryForSavedCards
+      ? switch firstPaymentMethod {
+        | Some(pm) =>
+          pm.requires_cvv
+            ? <SavedPaymentMethod.CVVComponent
+                savedCardCvv
+                setSavedCardCvv
+                cardScheme
+                onErrorTextChange={err => setCvcError(_ => err)}
+              />
+            : React.null
+        | _ => React.null
+        }
+      : React.null}
     {switch firstPaymentMethod {
-    | Some(pm) =>
-      pm.requires_cvv
-        ? <SavedPaymentMethod.CVVComponent savedCardCvv setSavedCardCvv cardScheme />
-        : React.null
-    | _ => React.null
-    }}
+      | Some(pm) => pm.requires_cvv
+      | _ => false
+      } &&
+      cvcError->Option.isSome
+      ? <View
+          style={s({
+            display: #flex,
+            flexDirection: #row,
+            alignItems: #center,
+            paddingStart: 15.->dp,
+          })}>
+          <ErrorText text=cvcError />
+        </View>
+      : React.null}
   </View>
 }
