@@ -365,15 +365,13 @@ let make = () => {
         ? switch firstPaymentMethod {
           | Some(pm) =>
             pm.requires_cvv
-              ? <View style={s({marginStart: auto})}>
-                  <SavedPaymentMethod.CVVComponent
-                    savedCardCvv
-                    setSavedCardCvv
-                    cardScheme
-                    isInline=true
-                    onErrorTextChange={err => setCvcError(_ => err)}
-                  />
-                </View>
+              ? <SavedPaymentMethod.CVVComponent
+                  savedCardCvv
+                  setSavedCardCvv
+                  cardScheme
+                  isInline=true
+                  onErrorTextChange={err => setCvcError(_ => err)}
+                />
               : React.null
           | _ => React.null
           }
