@@ -20,8 +20,10 @@ let make = (~confirmButtonData) => {
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   <UIUtils.RenderIf
-    condition={sheetType === DynamicFieldsSheet ||
-      (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet)}>
+    condition={!nativeProp.configuration.hideConfirmButton && (
+      sheetType === DynamicFieldsSheet ||
+        (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet)
+    )}>
     <ConfirmButton
       loading=confirmButtonData.loading
       handlePress=confirmButtonData.handlePress
