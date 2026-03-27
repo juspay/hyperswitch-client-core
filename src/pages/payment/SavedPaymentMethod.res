@@ -3,7 +3,13 @@ open Style
 
 module CVVComponent = {
   @react.component
-  let make = (~savedCardCvv, ~setSavedCardCvv, ~cardScheme) => {
+  let make = (
+    ~savedCardCvv,
+    ~setSavedCardCvv,
+    ~cardScheme,
+    ~isInline=false,
+    ~onErrorTextChange: option<string> => unit=_ => (),
+  ) => {
     let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
     let (isCvcFocus, setIsCvcFocus) = React.useState(_ => false)
@@ -18,56 +24,53 @@ module CVVComponent = {
     let errorMsgText = !isCvcValid ? Some(localeObject.inCompleteCVCErrorText) : None
     let onCvvChange = cvv => setSavedCardCvv(_ => Some(Validation.formatCVCNumber(cvv, cardScheme)))
 
-    <>
-      <View
-        style={s({
-          display: #flex,
-          flexDirection: #row,
-          alignItems: #center,
-          paddingHorizontal: 47.5->dp,
-          marginTop: 10.->dp,
-        })}>
-        <View style={s({width: {50.->dp}})}>
-          <TextWrapper text="CVC:" textType={ModalText} />
-        </View>
-        <CustomInput
-          state={savedCardCvv->Option.getOr("")}
-          setState={onCvvChange}
-          placeholder="123"
-          animateLabel="CVC"
-          fontSize=12.
-          keyboardType=#"number-pad"
-          enableCrossIcon=false
-          width={100.->dp}
-          height=40.
-          isValid={isCvcValid}
-          onFocus={() => {
-            setIsCvcFocus(_ => true)
-          }}
-          onBlur={() => {
-            setIsCvcFocus(_ => false)
-          }}
-          secureTextEntry=true
-          textColor={isCvcValid ? component.color : dangerColor}
-          iconRight=CustomIcon({
-            Validation.checkCardCVC(savedCardCvv->Option.getOr(""), cardScheme)
-              ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
-              : <Icon name="cvvempty" height=35. width=35. fill="black" />
-          })
-        />
-      </View>
-      {errorMsgText->Option.isSome
-        ? <View
-            style={s({
-              display: #flex,
-              flexDirection: #row,
-              alignItems: #center,
-              paddingLeft: 100.->dp,
-            })}>
-            <ErrorText text=errorMsgText />
+    React.useEffect1(() => {
+      onErrorTextChange(errorMsgText)
+      None
+    }, [errorMsgText])
+
+    let cvcWidth = 100.->dp
+
+    <View
+      style={s({
+        display: #flex,
+        flexDirection: #row,
+        alignItems: #center,
+        paddingHorizontal: isInline ? 0.->dp : 47.5->dp,
+        marginTop: isInline ? 0.->dp : 10.->dp,
+      })}>
+      {!isInline
+        ? <View style={s({width: {50.->dp}})}>
+            <TextWrapper text="CVC:" textType={ModalText} />
           </View>
         : React.null}
-    </>
+      <CustomInput
+        state={savedCardCvv->Option.getOr("")}
+        setState={onCvvChange}
+        placeholder={isInline ? "CVC" : "123"}
+        animateLabel="CVC"
+        fontSize=12.
+        keyboardType=#"number-pad"
+        enableCrossIcon=false
+        width=cvcWidth
+        height=40.
+        isValid={isCvcValid}
+        onFocus={() => {
+          setIsCvcFocus(_ => true)
+        }}
+        onBlur={() => {
+          setIsCvcFocus(_ => false)
+        }}
+        secureTextEntry=true
+        textColor={isCvcValid ? component.color : dangerColor}
+        iconRight=CustomIcon({
+          Validation.checkCardCVC(savedCardCvv->Option.getOr(""), cardScheme)
+            ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
+            : <Icon name="cvvempty" height=35. width=35. fill="black" />
+        })
+        style={isInline ? s({width: cvcWidth}) : s({width: 100.->pct})}
+      />
+    </View>
   }
 }
 module PMWithNickNameComponent = {
@@ -165,6 +168,18 @@ module PaymentMethodListView = {
   ) => {
     let localeObj = GetLocale.useGetLocalObj()
     let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
+    let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+    let hideCardExpiryForSavedCards = nativeProp.configuration.hideCardExpiryForSavedCards
+
+    let showCvv =
+      isPaymentMethodSelected &&
+      savedPaymentMethod.payment_method === CARD &&
+      savedPaymentMethod.requires_cvv
+
+    let cardScheme =
+      savedPaymentMethod.card->Option.map(card => card.card_network)->Option.getOr("")
+
+    let (cvcError, setCvcError) = React.useState(_ => None)
 
     <CustomPressable
       onPress={_ => {
@@ -183,7 +198,8 @@ module PaymentMethodListView = {
       <View
         style={s({
           flexDirection: #row,
-          flexWrap: #wrap,
+          flexWrap: hideCardExpiryForSavedCards ? #nowrap : #wrap,
+          width: 100.->pct,
           alignItems: #center,
           justifyContent: #"space-between",
           paddingHorizontal: 12.->dp,
@@ -194,28 +210,44 @@ module PaymentMethodListView = {
           <Space />
           <PMWithNickNameComponent savedPaymentMethod />
         </View>
-        {switch savedPaymentMethod.card {
-        | Some(card) =>
-          <TextWrapper
-            text={`${localeObj.cardExpiresText} ${card.expiry_month}/${card.expiry_year->String.sliceToEnd(
-                ~start=-2,
-              )}`}
-            textType={ModalTextLight}
-            overrideStyle={Some(s({marginLeft: auto}))}
-          />
-        | None => React.null
-        }}
+        {!hideCardExpiryForSavedCards
+          ? switch savedPaymentMethod.card {
+            | Some(card) =>
+              <TextWrapper
+                text={`${localeObj.cardExpiresText} ${card.expiry_month}/${card.expiry_year->String.sliceToEnd(
+                    ~start=-2,
+                  )}`}
+                textType={ModalTextLight}
+                overrideStyle={Some(s({marginStart: auto}))}
+              />
+            | None => React.null
+            }
+          : React.null}
+        {hideCardExpiryForSavedCards && showCvv
+          ? <CVVComponent
+              savedCardCvv
+              setSavedCardCvv
+              cardScheme
+              isInline=true
+              onErrorTextChange={err => setCvcError(_ => err)}
+            />
+          : React.null}
       </View>
-      {isPaymentMethodSelected &&
-      savedPaymentMethod.payment_method === CARD &&
-      savedPaymentMethod.requires_cvv
+      {!hideCardExpiryForSavedCards && showCvv
         ? <CVVComponent
-            savedCardCvv
-            setSavedCardCvv
-            cardScheme={savedPaymentMethod.card
-            ->Option.map(card => card.card_network)
-            ->Option.getOr("")}
+            savedCardCvv setSavedCardCvv cardScheme onErrorTextChange={err => setCvcError(_ => err)}
           />
+        : React.null}
+      {showCvv && cvcError->Option.isSome
+        ? <View
+            style={s({
+              display: #flex,
+              flexDirection: #row,
+              alignItems: #center,
+              paddingStart: 47.5->dp,
+            })}>
+            <ErrorText text=cvcError />
+          </View>
         : React.null}
     </CustomPressable>
   }
