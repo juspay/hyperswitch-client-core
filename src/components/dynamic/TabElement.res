@@ -11,6 +11,7 @@ let make = (
     country,
     isNicknameValid,
     setInitialValueCountry,
+    eligibilityStatus,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
@@ -41,16 +42,20 @@ let make = (
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
   let handlePress = _ => {
-    if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        None,
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
-    } else {
-      switch formMethods {
-      | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
-      | None => ()
+    switch eligibilityStatus {
+    | DynamicFieldsContext.Denied(_) => ()
+    | _ =>
+      if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+        processRequest(
+          CommonUtils.mergeDict(initialValues, formData),
+          None,
+          formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+        )
+      } else {
+        switch formMethods {
+        | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+        | None => ()
+        }
       }
     }
   }
@@ -62,12 +67,17 @@ let make = (
 
   React.useEffect(() => {
     if isScreenFocus {
+      let (loading, errorText) = switch eligibilityStatus {
+      | DynamicFieldsContext.Loading => (true, None)
+      | DynamicFieldsContext.Denied(msg) => (false, Some(msg))
+      | DynamicFieldsContext.Idle | DynamicFieldsContext.Allowed => (false, None)
+      }
       let confirmButton = {
-        GlobalConfirmButton.loading: false,
+        GlobalConfirmButton.loading,
         handlePress,
         payment_method_type: paymentMethodData.payment_method_type,
         payment_experience: paymentMethodData.payment_experience,
-        errorText: None,
+        errorText,
       }
       setConfirmButtonData(confirmButton)
     }
@@ -81,6 +91,7 @@ let make = (
     formData,
     formMethods,
     isNicknameValid,
+    eligibilityStatus,
   ))
 
   <DynamicFields

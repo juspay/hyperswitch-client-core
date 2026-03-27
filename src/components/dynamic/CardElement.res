@@ -50,6 +50,7 @@ let make = (
       Some(cardNetworkConfig),
     ) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+      let {onCardNumberComplete} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
       let (expireDate, setExpireDate) = React.useState(() => "")
 
       let {
@@ -135,6 +136,9 @@ let make = (
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
+          onCardNumberComplete(Some(num->clearSpaces))
+        } else {
+          onCardNumberComplete(None)
         }
       }
       let onChangeCardExpire = (
@@ -207,6 +211,9 @@ let make = (
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
         | _ => ()
+        }
+        if isCardValid {
+          onCardNumberComplete(Some(pan->clearSpaces))
         }
       }
 

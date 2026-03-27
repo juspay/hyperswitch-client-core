@@ -12,6 +12,8 @@ type walletDataRecord = {
 
 type sheetType = ButtonSheet | DynamicFieldsSheet
 
+type eligibilityStatus = Idle | Loading | Denied(string) | Allowed
+
 type dynamicFieldsData = {
   formDataRef: option<React.ref<RescriptCore.Dict.t<JSON.t>>>,
   sheetType: sheetType,
@@ -46,6 +48,8 @@ type dynamicFieldsData = {
   setNickname: option<string> => unit,
   isNicknameValid: bool,
   setIsNicknameValid: bool => unit,
+  eligibilityStatus: eligibilityStatus,
+  onCardNumberComplete: option<string> => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -83,6 +87,8 @@ let dynamicFieldsContext = React.createContext({
   setNickname: _ => (),
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
+  eligibilityStatus: Idle,
+  onCardNumberComplete: _ => (),
 })
 
 module Provider = {
@@ -376,6 +382,47 @@ let make = (~children) => {
     setIsNicknameValid(_ => val)
   }, [setIsNicknameValid])
 
+  let (eligibilityStatus, setEligibilityStatus) = React.useState(_ => Idle)
+  let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
+
+  let onCardNumberComplete = React.useCallback2(cardNumberOpt => {
+    switch cardNumberOpt {
+    | None => setEligibilityStatus(_ => Idle)
+    | Some(cardNumber) =>
+      let shouldCheck =
+        accountPaymentMethodData
+        ->Option.flatMap(d => d.sdk_next_action)
+        ->Option.map(action => action == "eligibility_check")
+        ->Option.getOr(false)
+      if shouldCheck {
+        setEligibilityStatus(_ => Loading)
+        callEligibilityCheck(~cardNumber)
+        ->Promise.then(json => {
+          let nextAction =
+            json
+            ->Utils.getDictFromJson
+            ->Utils.getOptionalObj("sdk_next_action")
+            ->Option.map(d => d->Utils.getString("next_action", ""))
+            ->Option.getOr("")
+          switch nextAction {
+          | "confirm" => setEligibilityStatus(_ => Allowed)
+          | "deny" =>
+            setEligibilityStatus(_ =>
+              Denied("You cannot proceed. Please change your payment method.")
+            )
+          | _ => setEligibilityStatus(_ => Idle)
+          }
+          Promise.resolve()
+        })
+        ->Promise.catch(_ => {
+          setEligibilityStatus(_ => Idle)
+          Promise.resolve()
+        })
+        ->ignore
+      }
+    }
+  }, (accountPaymentMethodData, callEligibilityCheck))
+
   React.useEffect(() => {
     if isNicknameSelected == false {
       setNickname(None)
@@ -401,6 +448,8 @@ let make = (~children) => {
       setNickname,
       isNicknameValid,
       setIsNicknameValid,
+      eligibilityStatus,
+      onCardNumberComplete,
     }>
     children
   </Provider>
