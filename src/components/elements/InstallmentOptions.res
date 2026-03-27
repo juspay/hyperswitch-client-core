@@ -38,8 +38,8 @@ let make = (
   <UIUtils.RenderIf condition={plans->Array.length > 0}>
     <View style={s({marginTop: 16.->dp})}>
       <ClickableTextElement
-        initialIconName="checkboxclickalinitial"
-        updateIconName={Some("checkboxclickedupdated")}
+        initialIconName="checkboxclicked"
+        updateIconName={Some("checkboxnotclicked")}
         text=localeObject.installmentPayInInstallments
         isSelected=showInstallments
         setIsSelected={onCheckboxToggle}

@@ -23,10 +23,9 @@ let make = (~plan: AccountPaymentMethodType.installmentPlan, ~currency, ~isSelec
     )
   }
 
-  let totalText = Utils.replaceLocaleParams(
-    localeObject.installmentTotalPayable,
-    [("amount", currency ++ " " ++ Utils.formatAmountWithTwoDecimals(plan.amount_details.total_amount))],
-  )
+  let totalLabel = localeObject.installmentTotalPayable
+
+  let totalAmount = currency ++ " " ++ Utils.formatAmountWithTwoDecimals(plan.amount_details.total_amount)
 
   <CustomPressable onPress={_ => onSelect()}>
     <View
@@ -42,10 +41,13 @@ let make = (~plan: AccountPaymentMethodType.installmentPlan, ~currency, ~isSelec
       <CustomRadioButton selected=isSelected color=primaryColor />
       <Space width=12. />
       <View style={s({flex: 1.})}>
-        <TextWrapper text=paymentLabel textType=ModalTextBold />
+        <View style={s({flexDirection: #row, justifyContent: #"space-between"})}>
+          <TextWrapper text=paymentLabel textType=ModalTextBold />
+          <TextWrapper text=totalLabel textType=ModalTextLight />
+        </View>
         <View style={s({flexDirection: #row, justifyContent: #"space-between", marginTop: 2.->dp})}>
           <TextWrapper text=interestText textType=ModalTextLight />
-          <TextWrapper text=totalText textType=ModalTextLight />
+          <TextWrapper text=totalAmount textType=ModalTextBold />
         </View>
       </View>
     </View>
