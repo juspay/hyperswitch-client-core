@@ -29,6 +29,8 @@ module CVVComponent = {
       None
     }, [errorMsgText])
 
+    let cvcWidth = 100.->dp
+
     <View
       style={s({
         display: #flex,
@@ -50,7 +52,7 @@ module CVVComponent = {
         fontSize=12.
         keyboardType=#"number-pad"
         enableCrossIcon=false
-        width={100.->dp}
+        width=cvcWidth
         height=40.
         isValid={isCvcValid}
         onFocus={() => {
@@ -66,6 +68,7 @@ module CVVComponent = {
             ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
             : <Icon name="cvvempty" height=35. width=35. fill="black" />
         })
+        style={isInline ? s({width: cvcWidth}) : s({width: 100.->pct})}
       />
     </View>
   }
@@ -221,23 +224,18 @@ module PaymentMethodListView = {
             }
           : React.null}
         {hideCardExpiryForSavedCards && showCvv
-          ? <View style={s({marginStart: auto})}>
-              <CVVComponent
-                savedCardCvv
-                setSavedCardCvv
-                cardScheme
-                isInline=true
-                onErrorTextChange={err => setCvcError(_ => err)}
-              />
-            </View>
+          ? <CVVComponent
+              savedCardCvv
+              setSavedCardCvv
+              cardScheme
+              isInline=true
+              onErrorTextChange={err => setCvcError(_ => err)}
+            />
           : React.null}
       </View>
       {!hideCardExpiryForSavedCards && showCvv
         ? <CVVComponent
-            savedCardCvv
-            setSavedCardCvv
-            cardScheme
-            onErrorTextChange={err => setCvcError(_ => err)}
+            savedCardCvv setSavedCardCvv cardScheme onErrorTextChange={err => setCvcError(_ => err)}
           />
         : React.null}
       {showCvv && cvcError->Option.isSome
