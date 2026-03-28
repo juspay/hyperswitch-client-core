@@ -872,11 +872,12 @@ let parseConfigurationDict = (configObj, from) => {
       | None => []
       }
       jsonArr
-      ->Belt.Array.keepMap(JSON.Decode.object)
+      ->Array.filterMap(JSON.Decode.object)
       ->Array.map(json => {
         paymentMethodName: getString(json, "paymentMethodName", ""),
         aliasName: getString(json, "aliasName", ""),
       })
+      ->Array.filter(alias => alias.paymentMethodName !== "" && alias.aliasName !== "")
     },
   }
   configuration
