@@ -68,7 +68,7 @@ let make = (
       let isScrollBarOnlyCards =
         hocComponentArr->Array.length == 1 &&
           switch hocComponentArr->Array.get(0) {
-          | Some({name}) => name == "Card"
+          | Some({iconName}) => iconName == "credit"
           | None => true
           }
 
