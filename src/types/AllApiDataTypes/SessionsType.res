@@ -26,6 +26,13 @@ type sessions = {
   amount: JSON.t,
   protocol: string,
   allowed_brands: array<JSON.t>,
+  // Paze-specific fields
+  client_id: string,
+  client_name: string,
+  client_profile_id: string,
+  email_address: string,
+  transaction_amount: string,
+  transaction_currency_code: string,
 }
 let defaultToken = {
   wallet_name: NONE,
@@ -53,6 +60,13 @@ let defaultToken = {
   amount: JSON.Encode.null,
   protocol: "",
   allowed_brands: [],
+  // Paze-specific defaults
+  client_id: "",
+  client_name: "",
+  client_profile_id: "",
+  email_address: "",
+  transaction_amount: "",
+  transaction_currency_code: "",
 }
 
 let getWallet = str => {
@@ -61,6 +75,7 @@ let getWallet = str => {
   | "paypal" => PAYPAL
   | "google_pay" => GOOGLE_PAY
   | "samsung_pay" => SAMSUNG_PAY
+  | "paze" => PAZE
   | _ => NONE
   }
 }
@@ -99,6 +114,13 @@ let itemToObjMapper = dict => {
         amount: getJsonObjectFromDict(dict, "amount"),
         protocol: getString(dict, "protocol", ""),
         allowed_brands: getArray(dict, "allowed_brands"),
+        // Paze-specific fields
+        client_id: getString(dict, "client_id", ""),
+        client_name: getString(dict, "client_name", ""),
+        client_profile_id: getString(dict, "client_profile_id", ""),
+        email_address: getString(dict, "email_address", ""),
+        transaction_amount: getString(dict, "transaction_amount", ""),
+        transaction_currency_code: getString(dict, "transaction_currency_code", ""),
       }
     })
   })
