@@ -581,5 +581,6 @@ let make = (
           <Space height=5. />
         </View>
       : React.null}
+    <Terms paymentMethod="card" paymentMethodType="debit" />
   </ErrorBoundary>
 }

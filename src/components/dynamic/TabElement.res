@@ -92,5 +92,7 @@ let make = (
     isCardPayment
     enabledCardSchemes
     accessible
+    paymentMethod=paymentMethodData.payment_method_str
+    paymentMethodType=paymentMethodData.payment_method_type
   />
 }

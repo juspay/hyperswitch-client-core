@@ -214,6 +214,25 @@ type placeholder = {
   cvv: string,
 }
 
+type messageDisplayMode = DefaultSdkMessage | CustomMessage | Hidden
+
+type paymentMethodMessage = {
+  value: option<string>,
+  displayMode: messageDisplayMode,
+}
+
+type paymentMethodTypeConfig = {
+  paymentMethodType: string,
+  message: paymentMethodMessage,
+}
+
+type paymentMethodConfig = {
+  paymentMethod: string,
+  paymentMethodTypes: array<paymentMethodTypeConfig>,
+}
+
+type paymentMethodsConfig = array<paymentMethodConfig>
+
 type configurationType = {
   allowsDelayedPaymentMethods: bool,
   appearance: appearance,
@@ -234,6 +253,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  paymentMethodsConfig: paymentMethodsConfig,
 }
 
 type sdkState =
@@ -719,6 +739,61 @@ let getPrimaryColor = (colors, ~theme=Default) =>
     }
   }
 
+let defaultPaymentMethodMessage = {
+  value: None,
+  displayMode: DefaultSdkMessage,
+}
+
+let getMessageDisplayMode = str => {
+  switch str {
+  | "default_sdk_message" => DefaultSdkMessage
+  | "custom_message" => CustomMessage
+  | "hidden" => Hidden
+  | _ => DefaultSdkMessage
+  }
+}
+
+let getPaymentMethodMessage = dict => {
+  let messageDict = getObj(dict, "message", Dict.make())
+  if messageDict->Dict.toArray->Array.length > 0 {
+    let value = getOptionString(messageDict, "value")
+    let displayMode = switch messageDict->Dict.get("displayMode") {
+    | Some(_) => getMessageDisplayMode(getString(messageDict, "displayMode", "default_sdk_message"))
+    | None => switch value {
+      | Some(_) => CustomMessage
+      | None => DefaultSdkMessage
+      }
+    }
+    {value, displayMode}
+  } else {
+    defaultPaymentMethodMessage
+  }
+}
+
+let getPaymentMethodTypeConfig = dict => {
+  {
+    paymentMethodType: getString(dict, "paymentMethodType", ""),
+    message: getPaymentMethodMessage(dict),
+  }
+}
+
+let getPaymentMethodConfig = dict => {
+  {
+    paymentMethod: getString(dict, "paymentMethod", ""),
+    paymentMethodTypes: dict
+    ->getArray("paymentMethodTypes")
+    ->Belt.Array.keepMap(JSON.Decode.object)
+    ->Array.map(getPaymentMethodTypeConfig),
+  }
+}
+
+let getPaymentMethodsConfig = (dict, str) => {
+  dict
+  ->getArray(str)
+  ->Belt.Array.keepMap(JSON.Decode.object)
+  ->Array.map(getPaymentMethodConfig)
+}
+
 let parseConfigurationDict = (configObj, from) => {
   let shippingDetailsDict =
     configObj->Dict.get("shippingDetails")->Option.flatMap(JSON.Decode.object)
@@ -836,6 +911,7 @@ let parseConfigurationDict = (configObj, from) => {
     },
     displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
     disableBranding: getBool(configObj, "disableBranding", false),
+    paymentMethodsConfig: getPaymentMethodsConfig(configObj, "paymentMethodsConfig"),
   }
   configuration
 }

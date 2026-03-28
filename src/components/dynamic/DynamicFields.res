@@ -9,6 +9,8 @@ let make = (
   ~isGiftCardPayment=false,
   ~enabledCardSchemes=[],
   ~accessible: bool,
+  ~paymentMethod="",
+  ~paymentMethodType="",
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
@@ -84,6 +86,9 @@ let make = (
         <Space />
       </UIUtils.RenderIf>
       <RedirectionText />
+    </UIUtils.RenderIf>
+    <UIUtils.RenderIf condition={!isGiftCardPayment && paymentMethod->String.length > 0}>
+      <Terms paymentMethod paymentMethodType />
     </UIUtils.RenderIf>
   </>
 }
