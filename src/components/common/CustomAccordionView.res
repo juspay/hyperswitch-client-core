@@ -21,7 +21,7 @@ module SectionHeader = {
         {section.title === "loading"
           ? <CustomLoader height="18" width="18" />
           : <Icon
-              name=section.title width=18. height=18. fill={isExpanded ? primaryColor : iconColor}
+              name={section.icon->Option.getOr(section.title)} width=18. height=18. fill={isExpanded ? primaryColor : iconColor}
             />}
         <Space height=5. />
         {section.title === "loading"
@@ -90,6 +90,7 @@ let make = (
   let allSections = hocComponentArr->Array.mapWithIndex((hoc, index) => {
     AccordionView.key: index,
     title: hoc.name,
+    icon: hoc.iconName,
     isExpanded: expandedSections->Array.includes(index),
     componentHoc: hoc.componentHoc,
   })

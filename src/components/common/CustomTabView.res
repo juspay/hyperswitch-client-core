@@ -33,7 +33,7 @@ let make = (
             isLoading
               ? <CustomLoader height="18" width="18" />
               : <Icon
-                  name=hoc.name
+                  name=hoc.iconName
                   width=18.
                   height=18.
                   fill={indexInFocus === index ? primaryColor : iconColor}
@@ -68,7 +68,7 @@ let make = (
       let isScrollBarOnlyCards =
         hocComponentArr->Array.length == 1 &&
           switch hocComponentArr->Array.get(0) {
-          | Some({name}) => name == "Card"
+          | Some({iconName}) => iconName == "credit"
           | None => true
           }
 

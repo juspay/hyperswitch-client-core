@@ -5,6 +5,7 @@ type componentHoc = (
 
 type hoc = {
   name: string,
+  iconName: string,
   componentHoc: componentHoc,
 }
 
@@ -20,7 +21,17 @@ let useAccountPaymentMethodModifier = () => {
   )
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
-  React.useMemo3(() => {
+  React.useMemo4(() => {
+    let customMethodNames = nativeProp.configuration.customMethodNames
+
+    // Returns the merchant-defined alias name for a payment method, or the default display name.
+    let resolveDisplayName = (paymentMethodType, defaultName) => {
+      customMethodNames
+      ->Array.find((alias: SdkTypes.alias) => alias.paymentMethodName->String.toLowerCase === paymentMethodType->String.toLowerCase)
+      ->Option.map((alias: SdkTypes.alias) => alias.aliasName)
+      ->Option.getOr(defaultName)
+    }
+
     let (initialTabArr, initialElementArr) = if nativeProp.configuration.displayMergedSavedMethods {
       customerPaymentMethodData
       ->Option.map(customerPaymentMethods => {
@@ -35,7 +46,8 @@ let useAccountPaymentMethodModifier = () => {
             customerPaymentMethods->Array.length > 0
               ? [
                   {
-                    name: "Saved",
+                    name: resolveDisplayName("saved", "Saved"),
+                    iconName: "saved",
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <SavedPaymentSheet
                         isScreenFocus
@@ -150,14 +162,22 @@ let useAccountPaymentMethodModifier = () => {
                     />,
                   )
                 : tabArr->Array.push({
-                    name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                    name: resolveDisplayName(
+                      paymentMethodData.payment_method_type,
+                      paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                    ),
+                    iconName: paymentMethodData.payment_method_type,
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
                   })
 
             | TabSheet | WidgetTabSheet =>
               tabArr->Array.push({
-                name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                name: resolveDisplayName(
+                  paymentMethodData.payment_method_type,
+                  paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                ),
+                iconName: paymentMethodData.payment_method_type,
                 componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                   <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
               })
@@ -179,6 +199,7 @@ let useAccountPaymentMethodModifier = () => {
     | None =>
       let loadingTabElement = {
         name: "loading",
+        iconName: "loading", /* sentinel — short-circuited before Icon render */
         componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) => <>
           <Space height=20. />
           <CustomLoader />
@@ -216,7 +237,7 @@ let useAccountPaymentMethodModifier = () => {
       | _ => ([], [], [])
       }
     }
-  }, (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData))
+  }, (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, nativeProp))
 }
 
 let useAddWebPaymentButton = () => {
