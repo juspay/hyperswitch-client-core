@@ -62,12 +62,19 @@ type ach_credit_transfer = {
 }
 type bank_transfer_steps_and_charges_details = {ach_credit_transfer?: ach_credit_transfer}
 
+type iframeData = {
+  threeDsMethodUrl: string,
+  threeDsMethodData: string,
+  methodKey: string,
+}
+
 type nextAction = {
   redirectToUrl: string,
   type_: string,
   threeDsData?: threeDsData,
   session_token?: sessionToken,
   bank_transfer_steps_and_charges_detail?: bank_transfer_steps_and_charges_details,
+  iframeData?: iframeData,
 }
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
@@ -157,6 +164,11 @@ let getNextAction = (dict, str) => {
       ->JSON.Decode.object
       ->Option.getOr(Dict.make())
 
+    let iframeDataDict =
+      json
+      ->Dict.get("iframe_data")
+      ->Option.flatMap(JSON.Decode.object)
+
     {
       redirectToUrl: getString(json, "redirect_to_url", ""),
       type_: getString(json, "type", ""),
@@ -184,6 +196,15 @@ let getNextAction = (dict, str) => {
       session_token: {
         wallet_name: getString(sessionTokenDict, "wallet_name", ""),
         open_banking_session_token: getString(sessionTokenDict, "open_banking_session_token", ""),
+      },
+      iframeData: ?switch iframeDataDict {
+      | Some(dict) =>
+        Some({
+          threeDsMethodUrl: getString(dict, "three_ds_method_url", ""),
+          threeDsMethodData: getString(dict, "three_ds_method_data", ""),
+          methodKey: getString(dict, "method_key", "threeDSMethodData"),
+        })
+      | None => None
       },
     }
   })
