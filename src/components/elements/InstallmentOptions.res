@@ -14,6 +14,7 @@ let make = (
   ~setErrorString,
 ) => {
   let localeObject = GetLocale.useGetLocalObj()
+  let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
 
   let plans = PaymentUtils.filterInstallmentPlansByPaymentMethod(installmentOptions, paymentMethod)
 
@@ -49,26 +50,40 @@ let make = (
         <View style={s({marginTop: 12.->dp, marginLeft: 4.->dp})}>
           <TextWrapper text=localeObject.installmentChoosePlan textType=ModalTextLight />
           <Space height=8. />
-          <ScrollView style={s({maxHeight: 250.->dp})}>
-            {plans
-            ->Array.mapWithIndex((plan, index) =>
-              <InstallmentOptionItem
-                key={index->Int.toString}
-                plan
-                currency
-                isSelected={selectedInstallmentPlan->Option.mapOr(false, selected =>
-                  selected.number_of_installments === plan.number_of_installments &&
-                    selected.interest_rate === plan.interest_rate
-                )}
-                onSelect={() => {
-                  setSelectedInstallmentPlan(_ => Some(plan))
-                  setErrorString(_ => "")
-                }}
-                isLastItem={index === plans->Array.length - 1}
-              />
-            )
-            ->React.array}
-          </ScrollView>
+          <View
+            style={s({
+              borderWidth,
+              borderColor: component.borderColor,
+              borderRadius,
+              overflow: #hidden,
+            })}>
+            <ScrollView
+              style={s({maxHeight: 250.->dp})}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={true}
+              persistentScrollbar={true}>
+              <View style={s({paddingHorizontal: 8.->dp})}>
+                {plans
+                ->Array.mapWithIndex((plan, index) =>
+                  <InstallmentOptionItem
+                    key={index->Int.toString}
+                    plan
+                    currency
+                    isSelected={selectedInstallmentPlan->Option.mapOr(false, selected =>
+                      selected.number_of_installments === plan.number_of_installments &&
+                        selected.interest_rate === plan.interest_rate
+                    )}
+                    onSelect={() => {
+                      setSelectedInstallmentPlan(_ => Some(plan))
+                      setErrorString(_ => "")
+                    }}
+                    isLastItem={index === plans->Array.length - 1}
+                  />
+                )
+                ->React.array}
+              </View>
+            </ScrollView>
+          </View>
         </View>
       </UIUtils.RenderIf>
       <UIUtils.RenderIf condition={errorString->String.length > 0}>

@@ -58,6 +58,29 @@ let make = (~setConfirmButtonData) => {
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
+  let cardDigitCount = React.useMemo1(() => {
+    formData
+    ->Dict.get("payment_method_data")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(d => d->Dict.get("card"))
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(d => d->Dict.get("card_number"))
+    ->Option.flatMap(JSON.Decode.string)
+    ->Option.getOr("")
+    ->Validation.clearSpaces
+    ->String.length
+  }, [formData])
+
+  // Reset installment state when card digits drop below 6
+  React.useEffect1(() => {
+    if cardDigitCount < 6 {
+      setShowInstallments(_ => false)
+      setSelectedInstallmentPlan(_ => None)
+      setInstallmentsError(_ => "")
+    }
+    None
+  }, [cardDigitCount])
+
   let setFormData = React.useCallback1(data => {
     setFormDataState(_ => data)
   }, [setFormDataState])
@@ -255,7 +278,7 @@ let make = (~setConfirmButtonData) => {
       enabledCardSchemes
       accessible=true
     />
-    <UIUtils.RenderIf condition=isCardPayment>
+    <UIUtils.RenderIf condition={isCardPayment && cardDigitCount >= 6}>
       <InstallmentOptions
         installmentOptions
         currency=installmentCurrency

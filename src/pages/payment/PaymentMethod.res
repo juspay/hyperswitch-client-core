@@ -29,6 +29,32 @@ let make = (
     ->Option.flatMap(intentData => intentData.installment_options)
     ->Option.getOr([])
 
+  let (cardDigitCount, setCardDigitCount) = React.useState(_ => 0)
+
+  let onFormDataChange = (data: Dict.t<JSON.t>) => {
+    let cardNumber =
+      data
+      ->Dict.get("payment_method_data")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.flatMap(d => d->Dict.get("card"))
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.flatMap(d => d->Dict.get("card_number"))
+      ->Option.flatMap(JSON.Decode.string)
+      ->Option.getOr("")
+      ->Validation.clearSpaces
+    setCardDigitCount(_ => cardNumber->String.length)
+  }
+
+  // Reset installment state when card digits drop below 6
+  React.useEffect1(() => {
+    if cardDigitCount < 6 {
+      setShowInstallments(_ => false)
+      setSelectedInstallmentPlan(_ => None)
+      setInstallmentsError(_ => "")
+    }
+    None
+  }, [cardDigitCount])
+
   let installmentCurrency =
     accountPaymentMethodData
     ->Option.flatMap(data => data.intent_data)
@@ -173,10 +199,10 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     {switch methodType {
     | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
-    | TAB => <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonData />
+    | TAB => <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonData onFormDataChange />
     | _ => React.null
     }}
-    <UIUtils.RenderIf condition={paymentMethodData.payment_method === CARD}>
+    <UIUtils.RenderIf condition={paymentMethodData.payment_method === CARD && cardDigitCount >= 6}>
       <InstallmentOptions
         installmentOptions
         currency=installmentCurrency
