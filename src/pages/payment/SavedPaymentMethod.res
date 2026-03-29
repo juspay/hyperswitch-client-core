@@ -70,6 +70,42 @@ module CVVComponent = {
     </>
   }
 }
+module SavedMethodSurcharge = {
+  @react.component
+  let make = (
+    ~surchargeDetails: AccountPaymentMethodType.surchargeDetails,
+    ~paymentMethod: string,
+  ) => {
+    let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+    let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+    let localeObject = GetLocale.useGetLocalObj()
+
+    let currency =
+      accountPaymentMethodData->Option.map(data => data.currency)->Option.getOr("")
+
+    switch SurchargeUtils.getSurchargeMessage(
+      ~surchargeDetails,
+      ~paymentMethod,
+      ~currency,
+      ~showShortSurchargeMessage=nativeProp.configuration.showShortSurchargeMessage,
+      ~localeObject,
+    ) {
+    | Some(message) =>
+      <View
+        style={s({
+          flexDirection: #row,
+          alignItems: #"flex-start",
+          paddingHorizontal: 12.->dp,
+          marginTop: 4.->dp,
+        })}>
+        <TextWrapper text="* " textType={ErrorText} />
+        <TextWrapper text=message textType={ModalTextLight} />
+      </View>
+    | None => React.null
+    }
+  }
+}
+
 module PMWithNickNameComponent = {
   @react.component
   let make = (~savedPaymentMethod: CustomerPaymentMethodType.customer_payment_method_type) => {
@@ -217,6 +253,11 @@ module PaymentMethodListView = {
             ->Option.getOr("")}
           />
         : React.null}
+      {switch savedPaymentMethod.surcharge_details {
+      | Some(surchargeDetails) =>
+        <SavedMethodSurcharge surchargeDetails paymentMethod=savedPaymentMethod.payment_method_str />
+      | None => React.null
+      }}
     </CustomPressable>
   }
 }

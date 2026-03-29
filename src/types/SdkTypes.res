@@ -234,6 +234,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  showShortSurchargeMessage: bool,
 }
 
 type sdkState =
@@ -836,6 +837,7 @@ let parseConfigurationDict = (configObj, from) => {
     },
     displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
     disableBranding: getBool(configObj, "disableBranding", false),
+    showShortSurchargeMessage: getBool(configObj, "showShortSurchargeMessage", false),
   }
   configuration
 }

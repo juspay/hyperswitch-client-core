@@ -34,7 +34,7 @@ type customer_payment_method_type = {
   metadata: option<string>,
   created: string,
   bank: option<string>,
-  surcharge_details: option<string>,
+  surcharge_details: option<AccountPaymentMethodType.surchargeDetails>,
   requires_cvv: bool,
   last_used_at: string,
   default_payment_method_set: bool,
@@ -120,7 +120,7 @@ let processCustomerPaymentMethods = (jsonArray: array<JSON.t>) => {
       metadata: customerPaymentMethodDict->getOptionString("metadata"),
       created: getString(customerPaymentMethodDict, "created", ""),
       bank: customerPaymentMethodDict->getOptionString("bank"),
-      surcharge_details: customerPaymentMethodDict->getOptionString("surcharge_details"),
+      surcharge_details: AccountPaymentMethodType.parseSurchargeDetails(customerPaymentMethodDict),
       requires_cvv: customerPaymentMethodDict->getBool("requires_cvv", false),
       last_used_at: getString(customerPaymentMethodDict, "last_used_at", ""),
       default_payment_method_set: customerPaymentMethodDict->getBool(
