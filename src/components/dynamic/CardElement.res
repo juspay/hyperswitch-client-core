@@ -136,9 +136,17 @@ let make = (
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
-          onCardNumberComplete(Some(num->clearSpaces))
+          let _timerId = setTimeout(
+            () =>
+              onCardNumberComplete(
+                Some(num->clearSpaces),
+                expireDate,
+                cardCvcInput.value->Option.getOr(""),
+              ),
+            0,
+          )
         } else {
-          onCardNumberComplete(None)
+          onCardNumberComplete(None, "", "")
         }
       }
       let onChangeCardExpire = (
@@ -159,6 +167,15 @@ let make = (
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
+          let cardNum = cardNumberInput.value->Option.getOr("")
+          let cardBrand = cardNetworkInput.value->Option.getOr("")
+          if cardValid(cardNum, cardBrand) && isCardNumberEqualsMax(cardNum, cardBrand) {
+            onCardNumberComplete(
+              Some(cardNum->clearSpaces),
+              dateExpire,
+              cardCvcInput.value->Option.getOr(""),
+            )
+          }
         }
       }
       let onChangeCvv = (
@@ -169,15 +186,17 @@ let make = (
 
         cardCvcInput.onChange(cvvData)
 
-        let isValidCvv = checkCardCVC(cvvData, cardNetworkInput.value->Option.getOr(""))
-        let shouldShiftFocusToNextField = checkMaxCardCvv(
-          cvvData,
-          cardNetworkInput.value->Option.getOr(""),
-        )
+        let cardBrand = cardNetworkInput.value->Option.getOr("")
+        let isValidCvv = checkCardCVC(cvvData, cardBrand)
+        let shouldShiftFocusToNextField = checkMaxCardCvv(cvvData, cardBrand)
         if isValidCvv && shouldShiftFocusToNextField {
           switch cvvOrZipRef.current->Nullable.toOption {
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.blur
+          }
+          let cardNum = cardNumberInput.value->Option.getOr("")
+          if cardValid(cardNum, cardBrand) && isCardNumberEqualsMax(cardNum, cardBrand) {
+            onCardNumberComplete(Some(cardNum->clearSpaces), expireDate, cvvData)
           }
         }
       }
@@ -213,7 +232,7 @@ let make = (
         | _ => ()
         }
         if isCardValid {
-          onCardNumberComplete(Some(pan->clearSpaces))
+          onCardNumberComplete(Some(pan->clearSpaces), expireDate, "")
         }
       }
 

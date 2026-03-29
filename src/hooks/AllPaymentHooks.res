@@ -351,37 +351,59 @@ let useEligibilityCheckHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  (~cardNumber: string) => {
-    let paymentId =
-      String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
-    let uri = `${baseUrl}/payments/${paymentId}/eligibility`
-    let body =
-      [
-        (
-          "payment_method_data",
-          [
-            (
-              "card",
-              [("card_number", cardNumber->JSON.Encode.string)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object,
-        ),
-      ]
-      ->Dict.fromArray
-      ->JSON.Encode.object
-      ->JSON.stringify
-    APIUtils.fetchApiWrapper(
-      ~uri,
-      ~method=#POST,
-      ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
-      ~body,
-      ~eventName=LoggerTypes.ELIGIBILITY_CALL,
-      ~apiLogWrapper,
-    )
+  (~cardNumber: string, ~expiry: string, ~cvc: string) => {
+    switch WebKit.platform {
+    | #next =>
+      Promise.resolve(
+        `{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn,
+      )
+    | _ =>
+      let paymentId =
+        String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+      let uri = `${baseUrl}/payments/${paymentId}/eligibility`
+      let expiryParts = expiry->String.split("/")->Array.map(s => s->String.trim)
+      let expiryMonth = expiryParts->Array.get(0)->Option.getOr("")
+      let expiryYear = expiryParts->Array.get(1)->Option.getOr("")
+      let expiryFields =
+        expiryMonth != "" && expiryYear != ""
+          ? [
+              ("card_exp_month", expiryMonth->JSON.Encode.string),
+              ("card_exp_year", expiryYear->JSON.Encode.string),
+            ]
+          : []
+      let cvcFields = cvc != "" ? [("card_cvc", cvc->JSON.Encode.string)] : []
+      let cardFields =
+        [("card_number", cardNumber->JSON.Encode.string)]
+        ->Array.concat(expiryFields)
+        ->Array.concat(cvcFields)
+      let body =
+        [
+          ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+          ("payment_method_type", "card"->JSON.Encode.string),
+          (
+            "payment_method_data",
+            [
+              (
+                "card",
+                cardFields->Dict.fromArray->JSON.Encode.object,
+              ),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+        ->JSON.stringify
+      APIUtils.fetchApiWrapper(
+        ~uri,
+        ~method=#POST,
+        ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+        ~body,
+        ~eventName=LoggerTypes.ELIGIBILITY_CALL,
+        ~apiLogWrapper,
+      )
+    }
   }
 }
 

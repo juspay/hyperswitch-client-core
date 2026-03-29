@@ -49,7 +49,8 @@ type dynamicFieldsData = {
   isNicknameValid: bool,
   setIsNicknameValid: bool => unit,
   eligibilityStatus: eligibilityStatus,
-  onCardNumberComplete: option<string> => unit,
+  setEligibilityStatus: (eligibilityStatus => eligibilityStatus) => unit,
+  onCardNumberComplete: (option<string>, string, string) => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -88,12 +89,16 @@ let dynamicFieldsContext = React.createContext({
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
   eligibilityStatus: Idle,
-  onCardNumberComplete: _ => (),
+  setEligibilityStatus: _ => (),
+  onCardNumberComplete: (_, _, _) => (),
 })
 
 module Provider = {
   let make = React.Context.provider(dynamicFieldsContext)
 }
+// TODO: localize this message using the locale system
+let eligibilityDeniedMessage = "You cannot proceed. Please change your payment method."
+
 @react.component
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
@@ -385,32 +390,37 @@ let make = (~children) => {
   let (eligibilityStatus, setEligibilityStatus) = React.useState(_ => Idle)
   let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
 
-  let onCardNumberComplete = React.useCallback2(cardNumberOpt => {
+  let onCardNumberComplete = React.useCallback2((cardNumberOpt, expiry, cvc) => {
     switch cardNumberOpt {
     | None => setEligibilityStatus(_ => Idle)
     | Some(cardNumber) =>
       let shouldCheck =
         accountPaymentMethodData
         ->Option.flatMap(d => d.sdk_next_action)
-        ->Option.map(action => action == "eligibility_check")
-        ->Option.getOr(false)
+        ->Option.mapOr(false, action => action == "eligibility_check")
+
       if shouldCheck {
         setEligibilityStatus(_ => Loading)
-        callEligibilityCheck(~cardNumber)
+
+        callEligibilityCheck(~cardNumber, ~expiry, ~cvc)
         ->Promise.then(json => {
-          let nextAction =
+          let nextActionJson =
             json
             ->Utils.getDictFromJson
             ->Utils.getOptionalObj("sdk_next_action")
-            ->Option.map(d => d->Utils.getString("next_action", ""))
-            ->Option.getOr("")
-          switch nextAction {
-          | "confirm" => setEligibilityStatus(_ => Allowed)
-          | "deny" =>
-            setEligibilityStatus(_ =>
-              Denied("You cannot proceed. Please change your payment method.")
-            )
-          | _ => setEligibilityStatus(_ => Idle)
+            ->Option.flatMap(d => d->Dict.get("next_action"))
+          switch nextActionJson->Option.flatMap(JSON.Decode.string) {
+          | Some("confirm") => setEligibilityStatus(_ => Allowed)
+          | Some(_) => setEligibilityStatus(_ => Idle)
+          | None =>
+            let denyMessage =
+              nextActionJson
+              ->Option.flatMap(j => j->Utils.getDictFromJson->Utils.getOptionalObj("deny"))
+              ->Option.map(d => d->Utils.getString("message", eligibilityDeniedMessage))
+            switch denyMessage {
+            | Some(msg) => setEligibilityStatus(_ => Denied(msg))
+            | None => setEligibilityStatus(_ => Idle)
+            }
           }
           Promise.resolve()
         })
@@ -419,6 +429,8 @@ let make = (~children) => {
           Promise.resolve()
         })
         ->ignore
+      } else {
+        setEligibilityStatus(_ => Allowed)
       }
     }
   }, (accountPaymentMethodData, callEligibilityCheck))
@@ -449,6 +461,7 @@ let make = (~children) => {
       isNicknameValid,
       setIsNicknameValid,
       eligibilityStatus,
+      setEligibilityStatus,
       onCardNumberComplete,
     }>
     children
