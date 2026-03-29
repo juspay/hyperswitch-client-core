@@ -245,6 +245,7 @@ type sdkState =
   | WidgetTabSheet
   | HostedCheckout
   | CardWidget
+  | CvcWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
   | PaymentMethodsManagement
@@ -279,6 +280,7 @@ let sdkStateToStrMapper = sdkState => {
   | WidgetButtonSheet => "WIDGET_BUTTON_SHEET"
   | HostedCheckout => "HOSTED_CHECKOUT"
   | CardWidget => "CARD_FORM"
+  | CvcWidget => "CVC_WIDGET"
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
@@ -881,6 +883,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "google_pay" => CustomWidget(GOOGLE_PAY)
     | "paypal" => CustomWidget(PAYPAL)
     | "card" => CardWidget
+    | "cvc" => CvcWidget
     | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
     | "headless" => Headless
