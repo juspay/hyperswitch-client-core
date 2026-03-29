@@ -30,7 +30,7 @@ let nativePerformThreeDsMethodPost = switch try {
 @set external setAction: (Dom.element, string) => unit = "action"
 @set external setFormMethod: (Dom.element, string) => unit = "method"
 @set external setTarget: (Dom.element, string) => unit = "target"
-@set external setStyleCssText: (Dom.element, string) => unit = "style.cssText"
+@send external setAttribute: (Dom.element, string, string) => unit = "setAttribute"
 @send external submitForm: Dom.element => unit = "submit"
 @send external addLoadListener: (Dom.element, @as("load") _, unit => unit) => unit =
   "addEventListener"
@@ -60,14 +60,14 @@ let performThreeDsMethodWeb = (~url: string, ~data: string, ~methodKey: string, 
 
     // Create hidden container div
     let containerDiv = createDomElement("div")
-    setStyleCssText(containerDiv, "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;")
+    setAttribute(containerDiv, "style", "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;")
     container := Some(containerDiv)
 
     // Create hidden iframe
     let iframe = createDomElement("iframe")
     setId(iframe, "threeDsMethodIframe")
     setName(iframe, "threeDsMethodIframe")
-    setStyleCssText(iframe, "width:0;height:0;border:none;")
+    setAttribute(iframe, "style", "width:0;height:0;border:none;")
     domAppendChild(containerDiv, iframe)
 
     // Create form targeting the iframe
@@ -88,9 +88,14 @@ let performThreeDsMethodWeb = (~url: string, ~data: string, ~methodKey: string, 
     // Append container to body
     domAppendChild(domBody, containerDiv)
 
-    // Listen for iframe load event -> "Y"
+    // Listen for iframe load event -> "Y" (second load = form POST response)
+    // First load fires when blank iframe is attached to DOM, second when POST completes.
+    let loadCount = ref(0)
     addLoadListener(iframe, () => {
-      complete("Y")
+      loadCount := loadCount.contents + 1
+      if loadCount.contents >= 2 {
+        complete("Y")
+      }
     })
 
     // Set timeout -> "N"
