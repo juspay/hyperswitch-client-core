@@ -45,16 +45,24 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
     )
     ->Option.getOr(SessionsType.defaultToken)
 
-  // Find the matching paymentMethodData from accountPaymentMethodData
+  // Auto-confirm state flag: set to true when merchant sends confirm=true,
+  // but actual GPay launch is deferred until sessions + PML data are ready.
+  let (autoConfirmPending, setAutoConfirmPending) = React.useState(_ => false)
+
+  // Find the matching paymentMethodData from accountPaymentMethodData.
+  // paymentMethodDataOpt is None when the backend didn't expose this wallet for the payment intent.
   let walletTypeStr = walletType->SdkTypes.walletTypeToStrMapper
-  let paymentMethodData =
+  let paymentMethodDataOpt =
     accountPaymentMethodData
     ->Option.flatMap(accountPaymentMethods =>
       accountPaymentMethods.payment_methods->Array.find(pm =>
         pm.payment_method_type == walletTypeStr
       )
     )
-    ->Option.getOr({
+
+  // Unwrapped with fallback — only used in paths guarded by paymentMethodDataOpt check.
+  let paymentMethodData =
+    paymentMethodDataOpt->Option.getOr({
       payment_method: WALLET,
       payment_method_str: "wallet",
       payment_method_type: walletTypeStr,
@@ -194,21 +202,28 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
 
   // --- GPay press handler ---
   let pressHandler = () => {
-    setLoading(ProcessingPayments)
-    let currentNativeProp = nativePropRef.current
-    logger(
-      ~logType=INFO,
-      ~value=paymentMethodData.payment_method_type,
-      ~category=USER_EVENT,
-      ~paymentMethod=paymentMethodData.payment_method_type,
-      ~eventName=PAYMENT_METHOD_CHANGED,
-      ~paymentExperience=paymentMethodData.payment_experience,
-      (),
-    )
-    HyperModule.launchGPay(
-      WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=currentNativeProp.env),
-      confirmGPay,
-    )
+    // Guard: don't launch GPay if sessions or PML data aren't ready yet
+    if sessionObject.wallet_name == NONE {
+      showAlert(~errorType="warning", ~message="Waiting for payment session")
+    } else if paymentMethodDataOpt->Option.isNone {
+      showAlert(~errorType="warning", ~message="Payment method not available")
+    } else {
+      setLoading(ProcessingPayments)
+      let currentNativeProp = nativePropRef.current
+      logger(
+        ~logType=INFO,
+        ~value=paymentMethodData.payment_method_type,
+        ~category=USER_EVENT,
+        ~paymentMethod=paymentMethodData.payment_method_type,
+        ~eventName=PAYMENT_METHOD_CHANGED,
+        ~paymentExperience=paymentMethodData.payment_experience,
+        (),
+      )
+      HyperModule.launchGPay(
+        WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=currentNativeProp.env),
+        confirmGPay,
+      )
+    }
   }
 
   // Register native event listener for GPay data callbacks.
@@ -257,9 +272,10 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
         })
         setLoading(FillingDetails)
 
-        // Auto-confirm: if merchant sends confirm=true, auto-launch GPay
+        // Auto-confirm: if merchant sends confirm=true, defer GPay launch
+        // until sessions + PML data are ready (handled by autoConfirmPending effect).
         if responseFromJava.confirm {
-          pressHandler()
+          setAutoConfirmPending(_ => true)
         }
       }
     }
@@ -272,6 +288,18 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
     Some(cleanup)
   }, [nativeProp.publishableKey])
 
+  // Deferred auto-confirm: launch GPay only after sessions + PML data have loaded.
+  // autoConfirmPending is set to true in handleWidgetEvent when confirm=true.
+  // This effect fires when any of the three deps change. Once both session and PML
+  // are ready, it calls pressHandler() and resets the flag.
+  React.useEffect3(() => {
+    if autoConfirmPending && sessionObject.wallet_name !== NONE && paymentMethodDataOpt->Option.isSome {
+      setAutoConfirmPending(_ => false)
+      pressHandler()
+    }
+    None
+  }, (autoConfirmPending, sessionObject.wallet_name, paymentMethodDataOpt))
+
   // Report widget height
   React.useEffect0(() => {
     HyperModule.updateWidgetHeight(45)
@@ -281,8 +309,8 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
   <ErrorBoundary level={FallBackScreen.Widget} rootTag=nativeProp.rootTag>
     <View
       style={s({flex: 1., width: 100.->pct, maxHeight: 45.->dp, backgroundColor: "transparent"})}>
-      {switch walletType {
-      | GOOGLE_PAY =>
+      {switch (walletType, paymentMethodDataOpt) {
+      | (GOOGLE_PAY, Some(_)) when sessionObject.wallet_name !== NONE =>
         <CustomButton
           text="Google Pay"
           borderRadius=buttonBorderRadius
@@ -297,6 +325,7 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
             />,
           )}
         </CustomButton>
+      | (GOOGLE_PAY, _) => <LoadingOverlay />
       | _ => <LoadingOverlay />
       }}
     </View>
