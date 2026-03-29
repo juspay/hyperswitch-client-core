@@ -28,4 +28,5 @@ let priorityArr =
     "evoucher",
     "classic",
     "cashapp",
+    "eft"
   ]->Array.toReversed
