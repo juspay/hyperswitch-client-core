@@ -2,6 +2,7 @@ open SdkTypes
 
 type sessions = {
   wallet_name: payment_method_type_wallet,
+  wallet_name_str: string,
   session_token: string,
   session_id: string,
   merchant_info: JSON.t,
@@ -29,6 +30,7 @@ type sessions = {
 }
 let defaultToken = {
   wallet_name: NONE,
+  wallet_name_str: "",
   session_token: "",
   session_id: "",
   merchant_info: JSON.Encode.null,
@@ -73,8 +75,10 @@ let itemToObjMapper = dict => {
   ->Option.map(arr => {
     arr->Array.map(json => {
       let dict = json->getDictFromJson
+      let walletNameStr = getString(dict, "wallet_name", "")
       {
-        wallet_name: getString(dict, "wallet_name", "")->getWallet,
+        wallet_name: walletNameStr->getWallet,
+        wallet_name_str: walletNameStr,
         session_token: getString(dict, "session_token", ""),
         session_id: getString(dict, "session_id", ""),
         merchant_info: getJsonObjectFromDict(dict, "merchant_info"),
