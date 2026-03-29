@@ -57,6 +57,8 @@ type eventName =
   | ADD_PAYMENT_METHOD_CALL
   | SAMSUNG_PAY
   | CARD_SCHEME_SELECTION
+  | ELIGIBILITY_CALL_INIT
+  | ELIGIBILITY_CALL
 
 type logFile = {
   timestamp: string,
@@ -94,6 +96,7 @@ let getApiInitEvent = (event: eventName): option<eventName> => {
   | POLL_STATUS_CALL => Some(POLL_STATUS_CALL_INIT)
   | DELETE_PAYMENT_METHODS_CALL => Some(DELETE_PAYMENT_METHODS_CALL_INIT)
   | ADD_PAYMENT_METHOD_CALL => Some(ADD_PAYMENT_METHOD_CALL_INIT)
+  | ELIGIBILITY_CALL => Some(ELIGIBILITY_CALL_INIT)
   | _ => None
   }
 }
