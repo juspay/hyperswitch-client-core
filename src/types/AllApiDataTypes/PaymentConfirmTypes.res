@@ -35,6 +35,7 @@ type redirectType = {
   payment_type?: string,
   customer_acceptance?: customer_acceptance,
   card_cvc?: string,
+  installment_data?: JSON.t,
 }
 
 type pollConfig = {

@@ -407,3 +407,13 @@ let rec pruneUnusedFieldsFromDict = (
 
   newDict
 }
+
+let formatAmountWithTwoDecimals = (amount: float) => {
+  amount->Float.toFixed(~digits=2)
+}
+
+let replaceLocaleParams = (template, params: array<(string, string)>) => {
+  params->Array.reduce(template, (acc, (key, value)) => {
+    acc->String.replaceAll("{" ++ key ++ "}", value)
+  })
+}
