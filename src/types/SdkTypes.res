@@ -247,6 +247,7 @@ type sdkState =
   | CardWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
+  | KlarnaWidget
   | PaymentMethodsManagement
   | Headless
   | NoView
@@ -281,6 +282,7 @@ let sdkStateToStrMapper = sdkState => {
   | CardWidget => "CARD_FORM"
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
+  | KlarnaWidget => "KLARNA_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
@@ -883,6 +885,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "card" => CardWidget
     | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
+    | "klarna" => KlarnaWidget
     | "headless" => Headless
     | _ => NoView
     },
