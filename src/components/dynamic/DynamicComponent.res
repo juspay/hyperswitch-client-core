@@ -36,6 +36,7 @@ let make = (~setConfirmButtonData) => {
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
@@ -198,6 +199,7 @@ let make = (~setConfirmButtonData) => {
       | Some(methods) => methods.submit()
       | None => ()
       }
+      notifyValidationFailure()
     }
   }
 
