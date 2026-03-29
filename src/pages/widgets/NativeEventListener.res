@@ -66,3 +66,27 @@ let setupExpressCheckoutListener = (
     onExpressCheckoutConfirm(responseFromJava)
   })
 }
+
+type cvcConfirmRequest = {
+  clientSecret: string,
+  publishableKey: string,
+  cardNetwork: string,
+  requiresCvv: bool,
+}
+
+let parseCvcConfirmRequest = dict => {
+  {
+    clientSecret: Utils.getString(dict, "clientSecret", ""),
+    publishableKey: Utils.getString(dict, "publishableKey", ""),
+    cardNetwork: Utils.getString(dict, "cardNetwork", ""),
+    requiresCvv: Utils.getBool(dict, "requiresCvv", true),
+  }
+}
+
+let setupCvcWidgetListener = (~onCvcConfirmRequest: cvcConfirmRequest => unit) => {
+  sendReadyMessage("cvc")
+  setupNativeEventListener("confirmCVC", var => {
+    let request = var->parseCvcConfirmRequest
+    onCvcConfirmRequest(request)
+  })
+}
