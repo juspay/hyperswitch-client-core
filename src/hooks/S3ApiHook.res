@@ -287,6 +287,11 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "surchargeMsgAmountForOneClickWallets",
         defaultLocale.surchargeMsgAmountForOneClickWallets,
       ),
+      shortSurchargeMessage: Utils.getString(
+        res,
+        "shortSurchargeMessage",
+        defaultLocale.shortSurchargeMessage,
+      ),
       on: Utils.getString(res, "on", defaultLocale.on),
       \"and": Utils.getString(res, "and", defaultLocale.\"and"),
       nameEmptyText: Utils.getString(res, "nameEmptyText", defaultLocale.nameEmptyText),

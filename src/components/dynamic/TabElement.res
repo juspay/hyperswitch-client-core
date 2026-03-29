@@ -83,14 +83,17 @@ let make = (
     isNicknameValid,
   ))
 
-  <DynamicFields
-    fields=requiredFields
-    initialValues
-    setFormData
-    setIsFormValid
-    setFormMethods
-    isCardPayment
-    enabledCardSchemes
-    accessible
-  />
+  <>
+    <DynamicFields
+      fields=requiredFields
+      initialValues
+      setFormData
+      setIsFormValid
+      setFormMethods
+      isCardPayment
+      enabledCardSchemes
+      accessible
+    />
+    <Surcharge paymentMethodData />
+  </>
 }

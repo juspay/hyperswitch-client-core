@@ -2,9 +2,12 @@ open Utils
 
 type eligible_connectors = array<JSON.t>
 
+type surchargeDetails = {displayTotalSurchargeAmount: float}
+
 type card_networks = {
   card_network: string,
   eligible_connectors: eligible_connectors,
+  surcharge_details: option<surchargeDetails>,
 }
 
 type bank_names = {
@@ -27,6 +30,7 @@ type payment_method_type = {
   bank_names: array<bank_names>,
   payment_experience: array<payment_experience>,
   required_fields: Dict.t<JSON.t>,
+  surcharge_details: option<surchargeDetails>,
 }
 
 type payment_methods = array<payment_method_type>
@@ -61,6 +65,16 @@ let defaultAccountPaymentMethods = {
   show_surcharge_breakup_screen: false,
 }
 
+let parseSurchargeDetails = (dict: Js.Dict.t<JSON.t>) => {
+  dict
+  ->Dict.get("surcharge_details")
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.flatMap(sd => {
+    let amount = sd->getOptionFloat("display_total_surcharge_amount")->Option.getOr(0.0)
+    amount !== 0.0 ? Some({displayTotalSurchargeAmount: amount}) : None
+  })
+}
+
 let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
   dict
   ->getArray("card_networks")
@@ -69,6 +83,7 @@ let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
     {
       card_network: itemDict->getString("card_network", ""),
       eligible_connectors: itemDict->getArray("eligible_connectors"),
+      surcharge_details: parseSurchargeDetails(itemDict),
     }
   })
 }
@@ -116,6 +131,7 @@ let parsePaymentMethodType = (
     bank_names: parseBankNames(paymentMethodTypeDict),
     payment_experience: parsePaymentExperience(paymentMethodTypeDict),
     required_fields: paymentMethodTypeDict->getObj("required_fields", Dict.make()),
+    surcharge_details: parseSurchargeDetails(paymentMethodTypeDict),
   }
 }
 
@@ -138,6 +154,11 @@ let mergePaymentMethods = (existing: payment_method_type, new: payment_method_ty
     bank_names: existing.bank_names->Array.concat(new.bank_names),
     payment_experience: existing.payment_experience->Array.concat(new.payment_experience),
     required_fields: existing.required_fields->Dict.assign(new.required_fields),
+    surcharge_details: switch (existing.surcharge_details, new.surcharge_details) {
+    | (Some(_), _) => existing.surcharge_details
+    | (None, Some(_)) => new.surcharge_details
+    | (None, None) => None
+    },
   }
 }
 
