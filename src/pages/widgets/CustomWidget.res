@@ -12,7 +12,7 @@ module WidgetError = {
 @react.component
 let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
-  let (_, _, sessionTokenData) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
@@ -44,17 +44,28 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
     ->Option.flatMap(sessions => sessions->Array.find(item => item.wallet_name == walletType))
     ->Option.getOr(SessionsType.defaultToken)
 
-  // Build a payment_method_type record for Apple Pay
-  let paymentMethodData: AccountPaymentMethodType.payment_method_type = {
-    payment_method: WALLET,
-    payment_method_str: "wallet",
-    payment_method_type: "apple_pay",
-    payment_method_type_wallet: APPLE_PAY,
-    card_networks: [],
-    bank_names: [],
-    payment_experience: [],
-    required_fields: Dict.make(),
-  }
+  // Find the matching paymentMethodData from accountPaymentMethodData
+  let walletTypeStr = walletType->SdkTypes.walletTypeToStrMapper
+  let paymentMethodDataOpt =
+    accountPaymentMethodData
+    ->Option.flatMap(accountPaymentMethods =>
+      accountPaymentMethods.payment_methods->Array.find(pm =>
+        pm.payment_method_type == walletTypeStr
+      )
+    )
+
+  let paymentMethodData =
+    paymentMethodDataOpt
+    ->Option.getOr({
+      payment_method: WALLET,
+      payment_method_str: "wallet",
+      payment_method_type: walletTypeStr,
+      payment_method_type_wallet: walletType,
+      card_networks: [],
+      bank_names: [],
+      payment_experience: [],
+      required_fields: Dict.make(),
+    })
 
   let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
     setLoading(FillingDetails)
@@ -74,7 +85,11 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
   }
 
   // Reads nativePropRef.current to avoid stale closure over nativeProp.
-  let processRequest = (walletDict, email) => {
+  let processRequest = (
+    initialValues: Dict.t<JSON.t>,
+    walletDict: option<Dict.t<JSON.t>>,
+    email: option<string>,
+  ) => {
     let currentNativeProp = nativePropRef.current
 
     // Guard: don't confirm with empty credentials
@@ -82,36 +97,47 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message="Payment session not initialized")
     } else {
-      let payment_method_data =
-        walletDict->Option.map(dict =>
-          [("wallet", [("apple_pay", dict->JSON.Encode.object)]->Dict.fromArray->JSON.Encode.object)]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        )
+      let paymentMethodDataBody =
+        [
+          (
+            "payment_method_data",
+            [
+              (
+                paymentMethodData.payment_method_str,
+                [
+                  (
+                    paymentMethodData.payment_method_type,
+                    walletDict->Option.getOr(Dict.make())->JSON.Encode.object,
+                  ),
+                ]
+                ->Dict.fromArray
+                ->JSON.Encode.object,
+              ),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object,
+          ),
+        ]->Dict.fromArray
 
-      let body: PaymentConfirmTypes.redirectType = {
-        client_secret: currentNativeProp.clientSecret,
-        return_url: ?Utils.getReturnUrl(~appId=currentNativeProp.hyperParams.appId),
-        ?email,
-        payment_method: "wallet",
-        payment_method_type: "apple_pay",
-        ?payment_method_data,
-        customer_acceptance: ?(
-          Some({
-            acceptance_type: "online",
-            accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-            online: {
-              user_agent: ?currentNativeProp.hyperParams.userAgent,
-            },
-          })
-        ),
-        browser_info: {
-          user_agent: ?currentNativeProp.hyperParams.userAgent,
-          device_model: ?currentNativeProp.hyperParams.device_model,
-          os_type: ?currentNativeProp.hyperParams.os_type,
-          os_version: ?currentNativeProp.hyperParams.os_version,
-        },
-      }
+      let body = PaymentUtils.generateCardConfirmBody(
+        ~nativeProp=currentNativeProp,
+        ~payment_method_str=paymentMethodData.payment_method_str,
+        ~payment_method_type=paymentMethodData.payment_method_type,
+        ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataBody, initialValues)
+          ->Dict.get("payment_method_data"),
+        ~payment_type=accountPaymentMethodData
+          ->Option.map(apm => apm.payment_type)
+          ->Option.getOr(NORMAL),
+        ~payment_type_str=?accountPaymentMethodData
+          ->Option.flatMap(apm => apm.payment_type_str),
+        ~appURL=?accountPaymentMethodData->Option.map(apm => apm.redirect_url),
+        ~isSaveCardCheckboxVisible=false,
+        ~isGuestCustomer=customerPaymentMethodData
+          ->Option.map(cpm => cpm.is_guest_customer)
+          ->Option.getOr(true),
+        ~email?,
+        (),
+      )
 
       fetchAndRedirect(
         ~body=body->JSON.stringifyAny->Option.getOr(""),
@@ -119,7 +145,8 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
         ~clientSecret=currentNativeProp.clientSecret,
         ~errorCallback,
         ~responseCallback,
-        ~paymentMethod="apple_pay",
+        ~paymentMethod=paymentMethodData.payment_method_type,
+        ~paymentExperience=paymentMethodData.payment_experience,
         (),
       )
     }
@@ -141,10 +168,10 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
     setInitialValueCountry(defaultCountry)
 
     if !isFieldsMissing {
-      let email = initialValues->Dict.get("email")->Option.flatMap(JSON.Decode.string)
       processRequest(
+        initialValues,
         Some(walletDict),
-        email,
+        initialValues->Dict.get("email")->Option.flatMap(JSON.Decode.string),
       )
     } else {
       setLoading(FillingDetails)
@@ -308,7 +335,7 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
     <View
       style={s({flex: 1., width: 100.->pct, maxHeight: 45.->dp, backgroundColor: "transparent"})}>
       {switch walletType {
-      | APPLE_PAY =>
+      | APPLE_PAY when paymentMethodDataOpt->Option.isSome && sessionObject.wallet_name !== NONE =>
         <TouchableOpacity onPress={_ => pressHandler()} activeOpacity=0.8>
           <ApplePayButtonView
             style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
@@ -317,6 +344,7 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
             buttonStyle=applePayButtonColor
           />
         </TouchableOpacity>
+      | APPLE_PAY => <LoadingOverlay />
       | _ => <LoadingOverlay />
       }}
     </View>
