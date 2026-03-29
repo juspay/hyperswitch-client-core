@@ -85,10 +85,7 @@ let performThreeDsMethodWeb = (~url: string, ~data: string, ~methodKey: string, 
 
     domAppendChild(containerDiv, form)
 
-    // Append container to body
-    domAppendChild(domBody, containerDiv)
-
-    // Listen for iframe load event -> "Y" (second load = form POST response)
+    // Listen for iframe load event BEFORE appending to DOM
     // First load fires when blank iframe is attached to DOM, second when POST completes.
     let loadCount = ref(0)
     addLoadListener(iframe, () => {
@@ -102,6 +99,9 @@ let performThreeDsMethodWeb = (~url: string, ~data: string, ~methodKey: string, 
     timeoutId := Some(setTimeout(() => {
         complete("N")
       }, timeoutMs))
+
+    // NOW append container to body (triggers first load event, caught by listener)
+    domAppendChild(domBody, containerDiv)
 
     // Submit the form
     submitForm(form)
