@@ -1,5 +1,20 @@
 open SdkTypes
 
+let useNotifyValidationFailure = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+
+  () => {
+    switch nativeProp.sdkState {
+    | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet =>
+      HyperModule.hyperModule.notifyWidgetPaymentResult(
+        nativeProp.widgetId,
+        PaymentConfirmTypes.formValidationError->HyperModule.stringifiedResStatus,
+      )
+    | _ => ()
+    }
+  }
+}
+
 let useWidgetActions = (
   ~confirmButtonData: GlobalConfirmButton.confirmButtonData,
 ) => {
