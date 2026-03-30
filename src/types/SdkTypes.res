@@ -226,6 +226,7 @@ type configurationType = {
   primaryButtonColor: option<string>,
   allowsPaymentMethodsRequiringShippingAddress: bool,
   displaySavedPaymentMethodsCheckbox: bool,
+  savedPaymentMethodsCheckboxCheckedByDefault: bool,
   displaySavedPaymentMethods: bool,
   placeholder: placeholder,
   defaultView: bool,
@@ -824,6 +825,11 @@ let parseConfigurationDict = (configObj, from) => {
     displaySavedPaymentMethodsCheckbox: getBool(
       configObj,
       "displaySavedPaymentMethodsCheckbox",
+      true,
+    ),
+    savedPaymentMethodsCheckboxCheckedByDefault: getBool(
+      configObj,
+      "savedPaymentMethodsCheckboxCheckedByDefault",
       true,
     ),
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
