@@ -131,17 +131,11 @@ type primaryButton = {
   primaryButtonColor: option<primaryButtonColorType>,
 }
 
+// ---- Wallet configuration types (mirrors hyperswitch-web wallets config) ----
+
+type walletShowType = Auto | Never
+
 type googlePayButtonType = BUY | BOOK | CHECKOUT | DONATE | ORDER | PAY | SUBSCRIBE | PLAIN
-
-type googlePayThemeBaseStyle = {
-  light: ReactNative.Appearance.t,
-  dark: ReactNative.Appearance.t,
-}
-
-type googlePayConfiguration = {
-  buttonType: googlePayButtonType,
-  buttonStyle: option<googlePayThemeBaseStyle>,
-}
 
 type applePayButtonType = [
   | #buy
@@ -151,18 +145,43 @@ type applePayButtonType = [
   | #checkout
   | #book
   | #subscribe
+  | #reload
+  | #addMoney
+  | #topUp
+  | #rent
+  | #order
+  | #support
+  | #tip
+  | #contribute
   | #plain
 ]
+
+type paypalButtonType = Paypal | Checkout | Buynow | Pay | Installment
+
+type samsungPayButtonType = Buy
+
 type applePayButtonStyle = [#white | #whiteOutline | #black]
 
-type applePayThemeBaseStyle = {
-  light: applePayButtonStyle,
-  dark: applePayButtonStyle,
+type walletTheme = WalletDefault | WalletDark | WalletLight | WalletOutline
+
+type walletStyle = {
+  applePayType: applePayButtonType,
+  googlePayType: googlePayButtonType,
+  paypalType: paypalButtonType,
+  samsungPayType: samsungPayButtonType,
+  theme: walletTheme,
+  height: int,
+  buttonRadius: int,
 }
 
-type applePayConfiguration = {
-  buttonType: applePayButtonType,
-  buttonStyle: option<applePayThemeBaseStyle>,
+type walletConfiguration = {
+  applePay: walletShowType,
+  googlePay: walletShowType,
+  payPal: walletShowType,
+  klarna: walletShowType,
+  paze: walletShowType,
+  samsungPay: walletShowType,
+  style: walletStyle,
 }
 
 type themeType = Default | Light | Dark | Minimal | FlatMinimal
@@ -174,8 +193,6 @@ type appearance = {
   shapes: option<shapes>,
   font: option<font>,
   primaryButton: option<primaryButton>,
-  googlePay: googlePayConfiguration,
-  applePay: applePayConfiguration,
   theme: themeType,
   layout: layoutType,
 }
@@ -217,6 +234,7 @@ type placeholder = {
 type configurationType = {
   allowsDelayedPaymentMethods: bool,
   appearance: appearance,
+  wallets: walletConfiguration,
   shippingDetails: option<addressDetails>,
   primaryButtonLabel: option<string>,
   paymentSheetHeaderText: option<string>,
@@ -403,16 +421,28 @@ let defaultAppearance: appearance = {
     | _ => None
     },
   }),
-  googlePay: {
-    buttonType: PLAIN,
-    buttonStyle: None,
-  },
-  applePay: {
-    buttonType: #plain,
-    buttonStyle: None,
-  },
   theme: Default,
   layout: Tab,
+}
+
+let defaultWalletStyle: walletStyle = {
+  applePayType: #plain,
+  googlePayType: PLAIN,
+  paypalType: Paypal,
+  samsungPayType: Buy,
+  theme: WalletDefault,
+  height: 48,
+  buttonRadius: 2,
+}
+
+let defaultWalletConfiguration: walletConfiguration = {
+  applePay: Auto,
+  googlePay: Auto,
+  payPal: Auto,
+  klarna: Auto,
+  paze: Auto,
+  samsungPay: Auto,
+  style: defaultWalletStyle,
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
@@ -450,12 +480,6 @@ let getAppearanceObj = (
   | "" => primaryButtonDict
   | _ => getObj(primaryButtonDict, keys.primaryButton_shapes, Dict.make())
   }
-
-  let googlePayDict = getObj(appearanceDict, "googlePay", Dict.make())
-  let googlePayButtonStyle = getOptionalObj(googlePayDict, "buttonStyle")
-
-  let applePayDict = getObj(appearanceDict, "applePay", Dict.make())
-  let applePayButtonStyle = getOptionalObj(applePayDict, "buttonStyle")
 
   {
     locale: switch retOptionalStr(getProp(keys.locale, appearanceDict)) {
@@ -637,62 +661,6 @@ let getAppearanceObj = (
             )
           },
     }),
-    googlePay: {
-      buttonType: switch getString(googlePayDict, "buttonType", "") {
-      | "BUY" => BUY
-      | "BOOK" => BOOK
-      | "CHECKOUT" => CHECKOUT
-      | "DONATE" => DONATE
-      | "ORDER" => ORDER
-      | "PAY" => PAY
-      | "SUBSCRIBE" => SUBSCRIBE
-      | _ => PLAIN
-      },
-      buttonStyle: googlePayButtonStyle->Option.map(googlePayButtonStyle => {
-        let style: googlePayThemeBaseStyle = {
-          light: switch getString(googlePayButtonStyle, "light", "") {
-          | "light" => #light
-          | "dark" => #dark
-          | _ => #dark
-          },
-          dark: switch getString(googlePayButtonStyle, "dark", "") {
-          | "light" => #light
-          | "dark" => #dark
-          | _ => #light
-          },
-        }
-        style
-      }),
-    },
-    applePay: {
-      buttonType: switch getString(applePayDict, "buttonType", "") {
-      | "buy" => #buy
-      | "setUp" => #setUp
-      | "inStore" => #inStore
-      | "donate" => #donate
-      | "checkout" => #checkout
-      | "book" => #book
-      | "subscribe" => #subscribe
-      | _ => #plain
-      },
-      buttonStyle: applePayButtonStyle->Option.map(applePayButtonStyle => {
-        let style: applePayThemeBaseStyle = {
-          light: switch getString(applePayButtonStyle, "light", "") {
-          | "white" => #white
-          | "whiteOutline" => #whiteOutline
-          | "black" => #black
-          | _ => #black
-          },
-          dark: switch getString(applePayButtonStyle, "dark", "") {
-          | "white" => #white
-          | "whiteOutline" => #whiteOutline
-          | "black" => #black
-          | _ => #white
-          },
-        }
-        style
-      }),
-    },
     theme: switch getString(appearanceDict, "theme", "") {
     | "Light" => Light
     | "Dark" => Dark
@@ -718,6 +686,111 @@ let getPrimaryColor = (colors, ~theme=Default) =>
     | _ => df.light->Option.flatMap(l => l.primary)
     }
   }
+
+let parseWalletShowType = str =>
+  switch str {
+  | "never" | "Never" => Never
+  | _ => Auto
+  }
+
+let parseGooglePayButtonType = str =>
+  switch str {
+  | "BUY" => BUY
+  | "BOOK" => BOOK
+  | "CHECKOUT" => CHECKOUT
+  | "DONATE" => DONATE
+  | "ORDER" => ORDER
+  | "PAY" => PAY
+  | "SUBSCRIBE" => SUBSCRIBE
+  | _ => PLAIN
+  }
+
+let parseApplePayButtonType = str =>
+  switch str {
+  | "buy" => #buy
+  | "setUp" => #setUp
+  | "inStore" => #inStore
+  | "donate" => #donate
+  | "checkout" => #checkout
+  | "book" => #book
+  | "subscribe" => #subscribe
+  | "reload" => #reload
+  | "addMoney" => #addMoney
+  | "topUp" => #topUp
+  | "rent" => #rent
+  | "order" => #order
+  | "support" => #support
+  | "tip" => #tip
+  | "contribute" => #contribute
+  | _ => #plain
+  }
+
+let parsePaypalButtonType = str =>
+  switch str {
+  | "checkout" => Checkout
+  | "buynow" => Buynow
+  | "pay" => Pay
+  | "installment" => Installment
+  | _ => Paypal
+  }
+
+let parseSamsungPayButtonType = _str => Buy
+
+let parseWalletTheme = str =>
+  switch str {
+  | "dark" | "Dark" => WalletDark
+  | "light" | "Light" => WalletLight
+  | "outline" | "Outline" => WalletOutline
+  | _ => WalletDefault
+  }
+
+let parseWalletsDict = (configObj: Dict.t<JSON.t>) => {
+  let walletsDict =
+    configObj->Dict.get("wallets")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+
+  let styleDict =
+    walletsDict->Dict.get("style")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+
+  let height = switch styleDict->Dict.get("height") {
+  | Some(json) =>
+    switch json->JSON.Decode.float {
+    | Some(f) => Float.toInt(f)
+    | None => defaultWalletStyle.height
+    }
+  | None => defaultWalletStyle.height
+  }
+
+  let style: walletStyle = {
+    applePayType: getString(styleDict, "applePayType", "")->parseApplePayButtonType,
+    googlePayType: getString(styleDict, "googlePayType", "")->parseGooglePayButtonType,
+    paypalType: getString(styleDict, "paypalType", "")->parsePaypalButtonType,
+    samsungPayType: getString(styleDict, "samsungPayType", "")->parseSamsungPayButtonType,
+    theme: getString(styleDict, "theme", "")->parseWalletTheme,
+    height,
+    buttonRadius: switch styleDict->Dict.get("buttonRadius") {
+    | Some(json) =>
+      switch json->JSON.Decode.float {
+      | Some(f) => Float.toInt(f)
+      | None => defaultWalletStyle.buttonRadius
+      }
+    | None => defaultWalletStyle.buttonRadius
+    },
+  }
+
+  // If no wallets dict was provided at all, return defaults
+  switch configObj->Dict.get("wallets") {
+  | None => defaultWalletConfiguration
+  | Some(_) => {
+      applePay: getString(walletsDict, "applePay", "auto")->parseWalletShowType,
+      googlePay: getString(walletsDict, "googlePay", "auto")->parseWalletShowType,
+      payPal: getString(walletsDict, "payPal", "auto")->parseWalletShowType,
+      klarna: getString(walletsDict, "klarna", "auto")->parseWalletShowType,
+      paze: getString(walletsDict, "paze", "auto")->parseWalletShowType,
+      samsungPay: getString(walletsDict, "samsungPay", "auto")->parseWalletShowType,
+      style,
+    }
+  }
+}
 
 let parseConfigurationDict = (configObj, from) => {
   let shippingDetailsDict =
@@ -758,6 +831,7 @@ let parseConfigurationDict = (configObj, from) => {
   let configuration = {
     allowsDelayedPaymentMethods: getBool(configObj, "allowsDelayedPaymentMethods", false),
     appearance,
+    wallets: parseWalletsDict(configObj),
     shippingDetails: switch shippingDetailsDict {
     | Some(shippingObj) =>
       let addressObj = getOptionalObj(shippingObj, "address")
