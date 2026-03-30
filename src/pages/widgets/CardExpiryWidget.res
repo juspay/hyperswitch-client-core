@@ -5,6 +5,75 @@ open Validation
 // Card Expiry Widget
 // A standalone widget for collecting card expiry date in "MM / YY" format
 
+// Named constants for magic numbers
+let maxExpiryLength = 7
+let widgetBaseHeight = 120
+let minMonth = 1
+let maxMonth = 12
+let singleDigitMonthMax = 9
+let doubleDigitPrefixThreshold = 2
+let yearPrefix = "20"
+
+// Type for expiry response
+type expiryResponse = {
+  isValid: bool,
+  expiryMonth: string,
+  expiryYear: string,
+}
+
+// Convert expiry response to JSON
+let responseToJson = (response: expiryResponse) => {
+  [
+    ("isValid", response.isValid->Js.Json.boolean),
+    ("expiryMonth", response.expiryMonth->Js.Json.string),
+    ("expiryYear", response.expiryYear->Js.Json.string),
+  ]
+  ->Dict.fromArray
+  ->JSON.Encode.object
+}
+
+// Extract and send expiry data to native with validation
+let validateAndSendExpiry = (
+  ~expiry: string,
+  ~setExpiryError: string => unit,
+  ~setIsValid: bool => unit,
+  ~localeObject: LocaleDataType.localeStrings,
+) => {
+  if expiry == "" {
+    setExpiryError(localeObject.cardExpiryDateEmptyText)
+    setIsValid(false)
+    let response = {
+      isValid: false,
+      expiryMonth: "",
+      expiryYear: "",
+    }
+    HyperModule.sendMessageToNative(response->responseToJson->Js.Json.stringify)
+    false
+  } else if !checkCardExpiry(expiry) {
+    setExpiryError(localeObject.inValidExpiryErrorText)
+    setIsValid(false)
+    let response = {
+      isValid: false,
+      expiryMonth: "",
+      expiryYear: "",
+    }
+    HyperModule.sendMessageToNative(response->responseToJson->Js.Json.stringify)
+    false
+  } else {
+    let (month, year) = splitExpiryDates(expiry)
+    let yearWithPrefix = yearPrefix ++ year
+    setExpiryError("")
+    setIsValid(true)
+    let response = {
+      isValid: true,
+      expiryMonth: month,
+      expiryYear: yearWithPrefix,
+    }
+    HyperModule.sendMessageToNative(response->responseToJson->Js.Json.stringify)
+    true
+  }
+}
+
 module CardExpiryInput = {
   @react.component
   let make = (
@@ -17,23 +86,21 @@ module CardExpiryInput = {
     ~onFocus=() => (),
     ~onBlur=() => (),
   ) => {
-    let (_, _) = React.useContext(NativePropContext.nativePropContext)
     let localeObject = GetLocale.useGetLocalObj()
-    let {
-      component,
-      dangerColor,
-      borderRadius,
-      borderWidth,
-    } = ThemebasedStyle.useThemeBasedStyle()
+    let {component, dangerColor, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
     let expiryRef = React.useRef(Nullable.null)
 
     // Format expiry as "MM / YY" during input
     let formatExpiryInput = val => {
       let clearValue = val->clearSpaces
       let expiryVal = clearValue->toInt
-      let formatted = if expiryVal >= 2 && expiryVal <= 9 && clearValue->String.length == 1 {
+      let formatted = if (
+        expiryVal >= doubleDigitPrefixThreshold &&
+        expiryVal <= singleDigitMonthMax &&
+        clearValue->String.length == 1
+      ) {
         `0${clearValue} / `
-      } else if clearValue->String.length == 2 && expiryVal > 12 {
+      } else if clearValue->String.length == 2 && expiryVal > maxMonth {
         let val = clearValue->String.split("")
         `0${val->Array.get(0)->Option.getOr("")} / ${val->Array.get(1)->Option.getOr("")}`
       } else {
@@ -41,55 +108,22 @@ module CardExpiryInput = {
       }
 
       if clearValue->String.length >= 3 {
-        `${formatted->String.slice(~start=0, ~end=2)} / ${formatted->String.slice(~start=2, ~end=4)}`
+        `${formatted->String.slice(~start=0, ~end=2)} / ${formatted->String.slice(
+            ~start=2,
+            ~end=4,
+          )}`
       } else {
         formatted
       }
-    }
-
-    // Validate expiry on blur and send data to native
-    let handleExpiryBlur = _ => {
-      let expiry = cardExpiry->String.trim
-
-      if expiry == "" {
-        setExpiryError(localeObject.cardExpiryDateEmptyText)
-        setIsValid(false)
-        HyperModule.sendMessageToNative(
-          `{"isValid": "false", "expiryMonth": "", "expiryYear": ""}`
-        )
-      } else if expiry->String.length < 7 {
-        // "MM / YY" = 7 chars
-        setExpiryError(localeObject.inValidExpiryErrorText)
-        setIsValid(false)
-        HyperModule.sendMessageToNative(
-          `{"isValid": "false", "expiryMonth": "", "expiryYear": ""}`
-        )
-      } else if !checkCardExpiry(expiry) {
-        setExpiryError(localeObject.inValidExpiryErrorText)
-        setIsValid(false)
-        HyperModule.sendMessageToNative(
-          `{"isValid": "false", "expiryMonth": "", "expiryYear": ""}`
-        )
-      } else {
-        setExpiryError("")
-        setIsValid(true)
-        // Extract month and year, send to native
-        let (month, year) = splitExpiryDates(expiry)
-        let yearWithPrefix = "20" ++ year
-        HyperModule.sendMessageToNative(
-          `{"isValid": "true", "expiryMonth": "${month}", "expiryYear": "${yearWithPrefix}"}`
-        )
-      }
-      onBlur()
     }
 
     // Handle input change with auto-formatting
     let handleExpiryChange = text => {
       let formatted = formatExpiryInput(text)
 
-      // Only allow max 7 characters ("MM / YY")
-      let limited = if formatted->String.length > 7 {
-        formatted->String.substring(~start=0, ~end=7)
+      // Only allow max maxExpiryLength characters ("MM / YY")
+      let limited = if formatted->String.length > maxExpiryLength {
+        formatted->String.substring(~start=0, ~end=maxExpiryLength)
       } else {
         formatted
       }
@@ -102,12 +136,17 @@ module CardExpiryInput = {
       }
     }
 
-    // Handle key press for backspace navigation
-    let onKeyPress = (ev: TextInput.KeyPressEvent.t) => {
-      if ev.nativeEvent.key == "Backspace" && cardExpiry == "" {
-        // Optional: handle backspace when empty (e.g., focus previous field)
-        ()
-      }
+    // Validate expiry on blur and send data to native
+    let handleExpiryBlur = _ => {
+      ignore(
+        validateAndSendExpiry(
+          ~expiry=cardExpiry->String.trim,
+          ~setExpiryError,
+          ~setIsValid,
+          ~localeObject,
+        ),
+      )
+      onBlur()
     }
 
     <View style={s({width: 100.->pct})}>
@@ -120,7 +159,7 @@ module CardExpiryInput = {
         keyboardType=#"number-pad"
         enableCrossIcon=false
         isValid={isValid || cardExpiry->String.length == 0}
-        maxLength=Some(7)
+        maxLength=Some(maxExpiryLength)
         borderTopLeftRadius=borderRadius
         borderTopRightRadius=borderRadius
         borderBottomLeftRadius=borderRadius
@@ -134,7 +173,6 @@ module CardExpiryInput = {
           onFocus()
         }}
         onBlur={handleExpiryBlur}
-        onKeyPress
         animateLabel=localeObject.validThruText
       />
       <UIUtils.RenderIf condition={expiryError != ""}>
@@ -148,11 +186,11 @@ module CardExpiryInput = {
 @react.component
 let make = () => {
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
-  let (cardExpiry, setCardExpiry) = React.useState(() => "")
-  let (isValid, setIsValid) = React.useState(() => false)
-  let (expiryError, setExpiryError) = React.useState(() => "")
-  let (isReady, setIsReady) = React.useState(() => false)
-  let (confirm, setConfirm) = React.useState(() => false)
+  let (cardExpiry, setCardExpiry) = React.useState(_ => "")
+  let (isValid, setIsValid) = React.useState(_ => false)
+  let (expiryError, setExpiryError) = React.useState(_ => "")
+  let (isReady, setIsReady) = React.useState(_ => false)
+  let (confirm, setConfirm) = React.useState(_ => false)
   let localeObject = GetLocale.useGetLocalObj()
 
   // Send widget ready message to native
@@ -193,32 +231,14 @@ let make = () => {
   // Handle confirm action - send collected data to native
   React.useEffect1(() => {
     if confirm {
-      // Validate expiry
-      if cardExpiry == "" {
-        setExpiryError(_ => localeObject.cardExpiryDateEmptyText)
-        setIsValid(_ => false)
-        HyperModule.sendMessageToNative(
-          `{"isValid": "false", "expiryMonth": "", "expiryYear": ""}`
-        )
-      } else if !checkCardExpiry(cardExpiry) {
-        setExpiryError(_ => localeObject.inValidExpiryErrorText)
-        setIsValid(_ => false)
-        HyperModule.sendMessageToNative(
-          `{"isValid": "false", "expiryMonth": "", "expiryYear": ""}`
-        )
-      } else {
-        // Valid expiry - send data to native
-        setIsValid(_ => true)
-        
-        // Extract month and year
-        let (month, year) = splitExpiryDates(cardExpiry)
-        let yearWithPrefix = "20" ++ year
-
-        // Send collected data to native for processing
-        HyperModule.sendMessageToNative(
-          `{"isValid": "true", "expiryMonth": "${month}", "expiryYear": "${yearWithPrefix}"}`
-        )
-      }
+      ignore(
+        validateAndSendExpiry(
+          ~expiry=cardExpiry,
+          ~setExpiryError=err => setExpiryError(_ => err),
+          ~setIsValid=valid => setIsValid(_ => valid),
+          ~localeObject,
+        ),
+      )
       setConfirm(_ => false)
     }
     None
@@ -226,8 +246,7 @@ let make = () => {
 
   // Update widget height based on content
   React.useEffect1(() => {
-    let widgetHeight = 120 // Base height for single input
-    HyperModule.updateWidgetHeight(widgetHeight)
+    HyperModule.updateWidgetHeight(widgetBaseHeight)
     None
   }, [])
 
