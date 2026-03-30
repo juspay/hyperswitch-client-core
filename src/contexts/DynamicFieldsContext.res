@@ -361,7 +361,9 @@ let make = (~children) => {
     (isFieldsMissing, initialValues, defaultCountry)
   }
 
-  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ => false)
+  let (isNicknameSelected, setIsNicknameSelected) = React.useState(_ =>
+    nativeProp.configuration.savedPaymentMethodsCheckboxCheckedByDefault
+  )
   let setIsNicknameSelected = React.useCallback1(val => {
     setIsNicknameSelected(_ => val)
   }, [setIsNicknameSelected])
