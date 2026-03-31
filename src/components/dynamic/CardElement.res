@@ -169,9 +169,11 @@ let make = (
 
         cardCvcInput.onChange(cvvData)
 
-        let cardBrand = cardNetworkInput.value->Option.getOr("")
-        let isValidCvv = checkCardCVC(cvvData, cardBrand)
-        let shouldShiftFocusToNextField = checkMaxCardCvv(cvvData, cardBrand)
+        let isValidCvv = checkCardCVC(cvvData, cardNetworkInput.value->Option.getOr(""))
+        let shouldShiftFocusToNextField = checkMaxCardCvv(
+          cvvData,
+          cardNetworkInput.value->Option.getOr(""),
+        )
         if isValidCvv && shouldShiftFocusToNextField {
           switch cvvOrZipRef.current->Nullable.toOption {
           | None => ()
