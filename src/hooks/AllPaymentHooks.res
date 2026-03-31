@@ -351,7 +351,7 @@ let useEligibilityCheckHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  (~cardNumber: string, ~expiry: string, ~cvc: string) => {
+  (~cardNumber: string) => {
     switch WebKit.platform {
     | #next =>
       Promise.resolve(
@@ -361,21 +361,6 @@ let useEligibilityCheckHook = () => {
       let paymentId =
         String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
       let uri = `${baseUrl}/payments/${paymentId}/eligibility`
-      let expiryParts = expiry->String.split("/")->Array.map(s => s->String.trim)
-      let expiryMonth = expiryParts->Array.get(0)->Option.getOr("")
-      let expiryYear = expiryParts->Array.get(1)->Option.getOr("")
-      let expiryFields =
-        expiryMonth != "" && expiryYear != ""
-          ? [
-              ("card_exp_month", expiryMonth->JSON.Encode.string),
-              ("card_exp_year", expiryYear->JSON.Encode.string),
-            ]
-          : []
-      let cvcFields = cvc != "" ? [("card_cvc", cvc->JSON.Encode.string)] : []
-      let cardFields =
-        [("card_number", cardNumber->JSON.Encode.string)]
-        ->Array.concat(expiryFields)
-        ->Array.concat(cvcFields)
       let body =
         [
           ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
@@ -385,7 +370,9 @@ let useEligibilityCheckHook = () => {
             [
               (
                 "card",
-                cardFields->Dict.fromArray->JSON.Encode.object,
+                [("card_number", cardNumber->JSON.Encode.string)]
+                ->Dict.fromArray
+                ->JSON.Encode.object,
               ),
             ]
             ->Dict.fromArray

@@ -50,7 +50,7 @@ let make = (
       Some(cardNetworkConfig),
     ) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-      let {onCardNumberComplete} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+      let {onCardNumberComplete, eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
       let (expireDate, setExpireDate) = React.useState(() => "")
 
       let {
@@ -140,13 +140,11 @@ let make = (
             () =>
               onCardNumberComplete(
                 Some(num->clearSpaces),
-                expireDate,
-                cardCvcInput.value->Option.getOr(""),
               ),
             0,
           )
         } else {
-          onCardNumberComplete(None, "", "")
+          onCardNumberComplete(None)
         }
       }
       let onChangeCardExpire = (
@@ -167,15 +165,6 @@ let make = (
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
-          let cardNum = cardNumberInput.value->Option.getOr("")
-          let cardBrand = cardNetworkInput.value->Option.getOr("")
-          if cardValid(cardNum, cardBrand) && isCardNumberEqualsMax(cardNum, cardBrand) {
-            onCardNumberComplete(
-              Some(cardNum->clearSpaces),
-              dateExpire,
-              cardCvcInput.value->Option.getOr(""),
-            )
-          }
         }
       }
       let onChangeCvv = (
@@ -193,10 +182,6 @@ let make = (
           switch cvvOrZipRef.current->Nullable.toOption {
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.blur
-          }
-          let cardNum = cardNumberInput.value->Option.getOr("")
-          if cardValid(cardNum, cardBrand) && isCardNumberEqualsMax(cardNum, cardBrand) {
-            onCardNumberComplete(Some(cardNum->clearSpaces), expireDate, cvvData)
           }
         }
       }
@@ -232,7 +217,7 @@ let make = (
         | _ => ()
         }
         if isCardValid {
-          onCardNumberComplete(Some(pan->clearSpaces), expireDate, "")
+          onCardNumberComplete(Some(pan->clearSpaces))
         }
       }
 
@@ -442,7 +427,11 @@ let make = (
               | _ =>
                 switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
                 | (Some(error), true) => <ErrorText text={Some(error)} />
-                | _ => React.null
+                | _ =>
+                  switch eligibilityStatus {
+                  | DynamicFieldsContext.Denied(msg) => <ErrorText text={Some(msg)} />
+                  | _ => React.null
+                  }
                 }
               }
             }

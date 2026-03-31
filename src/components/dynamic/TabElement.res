@@ -45,8 +45,7 @@ let make = (
   let handlePress = _ => {
     switch eligibilityStatus {
     | DynamicFieldsContext.Denied(_) => ()
-    | DynamicFieldsContext.Loading => ()
-    | DynamicFieldsContext.Idle | DynamicFieldsContext.Allowed =>
+    | DynamicFieldsContext.Allowed =>
       if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
         processRequest(
           CommonUtils.mergeDict(initialValues, formData),
@@ -69,7 +68,7 @@ let make = (
 
   React.useEffect1(() => {
     if !isScreenFocus {
-      setEligibilityStatus(_ => DynamicFieldsContext.Idle)
+      setEligibilityStatus(_ => DynamicFieldsContext.Allowed)
     }
     None
   }, [isScreenFocus])
@@ -77,9 +76,8 @@ let make = (
   React.useEffect(() => {
     if isScreenFocus {
       let (loading, errorText) = switch eligibilityStatus {
-      | DynamicFieldsContext.Loading => (true, None)
-      | DynamicFieldsContext.Denied(msg) => (false, Some(msg))
-      | DynamicFieldsContext.Idle | DynamicFieldsContext.Allowed => (false, None)
+      | DynamicFieldsContext.Denied(_) => (false, None)
+      | DynamicFieldsContext.Allowed => (false, None)
       }
       let confirmButton = {
         GlobalConfirmButton.loading,

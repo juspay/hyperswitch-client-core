@@ -12,7 +12,7 @@ type walletDataRecord = {
 
 type sheetType = ButtonSheet | DynamicFieldsSheet
 
-type eligibilityStatus = Idle | Loading | Denied(string) | Allowed
+type eligibilityStatus = Denied(string) | Allowed
 
 type dynamicFieldsData = {
   formDataRef: option<React.ref<RescriptCore.Dict.t<JSON.t>>>,
@@ -50,7 +50,7 @@ type dynamicFieldsData = {
   setIsNicknameValid: bool => unit,
   eligibilityStatus: eligibilityStatus,
   setEligibilityStatus: (eligibilityStatus => eligibilityStatus) => unit,
-  onCardNumberComplete: (option<string>, string, string) => unit,
+  onCardNumberComplete: option<string> => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -88,9 +88,9 @@ let dynamicFieldsContext = React.createContext({
   setNickname: _ => (),
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
-  eligibilityStatus: Idle,
+  eligibilityStatus: Allowed,
   setEligibilityStatus: _ => (),
-  onCardNumberComplete: (_, _, _) => (),
+  onCardNumberComplete: _ => (),
 })
 
 module Provider = {
@@ -387,12 +387,12 @@ let make = (~children) => {
     setIsNicknameValid(_ => val)
   }, [setIsNicknameValid])
 
-  let (eligibilityStatus, setEligibilityStatus) = React.useState(_ => Idle)
+  let (eligibilityStatus, setEligibilityStatus) = React.useState(_ => Allowed)
   let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
 
-  let onCardNumberComplete = React.useCallback2((cardNumberOpt, expiry, cvc) => {
+  let onCardNumberComplete = React.useCallback2(cardNumberOpt => {
     switch cardNumberOpt {
-    | None => setEligibilityStatus(_ => Idle)
+    | None => setEligibilityStatus(_ => Allowed)
     | Some(cardNumber) =>
       let shouldCheck =
         accountPaymentMethodData
@@ -400,9 +400,7 @@ let make = (~children) => {
         ->Option.mapOr(false, action => action == "eligibility_check")
 
       if shouldCheck {
-        setEligibilityStatus(_ => Loading)
-
-        callEligibilityCheck(~cardNumber, ~expiry, ~cvc)
+        callEligibilityCheck(~cardNumber)
         ->Promise.then(json => {
           let nextActionJson =
             json
@@ -411,7 +409,7 @@ let make = (~children) => {
             ->Option.flatMap(d => d->Dict.get("next_action"))
           switch nextActionJson->Option.flatMap(JSON.Decode.string) {
           | Some("confirm") => setEligibilityStatus(_ => Allowed)
-          | Some(_) => setEligibilityStatus(_ => Idle)
+          | Some(_) => setEligibilityStatus(_ => Allowed)
           | None =>
             let denyMessage =
               nextActionJson
@@ -419,13 +417,13 @@ let make = (~children) => {
               ->Option.map(d => d->Utils.getString("message", eligibilityDeniedMessage))
             switch denyMessage {
             | Some(msg) => setEligibilityStatus(_ => Denied(msg))
-            | None => setEligibilityStatus(_ => Idle)
+            | None => setEligibilityStatus(_ => Denied(eligibilityDeniedMessage))
             }
           }
           Promise.resolve()
         })
         ->Promise.catch(_ => {
-          setEligibilityStatus(_ => Idle)
+          setEligibilityStatus(_ => Allowed)
           Promise.resolve()
         })
         ->ignore
