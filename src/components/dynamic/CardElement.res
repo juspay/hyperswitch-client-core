@@ -136,13 +136,7 @@ let make = (
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
-          let _timerId = setTimeout(
-            () =>
-              onCardNumberComplete(
-                Some(num->clearSpaces),
-              ),
-            0,
-          )
+          onCardNumberComplete(Some(num->clearSpaces))
         } else {
           onCardNumberComplete(None)
         }

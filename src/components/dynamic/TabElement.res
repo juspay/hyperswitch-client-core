@@ -75,16 +75,12 @@ let make = (
 
   React.useEffect(() => {
     if isScreenFocus {
-      let (loading, errorText) = switch eligibilityStatus {
-      | DynamicFieldsContext.Denied(_) => (false, None)
-      | DynamicFieldsContext.Allowed => (false, None)
-      }
       let confirmButton = {
-        GlobalConfirmButton.loading,
+        GlobalConfirmButton.loading: false,
         handlePress,
         payment_method_type: paymentMethodData.payment_method_type,
         payment_experience: paymentMethodData.payment_experience,
-        errorText,
+        errorText: None,
       }
       setConfirmButtonData(confirmButton)
     }
