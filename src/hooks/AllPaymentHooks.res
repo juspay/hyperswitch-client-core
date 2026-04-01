@@ -350,20 +350,19 @@ let useDeleteSavedPaymentMethod = () => {
 let useEligibilityCheckHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  (~cardNumber: string, ~paymentMethodSubtype: string) => {
+  (~cardNumber: string) => {
     switch WebKit.platform {
     | #next =>
       Promise.resolve(
         `{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn,
       )
     | _ =>
-      let paymentId = nativeProp.paymentMethodId
+      let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
       let uri = `${baseUrl}/payments/${paymentId}/eligibility`
       let body =
         [
           ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
           ("payment_method_type", "card"->JSON.Encode.string),
-          ("payment_method_subtype", paymentMethodSubtype->JSON.Encode.string),
           (
             "payment_method_data",
             [
