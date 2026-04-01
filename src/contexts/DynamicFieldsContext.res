@@ -400,7 +400,14 @@ let make = (~children) => {
         ->Option.mapOr(false, action => action == "eligibility_check")
 
       if shouldCheck {
-        callEligibilityCheck(~cardNumber)
+        let paymentMethodSubtype =
+          accountPaymentMethodData
+          ->Option.map(d => d.payment_methods)
+          ->Option.getOr([])
+          ->Array.find(pm => pm.payment_method === CARD)
+          ->Option.map(pm => pm.payment_method_type)
+          ->Option.getOr("")
+        callEligibilityCheck(~cardNumber, ~paymentMethodSubtype)
         ->Promise.then(json => {
           let nextActionJson =
             json
