@@ -96,24 +96,30 @@ let useAccountPaymentMethodModifier = () => {
               x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
             )
 
+          let wallets = nativeProp.configuration.wallets
+
           let walletExperience = switch paymentMethodData.payment_method_type_wallet {
           | APPLE_PAY =>
-            WebKit.platform !== #android &&
-            WebKit.platform !== #androidWebView &&
-            WebKit.platform !== #next &&
-            sessionObject.wallet_name !== NONE &&
-            exp->Option.isSome
-              ? Some()
-              : None
+            wallets.applePay == Never
+              ? None
+              : WebKit.platform !== #android &&
+                WebKit.platform !== #androidWebView &&
+                WebKit.platform !== #next &&
+                sessionObject.wallet_name !== NONE &&
+                exp->Option.isSome
+                  ? Some()
+                  : None
           | GOOGLE_PAY =>
-            WebKit.platform !== #ios &&
-            WebKit.platform !== #iosWebView &&
-            WebKit.platform !== #next &&
-            sessionObject.wallet_name !== NONE &&
-            sessionObject.connector !== "trustpay" &&
-            exp->Option.isSome
-              ? Some()
-              : None
+            wallets.googlePay == Never
+              ? None
+              : WebKit.platform !== #ios &&
+                WebKit.platform !== #iosWebView &&
+                WebKit.platform !== #next &&
+                sessionObject.wallet_name !== NONE &&
+                sessionObject.connector !== "trustpay" &&
+                exp->Option.isSome
+                  ? Some()
+                  : None
           | SAMSUNG_PAY =>
             exp->Option.isSome &&
             SamsungPayModule.isAvailable &&
@@ -225,6 +231,7 @@ let useAccountPaymentMethodModifier = () => {
 }
 
 let useAddWebPaymentButton = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, _, sessionTokenData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
@@ -251,9 +258,12 @@ let useAddWebPaymentButton = () => {
               x => x.payment_experience_type_decode === INVOKE_SDK_CLIENT,
             )
 
+          let wallets = nativeProp.configuration.wallets
+
           switch paymentMethodData.payment_method_type_wallet {
           | APPLE_PAY =>
             if (
+              wallets.applePay !== Never &&
               WebKit.platform !== #android &&
               WebKit.platform !== #androidWebView &&
               WebKit.platform !== #next &&
@@ -273,6 +283,7 @@ let useAddWebPaymentButton = () => {
             }
           | GOOGLE_PAY =>
             if (
+              wallets.googlePay !== Never &&
               WebKit.platform !== #ios &&
               WebKit.platform !== #iosWebView &&
               WebKit.platform !== #next &&

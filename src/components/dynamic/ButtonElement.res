@@ -17,7 +17,8 @@ let make = (
     googlePayButtonColor,
     applePayButtonColor,
     buttonBorderRadius,
-    primaryButtonHeight,
+    walletButtonHeight,
+    walletButtonBorderRadius,
     payNowButtonTextColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
@@ -339,9 +340,9 @@ let make = (
       | APPLE_PAY =>
         Some(
           <ApplePayButtonView
-            style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
-            cornerRadius=buttonBorderRadius
-            buttonType=nativeProp.configuration.appearance.applePay.buttonType
+            style={s({height: walletButtonHeight->dp, width: 100.->pct})}
+            cornerRadius={walletButtonBorderRadius}
+            buttonType=nativeProp.configuration.wallets.style.applePayType
             buttonStyle=applePayButtonColor
           />,
         )
@@ -349,10 +350,10 @@ let make = (
         Some(
           <GooglePayButtonView
             allowedPaymentMethods={WalletType.getAllowedPaymentMethods(~obj=sessionObject)}
-            style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
-            buttonType=nativeProp.configuration.appearance.googlePay.buttonType
+            style={s({height: walletButtonHeight->dp, width: 100.->pct})}
+            buttonType=nativeProp.configuration.wallets.style.googlePayType
             buttonStyle=googlePayButtonColor
-            borderRadius={buttonBorderRadius}
+            borderRadius={walletButtonBorderRadius}
           />,
         )
       | PAYPAL => Some(<GenericButtonElement buttonName width=80. color=paypalButonColor />)
