@@ -1,12 +1,13 @@
 type retrieve = Payment | List
 
-let defaultButtonElementArr = ["apple_pay", "google_pay", "paypal"]
+let defaultButtonElementArr = ["apple_pay", "google_pay", "paypal", "paze"]
 
 let priorityArr =
   [
     "apple_pay",
     "google_pay",
     "paypal",
+    "paze",
     "credit",
     "klarna",
     "affirm",

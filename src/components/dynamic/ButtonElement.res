@@ -178,6 +178,21 @@ let make = (
     }
   }
 
+  let confirmPaze = var => {
+    let status = handleWalletPayments(PAZE, var)
+
+    switch status {
+    | Success(walletData, billingAddress, shippingAddress) =>
+      processWalletData(walletData, ~billingAddress?, ~shippingAddress?)
+    | Cancelled | Simulated =>
+      setLoading(FillingDetails)
+      showAlert(~errorType="warning", ~message="Payment was Cancelled")
+    | Failed(error_message) =>
+      setLoading(FillingDetails)
+      showAlert(~errorType="error", ~message=error_message)
+    }
+  }
+
   let pressHandler = () => {
     let event = buildPaymentMethodStatusEvent(
       ~paymentMethod=paymentMethodData.payment_method_str,
@@ -297,6 +312,26 @@ let make = (
         (),
       )
     // SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
+    | PAZE =>
+      let pazeRequestObj =
+        [
+          ("client_id", sessionObject.client_id->JSON.Encode.string),
+          ("client_name", sessionObject.client_name->JSON.Encode.string),
+          ("client_profile_id", sessionObject.client_profile_id->JSON.Encode.string),
+          ("email_address", sessionObject.email_address->JSON.Encode.string),
+          ("transaction_amount", sessionObject.transaction_amount->JSON.Encode.string),
+          ("transaction_currency_code", sessionObject.transaction_currency_code->JSON.Encode.string),
+          ("session_id", sessionObject.session_id->JSON.Encode.string),
+          (
+            "publishable_key",
+            nativeProp.publishableKey->JSON.Encode.string,
+          ),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+        ->JSON.stringify
+
+      HyperModule.launchPaze(pazeRequestObj, confirmPaze)
     | _ => {
         setLoading(FillingDetails)
         processWalletData(Dict.make(), ~useIntentData=true)
@@ -308,6 +343,7 @@ let make = (
     switch paymentMethodData.payment_method_type_wallet {
     | APPLE_PAY => Window.registerEventListener("applePayData", confirmApplePay)
     | GOOGLE_PAY => Window.registerEventListener("googlePayData", confirmGPay)
+    | PAZE => Window.registerEventListener("pazeData", confirmPaze)
     | _ => ()
     }
     None
@@ -356,6 +392,7 @@ let make = (
           />,
         )
       | PAYPAL => Some(<GenericButtonElement buttonName width=80. color=paypalButonColor />)
+      | PAZE => Some(<GenericButtonElement buttonName width=55. color="#2B63FF" />)
       // | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)
       // | PAY_SAFE_CARD => Some(<GenericButtonElement buttonName width=92. color="#008ac9" />)
       // | KLARNA => Some(<GenericButtonElement buttonName width=92. height=32. color="#0B051D" />)

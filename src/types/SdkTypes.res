@@ -2,7 +2,7 @@ open Utils
 
 type fontFamilyTypes = DefaultIOS | DefaultAndroid | CustomFont(string) | DefaultWeb
 
-type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | NONE
+type payment_method_type_wallet = GOOGLE_PAY | APPLE_PAY | PAYPAL | SAMSUNG_PAY | PAZE | NONE
 
 let defaultCountry = "US"
 
@@ -12,6 +12,7 @@ let walletNameMapper = str => {
   | "apple_pay" => "Apple Pay"
   | "paypal" => "Paypal"
   | "samsung_pay" => "Samsung Pay"
+  | "paze" => "Paze"
   | _ => ""
   }
 }
@@ -22,6 +23,7 @@ let walletNameToTypeMapper = str => {
   | "Apple Pay" => APPLE_PAY
   | "Paypal" => PAYPAL
   | "Samsung Pay" => SAMSUNG_PAY
+  | "Paze" => PAZE
   | _ => NONE
   }
 }
@@ -255,6 +257,7 @@ let widgetToStrMapper = str => {
   switch str {
   | GOOGLE_PAY => "GOOGLE_PAY"
   | PAYPAL => "PAYPAL"
+  | PAZE => "PAZE"
   | _ => ""
   }
 }
@@ -265,6 +268,7 @@ let walletTypeToStrMapper = walletType => {
   | APPLE_PAY => "apple_pay"
   | PAYPAL => "paypal"
   | SAMSUNG_PAY => "samsung_pay"
+  | PAZE => "paze"
   | _ => ""
   }
 }

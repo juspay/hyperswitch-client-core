@@ -19,6 +19,7 @@ type useWebKit = {
   sdkInitialised: string => unit,
   launchApplePay: string => unit,
   launchGPay: string => unit,
+  launchPaze: string => unit,
 }
 
 let useWebKit = () => {
@@ -88,5 +89,24 @@ let useWebKit = () => {
     | _ => Window.postMessageToParent(str, "*")
     }
   }
-  {exitPaymentSheet, sdkInitialised, launchApplePay, launchGPay}
+  let launchPaze = str => {
+    switch platform {
+    | #androidWebView =>
+      switch Window.androidInterface->Nullable.toOption {
+      | Some(interface) => interface.postMessage(`{"launchPaze": ${str}}`)
+      | None => ()
+      }
+    | #iosWebView =>
+      switch messageHandlers {
+      | Some(messageHandlers) =>
+        switch messageHandlers.launchApplePay {
+        | Some(_) => Window.postMessageToParent(str, "*")
+        | None => ()
+        }
+      | None => Window.postMessageToParent(str, "*")
+      }
+    | _ => Window.postMessageToParent(str, "*")
+    }
+  }
+  {exitPaymentSheet, sdkInitialised, launchApplePay, launchGPay, launchPaze}
 }
