@@ -15,10 +15,12 @@ let make = (
   ~gap=10.,
   ~coloredText=false,
   ~size=?,
+  ~testID=?,
 ) => {
   let {linkColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
   let isLink = textType === TextWrapper.LinkText || textType === LinkTextBold
   <CustomPressable
+    ?testID
     disabled
     style={s({flexDirection: #row, alignItems: #center})}
     onPress={_ => setIsSelected(!isSelected)}>

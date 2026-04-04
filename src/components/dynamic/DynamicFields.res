@@ -53,6 +53,7 @@ let make = (
         <ReactNative.View
           style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
           <ClickableTextElement
+            testID={TestUtils.saveCardCheckboxTestId}
             disabled={false}
             initialIconName="checkboxClicked"
             updateIconName=Some("checkboxNotClicked")
