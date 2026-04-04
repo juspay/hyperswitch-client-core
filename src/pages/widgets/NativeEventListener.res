@@ -18,12 +18,18 @@ let sendReadyMessage = paymentMethodType => {
   )
 }
 
+// Hook to send ready event when widget is mounted and ready
+let useSendReadyEvent = (~paymentMethodType: string) => {
+  React.useEffect0(() => {
+    sendReadyMessage(paymentMethodType)
+    None
+  })
+}
+
 let setupPaymentConfirmListener = (
   ~onConfirm: (string, string) => unit, // clientSecret, publishableKey
   ~paymentMethodType: string="card",
 ) => {
-  sendReadyMessage(paymentMethodType)
-
   setupNativeEventListener("confirm", var => {
     let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
     onConfirm(responseFromJava.clientSecret, responseFromJava.publishableKey)
@@ -40,9 +46,6 @@ let setupWidgetEventListener = (
   ~onWidgetEvent: widgetResponse => unit,
   ~walletType: SdkTypes.payment_method_type_wallet,
 ) => {
-  let formattedType = walletType->SdkTypes.widgetToStrMapper->String.toLowerCase
-  sendReadyMessage(formattedType)
-
   setupNativeEventListener("widget", var => {
     let responseFromJava = {
       let mapped = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -60,7 +63,6 @@ let setupWidgetEventListener = (
 let setupExpressCheckoutListener = (
   ~onExpressCheckoutConfirm: PaymentConfirmTypes.responseFromJava => unit,
 ) => {
-  sendReadyMessage("expressCheckout")
   setupNativeEventListener("confirmEC", var => {
     let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
     onExpressCheckoutConfirm(responseFromJava)

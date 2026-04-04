@@ -3,6 +3,9 @@ open Style
 
 @react.component
 let make = () => {
+  // Send ready event when widget is mounted and ready
+  NativeEventListener.useSendReadyEvent(~paymentMethodType="card")
+
   // let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   // let (_reset, setReset) = React.useState(_ => false)
   // let (isCardValuesValid, _setIsCardValuesValid) = React.useState(_ => false)
