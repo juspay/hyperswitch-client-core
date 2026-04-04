@@ -113,6 +113,7 @@ let make = () => {
         <ParentPaymentSheet />
       | HostedCheckout => <HostedCheckout />
       | CardWidget => <CardWidget />
+      | CvcWidget => <CvcWidget />
       | CustomWidget(walletType) => <CustomWidget walletType />
       | ExpressCheckoutWidget => <ExpressCheckoutWidget />
       | Headless

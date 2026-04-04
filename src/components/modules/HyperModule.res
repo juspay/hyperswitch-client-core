@@ -181,3 +181,17 @@ let launchWidgetPaymentSheet = (requestObj: string, callback) => {
 let updateWidgetHeight = (height: int) => {
   hyperModule.updateWidgetHeight(height)
 }
+
+let sendCvcResponse = (~cvc: string, ~isValid: bool, ~errorMessage: string="") => {
+  let response =
+    [
+      ("cvcWidgetConfirmResponse", true->JSON.Encode.bool),
+      ("cvc", cvc->JSON.Encode.string),
+      ("isValid", isValid->JSON.Encode.bool),
+      ("errorMessage", errorMessage->JSON.Encode.string),
+    ]
+    ->Dict.fromArray
+    ->JSON.Encode.object
+    ->JSON.stringify
+  sendMessageToNative(response)
+}
