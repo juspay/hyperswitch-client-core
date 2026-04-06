@@ -42,6 +42,7 @@ module CVVComponent = {
           width={100.->dp}
           height=40.
           isValid={isCvcValid}
+          name={TestUtils.savedCardCvcInputTestId}
           onFocus={() => {
             setIsCvcFocus(_ => true)
           }}
