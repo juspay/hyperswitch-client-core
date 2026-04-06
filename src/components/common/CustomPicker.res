@@ -20,6 +20,8 @@ let make = (
   ~onBlur,
   ~animate=?,
   ~accessible=?,
+  ~accessibilityLabel=?,
+  ~accessibilityHint=?,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -48,8 +50,26 @@ let make = (
     setSearchInput(_ => None)
     None
   }, [isModalVisible])
+  let selectedLabel =
+    items
+    ->Array.find(x => x.value == value->Option.getOr("") || x.label == value->Option.getOr(""))
+    ->Option.map(x => x.label)
+    ->Option.getOr("")
+  let triggerLabel = {
+    let base = accessibilityLabel->Option.getOr(placeholderText)
+    selectedLabel != "" ? base ++ ", " ++ selectedLabel : base
+  }
+
   <View ?style>
-    <CustomPressable disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+    <CustomPressable
+      disabled
+      accessible={accessible->Option.getOr(true)}
+      accessibilityRole=#combobox
+      accessibilityLabel=triggerLabel
+      ?accessibilityHint
+      accessibilityState={expanded: isModalVisible}
+      onPress={_ => setIsModalVisible(prev => !prev)}
+    >
       <CustomInput
         state={switch items->Array.find(x =>
           x.value == value->Option.getOr("") || x.label == value->Option.getOr("")
@@ -71,7 +91,7 @@ let make = (
         editable=false
         textColor=component.color
         iconRight=CustomIcon(
-          <CustomPressable disabled onPress={_ => setIsModalVisible(prev => !prev)}>
+          <CustomPressable disabled accessible={false} onPress={_ => setIsModalVisible(prev => !prev)}>
             <ChevronIcon width=13. height=13. fill=iconColor />
           </CustomPressable>,
         )
@@ -79,13 +99,14 @@ let make = (
         onBlur
         onFocus
         ?animate
-        ?accessible
+        accessible={false}
       />
     </CustomPressable>
     <Modal
       visible={isModalVisible}
       transparent={true}
       animationType=#slide
+      onRequestClose={() => setIsModalVisible(_ => false)}
       onShow={() => {
         setTimeout(() => {
           switch searchInputRef.current->Nullable.toOption {
@@ -103,6 +124,7 @@ let make = (
           transparentBG,
         ])}>
         <View
+          accessibilityViewIsModal={true}
           style={array([
             s({
               flex: 1.,
@@ -128,6 +150,9 @@ let make = (
             })}>
             <TextWrapper text=placeholderText textType={HeadingBold} />
             <CustomPressable
+              accessible={true}
+              accessibilityRole=#button
+              accessibilityLabel={"Close " ++ placeholderText ++ " list"}
               onPress={_ => setIsModalVisible(prev => !prev)} style={s({padding: 14.->dp})}>
               <Icon name="close" width=20. height=20. fill=iconColor />
             </CustomPressable>
@@ -149,7 +174,8 @@ let make = (
             borderBottomWidth=borderWidth
             borderLeftWidth=borderWidth
             borderRightWidth=borderWidth
-            ?accessible
+            accessible={true}
+            accessibilityLabel={"Search " ++ placeholderText}
           />
           <Space />
           {isLoading
@@ -177,9 +203,16 @@ let make = (
                 showsHorizontalScrollIndicator=false
                 keyExtractor={(_, i) => i->Int.toString}
                 horizontal=false
-                renderItem={({item, index}) =>
+                renderItem={({item, index}) => {
+                  let isSelected =
+                    item.value == value->Option.getOr("") ||
+                      item.label == value->Option.getOr("")
                   <CustomPressable
                     key={index->Int.toString}
+                    accessible={true}
+                    accessibilityRole=#button
+                    accessibilityLabel={item.label}
+                    accessibilityState={selected: isSelected}
                     style={s({height: 32.->dp, margin: 1.->dp, flexDirection: #row, gap: 6.->dp})}
                     onPress={_ => {
                       setValue(_ => Some(item.value))
@@ -196,7 +229,8 @@ let make = (
                           }}
                           <TextWrapper text=item.label textType=ModalText />
                         </>}
-                  </CustomPressable>}
+                  </CustomPressable>
+                }}
               />}
         </View>
       </View>

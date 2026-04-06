@@ -203,6 +203,7 @@ module TabBarItemInternal = {
       accessible
       accessibilityRole=#tab
       accessibilityLabel=?ariaLabel
+      accessibilityState={selected: isFocused}
       unstable_pressDelay={0}
       ?onLayout
       onPress=handlePress

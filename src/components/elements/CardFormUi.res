@@ -16,6 +16,7 @@ let make = (
   ~isExpireDataValid,
   ~isCvvValid,
   ~isZipValid,
+  ~accessible=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let buttomFlex = AnimatedValue.useAnimatedValue(1.)
@@ -132,6 +133,9 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.cardNumberLabel ++ ", " ++ localeObject.requiredText}
+            accessibilityHint=localeObject.accessibilityHintCardNumber
+            ?accessible
           />
         </Animated.View>
         <Animated.View style={s({flex: {expireInputFlex->Animated.StyleProp.float}})}>
@@ -167,6 +171,9 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.validThruText ++ ", " ++ localeObject.requiredText}
+            accessibilityHint=localeObject.accessibilityHintCardExpiry
+            ?accessible
           />
         </Animated.View>
         <Animated.View style={s({flex: {cvvInputFlex->Animated.StyleProp.float}})}>
@@ -204,6 +211,9 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.cvcTextLabel ++ ", " ++ localeObject.requiredText}
+            accessibilityHint=localeObject.accessibilityHintCvc
+            ?accessible
           />
         </Animated.View>
         {isZipAvailable
@@ -240,6 +250,9 @@ let make = (
                     }
                   }
                 }}
+                accessibilityLabel={localeObject.postalCodeLabel ++ ", " ++ localeObject.requiredText}
+                accessibilityHint=localeObject.accessibilityHintBillingZip
+                ?accessible
               />
             </Animated.View>
           : React.null}
