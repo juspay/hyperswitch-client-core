@@ -17,17 +17,17 @@ let widgetActionTypeFromString = (str: string): option<widgetActionType> =>
 // Widget action data structure received from native
 type widgetActionData = {
   actionType: widgetActionType,
-  widgetId: string,
+  rootTag: int,
 }
 
 let widgetActionDataMapper = (dict: Dict.t<JSON.t>): option<widgetActionData> => {
   let actionTypeStr = dict->getString("actionType", "")
-  let widgetId = dict->getString("widgetId", "")
+  let rootTag = dict->getInt("rootTag", -1);
 
   actionTypeStr
   ->widgetActionTypeFromString
   ->Option.map(actionType => {
     actionType,
-    widgetId,
+    rootTag,
   })
 }

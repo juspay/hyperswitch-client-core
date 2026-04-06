@@ -7,7 +7,7 @@ let useNotifyValidationFailure = () => {
     switch nativeProp.sdkState {
     | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet =>
       HyperModule.hyperModule.notifyWidgetPaymentResult(
-        nativeProp.widgetId,
+        nativeProp.rootTag,
         PaymentConfirmTypes.formValidationError->HyperModule.stringifiedResStatus,
       )
     | _ => ()
@@ -15,9 +15,7 @@ let useNotifyValidationFailure = () => {
   }
 }
 
-let useWidgetActions = (
-  ~confirmButtonData: GlobalConfirmButton.confirmButtonData,
-) => {
+let useWidgetActions = (~confirmButtonData: GlobalConfirmButton.confirmButtonData) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   React.useEffect2(() => {
@@ -28,15 +26,16 @@ let useWidgetActions = (
     }
 
     if shouldSetupListener {
-      let unsubscribe = NativeEventListener.setupWidgetActionListener(
-        ~onWidgetAction=(actionData: NativeModulesType.widgetActionData) => {
-            switch actionData.actionType {
-            | ConfirmPayment =>
-              // Trigger the confirm button press
-              confirmButtonData.handlePress(Obj.magic(()))
-            }
-        },
-      )
+      let unsubscribe = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
+        actionData: NativeModulesType.widgetActionData,
+      ) => {
+        switch actionData.actionType {
+        | ConfirmPayment =>
+          if actionData.rootTag === nativeProp.rootTag {
+            confirmButtonData.handlePress()
+          }
+        }
+      })
 
       Some(unsubscribe)
     } else {

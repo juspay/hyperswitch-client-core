@@ -10,9 +10,9 @@ type hyperModule = {
   exitCardForm: string => unit,
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   onAddPaymentMethod: string => unit,
-  exitWidgetPaymentsheet: (int, string, string, bool) => unit,
+  exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
-  notifyWidgetPaymentResult: (string, string) => unit,
+  notifyWidgetPaymentResult: (int, string) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -47,7 +47,6 @@ let hyperModule = {
   ) => ()),
   onAddPaymentMethod: getFunctionFromModule(hyperModuleDict, "onAddPaymentMethod", _ => ()),
   exitWidgetPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitWidgetPaymentsheet", (
-    _,
     _,
     _,
     _,
@@ -108,7 +107,6 @@ let useExitPaymentsheet = () => {
           | WidgetPaymentSheet | WidgetButtonSheet =>
             hyperModule.exitWidgetPaymentsheet(
               nativeProp.rootTag,
-              nativeProp.widgetId,
               apiResStatus->stringifiedResStatus,
               reset,
             )
@@ -143,7 +141,6 @@ let useExitPaymentsheet = () => {
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
       ? hyperModule.exitWidgetPaymentsheet(
         rootTag,
-        nativeProp.widgetId,
         apiResStatus->stringifiedResStatus,
         reset,
       )
