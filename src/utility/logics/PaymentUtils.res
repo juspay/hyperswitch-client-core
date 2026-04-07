@@ -103,31 +103,48 @@ let generateSavedCardConfirmBody = (
   ~screen_width=?,
   ~billing=?,
 ): PaymentConfirmTypes.redirectType => {
-  client_secret: nativeProp.clientSecret,
-  payment_method: "card",
-  payment_token,
-  card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
-  payment_method_data: ?billing->Option.map(address =>
-    [("billing", address->Utils.getJsonObjectFromRecord)]
-    ->Dict.fromArray
-    ->JSON.Encode.object
-  ),
-  payment_type: ?payment_type_str,
-  browser_info: {
-    user_agent: ?nativeProp.hyperParams.userAgent,
-    accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
-    language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
-    color_depth: 32,
-    screen_height: ?screen_height->Option.map(Int.fromFloat),
-    screen_width: ?screen_width->Option.map(Int.fromFloat),
-    time_zone: Date.make()->Date.getTimezoneOffset,
-    java_enabled: true,
-    java_script_enabled: true,
-    device_model: ?nativeProp.hyperParams.device_model,
-    os_type: ?nativeProp.hyperParams.os_type,
-    os_version: ?nativeProp.hyperParams.os_version,
-  },
+  let isMandate =
+    payment_type_str === Some("new_mandate") || payment_type_str === Some("setup_mandate")
+  {
+    client_secret: nativeProp.clientSecret,
+    payment_method: "card",
+    payment_token,
+    card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
+    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+    payment_method_data: ?billing->Option.map(address =>
+      [("billing", address->Utils.getJsonObjectFromRecord)]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    ),
+    payment_type: ?payment_type_str,
+    customer_acceptance: ?(
+      isMandate
+        ? Some({
+            {
+              acceptance_type: "online",
+              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+              online: {
+                user_agent: ?nativeProp.hyperParams.userAgent,
+              },
+            }
+          })
+        : None
+    ),
+    browser_info: {
+      user_agent: ?nativeProp.hyperParams.userAgent,
+      accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+      language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
+      color_depth: 32,
+      screen_height: ?screen_height->Option.map(Int.fromFloat),
+      screen_width: ?screen_width->Option.map(Int.fromFloat),
+      time_zone: Date.make()->Date.getTimezoneOffset,
+      java_enabled: true,
+      java_script_enabled: true,
+      device_model: ?nativeProp.hyperParams.device_model,
+      os_type: ?nativeProp.hyperParams.os_type,
+      os_version: ?nativeProp.hyperParams.os_version,
+    },
+  }
 }
 let generateWalletConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
