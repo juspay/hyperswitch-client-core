@@ -22,7 +22,7 @@ type customer_acceptance = {
 type mandate_data = {customer_acceptance: customer_acceptance}
 
 type redirectType = {
-  client_secret: string,
+  client_secret?: string,
   return_url?: string,
   email?: string,
   payment_method?: string,

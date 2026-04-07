@@ -30,10 +30,19 @@ let useErrorWarningValidationOnLoad = () => {
 
   let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
 
-  let isClientSecretValid = RegExp.test(
-    `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
-    nativeProp.clientSecret,
-  )
+  let isClientSecretValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(sdkAuth) => {
+      let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
+      sdkAuthData.publishableKey
+      ->Option.map(pk => pk === nativeProp.publishableKey)
+      ->Option.getOr(false)
+    }
+  | None =>
+    RegExp.test(
+      `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
+      nativeProp.clientSecret,
+    )
+  }
   let showErrorOrWarning = useShowErrorOrWarning()
   () => {
     if !isPublishableKeyValid {

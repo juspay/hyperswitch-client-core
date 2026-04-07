@@ -34,18 +34,31 @@ let useRetrieveHook = () => {
     switch (WebKit.platform, type_) {
     | (#next, Types.List) => Promise.resolve(Next.listRes)
     | (_, type_) =>
-      let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
+      let headers = Utils.getHeader(
+        ~apiKey=publishableKey,
+        ~appId=nativeProp.hyperParams.appId,
+        ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+        (),
+      )
       let (uri, eventName: LoggerTypes.eventName) = switch type_ {
       | Payment => (
-          `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
-            ->Array.get(0)
-            ->Option.getOr("")}?force_sync=${isForceSync
-              ? "true"
-              : "false"}&client_secret=${clientSecret}`,
+          switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+          | Some(_) =>
+            `${baseUrl}/payments/${nativeProp.paymentMethodId}?force_sync=${isForceSync
+                ? "true"
+                : "false"}`
+          | None =>
+            `${baseUrl}/payments/${nativeProp.paymentMethodId}?force_sync=${isForceSync
+                ? "true"
+                : "false"}&client_secret=${clientSecret}`
+          },
           RETRIEVE_CALL,
         )
       | List => (
-          `${baseUrl}/account/payment_methods?client_secret=${clientSecret}`,
+          switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+          | Some(_) => `${baseUrl}/account/payment_methods`
+          | None => `${baseUrl}/account/payment_methods?client_secret=${clientSecret}`
+          },
           PAYMENT_METHODS_CALL,
         )
       }
@@ -63,12 +76,22 @@ let usePaymentMethodHook = (~customerLevel=false) => {
     switch WebKit.platform {
     | #next => Promise.resolve(Next.clistRes)
     | _ =>
-      APIUtils.fetchApiWrapper(
-        ~uri=`${baseUrl}/${customerLevel
+      let uri = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+      | Some(_) => `${baseUrl}/${customerLevel ? "customers" : "account"}/payment_methods`
+      | None =>
+        `${baseUrl}/${customerLevel
             ? "customers"
-            : "account"}/payment_methods?client_secret=${nativeProp.clientSecret}`,
+            : "account"}/payment_methods?client_secret=${nativeProp.clientSecret}`
+      }
+      APIUtils.fetchApiWrapper(
+        ~uri,
         ~method=#GET,
-        ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+        ~headers=Utils.getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
+        ),
         ~eventName={customerLevel ? CUSTOMER_PAYMENT_METHODS_CALL : PAYMENT_METHODS_CALL},
         ~apiLogWrapper,
       )
@@ -88,10 +111,17 @@ let useSessionTokenHook = () => {
         ~uri=`${baseUrl}/payments/session_tokens`,
         ~body=PaymentUtils.generateSessionsTokenBody(
           ~clientSecret=nativeProp.clientSecret,
+          ~paymentId=nativeProp.paymentMethodId,
+          ~sdkAuthorization=?nativeProp.sdkAuthorization,
           ~wallet,
         ),
         ~method=#POST,
-        ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+        ~headers=Utils.getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
+        ),
         ~eventName=LoggerTypes.SESSIONS_CALL,
         ~apiLogWrapper,
       )
@@ -174,9 +204,14 @@ let useRedirectHook = () => {
     ~isCardPayment=false,
     (),
   ) => {
-    let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+    let uriPram = nativeProp.paymentMethodId
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
-    let headers = Utils.getHeader(publishableKey, nativeProp.hyperParams.appId)
+    let headers = Utils.getHeader(
+      ~apiKey=publishableKey,
+      ~appId=nativeProp.hyperParams.appId,
+      ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+      (),
+    )
 
     let handleInvokeThreeDSFlow = (~nextAction) => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
@@ -186,6 +221,7 @@ let useRedirectHook = () => {
         ~netceteraSDKApiKey,
         ~clientSecret,
         ~publishableKey,
+        ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
         ~nextAction,
         ~retrievePayment,
         ~sdkEnvironment=nativeProp.env,
@@ -302,10 +338,19 @@ let useGetSavedPMHook = () => {
     switch WebKit.platform {
     | #next => Promise.resolve(Next.clistRes)
     | _ =>
+      let uri = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+      | Some(_) => `${baseUrl}/customers/payment_methods`
+      | None => `${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
+      }
       APIUtils.fetchApiWrapper(
-        ~uri=`${baseUrl}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`,
+        ~uri,
         ~method=#GET,
-        ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+        ~headers=Utils.getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
+        ),
         ~eventName=LoggerTypes.CUSTOMER_PAYMENT_METHODS_CALL,
         ~apiLogWrapper,
       )
@@ -335,8 +380,10 @@ let useDeleteSavedPaymentMethod = () => {
         ~uri,
         ~method=#DELETE,
         ~headers=Utils.getHeader(
-          nativeProp.ephemeralKey->Option.getOr(""),
-          nativeProp.hyperParams.appId,
+          ~apiKey=nativeProp.ephemeralKey->Option.getOr(""),
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
         ),
         ~eventName=LoggerTypes.DELETE_PAYMENT_METHODS_CALL,
         ~apiLogWrapper,
@@ -359,7 +406,12 @@ let useSavePaymentMethod = () => {
     APIUtils.fetchApiWrapper(
       ~uri,
       ~method=#POST,
-      ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+      ~headers=Utils.getHeader(
+        ~apiKey=nativeProp.publishableKey,
+        ~appId=nativeProp.hyperParams.appId,
+        ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+        (),
+      ),
       ~eventName=LoggerTypes.ADD_PAYMENT_METHOD_CALL,
       ~body=body->JSON.stringifyAny->Option.getOr(""),
       ~apiLogWrapper,

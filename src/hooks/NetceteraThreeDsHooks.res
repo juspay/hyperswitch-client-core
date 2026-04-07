@@ -55,6 +55,7 @@ let useExternalThreeDs = () => {
     ~netceteraSDKApiKey,
     ~clientSecret,
     ~publishableKey,
+    ~sdkAuthorization="",
     ~nextAction,
     ~sdkEnvironment: GlobalVars.envType,
     ~retrievePayment: (Types.retrieve, string, string, ~isForceSync: bool=?) => promise<Js.Json.t>,
@@ -107,7 +108,7 @@ let useExternalThreeDs = () => {
           )
         }
 
-        let headers = getAuthCallHeaders(publishableKey)
+        let headers = getAuthCallHeaders(~publishableKey, ~sdkAuthorization, ())
         APIUtils.fetchApi(~uri, ~headers, ~method_=#GET)
         ->Promise.then(data => {
           let statusCode = data->Fetch.Response.status->string_of_int
@@ -226,7 +227,10 @@ let useExternalThreeDs = () => {
         ~data=JSON.Encode.null,
         (),
       )
-      let headers = [("Content-Type", "application/json")]->Dict.fromArray
+      let headers = switch sdkAuthorization->String.length > 0 {
+      | true => [("Content-Type", "application/json"), ("Authorization", sdkAuthorization)]->Dict.fromArray
+      | false => [("Content-Type", "application/json")]->Dict.fromArray
+      }
       APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=#POST)
       ->Promise.then(async data => {
         setLoading(ProcessingPayments)
@@ -323,8 +327,8 @@ let useExternalThreeDs = () => {
 
     let hsThreeDsAuthCall = (aReqParams: aReqParams) => {
       let uri = threeDsData.threeDsAuthenticationUrl
-      let bodyStr = generateAuthenticationCallBody(clientSecret, aReqParams)
-      let headers = getAuthCallHeaders(publishableKey)
+      let bodyStr = generateAuthenticationCallBody(clientSecret, ~sdkAuthorization, aReqParams)
+      let headers = getAuthCallHeaders(~publishableKey, ~sdkAuthorization, ())
 
       apiLogWrapper(
         ~logType=INFO,
