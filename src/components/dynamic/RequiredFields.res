@@ -7,11 +7,13 @@ let make = (
   ~initialValues,
   ~setFormData,
   ~setIsFormValid,
+  ~setIsPristine=?,
   ~setFormMethods,
   ~isCardPayment,
   ~enabledCardSchemes,
   ~accessible=?,
   ~onSubmit=?,
+  ~isFocused: bool=false,
 ) => {
   let categorizedFields = React.useMemo1(() => {
     fields->Array.reduce(([], [], [], [], [], [], [], []), (
@@ -109,6 +111,7 @@ let make = (
       ReactFinalForm.useFormStateHandler(
         ~onFormChange=setFormData,
         ~onValidationChange=setIsFormValid,
+        ~onPristineChange=?setIsPristine,
         ~formProps,
       )
       React.useEffect0(() => {
@@ -117,6 +120,7 @@ let make = (
       })
 
       <View>
+        <AddressEmitterInsideForm isFocused />
         {elements
         ->Array.mapWithIndex((element, index) =>
           <ParentElement
