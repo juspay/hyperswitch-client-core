@@ -34,6 +34,7 @@ let make = (
   ~formatValue,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
+  ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   switch (
     fields->Array.get(0),
@@ -50,7 +51,7 @@ let make = (
       Some(cardNetworkConfig),
     ) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-      let {onCardNumberComplete, eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+      let {eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
       let emitter = PaymentEvents.usePaymentEventEmitter()
       let (expireDate, setExpireDate) = React.useState(() => "")
 
@@ -137,9 +138,6 @@ let make = (
           | None => ()
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
-          onCardNumberComplete(Some(num->clearSpaces))
-        } else {
-          onCardNumberComplete(None)
         }
       }
       let onChangeCardExpire = (
@@ -193,6 +191,17 @@ let make = (
         None
       }, (cardNumber, expireDate, cvc, brand))
 
+      React.useEffect1(() => {
+        let isValid = cardValid(cardNumber, brand)
+        let isMaxLength = isCardNumberEqualsMax(cardNumber, brand)
+        if isValid && isMaxLength {
+          checkEligibility(Some(cardNumber->clearSpaces))
+        } else if !isValid && eligibilityStatus !== DynamicFieldsContext.Allowed {
+          checkEligibility(None)
+        }
+        None
+      }, [cardNumber])
+
       let onScanCard = (
         pan,
         expiry,
@@ -222,9 +231,6 @@ let make = (
           | Some(ref) => ref->ReactNative.TextInputElement.focus
           }
         | _ => ()
-        }
-        if isCardValid {
-          onCardNumberComplete(Some(pan->clearSpaces))
         }
       }
 
@@ -436,7 +442,8 @@ let make = (
                 | (Some(error), true) => <ErrorText text={Some(error)} />
                 | _ =>
                   switch eligibilityStatus {
-                  | DynamicFieldsContext.Denied(msg) => <ErrorText text={Some(msg)} />
+                  | DynamicFieldsContext.Denied => <ErrorText text={Some(localeObject.cardNotEligibleText)} />
+                  | DynamicFieldsContext.Pending => React.null
                   | _ => React.null
                   }
                 }

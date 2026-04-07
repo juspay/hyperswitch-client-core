@@ -16,7 +16,59 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let {nickname, isNicknameSelected} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {nickname, isNicknameSelected, setEligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+
+  let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
+
+  let checkEligibility = (cardNumberOpt: option<string>) => {
+    switch cardNumberOpt {
+    | None => setEligibilityStatus(_ => Allowed)
+    | Some(cardNumber) =>
+      let shouldCheck =
+        accountPaymentMethodData
+        ->Option.flatMap(d => d.sdk_next_action)
+        ->Option.mapOr(false, action => action == "eligibility_check")
+
+      if shouldCheck {
+        setEligibilityStatus(_ => Pending)
+        let pmData =
+          [
+            (
+              paymentMethodData.payment_method_str,
+              [("card_number", cardNumber->JSON.Encode.string)]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]
+          ->Dict.fromArray
+          ->JSON.Encode.object
+        callEligibilityCheck(
+          ~paymentMethodType=paymentMethodData.payment_method_str,
+          ~paymentMethodData=pmData,
+        )
+        ->Promise.then(json => {
+          let nextActionJson =
+            json
+            ->Utils.getDictFromJson
+            ->Utils.getOptionalObj("sdk_next_action")
+            ->Option.flatMap(d => d->Dict.get("next_action"))
+          switch nextActionJson->Option.flatMap(JSON.Decode.string) {
+          | Some("confirm") => setEligibilityStatus(_ => Allowed)
+          | Some(_) => setEligibilityStatus(_ => Denied)
+          | None => setEligibilityStatus(_ => Denied)
+          }
+          Promise.resolve()
+        })
+        ->Promise.catch(_ => {
+          setEligibilityStatus(_ => Allowed)
+          Promise.resolve()
+        })
+        ->ignore
+      } else {
+        setEligibilityStatus(_ => Allowed)
+      }
+    }
+  }
 
   let processRequest = (
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
@@ -145,7 +197,7 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     {switch methodType {
     | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
-    | TAB => <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonData />
+    | TAB => <TabElement paymentMethodData processRequest checkEligibility isScreenFocus setConfirmButtonData />
     | _ => React.null
     }}
   </ErrorBoundary>

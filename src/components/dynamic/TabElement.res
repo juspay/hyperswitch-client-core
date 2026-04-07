@@ -3,6 +3,7 @@ let make = (
   ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
   ~isScreenFocus,
   ~processRequest,
+  ~checkEligibility: option<string> => unit,
   ~setConfirmButtonData,
 ) => {
   let {
@@ -49,7 +50,7 @@ let make = (
 
   let handlePress = _ => {
     switch eligibilityStatus {
-    | DynamicFieldsContext.Denied(_) => ()
+    | DynamicFieldsContext.Denied | DynamicFieldsContext.Pending => ()
     | DynamicFieldsContext.Allowed =>
       if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
         processRequest(
@@ -120,5 +121,6 @@ let make = (
     enabledCardSchemes
     accessible
     isFocused=isScreenFocus
+    checkEligibility
   />
 }
