@@ -394,6 +394,38 @@ let useDeleteSavedPaymentMethod = () => {
   }
 }
 
+let useEligibilityCheckHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  (~paymentMethodType: string, ~paymentMethodData: JSON.t) => {
+    switch WebKit.platform {
+    | #next =>
+      Promise.resolve(
+        `{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn,
+      )
+    | _ =>
+      let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+      let uri = `${baseUrl}/payments/${paymentId}/eligibility`
+      let body =
+        [
+          ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+          ("payment_method_type", paymentMethodType->JSON.Encode.string),
+          ("payment_method_data", paymentMethodData),
+        ]
+        ->Dict.fromArray
+        ->JSON.Encode.object
+        ->JSON.stringify
+      APIUtils.fetchApi(
+        ~uri,
+        ~bodyStr=body,
+        ~method_=#POST,
+        ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+      )
+      ->Promise.then(response => response->Fetch.Response.json)
+    }
+  }
+}
+
 let useSavePaymentMethod = () => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()

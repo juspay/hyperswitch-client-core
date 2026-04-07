@@ -15,10 +15,11 @@ let make = (
   ~isCardPayment,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
+  ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   switch element {
   | CARD(fields) if fields->Array.length > 0 =>
-    <CardElement fields createFieldValidator formatValue enabledCardSchemes ?accessible />
+    <CardElement fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility />
   | CRYPTO(fields) if fields->Array.length > 0 =>
     <CryptoElement fields createFieldValidator formatValue ?accessible />
   | EMAIL(fields) if fields->Array.length > 0 =>

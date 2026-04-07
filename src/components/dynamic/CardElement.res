@@ -34,6 +34,7 @@ let make = (
   ~formatValue,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
+  ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   switch (
     fields->Array.get(0),
@@ -50,6 +51,7 @@ let make = (
       Some(cardNetworkConfig),
     ) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+      let {eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
       let emitter = PaymentEvents.usePaymentEventEmitter()
       let (expireDate, setExpireDate) = React.useState(() => "")
 
@@ -188,6 +190,17 @@ let make = (
         emitter.emitCardInfo(~info)
         None
       }, (cardNumber, expireDate, cvc, brand))
+
+      React.useEffect1(() => {
+        let isValid = cardValid(cardNumber, brand)
+        let isMaxLength = isCardNumberEqualsMax(cardNumber, brand)
+        if isValid && isMaxLength {
+          checkEligibility(Some(cardNumber->clearSpaces))
+        } else if !isValid && eligibilityStatus !== DynamicFieldsContext.Allowed {
+          checkEligibility(None)
+        }
+        None
+      }, [cardNumber])
 
       let onScanCard = (
         pan,
@@ -427,7 +440,12 @@ let make = (
               | _ =>
                 switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
                 | (Some(error), true) => <ErrorText text={Some(error)} />
-                | _ => React.null
+                | _ =>
+                  switch eligibilityStatus {
+                  | DynamicFieldsContext.Denied => <ErrorText text={Some(localeObject.cardNotEligibleText)} />
+                  | DynamicFieldsContext.Pending => React.null
+                  | _ => React.null
+                  }
                 }
               }
             }

@@ -12,6 +12,8 @@ type walletDataRecord = {
 
 type sheetType = ButtonSheet | DynamicFieldsSheet
 
+type eligibilityStatus = Denied | Allowed | Pending
+
 type dynamicFieldsData = {
   formDataRef: option<React.ref<RescriptCore.Dict.t<JSON.t>>>,
   sheetType: sheetType,
@@ -46,6 +48,8 @@ type dynamicFieldsData = {
   setNickname: option<string> => unit,
   isNicknameValid: bool,
   setIsNicknameValid: bool => unit,
+  eligibilityStatus: eligibilityStatus,
+  setEligibilityStatus: (eligibilityStatus => eligibilityStatus) => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -83,11 +87,14 @@ let dynamicFieldsContext = React.createContext({
   setNickname: _ => (),
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
+  eligibilityStatus: Allowed,
+  setEligibilityStatus: _ => (),
 })
 
 module Provider = {
   let make = React.Context.provider(dynamicFieldsContext)
 }
+
 @react.component
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
@@ -376,6 +383,8 @@ let make = (~children) => {
     setIsNicknameValid(_ => val)
   }, [setIsNicknameValid])
 
+  let (eligibilityStatus, setEligibilityStatus) = React.useState(_ => Allowed)
+
   React.useEffect(() => {
     if isNicknameSelected == false {
       setNickname(None)
@@ -401,6 +410,8 @@ let make = (~children) => {
       setNickname,
       isNicknameValid,
       setIsNicknameValid,
+      eligibilityStatus,
+      setEligibilityStatus,
     }>
     children
   </Provider>
