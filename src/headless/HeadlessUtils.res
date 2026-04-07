@@ -131,13 +131,13 @@ let handleApiCall = async (
   ~eventName,
   ~body=?,
   ~headers,
-  ~nativeProp,
+  ~nativeProp: SdkTypes.nativeProp,
   ~method,
   ~processSuccess: Core__JSON.t => 'a,
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
 ) => {
-  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+  let paymentId = nativeProp.paymentMethodId
   try {
     let initEventName = LoggerTypes.getApiInitEvent(eventName)
     switch initEventName {
@@ -151,7 +151,7 @@ let handleApiCall = async (
       ~uri,
       ~method_=method,
       ~headers,
-      ~bodyStr=body->Option.getOr("")
+      ~bodyStr=body->Option.getOr(""),
     )
 
     let statusCode = data->Fetch.Response.status->string_of_int
@@ -195,33 +195,48 @@ let getBaseUrl = nativeProp => {
 }
 
 let savedPaymentMethodAPICall = nativeProp => {
-  let uri = `${getBaseUrl(
-      nativeProp,
-    )}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
+  let uri = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => `${getBaseUrl(nativeProp)}/customers/payment_methods`
+  | None =>
+    `${getBaseUrl(nativeProp)}/customers/payment_methods?client_secret=${nativeProp.clientSecret}`
+  }
 
   handleApiCall(
     ~uri,
     ~nativeProp,
     ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
     ~method=#GET,
-    ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.publishableKey,
+      ~appId=nativeProp.hyperParams.appId,
+      ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
     ~processSuccess=json => Some(json),
     ~processError=error => Some(error),
     ~processCatch=_ => Some(JSON.Encode.null),
   )
 }
 
-let sessionAPICall = nativeProp => {
-  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+let sessionAPICall = (nativeProp: SdkTypes.nativeProp) => {
+  let paymentId = nativeProp.paymentMethodId
 
-  let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
+  let headers = Utils.getHeader(
+    ~apiKey=nativeProp.publishableKey,
+    ~appId=nativeProp.hyperParams.appId,
+    ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+    (),
+  )
   let uri = `${getBaseUrl(nativeProp)}/payments/session_tokens`
+
+  let bodyArr = [("payment_id", paymentId->JSON.Encode.string), ("wallets", []->JSON.Encode.array)]
+
   let body =
-    [
-      ("payment_id", paymentId->JSON.Encode.string),
-      ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
-      ("wallets", []->JSON.Encode.array),
-    ]
+    switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+    | Some(_) => bodyArr
+    | None =>
+      bodyArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+    }
     ->Dict.fromArray
     ->JSON.Encode.object
     ->JSON.stringify
@@ -239,10 +254,15 @@ let sessionAPICall = nativeProp => {
   )
 }
 
-let confirmAPICall = (nativeProp, body) => {
-  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body) => {
+  let paymentId = nativeProp.paymentMethodId
   let uri = `${getBaseUrl(nativeProp)}/payments/${paymentId}/confirm`
-  let headers = Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId)
+  let headers = Utils.getHeader(
+    ~apiKey=nativeProp.publishableKey,
+    ~appId=nativeProp.hyperParams.appId,
+    ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+    (),
+  )
 
   handleApiCall(
     ~uri,
@@ -347,8 +367,7 @@ let generateWalletConfirmBody = (
   ~payment_method_data,
   ~payment_type_str=?,
 ) => {
-  [
-    ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+  let baseArr = [
     ("payment_method", "wallet"->JSON.Encode.string),
     ("payment_method_type", data.payment_method_type->JSON.Encode.string),
     ("payment_method_data", payment_method_data),
@@ -370,6 +389,11 @@ let generateWalletConfirmBody = (
       ->JSON.Encode.object,
     ),
   ]
+  let bodyArr = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => baseArr
+  | None => baseArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+  }
+  bodyArr
   ->Dict.fromArray
   ->JSON.Encode.object
   ->JSON.stringify

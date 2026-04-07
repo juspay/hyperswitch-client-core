@@ -324,6 +324,7 @@ type nativeProp = {
   customParams: Dict.t<JSON.t>,
   subscribedEvents: array<PaymentEventTypes.events>,
   widgetId: string,
+  sdkAuthorization: option<string>,
 }
 
 let defaultAppearance: appearance = {
@@ -861,6 +862,22 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   | val => val
   }
 
+  let sdkAuthorization = switch getOptionString(dictfromNative, "sdkAuthorization") {
+  | Some("") => None
+  | val => val
+  }
+
+  let clientSecret = getString(dictfromNative, "clientSecret", "")
+  let paymentMethodId = switch sdkAuthorization {
+  | Some(sdkAuth) => {
+      let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
+      sdkAuthData.paymentId->Option.getOr(
+        String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
+      )
+    }
+  | None => String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+  }
+
   let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
 
   {
@@ -868,15 +885,14 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     env: GlobalVars.checkEnv(publishableKey),
     rootTag,
     publishableKey,
-    clientSecret: getString(dictfromNative, "clientSecret", ""),
-    paymentMethodId: String.split(getString(dictfromNative, "clientSecret", ""), "_secret_")
-    ->Array.get(0)
-    ->Option.getOr(""),
+    clientSecret,
+    paymentMethodId,
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
     customBackendUrl,
     customLogUrl,
+    sdkAuthorization,
     sessionId: getString(dictfromNative, "sessionId", ""),
-    widgetId: getString(dictfromNative, "widgetId", getString(dictfromNative, "sessionId", "")),
+    widgetId: getString(dictfromNative, "widgetId", ""),
     sdkState: switch getString(dictfromNative, "type", "") {
     | "payment" => PaymentSheet
     | "tabSheet" => TabSheet
@@ -920,7 +936,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       json
       ->JSON.Decode.array
       ->Option.getOr([])
-      ->Array.map(event => 
+      ->Array.map(event =>
         event->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString
       )
     | None => []

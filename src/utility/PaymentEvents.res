@@ -46,7 +46,9 @@ let usePaymentEventEmitter = (): emitterFunctions => {
       emitToNative(
         ~widgetId=nativeProp.widgetId,
         ~eventType=PaymentEventTypes.eventToString(FormStatus),
-        ~payload=formStatusEventToJson(~status=event.status->PaymentEventTypes.formStatusValueFromString),
+        ~payload=formStatusEventToJson(
+          ~status=event.status->PaymentEventTypes.formStatusValueFromString,
+        ),
       )
     }
   }
@@ -75,5 +77,11 @@ let usePaymentEventEmitter = (): emitterFunctions => {
     }
   }
 
-  {emitCardInfo, emitPaymentMethodStatus, emitFormStatus, emitPaymentMethodInfoAddress, emitCvcStatus}
+  {
+    emitCardInfo,
+    emitPaymentMethodStatus,
+    emitFormStatus,
+    emitPaymentMethodInfoAddress,
+    emitCvcStatus,
+  }
 }

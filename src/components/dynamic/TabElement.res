@@ -3,6 +3,7 @@ let make = (
   ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
   ~isScreenFocus,
   ~processRequest,
+  ~checkEligibility: option<string> => unit,
   ~setConfirmButtonData,
 ) => {
   let {
@@ -11,6 +12,8 @@ let make = (
     country,
     isNicknameValid,
     setInitialValueCountry,
+    eligibilityStatus,
+    setEligibilityStatus,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
@@ -48,18 +51,22 @@ let make = (
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
   let handlePress = _ => {
-    if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        None,
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
-    } else {
-      switch formMethods {
-      | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
-      | None => ()
+    switch eligibilityStatus {
+    | DynamicFieldsContext.Denied | DynamicFieldsContext.Pending => ()
+    | DynamicFieldsContext.Allowed =>
+      if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+        processRequest(
+          CommonUtils.mergeDict(initialValues, formData),
+          None,
+          formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+        )
+      } else {
+        switch formMethods {
+        | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+        | None => ()
+        }
+        notifyValidationFailure()
       }
-      notifyValidationFailure()
     }
   }
 
@@ -67,6 +74,13 @@ let make = (
     setInitialValueCountry(defaultCountry)
     None
   }, [defaultCountry])
+
+  React.useEffect1(() => {
+    if !isScreenFocus {
+      setEligibilityStatus(_ => DynamicFieldsContext.Allowed)
+    }
+    None
+  }, [isScreenFocus])
 
   FormStatusEmitter.useFormStatusEmitter(
     ~isFocused=isScreenFocus,
@@ -91,6 +105,7 @@ let make = (
     paymentMethodData.payment_method_type,
     isScreenFocus,
     setConfirmButtonData,
+    eligibilityStatus,
     requiredFields,
     isFormValid,
     formData,
@@ -109,5 +124,6 @@ let make = (
     enabledCardSchemes
     accessible
     isFocused=isScreenFocus
+    checkEligibility
   />
 }

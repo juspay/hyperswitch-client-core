@@ -43,7 +43,7 @@ type widgetActionData = {
 
 let widgetActionDataMapper = (dict: Dict.t<JSON.t>): option<widgetActionData> => {
   let actionTypeStr = dict->getString("actionType", "")
-  let rootTag = dict->getInt("rootTag", -1);
+  let rootTag = dict->getInt("rootTag", -1)
 
   actionTypeStr
   ->widgetActionTypeFromString

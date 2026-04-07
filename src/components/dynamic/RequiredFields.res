@@ -14,6 +14,7 @@ let make = (
   ~accessible=?,
   ~onSubmit=?,
   ~isFocused: bool=false,
+  ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   let categorizedFields = React.useMemo1(() => {
     fields->Array.reduce(([], [], [], [], [], [], [], []), (
@@ -131,6 +132,7 @@ let make = (
             isCardPayment
             enabledCardSchemes
             ?accessible
+            checkEligibility
           />
         )
         ->React.array}
