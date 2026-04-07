@@ -419,7 +419,12 @@ let useEligibilityCheckHook = () => {
         ~uri,
         ~bodyStr=body,
         ~method_=#POST,
-        ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+        ~headers=Utils.getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
+        ),
       )
       ->Promise.then(response => response->Fetch.Response.json)
     }
