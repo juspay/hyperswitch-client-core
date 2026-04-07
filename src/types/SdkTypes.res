@@ -861,13 +861,17 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   | val => val
   }
 
-  let clientSecret = switch sdkAuthorization {
+  let clientSecret = getString(dictfromNative, "clientSecret", "")
+  let paymentMethodId = switch sdkAuthorization {
   | Some(sdkAuth) => {
       let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
-      sdkAuthData.clientSecret->Option.getOr(getString(dictfromNative, "clientSecret", ""))
+      sdkAuthData.paymentId->Option.getOr(
+        String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
+      )
     }
-  | None => getString(dictfromNative, "clientSecret", "")
+  | None => String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
   }
+  Js.log("Derived paymentMethodId: " ++ paymentMethodId)
 
   let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
 
@@ -877,9 +881,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     rootTag,
     publishableKey,
     clientSecret,
-    paymentMethodId: String.split(clientSecret, "_secret_")
-    ->Array.get(0)
-    ->Option.getOr(""),
+    paymentMethodId,
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
     customBackendUrl,
     customLogUrl,

@@ -79,14 +79,11 @@ let generateCardConfirmBody = (
   }
 }
 
-let generateSessionsTokenBody = (~clientSecret, ~sdkAuthorization=?, ~wallet) => {
+let generateSessionsTokenBody = (~clientSecret, ~paymentId, ~sdkAuthorization=?, ~wallet) => {
   let baseArr = [
     (
       "payment_id",
-      String.split(clientSecret, "_secret_")
-      ->Array.get(0)
-      ->Option.getOr("")
-      ->JSON.Encode.string,
+      paymentId->JSON.Encode.string,
     ),
     ("wallets", wallet->JSON.Encode.array),
   ]

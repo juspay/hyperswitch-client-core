@@ -131,13 +131,13 @@ let handleApiCall = async (
   ~eventName,
   ~body=?,
   ~headers,
-  ~nativeProp,
+  ~nativeProp: SdkTypes.nativeProp,
   ~method,
   ~processSuccess: Core__JSON.t => 'a,
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
 ) => {
-  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+  let paymentId = nativeProp.paymentMethodId
   try {
     let initEventName = LoggerTypes.getApiInitEvent(eventName)
     switch initEventName {
@@ -218,8 +218,8 @@ let savedPaymentMethodAPICall = nativeProp => {
   )
 }
 
-let sessionAPICall = nativeProp => {
-  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+let sessionAPICall = (nativeProp: SdkTypes.nativeProp) => {
+  let paymentId = nativeProp.paymentMethodId
 
   let headers = Utils.getHeader(
     ~apiKey=nativeProp.publishableKey,
@@ -254,8 +254,8 @@ let sessionAPICall = nativeProp => {
   )
 }
 
-let confirmAPICall = (nativeProp, body) => {
-  let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body) => {
+  let paymentId = nativeProp.paymentMethodId
   let uri = `${getBaseUrl(nativeProp)}/payments/${paymentId}/confirm`
   let headers = Utils.getHeader(
     ~apiKey=nativeProp.publishableKey,

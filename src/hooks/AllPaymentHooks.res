@@ -39,15 +39,11 @@ let headers = Utils.getHeader(~apiKey=publishableKey, ~appId=nativeProp.hyperPar
       | Payment => (
           switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
           | Some(_) =>
-            `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
-              ->Array.get(0)
-              ->Option.getOr("")}?force_sync=${isForceSync
+            `${baseUrl}/payments/${nativeProp.paymentMethodId}?force_sync=${isForceSync
                 ? "true"
                 : "false"}`
           | None =>
-            `${baseUrl}/payments/${String.split(clientSecret, "_secret_")
-              ->Array.get(0)
-              ->Option.getOr("")}?force_sync=${isForceSync
+            `${baseUrl}/payments/${nativeProp.paymentMethodId}?force_sync=${isForceSync
                 ? "true"
                 : "false"}&client_secret=${clientSecret}`
           },
@@ -102,6 +98,7 @@ let useSessionTokenHook = () => {
         ~uri=`${baseUrl}/payments/session_tokens`,
         ~body=PaymentUtils.generateSessionsTokenBody(
           ~clientSecret=nativeProp.clientSecret,
+          ~paymentId=nativeProp.paymentMethodId,
           ~sdkAuthorization=?nativeProp.sdkAuthorization,
           ~wallet,
         ),
@@ -189,7 +186,7 @@ let useRedirectHook = () => {
     ~isCardPayment=false,
     (),
   ) => {
-    let uriPram = String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+    let uriPram = nativeProp.paymentMethodId
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
     let headers = Utils.getHeader(~apiKey=publishableKey, ~appId=nativeProp.hyperParams.appId, ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""), ())
 

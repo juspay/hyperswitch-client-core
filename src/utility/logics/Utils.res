@@ -394,6 +394,7 @@ let getDaysInMonth = (month: string, year: string) => {
 
 type sdkAuthorizationData = {
   publishableKey: option<string>,
+  paymentId: option<string>,
   clientSecret: option<string>,
   customerId: option<string>,
   profileId: option<string>,
@@ -402,18 +403,14 @@ type sdkAuthorizationData = {
 let getSdkAuthorizationData = (sdkAuthorization: string) => {
   let arrOfKeys = sdkAuthorization->Base64.decode->String.split(",")
 
-  let getValueFromArrayOfKeys = (~keyName, ~regex) => {
+  let getValueFromArrayOfKeys = (~keyName) => {
     let prefix = keyName ++ "="
     let keyStr = arrOfKeys->Array.find(key => key->String.startsWith(prefix))
     keyStr->Option.flatMap(key => {
       let idx = key->String.indexOf("=")
       if idx !== -1 {
         let value = key->String.sliceToEnd(~start=idx + 1)
-        if RegExp.test(regex, value) {
-          Some(value)
-        } else {
-          None
-        }
+        value->String.length > 0 ? Some(value) : None
       } else {
         None
       }
@@ -421,16 +418,11 @@ let getSdkAuthorizationData = (sdkAuthorization: string) => {
   }
 
   {
-    publishableKey: getValueFromArrayOfKeys(
-      ~keyName="publishable_key",
-      ~regex=%re("/^pk_(prd|snd|dev)_[a-zA-Z0-9]+$/"),
-    ),
-    clientSecret: getValueFromArrayOfKeys(
-      ~keyName="client_secret",
-      ~regex=%re("/^[A-Za-z0-9_-]+_secret_[A-Za-z0-9]+$/"),
-    ),
-    customerId: getValueFromArrayOfKeys(~keyName="customer_id", ~regex=%re("/^[a-zA-Z0-9_-]+$/")),
-    profileId: getValueFromArrayOfKeys(~keyName="profile_id", ~regex=%re("/^[a-zA-Z0-9_-]+$/")),
+    publishableKey: getValueFromArrayOfKeys(~keyName="publishable_key"),
+    paymentId: getValueFromArrayOfKeys(~keyName="payment_id"),
+    clientSecret: getValueFromArrayOfKeys(~keyName="client_secret"),
+    customerId: getValueFromArrayOfKeys(~keyName="customer_id"),
+    profileId: getValueFromArrayOfKeys(~keyName="profile_id"),
   }
 }
 
