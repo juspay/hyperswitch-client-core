@@ -873,7 +873,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     }
   | None => String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
   }
-  Js.log("Derived paymentMethodId: " ++ paymentMethodId)
 
   let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
 

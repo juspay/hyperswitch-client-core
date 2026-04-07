@@ -34,7 +34,12 @@ let useRetrieveHook = () => {
     switch (WebKit.platform, type_) {
     | (#next, Types.List) => Promise.resolve(Next.listRes)
     | (_, type_) =>
-let headers = Utils.getHeader(~apiKey=publishableKey, ~appId=nativeProp.hyperParams.appId, ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""), ())
+      let headers = Utils.getHeader(
+        ~apiKey=publishableKey,
+        ~appId=nativeProp.hyperParams.appId,
+        ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+        (),
+      )
       let (uri, eventName: LoggerTypes.eventName) = switch type_ {
       | Payment => (
           switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
@@ -73,12 +78,20 @@ let usePaymentMethodHook = (~customerLevel=false) => {
     | _ =>
       let uri = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
       | Some(_) => `${baseUrl}/${customerLevel ? "customers" : "account"}/payment_methods`
-      | None => `${baseUrl}/${customerLevel ? "customers" : "account"}/payment_methods?client_secret=${nativeProp.clientSecret}`
+      | None =>
+        `${baseUrl}/${customerLevel
+            ? "customers"
+            : "account"}/payment_methods?client_secret=${nativeProp.clientSecret}`
       }
       APIUtils.fetchApiWrapper(
         ~uri,
         ~method=#GET,
-        ~headers=Utils.getHeader(~apiKey=nativeProp.publishableKey, ~appId=nativeProp.hyperParams.appId, ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""), ()),
+        ~headers=Utils.getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
+        ),
         ~eventName={customerLevel ? CUSTOMER_PAYMENT_METHODS_CALL : PAYMENT_METHODS_CALL},
         ~apiLogWrapper,
       )
@@ -103,7 +116,12 @@ let useSessionTokenHook = () => {
           ~wallet,
         ),
         ~method=#POST,
-        ~headers=Utils.getHeader(~apiKey=nativeProp.publishableKey, ~appId=nativeProp.hyperParams.appId, ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""), ()),
+        ~headers=Utils.getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
+        ),
         ~eventName=LoggerTypes.SESSIONS_CALL,
         ~apiLogWrapper,
       )
@@ -188,7 +206,12 @@ let useRedirectHook = () => {
   ) => {
     let uriPram = nativeProp.paymentMethodId
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
-    let headers = Utils.getHeader(~apiKey=publishableKey, ~appId=nativeProp.hyperParams.appId, ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""), ())
+    let headers = Utils.getHeader(
+      ~apiKey=publishableKey,
+      ~appId=nativeProp.hyperParams.appId,
+      ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+      (),
+    )
 
     let handleInvokeThreeDSFlow = (~nextAction) => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
@@ -322,7 +345,12 @@ let useGetSavedPMHook = () => {
       APIUtils.fetchApiWrapper(
         ~uri,
         ~method=#GET,
-        ~headers=Utils.getHeader(~apiKey=nativeProp.publishableKey, ~appId=nativeProp.hyperParams.appId, ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""), ()),
+        ~headers=Utils.getHeader(
+          ~apiKey=nativeProp.publishableKey,
+          ~appId=nativeProp.hyperParams.appId,
+          ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+          (),
+        ),
         ~eventName=LoggerTypes.CUSTOMER_PAYMENT_METHODS_CALL,
         ~apiLogWrapper,
       )
@@ -378,7 +406,12 @@ let useSavePaymentMethod = () => {
     APIUtils.fetchApiWrapper(
       ~uri,
       ~method=#POST,
-      ~headers=Utils.getHeader(~apiKey=nativeProp.publishableKey, ~appId=nativeProp.hyperParams.appId, ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""), ()),
+      ~headers=Utils.getHeader(
+        ~apiKey=nativeProp.publishableKey,
+        ~appId=nativeProp.hyperParams.appId,
+        ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+        (),
+      ),
       ~eventName=LoggerTypes.ADD_PAYMENT_METHOD_CALL,
       ~body=body->JSON.stringifyAny->Option.getOr(""),
       ~apiLogWrapper,
