@@ -7,7 +7,7 @@ open HeadlessUtils
 
 type headlessModule = {
   getPaymentSession: (JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: (int, string, string) => unit,
+  exitHeadless: string => unit,
 }
 
 let makeHeadlessModule = (): headlessModule => {
@@ -25,7 +25,7 @@ let makeHeadlessModule = (): headlessModule => {
 
   {
     getPaymentSession: getFn("getPaymentSession", (_, _, _, _) => ()),
-    exitHeadless: getFn("exitHeadless", (_, _, _) => ()),
+    exitHeadless: getFn("exitHeadless", _ => ()),
   }
 }
 
@@ -35,7 +35,7 @@ let getDefaultPaymentSession = (headlessModule, error) => {
     error->Utils.getJsonObjectFromRecord,
     []->Utils.getJsonObjectFromRecord,
     _response => {
-      headlessModule.exitHeadless(0, "", error->HyperModule.stringifiedResStatus)
+      headlessModule.exitHeadless(error->HyperModule.stringifiedResStatus)
     },
   )
 }
@@ -48,8 +48,6 @@ let confirmCall = async (headlessModule, body, nativeProp) => {
     ->Utils.getDictFromJson
     ->PaymentConfirmTypes.itemToObjMapper
   headlessModule.exitHeadless(
-    nativeProp.rootTag,
-    nativeProp.widgetId,
     confirmRes.error->HyperModule.stringifiedResStatus,
   )
 }
@@ -133,8 +131,6 @@ let confirmGPay = (
   | "Cancel" => reRegisterCallback.contents()
   | err =>
     headlessModule.exitHeadless(
-      0,
-      "",
       {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
     )
   }
@@ -155,14 +151,10 @@ let confirmApplePay = (
   | "Cancelled" => reRegisterCallback.contents()
   | "Failed" =>
     headlessModule.exitHeadless(
-      0,
-      "",
       {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
     )
   | "Error" =>
     headlessModule.exitHeadless(
-      0,
-      "",
       {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
     )
   | _ =>
@@ -179,8 +171,6 @@ let confirmApplePay = (
       ) == "Simulated Identifier"
     ) {
       headlessModule.exitHeadless(
-        0,
-        "",
         {message: "Simulated Identifier", status: "failed"}->HyperModule.stringifiedResStatus,
       )
     } else {
@@ -290,7 +280,7 @@ let processRequest = async (
           ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
-        headlessModule.exitHeadless(0, "", getDefaultError->HyperModule.stringifiedResStatus)
+        headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
       }, 5000)
       let applePayCallback = async var => {
         try {
@@ -337,7 +327,7 @@ let processRequest = async (
       )
     | _ => ()
     }
-  | _ => headlessModule.exitHeadless(0, "", getDefaultError->HyperModule.stringifiedResStatus)
+  | _ => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
   }
 }
 
@@ -405,15 +395,11 @@ let getPaymentSession = (
                   )->ignore
                 | None =>
                   headlessModule.exitHeadless(
-                    0,
-                    "",
                     getDefaultError->HyperModule.stringifiedResStatus,
                   )
                 }
               | None =>
                 headlessModule.exitHeadless(
-                  0,
-                  "",
                   getDefaultError->HyperModule.stringifiedResStatus,
                 )
               }
