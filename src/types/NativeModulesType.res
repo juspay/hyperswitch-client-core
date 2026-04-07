@@ -5,12 +5,12 @@ type widgetActionType = ConfirmPayment
 
 let widgetActionTypeToString = actionType =>
   switch actionType {
-  | ConfirmPayment => "confirmPayment"
+  | ConfirmPayment => "CONFIRM_PAYMENT_ACTION"
   }
 
 let widgetActionTypeFromString = (str: string): option<widgetActionType> =>
   switch str {
-  | "confirmPayment" => Some(ConfirmPayment)
+  | "CONFIRM_PAYMENT_ACTION" => Some(ConfirmPayment)
   | _ => None
   }
 
