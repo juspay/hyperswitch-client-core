@@ -234,6 +234,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  hideConfirmButton: bool,
 }
 
 type sdkState =
@@ -790,6 +791,7 @@ let parseConfigurationDict = (configObj, from) => {
     paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
     savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
     displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
+    hideConfirmButton: getBool(configObj, "hideConfirmButton", false),
     enablePartialLoading: getBool(configObj, "enablePartialLoading", false),
     // customer: switch customerDict {
     // | Some(obj) =>
@@ -874,7 +876,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     customBackendUrl,
     customLogUrl,
     sessionId: getString(dictfromNative, "sessionId", ""),
-    widgetId: getString(dictfromNative, "widgetId", ""),
+    widgetId: getString(dictfromNative, "widgetId", getString(dictfromNative, "sessionId", "")),
     sdkState: switch getString(dictfromNative, "type", "") {
     | "payment" => PaymentSheet
     | "tabSheet" => TabSheet
