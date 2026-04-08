@@ -7,7 +7,7 @@ open HeadlessUtils
 
 type headlessModule = {
   getPaymentSession: (JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: string => unit,
+  exitHeadless: (int, string) => unit,
 }
 
 let makeHeadlessModule = (): headlessModule => {
@@ -25,17 +25,17 @@ let makeHeadlessModule = (): headlessModule => {
 
   {
     getPaymentSession: getFn("getPaymentSession", (_, _, _, _) => ()),
-    exitHeadless: getFn("exitHeadless", _ => ()),
+    exitHeadless: getFn("exitHeadless", (_, _) => ()),
   }
 }
 
-let getDefaultPaymentSession = (headlessModule, error) => {
+let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
   headlessModule.getPaymentSession(
     error->Utils.getJsonObjectFromRecord,
     error->Utils.getJsonObjectFromRecord,
     []->Utils.getJsonObjectFromRecord,
     _response => {
-      headlessModule.exitHeadless(error->HyperModule.stringifiedResStatus)
+      headlessModule.exitHeadless(rootTag, error->HyperModule.stringifiedResStatus)
     },
   )
 }
@@ -48,6 +48,7 @@ let confirmCall = async (headlessModule, body, nativeProp) => {
     ->Utils.getDictFromJson
     ->PaymentConfirmTypes.itemToObjMapper
   headlessModule.exitHeadless(
+    nativeProp.rootTag,
     confirmRes.error->HyperModule.stringifiedResStatus,
   )
 }
@@ -131,6 +132,7 @@ let confirmGPay = (
   | "Cancel" => reRegisterCallback.contents()
   | err =>
     headlessModule.exitHeadless(
+      nativeProp.rootTag,
       {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
     )
   }
@@ -151,10 +153,12 @@ let confirmApplePay = (
   | "Cancelled" => reRegisterCallback.contents()
   | "Failed" =>
     headlessModule.exitHeadless(
+      nativeProp.rootTag,
       {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
     )
   | "Error" =>
     headlessModule.exitHeadless(
+      nativeProp.rootTag,
       {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
     )
   | _ =>
@@ -171,6 +175,7 @@ let confirmApplePay = (
       ) == "Simulated Identifier"
     ) {
       headlessModule.exitHeadless(
+        nativeProp.rootTag,
         {message: "Simulated Identifier", status: "failed"}->HyperModule.stringifiedResStatus,
       )
     } else {
@@ -280,7 +285,7 @@ let processRequest = async (
           ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
-        headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
+        headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
       }, 5000)
       let applePayCallback = async var => {
         try {
@@ -327,7 +332,7 @@ let processRequest = async (
       )
     | _ => ()
     }
-  | _ => headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
+  | _ => headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
   }
 }
 
@@ -395,11 +400,13 @@ let getPaymentSession = (
                   )->ignore
                 | None =>
                   headlessModule.exitHeadless(
+                    nativeProp.rootTag,
                     getDefaultError->HyperModule.stringifiedResStatus,
                   )
                 }
               | None =>
                 headlessModule.exitHeadless(
+                  nativeProp.rootTag,
                   getDefaultError->HyperModule.stringifiedResStatus,
                 )
               }
@@ -410,7 +417,7 @@ let getPaymentSession = (
 
     reRegisterCallback.contents()
   } else {
-    getDefaultPaymentSession(headlessModule, getDefaultError)
+    getDefaultPaymentSession(headlessModule, getDefaultError, ~rootTag=nativeProp.rootTag)
   }
 }
 
@@ -454,14 +461,14 @@ let apiHandler = async (
         if session->ErrorUtils.getErrorCode == "\"IR_16\"" {
           ErrorUtils.errorWarning.usedCL
           ->errorOnApiCalls
-          ->(getDefaultPaymentSession(headlessModule, _))
+          ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
         } else if session->ErrorUtils.getErrorCode == "\"IR_09\"" {
           ErrorUtils.errorWarning.invalidCL
           ->errorOnApiCalls
-          ->(getDefaultPaymentSession(headlessModule, _))
+          ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
         } else {
           // Unknown session API error — surface it rather than silently dead-ending
-          getDefaultPaymentSession(headlessModule, getDefaultError)
+          getDefaultPaymentSession(headlessModule, getDefaultError, ~rootTag=nativeProp.rootTag)
         }
       } else if session != JSON.Encode.null {
         switch session->Utils.getDictFromJson->SessionsType.itemToObjMapper {
@@ -513,7 +520,7 @@ let apiHandler = async (
       )
     }
 
-  | None => customerSavedPMData->getErrorFromResponse->(getDefaultPaymentSession(headlessModule, _))
+  | None => customerSavedPMData->getErrorFromResponse->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }
 }
 
@@ -535,8 +542,8 @@ let runHeadlessFlow = (
   if isPublishableKeyValid && isClientSecretValid {
     apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
   } else if !isPublishableKeyValid {
-    errorOnApiCalls(INVALID_PK(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _))
+    errorOnApiCalls(INVALID_PK(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   } else if !isClientSecretValid {
-    errorOnApiCalls(INVALID_CL(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _))
+    errorOnApiCalls(INVALID_CL(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }
 }
