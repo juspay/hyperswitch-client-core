@@ -13,7 +13,6 @@ let make = (
     isNicknameValid,
     setInitialValueCountry,
     eligibilityStatus,
-    setEligibilityStatus,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
@@ -51,22 +50,22 @@ let make = (
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
   let handlePress = _ => {
-    switch eligibilityStatus {
-    | DynamicFieldsContext.Denied | DynamicFieldsContext.Pending => ()
-    | DynamicFieldsContext.Allowed =>
-      if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-        processRequest(
-          CommonUtils.mergeDict(initialValues, formData),
-          None,
-          formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-        )
-      } else {
-        switch formMethods {
-        | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
-        | None => ()
-        }
-        notifyValidationFailure()
+    // Only gate on eligibility for card payments; non-card methods skip the check
+    let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
+    if isEligibilityBlocked {
+      ()
+    } else if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+      processRequest(
+        CommonUtils.mergeDict(initialValues, formData),
+        None,
+        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+      )
+    } else {
+      switch formMethods {
+      | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+      | None => ()
       }
+      notifyValidationFailure()
     }
   }
 
@@ -74,13 +73,6 @@ let make = (
     setInitialValueCountry(defaultCountry)
     None
   }, [defaultCountry])
-
-  React.useEffect1(() => {
-    if !isScreenFocus {
-      setEligibilityStatus(_ => DynamicFieldsContext.Allowed)
-    }
-    None
-  }, [isScreenFocus])
 
   FormStatusEmitter.useFormStatusEmitter(
     ~isFocused=isScreenFocus,
