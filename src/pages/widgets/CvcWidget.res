@@ -15,7 +15,6 @@ let make = () => {
   let (isFocused, setIsFocused) = React.useState(_ => false)
   let emitter = PaymentEvents.usePaymentEventEmitter()
   let localeObject = GetLocale.useGetLocalObj()
-  
   let {
     component,
     dangerColor,
@@ -24,55 +23,61 @@ let make = () => {
     primaryColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
-  let lastUsedCardPaymentMethod = {
-    customerPaymentMethodData
-    ->Option.map(customerPaymentMethods => {
-      let pmList = customerPaymentMethods.customer_payment_methods
-      let cardPaymentMethods =
-        pmList->Array.filter(pm => pm.payment_method === PaymentMethodType.CARD)
-        
-      if cardPaymentMethods->Array.length === 0 {
-        None
-      } else {
-        cardPaymentMethods->Array.reduce(None, (
-          a: option<CustomerPaymentMethodType.customer_payment_method_type>,
-          b: CustomerPaymentMethodType.customer_payment_method_type,
-        ) => {
-          let lastUsedAtA = switch a {
-          | Some(a) => Some(a.last_used_at)
-          | None => None
-          }
-          lastUsedAtA
-          ->Option.map(
-            date =>
-              compare(
-                Date.fromString(date)->Js.Date.getTime,
-                Date.fromString(b.last_used_at)->Js.Date.getTime,
-              ) < 0
-                ? Some(b)
-                : a,
-          )
-          ->Option.getOr(Some(b))
-        })
-      }
-    })
-    ->Option.getOr(None)
-  }
+  // let lastUsedCardPaymentMethod = {
+  //   customerPaymentMethodData
+  //   ->Option.map(customerPaymentMethods => {
+  //     let pmList = customerPaymentMethods.customer_payment_methods
+  //     let cardPaymentMethods =
+  //       pmList->Array.filter(pm => pm.payment_method === PaymentMethodType.CARD)
 
-  let cardNetwork = switch lastUsedCardPaymentMethod {
-  | Some(pm) => pm.card->Option.map(card => card.card_network)->Option.getOr("")
-  | None => ""
-  }
+  //     if cardPaymentMethods->Array.length === 0 {
+  //       None
+  //     } else {
+  //       cardPaymentMethods->Array.reduce(None, (
+  //         a: option<CustomerPaymentMethodType.customer_payment_method_type>,
+  //         b: CustomerPaymentMethodType.customer_payment_method_type,
+  //       ) => {
+  //         let lastUsedAtA = switch a {
+  //         | Some(a) => Some(a.last_used_at)
+  //         | None => None
+  //         }
+  //         lastUsedAtA
+  //         ->Option.map(
+  //           date =>
+  //             compare(
+  //               Date.fromString(date)->Js.Date.getTime,
+  //               Date.fromString(b.last_used_at)->Js.Date.getTime,
+  //             ) < 0
+  //               ? Some(b)
+  //               : a,
+  //         )
+  //         ->Option.getOr(Some(b))
+  //       })
+  //     }
+  //   })
+  //   ->Option.getOr(None)
+  // }
 
-  let requiresCvv = switch lastUsedCardPaymentMethod {
-  | Some(pm) => pm.requires_cvv
-  | None => false
-  }
+  // let cardNetwork = switch lastUsedCardPaymentMethod {
+  // | Some(pm) => pm.card->Option.map(card => card.card_network)->Option.getOr("")
+  // | None => ""
+  // }
+
+  // let requiresCvv = switch lastUsedCardPaymentMethod {
+  // | Some(pm) => pm.requires_cvv
+  // | None => false
+  // }
+
+  // TODO: Add cardBrand prop later so CVC length can be brand-aware
+  // (e.g. Amex = 4, others = 3). For now, accept 3 or 4 digits.
+  let cardNetwork = ""
+
+  let requiresCvv = true
 
   let isCvcValid =
     cvcValue->String.length === 0 ? true : Validation.cvcNumberInRange(cvcValue, cardNetwork)
 
-  // let isCvcComplete = Validation.checkCardCVC(cvcValue, cardNetwork) // commented out for now
+  // let isCvcComplete = Validation.checkCardCVC(cvcValue, cardNetwork)
 
   let isCvcEmpty = cvcValue->String.length === 0
 
@@ -82,7 +87,6 @@ let make = () => {
     cvcValueRef.current = formatted
   }
 
-  // Emit cvcStatus with the new shape: {cvcStatus: {isCvcFocused, isCvcBlur, isCvcEmpty}}
   let emitCvcStatusEvent = (~focused: bool, ~blur: bool) => {
     emitter.emitCvcStatus(
       ~event={
@@ -104,33 +108,24 @@ let make = () => {
 
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
-
-    // Listen for "triggerWidgetAction" with CONFIRM_CVC_PAYMENT action from native.
-    // When merchant calls confirm and CvcWidget is active, native emits this event
-    // with paymentToken + paymentMethodId. CvcWidget reads the CVC from CvcRegistry
-    // and makes the confirm API call directly in its own JS context.
     let cleanup = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
       actionData: NativeModulesType.widgetActionData,
     ) => {
       switch actionData.actionType {
       | ConfirmCvcPayment =>
-        // Guard: only process events targeted at THIS widget instance (by rootTag).
         if actionData.rootTag !== nativeProp.rootTag {
           ()
         } else {
           let paymentToken = actionData.paymentToken->Option.getOr("")
           let paymentMethodId = actionData.paymentMethodId->Option.getOr("")
 
-          // Look up the payment method by payment_method_id (stable across API calls)
-          // from the React context data to get billing. We match by payment_method_id
-          // instead of payment_token because tokens are ephemeral — each API call to
-          // /customers/payment_methods generates a new token for the same card.
-          // Read from the ref (not the captured closure variable) to avoid stale closure.
           let billing =
             customerPaymentMethodDataRef.current
             ->Option.flatMap(
               cpmd => {
-                cpmd.customer_payment_methods->Array.find(pm => pm.payment_method_id == paymentMethodId)
+                cpmd.customer_payment_methods->Array.find(
+                  pm => pm.payment_method_id == paymentMethodId,
+                )
               },
             )
             ->Option.flatMap(pm => pm.billing)
@@ -157,7 +152,6 @@ let make = () => {
     )
   })
 
-  // Emit initial cvcStatus on mount and when isCvcEmpty changes
   React.useEffect1(_ => {
     emitCvcStatusEvent(~focused=isFocused, ~blur=!isFocused)
     None
