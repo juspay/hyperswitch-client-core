@@ -10,9 +10,10 @@ type hyperModule = {
   exitCardForm: string => unit,
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   onAddPaymentMethod: string => unit,
-  exitWidgetPaymentsheet: (int, string, string, bool) => unit,
+  exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
-  emitPaymentEvent: (string, string, JSON.t) => unit,
+  notifyWidgetPaymentResult: (int, string) => unit,
+  emitPaymentEvent: (int, string, JSON.t) => unit,
 }
 
 type useExitPaymentsheetReturnType = {
