@@ -5,6 +5,9 @@ open LoggerTypes
 
 @react.component
 let make = () => {
+  // Send ready event when widget is mounted and ready
+  NativeEventListener.useSendReadyEvent(~paymentMethodType="expressCheckout")
+
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
   let (_, customerPaymentMethodData, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
