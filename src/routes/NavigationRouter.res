@@ -118,6 +118,7 @@ let make = () => {
       | CardWidget => <CardWidget />
       | CustomWidget(walletType) => <CustomWidget walletType />
       | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+      | KlarnaWidget => <KlarnaWidgetWrapper />
       | Headless
       | NoView
       | PaymentMethodsManagement => React.null

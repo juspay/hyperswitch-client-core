@@ -25,7 +25,7 @@ let make = () => {
           loading === ProcessingPaymentsWithOverlay ? bgColor : s({backgroundColor: "transparent"}),
         ])}>
         {switch nativeProps.sdkState {
-        | CardWidget | CustomWidget(_) =>
+        | CardWidget | CustomWidget(_) | KlarnaWidget =>
           <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
             // <HyperLoaderAnimation shapeSize=20. />
             <CustomLoader />

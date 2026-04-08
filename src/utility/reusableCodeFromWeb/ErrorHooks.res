@@ -55,7 +55,7 @@ let useErrorWarningValidationOnLoad = () => {
       | WidgetTabSheet =>
         showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
-      | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
+      | CardWidget | CustomWidget(_) | ExpressCheckoutWidget | KlarnaWidget => ()
       | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
       | NoView | PaymentMethodsManagement => ()
       }
@@ -70,7 +70,7 @@ let useErrorWarningValidationOnLoad = () => {
       | WidgetTabSheet =>
         showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
-      | CardWidget | CustomWidget(_) | ExpressCheckoutWidget => ()
+      | CardWidget | CustomWidget(_) | ExpressCheckoutWidget | KlarnaWidget => ()
       | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
       | NoView | PaymentMethodsManagement => ()
       }
