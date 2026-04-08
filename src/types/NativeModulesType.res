@@ -1,3 +1,4 @@
+open Utils
 type hyperModule = {
   sendMessageToNative: string => unit,
   launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
@@ -20,7 +21,7 @@ type useExitPaymentsheetReturnType = {
   exit: (PaymentConfirmTypes.error, bool) => unit,
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
-open Utils
+
 
 // Widget action types that can be triggered from native side
 type widgetActionType = ConfirmPayment | ConfirmCvcPayment
