@@ -166,7 +166,6 @@ type applePayConfiguration = {
 }
 
 type themeType = Default | Light | Dark | Minimal | FlatMinimal
-type layoutType = Tab | Accordion | SpacedAccordion
 
 type appearance = {
   locale: option<LocaleDataType.localeTypes>,
@@ -177,7 +176,7 @@ type appearance = {
   googlePay: googlePayConfiguration,
   applePay: applePayConfiguration,
   theme: themeType,
-  layout: layoutType,
+  layout: LayoutTypes.layout,
 }
 
 type address = {
@@ -232,7 +231,6 @@ type configurationType = {
   netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
   enablePartialLoading: bool,
-  displayMergedSavedMethods: bool,
   disableBranding: bool,
   hideConfirmButton: bool,
 }
@@ -418,7 +416,18 @@ let defaultAppearance: appearance = {
     buttonStyle: None,
   },
   theme: Default,
-  layout: Tab,
+  layout: {
+    layoutType: Tab,
+    showOneClickWalletsOnTop: true,
+    paymentMethodsArrangementForTabs: ArrangementDefault,
+    defaultCollapsed: false,
+    radios: false,
+    spacedAccordionItems: false,
+    maxAccordionItems: 4,
+    savedMethodCustomization: {
+      groupingBehavior: {displayInSeparateScreen: true, groupByPaymentMethods: false},
+    },
+  },
 }
 
 let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
@@ -706,12 +715,7 @@ let getAppearanceObj = (
     | "FlatMinimal" => FlatMinimal
     | _ => Default
     },
-    layout: switch getString(appearanceDict, "layout", "") {
-    | "tabs" => Tab
-    | "accordion" => Accordion
-    | "spacedAccordion" => SpacedAccordion
-    | _ => Tab
-    },
+    layout: LayoutTypes.parseLayout(appearanceDict),
   }
 }
 
@@ -841,7 +845,6 @@ let parseConfigurationDict = (configObj, from) => {
       expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
       cvv: getString(placeholderDict, "cvv", "CVC"),
     },
-    displayMergedSavedMethods: getBool(configObj, "displayMergedSavedMethods", false),
     disableBranding: getBool(configObj, "disableBranding", false),
   }
   configuration
