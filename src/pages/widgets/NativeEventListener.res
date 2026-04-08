@@ -79,3 +79,29 @@ let setupWidgetActionListener = (~onWidgetAction: NativeModulesType.widgetAction
     }
   })
 }
+
+let setupUpdateIntentInitListener = (~onUpdateIntentInit: NativeModulesType.updateIntentData => unit) => {
+  setupNativeEventListener("updateIntentInit", var => {
+    switch var->JSON.Decode.object {
+    | Some(dict) =>
+      switch NativeModulesType.updateIntentDataMapper("updateIntentInit", dict) {
+      | Some(intentData) => onUpdateIntentInit(intentData)
+      | None => ()
+      }
+    | None => ()
+    }
+  })
+}
+
+let setupUpdateIntentCompleteListener = (~onUpdateIntentComplete: NativeModulesType.updateIntentData => unit) => {
+  setupNativeEventListener("updateIntentComplete", var => {
+    switch var->JSON.Decode.object {
+    | Some(dict) =>
+      switch NativeModulesType.updateIntentDataMapper("updateIntentComplete", dict) {
+      | Some(intentData) => onUpdateIntentComplete(intentData)
+      | None => ()
+      }
+    | None => ()
+    }
+  })
+}

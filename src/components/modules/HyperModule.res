@@ -14,6 +14,7 @@ type hyperModule = {
   updateWidgetHeight: int => unit,
   notifyWidgetPaymentResult: (int, string) => unit,
   emitPaymentEvent: (int, string, JSON.t) => unit,
+  onUpdateIntentEvent: (int, string, string) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -58,6 +59,7 @@ let hyperModule = {
     _,
   ) => ()),
   emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
+  onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) => ()),
 }
 
 let sendMessageToNative = str => {
@@ -87,6 +89,10 @@ type useExitPaymentsheetReturnType = {
 }
 let emitPaymentEvent = (rootTag: int, eventType: string, payload: JSON.t) => {
   hyperModule.emitPaymentEvent(rootTag, eventType, payload)
+}
+
+let onUpdateIntentEvent = (rootTag: int, type_: string, result: string) => {
+  hyperModule.onUpdateIntentEvent(rootTag, type_, result)
 }
 
 let useExitPaymentsheet = () => {

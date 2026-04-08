@@ -14,6 +14,7 @@
     "run:ios": "bundle && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
     "bundle:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
+    "bundle:rn:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output ../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch/android/src/main/assets/hyperswitch.bundle",
     "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
     "build:web": "rm -rf reactNativeWeb/dist/ && webpack --mode=production --config reactNativeWeb/webpack.config.js",
     "build:lib": "android/build-lib.sh",

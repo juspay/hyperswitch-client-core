@@ -102,6 +102,12 @@ let make = () => {
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
   ConfigurationService.useConfigurationService()->ignore
 
+  UpdateIntentHook.useUpdateIntentListener(
+    ~setAccountPaymentMethodData,
+    ~setCustomerPaymentMethodData,
+    ~setSessionTokenData,
+  )
+
   <AllApiDataContextNew accountPaymentMethodData customerPaymentMethodData sessionTokenData>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.

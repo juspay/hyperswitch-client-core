@@ -1,4 +1,5 @@
 open Utils
+
 type hyperModule = {
   sendMessageToNative: string => unit,
   launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
@@ -13,8 +14,8 @@ type hyperModule = {
   onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
-  notifyWidgetPaymentResult: (int, string) => unit,
-  emitPaymentEvent: (int, string, JSON.t) => unit,
+  emitPaymentEvent: (string, string, JSON.t) => unit,
+  onUpdateIntentEvent: (int, string, string) => unit,
 }
 
 type useExitPaymentsheetReturnType = {
@@ -60,5 +61,35 @@ let widgetActionDataMapper = (dict: Dict.t<JSON.t>): option<widgetActionData> =>
     rootTag,
     paymentToken,
     paymentMethodId,
+  })
+}
+
+// Update intent event types from native
+type updateIntentEventType = UpdateIntentInit | UpdateIntentComplete
+
+let updateIntentEventTypeFromString = (str: string): option<updateIntentEventType> =>
+  switch str {
+  | "updateIntentInit" => Some(UpdateIntentInit)
+  | "updateIntentComplete" => Some(UpdateIntentComplete)
+  | _ => None
+  }
+
+// Update intent data structure received from native
+type updateIntentData = {
+  eventType: updateIntentEventType,
+  rootTag: int,
+  sdkAuthorization: option<string>,
+}
+
+let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<updateIntentData> => {
+  let rootTag = dict->getInt("rootTag", -1)
+  let sdkAuthorization = dict->getOptionString("sdkAuthorization")
+
+  eventName
+  ->updateIntentEventTypeFromString
+  ->Option.map(eventType => {
+    eventType,
+    rootTag,
+    sdkAuthorization,
   })
 }
