@@ -148,13 +148,28 @@ let rec transformKeysSnakeToCamel = (json: JSON.t) => {
   ->JSON.Encode.object
 }
 
-let getHeader = (apiKey, appId, ~redirectUri=?) => {
-  [
-    ("api-key", apiKey),
-    ("x-app-id", Js.String.replace(".hyperswitch://", "", appId->Option.getOr(""))),
-    ("x-redirect-uri", redirectUri->Option.getOr("")),
-    // ("x-feature", "router-custom-be"),
-  ]->Dict.fromArray
+let getNonEmptyOption = str => {
+  switch str {
+  | Some(s) => s->String.length > 0 ? Some(s) : None
+  | None => None
+  }
+}
+
+let getHeader = (~apiKey, ~appId, ~redirectUri="", ~sdkAuthorization="", ()) => {
+  let hasSdkAuth = sdkAuthorization->String.length > 0
+  if hasSdkAuth {
+    [
+      ("Authorization", sdkAuthorization),
+      ("x-app-id", Js.String.replace(".hyperswitch://", "", appId->Option.getOr(""))),
+      ("x-redirect-uri", redirectUri),
+    ]->Dict.fromArray
+  } else {
+    [
+      ("api-key", apiKey),
+      ("x-app-id", Js.String.replace(".hyperswitch://", "", appId->Option.getOr(""))),
+      ("x-redirect-uri", redirectUri),
+    ]->Dict.fromArray
+  }
 }
 
 let getCountryFlags = isoAlpha2 => {
@@ -382,6 +397,40 @@ let getDaysInMonth = (month: string, year: string) => {
     | 4 | 6 | 9 | 11 => 30
     | _ => 31
     }
+  }
+}
+
+type sdkAuthorizationData = {
+  publishableKey: option<string>,
+  paymentId: option<string>,
+  clientSecret: option<string>,
+  customerId: option<string>,
+  profileId: option<string>,
+}
+
+let getSdkAuthorizationData = (sdkAuthorization: string) => {
+  let arrOfKeys = sdkAuthorization->Base64.decode->String.split(",")
+
+  let getValueFromArrayOfKeys = (~keyName) => {
+    let prefix = keyName ++ "="
+    let keyStr = arrOfKeys->Array.find(key => key->String.startsWith(prefix))
+    keyStr->Option.flatMap(key => {
+      let idx = key->String.indexOf("=")
+      if idx !== -1 {
+        let value = key->String.sliceToEnd(~start=idx + 1)
+        value->String.length > 0 ? Some(value) : None
+      } else {
+        None
+      }
+    })
+  }
+
+  {
+    publishableKey: getValueFromArrayOfKeys(~keyName="publishable_key"),
+    paymentId: getValueFromArrayOfKeys(~keyName="payment_id"),
+    clientSecret: getValueFromArrayOfKeys(~keyName="client_secret"),
+    customerId: getValueFromArrayOfKeys(~keyName="customer_id"),
+    profileId: getValueFromArrayOfKeys(~keyName="profile_id"),
   }
 }
 
