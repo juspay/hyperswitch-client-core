@@ -52,11 +52,16 @@ let make = (
             ->Utils.getDictFromJson
             ->Utils.getOptionalObj("sdk_next_action")
             ->Option.flatMap(d => d->Dict.get("next_action"))
-          switch nextActionJson->Option.flatMap(JSON.Decode.string) {
-          | Some("confirm") => setEligibilityStatus(_ => Allowed)
-          | Some(_) => setEligibilityStatus(_ => Denied)
-          | None => setEligibilityStatus(_ => Denied)
+          let isDenied = switch nextActionJson {
+          | Some(json) =>
+            switch JSON.Decode.string(json) {
+            | Some("deny") => true
+            | Some(_) => false
+            | None => json->Utils.getDictFromJson->Dict.get("deny")->Option.isSome
+            }
+          | None => false
           }
+          setEligibilityStatus(_ => isDenied ? Denied : Allowed)
           Promise.resolve()
         })
         ->Promise.catch(_ => {
