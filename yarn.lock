@@ -10673,7 +10673,7 @@ __metadata:
     typescript: 5.0.4
     url-loader: ^4.1.1
     use-latest-callback: ^0.3.1
-    webpack: ^5.93.0
+    webpack: ^5.104.1
     webpack-cli: ^5.1.4
     webpack-dev-server: ^5.0.4
   languageName: unknown
@@ -18357,7 +18357,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webpack@npm:^5.93.0":
+"webpack@npm:^5.104.1":
   version: 5.105.4
   resolution: "webpack@npm:5.105.4"
   dependencies:
