@@ -36,6 +36,8 @@ let make = (
     setFormMethods(_ => formSubmit)
   }, [setFormMethods])
 
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+
   let (
     requiredFields,
     initialValues,
@@ -63,6 +65,7 @@ let make = (
       | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
       | None => ()
       }
+      notifyValidationFailure()
     }
   }
 
@@ -70,8 +73,6 @@ let make = (
     setInitialValueCountry(defaultCountry)
     None
   }, [defaultCountry])
-
-
 
   FormStatusEmitter.useFormStatusEmitter(
     ~isFocused=isScreenFocus,

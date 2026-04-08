@@ -29,6 +29,7 @@ let make = (
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
@@ -417,6 +418,7 @@ let make = (
                 setSavedCardCvv(_ => Some(""))
               }
               setLoading(FillingDetails)
+              notifyValidationFailure()
             }
           : processRequestSaved(token)
       | WALLET =>
@@ -518,6 +520,7 @@ let make = (
       if showDisclaimer && !isSaveCardCheckboxSelected {
         setErrorText(_ => Some("Please accept the terms and conditions to continue."))
       }
+      notifyValidationFailure()
     }
   }
 

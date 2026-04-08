@@ -10,9 +10,10 @@ type hyperModule = {
   exitCardForm: string => unit,
   launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
   onAddPaymentMethod: string => unit,
-  exitWidgetPaymentsheet: (int, string, string, bool) => unit,
+  exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
-  emitPaymentEvent: (string, string, JSON.t) => unit,
+  notifyWidgetPaymentResult: (int, string) => unit,
+  emitPaymentEvent: (int, string, JSON.t) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -50,9 +51,12 @@ let hyperModule = {
     _,
     _,
     _,
-    _,
   ) => ()),
   updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
+  notifyWidgetPaymentResult: getFunctionFromModule(hyperModuleDict, "notifyWidgetPaymentResult", (
+    _,
+    _,
+  ) => ()),
   emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
 }
 
@@ -81,8 +85,8 @@ type useExitPaymentsheetReturnType = {
   exit: (PaymentConfirmTypes.error, bool) => unit,
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
-let emitPaymentEvent = (widgetId: string, eventType: string, payload: JSON.t) => {
-  hyperModule.emitPaymentEvent(widgetId, eventType, payload)
+let emitPaymentEvent = (rootTag: int, eventType: string, payload: JSON.t) => {
+  hyperModule.emitPaymentEvent(rootTag, eventType, payload)
 }
 
 let useExitPaymentsheet = () => {
@@ -108,7 +112,6 @@ let useExitPaymentsheet = () => {
           | WidgetPaymentSheet | WidgetButtonSheet =>
             hyperModule.exitWidgetPaymentsheet(
               nativeProp.rootTag,
-              nativeProp.widgetId,
               apiResStatus->stringifiedResStatus,
               reset,
             )
@@ -143,7 +146,6 @@ let useExitPaymentsheet = () => {
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
       ? hyperModule.exitWidgetPaymentsheet(
         rootTag,
-        nativeProp.widgetId,
         apiResStatus->stringifiedResStatus,
         reset,
       )

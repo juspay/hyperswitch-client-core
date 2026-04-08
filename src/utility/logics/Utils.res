@@ -19,12 +19,20 @@ let getOptionString = (dict, key) => {
   dict->Dict.get(key)->Option.flatMap(JSON.Decode.string)
 }
 
+let getOptionInt = (dict, key) => {
+  dict->Dict.get(key)->Option.flatMap(JSON.Decode.float)->Option.map(Float.toInt)
+}
+
 let getOptionFloat = (dict, key) => {
   dict->Dict.get(key)->retOptionalFloat
 }
 
 let getString = (dict, key, default) => {
   getOptionString(dict, key)->Option.getOr(default)
+}
+
+let getInt = (dict, key, default) => {
+  getOptionInt(dict, key)->Option.getOr(default)
 }
 
 let getBool = (dict, key, default) => {

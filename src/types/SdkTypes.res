@@ -234,6 +234,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  hideConfirmButton: bool,
 }
 
 type sdkState =
@@ -247,6 +248,7 @@ type sdkState =
   | CardWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
+  | CvcWidget
   | PaymentMethodsManagement
   | Headless
   | NoView
@@ -281,6 +283,7 @@ let sdkStateToStrMapper = sdkState => {
   | CardWidget => "CARD_FORM"
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
+  | CvcWidget => "CVC_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
@@ -319,7 +322,7 @@ type nativeProp = {
   rootTag: int,
   hyperParams: hyperParams,
   customParams: Dict.t<JSON.t>,
-  subscribedEvents: array<string>,
+  subscribedEvents: array<PaymentEventTypes.events>,
   widgetId: string,
   sdkAuthorization: option<string>,
 }
@@ -789,6 +792,7 @@ let parseConfigurationDict = (configObj, from) => {
     paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
     savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
     displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
+    hideConfirmButton: getBool(configObj, "hideConfirmButton", false),
     enablePartialLoading: getBool(configObj, "enablePartialLoading", false),
     // customer: switch customerDict {
     // | Some(obj) =>
@@ -902,6 +906,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "card" => CardWidget
     | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
+    | "cvcWidget" => CvcWidget
     | "headless" => Headless
     | _ => NoView
     },
@@ -931,7 +936,9 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       json
       ->JSON.Decode.array
       ->Option.getOr([])
-      ->Array.map(event => event->JSON.Decode.string->Option.getOr(""))
+      ->Array.map(event =>
+        event->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString
+      )
     | None => []
     },
   }

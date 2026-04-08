@@ -399,12 +399,10 @@ let useEligibilityCheckHook = () => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   (~paymentMethodType: string, ~paymentMethodData: JSON.t) => {
     switch WebKit.platform {
-    | #next =>
-      Promise.resolve(
-        `{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn,
-      )
+    | #next => Promise.resolve(`{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn)
     | _ =>
-      let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+      let paymentId =
+        String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
       let uri = `${baseUrl}/payments/${paymentId}/eligibility`
       let body =
         [
@@ -425,8 +423,7 @@ let useEligibilityCheckHook = () => {
           ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
           (),
         ),
-      )
-      ->Promise.then(response => response->Fetch.Response.json)
+      )->Promise.then(response => response->Fetch.Response.json)
     }
   }
 }
