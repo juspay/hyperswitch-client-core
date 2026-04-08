@@ -34,6 +34,7 @@ let useWidgetActions = (~confirmButtonData: GlobalConfirmButton.confirmButtonDat
           if actionData.rootTag === nativeProp.rootTag {
             confirmButtonData.handlePress()
           }
+        | ConfirmCvcPayment => () // Handled by CvcWidget.res directly
         }
       })
 

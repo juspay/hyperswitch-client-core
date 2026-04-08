@@ -11,6 +11,7 @@ let make = () => {
   let customerPaymentMethodDataRef = React.useRef(customerPaymentMethodData)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (cvcValue, setCvcValue) = React.useState(_ => "")
+  let cvcValueRef = React.useRef("")
   let (isFocused, setIsFocused) = React.useState(_ => false)
   let emitter = PaymentEvents.usePaymentEventEmitter()
   let localeObject = GetLocale.useGetLocalObj()
@@ -78,8 +79,7 @@ let make = () => {
   let onCvcChange = cvc => {
     let formatted = Validation.formatCVCNumber(cvc, cardNetwork)
     setCvcValue(_ => formatted)
-    // Register CVC in the global registry by widgetId
-    CvcRegistry.register(nativeProp.widgetId, formatted)
+    cvcValueRef.current = formatted
   }
 
   // Emit cvcStatus with the new shape: {cvcStatus: {isCvcFocused, isCvcBlur, isCvcEmpty}}
@@ -105,63 +105,53 @@ let make = () => {
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
 
-    // Listen for "confirmPayment" event from native.
+    // Listen for "triggerWidgetAction" with CONFIRM_CVC_PAYMENT action from native.
     // When merchant calls confirm and CvcWidget is active, native emits this event
-    // instead of invoking HeadlessJsTask's callback. CvcWidget reads the CVC from
-    // CvcRegistry and makes the confirm API call directly in its own JS context.
-    let cleanup = NativeEventListener.setupNativeEventListener("confirmPayment", var => {
-      let dict = var->Utils.getDictFromJson
-      let paymentToken =
-        dict->Dict.get("paymentToken")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-      let paymentMethodId =
-        dict->Dict.get("paymentMethodId")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-      let widgetId =
-        dict
-        ->Dict.get("widgetId")
-        ->Option.flatMap(JSON.Decode.string)
-        ->Option.getOr(nativeProp.widgetId)
+    // with paymentToken + paymentMethodId. CvcWidget reads the CVC from CvcRegistry
+    // and makes the confirm API call directly in its own JS context.
+    let cleanup = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
+      actionData: NativeModulesType.widgetActionData,
+    ) => {
+      switch actionData.actionType {
+      | ConfirmCvcPayment =>
+        // Guard: only process events targeted at THIS widget instance (by rootTag).
+        if actionData.rootTag !== nativeProp.rootTag {
+          ()
+        } else {
+          let paymentToken = actionData.paymentToken->Option.getOr("")
+          let paymentMethodId = actionData.paymentMethodId->Option.getOr("")
 
-      // Guard: only process events targeted at THIS widget instance.
-      // DeviceEventEmitter is global across the shared ReactContext, so ALL mounted
-      // CvcWidget instances receive every "confirmPayment" event. Without this guard,
-      // a stale widget from a previous payment session (different clientSecret) could
-      // also fire confirmCardPayment, causing duplicate API calls with wrong clientSecrets.
-      if widgetId != nativeProp.widgetId {
-        ()
-      } else {
-        // Look up the payment method by payment_method_id (stable across API calls)
-        // from the React context data to get billing. We match by payment_method_id
-        // instead of payment_token because tokens are ephemeral — each API call to
-        // /customers/payment_methods generates a new token for the same card. The
-        // HeadlessTask and NavigationRouter fetch PMs separately, so their tokens
-        // differ, but payment_method_id is always the same for a given saved card.
-        // Read from the ref (not the captured closure variable) to avoid stale closure.
-        let billing =
-          customerPaymentMethodDataRef.current
-          ->Option.flatMap(
-            cpmd => {
-              cpmd.customer_payment_methods->Array.find(pm => pm.payment_method_id == paymentMethodId)
-            },
+          // Look up the payment method by payment_method_id (stable across API calls)
+          // from the React context data to get billing. We match by payment_method_id
+          // instead of payment_token because tokens are ephemeral — each API call to
+          // /customers/payment_methods generates a new token for the same card.
+          // Read from the ref (not the captured closure variable) to avoid stale closure.
+          let billing =
+            customerPaymentMethodDataRef.current
+            ->Option.flatMap(
+              cpmd => {
+                cpmd.customer_payment_methods->Array.find(pm => pm.payment_method_id == paymentMethodId)
+              },
+            )
+            ->Option.flatMap(pm => pm.billing)
+            ->Option.map(Utils.getJsonObjectFromRecord)
+
+          let cvc = cvcValueRef.current->JSON.Encode.string
+
+          HeadlessCommon.confirmCardPayment(
+            headlessModule,
+            nativeProp,
+            ~paymentToken,
+            ~cvc,
+            ~billing?,
           )
-          ->Option.flatMap(pm => pm.billing)
-          ->Option.map(Utils.getJsonObjectFromRecord)
-
-        let cvc = CvcRegistry.get(widgetId)
-
-        HeadlessCommon.confirmCardPayment(
-          headlessModule,
-          nativeProp,
-          ~paymentToken,
-          ~cvc,
-          ~billing?,
-        )
+        }
+      | _ => ()
       }
     })
 
     Some(
       () => {
-        // Cleanup: remove from CvcRegistry and call event listener cleanup
-        CvcRegistry.remove(nativeProp.widgetId)
         cleanup()
       },
     )
