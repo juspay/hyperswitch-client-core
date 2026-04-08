@@ -52,9 +52,8 @@ let make = (~setConfirmButtonData) => {
     accountPaymentMethodData
     ->Option.flatMap(data => data.intent_data)
     ->Option.map(intentData => intentData.currency)
-    ->Option.getOr(
-      accountPaymentMethodData->Option.map(data => data.currency)->Option.getOr(""),
-    )
+    ->Option.getOr(accountPaymentMethodData->Option.map(data => data.currency)->Option.getOr(""))
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
@@ -107,6 +106,11 @@ let make = (~setConfirmButtonData) => {
     setIsFormValid(_ => isValid)
   }, [setIsFormValid])
 
+  let (isPristine, setIsPristine) = React.useState(_ => true)
+  let setIsPristine = React.useCallback1(pristine => {
+    setIsPristine(_ => pristine)
+  }, [setIsPristine])
+
   let (formMethods: option<ReactFinalForm.Form.formMethods>, setFormMethods) = React.useState(_ =>
     None
   )
@@ -119,121 +123,117 @@ let make = (~setConfirmButtonData) => {
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
   ) => {
-    if (
-      isCardPayment &&
-        showInstallments &&
-        selectedInstallmentPlan->Option.isNone
-    ) {
+    if isCardPayment && showInstallments && selectedInstallmentPlan->Option.isNone {
       setInstallmentsError(_ => localeObject.installmentSelectPlanError)
     } else {
-    setLoading(ProcessingPayments)
+      setLoading(ProcessingPayments)
 
-    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
-      if !closeSDK {
-        setLoading(FillingDetails)
-      }
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-    }
-
-    let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
-      switch paymentStatus {
-      | PaymentSuccess => {
-          setLoading(PaymentSuccess)
-          setTimeout(() => {
-            handleSuccessFailure(~apiResStatus=status, ())
-          }, 300)->ignore
+      let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+        if !closeSDK {
+          setLoading(FillingDetails)
         }
-      | _ => handleSuccessFailure(~apiResStatus=status, ())
+        handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
       }
-    }
 
-    let paymentMethodDataDict = switch payment_method {
-    | CARD =>
-      switch nickname {
-      | Some(name) =>
+      let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+        switch paymentStatus {
+        | PaymentSuccess => {
+            setLoading(PaymentSuccess)
+            setTimeout(() => {
+              handleSuccessFailure(~apiResStatus=status, ())
+            }, 300)->ignore
+          }
+        | _ => handleSuccessFailure(~apiResStatus=status, ())
+        }
+      }
+
+      let paymentMethodDataDict = switch payment_method {
+      | CARD =>
+        switch nickname {
+        | Some(name) =>
+          [
+            (
+              "payment_method_data",
+              [
+                (
+                  payment_method_str,
+                  [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                ),
+              ]
+              ->Dict.fromArray
+              ->Js.Json.object_,
+            ),
+          ]->Dict.fromArray
+        | None => Dict.make()
+        }
+      | pm =>
         [
           (
             "payment_method_data",
             [
               (
                 payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+                [
+                  (
+                    payment_method_type ++ (
+                      pm === PAY_LATER || payment_method_type_wallet === PAYPAL ? "_redirect" : ""
+                    ),
+                    walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                  ),
+                ]
+                ->Dict.fromArray
+                ->Js.Json.object_,
               ),
             ]
             ->Dict.fromArray
             ->Js.Json.object_,
           ),
         ]->Dict.fromArray
-      | None => Dict.make()
       }
-    | pm =>
-      [
-        (
+
+      let body = PaymentUtils.generateCardConfirmBody(
+        ~nativeProp,
+        ~payment_method_str,
+        ~payment_method_type,
+        ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
           "payment_method_data",
-          [
-            (
-              payment_method_str,
-              [
-                (
-                  payment_method_type ++ (
-                    pm === PAY_LATER || payment_method_type_wallet === PAYPAL ? "_redirect" : ""
-                  ),
-                  walletDict->Option.getOr(Dict.make())->Js.Json.object_,
-                ),
-              ]
-              ->Dict.fromArray
-              ->Js.Json.object_,
-            ),
-          ]
-          ->Dict.fromArray
-          ->Js.Json.object_,
         ),
-      ]->Dict.fromArray
-    }
+        ~payment_type=accountPaymentMethodData
+        ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+        ->Option.getOr(NORMAL),
+        ~payment_type_str=?accountPaymentMethodData
+        ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+        ->Option.getOr(None),
+        ~appURL=?{
+          accountPaymentMethodData->Option.map(accountPaymentMethods =>
+            accountPaymentMethods.redirect_url
+          )
+        },
+        ~isSaveCardCheckboxVisible={
+          payment_method === CARD && nativeProp.configuration.displaySavedPaymentMethodsCheckbox
+        },
+        ~isGuestCustomer=customerPaymentMethodData
+        ->Option.map(customerPaymentMethods => customerPaymentMethods.is_guest_customer)
+        ->Option.getOr(true),
+        ~isNicknameSelected,
+        ~email?,
+        ~screen_height=viewPortContants.screenHeight,
+        ~screen_width=viewPortContants.screenWidth,
+        ~installment_data=?showInstallments ? selectedInstallmentPlan : None,
+        (),
+      )
 
-    let body = PaymentUtils.generateCardConfirmBody(
-      ~nativeProp,
-      ~payment_method_str,
-      ~payment_method_type,
-      ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
-        "payment_method_data",
-      ),
-      ~payment_type=accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
-      ->Option.getOr(NORMAL),
-      ~payment_type_str=?accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
-      ->Option.getOr(None),
-      ~appURL=?{
-        accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirect_url
-        )
-      },
-      ~isSaveCardCheckboxVisible={
-        payment_method === CARD && nativeProp.configuration.displaySavedPaymentMethodsCheckbox
-      },
-      ~isGuestCustomer=customerPaymentMethodData
-      ->Option.map(customerPaymentMethods => customerPaymentMethods.is_guest_customer)
-      ->Option.getOr(true),
-      ~isNicknameSelected,
-      ~email?,
-      ~screen_height=viewPortContants.screenHeight,
-      ~screen_width=viewPortContants.screenWidth,
-      ~installment_data=?showInstallments ? selectedInstallmentPlan : None,
-      (),
-    )
-
-    redirectHook(
-      ~body=body->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
-      ~errorCallback,
-      ~responseCallback,
-      ~paymentMethod=payment_method_type,
-      ~paymentExperience=payment_experience,
-      ~isCardPayment={payment_method === CARD},
-      (),
-    )->ignore
+      redirectHook(
+        ~body=body->JSON.stringifyAny->Option.getOr(""),
+        ~publishableKey=nativeProp.publishableKey,
+        ~clientSecret=nativeProp.clientSecret,
+        ~errorCallback,
+        ~responseCallback,
+        ~paymentMethod=payment_method_type,
+        ~paymentExperience=payment_experience,
+        ~isCardPayment={payment_method === CARD},
+        (),
+      )->ignore
     }
   }
 
@@ -249,8 +249,16 @@ let make = (~setConfirmButtonData) => {
       | Some(methods) => methods.submit()
       | None => ()
       }
+      notifyValidationFailure()
     }
   }
+
+  FormStatusEmitter.useFormStatusEmitter(
+    ~isFocused=true,
+    ~hasRequiredFields=missingRequiredFields->Array.length > 0,
+    ~isFormValid,
+    ~isPristine,
+  )
 
   React.useEffect(() => {
     let confirmButton = {
@@ -273,6 +281,7 @@ let make = (~setConfirmButtonData) => {
       initialValues
       setFormData
       setIsFormValid
+      setIsPristine=?Some(setIsPristine)
       setFormMethods
       isCardPayment
       enabledCardSchemes

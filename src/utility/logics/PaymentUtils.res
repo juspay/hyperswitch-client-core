@@ -55,7 +55,10 @@ let generateCardConfirmBody = (
 ): PaymentConfirmTypes.redirectType => {
   let isMandate = payment_type !== NORMAL
   {
-    client_secret: nativeProp.clientSecret,
+    client_secret: ?switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+    | Some(_) => None
+    | None => Some(nativeProp.clientSecret)
+    },
     return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
     payment_method: payment_method_str,
     payment_method_type,
@@ -99,18 +102,19 @@ let generateCardConfirmBody = (
   }
 }
 
-let generateSessionsTokenBody = (~clientSecret, ~wallet) => {
-  [
+let generateSessionsTokenBody = (~clientSecret, ~paymentId, ~sdkAuthorization=?, ~wallet) => {
+  let baseArr = [
     (
       "payment_id",
-      String.split(clientSecret, "_secret_")
-      ->Array.get(0)
-      ->Option.getOr("")
-      ->JSON.Encode.string,
+      paymentId->JSON.Encode.string,
     ),
-    ("client_secret", clientSecret->JSON.Encode.string),
     ("wallets", wallet->JSON.Encode.array),
   ]
+  let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => baseArr
+  | None => baseArr->Array.concat([("client_secret", clientSecret->JSON.Encode.string)])
+  }
+  bodyArr
   ->Dict.fromArray
   ->JSON.Encode.object
   ->JSON.stringify
@@ -127,7 +131,10 @@ let generateSavedCardConfirmBody = (
   ~billing=?,
   ~installment_data: option<AccountPaymentMethodType.installmentPlan>=?,
 ): PaymentConfirmTypes.redirectType => {
-  client_secret: nativeProp.clientSecret,
+  client_secret: ?switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => None
+  | None => Some(nativeProp.clientSecret)
+  },
   payment_method: "card",
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
@@ -160,7 +167,10 @@ let generateWalletConfirmBody = (
   ~payment_method_type,
   ~payment_type_str,
 ): PaymentConfirmTypes.redirectType => {
-  client_secret: nativeProp.clientSecret,
+  client_secret: ?switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => None
+  | None => Some(nativeProp.clientSecret)
+  },
   payment_token,
   payment_method: "wallet",
   payment_method_type,

@@ -24,7 +24,10 @@ let make = () => {
     error()
 
     //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => ())
-    if nativeProp.clientSecret != "" && nativeProp.publishableKey != "" {
+    if (
+      (nativeProp.clientSecret != "" || nativeProp.paymentMethodId != "") &&
+        nativeProp.publishableKey != ""
+    ) {
       let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
         if ErrorUtils.isError(accountPaymentMethodData) {
           errorOnApiCalls(
@@ -115,6 +118,7 @@ let make = () => {
       | CardWidget => <CardWidget />
       | CustomWidget(walletType) => <CustomWidget walletType />
       | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+      | CvcWidget => <CvcWidget />
       | Headless
       | NoView
       | PaymentMethodsManagement => React.null

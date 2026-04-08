@@ -695,6 +695,11 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "installmentPaymentLabel",
         defaultLocale.installmentPaymentLabel,
       ),
+      cardNotEligibleText: Utils.getString(
+        res,
+        "cardNotEligibleText",
+        defaultLocale.cardNotEligibleText,
+      ),
     }
   | None => defaultLocale
   }

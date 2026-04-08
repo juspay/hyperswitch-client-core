@@ -68,6 +68,7 @@ type accountPaymentMethods = {
   request_external_three_ds_authentication: bool,
   show_surcharge_breakup_screen: bool,
   intent_data: option<intentData>,
+  sdk_next_action: option<string>,
 }
 
 let defaultAccountPaymentMethods = {
@@ -84,6 +85,7 @@ let defaultAccountPaymentMethods = {
   request_external_three_ds_authentication: false,
   show_surcharge_breakup_screen: false,
   intent_data: None,
+  sdk_next_action: None,
 }
 
 let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
@@ -301,6 +303,9 @@ let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
     ->Dict.get("intent_data")
     ->Option.flatMap(JSON.Decode.object)
     ->Option.map(parseIntentData),
+    sdk_next_action: accountPaymentMethodsDict
+    ->getOptionalObj("sdk_next_action")
+    ->Option.map(d => d->getString("next_action", "")),
   }
 }
 

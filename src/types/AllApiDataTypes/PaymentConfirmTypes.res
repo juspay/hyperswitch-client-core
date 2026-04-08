@@ -22,7 +22,7 @@ type customer_acceptance = {
 type mandate_data = {customer_acceptance: customer_acceptance}
 
 type redirectType = {
-  client_secret: string,
+  client_secret?: string,
   return_url?: string,
   email?: string,
   payment_method?: string,
@@ -97,6 +97,13 @@ let defaultSuccess = {
   status: "Processing",
   code: "",
   message: "",
+}
+
+let formValidationError = {
+  type_: "form_validation_error",
+  status: "form_invalid",
+  code: "form_validation_failed",
+  message: "Payment form has validation errors. Please correct them and try again.",
 }
 let getACH_bank_transfer = (data: option<bank_transfer_steps_and_charges_details>) => {
   switch data {

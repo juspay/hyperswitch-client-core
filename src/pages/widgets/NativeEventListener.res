@@ -66,3 +66,16 @@ let setupExpressCheckoutListener = (
     onExpressCheckoutConfirm(responseFromJava)
   })
 }
+
+let setupWidgetActionListener = (~onWidgetAction: NativeModulesType.widgetActionData => unit) => {
+  setupNativeEventListener("triggerWidgetAction", var => {
+    switch var->JSON.Decode.object {
+    | Some(dict) =>
+      switch dict->NativeModulesType.widgetActionDataMapper {
+      | Some(actionData) => onWidgetAction(actionData)
+      | None => ()
+      }
+    | None => ()
+    }
+  })
+}

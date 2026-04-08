@@ -3,6 +3,7 @@ let make = (
   ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
   ~isScreenFocus,
   ~processRequest,
+  ~checkEligibility: option<string> => unit,
   ~setConfirmButtonData,
   ~onFormDataChange=_ => (),
 ) => {
@@ -12,6 +13,7 @@ let make = (
     country,
     isNicknameValid,
     setInitialValueCountry,
+    eligibilityStatus,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
@@ -26,10 +28,17 @@ let make = (
     setIsFormValid(_ => isValid)
   }, [setIsFormValid])
 
+  let (isPristine, setIsPristine) = React.useState(_ => true)
+  let setIsPristine = React.useCallback1(pristine => {
+    setIsPristine(_ => pristine)
+  }, [setIsPristine])
+
   let (formMethods, setFormMethods) = React.useState(_ => None)
   let setFormMethods = React.useCallback1(formSubmit => {
     setFormMethods(_ => formSubmit)
   }, [setFormMethods])
+
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
   let (
     requiredFields,
@@ -43,7 +52,11 @@ let make = (
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
   let handlePress = _ => {
-    if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+    // Only gate on eligibility for card payments; non-card methods skip the check
+    let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
+    if isEligibilityBlocked {
+      ()
+    } else if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
       processRequest(
         CommonUtils.mergeDict(initialValues, formData),
         None,
@@ -54,6 +67,7 @@ let make = (
       | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
       | None => ()
       }
+      notifyValidationFailure()
     }
   }
 
@@ -61,6 +75,13 @@ let make = (
     setInitialValueCountry(defaultCountry)
     None
   }, [defaultCountry])
+
+  FormStatusEmitter.useFormStatusEmitter(
+    ~isFocused=isScreenFocus,
+    ~hasRequiredFields=requiredFields->Array.length > 0,
+    ~isFormValid,
+    ~isPristine,
+  )
 
   React.useEffect(() => {
     if isScreenFocus {
@@ -78,6 +99,7 @@ let make = (
     paymentMethodData.payment_method_type,
     isScreenFocus,
     setConfirmButtonData,
+    eligibilityStatus,
     requiredFields,
     isFormValid,
     formData,
@@ -90,9 +112,12 @@ let make = (
     initialValues
     setFormData
     setIsFormValid
+    setIsPristine=?Some(setIsPristine)
     setFormMethods
     isCardPayment
     enabledCardSchemes
     accessible
+    isFocused=isScreenFocus
+    checkEligibility
   />
 }
