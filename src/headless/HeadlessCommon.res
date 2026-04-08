@@ -532,7 +532,7 @@ let runHeadlessFlow = (
     nativeProp.clientSecret,
   )
 
-  if isPublishableKeyValid && isClientSecretValid {
+  if isPublishableKeyValid && (isClientSecretValid || nativeProp.sdkAuthorization != None) {
     apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
   } else if !isPublishableKeyValid {
     errorOnApiCalls(INVALID_PK(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _))
