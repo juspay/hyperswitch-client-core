@@ -30,7 +30,7 @@ let make = () => {
       switch (
         nativeProp.sdkState,
         !nativeProp.configuration.displaySavedPaymentMethods ||
-        nativeProp.configuration.displayMergedSavedMethods,
+        !nativeProp.configuration.appearance.layout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen,
       ) {
       | (PaymentSheet, true)
       | (WidgetPaymentSheet, true)
