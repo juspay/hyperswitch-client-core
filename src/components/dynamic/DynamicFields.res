@@ -74,12 +74,13 @@ let make = (
         accountPaymentMethodData
         ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
         ->Option.getOr(NORMAL),
+        nativeProp.configuration.hideCardNicknameField,
       ) {
-      | (false, _, true, NEW_MANDATE | NORMAL) =>
+      | (false, _, true, NEW_MANDATE | NORMAL, false) =>
         isNicknameSelected
           ? <NickNameElement nickname setNickname setIsNicknameValid accessible />
           : React.null
-      | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
+      | (false, _, false, NEW_MANDATE, false) | (false, _, _, SETUP_MANDATE, false) =>
         <NickNameElement nickname setNickname setIsNicknameValid accessible />
       | _ => React.null
       }}
