@@ -13,6 +13,7 @@ module CardBrandAndScanCardIcon = {
     ~showCardSchemeDropDown,
     ~cardNumberFilled,
     ~onScanCard,
+    ~onNfcCardRead,
     ~expireRef,
     ~cvvRef,
     ~cardBrand,
@@ -22,6 +23,9 @@ module CardBrandAndScanCardIcon = {
       <CardSchemeComponent eligibleCardSchemes showCardSchemeDropDown cardBrand setCardBrand />
       <UIUtils.RenderIf condition={isScanCardAvailable && !cardNumberFilled}>
         <ScanCardButton onScanCard expireRef cvvRef />
+      </UIUtils.RenderIf>
+      <UIUtils.RenderIf condition={!cardNumberFilled}>
+        <NfcEmvButton onNfcCardRead expireRef cvvRef />
       </UIUtils.RenderIf>
     </View>
   }
@@ -244,6 +248,46 @@ let make = (
         }
       }
 
+      let onNfcCardRead = (
+        cardNumber,
+        expiryDate,
+        expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
+        cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
+      ) => {
+        let cardBrand = getCardBrand(cardNumber)
+        let formattedCardNumber = formatCardNumber(cardNumber, cardType(cardBrand))
+        let isCardValid = cardValid(formattedCardNumber, cardBrand)
+        // NFC library returns expiry in MM/YY format, but our formatter expects MM/YY input
+        // The formatCardExpiryNumber function expects input like "MM / YY" or "MMYY"
+        let formattedExpiry = if expiryDate->String.includes("/") {
+          expiryDate
+        } else {
+          formatCardExpiryNumber(expiryDate)
+        }
+        let isExpiryValid = checkCardExpiry(formattedExpiry)
+
+        cardNumberInput.onChange(formattedCardNumber)
+        cardNetworkInput.onChange(cardBrand)
+        let (month, year) = formattedExpiry->splitExpiryDates
+        cardExpiryMonthInput.onChange(month)
+        cardExpiryYearInput.onChange(year)
+        setExpireDate(_ => formattedExpiry)
+
+        switch (isCardValid, isExpiryValid) {
+        | (true, true) =>
+          switch cvvRef.current->Nullable.toOption {
+          | None => ()
+          | Some(ref) => ref->ReactNative.TextInputElement.focus
+          }
+        | (true, false) =>
+          switch expireRef.current->Nullable.toOption {
+          | None => ()
+          | Some(ref) => ref->ReactNative.TextInputElement.focus
+          }
+        | _ => ()
+        }
+      }
+
       <React.Fragment>
         <View style={s({marginBottom: 16.->dp})}>
           <View style={s({width: 100.->pct, borderRadius})}>
@@ -285,6 +329,7 @@ let make = (
                     | _ => true
                     }}
                     onScanCard
+                    onNfcCardRead
                     expireRef
                     cvvRef
                     cardBrand={cardNetworkInput.value->Option.getOr("")}
