@@ -56,7 +56,7 @@ let make = () => {
       | ConfirmCvcPayment =>
         if actionData.rootTag === nativeProp.rootTag {
           HeadlessCommon.confirmCardPayment(
-            headlessModule,
+            ~onResult=HyperModule.hyperModule.notifyCvcPaymentResult,
             nativeProp,
             ~sdkAuthorization=actionData.sdkAuthorization->Option.getOr(""),
             ~paymentToken=actionData.paymentToken->Option.getOr(""),
