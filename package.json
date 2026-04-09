@@ -29,7 +29,7 @@
     "clean:gradle:cache": "rm -rf ~/.gradle",
     "clean:pod:cache": "pod cache clean --all",
     "lint": "eslint .",
-    "test": "jest",
+    "test:unit": "jest --config jest.config.js",
     "build:android:detox": "npx detox build --configuration  android.emu.debug",
     "build:ios:detox": "npx detox build --configuration ios.sim.debug",
     "test:android": "npx detox test --configuration android.emu.debug  --loglevel trace --record-logs all",
@@ -77,6 +77,7 @@
     "@semantic-release/release-notes-generator": "^14.0.3",
     "@svgr/webpack": "^6.5.1",
     "@swc/core": "^1.7.23",
+    "@testing-library/react-native": "^13.3.3",
     "@tsconfig/react-native": "^3.0.0",
     "@types/jest": "^29.5.13",
     "@types/pako": "^2",
@@ -98,6 +99,7 @@
     "html-webpack-plugin": "^5.6.0",
     "husky": "^9.0.11",
     "jest": "^29.6.3",
+    "jest-sonar-reporter": "^2.0.0",
     "patch-package": "^6.5.1",
     "prettier": "2.8.8",
     "react": "19.0.0",
@@ -123,8 +125,9 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4"
   },
-  "jest": {
-    "preset": "react-native"
+  "jestSonar": {
+    "reportPath": "coverage",
+    "reportFile": "test-report.xml"
   },
   "config": {
     "commitizen": {

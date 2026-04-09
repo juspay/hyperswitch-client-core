@@ -101,6 +101,7 @@ hyperswitch-react-native/lib/bs/
 
 # testing
 /coverage
+test-report.xml
 
 # Yarn
 .yarn/*
