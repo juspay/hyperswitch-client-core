@@ -660,7 +660,46 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
       swiftCode: Utils.getString(res, "swiftCode", defaultLocale.swiftCode),
       doneText: Utils.getString(res, "doneText", defaultLocale.doneText),
       copyToClipboard: Utils.getString(res, "copyToClipboard", defaultLocale.copyToClipboard),
-      cardNotEligibleText: Utils.getString(res, "cardNotEligibleText", defaultLocale.cardNotEligibleText),
+      installmentPayInInstallments: Utils.getString(
+        res,
+        "installmentPayInInstallments",
+        defaultLocale.installmentPayInInstallments,
+      ),
+      installmentChoosePlan: Utils.getString(
+        res,
+        "installmentChoosePlan",
+        defaultLocale.installmentChoosePlan,
+      ),
+      installmentInterestFree: Utils.getString(
+        res,
+        "installmentInterestFree",
+        defaultLocale.installmentInterestFree,
+      ),
+      installmentInterestRate: Utils.getString(
+        res,
+        "installmentInterestRate",
+        defaultLocale.installmentInterestRate,
+      ),
+      installmentTotalPayable: Utils.getString(
+        res,
+        "installmentTotalPayable",
+        defaultLocale.installmentTotalPayable,
+      ),
+      installmentSelectPlanError: Utils.getString(
+        res,
+        "installmentSelectPlanError",
+        defaultLocale.installmentSelectPlanError,
+      ),
+      installmentPaymentLabel: Utils.getString(
+        res,
+        "installmentPaymentLabel",
+        defaultLocale.installmentPaymentLabel,
+      ),
+      cardNotEligibleText: Utils.getString(
+        res,
+        "cardNotEligibleText",
+        defaultLocale.cardNotEligibleText,
+      ),
     }
   | None => defaultLocale
   }

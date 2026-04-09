@@ -5,6 +5,7 @@ let make = (
   ~processRequest,
   ~checkEligibility: option<string> => unit,
   ~setConfirmButtonData,
+  ~onFormDataChange=_ => (),
 ) => {
   let {
     formDataRef,
@@ -19,6 +20,7 @@ let make = (
   let setFormData = React.useCallback1(data => {
     formDataRef->Option.map(ref => ref.current = data)->ignore
     setFormData(_ => data)
+    onFormDataChange(data)
   }, [setFormData])
 
   let (isFormValid, setIsFormValid) = React.useState(_ => false)
