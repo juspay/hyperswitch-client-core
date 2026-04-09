@@ -97,9 +97,6 @@ let make = () => {
     )
   }
 
-  // HyperHeadless module — needed only for exitHeadless after confirm
-  let headlessModule = HeadlessCommon.makeHeadlessModule()
-
   // Keep the ref in sync with the latest context value on every re-render.
   React.useEffect1(() => {
     customerPaymentMethodDataRef.current = customerPaymentMethodData
@@ -134,7 +131,7 @@ let make = () => {
           let cvc = cvcValueRef.current->JSON.Encode.string
 
           HeadlessCommon.confirmCardPayment(
-            headlessModule,
+            ~onResult=HyperModule.hyperModule.notifyCvcPaymentResult,
             nativeProp,
             ~paymentToken,
             ~cvc,
