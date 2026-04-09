@@ -40,14 +40,14 @@ let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
   )
 }
 
-let confirmCall = async (headlessModule, body, nativeProp) => {
+let confirmCall = async (~onResult: (int, string) => unit, body, nativeProp) => {
   let res = await confirmAPICall(nativeProp, body)
   let confirmRes =
     res
     ->Option.getOr(JSON.Encode.null)
     ->Utils.getDictFromJson
     ->PaymentConfirmTypes.itemToObjMapper
-  headlessModule.exitHeadless(
+  onResult(
     nativeProp.rootTag,
     confirmRes.error->HyperModule.stringifiedResStatus,
   )
@@ -56,18 +56,23 @@ let confirmCall = async (headlessModule, body, nativeProp) => {
 // Standalone card confirm: builds the confirm body and calls the API.
 // Used by both HeadlessTask (via processRequest) and CvcWidget (via confirmPayment event).
 let confirmCardPayment = (
-  headlessModule,
+  ~onResult: (int, string) => unit,
   nativeProp,
   ~paymentToken: string,
   ~cvc: JSON.t,
   ~billing: option<JSON.t>=?,
 ) => {
-  let bodyArr = [
-    ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+  let baseBodyArr = [
     ("payment_method", "card"->JSON.Encode.string),
     ("payment_token", paymentToken->JSON.Encode.string),
     ("card_cvc", cvc),
   ]
+
+  let bodyArr = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => baseBodyArr
+  | None =>
+    baseBodyArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+  }
 
   billing
   ->Option.map(address => {
@@ -84,7 +89,7 @@ let confirmCardPayment = (
     bodyArr
     ->Dict.fromArray
     ->JSON.Encode.object
-  confirmCall(headlessModule, body->JSON.stringify, nativeProp)->ignore
+  confirmCall(~onResult, body->JSON.stringify, nativeProp)->ignore
 }
 
 let confirmGPay = (
@@ -127,7 +132,7 @@ let confirmGPay = (
       ->JSON.Encode.object
 
     generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
-    ->(confirmCall(headlessModule, _, nativeProp))
+    ->(confirmCall(~onResult=headlessModule.exitHeadless, _, nativeProp))
     ->ignore
   | "Cancel" => reRegisterCallback.contents()
   | err =>
@@ -211,7 +216,7 @@ let confirmApplePay = (
         ->JSON.Encode.object
 
       generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
-      ->(confirmCall(headlessModule, _, nativeProp))
+      ->(confirmCall(~onResult=headlessModule.exitHeadless, _, nativeProp))
       ->ignore
     }
   }
@@ -233,7 +238,7 @@ let processRequest = async (
   switch data.payment_method {
   | CARD =>
     confirmCardPayment(
-      headlessModule,
+      ~onResult=headlessModule.exitHeadless,
       nativeProp,
       ~paymentToken=data.payment_token,
       ~cvc=getCvc(response),

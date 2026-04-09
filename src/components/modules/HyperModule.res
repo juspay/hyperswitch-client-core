@@ -13,6 +13,7 @@ type hyperModule = {
   exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
   notifyWidgetPaymentResult: (int, string) => unit,
+  notifyCvcPaymentResult: (int, string) => unit,
   emitPaymentEvent: (int, string, JSON.t) => unit,
   onUpdateIntentEvent: (int, string, string) => unit,
 }
@@ -55,6 +56,10 @@ let hyperModule = {
   ) => ()),
   updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
   notifyWidgetPaymentResult: getFunctionFromModule(hyperModuleDict, "notifyWidgetPaymentResult", (
+    _,
+    _,
+  ) => ()),
+  notifyCvcPaymentResult: getFunctionFromModule(hyperModuleDict, "notifyCvcPaymentResult", (
     _,
     _,
   ) => ()),
