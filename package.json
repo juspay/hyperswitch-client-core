@@ -46,6 +46,7 @@
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",
     "react-native-inappbrowser-reborn": "^3.7.0",
+    "react-native-nfc-emv": "link:../../../library/react-native-nfc-emv",
     "react-native-svg": "^15.6.0"
   },
   "devDependencies": {
