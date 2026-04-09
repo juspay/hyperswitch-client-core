@@ -132,6 +132,7 @@ app.get('/create-payment-intent', async (req, res) => {
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: response.data.client_secret,
+      profileId: PROFILE_ID,
     });
   } catch (error) {
     logger.error(
@@ -172,6 +173,7 @@ app.post('/create-payment-intent', async (req, res) => {
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
       clientSecret: response.data.client_secret,
+      profileId: PROFILE_ID,
     });
   } catch (error) {
     logger.error(
