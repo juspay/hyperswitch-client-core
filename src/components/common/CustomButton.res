@@ -82,9 +82,20 @@ let make = (
     )->Animated.start
   }
 
+  let a11yLabel = switch buttonState {
+  | LoadingButton => loadingText
+  | Completed => "Complete"
+  | _ => text->Option.getOr("Button")
+  }
+  let a11yState: Accessibility.state = {disabled: disabled}
+
   <CustomPressable
     disabled
+    accessible={true}
     testID={testID->Option.getOr("")}
+    accessibilityLabel=a11yLabel
+    accessibilityState=a11yState
+    accessibilityRole=#button
     style={array([
       s({
         height: primaryButtonHeight->dp,
