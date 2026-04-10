@@ -248,6 +248,7 @@ type sdkState =
   | CardWidget
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
+  | CvcWidget
   | CardExpiryWidget
   | PaymentMethodsManagement
   | Headless
@@ -283,6 +284,7 @@ let sdkStateToStrMapper = sdkState => {
   | CardWidget => "CARD_FORM"
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
+  | CvcWidget => "CVC_WIDGET"
   | CardExpiryWidget => "CARD_EXPIRY_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
@@ -890,6 +892,8 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "cardExpiry" => CardExpiryWidget
     | "paymentMethodsManagement" => PaymentMethodsManagement
     | "expressCheckout" => ExpressCheckoutWidget
+    | "cvcWidget" => CvcWidget
+    | "cardExpiry" => CardExpiryWidget
     | "headless" => Headless
     | _ => NoView
     },

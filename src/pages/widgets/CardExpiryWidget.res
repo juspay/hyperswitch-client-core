@@ -5,23 +5,27 @@ open Validation
 // Card Expiry Widget
 // A standalone widget for collecting card expiry date in "MM / YY" format
 
-// Named constants for magic numbers
 let maxExpiryLength = 7
 let widgetBaseHeight = 120
 let minMonth = 1
 let maxMonth = 12
-let singleDigitMonthMax = 9
-let doubleDigitPrefixThreshold = 2
+
+let singleDigitMonthThreshold = 1
+
 let yearPrefix = "20"
 
-// Type for expiry response
 type expiryResponse = {
   isValid: bool,
   expiryMonth: string,
   expiryYear: string,
 }
 
-// Convert expiry response to JSON
+let buildExpiryResponse = (~isValid, ~expiryMonth="", ~expiryYear=""): expiryResponse => {
+  isValid,
+  expiryMonth,
+  expiryYear,
+}
+
 let responseToJson = (response: expiryResponse) => {
   [
     ("isValid", response.isValid->Js.Json.boolean),
@@ -32,7 +36,6 @@ let responseToJson = (response: expiryResponse) => {
   ->JSON.Encode.object
 }
 
-// Extract and send expiry data to native with validation
 let validateAndSendExpiry = (
   ~expiry: string,
   ~setExpiryError: string => unit,
@@ -42,21 +45,13 @@ let validateAndSendExpiry = (
   if expiry == "" {
     setExpiryError(localeObject.cardExpiryDateEmptyText)
     setIsValid(false)
-    let response = {
-      isValid: false,
-      expiryMonth: "",
-      expiryYear: "",
-    }
+    let response = buildExpiryResponse(~isValid=false)
     HyperModule.sendMessageToNative(response->responseToJson->Js.Json.stringify)
     false
   } else if !checkCardExpiry(expiry) {
     setExpiryError(localeObject.inValidExpiryErrorText)
     setIsValid(false)
-    let response = {
-      isValid: false,
-      expiryMonth: "",
-      expiryYear: "",
-    }
+    let response = buildExpiryResponse(~isValid=false)
     HyperModule.sendMessageToNative(response->responseToJson->Js.Json.stringify)
     false
   } else {
@@ -64,11 +59,7 @@ let validateAndSendExpiry = (
     let yearWithPrefix = yearPrefix ++ year
     setExpiryError("")
     setIsValid(true)
-    let response = {
-      isValid: true,
-      expiryMonth: month,
-      expiryYear: yearWithPrefix,
-    }
+    let response = buildExpiryResponse(~isValid=true, ~expiryMonth=month, ~expiryYear=yearWithPrefix)
     HyperModule.sendMessageToNative(response->responseToJson->Js.Json.stringify)
     true
   }
@@ -94,13 +85,17 @@ module CardExpiryInput = {
     let formatExpiryInput = val => {
       let clearValue = val->clearSpaces
       let expiryVal = clearValue->toInt
+      
+      // FIX: Use singleDigitMonthThreshold (1) instead of 2
+      // This ensures "1" becomes "01 / " not just "1"
       let formatted = if (
-        expiryVal >= doubleDigitPrefixThreshold &&
-        expiryVal <= singleDigitMonthMax &&
+        expiryVal >= singleDigitMonthThreshold &&
+        expiryVal <= 9 &&
         clearValue->String.length == 1
       ) {
         `0${clearValue} / `
       } else if clearValue->String.length == 2 && expiryVal > maxMonth {
+        // Handle case where user types "13" - convert to "01 / 3"
         let val = clearValue->String.split("")
         `0${val->Array.get(0)->Option.getOr("")} / ${val->Array.get(1)->Option.getOr("")}`
       } else {
