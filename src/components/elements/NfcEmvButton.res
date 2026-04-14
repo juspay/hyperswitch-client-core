@@ -1,99 +1,55 @@
 open ReactNative
 open Style
 
-module PulsingNfcIcon = {
+module BlinkingNfcIcon = {
   @react.component
   let make = (~isListening: bool, ~size: float, ~color: string, ~activeColor: string) => {
-    let pulseScale = AnimatedValue.useAnimatedValue(0.8)
-    let pulseOpacity = AnimatedValue.useAnimatedValue(0.6)
+    let blinkOpacity = AnimatedValue.useAnimatedValue(1.0)
 
     React.useEffect1(() => {
       if isListening {
-        let scaleAnim = Animated.loop(
-          Animated.timing(
-            pulseScale,
-            {
-              toValue: 1.5->Animated.Value.Timing.fromRawValue,
+        let anim = Animated.loop(
+          Animated.sequence([
+            Animated.timing(blinkOpacity, {
+              toValue: 0.3->Animated.Value.Timing.fromRawValue,
               isInteraction: false,
               useNativeDriver: true,
               delay: 0.,
-              duration: 1000.,
-              easing: Easing.out(Easing.ease),
-            },
-          ),
-        )
-
-        let opacityAnim = Animated.loop(
-          Animated.timing(
-            pulseOpacity,
-            {
-              toValue: 0.->Animated.Value.Timing.fromRawValue,
+              duration: 500.,
+              easing: Easing.inOut(Easing.ease),
+            }),
+            Animated.timing(blinkOpacity, {
+              toValue: 1.0->Animated.Value.Timing.fromRawValue,
               isInteraction: false,
               useNativeDriver: true,
               delay: 0.,
-              duration: 1000.,
-              easing: Easing.out(Easing.ease),
-            },
-          ),
+              duration: 500.,
+              easing: Easing.inOut(Easing.ease),
+            }),
+          ]),
         )
 
-        scaleAnim->Animated.start
-        opacityAnim->Animated.start
+        anim->Animated.start
 
         Some(
           () => {
-            scaleAnim->Animated.stop
-            opacityAnim->Animated.stop
-            pulseScale->Animated.Value.setValue(0.8)
-            pulseOpacity->Animated.Value.setValue(0.6)
+            anim->Animated.stop
+            blinkOpacity->Animated.Value.setValue(1.0)
           },
         )
       } else {
-        pulseScale->Animated.Value.setValue(0.8)
-        pulseOpacity->Animated.Value.setValue(0.6)
+        blinkOpacity->Animated.Value.setValue(1.0)
         None
       }
     }, [isListening])
 
-    let scaleValue = pulseScale->Animated.StyleProp.float
-    let opacityValue = pulseOpacity->Animated.StyleProp.float
+    let opacity = blinkOpacity->Animated.StyleProp.float
 
-    <View
-      style={s({
-        width: size->dp,
-        height: size->dp,
-        justifyContent: #center,
-        alignItems: #center,
-      })}>
-      {isListening
-        ? <Animated.View
-            style={s({
-              position: #absolute,
-              width: size->dp,
-              height: size->dp,
-              borderRadius: (size /. 2.0),
-              backgroundColor: activeColor,
-              transform: [scale(~scale=scaleValue)],
-              opacity: opacityValue,
-            })}
-          />
-        : React.null}
-      <View
-        style={s({
-          width: (size *. 0.7)->dp,
-          height: (size *. 0.7)->dp,
-          borderRadius: ((size *. 0.7) /. 2.0),
-          backgroundColor: isListening ? activeColor : "transparent",
-          justifyContent: #center,
-          alignItems: #center,
-          borderWidth: isListening ? 0. : 1.5,
-          borderColor: color,
-        })}>
-        <Icon
-          name="nfc" height={size *. 0.4} width={size *. 0.4} fill={isListening ? "#FFFFFF" : color}
-        />
-      </View>
-    </View>
+    {isListening
+      ? <Animated.View style={s({opacity: opacity})}>
+          <Icon name="nfc" height=size width=size fill=activeColor />
+        </Animated.View>
+      : <Icon name="nfc" height=size width=size fill=color />}
   }
 }
 
@@ -244,9 +200,9 @@ let make = (~onNfcCardRead, ~expireRef, ~cvvRef) => {
             justifyContent: #center,
           })}
           onPress={_ => handleNfcPress()}>
-          <PulsingNfcIcon
+          <BlinkingNfcIcon
             isListening={isListening}
-            size=32.
+            size=28.
             color={component.color}
             activeColor={primaryColor}
           />
