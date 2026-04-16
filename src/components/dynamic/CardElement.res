@@ -2,6 +2,9 @@ open ReactNative
 open Style
 open Validation
 
+// Import NFC EMV components
+open NfcEmvButton
+
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 
@@ -9,6 +12,7 @@ module CardBrandAndScanCardIcon = {
   @react.component
   let make = (
     ~isScanCardAvailable,
+    ~isNfcAvailable,
     ~eligibleCardSchemes,
     ~showCardSchemeDropDown,
     ~cardNumberFilled,
@@ -21,11 +25,11 @@ module CardBrandAndScanCardIcon = {
   ) => {
     <View style={s({flexDirection: #row, alignItems: #center})}>
       <CardSchemeComponent eligibleCardSchemes showCardSchemeDropDown cardBrand setCardBrand />
+      <UIUtils.RenderIf condition={isNfcAvailable && !cardNumberFilled}>
+        <NfcEmvButton onNfcCardRead expireRef cvvRef />
+      </UIUtils.RenderIf>
       <UIUtils.RenderIf condition={isScanCardAvailable && !cardNumberFilled}>
         <ScanCardButton onScanCard expireRef cvvRef />
-      </UIUtils.RenderIf>
-      <UIUtils.RenderIf condition={!cardNumberFilled}>
-        <NfcEmvButton onNfcCardRead expireRef cvvRef />
       </UIUtils.RenderIf>
     </View>
   }
@@ -207,6 +211,8 @@ let make = (
         None
       }, [cardNumber])
 
+      let isNfcAvailable = NfcEmvModule.checkAvailability()
+
       let onScanCard = (
         pan,
         expiry,
@@ -313,6 +319,7 @@ let make = (
                 iconRight=CustomInput.CustomIcon(
                   <CardBrandAndScanCardIcon
                     isScanCardAvailable=ScanCardModule.isAvailable
+                    isNfcAvailable
                     eligibleCardSchemes
                     showCardSchemeDropDown
                     cardNumberFilled={switch cardNumberInput.value {
