@@ -66,7 +66,7 @@ let make = (~onNfcCardRead, ~expireRef, ~cvvRef) => {
 
   // Check NFC availability on mount
   React.useEffect0(() => {
-    NfcEmvModule.isAvailableFn()
+    NfcEmvModule.isAvailable()
     ->Promise.then(available => {
       setIsNfcAvailable(_ => available)
       Promise.resolve()
