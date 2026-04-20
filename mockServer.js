@@ -7,10 +7,10 @@ const PORT = process.env.PORT || 5252;
 
 let mockData;
 try {
-  mockData = require("./mockData.js");
+  mockData = require('./mockData.js');
 } catch (_) {
   mockData = {
-    paymentIntentBody: {}
+    paymentIntentBody: {},
   };
 }
 
@@ -131,7 +131,7 @@ app.get('/create-payment-intent', async (req, res) => {
 
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
-      clientSecret: response.data.client_secret,
+      sdkAuthorization: response.data.sdk_authorization,
       profileId: PROFILE_ID,
     });
   } catch (error) {
@@ -172,7 +172,7 @@ app.post('/create-payment-intent', async (req, res) => {
 
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
-      clientSecret: response.data.client_secret,
+      sdkAuthorization: response.data.sdk_authorization,
       profileId: PROFILE_ID,
     });
   } catch (error) {
@@ -230,7 +230,7 @@ app.post('/create-authentication', async (req, res) => {
 
     res.json({
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
-      clientSecret: data.client_secret,
+      sdkAuthorization: data.sdk_authorization,
       profileId: data.profile_id,
       authenticationId: data.authentication_id,
       merchantId: data.merchant_id,
