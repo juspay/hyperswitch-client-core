@@ -48,13 +48,15 @@ let useUpdateIntentListener = (
         }
       } else {
         let currentNativeProp = nativePropRef.current
-        HyperModule.onUpdateIntentEvent(
-          currentNativeProp.rootTag,
-          updateIntentInitReturned,
-          JSON.stringify(
-            JSON.Encode.object(Dict.fromArray([("status", JSON.Encode.string("failed"))])),
-          ),
-        )
+        if intentData.rootTag === currentNativeProp.rootTag {
+          HyperModule.onUpdateIntentEvent(
+            currentNativeProp.rootTag,
+            updateIntentInitReturned,
+            JSON.stringify(
+              JSON.Encode.object(Dict.fromArray([("status", JSON.Encode.string("failed"))])),
+            ),
+          )
+        }
       }
     })
 

@@ -24,11 +24,9 @@ let make = () => {
     error()
 
     //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => ())
-    if (
-      true
-      // (nativeProp.clientSecret != "" || nativeProp.paymentMethodId != "") &&
-      //   nativeProp.publishableKey != ""
-    ) {
+    // if (nativeProp.clientSecret != "" || nativeProp.paymentMethodId != "") &&
+    //   nativeProp.publishableKey != ""
+    if nativeProp.sdkState !== CvcWidget {
       let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
         if ErrorUtils.isError(accountPaymentMethodData) {
           errorOnApiCalls(
