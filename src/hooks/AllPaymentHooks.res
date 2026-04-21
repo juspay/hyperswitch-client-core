@@ -401,12 +401,9 @@ let useEligibilityCheckHook = () => {
     switch WebKit.platform {
     | #next => Promise.resolve(`{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn)
     | _ =>
-      let paymentId =
-        String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
-      let uri = `${baseUrl}/payments/${paymentId}/eligibility`
+      let uri = `${baseUrl}/payments/${nativeProp.paymentMethodId}/eligibility`
       let body =
         [
-          ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
           ("payment_method_type", paymentMethodType->JSON.Encode.string),
           ("payment_method_data", paymentMethodData),
         ]
