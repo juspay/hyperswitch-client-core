@@ -28,56 +28,61 @@ let useShowErrorOrWarning = () => {
 let useErrorWarningValidationOnLoad = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
+  // let isPublishableKeyValid = true
+  // GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
 
-  let isClientSecretValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(sdkAuth) => {
-      let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
-      sdkAuthData.publishableKey
-      ->Option.map(pk => pk === nativeProp.publishableKey)
-      ->Option.getOr(false)
-    }
-  | None =>
-    RegExp.test(
-      `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
-      nativeProp.clientSecret,
-    )
-  }
+  // let isClientSecretValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  // | Some(sdkAuth) => {
+  //     let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
+  //     sdkAuthData.publishableKey
+  //     ->Option.map(pk => pk === nativeProp.publishableKey)
+  //     ->Option.getOr(false)
+  //   }
+  // | None =>
+  //   RegExp.test(
+  //     `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
+  //     nativeProp.clientSecret,
+  //   )
+  // }
+
   let showErrorOrWarning = useShowErrorOrWarning()
   () => {
-    if !isPublishableKeyValid {
-      switch nativeProp.sdkState {
-      | PaymentSheet
-      | WidgetPaymentSheet
-      | WidgetButtonSheet
-      | ButtonSheet
-      | TabSheet
-      | WidgetTabSheet =>
-        showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
-      | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
-      | CardWidget | CustomWidget(_) | ExpressCheckoutWidget | CvcWidget => ()
-      | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
-      | NoView | PaymentMethodsManagement => ()
-      }
-    } else if !isClientSecretValid {
-      let dynamicStr = "ClientSecret is expected to be in format pay_******_secret_*****"
-      switch nativeProp.sdkState {
-      | PaymentSheet
-      | WidgetPaymentSheet
-      | WidgetButtonSheet
-      | ButtonSheet
-      | TabSheet
-      | WidgetTabSheet =>
-        showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
-      | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
-      | CardWidget | CustomWidget(_) | ExpressCheckoutWidget | CvcWidget => ()
-      | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
-      | NoView | PaymentMethodsManagement => ()
-      }
-    }
-    // else if nativeProp.configuration.merchantDisplayName === "" {
-    //   let dynamicStr = "When  a configuration is passed to PaymentSheet, the merchant display name cannot be an empty string"
-    //   showErrorOrWarning(errorWarning.reguirParameter, ~dynamicStr, ())
+    // publishableKey and clientSecret validations are optional now
+    // if !isPublishableKeyValid {
+    //   switch nativeProp.sdkState {
+    //   | PaymentSheet
+    //   | WidgetPaymentSheet
+    //   | WidgetButtonSheet
+    //   | ButtonSheet
+    //   | TabSheet
+    //   | WidgetTabSheet =>
+    //     showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
+    //   | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
+    //   | CardWidget | CustomWidget(_) | ExpressCheckoutWidget | CvcWidget => ()
+    //   | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidPk, ())
+    //   | NoView | PaymentMethodsManagement => ()
+    //   }
+    // } else if !isClientSecretValid {
+    //   let dynamicStr = "ClientSecret is expected to be in format pay_******_secret_*****"
+    //   switch nativeProp.sdkState {
+    //   | PaymentSheet
+    //   | WidgetPaymentSheet
+    //   | WidgetButtonSheet
+    //   | ButtonSheet
+    //   | TabSheet
+    //   | WidgetTabSheet =>
+    //     showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
+    //   | HostedCheckout => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
+    //   | CardWidget | CustomWidget(_) | ExpressCheckoutWidget | CvcWidget => ()
+    //   | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
+    //   | NoView | PaymentMethodsManagement => ()
+    //   }
     // }
+    // else 
+    if nativeProp.configuration.merchantDisplayName === "" {
+      let dynamicStr = "When  a configuration is passed to PaymentSheet, the merchant display name cannot be an empty string"
+      showErrorOrWarning(ErrorUtils.errorWarning.reguirParameter, ~dynamicStr, ())
+    }
+    ignore(showErrorOrWarning)
   }
 }
