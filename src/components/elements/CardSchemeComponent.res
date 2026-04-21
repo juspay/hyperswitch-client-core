@@ -166,7 +166,7 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
     None
   }, [showCardSchemeDropDown])
 
-  <View>
+  <View testID={TestUtils.cardSchemeComponentTestId}>
     <Tooltip
       disabled={!showCardSchemeDropDown}
       maxWidth=200.
@@ -174,6 +174,7 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
       renderContent={toggleVisibility =>
         <CardSchemeSelectionPopoverElement eligibleCardSchemes setCardBrand toggleVisibility />}>
       <View
+        testID={showCardSchemeDropDown ? TestUtils.cardSchemeDropdownTestId : ""}
         style={s({
           height: 46.->dp,
           display: #flex,
