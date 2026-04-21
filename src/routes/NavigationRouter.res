@@ -25,8 +25,9 @@ let make = () => {
 
     //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => ())
     if (
-      (nativeProp.clientSecret != "" || nativeProp.paymentMethodId != "") &&
-        nativeProp.publishableKey != ""
+      true
+      // (nativeProp.clientSecret != "" || nativeProp.paymentMethodId != "") &&
+      //   nativeProp.publishableKey != ""
     ) {
       let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
         if ErrorUtils.isError(accountPaymentMethodData) {
