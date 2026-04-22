@@ -274,11 +274,11 @@ let make = () => {
         clientSecret: responseFromJava.clientSecret,
         configuration: {
           ...nativeProp.configuration,
-          appearance: {
-            ...nativeProp.configuration.appearance,
-            googlePay: {
-              buttonType: PLAIN,
-              buttonStyle: None,
+          wallets: {
+            ...nativeProp.configuration.wallets,
+            style: {
+              ...nativeProp.configuration.wallets.style,
+              googlePayType: PLAIN,
             },
           },
         },

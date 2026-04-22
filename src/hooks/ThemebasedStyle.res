@@ -164,6 +164,8 @@ type themeBasedStyleObj = {
   shadowColor: string,
   shadowIntensity: float,
   primaryButtonHeight: float,
+  walletButtonHeight: float,
+  walletButtonBorderRadius: float,
   disclaimerBackgroundColor: string,
   disclaimerTextColor: string,
   instructionalTextColor: string,
@@ -177,6 +179,8 @@ type themeBasedStyleObj = {
 
 let darkRecord = {
   primaryButtonHeight: 45.,
+  walletButtonHeight: 48.,
+  walletButtonBorderRadius: 2.,
   platform: "android",
   paymentSheetOverlay: "#00000025",
   bgColor: styles["dark_bgColor"],
@@ -264,6 +268,8 @@ let darkRecord = {
 }
 let lightRecord = {
   primaryButtonHeight: 45.,
+  walletButtonHeight: 48.,
+  walletButtonBorderRadius: 2.,
   platform: "android",
   paymentSheetOverlay: "#00000070",
   bgColor: styles["light_bgColor"],
@@ -352,6 +358,8 @@ let lightRecord = {
 
 let minimal = {
   primaryButtonHeight: 45.,
+  walletButtonHeight: 48.,
+  walletButtonBorderRadius: 2.,
   platform: "android",
   paymentSheetOverlay: "#00000025",
   bgColor: styles["light_bgColor"],
@@ -440,6 +448,8 @@ let minimal = {
 
 let flatMinimal = {
   primaryButtonHeight: 45.,
+  walletButtonHeight: 48.,
+  walletButtonBorderRadius: 2.,
   platform: "android",
   paymentSheetOverlay: "#00000025",
   bgColor: styles["flatMinimal_bgColor"],
@@ -535,6 +545,7 @@ let some = (~override, ~fn, ~default) => {
 let itemToObj = (
   themeObj: themeBasedStyleObj,
   appearance: SdkTypes.appearance,
+  wallets: SdkTypes.walletConfiguration,
   isDarkMode: bool,
 ) => {
   let appearanceColor: option<SdkTypes.colors> = switch appearance.colors {
@@ -561,17 +572,23 @@ let itemToObj = (
   | None => None
   }
 
-  let gpayOverrideStyle = switch appearance.googlePay.buttonStyle {
-  | Some(val) => isDarkMode ? val.dark : val.light
-  | None => themeObj.googlePayButtonColor
+  let gpayOverrideStyle = switch wallets.style.theme {
+  | WalletDefault => themeObj.googlePayButtonColor
+  | WalletDark => #dark
+  | WalletLight => #light
+  | WalletOutline => isDarkMode ? #light : #dark
   }
 
-  let applePayOverrideStyle = switch appearance.applePay.buttonStyle {
-  | Some(val) => isDarkMode ? val.dark : val.light
-  | None => themeObj.applePayButtonColor
+  let applePayOverrideStyle = switch wallets.style.theme {
+  | WalletDefault => themeObj.applePayButtonColor
+  | WalletDark => #black
+  | WalletLight => #white
+  | WalletOutline => #whiteOutline
   }
   {
     primaryButtonHeight: themeObj.primaryButtonHeight,
+    walletButtonHeight: wallets.style.height > 0 ? Int.toFloat(wallets.style.height) : themeObj.walletButtonHeight,
+    walletButtonBorderRadius: wallets.style.buttonRadius > 0 ? Int.toFloat(wallets.style.buttonRadius) : themeObj.walletButtonBorderRadius,
     platform: themeObj.platform,
     bgColor: getStyleProp(
       ~override=switch appearanceColor {
@@ -941,9 +958,10 @@ let useThemeBasedStyle = () => {
   | Dark => Some(darkRecord)
   | Default => None
   }
+  let wallets = nativeProp.configuration.wallets
   let themerecordOverridedWithAppObj = switch themeType {
-  | Light(appearance) => itemToObj(themerecord->Option.getOr(lightRecord), appearance, false)
-  | Dark(appearance) => itemToObj(themerecord->Option.getOr(darkRecord), appearance, true)
+  | Light(appearance) => itemToObj(themerecord->Option.getOr(lightRecord), appearance, wallets, false)
+  | Dark(appearance) => itemToObj(themerecord->Option.getOr(darkRecord), appearance, wallets, true)
   }
   themerecordOverridedWithAppObj
 }
