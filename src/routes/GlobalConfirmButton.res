@@ -32,5 +32,6 @@ let make = (~confirmButtonData) => {
       customerPaymentExperience=?confirmButtonData.customer_payment_experience
       errorText=confirmButtonData.errorText
     />
+    <Space height=15. />
   </UIUtils.RenderIf>
 }

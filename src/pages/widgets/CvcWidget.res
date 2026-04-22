@@ -58,6 +58,7 @@ let make = () => {
           HeadlessCommon.confirmCardPayment(
             headlessModule,
             nativeProp,
+            ~sdkAuthorization=actionData.sdkAuthorization->Option.getOr(""),
             ~paymentToken=actionData.paymentToken->Option.getOr(""),
             ~cvc=cvcValueRef.current->JSON.Encode.string,
             ~billing=?actionData.billing,
@@ -84,6 +85,7 @@ let make = () => {
         flex: 1.,
         backgroundColor: "transparent",
         justifyContent: #center,
+        padding: 2.->dp,
       })}>
       <CustomInput
         state={cvcValue}
@@ -130,6 +132,7 @@ let make = () => {
           </View>,
         )
       />
+      <Space height=2. />
     </View>
   }
 }

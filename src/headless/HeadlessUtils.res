@@ -137,7 +137,7 @@ let handleApiCall = async (
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
 ) => {
-  let paymentId = nativeProp.paymentMethodId
+  let paymentId = nativeProp.paymentId
   try {
     let initEventName = LoggerTypes.getApiInitEvent(eventName)
     switch initEventName {
@@ -219,7 +219,7 @@ let savedPaymentMethodAPICall = nativeProp => {
 }
 
 let sessionAPICall = (nativeProp: SdkTypes.nativeProp) => {
-  let paymentId = nativeProp.paymentMethodId
+  let paymentId = nativeProp.paymentId
 
   let headers = Utils.getHeader(
     ~apiKey=nativeProp.publishableKey,
@@ -254,13 +254,17 @@ let sessionAPICall = (nativeProp: SdkTypes.nativeProp) => {
   )
 }
 
-let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body) => {
-  let paymentId = nativeProp.paymentMethodId
+let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) => {
+  let paymentId =
+    sdkAuthorization
+    ->Option.map(auth => Utils.getSdkAuthorizationData(auth).paymentId)
+    ->Option.getOr(None)
+    ->Option.getOr(nativeProp.paymentId)
   let uri = `${getBaseUrl(nativeProp)}/payments/${paymentId}/confirm`
   let headers = Utils.getHeader(
     ~apiKey=nativeProp.publishableKey,
     ~appId=nativeProp.hyperParams.appId,
-    ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+    ~sdkAuthorization=sdkAuthorization->Option.getOr(nativeProp.sdkAuthorization->Option.getOr("")),
     (),
   )
 

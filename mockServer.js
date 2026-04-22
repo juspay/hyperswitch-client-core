@@ -132,6 +132,7 @@ app.get('/create-payment-intent', async (req, res) => {
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
       sdkAuthorization: response.data.sdk_authorization,
+      paymentId: response.data.payment_id,
       profileId: PROFILE_ID,
     });
   } catch (error) {
@@ -173,6 +174,7 @@ app.post('/create-payment-intent', async (req, res) => {
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
       sdkAuthorization: response.data.sdk_authorization,
+      paymentId: response.data.payment_id,
       profileId: PROFILE_ID,
     });
   } catch (error) {
@@ -255,6 +257,38 @@ app.get('/netcetera-sdk-api-key', (_, res) => {
   } else {
     res.status(500).json({
       error: 'Not Configured',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.post("/update-payment", async (req, res) => {
+  try {
+    const { paymentId, ...updateFields } = req.body;
+
+    logger.debug('Updating payment intent with data', updateFields);
+
+    const response = await makeHyperswitchRequest(`/payments/${paymentId}`, {
+      method: 'POST',
+      body: JSON.stringify(updateFields),
+    });
+
+    logger.debug('Payment intent updated successfully', {
+      payment_id: response.data.payment_id,
+    });
+
+    res.json({
+      sdkAuthorization: response.data.sdk_authorization,
+    });
+  } catch (error) {
+    logger.error(
+      'Error updating payment intent',
+      error.response?.data || error.message,
+    );
+
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to update intent',
+      details: error.response?.data || error.message,
       timestamp: new Date().toISOString(),
     });
   }
