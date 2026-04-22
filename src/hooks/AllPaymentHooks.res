@@ -129,6 +129,37 @@ let useSessionTokenHook = () => {
   }
 }
 
+let usePostSessionTokensHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  (~paymentMethodData: AccountPaymentMethodType.payment_method_type, ~sessionObject: SessionsType.sessions, ()) => {
+    let payment_type_str = accountPaymentMethodData
+      ->Option.map(a => a.payment_type_str)
+      ->Option.getOr(None)
+    
+    let body = PaymentUtils.generatePostSessionTokensBody(
+      ~nativeProp,
+      ~paymentMethodData,
+      ~sessionObject,
+      ~payment_type_str?,
+      (),
+    )->JSON.stringify
+    
+    let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+    
+    APIUtils.fetchApiWrapper(
+      ~uri=`${baseUrl}/payments/${paymentId}/post_session_tokens`,
+      ~body,
+      ~method=#POST,
+      ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+      ~eventName=POST_SESSION_TOKENS_CALL,
+      ~apiLogWrapper,
+    )
+  }
+}
+
 let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
   let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)

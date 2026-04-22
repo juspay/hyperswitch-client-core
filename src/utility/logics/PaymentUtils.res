@@ -152,6 +152,44 @@ let generateWalletConfirmBody = (
   payment_type: ?payment_type_str,
 }
 
+let generatePostSessionTokensBody = (
+  ~nativeProp: SdkTypes.nativeProp,
+  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~sessionObject: SessionsType.sessions,
+  ~payment_type_str: option<string>=?,
+  (),
+): JSON.t => {
+  let sdkData = [("token", JSON.Encode.string(""))]->Dict.fromArray->JSON.Encode.object
+  
+  let walletInner = [
+    (paymentMethodData.payment_method_type ++ "_sdk", sdkData),
+  ]->Dict.fromArray->JSON.Encode.object
+
+  let paymentMethodDataBody = [
+    ("wallet", walletInner),
+  ]->Dict.fromArray->JSON.Encode.object
+
+  let connector = switch sessionObject.connector {
+  | "" => 
+    paymentMethodData.payment_experience
+    ->Array.get(0)
+    ->Option.map(_ => [paymentMethodData.payment_method_type])
+    ->Option.getOr([paymentMethodData.payment_method_type])
+  | c => [c]
+  }
+
+  [
+    ("payment_id", String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")->JSON.Encode.string),
+    ("payment_method_type", JSON.Encode.string(paymentMethodData.payment_method_type)),
+    ("payment_method", JSON.Encode.string("wallet")),
+    ("client_secret", JSON.Encode.string(nativeProp.clientSecret)),
+    ("payment_experience", JSON.Encode.string("invoke_sdk_client")),
+    ("connector", connector->Array.map(JSON.Encode.string)->JSON.Encode.array),
+    ("payment_method_data", paymentMethodDataBody),
+    ("payment_type", JSON.Encode.string(payment_type_str->Option.getOr("normal"))),
+  ]->Dict.fromArray->JSON.Encode.object
+}
+
 let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
   let actionType = nextActionObj->Option.getOr({type_: "", redirectToUrl: ""})
   actionType.type_

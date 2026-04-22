@@ -101,7 +101,23 @@ let make = (
       }
     }
 
-    let (paymentMethodDataDict, tabDict) = switch paymentMethodData.payment_method {
+    let getExperienceSuffix = (experiences: array<AccountPaymentMethodType.payment_experience>) => {
+      let hasSDKFlow = experiences
+        ->Array.some(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
+
+      let hasRedirectFlow = experiences
+        ->Array.some(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+
+      if hasSDKFlow {
+        "_sdk"
+      } else if hasRedirectFlow {
+        "_redirect"
+      } else {
+        ""
+      }
+    }
+
+    let (paymentMethodDataDict, tabDict, paymentMethodStr) = switch paymentMethodData.payment_method {
     | CARD =>
       switch nickname {
       | Some(name) => (
@@ -119,16 +135,30 @@ let make = (
             ),
           ]->Dict.fromArray,
           tabDict,
+          paymentMethodData.payment_method_str,
         )
-      | None => (Dict.make(), tabDict)
+      | None => (Dict.make(), tabDict, paymentMethodData.payment_method_str)
       }
     | REWARD => (
         [
           ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
         ]->Dict.fromArray,
         Dict.make(),
+        paymentMethodData.payment_method_str,
       )
-    | pm => (
+    | pm =>
+      let suffix = 
+        if pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL {
+          paymentMethodData.payment_experience->getExperienceSuffix
+        } else if paymentMethodData.payment_method_type === "cashapp" {
+          "_qr"
+        } else {
+          ""
+        }
+      
+      let pms = suffix === "_sdk" ? "wallet" : paymentMethodData.payment_method_str
+      
+      (
         [
           (
             "payment_method_data",
@@ -137,10 +167,7 @@ let make = (
                 paymentMethodData.payment_method_str,
                 [
                   (
-                    paymentMethodData.payment_method_type ++
-                    (pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL
-                      ? "_redirect"
-                      : "") ++ (paymentMethodData.payment_method_type === "cashapp" ? "_qr" : ""),
+                    paymentMethodData.payment_method_type ++ suffix,
                     walletDict->Option.getOr(Dict.make())->Js.Json.object_,
                   ),
                 ]
@@ -153,12 +180,13 @@ let make = (
           ),
         ]->Dict.fromArray,
         tabDict,
+        pms,
       )
     }
 
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,
-      ~payment_method_str=paymentMethodData.payment_method_str,
+      ~payment_method_str=paymentMethodStr,
       ~payment_method_type=paymentMethodData.payment_method_type,
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",

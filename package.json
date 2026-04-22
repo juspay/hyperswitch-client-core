@@ -40,6 +40,7 @@
   },
   "dependencies": {
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
+    "@juspay-tech/react-native-hyperswitch-paypal": "link:../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch-paypal",
     "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.2",
     "@sentry/react-native": "^6.13.0",
     "base-64": "^1.0.0",
