@@ -14,6 +14,11 @@ try {
   };
 }
 
+// Cache for test automation: when a test POSTs a custom body,
+// it is stored here so subsequent GET requests (from the demo app)
+// use the same payment data (including customer_id).
+let cachedTestBody = null;
+
 const colors = {
   reset: '\x1b[0m',
   bold: '\x1b[1m',
@@ -53,6 +58,23 @@ const logger = {
 
 app.use(cors());
 app.use(express.json());
+
+// Request logging middleware for debugging
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  logger.info(`[${timestamp}] ${req.method} ${req.path}`);
+  if (req.method === 'POST' && req.body) {
+    logger.info(
+      `  -> request customer_id: ${req.body.customer_id || '(not set)'}`,
+    );
+  }
+  logger.info(
+    `  -> cachedTestBody: ${
+      cachedTestBody ? 'customer_id=' + cachedTestBody.customer_id : 'null'
+    }`,
+  );
+  next();
+});
 
 const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
 const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
@@ -108,11 +130,24 @@ app.get('/health', (req, res) => {
 
 app.get('/create-payment-intent', async (req, res) => {
   try {
-    const paymentData = {
-      ...mockData.paymentIntentBody,
-      amount: 100,
-      currency: 'USD',
-    };
+    let paymentData;
+    if (cachedTestBody) {
+      // Use the cached body from a previous POST (test automation)
+      paymentData = {...cachedTestBody};
+      logger.info(
+        'Using cached test body for GET request (customer_id: ' +
+          paymentData.customer_id +
+          ')',
+      );
+      // Clear the cache after use so it doesn't leak into unrelated requests
+      cachedTestBody = null;
+    } else {
+      paymentData = {
+        ...mockData.paymentIntentBody,
+        amount: 100,
+        currency: 'USD',
+      };
+    }
 
     if (process.env.PROFILE_ID) {
       paymentData.profile_id = process.env.PROFILE_ID;
@@ -159,6 +194,15 @@ app.post('/create-payment-intent', async (req, res) => {
     if (process.env.PROFILE_ID) {
       paymentData.profile_id = process.env.PROFILE_ID;
     }
+
+    // Cache the merged body so the next GET request (from the demo app)
+    // uses the same payment data including customer_id
+    cachedTestBody = {...paymentData};
+    logger.info(
+      'Cached test body for next GET request (customer_id: ' +
+        paymentData.customer_id +
+        ')',
+    );
 
     logger.debug('Creating payment intent with data', paymentData);
 
@@ -243,6 +287,73 @@ app.post('/create-authentication', async (req, res) => {
     res.status(500).json({
       error: 'Failed to create authentication',
       details: error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.get('/session-data', async (req, res) => {
+  try {
+    // Fetch session data from Hyperswitch API
+    const response = await makeHyperswitchRequest('/sessions', {
+      method: 'POST',
+      body: JSON.stringify({
+        client_secret: req.query.client_secret || '',
+      }),
+    });
+
+    logger.debug('Session data fetched successfully');
+    res.json(response.data);
+  } catch (error) {
+    logger.error(
+      'Error fetching session data',
+      error.response?.data || error.message,
+    );
+
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch session data',
+      details: error.response?.data || error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.get('/payment-methods', async (req, res) => {
+  try {
+    const clientSecret = req.query.client_secret || '';
+    // Extract the payment_id from client_secret (format: pay_xxx_secret_yyy)
+    const paymentId = clientSecret.split('_secret_')[0];
+
+    const response = await fetch(
+      `${HYPERSWITCH_BASE_URL}/account/payment_methods?client_secret=${encodeURIComponent(clientSecret)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': HYPERSWITCH_PUBLISHABLE_KEY,
+        },
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      const error = new Error(`HTTP ${response.status}`);
+      error.response = {status: response.status, data};
+      throw error;
+    }
+
+    logger.debug('Payment methods fetched successfully');
+    res.json(data);
+  } catch (error) {
+    logger.error(
+      'Error fetching payment methods',
+      error.response?.data || error.message,
+    );
+
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch payment methods',
+      details: error.response?.data || error.message,
       timestamp: new Date().toISOString(),
     });
   }
