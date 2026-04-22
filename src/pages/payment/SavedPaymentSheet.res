@@ -33,7 +33,9 @@ let make = (
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
-  let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
+  let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ =>
+    nativeProp.configuration.savedPaymentMethodsCheckboxCheckedByDefault
+  )
   let setSaveCardChecboxSelected = React.useCallback1(isSelected => {
     if isSelected {
       setErrorText(_ => None)
