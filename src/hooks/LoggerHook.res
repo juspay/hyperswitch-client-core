@@ -140,7 +140,7 @@ let useLoggerHook = () => {
       value,
       internalMetadata: internalMetadata->Option.getOr(""),
       category,
-      paymentId: nativeProp.paymentMethodId,
+      paymentId: nativeProp.paymentId,
       merchantId: nativeProp.publishableKey,
       appId: ?nativeProp.hyperParams.appId,
       platform: WebKit.platformString,
@@ -171,7 +171,7 @@ let useLoggerHook = () => {
     updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)
     setEvents(updatedEvents)
     snooze(
-      ~paymentId=nativeProp.paymentMethodId,
+      ~paymentId=nativeProp.paymentId,
       ~publishableKey=nativeProp.publishableKey,
       ~appId=nativeProp.hyperParams.appId,
       ~platform=WebKit.platformString,
