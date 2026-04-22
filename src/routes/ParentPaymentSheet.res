@@ -102,6 +102,5 @@ let make = () => {
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
     <GlobalConfirmButton confirmButtonData />
-    <Space height=15. />
   </FullScreenSheetWrapper>
 }

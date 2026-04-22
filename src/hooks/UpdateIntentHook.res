@@ -175,7 +175,7 @@ let useUpdateIntentListener = (
                 ~uri=`${baseUrl}/payments/session_tokens`,
                 ~body=PaymentUtils.generateSessionsTokenBody(
                   ~clientSecret=currentNativeProp.clientSecret,
-                  ~paymentId=currentNativeProp.paymentMethodId,
+                  ~paymentId=currentNativeProp.paymentId,
                   ~sdkAuthorization=sdkAuth,
                   ~wallet=[],
                 ),
