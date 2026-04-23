@@ -40,38 +40,36 @@ let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
   )
 }
 
-let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => {
+let confirmCall = async (~onResult: (int, string) => unit, body, nativeProp, sdkAuthorization) => {
   let res = await confirmAPICall(nativeProp, body, sdkAuthorization)
   let confirmRes =
     res
     ->Option.getOr(JSON.Encode.null)
     ->Utils.getDictFromJson
     ->PaymentConfirmTypes.itemToObjMapper
-  headlessModule.exitHeadless(
-    nativeProp.rootTag,
-    confirmRes.error->HyperModule.stringifiedResStatus,
-  )
+  onResult(nativeProp.rootTag, confirmRes.error->HyperModule.stringifiedResStatus)
 }
 
 // Standalone card confirm: builds the confirm body and calls the API.
 // Used by both HeadlessTask (via processRequest) and CvcWidget (via confirmPayment event).
 let confirmCardPayment = (
-  headlessModule,
+  ~onResult: (int, string) => unit,
   nativeProp,
   ~sdkAuthorization: option<string>=?,
   ~paymentToken: string,
   ~cvc: JSON.t,
   ~billing: option<JSON.t>=?,
 ) => {
-  let baseArr = [
+  let baseBodyArr = [
     ("payment_method", "card"->JSON.Encode.string),
     ("payment_token", paymentToken->JSON.Encode.string),
     ("card_cvc", cvc),
   ]
 
   let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(_) => baseArr
-  | None => baseArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+  | Some(_) => baseBodyArr
+  | None =>
+    baseBodyArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
   }
 
   billing
@@ -89,7 +87,7 @@ let confirmCardPayment = (
     bodyArr
     ->Dict.fromArray
     ->JSON.Encode.object
-  confirmCall(headlessModule, body->JSON.stringify, nativeProp, sdkAuthorization)->ignore
+  confirmCall(~onResult, body->JSON.stringify, nativeProp, sdkAuthorization)->ignore
 }
 
 let confirmGPay = (
@@ -132,7 +130,7 @@ let confirmGPay = (
       ->JSON.Encode.object
 
     generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
-    ->(confirmCall(headlessModule, _, nativeProp, None))
+    ->(confirmCall(~onResult=headlessModule.exitHeadless, _, nativeProp, None))
     ->ignore
   | "Cancel" => reRegisterCallback.contents()
   | err =>
@@ -216,7 +214,7 @@ let confirmApplePay = (
         ->JSON.Encode.object
 
       generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
-      ->(confirmCall(headlessModule, _, nativeProp, None))
+      ->(confirmCall(~onResult=headlessModule.exitHeadless, _, nativeProp, None))
       ->ignore
     }
   }
@@ -238,7 +236,7 @@ let processRequest = async (
   switch data.payment_method {
   | CARD =>
     confirmCardPayment(
-      headlessModule,
+      ~onResult=headlessModule.exitHeadless,
       nativeProp,
       ~paymentToken=data.payment_token,
       ~cvc=getCvc(response),
@@ -290,7 +288,10 @@ let processRequest = async (
           ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
-        headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+        headlessModule.exitHeadless(
+          nativeProp.rootTag,
+          getDefaultError->HyperModule.stringifiedResStatus,
+        )
       }, 5000)
       let applePayCallback = async var => {
         try {
@@ -337,7 +338,11 @@ let processRequest = async (
       )
     | _ => ()
     }
-  | _ => headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+  | _ =>
+    headlessModule.exitHeadless(
+      nativeProp.rootTag,
+      getDefaultError->HyperModule.stringifiedResStatus,
+    )
   }
 }
 
@@ -525,7 +530,10 @@ let apiHandler = async (
       )
     }
 
-  | None => customerSavedPMData->getErrorFromResponse->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+  | None =>
+    customerSavedPMData
+    ->getErrorFromResponse
+    ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }
 }
 
@@ -547,8 +555,12 @@ let runHeadlessFlow = (
   if isPublishableKeyValid && (isClientSecretValid || nativeProp.sdkAuthorization != None) {
     apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
   } else if !isPublishableKeyValid {
-    errorOnApiCalls(INVALID_PK(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_PK(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   } else if !isClientSecretValid {
-    errorOnApiCalls(INVALID_CL(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_CL(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   }
 }
