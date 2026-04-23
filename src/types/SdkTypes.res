@@ -254,6 +254,7 @@ type sdkState =
 let widgetToStrMapper = str => {
   switch str {
   | GOOGLE_PAY => "GOOGLE_PAY"
+  | APPLE_PAY => "APPLE_PAY"
   | PAYPAL => "PAYPAL"
   | _ => ""
   }
@@ -905,6 +906,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | "widgetButtonSheet" => WidgetButtonSheet
     | "hostedCheckout" => HostedCheckout
     | "google_pay" => CustomWidget(GOOGLE_PAY)
+    | "apple_pay" => CustomWidget(APPLE_PAY)
     | "paypal" => CustomWidget(PAYPAL)
     | "card" => CardWidget
     | "paymentMethodsManagement" => PaymentMethodsManagement
