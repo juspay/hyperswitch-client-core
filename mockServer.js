@@ -233,6 +233,7 @@ app.post('/create-authentication', async (req, res) => {
     res.json({
       publishableKey: process.env.HYPERSWITCH_PUBLISHABLE_KEY,
       sdkAuthorization: data.sdk_authorization,
+      clientSecret: data.client_secret,
       profileId: data.profile_id,
       authenticationId: data.authentication_id,
       merchantId: data.merchant_id,

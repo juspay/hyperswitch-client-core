@@ -29,7 +29,16 @@ let defaultProps = {
     // displaySavedPaymentMethods: false,
     appearance: {
       theme: 'Light',
-      // layout: 'accordion',
+      layout: {
+        type: 'accordion',
+        spacedAccordionItems: true,
+        savedMethodCustomization: {
+          groupingBehavior: {
+            displayInSeparateScreen: false,
+            groupByPaymentMethods: false,
+          }
+        }
+      },
       // colors:{
       //   background:"rgb(58, 23, 84)",
       //   primary:"#fff",
@@ -88,7 +97,7 @@ const initReactNativeWeb = async () => {
       }
       const data = await response.json();
       defaultProps.publishableKey = data.publishableKey;
-      defaultProps.clientSecret = data.clientSecret;
+      defaultProps.sdkAuthorization = data.sdkAuthorization;
       defaultProps.local = true;
 
       const iframe = document.querySelector('iframe');
