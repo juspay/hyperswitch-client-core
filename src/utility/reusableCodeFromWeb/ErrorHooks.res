@@ -26,27 +26,33 @@ let useShowErrorOrWarning = () => {
 }
 
 let useErrorWarningValidationOnLoad = () => {
-  // let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  // let isPublishableKeyValid = true
-  // GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
+  let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
 
-  // let isClientSecretValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
-  // | Some(sdkAuth) => {
-  //     let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
-  //     sdkAuthData.publishableKey
-  //     ->Option.map(pk => pk === nativeProp.publishableKey)
-  //     ->Option.getOr(false)
-  //   }
-  // | None =>
-  //   RegExp.test(
-  //     `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
-  //     nativeProp.clientSecret,
-  //   )
-  // }
+  let isClientSecretValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(sdkAuth) => {
+      let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
+      sdkAuthData.publishableKey
+      ->Option.map(pk => pk === nativeProp.publishableKey)
+      ->Option.getOr(false)
+    }
+  | None =>
+    RegExp.test(
+      `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
+      nativeProp.clientSecret,
+    )
+  }
 
   let showErrorOrWarning = useShowErrorOrWarning()
   () => {
+    if !isPublishableKeyValid || !isClientSecretValid {
+      showErrorOrWarning(
+        ErrorUtils.errorWarning.reguirParameter,
+        ~dynamicStr="Either sdkAuthorization or both clientSecret and publishableKey must be provided",
+        (),
+      )
+    }
     // publishableKey and clientSecret validations are optional now
     // if !isPublishableKeyValid {
     //   switch nativeProp.sdkState {
@@ -77,12 +83,10 @@ let useErrorWarningValidationOnLoad = () => {
     //   | Headless => showErrorOrWarning(ErrorUtils.errorWarning.invalidFormat, ~dynamicStr, ())
     //   | NoView | PaymentMethodsManagement => ()
     //   }
-    // }
-    // else 
-    // if nativeProp.configuration.merchantDisplayName === "" {
-    //   let dynamicStr = "When  a configuration is passed to PaymentSheet, the merchant display name cannot be an empty string"
+    // } else if nativeProp.configuration.merchantDisplayName === "" {
+    //   let dynamicStr = "When a configuration is passed to PaymentSheet, the merchant display name cannot be an empty string"
     //   showErrorOrWarning(ErrorUtils.errorWarning.reguirParameter, ~dynamicStr, ())
     // }
-    ignore(showErrorOrWarning)
+    // ignore(showErrorOrWarning)
   }
 }
