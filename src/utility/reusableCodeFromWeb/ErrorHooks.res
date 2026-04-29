@@ -30,14 +30,10 @@ let useErrorWarningValidationOnLoad = () => {
 
   let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
 
-  let isClientSecretValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(sdkAuth) => {
-      let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
-      sdkAuthData.publishableKey
-      ->Option.map(pk => pk === nativeProp.publishableKey)
-      ->Option.getOr(false)
-    }
+  let isValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => true
   | None =>
+    isPublishableKeyValid &&
     RegExp.test(
       `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
       nativeProp.clientSecret,
@@ -46,7 +42,7 @@ let useErrorWarningValidationOnLoad = () => {
 
   let showErrorOrWarning = useShowErrorOrWarning()
   () => {
-    if !isPublishableKeyValid || !isClientSecretValid {
+    if !isValid {
       showErrorOrWarning(
         ErrorUtils.errorWarning.reguirParameter,
         ~dynamicStr="Either sdkAuthorization or both clientSecret and publishableKey must be provided",
