@@ -26,7 +26,7 @@ let useShowErrorOrWarning = () => {
 }
 
 let useErrorWarningValidationOnLoad = () => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  // let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   // let isPublishableKeyValid = true
   // GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
@@ -79,10 +79,10 @@ let useErrorWarningValidationOnLoad = () => {
     //   }
     // }
     // else 
-    if nativeProp.configuration.merchantDisplayName === "" {
-      let dynamicStr = "When  a configuration is passed to PaymentSheet, the merchant display name cannot be an empty string"
-      showErrorOrWarning(ErrorUtils.errorWarning.reguirParameter, ~dynamicStr, ())
-    }
+    // if nativeProp.configuration.merchantDisplayName === "" {
+    //   let dynamicStr = "When  a configuration is passed to PaymentSheet, the merchant display name cannot be an empty string"
+    //   showErrorOrWarning(ErrorUtils.errorWarning.reguirParameter, ~dynamicStr, ())
+    // }
     ignore(showErrorOrWarning)
   }
 }
