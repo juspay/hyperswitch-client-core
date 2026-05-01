@@ -1,3 +1,10 @@
+## [1.10.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.10.0...v1.10.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* commented the by mistakenly uncommented code snippet ([#494](https://github.com/juspay/hyperswitch-client-core/issues/494)) ([89abc29](https://github.com/juspay/hyperswitch-client-core/commit/89abc293eed9b71e93c92e5ff4bba17e03d12bed))
+
 # [1.10.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.9.0...v1.10.0) (2026-04-22)
 
 
