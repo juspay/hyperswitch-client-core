@@ -104,6 +104,14 @@ let formValidationError = {
   code: "form_validation_failed",
   message: "Payment form has validation errors. Please correct them and try again.",
 }
+
+let walletError = {
+  type_: "wallet_error",
+  status: "wallet_failed",
+  code: "wallet_error",
+  message: "An error occurred with the wallet during payment confirmation. Please try again or use a different payment method.",
+}
+
 let getACH_bank_transfer = (data: option<bank_transfer_steps_and_charges_details>) => {
   switch data {
   | Some(data) => data.ach_credit_transfer
