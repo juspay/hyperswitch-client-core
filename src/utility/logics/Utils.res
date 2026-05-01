@@ -35,6 +35,17 @@ let getInt = (dict, key, default) => {
   getOptionInt(dict, key)->Option.getOr(default)
 }
 
+let getOptionJSON = (dict, key) => {
+  dict
+  ->Dict.get(key)
+  ->Option.flatMap(JSON.Decode.string)
+  ->Option.flatMap(jsonStr =>
+    try {Some(jsonStr->JSON.parseExn)} catch {
+    | _ => None
+    }
+  )
+}
+
 let getBool = (dict, key, default) => {
   dict
   ->Dict.get(key)
