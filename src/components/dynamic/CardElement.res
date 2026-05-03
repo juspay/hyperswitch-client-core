@@ -191,15 +191,6 @@ let make = (
         None
       }, (cardNumber, expireDate, cvc, brand))
 
-      let cardNumber = cardNumberInput.value->Option.getOr("")
-      let cvc = cardCvcInput.value->Option.getOr("")
-      let brand = cardNetworkInput.value->Option.getOr("")
-
-      React.useEffect(() => {
-        let info = PaymentEvents.buildCardInfo(~cardNumber, ~expiry=expireDate, ~cvc, ~brand)
-        emitter.emitCardInfo(~info)
-        None
-      }, (cardNumber, expireDate, cvc, brand))
 
       React.useEffect1(() => {
         let isValid = cardValid(cardNumber, brand)

@@ -40,8 +40,8 @@ let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
   )
 }
 
-let confirmCall = async (headlessModule, body, nativeProp) => {
-  let res = await confirmAPICall(nativeProp, body)
+let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => {
+  let res = await confirmAPICall(nativeProp, body, sdkAuthorization)
   let confirmRes =
     res
     ->Option.getOr(JSON.Encode.null)
@@ -58,16 +58,21 @@ let confirmCall = async (headlessModule, body, nativeProp) => {
 let confirmCardPayment = (
   headlessModule,
   nativeProp,
+  ~sdkAuthorization: option<string>=?,
   ~paymentToken: string,
   ~cvc: JSON.t,
   ~billing: option<JSON.t>=?,
 ) => {
-  let bodyArr = [
-    ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
+  let baseArr = [
     ("payment_method", "card"->JSON.Encode.string),
     ("payment_token", paymentToken->JSON.Encode.string),
     ("card_cvc", cvc),
   ]
+
+  let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => baseArr
+  | None => baseArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+  }
 
   billing
   ->Option.map(address => {
@@ -84,7 +89,7 @@ let confirmCardPayment = (
     bodyArr
     ->Dict.fromArray
     ->JSON.Encode.object
-  confirmCall(headlessModule, body->JSON.stringify, nativeProp)->ignore
+  confirmCall(headlessModule, body->JSON.stringify, nativeProp, sdkAuthorization)->ignore
 }
 
 let confirmGPay = (
@@ -127,7 +132,7 @@ let confirmGPay = (
       ->JSON.Encode.object
 
     generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
-    ->(confirmCall(headlessModule, _, nativeProp))
+    ->(confirmCall(headlessModule, _, nativeProp, None))
     ->ignore
   | "Cancel" => reRegisterCallback.contents()
   | err =>
@@ -211,7 +216,7 @@ let confirmApplePay = (
         ->JSON.Encode.object
 
       generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
-      ->(confirmCall(headlessModule, _, nativeProp))
+      ->(confirmCall(headlessModule, _, nativeProp, None))
       ->ignore
     }
   }

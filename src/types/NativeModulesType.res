@@ -44,23 +44,33 @@ let widgetActionTypeFromString = (str: string): option<widgetActionType> =>
 type widgetActionData = {
   actionType: widgetActionType,
   rootTag: int,
+  sdkAuthorization: option<string>,
   paymentToken: option<string>,
-  paymentMethodId: option<string>,
+  billing: option<JSON.t>,
 }
 
 let widgetActionDataMapper = (dict: Dict.t<JSON.t>): option<widgetActionData> => {
   let actionTypeStr = dict->getString("actionType", "")
   let rootTag = dict->getInt("rootTag", -1)
   let paymentToken = dict->getOptionString("paymentToken")
-  let paymentMethodId = dict->getOptionString("paymentMethodId")
+  let sdkAuthorization = dict->getOptionString("sdkAuthorization")
+  let billing =
+    dict
+    ->getOptionString("billing")
+    ->Option.flatMap(str =>
+      try Some(str->JSON.parseExn) catch {
+      | _ => None
+      }
+    )
 
   actionTypeStr
   ->widgetActionTypeFromString
   ->Option.map(actionType => {
     actionType,
     rootTag,
+    sdkAuthorization,
     paymentToken,
-    paymentMethodId,
+    billing,
   })
 }
 

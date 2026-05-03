@@ -5,10 +5,6 @@ open PaymentEvents
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (_, customerPaymentMethodData, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
-  // Ref to hold the latest customerPaymentMethodData so the useEffect0 event listener
-  // always reads the current value instead of the stale one captured at mount time.
-  let customerPaymentMethodDataRef = React.useRef(customerPaymentMethodData)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (cvcValue, setCvcValue) = React.useState(_ => "")
   let cvcValueRef = React.useRef("")
@@ -23,61 +19,12 @@ let make = () => {
     primaryColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
-  // let lastUsedCardPaymentMethod = {
-  //   customerPaymentMethodData
-  //   ->Option.map(customerPaymentMethods => {
-  //     let pmList = customerPaymentMethods.customer_payment_methods
-  //     let cardPaymentMethods =
-  //       pmList->Array.filter(pm => pm.payment_method === PaymentMethodType.CARD)
-
-  //     if cardPaymentMethods->Array.length === 0 {
-  //       None
-  //     } else {
-  //       cardPaymentMethods->Array.reduce(None, (
-  //         a: option<CustomerPaymentMethodType.customer_payment_method_type>,
-  //         b: CustomerPaymentMethodType.customer_payment_method_type,
-  //       ) => {
-  //         let lastUsedAtA = switch a {
-  //         | Some(a) => Some(a.last_used_at)
-  //         | None => None
-  //         }
-  //         lastUsedAtA
-  //         ->Option.map(
-  //           date =>
-  //             compare(
-  //               Date.fromString(date)->Js.Date.getTime,
-  //               Date.fromString(b.last_used_at)->Js.Date.getTime,
-  //             ) < 0
-  //               ? Some(b)
-  //               : a,
-  //         )
-  //         ->Option.getOr(Some(b))
-  //       })
-  //     }
-  //   })
-  //   ->Option.getOr(None)
-  // }
-
-  // let cardNetwork = switch lastUsedCardPaymentMethod {
-  // | Some(pm) => pm.card->Option.map(card => card.card_network)->Option.getOr("")
-  // | None => ""
-  // }
-
-  // let requiresCvv = switch lastUsedCardPaymentMethod {
-  // | Some(pm) => pm.requires_cvv
-  // | None => false
-  // }
-
-  // TODO: Add cardBrand prop later so CVC length can be brand-aware
-  // (e.g. Amex = 4, others = 3). For now, accept 3 or 4 digits.
   let cardNetwork = ""
 
   let requiresCvv = true
 
   let isCvcValid =
     cvcValue->String.length === 0 ? true : Validation.cvcNumberInRange(cvcValue, cardNetwork)
-
-  // let isCvcComplete = Validation.checkCardCVC(cvcValue, cardNetwork)
 
   let isCvcEmpty = cvcValue->String.length === 0
 
@@ -100,12 +47,6 @@ let make = () => {
   // HyperHeadless module — needed only for exitHeadless after confirm
   let headlessModule = HeadlessCommon.makeHeadlessModule()
 
-  // Keep the ref in sync with the latest context value on every re-render.
-  React.useEffect1(() => {
-    customerPaymentMethodDataRef.current = customerPaymentMethodData
-    None
-  }, [customerPaymentMethodData])
-
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
     let cleanup = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
@@ -113,43 +54,21 @@ let make = () => {
     ) => {
       switch actionData.actionType {
       | ConfirmCvcPayment =>
-        if actionData.rootTag !== nativeProp.rootTag {
-          ()
-        } else {
-          let paymentToken = actionData.paymentToken->Option.getOr("")
-          let paymentMethodId = actionData.paymentMethodId->Option.getOr("")
-
-          let billing =
-            customerPaymentMethodDataRef.current
-            ->Option.flatMap(
-              cpmd => {
-                cpmd.customer_payment_methods->Array.find(
-                  pm => pm.payment_method_id == paymentMethodId,
-                )
-              },
-            )
-            ->Option.flatMap(pm => pm.billing)
-            ->Option.map(Utils.getJsonObjectFromRecord)
-
-          let cvc = cvcValueRef.current->JSON.Encode.string
-
+        if actionData.rootTag === nativeProp.rootTag {
           HeadlessCommon.confirmCardPayment(
             headlessModule,
             nativeProp,
-            ~paymentToken,
-            ~cvc,
-            ~billing?,
+            ~sdkAuthorization=actionData.sdkAuthorization->Option.getOr(""),
+            ~paymentToken=actionData.paymentToken->Option.getOr(""),
+            ~cvc=cvcValueRef.current->JSON.Encode.string,
+            ~billing=?actionData.billing,
           )
         }
       | _ => ()
       }
     })
 
-    Some(
-      () => {
-        cleanup()
-      },
-    )
+    Some(() => cleanup())
   })
 
   React.useEffect1(_ => {
@@ -166,6 +85,7 @@ let make = () => {
         flex: 1.,
         backgroundColor: "transparent",
         justifyContent: #center,
+        padding: 2.->dp,
       })}>
       <CustomInput
         state={cvcValue}
@@ -212,6 +132,7 @@ let make = () => {
           </View>,
         )
       />
+      <Space height=2. />
     </View>
   }
 }

@@ -44,11 +44,11 @@ let useRetrieveHook = () => {
       | Payment => (
           switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
           | Some(_) =>
-            `${baseUrl}/payments/${nativeProp.paymentMethodId}?force_sync=${isForceSync
+            `${baseUrl}/payments/${nativeProp.paymentId}?force_sync=${isForceSync
                 ? "true"
                 : "false"}`
           | None =>
-            `${baseUrl}/payments/${nativeProp.paymentMethodId}?force_sync=${isForceSync
+            `${baseUrl}/payments/${nativeProp.paymentId}?force_sync=${isForceSync
                 ? "true"
                 : "false"}&client_secret=${clientSecret}`
           },
@@ -111,7 +111,7 @@ let useSessionTokenHook = () => {
         ~uri=`${baseUrl}/payments/session_tokens`,
         ~body=PaymentUtils.generateSessionsTokenBody(
           ~clientSecret=nativeProp.clientSecret,
-          ~paymentId=nativeProp.paymentMethodId,
+          ~paymentId=nativeProp.paymentId,
           ~sdkAuthorization=?nativeProp.sdkAuthorization,
           ~wallet,
         ),
@@ -204,7 +204,7 @@ let useRedirectHook = () => {
     ~isCardPayment=false,
     (),
   ) => {
-    let uriPram = nativeProp.paymentMethodId
+    let uriPram = nativeProp.paymentId
     let uri = `${baseUrl}/payments/${uriPram}/confirm`
     let headers = Utils.getHeader(
       ~apiKey=publishableKey,
@@ -401,12 +401,9 @@ let useEligibilityCheckHook = () => {
     switch WebKit.platform {
     | #next => Promise.resolve(`{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn)
     | _ =>
-      let paymentId =
-        String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
-      let uri = `${baseUrl}/payments/${paymentId}/eligibility`
+      let uri = `${baseUrl}/payments/${nativeProp.paymentId}/eligibility`
       let body =
         [
-          ("client_secret", nativeProp.clientSecret->JSON.Encode.string),
           ("payment_method_type", paymentMethodType->JSON.Encode.string),
           ("payment_method_data", paymentMethodData),
         ]
@@ -434,7 +431,7 @@ let useSavePaymentMethod = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   (~body: PaymentConfirmTypes.redirectType) => {
-    let uriParam = nativeProp.paymentMethodId
+    let uriParam = nativeProp.paymentId
     let uri = `${baseUrl}/payment_methods/${uriParam}/save`
 
     APIUtils.fetchApiWrapper(
