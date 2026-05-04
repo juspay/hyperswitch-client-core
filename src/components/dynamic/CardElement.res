@@ -5,6 +5,28 @@ open Validation
 type cardFormType = {isZipAvailable: bool}
 type viewType = PaymentSheet | CardForm(cardFormType)
 
+module CardNetworkSync = {
+  @react.component
+  let make = (
+    ~config: SuperpositionTypes.fieldConfig,
+    ~brand: string,
+    ~enabledCardSchemes: array<string>,
+    ~createFieldValidator,
+  ) => {
+    let {input} = ReactFinalForm.useField(
+      config.outputPath,
+      ~config={validate: createFieldValidator(Validation.CardNetwork(enabledCardSchemes))},
+    )
+    React.useEffect1(() => {
+      if input.value->Option.getOr("") !== brand {
+        input.onChange(brand)
+      }
+      None
+    }, [brand])
+    React.null
+  }
+}
+
 module CardBrandAndScanCardIcon = {
   @react.component
   let make = (
@@ -36,19 +58,18 @@ let make = (
   ~accessible=?,
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
+  let cardNetworkConfig = fields->SuperpositionHelper.findFieldByName("card.card_network")
   switch (
-    fields->Array.get(0),
-    fields->Array.get(1),
-    fields->Array.get(2),
-    fields->Array.get(3),
-    fields->Array.get(4),
+    fields->SuperpositionHelper.findFieldByName("card.card_number"),
+    fields->SuperpositionHelper.findFieldByName("card.card_exp_month"),
+    fields->SuperpositionHelper.findFieldByName("card.card_exp_year"),
+    fields->SuperpositionHelper.findFieldByName("card.card_cvc"),
   ) {
   | (
       Some(cardNumberConfig),
       Some(cardExpiryMonthConfig),
       Some(cardExpiryYearConfig),
       Some(cardCvcConfig),
-      Some(cardNetworkConfig),
     ) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
       let {eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
@@ -86,14 +107,11 @@ let make = (
         ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
-      let {input: cardNetworkInput, meta: cardNetworkMeta} = ReactFinalForm.useField(
-        cardNetworkConfig.outputPath,
-        ~config={validate: createFieldValidator(CardNetwork(enabledCardSchemes))},
-      )
+      let (cardBrand, setCardBrand) = React.useState(() => "")
 
       let {input: cardCvcInput, meta: cardCvcMeta} = ReactFinalForm.useField(
         cardCvcConfig.outputPath,
-        ~config={validate: createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr("")))},
+        ~config={validate: createFieldValidator(CardCVC(cardBrand))},
       )
 
       let (
@@ -117,7 +135,7 @@ let make = (
         setCardSchemeVariables(_ => (matchedCardSchemes, showCardSchemeDropDown))
 
         if (
-          currentCardBrand !== cardNetworkInput.value->Option.getOr("") &&
+          currentCardBrand !== cardBrand &&
             matchedCardSchemes->Array.find(v => v === currentCardBrand)->Option.isNone
         ) {
           cardExpiryMonthInput.onChange("")
@@ -127,7 +145,7 @@ let make = (
         }
         if num !== cardNumberInput.value->Option.getOr("") {
           cardNumberInput.onChange(num)
-          cardNetworkInput.onChange(currentCardBrand)
+          setCardBrand(_ => currentCardBrand)
         }
 
         let isthisValid = cardValid(num, currentCardBrand)
@@ -164,15 +182,12 @@ let make = (
         text,
         cvvOrZipRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
       ) => {
-        let cvvData = formatCVCNumber(text, cardNetworkInput.value->Option.getOr(""))
+        let cvvData = formatCVCNumber(text, cardBrand)
 
         cardCvcInput.onChange(cvvData)
 
-        let isValidCvv = checkCardCVC(cvvData, cardNetworkInput.value->Option.getOr(""))
-        let shouldShiftFocusToNextField = checkMaxCardCvv(
-          cvvData,
-          cardNetworkInput.value->Option.getOr(""),
-        )
+        let isValidCvv = checkCardCVC(cvvData, cardBrand)
+        let shouldShiftFocusToNextField = checkMaxCardCvv(cvvData, cardBrand)
         if isValidCvv && shouldShiftFocusToNextField {
           switch cvvOrZipRef.current->Nullable.toOption {
           | None => ()
@@ -183,14 +198,13 @@ let make = (
 
       let cardNumber = cardNumberInput.value->Option.getOr("")
       let cvc = cardCvcInput.value->Option.getOr("")
-      let brand = cardNetworkInput.value->Option.getOr("")
+      let brand = cardBrand
 
       React.useEffect(() => {
         let info = PaymentEvents.buildCardInfo(~cardNumber, ~expiry=expireDate, ~cvc, ~brand)
         emitter.emitCardInfo(~info)
         None
       }, (cardNumber, expireDate, cvc, brand))
-
 
       React.useEffect1(() => {
         let isValid = cardValid(cardNumber, brand)
@@ -209,13 +223,13 @@ let make = (
         expireRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
         cvvRef: React.ref<Nullable.t<ReactNative.TextInput.element>>,
       ) => {
-        let cardBrand = getCardBrand(pan)
-        let cardNumber = formatCardNumber(pan, cardType(cardBrand))
-        let isCardValid = cardValid(cardNumber, cardBrand)
+        let scannedBrand = getCardBrand(pan)
+        let cardNumber = formatCardNumber(pan, cardType(scannedBrand))
+        let isCardValid = cardValid(cardNumber, scannedBrand)
         let expireDate = formatCardExpiryNumber(expiry)
         let isExpiryValid = checkCardExpiry(expireDate)
         cardNumberInput.onChange(cardNumber)
-        cardNetworkInput.onChange(cardBrand)
+        setCardBrand(_ => scannedBrand)
         let (month, year) = expireDate->splitExpiryDates
         cardExpiryMonthInput.onChange(month)
         cardExpiryYearInput.onChange(year)
@@ -236,6 +250,11 @@ let make = (
       }
 
       <React.Fragment>
+        {switch cardNetworkConfig {
+        | Some(config) =>
+          <CardNetworkSync config brand=cardBrand enabledCardSchemes createFieldValidator />
+        | None => React.null
+        }}
         <View style={s({marginBottom: 16.->dp})}>
           <View style={s({width: 100.->pct, borderRadius})}>
             <View style={s({width: 100.->pct})}>
@@ -278,8 +297,8 @@ let make = (
                     onScanCard
                     expireRef
                     cvvRef
-                    cardBrand={cardNetworkInput.value->Option.getOr("")}
-                    setCardBrand=cardNetworkInput.onChange
+                    cardBrand
+                    setCardBrand={b => setCardBrand(_ => b)}
                   />,
                 )
                 onFocus={() => {
@@ -400,10 +419,7 @@ let make = (
                         name="cvv"
                         height=32.
                         width=32.
-                        fill={checkCardCVC(
-                          cardCvcInput.value->Option.getOr(""),
-                          cardNetworkInput.value->Option.getOr(""),
-                        )
+                        fill={checkCardCVC(cardCvcInput.value->Option.getOr(""), cardBrand)
                           ? primaryColor
                           : "#858F97"}
                       />
@@ -439,15 +455,11 @@ let make = (
               switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
               | (Some(error), true, false) => <ErrorText text={Some(error)} />
               | _ =>
-                switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
-                | (Some(error), true) => <ErrorText text={Some(error)} />
-                | _ =>
-                  switch eligibilityStatus {
-                  | DynamicFieldsContext.Denied =>
-                    <ErrorText text={Some(localeObject.cardNotEligibleText)} />
-                  | DynamicFieldsContext.Pending => React.null
-                  | _ => React.null
-                  }
+                switch eligibilityStatus {
+                | DynamicFieldsContext.Denied =>
+                  <ErrorText text={Some(localeObject.cardNotEligibleText)} />
+                | DynamicFieldsContext.Pending => React.null
+                | _ => React.null
                 }
               }
             }
