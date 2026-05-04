@@ -67,12 +67,6 @@ let confirmCardPayment = (
   ]
 
   let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(_) => baseBodyArr
-  | None =>
-    baseBodyArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
-  }
-
-  let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => baseArr
   | None => baseArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
   }
