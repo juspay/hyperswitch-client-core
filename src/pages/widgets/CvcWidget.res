@@ -44,9 +44,6 @@ let make = () => {
     )
   }
 
-  // HyperHeadless module — needed only for exitHeadless after confirm
-  let headlessModule = HeadlessCommon.makeHeadlessModule()
-
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
     let cleanup = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
