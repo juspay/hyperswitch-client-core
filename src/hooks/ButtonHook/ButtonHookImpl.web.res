@@ -28,7 +28,7 @@ let usePayButton = () => {
         let paymentClient = Window.google(token.environment)
         let buttonProps: Window.buttonProps = {
           onClick: () => onGooglePayButtonClick(),
-          buttonType: switch nativeProp.configuration.appearance.googlePay.buttonType {
+          buttonType: switch nativeProp.configuration.wallets.style.googlePayType {
           | BUY => "buy"
           | BOOK => "book"
           | CHECKOUT => "checkout"
@@ -79,15 +79,23 @@ let usePayButton = () => {
           )
           appleWalletButton.setAttribute(
             "type",
-            switch nativeProp.configuration.appearance.applePay.buttonType {
+            switch nativeProp.configuration.wallets.style.applePayType {
             | #book => "book"
             | #buy => "buy"
             | #checkout => "checkout"
             | #donate => "donate"
             | #inStore => "inStore"
-            | #plain => "plain"
             | #setUp => "setUp"
             | #subscribe => "subscribe"
+            | #reload => "reload"
+            | #addMoney => "addMoney"
+            | #topUp => "topUp"
+            | #rent => "rent"
+            | #order => "order"
+            | #support => "support"
+            | #tip => "tip"
+            | #contribute => "contribute"
+            | #plain => "plain"
             },
           )
           appleWalletButton.setAttribute("locale", "en-US")
