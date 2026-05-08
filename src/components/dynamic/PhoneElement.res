@@ -10,6 +10,7 @@ let make = (
 ) => {
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let localeObject = GetLocale.useGetLocalObj()
 
   let {country} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
@@ -97,6 +98,8 @@ let make = (
               onBlur={_ => phoneCodeInput.onBlur()}
               isCountryStateFields=true
               showValue=true
+              accessibilityLabel={phoneCodeConfig.displayName ++ ", " ++ localeObject.requiredText}
+              accessibilityHint="Opens country phone code selection list" // TODO: localize in Phase 2
               ?accessible
             />
           }
@@ -126,6 +129,10 @@ let make = (
               phoneNumberMeta.active
                 ? component.color
                 : dangerColor}
+              accessibilityLabel={GetLocale.getLocalString(phoneNumberConfig.displayName) ++
+              ", " ++
+              localeObject.requiredText}
+              accessibilityHint="Enter your phone number" // TODO: localize in Phase 2
               ?accessible
             />
           }

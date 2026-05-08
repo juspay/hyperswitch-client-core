@@ -10,6 +10,7 @@ let make = (
   ~accessible=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let localeObject = GetLocale.useGetLocalObj()
   let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {country, setCountry} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
@@ -46,6 +47,16 @@ let make = (
     }
 
     let placeholder = GetLocale.getLocalString(field.displayName)
+    let accessibilityLabel = placeholder ++ (field.required ? ", " ++ localeObject.requiredText : "")
+    // TODO: localize accessibilityHint strings in Phase 2
+    let accessibilityHint = switch field.fieldType {
+    | EmailInput => "Enter a valid email address"
+    | PhoneInput => "Enter your phone number including area code"
+    | CvcPasswordInput => "3 or 4 digit security code on your card"
+    | CountrySelect | StateSelect | CountryCodeSelect | CurrencySelect | DropdownSelect =>
+      "Opens " ++ placeholder ++ " selection list"
+    | _ => "Enter " ++ placeholder
+    }
 
     switch field.fieldType {
     | CardNumberTextInput
@@ -62,6 +73,8 @@ let make = (
           state={input.value->Option.getOr("")}
           setState=handleInputChange
           placeholder
+          accessibilityLabel
+          accessibilityHint
           enableCrossIcon=false
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           onFocus={_ => input.onFocus()}
@@ -87,6 +100,8 @@ let make = (
           | _ => []
           }}
           placeholderText=placeholder
+          accessibilityLabel
+          accessibilityHint
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
@@ -110,6 +125,8 @@ let make = (
           | _ => []
           }}
           placeholderText=placeholder
+          accessibilityLabel
+          accessibilityHint
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
@@ -138,6 +155,8 @@ let make = (
           setValue=handlePickerChange
           items
           placeholderText=placeholder
+          accessibilityLabel
+          accessibilityHint
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}
@@ -161,6 +180,8 @@ let make = (
             value: opt,
           })}
           placeholderText=placeholder
+          accessibilityLabel
+          accessibilityHint
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           isLoading=false
           onFocus={_ => input.onFocus()}

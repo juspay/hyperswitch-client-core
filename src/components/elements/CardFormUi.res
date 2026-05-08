@@ -16,6 +16,7 @@ let make = (
   ~isExpireDataValid,
   ~isCvvValid,
   ~isZipValid,
+  ~accessible=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let buttomFlex = AnimatedValue.useAnimatedValue(1.)
@@ -132,6 +133,9 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.cardNumberLabel ++ ", " ++ localeObject.requiredText}
+            accessibilityHint="Enter your card number" // TODO: localize in Phase 2
+            ?accessible
           />
         </Animated.View>
         <Animated.View style={s({flex: {expireInputFlex->Animated.StyleProp.float}})}>
@@ -167,6 +171,9 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.validThruText ++ ", " ++ localeObject.requiredText}
+            accessibilityHint="Format: MM/YY, e.g. 01/26" // TODO: localize in Phase 2
+            ?accessible
           />
         </Animated.View>
         <Animated.View style={s({flex: {cvvInputFlex->Animated.StyleProp.float}})}>
@@ -204,6 +211,9 @@ let make = (
                 }
               }
             }}
+            accessibilityLabel={localeObject.cvcTextLabel ++ ", " ++ localeObject.requiredText}
+            accessibilityHint="3 or 4 digit security code on your card" // TODO: localize in Phase 2
+            ?accessible
           />
         </Animated.View>
         {isZipAvailable
@@ -240,6 +250,9 @@ let make = (
                     }
                   }
                 }}
+                accessibilityLabel={localeObject.postalCodeLabel ++ ", " ++ localeObject.requiredText}
+                accessibilityHint="Enter your billing zip code" // TODO: localize in Phase 2
+                ?accessible
               />
             </Animated.View>
           : React.null}
