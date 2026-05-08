@@ -33,6 +33,22 @@ let make = (
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
+  let (showInstallments, setShowInstallments) = React.useState(_ => false)
+  let (selectedInstallmentPlan, setSelectedInstallmentPlan) = React.useState(_ => None)
+  let (installmentsError, setInstallmentsError) = React.useState(_ => "")
+
+  let installmentOptions =
+    accountPaymentMethodData
+    ->Option.flatMap(data => data.intent_data)
+    ->Option.flatMap(intentData => intentData.installment_options)
+    ->Option.getOr([])
+
+  let installmentCurrency =
+    accountPaymentMethodData
+    ->Option.flatMap(data => data.intent_data)
+    ->Option.map(intentData => intentData.currency)
+    ->Option.getOr(accountPaymentMethodData->Option.map(data => data.currency)->Option.getOr(""))
+
   let (isSaveCardCheckboxSelected, setSaveCardChecboxSelected) = React.useState(_ => false)
   let setSaveCardChecboxSelected = React.useCallback1(isSelected => {
     if isSelected {
@@ -98,6 +114,7 @@ let make = (
       ~billing=token.billing,
       ~screen_height=viewPortContants.screenHeight,
       ~screen_width=viewPortContants.screenWidth,
+      ~installment_data=?showInstallments ? selectedInstallmentPlan : None,
     )
 
     redirectHook(
@@ -213,6 +230,7 @@ let make = (
       ~email?,
       ~screen_height=viewPortContants.screenHeight,
       ~screen_width=viewPortContants.screenWidth,
+      ~installment_data=?showInstallments ? selectedInstallmentPlan : None,
       (),
     )
 
@@ -405,22 +423,26 @@ let make = (
     | (Some(token), true) =>
       switch token.payment_method {
       | CARD =>
-        token.requires_cvv &&
-        (savedCardCvv->Option.isNone ||
-          !Validation.cvcNumberInRange(
-            savedCardCvv->Option.getOr(""),
-            token.card
-            ->Option.map(card => card.card_network)
-            ->Option.getOr(""),
-          ))
-          ? {
-              if savedCardCvv->Option.isNone {
-                setSavedCardCvv(_ => Some(""))
-              }
-              setLoading(FillingDetails)
-              notifyValidationFailure()
-            }
-          : processRequestSaved(token)
+        if showInstallments && selectedInstallmentPlan->Option.isNone {
+          setInstallmentsError(_ => localeObj.installmentSelectPlanError)
+        } else if (
+          token.requires_cvv &&
+          (savedCardCvv->Option.isNone ||
+            !Validation.cvcNumberInRange(
+              savedCardCvv->Option.getOr(""),
+              token.card
+              ->Option.map(card => card.card_network)
+              ->Option.getOr(""),
+            ))
+        ) {
+          if savedCardCvv->Option.isNone {
+            setSavedCardCvv(_ => Some(""))
+          }
+          setLoading(FillingDetails)
+        } else {
+          processRequestSaved(token)
+          notifyValidationFailure()
+        }
       | WALLET =>
         switch token.payment_method_type_wallet {
         | APPLE_PAY =>
@@ -608,6 +630,8 @@ let make = (
     savedCardCvv,
     errorText,
     isSaveCardCheckboxSelected,
+    showInstallments,
+    selectedInstallmentPlan,
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
@@ -636,6 +660,24 @@ let make = (
         ?maxVisibleItems
       />
     </View>
+    <UIUtils.RenderIf
+      condition={selectedToken
+      ->Option.map(token => token.payment_method === CARD)
+      ->Option.getOr(false)}>
+      <View style={s({paddingHorizontal: 2.->dp})}>
+        <InstallmentOptions
+          installmentOptions
+          currency=installmentCurrency
+          paymentMethod="card"
+          selectedInstallmentPlan
+          setSelectedInstallmentPlan
+          showInstallments
+          setShowInstallments
+          errorString=installmentsError
+          setErrorString=setInstallmentsError
+        />
+      </View>
+    </UIUtils.RenderIf>
     {showDisclaimer && savedCardCvv->Option.isSome
       ? <View style={s({paddingHorizontal: 2.->dp})}>
           <Space />
