@@ -190,6 +190,7 @@ let useRedirectHook = () => {
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
+  let handleRedsys3dsFlow = Redsys3dsHooks.useRedsys3dsFlow()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
   let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
 
@@ -260,6 +261,35 @@ let useRedirectHook = () => {
       }
     }
 
+    let handleInvokeHiddenIframeFlow = (~nextAction) => {
+      let action = nextAction->Option.getOr(defaultNextAction)
+      handleRedsys3dsFlow(
+        ~clientSecret,
+        ~publishableKey,
+        ~nextAction=action,
+        ~responseCallback,
+        ~errorCallback,
+        ~paymentMethod,
+        ~browserRedirectionHandler=(
+          ~clientSecret,
+          ~publishableKey,
+          ~openUrl,
+          ~responseCallback,
+          ~errorCallback,
+          ~paymentMethod,
+        ) => {
+          browserRedirectionHandler(
+            ~clientSecret,
+            ~publishableKey,
+            ~openUrl,
+            ~responseCallback,
+            ~errorCallback,
+            ~paymentMethod,
+          )
+        },
+      )->ignore
+    }
+
     let handleDefaultPaymentFlows = (~status, ~reUri, ~error: error) => {
       let terminalStatusHandler = () => {status, message: "", code: "", type_: ""}
 
@@ -322,6 +352,7 @@ let useRedirectHook = () => {
       | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
       | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
       | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
+      | "invoke_hidden_iframe" => handleInvokeHiddenIframeFlow(~nextAction)
       | _ => handleDefaultPaymentFlows(~status, ~reUri, ~error)
       }
     }
