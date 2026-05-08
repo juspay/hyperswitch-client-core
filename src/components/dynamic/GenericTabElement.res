@@ -69,6 +69,7 @@ let make = (
           textColor={meta.error->Option.isNone || !meta.touched || meta.active
             ? component.color
             : dangerColor}
+          name=field.outputPath
           ?accessible
         />
         {switch (meta.error, meta.touched, meta.active) {
@@ -92,6 +93,7 @@ let make = (
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
           isCountryStateFields=true
+          name=field.outputPath
           ?accessible
         />
         {switch (meta.error, meta.touched, meta.active) {
@@ -115,6 +117,7 @@ let make = (
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
           isCountryStateFields=true
+          name=field.outputPath
           ?accessible
         />
         {switch (meta.error, meta.touched, meta.active) {
@@ -142,6 +145,7 @@ let make = (
           isLoading=false
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
+          name=field.outputPath
           ?accessible
         />
         {switch (meta.error, meta.touched, meta.active) {
@@ -165,6 +169,7 @@ let make = (
           isLoading=false
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
+          name=field.outputPath
           ?accessible
         />
         {switch (meta.error, meta.touched, meta.active) {

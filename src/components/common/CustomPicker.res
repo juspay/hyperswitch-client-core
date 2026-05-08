@@ -20,6 +20,7 @@ let make = (
   ~onBlur,
   ~animate=?,
   ~accessible=?,
+  ~name="",
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -78,6 +79,7 @@ let make = (
         pointerEvents={#none}
         onBlur
         onFocus
+        name
         ?animate
         ?accessible
       />
@@ -149,6 +151,7 @@ let make = (
             borderBottomWidth=borderWidth
             borderLeftWidth=borderWidth
             borderRightWidth=borderWidth
+            name={"picker_search_" ++ name}
             ?accessible
           />
           <Space />
@@ -180,6 +183,7 @@ let make = (
                 renderItem={({item, index}) =>
                   <CustomPressable
                     key={index->Int.toString}
+                    testID={"picker_item_" ++ item.value}
                     style={s({height: 32.->dp, margin: 1.->dp, flexDirection: #row, gap: 6.->dp})}
                     onPress={_ => {
                       setValue(_ => Some(item.value))

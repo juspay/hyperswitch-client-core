@@ -69,6 +69,7 @@ let make = (
                 (lastNameMeta.active || lastNameMeta.error->Option.isNone || !lastNameMeta.touched)
                 ? component.color
                 : dangerColor}
+              name=firstNameConfig.outputPath
               ?accessible
             />
             {switch (firstNameMeta.error, lastNameMeta.touched, lastNameMeta.active) {

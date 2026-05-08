@@ -73,6 +73,7 @@ module WidgetWrapper = {
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
     <ScrollView
+      testID=TestUtils.paymentSheetScrollViewTestId
       contentContainerStyle={s({
         minHeight: 250.->dp,
         paddingHorizontal: sheetContentPadding->dp,
@@ -106,6 +107,7 @@ module Wrapper = {
     })
 
     <ScrollView
+      testID=TestUtils.paymentSheetScrollViewTestId
       contentContainerStyle={s({
         minHeight: 250.->dp,
         paddingHorizontal: sheetContentPadding->dp,
