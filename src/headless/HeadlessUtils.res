@@ -109,7 +109,20 @@ let apiLogWrapper = (
     ~logType,
     ~eventName,
     ~url=uri,
-    ~customLogUrl=nativeProp.customLogUrl,
+    ~customLogUrl=switch nativeProp.baseConfiguration.customEndpoint {
+    | CustomEndpoint(url) => url
+    | OverrideEndpoints(endpoints) =>
+      Some(
+        endpoints.loggingEndpoint->Option.getOr(
+          switch nativeProp.env {
+          | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+          | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+          | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+          } ++
+          EnvTypes.process.env["HYPERSWITCH_LOGS_PATH"],
+        ),
+      )
+    },
     ~env=nativeProp.env,
     ~category=API,
     ~statusCode,
@@ -183,13 +196,26 @@ let handleApiCall = async (
 }
 
 let getBaseUrl = nativeProp => {
-  switch nativeProp.customBackendUrl {
-  | Some(url) => url
-  | None =>
-    switch nativeProp.env {
-    | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
-    | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
-    | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+  switch nativeProp.baseConfiguration.customEndpoint {
+  | CustomEndpoint(endpoint) =>
+    switch endpoint {
+    | Some(url) => url
+    | None =>
+      switch nativeProp.env {
+      | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+      | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+      | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+      }
+    }
+  | OverrideEndpoints(endpoints) =>
+    switch endpoints.backendEndpoint {
+    | Some(url) => url
+    | None =>
+      switch nativeProp.env {
+      | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+      | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+      | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+      }
     }
   }
 }

@@ -275,7 +275,20 @@ let processRequest = async (
           ~logType=DEBUG,
           ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
           ~url="",
-          ~customLogUrl=nativeProp.customLogUrl,
+          ~customLogUrl=switch nativeProp.baseConfiguration.customEndpoint {
+          | CustomEndpoint(url) => url
+          | OverrideEndpoints(endpoints) =>
+            Some(
+              endpoints.loggingEndpoint->Option.getOr(
+                switch nativeProp.env {
+                | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+                | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+                | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+                } ++
+                EnvTypes.process.env["HYPERSWITCH_LOGS_PATH"],
+              ),
+            )
+          },
           ~env=nativeProp.env,
           ~category=API,
           ~statusCode="",
@@ -290,7 +303,10 @@ let processRequest = async (
           ~version=nativeProp.hyperParams.sdkVersion,
           (),
         )
-        headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+        headlessModule.exitHeadless(
+          nativeProp.rootTag,
+          getDefaultError->HyperModule.stringifiedResStatus,
+        )
       }, 5000)
       let applePayCallback = async var => {
         try {
@@ -315,7 +331,20 @@ let processRequest = async (
             ~logType=DEBUG,
             ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
             ~url="",
-            ~customLogUrl=nativeProp.customLogUrl,
+            ~customLogUrl=switch nativeProp.baseConfiguration.customEndpoint {
+            | CustomEndpoint(url) => url
+            | OverrideEndpoints(endpoints) =>
+              Some(
+                endpoints.loggingEndpoint->Option.getOr(
+                  switch nativeProp.env {
+                  | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+                  | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+                  | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+                  } ++
+                  EnvTypes.process.env["HYPERSWITCH_LOGS_PATH"],
+                ),
+              )
+            },
             ~env=nativeProp.env,
             ~category=API,
             ~statusCode="",
@@ -337,7 +366,11 @@ let processRequest = async (
       )
     | _ => ()
     }
-  | _ => headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+  | _ =>
+    headlessModule.exitHeadless(
+      nativeProp.rootTag,
+      getDefaultError->HyperModule.stringifiedResStatus,
+    )
   }
 }
 
@@ -525,7 +558,10 @@ let apiHandler = async (
       )
     }
 
-  | None => customerSavedPMData->getErrorFromResponse->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+  | None =>
+    customerSavedPMData
+    ->getErrorFromResponse
+    ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }
 }
 
@@ -547,8 +583,12 @@ let runHeadlessFlow = (
   if isPublishableKeyValid && (isClientSecretValid || nativeProp.sdkAuthorization != None) {
     apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
   } else if !isPublishableKeyValid {
-    errorOnApiCalls(INVALID_PK(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_PK(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   } else if !isClientSecretValid {
-    errorOnApiCalls(INVALID_CL(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_CL(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   }
 }

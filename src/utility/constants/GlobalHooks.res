@@ -2,13 +2,26 @@ open EnvTypes
 let useGetBaseUrl = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   () => {
-    switch nativeProp.customBackendUrl {
-    | Some(url) => url
-    | None =>
-      switch nativeProp.env {
-      | PROD => process.env["HYPERSWITCH_PRODUCTION_URL"]
-      | SANDBOX => process.env["HYPERSWITCH_SANDBOX_URL"]
-      | INTEG => process.env["HYPERSWITCH_INTEG_URL"]
+    switch nativeProp.baseConfiguration.customEndpoint {
+    | CustomEndpoint(endpoint) =>
+      switch endpoint {
+      | Some(url) => url
+      | None =>
+        switch nativeProp.env {
+        | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+        | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+        | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+        }
+      }
+    | OverrideEndpoints(endpoints) =>
+      switch endpoints.backendEndpoint {
+      | Some(url) => url
+      | None =>
+        switch nativeProp.env {
+        | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+        | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+        | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+        }
       }
     }
   }
@@ -40,16 +53,18 @@ let useGetAssetUrlWithVersion = () => {
 let useGetLoggingUrl = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   () => {
-    switch (nativeProp.customBackendUrl, nativeProp.customLogUrl) {
-    | (Some(_), None) => None
-    | (_, Some(url)) => Some(url)
-    | (None, None) =>
+    switch nativeProp.baseConfiguration.customEndpoint {
+    | CustomEndpoint(url) => url
+    | OverrideEndpoints(endpoints) =>
       Some(
-        switch nativeProp.env {
-        | PROD => process.env["HYPERSWITCH_PRODUCTION_URL"]
-        | _ => process.env["HYPERSWITCH_SANDBOX_URL"]
-        } ++
-        process.env["HYPERSWITCH_LOGS_PATH"],
+        endpoints.loggingEndpoint->Option.getOr(
+          switch nativeProp.env {
+          | PROD => EnvTypes.process.env["HYPERSWITCH_PRODUCTION_URL"]
+          | SANDBOX => EnvTypes.process.env["HYPERSWITCH_SANDBOX_URL"]
+          | INTEG => EnvTypes.process.env["HYPERSWITCH_INTEG_URL"]
+          } ++
+          process.env["HYPERSWITCH_LOGS_PATH"],
+        ),
       )
     }
   }

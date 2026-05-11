@@ -13,7 +13,6 @@ let useUpdateIntentListener = (
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
-  // Use refs to always have access to latest values in callbacks
   let nativePropRef = React.useRef(nativeProp)
 
   React.useEffect1(() => {
@@ -21,7 +20,7 @@ let useUpdateIntentListener = (
     None
   }, [nativeProp])
 
-  React.useEffect1(() => {
+  React.useEffect0(() => {
     let shouldSetupListener = switch nativeProp.sdkState {
     | WidgetPaymentSheet
     | WidgetTabSheet
@@ -53,7 +52,18 @@ let useUpdateIntentListener = (
             currentNativeProp.rootTag,
             updateIntentInitReturned,
             JSON.stringify(
-              JSON.Encode.object(Dict.fromArray([("status", JSON.Encode.string("failed"))])),
+              JSON.Encode.object(
+                Dict.fromArray([
+                  ("status", JSON.Encode.string("failed")),
+                  ("code", JSON.Encode.string("invalid_sdk_authorization")),
+                  (
+                    "message",
+                    JSON.Encode.string(
+                      "ignoring as the sdkState is not valid for update intent init event",
+                    ),
+                  ),
+                ]),
+              ),
             ),
           )
         }
@@ -87,7 +97,8 @@ let useUpdateIntentListener = (
                   JSON.stringify(
                     JSON.Encode.object(
                       Dict.fromArray([
-                        ("status", JSON.Encode.string("error")),
+                        ("status", JSON.Encode.string("failed")),
+                        ("code", JSON.Encode.string("invalid_account_payment_methods_response")),
                         (
                           "message",
                           JSON.Encode.string(ErrorUtils.getErrorMessage(accountPaymentMethodData)),
@@ -104,7 +115,8 @@ let useUpdateIntentListener = (
                   JSON.stringify(
                     JSON.Encode.object(
                       Dict.fromArray([
-                        ("status", JSON.Encode.string("error")),
+                        ("status", JSON.Encode.string("failed")),
+                        ("code", JSON.Encode.string("no_payment_methods_found")),
                         ("message", JSON.Encode.string("No payment methods found")),
                       ]),
                     ),
@@ -217,7 +229,8 @@ let useUpdateIntentListener = (
                   JSON.stringify(
                     JSON.Encode.object(
                       Dict.fromArray([
-                        ("status", JSON.Encode.string("error")),
+                        ("status", JSON.Encode.string("failed")),
+                        ("code", JSON.Encode.string("network_error")),
                         ("message", JSON.Encode.string("API call failed")),
                       ]),
                     ),
@@ -235,21 +248,23 @@ let useUpdateIntentListener = (
               JSON.stringify(
                 JSON.Encode.object(
                   Dict.fromArray([
-                    ("status", JSON.Encode.string("error")),
+                    ("status", JSON.Encode.string("failed")),
+                    ("code", JSON.Encode.string("invalid_sdk_authorization")),
                     ("message", JSON.Encode.string("Invalid sdkAuthorization")),
                   ]),
                 ),
               ),
             )
           }
-        } else {
+        } else if intentData.rootTag === currentNativeProp.rootTag {
           HyperModule.onUpdateIntentEvent(
-            nativeProp.rootTag,
+            intentData.rootTag,
             updateIntentCompleteReturned,
             JSON.stringify(
               JSON.Encode.object(
                 Dict.fromArray([
-                  ("status", JSON.Encode.string("error")),
+                  ("status", JSON.Encode.string("failed")),
+                  ("code", JSON.Encode.string("invalid_intent_data")),
                   (
                     "message",
                     JSON.Encode.string(
@@ -270,5 +285,5 @@ let useUpdateIntentListener = (
         unsubComplete()
       },
     )
-  }, [nativeProp])
+  })
 }

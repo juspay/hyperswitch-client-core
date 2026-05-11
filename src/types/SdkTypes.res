@@ -305,17 +305,36 @@ type hyperParams = {
   rightInset: option<float>,
 }
 
+type overrideEndpointConfiguration = {
+  backendEndpoint: option<string>,
+  assetsEndpoint: option<string>,
+  sdkConfigEndpoint: option<string>,
+  confirmEndpoint: option<string>,
+  airborneEndpoint: option<string>,
+  loggingEndpoint: option<string>,
+}
+
+type customEndpointType =
+  | CustomEndpoint(option<string>)
+  | OverrideEndpoints(overrideEndpointConfiguration)
+
+type baseConfigurationType = {
+  publishableKey: option<string>,
+  profileId: option<string>,
+  environment: GlobalVars.envType,
+  customEndpoint: customEndpointType,
+}
+
 type nativeProp = {
   publishableKey: string,
   clientSecret: string,
   paymentId: string,
   ephemeralKey: option<string>,
-  customBackendUrl: option<string>,
-  customLogUrl: option<string>,
   sessionId: string,
   from: string,
   configuration: configurationType,
   env: GlobalVars.envType,
+  baseConfiguration: baseConfigurationType,
   sdkState: sdkState,
   rootTag: int,
   hyperParams: hyperParams,
@@ -850,20 +869,42 @@ let parseConfigurationDict = (configObj, from) => {
   configuration
 }
 
+let parseBaseConfigurationDict = baseConfigObj => {
+  let customConfigObj = getObj(baseConfigObj, "overrideEndpoints", Dict.make())
+  let customEndpoint = getOptionString(baseConfigObj, "customEndpoint")
+  let data = {
+    publishableKey: getOptionString(baseConfigObj, "publishableKey"),
+    profileId: getOptionString(baseConfigObj, "profileId"),
+    environment: switch getString(baseConfigObj, "environment", "") {
+    | "SANDBOX" => GlobalVars.SANDBOX
+    | "INTEG" => GlobalVars.INTEG
+    | "PROD" => GlobalVars.PROD
+    | _ => GlobalVars.checkEnv(getOptionString(baseConfigObj, "publishableKey")->Option.getOr(""))
+    },
+    customEndpoint: switch customEndpoint {
+    | Some(endpoint) => CustomEndpoint(Some(endpoint))
+    | None =>
+      OverrideEndpoints({
+        backendEndpoint: getOptionString(customConfigObj, "backendEndpoint"),
+        assetsEndpoint: getOptionString(customConfigObj, "assetsEndpoint"),
+        sdkConfigEndpoint: getOptionString(customConfigObj, "sdkConfigEndpoint"),
+        confirmEndpoint: getOptionString(customConfigObj, "confirmEndpoint"),
+        airborneEndpoint: getOptionString(customConfigObj, "airborneEndpoint"),
+        loggingEndpoint: getOptionString(customConfigObj, "loggingEndpoint"),
+      })
+    },
+  }
+  Console.log2("data", data)
+  data
+}
+
 let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   let dictfromNative = jsonFromNative->JSON.Decode.object->Option.getOr(Dict.make())
   let configurationDict = getObj(dictfromNative, "configuration", Dict.make())
   let from = getOptionString(dictfromNative, "from")->Option.getOr("native")
 
   let publishableKey = getString(dictfromNative, "publishableKey", "")
-  let customBackendUrl = switch getOptionString(dictfromNative, "customBackendUrl") {
-  | Some("") => None
-  | val => val
-  }
-  let customLogUrl = switch getOptionString(dictfromNative, "customLogUrl") {
-  | Some("") => None
-  | val => val
-  }
+  let baseConfiguration = getObj(dictfromNative, "baseConfiguration", Dict.make())
 
   let sdkAuthorization = switch getOptionString(dictfromNative, "sdkAuthorization") {
   | Some("") => None
@@ -891,8 +932,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     clientSecret,
     paymentId,
     ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
-    customBackendUrl,
-    customLogUrl,
     sdkAuthorization,
     sessionId: getString(dictfromNative, "sessionId", ""),
     widgetId: getString(dictfromNative, "widgetId", ""),
@@ -914,6 +953,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     | _ => NoView
     },
     configuration: parseConfigurationDict(configurationDict, from),
+    baseConfiguration: parseBaseConfigurationDict(baseConfiguration),
     hyperParams: {
       appId: ?getOptionString(hyperParams, "appId"),
       country: switch getOptionString(hyperParams, "country") {
