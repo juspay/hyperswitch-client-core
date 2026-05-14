@@ -34,7 +34,7 @@ let make = () => {
     <TubeSpinner size=60. />
     <Space />
     <View style={s({display: #flex, flexDirection: #row})}>
-      <TextWrapper text={"Processing Your Payment"} textType={HeadingBold} />
+      <TextWrapper text={"Processing Your Request"} textType={HeadingBold} />
       <View style={s({marginLeft: 2.->dp, width: 20.->dp})}>
         <TextWrapper text={paymentProcessingText} textType={HeadingBold} />
       </View>
