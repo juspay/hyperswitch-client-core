@@ -48,6 +48,15 @@ let make = (
     setSelectedToken(_ => token)
   }, [setSelectedToken])
 
+  React.useEffect1(() => {
+    // if !isScreenFocus {
+      setSelectedToken(customerPaymentMethods->Array.get(0))
+      setSavedCardCvv(_ => None)
+      setSaveCardChecboxSelected(false)
+    // }
+    None
+  }, [customerPaymentMethods])
+
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
   let prevStatusRef = React.useRef(None)
