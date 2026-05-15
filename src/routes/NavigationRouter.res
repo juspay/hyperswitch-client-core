@@ -24,7 +24,9 @@ let make = () => {
     error()
 
     //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => ())
-    if nativeProp.clientSecret != "" && nativeProp.publishableKey != "" {
+    // if (nativeProp.clientSecret != "" || nativeProp.paymentMethodId != "") &&
+    //   nativeProp.publishableKey != ""
+    if nativeProp.sdkState !== CvcWidget {
       let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
         if ErrorUtils.isError(accountPaymentMethodData) {
           errorOnApiCalls(
@@ -99,6 +101,12 @@ let make = () => {
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
   ConfigurationService.useConfigurationService()->ignore
 
+  UpdateIntentHook.useUpdateIntentListener(
+    ~setAccountPaymentMethodData,
+    ~setCustomerPaymentMethodData,
+    ~setSessionTokenData,
+  )
+
   <AllApiDataContextNew accountPaymentMethodData customerPaymentMethodData sessionTokenData>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
@@ -115,6 +123,7 @@ let make = () => {
       | CardWidget => <CardWidget />
       | CustomWidget(walletType) => <CustomWidget walletType />
       | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+      | CvcWidget => <CvcWidget />
       | Headless
       | NoView
       | PaymentMethodsManagement => React.null

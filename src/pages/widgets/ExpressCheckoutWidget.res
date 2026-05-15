@@ -167,7 +167,10 @@ let make = () => {
     }
 
     let body: PaymentConfirmTypes.redirectType = {
-      client_secret: nativeProp.clientSecret,
+      client_secret: ?switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+      | Some(_) => None
+      | None => Some(nativeProp.clientSecret)
+      },
       return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId),
       ?email,
       payment_method,

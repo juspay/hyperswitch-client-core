@@ -66,3 +66,42 @@ let setupExpressCheckoutListener = (
     onExpressCheckoutConfirm(responseFromJava)
   })
 }
+
+let setupWidgetActionListener = (~onWidgetAction: NativeModulesType.widgetActionData => unit) => {
+  setupNativeEventListener("triggerWidgetAction", var => {
+    switch var->JSON.Decode.object {
+    | Some(dict) =>
+      switch dict->NativeModulesType.widgetActionDataMapper {
+      | Some(actionData) => onWidgetAction(actionData)
+      | None => ()
+      }
+    | None => ()
+    }
+  })
+}
+
+let setupUpdateIntentInitListener = (~onUpdateIntentInit: NativeModulesType.updateIntentData => unit) => {
+  setupNativeEventListener("updateIntentInit", var => {
+    switch var->JSON.Decode.object {
+    | Some(dict) =>
+      switch NativeModulesType.updateIntentDataMapper("updateIntentInit", dict) {
+      | Some(intentData) => onUpdateIntentInit(intentData)
+      | None => ()
+      }
+    | None => ()
+    }
+  })
+}
+
+let setupUpdateIntentCompleteListener = (~onUpdateIntentComplete: NativeModulesType.updateIntentData => unit) => {
+  setupNativeEventListener("updateIntentComplete", var => {
+    switch var->JSON.Decode.object {
+    | Some(dict) =>
+      switch NativeModulesType.updateIntentDataMapper("updateIntentComplete", dict) {
+      | Some(intentData) => onUpdateIntentComplete(intentData)
+      | None => ()
+      }
+    | None => ()
+    }
+  })
+}

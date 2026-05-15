@@ -14,7 +14,7 @@ let make = (~setConfirmButtonData, ~isLoading, ~tabArr, ~elementArr, ~giftCardAr
       ->Option.getOr(NORMAL) !== NORMAL}
     />
     <GiftCardComponent isLoading giftCardArr />
-    {nativeProp.configuration.appearance.layout === Tab
+    {nativeProp.configuration.appearance.layout.layoutType === Tab
       ? <CustomTabView hocComponentArr=tabArr isLoading setConfirmButtonData />
       : <CustomAccordionView hocComponentArr=tabArr isLoading setConfirmButtonData />}
   </>

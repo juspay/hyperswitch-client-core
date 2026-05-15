@@ -1,3 +1,35 @@
+## [1.10.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.10.0...v1.10.1) (2026-05-01)
+
+
+### Bug Fixes
+
+* commented the by mistakenly uncommented code snippet ([#494](https://github.com/juspay/hyperswitch-client-core/issues/494)) ([89abc29](https://github.com/juspay/hyperswitch-client-core/commit/89abc293eed9b71e93c92e5ff4bba17e03d12bed))
+
+# [1.10.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.9.0...v1.10.0) (2026-04-22)
+
+
+### Bug Fixes
+
+* added sdkAuthorization in the header of eligibility hook ([#472](https://github.com/juspay/hyperswitch-client-core/issues/472)) ([93eb78f](https://github.com/juspay/hyperswitch-client-core/commit/93eb78f0850a057467844c418ddcdfe466e09dff))
+* allowing the payment for all the cases and blocking for deny ([#474](https://github.com/juspay/hyperswitch-client-core/issues/474)) ([94b89ee](https://github.com/juspay/hyperswitch-client-core/commit/94b89ee8c79d79cd6f31fe395e846cd3d019dfb3))
+* card only guard for eligibility ([#473](https://github.com/juspay/hyperswitch-client-core/issues/473)) ([5d2a8a8](https://github.com/juspay/hyperswitch-client-core/commit/5d2a8a8239e593c0f90224f38ce67e830e934134))
+* eligibility paymentid consumption and unused vars removed ([#490](https://github.com/juspay/hyperswitch-client-core/issues/490)) ([51bcbeb](https://github.com/juspay/hyperswitch-client-core/commit/51bcbebc25ae719babd66ce2d60777c0c79dd861))
+* removed redundant useEffect ([#489](https://github.com/juspay/hyperswitch-client-core/issues/489)) ([5ee5655](https://github.com/juspay/hyperswitch-client-core/commit/5ee56553644badb48aea4513fefc89f42392d668))
+* removed the regex check for client_secret ([#477](https://github.com/juspay/hyperswitch-client-core/issues/477)) ([8fa8412](https://github.com/juspay/hyperswitch-client-core/commit/8fa8412c6648dae372cb5a0641c055eb9db688c2))
+* stabilize Detox CI and test flows ([#413](https://github.com/juspay/hyperswitch-client-core/issues/413)) ([832efbf](https://github.com/juspay/hyperswitch-client-core/commit/832efbfd8d0cf1118ae44ab9fc5584e2a01cf6ae))
+
+
+### Features
+
+* add 'eft' to payment method priority array ([#457](https://github.com/juspay/hyperswitch-client-core/issues/457)) ([97f7b28](https://github.com/juspay/hyperswitch-client-core/commit/97f7b2891c2f91555c0beabec7e2615a073b73db))
+* add update intent event handling and improve payment intent cre… ([#476](https://github.com/juspay/hyperswitch-client-core/issues/476)) ([8176cfc](https://github.com/juspay/hyperswitch-client-core/commit/8176cfca7b3a1fd233c5b72295384c55a215f76e))
+* added subscription based events ([#429](https://github.com/juspay/hyperswitch-client-core/issues/429)) ([75d9463](https://github.com/juspay/hyperswitch-client-core/commit/75d946356b39230849e0dfff9124c4cf16ed4fae))
+* added support for sdkAuthorization parameter ([#444](https://github.com/juspay/hyperswitch-client-core/issues/444)) ([21b5ddb](https://github.com/juspay/hyperswitch-client-core/commit/21b5ddb6f64cabf413890ba2eb5be773d8903685))
+* added support for structured layout configuration ([#438](https://github.com/juspay/hyperswitch-client-core/issues/438)) ([120a262](https://github.com/juspay/hyperswitch-client-core/commit/120a26214cb12236fb5987e6043d0e22e9a61f38))
+* **api:** eligibility check ([#470](https://github.com/juspay/hyperswitch-client-core/issues/470)) ([4d1f420](https://github.com/juspay/hyperswitch-client-core/commit/4d1f420fcd91e5b3ddb3d6235f146fd0683fe331))
+* enhance UpdateIntentHook with additional SDK states and improve… ([#488](https://github.com/juspay/hyperswitch-client-core/issues/488)) ([0817416](https://github.com/juspay/hyperswitch-client-core/commit/0817416eb7cf2929f5782e1e2c97ee17b39d6494))
+* hook to notify of failed confirm action on invalid form ([#459](https://github.com/juspay/hyperswitch-client-core/issues/459)) ([dbf3bbc](https://github.com/juspay/hyperswitch-client-core/commit/dbf3bbc607d3de79c28ffc8c94ee8cd321c361a5))
+
 # [1.9.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.8.8...v1.9.0) (2026-02-27)
 
 

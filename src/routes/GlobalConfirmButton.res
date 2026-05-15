@@ -1,6 +1,6 @@
 type confirmButtonData = {
   loading: bool,
-  handlePress: ReactNative.Event.pressEvent => unit,
+  handlePress: unit => unit,
   payment_method_type: string,
   payment_experience?: array<AccountPaymentMethodType.payment_experience>,
   customer_payment_experience?: array<PaymentMethodType.payment_experience_type>,
@@ -20,8 +20,10 @@ let make = (~confirmButtonData) => {
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   <UIUtils.RenderIf
-    condition={sheetType === DynamicFieldsSheet ||
-      (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet)}>
+    condition={!nativeProp.configuration.hideConfirmButton && (
+      sheetType === DynamicFieldsSheet ||
+        (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet)
+    )}>
     <ConfirmButton
       loading=confirmButtonData.loading
       handlePress=confirmButtonData.handlePress
@@ -30,5 +32,6 @@ let make = (~confirmButtonData) => {
       customerPaymentExperience=?confirmButtonData.customer_payment_experience
       errorText=confirmButtonData.errorText
     />
+    <Space height=15. />
   </UIUtils.RenderIf>
 }

@@ -1,9 +1,10 @@
 open ReactNative
 open Style
+open PaymentEvents
 
 module SectionHeader = {
   @react.component
-  let make = (~section: AccordionView.accordionSection, ~isExpanded: bool) => {
+  let make = (~section: AccordionView.accordionSection, ~isExpanded: bool, ~showRadios: bool) => {
     let {iconColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
 
     <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
@@ -16,8 +17,10 @@ module SectionHeader = {
             padding: 20.->dp,
           }),
         ])}>
-        <CustomRadioButton size=20.5 selected=isExpanded color=primaryColor />
-        <Space height=5. />
+        <UIUtils.RenderIf condition={showRadios}>
+          <CustomRadioButton size=20.5 selected=isExpanded color=primaryColor />
+          <Space height=5. />
+        </UIUtils.RenderIf>
         {section.title === "loading"
           ? <CustomLoader height="18" width="18" />
           : <Icon
@@ -67,11 +70,20 @@ let make = (
   ~isLoading=true,
   ~setConfirmButtonData,
   ~allowMultipleExpanded: bool=false,
-  ~maxVisibleItems: int=2,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (expandedSections, setExpandedSections) = React.useState(_ => [0])
+  let layout = nativeProp.configuration.appearance.layout
+
+  let defaultCollapsed = layout.defaultCollapsed
+  let maxVisibleItems = layout.maxAccordionItems
+  let showRadios = layout.radios
+
+  let (expandedSections, setExpandedSections) = React.useState(_ =>
+    defaultCollapsed ? [] : [0]
+  )
   let (showMore, setShowMore) = React.useState(_ => true)
+
+  let emitter = PaymentEvents.usePaymentEventEmitter()
 
   let handleSectionToggle = (sectionKey: int) => {
     setExpandedSections(prevExpanded => {
@@ -81,6 +93,8 @@ let make = (
         } else {
           prevExpanded->Array.concat([sectionKey])
         }
+      } else if prevExpanded->Array.includes(sectionKey) {
+        []
       } else {
         [sectionKey]
       }
@@ -101,13 +115,33 @@ let make = (
   }
 
   let renderSectionHeader = (~section: AccordionView.accordionSection, ~isExpanded: bool) => {
-    <SectionHeader section isExpanded />
+    <SectionHeader section isExpanded showRadios />
   }
 
   let renderSectionContent = (~section: AccordionView.accordionSection) => {
     let isScreenFocus = expandedSections->Array.includes(section.key)
     section.componentHoc(~isScreenFocus, ~setConfirmButtonData)
   }
+
+  React.useEffect2(() => {
+    switch expandedSections->Array.get(0) {
+    | Some(sectionKey) =>
+      switch hocComponentArr->Array.get(sectionKey) {
+      | Some(hoc) =>
+        if hoc.name !== "loading" {
+          let event = PaymentEvents.buildPaymentMethodStatusEvent(
+            ~paymentMethod=hoc.name,
+            ~paymentMethodType=hoc.paymentMethodType,
+            ~isSavedPaymentMethod=false,
+          )
+          emitter.emitPaymentMethodStatus(~event)
+        }
+      | None => ()
+      }
+    | None => ()
+    }
+    None
+  }, (expandedSections, hocComponentArr))
 
   <UIUtils.RenderIf condition={hocComponentArr->Array.length > 0}>
     <Space />
@@ -120,7 +154,7 @@ let make = (
       style={s({marginHorizontal: -10.->dp})}
       sectionStyle={s({marginHorizontal: 10.->dp})}
       allowMultipleExpanded
-      layout=nativeProp.configuration.appearance.layout
+      spacedAccordionItems=layout.spacedAccordionItems
     />
     <UIUtils.RenderIf condition={allSections->Array.length > maxVisibleItems && showMore}>
       <MoreButton

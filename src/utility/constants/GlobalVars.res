@@ -1,10 +1,10 @@
 type envType = INTEG | SANDBOX | PROD
 
 let checkEnv = publishableKey => {
-  if publishableKey != "" && publishableKey->String.startsWith("pk_prd_") {
-    PROD
-  } else {
+  if publishableKey != "" && publishableKey->String.startsWith("pk_snd_") {
     SANDBOX
+  } else {
+    PROD
   }
 }
 

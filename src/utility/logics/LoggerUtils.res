@@ -80,7 +80,7 @@ let sendLogs = (logFile, uri: option<string>, publishableKey, appId) => {
         ~uri,
         ~method_=#POST,
         ~bodyStr=data,
-        ~headers=Utils.getHeader(publishableKey, appId),
+        ~headers=Utils.getHeader(~apiKey=publishableKey, ~appId, ()),
         ~mode=#"no-cors",
       )
       ->Promise.then(res => res->Fetch.Response.json)

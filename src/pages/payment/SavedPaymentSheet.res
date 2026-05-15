@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+open PaymentEvents
 
 @react.component
 let make = (
@@ -28,6 +29,7 @@ let make = (
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
@@ -45,6 +47,19 @@ let make = (
   let setSelectedToken = React.useCallback1(token => {
     setSelectedToken(_ => token)
   }, [setSelectedToken])
+
+  React.useEffect1(() => {
+    // if !isScreenFocus {
+      setSelectedToken(customerPaymentMethods->Array.get(0))
+      setSavedCardCvv(_ => None)
+      setSaveCardChecboxSelected(false)
+    // }
+    None
+  }, [customerPaymentMethods])
+
+  let emitter = PaymentEvents.usePaymentEventEmitter()
+
+  let prevStatusRef = React.useRef(None)
 
   let {
     borderWidth,
@@ -412,6 +427,7 @@ let make = (
                 setSavedCardCvv(_ => Some(""))
               }
               setLoading(FillingDetails)
+              notifyValidationFailure()
             }
           : processRequestSaved(token)
       | WALLET =>
@@ -513,8 +529,71 @@ let make = (
       if showDisclaimer && !isSaveCardCheckboxSelected {
         setErrorText(_ => Some("Please accept the terms and conditions to continue."))
       }
+      notifyValidationFailure()
     }
   }
+
+  React.useEffect1(() => {
+    switch selectedToken {
+    | Some(token) =>
+      let event = PaymentEvents.buildPaymentMethodStatusEvent(
+        ~paymentMethod=token.payment_method_str,
+        ~paymentMethodType=token.payment_method_type,
+        ~isSavedPaymentMethod=true,
+      )
+      emitter.emitPaymentMethodStatus(~event)
+    | None => ()
+    }
+    None
+  }, [selectedToken])
+
+  React.useEffect2(() => {
+    switch selectedToken {
+    | Some(token) =>
+      let isFormComplete = switch token.payment_method {
+      | CARD =>
+        if token.requires_cvv {
+          switch savedCardCvv {
+          | Some(cvv) =>
+            cvv->String.length > 0 &&
+              Validation.cvcNumberInRange(
+                cvv,
+                token.card->Option.map(c => c.card_network)->Option.getOr(""),
+              )
+          | None => false
+          }
+        } else {
+          true
+        }
+      | _ => true
+      }
+
+      let status = isFormComplete ? PaymentEventTypes.Complete : PaymentEventTypes.Filling
+      let statusStr = PaymentEventTypes.formStatusValueToString(status)
+
+      if prevStatusRef.current !== Some(statusStr) {
+        prevStatusRef.current = Some(statusStr)
+        let event = PaymentEvents.buildFormStatusEvent(~status)
+        emitter.emitFormStatus(~event)
+      }
+
+      switch token.card {
+      | Some(card) =>
+        let info = PaymentEvents.buildCardInfoFromSavedCard(
+          ~bin=card.card_isin,
+          ~last4=card.last4_digits,
+          ~brand=card.card_network,
+          ~expiryMonth=card.expiry_month,
+          ~expiryYear=card.expiry_year,
+          ~isCvcComplete=isFormComplete,
+        )
+        emitter.emitCardInfo(~info)
+      | None => ()
+      }
+    | None => ()
+    }
+    None
+  }, (selectedToken, savedCardCvv))
 
   React.useEffect(() => {
     let confirmButton = {

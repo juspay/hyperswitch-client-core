@@ -109,3 +109,8 @@ regexes = [".*t.compileToken=t.compileUnsafe=t.compile=void.*"]
 description = "Ignore keys on iOS"
 commits = ["6bf2569aed49c444fb036f3f74d353ceb1477c14"]
 regexes = [".*ZeYpcB05LhwoIg7CL.*"]
+
+[[allowlists]]
+description = "Ignore dummy cs in Client Core"
+commits = ["62f5e1803d3a441abfe9323d28df4952f11b77c6"]
+regexes = [".*client_secret.*pay_.*_secret_.*"]

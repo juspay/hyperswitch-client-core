@@ -1,7 +1,7 @@
 @react.component
 let make = (
   ~loading,
-  ~handlePress: ReactNative.Event.pressEvent => unit,
+  ~handlePress: unit => unit,
   ~paymentMethod: string,
   ~paymentExperience=?,
   ~customerPaymentExperience=?,

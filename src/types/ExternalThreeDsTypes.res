@@ -19,7 +19,7 @@ type sdkInformation = {
   sdk_max_timeout: int,
 }
 type authCallBody = {
-  client_secret: string,
+  client_secret?: string,
   device_channel: string,
   threeds_method_comp_ind: string,
   sdk_information: sdkInformation,

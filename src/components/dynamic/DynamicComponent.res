@@ -36,6 +36,7 @@ let make = (~setConfirmButtonData) => {
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
@@ -64,6 +65,11 @@ let make = (~setConfirmButtonData) => {
   let setIsFormValid = React.useCallback1(isValid => {
     setIsFormValid(_ => isValid)
   }, [setIsFormValid])
+
+  let (isPristine, setIsPristine) = React.useState(_ => true)
+  let setIsPristine = React.useCallback1(pristine => {
+    setIsPristine(_ => pristine)
+  }, [setIsPristine])
 
   let (formMethods: option<ReactFinalForm.Form.formMethods>, setFormMethods) = React.useState(_ =>
     None
@@ -198,8 +204,16 @@ let make = (~setConfirmButtonData) => {
       | Some(methods) => methods.submit()
       | None => ()
       }
+      notifyValidationFailure()
     }
   }
+
+  FormStatusEmitter.useFormStatusEmitter(
+    ~isFocused=true,
+    ~hasRequiredFields=missingRequiredFields->Array.length > 0,
+    ~isFormValid,
+    ~isPristine,
+  )
 
   React.useEffect3(() => {
     let confirmButton = {
@@ -222,6 +236,7 @@ let make = (~setConfirmButtonData) => {
       initialValues
       setFormData
       setIsFormValid
+      setIsPristine=?Some(setIsPristine)
       setFormMethods
       isCardPayment
       enabledCardSchemes

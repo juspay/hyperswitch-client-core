@@ -1,5 +1,6 @@
 open ReactNative
 open Style
+open PaymentEvents
 
 module CVVComponent = {
   @react.component
@@ -165,6 +166,7 @@ module PaymentMethodListView = {
   ) => {
     let localeObj = GetLocale.useGetLocalObj()
     let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
+    let emitter = PaymentEvents.usePaymentEventEmitter()
 
     <CustomPressable
       onPress={_ => {
@@ -172,6 +174,12 @@ module PaymentMethodListView = {
           setSavedCardCvv(_ => None)
         }
         setSelectedToken(Some(savedPaymentMethod))
+        let event = PaymentEvents.buildPaymentMethodStatusEvent(
+          ~paymentMethod=savedPaymentMethod.payment_method_str,
+          ~paymentMethodType=savedPaymentMethod.payment_method_type,
+          ~isSavedPaymentMethod=true,
+        )
+        emitter.emitPaymentMethodStatus(~event)
       }}
       style={s({
         minHeight: 60.->dp,

@@ -48,7 +48,7 @@ let make = (
       backgroundColor={payNowButtonColor}
       text={displayText == "Pay Now" ? localeObject.payNowButton : displayText}
       testID={TestUtils.payButtonTestId}
-      onPress={ev => {
+      onPress={_ => {
         logger(
           ~logType=INFO,
           ~value="",
@@ -59,7 +59,7 @@ let make = (
           ~customerPaymentExperience?,
           (),
         )
-        handlePress(ev)
+        handlePress()
       }}
     />
   </View>

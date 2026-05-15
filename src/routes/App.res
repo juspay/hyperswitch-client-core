@@ -1,6 +1,3 @@
-open ReactNative
-open Style
-
 module ContextWrapper = {
   @react.component
   let make = (~props, ~rootTag, ~children) => {
@@ -27,12 +24,7 @@ module ContextWrapper = {
 module App = {
   @react.component
   let make = () => {
-    <View style={s({flex: 1.})}>
-      {WebKit.platform === #android
-        ? <StatusBar translucent=true backgroundColor="transparent" />
-        : React.null}
-      <NavigatorRouterParent />
-    </View>
+    <NavigatorRouterParent />
   }
 }
 

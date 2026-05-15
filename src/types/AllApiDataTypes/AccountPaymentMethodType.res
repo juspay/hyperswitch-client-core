@@ -44,6 +44,7 @@ type accountPaymentMethods = {
   redirect_url: string,
   request_external_three_ds_authentication: bool,
   show_surcharge_breakup_screen: bool,
+  sdk_next_action: option<string>,
 }
 
 let defaultAccountPaymentMethods = {
@@ -59,6 +60,7 @@ let defaultAccountPaymentMethods = {
   redirect_url: "",
   request_external_three_ds_authentication: false,
   show_surcharge_breakup_screen: false,
+  sdk_next_action: None,
 }
 
 let parseCardNetworks = (dict: Js.Dict.t<JSON.t>) => {
@@ -226,6 +228,9 @@ let jsonToAccountPaymentMethodType: JSON.t => accountPaymentMethods = res => {
       "show_surcharge_breakup_screen",
       false,
     ),
+    sdk_next_action: accountPaymentMethodsDict
+    ->getOptionalObj("sdk_next_action")
+    ->Option.map(d => d->getString("next_action", "")),
   }
 }
 

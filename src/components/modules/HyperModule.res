@@ -12,6 +12,9 @@ type hyperModule = {
   onAddPaymentMethod: string => unit,
   exitWidgetPaymentsheet: (int, string, bool) => unit,
   updateWidgetHeight: int => unit,
+  notifyWidgetPaymentResult: (int, string) => unit,
+  emitPaymentEvent: (int, string, JSON.t) => unit,
+  onUpdateIntentEvent: (int, string, string) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -51,6 +54,12 @@ let hyperModule = {
     _,
   ) => ()),
   updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
+  notifyWidgetPaymentResult: getFunctionFromModule(hyperModuleDict, "notifyWidgetPaymentResult", (
+    _,
+    _,
+  ) => ()),
+  emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
+  onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) => ()),
 }
 
 let sendMessageToNative = str => {
@@ -78,6 +87,14 @@ type useExitPaymentsheetReturnType = {
   exit: (PaymentConfirmTypes.error, bool) => unit,
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
+let emitPaymentEvent = (rootTag: int, eventType: string, payload: JSON.t) => {
+  hyperModule.emitPaymentEvent(rootTag, eventType, payload)
+}
+
+let onUpdateIntentEvent = (rootTag: int, type_: string, result: string) => {
+  hyperModule.onUpdateIntentEvent(rootTag, type_, result)
+}
+
 let useExitPaymentsheet = () => {
   // let (ref, _) = React.useContext(ReactNativeWrapperContext.reactNativeWrapperContext)
   let logger = LoggerHook.useLoggerHook()
@@ -133,7 +150,11 @@ let useExitPaymentsheet = () => {
         //   )
         exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
-      ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
+      ? hyperModule.exitWidgetPaymentsheet(
+        rootTag,
+        apiResStatus->stringifiedResStatus,
+        reset,
+      )
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }
   {exit, simplyExit}

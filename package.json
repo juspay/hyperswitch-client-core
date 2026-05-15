@@ -1,6 +1,6 @@
 {
   "name": "hyperswitch",
-  "version": "1.9.0",
+  "version": "1.10.2",
   "private": true,
   "scripts": {
     "start": "react-native start --reset-cache --client-logs",
@@ -14,6 +14,7 @@
     "run:ios": "bundle && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
     "bundle:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
+    "bundle:rn:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output ../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch/android/src/main/assets/hyperswitch.bundle",
     "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
     "build:web": "rm -rf reactNativeWeb/dist/ && webpack --mode=production --config reactNativeWeb/webpack.config.js",
     "build:lib": "android/build-lib.sh",
@@ -42,6 +43,7 @@
     "@juspay-tech/react-native-hyperswitch-paypal": "link:../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch-paypal",
     "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.2",
     "@sentry/react-native": "^6.13.0",
+    "base-64": "^1.0.0",
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",
     "react-native-inappbrowser-reborn": "^3.7.0",
@@ -118,7 +120,7 @@
     "typescript": "5.0.4",
     "url-loader": "^4.1.1",
     "use-latest-callback": "^0.3.1",
-    "webpack": "^5.93.0",
+    "webpack": "^5.104.1",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.0.4"
   },
