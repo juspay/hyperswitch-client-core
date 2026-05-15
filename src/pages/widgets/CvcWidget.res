@@ -28,6 +28,8 @@ let make = () => {
 
   let isCvcEmpty = cvcValue->String.length === 0
 
+  let isCvcComplete = Validation.checkCardCVC(cvcValue, cardNetwork)
+
   let onCvcChange = cvc => {
     let formatted = Validation.formatCVCNumber(cvc, cardNetwork)
     setCvcValue(_ => formatted)
@@ -40,11 +42,11 @@ let make = () => {
         isCvcFocused: focused,
         isCvcBlur: blur,
         isCvcEmpty,
+        isCvcComplete,
       },
     )
   }
 
-  // HyperHeadless module — needed only for exitHeadless after confirm
   let headlessModule = HeadlessCommon.makeHeadlessModule()
 
   React.useEffect0(() => {
@@ -74,7 +76,7 @@ let make = () => {
   React.useEffect1(_ => {
     emitCvcStatusEvent(~focused=isFocused, ~blur=!isFocused)
     None
-  }, [isCvcEmpty])
+  }, [cvcValue])
 
   if !requiresCvv {
     <View style={s({height: 0.->dp})} />
