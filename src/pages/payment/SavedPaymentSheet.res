@@ -13,6 +13,7 @@ let make = (
   ~style=empty,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
   let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
@@ -53,13 +54,13 @@ let make = (
   let prevStatusRef = React.useRef(None)
 
   let {
+    bgColor,
     borderWidth,
     borderRadius,
     component,
-    shadowIntensity,
-    shadowColor,
+    shadowConfig,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   let processRequestSaved = (token: CustomerPaymentMethodType.customer_payment_method_type) => {
     setLoading(ProcessingPayments)
@@ -85,6 +86,7 @@ let make = (
 
     let paymentMethodType = PaymentUtils.generateSavedCardConfirmBody(
       ~nativeProp,
+      ~payment_method=token.payment_method_str,
       ~payment_token=token.payment_token,
       ~savedCardCvv,
       ~appURL=?{
@@ -102,8 +104,8 @@ let make = (
 
     redirectHook(
       ~body=paymentMethodType->Utils.getStringFromRecord,
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod="card",
@@ -218,8 +220,8 @@ let make = (
 
     redirectHook(
       ~body=body->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodData.payment_method_type,
@@ -505,11 +507,17 @@ let make = (
           }
           WebKit.platform === #android
             ? HyperModule.launchGPay(
-                WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+                WalletType.getGpayTokenStringified(
+                  ~obj=sessionObject,
+                  ~appEnv=nativeProp.hyperswitchConfig.environment,
+                ),
                 confirmGPay,
               )
             : launchGPay(
-                WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+                WalletType.getGpayTokenStringified(
+                  ~obj=sessionObject,
+                  ~appEnv=nativeProp.hyperswitchConfig.environment,
+                ),
               )
         | _ => processRequestSaved(token)
         }
@@ -611,17 +619,24 @@ let make = (
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
-    <Space />
+    <UIUtils.RenderIf condition=displayInSeparateScreen>
+      <Space />
+    </UIUtils.RenderIf>
     <View
       style={array([
-        getShadowStyle,
+        displayInSeparateScreen || nativeProp.configuration.paymentMethodLayout.layoutType === Tabs
+          ? s({
+              borderRadius,
+              borderWidth,
+              borderColor: component.borderColor,
+            })
+          : empty,
+        displayInSeparateScreen ? bgColor : empty,
+        nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? getShadowStyle : empty,
         s({
-          paddingHorizontal: 16.->dp,
+          flexShrink: 1.,
           paddingVertical: 5.->dp,
-          borderRadius,
-          borderWidth,
-          borderColor: component.borderColor,
-          backgroundColor: component.background,
+          backgroundColor: ?(displayInSeparateScreen ? Some(component.background) : None),
         }),
         style,
       ])}>
@@ -638,7 +653,7 @@ let make = (
     </View>
     {showDisclaimer && savedCardCvv->Option.isSome
       ? <View style={s({paddingHorizontal: 2.->dp})}>
-          <Space />
+          // <Space />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
@@ -648,8 +663,9 @@ let make = (
             setIsSelected={setSaveCardChecboxSelected}
             textType={TextWrapper.ModalText}
           />
-          <Space height=5. />
+          // <Space height=5. />
+          <Space />
         </View>
-      : React.null}
+      : <Space height=4. />}
   </ErrorBoundary>
 }

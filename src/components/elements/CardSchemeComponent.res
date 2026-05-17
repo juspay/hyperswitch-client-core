@@ -68,7 +68,7 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
         {
           toValue: 0.->Animated.Value.Timing.fromRawValue,
           duration: 300.,
-          useNativeDriver: false,
+          useNativeDriver: true,
           easing: Easing.ease,
         },
       ),

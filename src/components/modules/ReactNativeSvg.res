@@ -100,6 +100,7 @@ module SvgCss = {
     ~width: float,
     ~height: float,
     ~fill: string,
+    ~color: string=?,
     ~onError: unit => unit,
     ~onLoad: unit => unit=?,
   ) => React.element = "SvgCss"
@@ -125,6 +126,7 @@ module SvgUri = {
     ~width: float,
     ~height: float,
     ~fill: string,
+    ~stroke=?,
     ~onError: unit => unit,
     ~onLoad: option<unit => unit>=?,
     ~loadingComponent=React.null,
@@ -135,9 +137,12 @@ module SvgUri = {
       switch svgUriCache->Dict.get(uri) {
       | Some(xml) => setXml(_ => Some(xml))
       | None =>
-        Fetch.fetch(uri, {
-          method: #GET,
-        })
+        Fetch.fetch(
+          uri,
+          {
+            method: #GET,
+          },
+        )
         ->Promise.then(Fetch.Response.text)
         ->Promise.then(text => {
           if text === "" || text->String.trim->String.sliceToEnd(~start=-6) !== "</svg>" {
@@ -160,7 +165,7 @@ module SvgUri = {
     }, [uri])
 
     switch xml {
-    | Some(xml) => <SvgCss onError ?onLoad xml width height fill />
+    | Some(xml) => <SvgCss onError ?onLoad xml width height fill color=?stroke />
     | None => loadingComponent
     }
   }

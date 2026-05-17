@@ -77,14 +77,12 @@ module TabBarItemInternal = {
   ) => {
     let {
       component,
-      primaryColor,
       borderRadius,
       bgColor,
       borderWidth,
-      shadowColor,
-      shadowIntensity,
+      shadowConfig,
     } = ThemebasedStyle.useThemeBasedStyle()
-    let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+    let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
     let labelColorFromStyle = switch labelStyle {
     // | Some(s) => s.color
@@ -211,9 +209,9 @@ module TabBarItemInternal = {
         bgColor,
         getShadowStyle,
         s({
-          backgroundColor: component.background,
-          borderWidth: isFocused ? borderWidth +. 1.5 : borderWidth,
-          borderColor: isFocused ? primaryColor : component.borderColor,
+          backgroundColor: isFocused ? component.selected.background : component.background,
+          borderWidth: isFocused ? component.selected.borderWidth : borderWidth,
+          borderColor: isFocused ? component.selected.borderColor : component.borderColor,
           minWidth: 115.->dp,
           padding: (isFocused ? 10. : 11.5)->dp,
           margin: 6.->dp,
@@ -254,7 +252,8 @@ module MemoizedTabBarItemInternal = {
     prevProps.index === nextProps.index &&
     prevProps.route.key === nextProps.route.key &&
     prevProps.isLoading === nextProps.isLoading &&
-    prevProps.position === nextProps.position
+    prevProps.position === nextProps.position &&
+    prevProps.label === nextProps.label
   })
 }
 

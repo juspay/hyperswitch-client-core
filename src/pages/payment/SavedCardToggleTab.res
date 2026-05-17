@@ -30,9 +30,9 @@ let make = (
         customerPaymentMethods=savedCardMethods
         setConfirmButtonData
         merchantName
-        animated=false
+        animated=true
       />
-      <Space />
+      {nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? <Space /> : React.null}
       <ClickableTextElement
         initialIconName="addwithcircle"
         updateIconName={Some("cardv1")}
@@ -42,12 +42,14 @@ let make = (
         textType={TextWrapper.LinkTextBold}
         size=24.
       />
-      <Space height=5. />
+      {nativeProp.configuration.paymentMethodLayout.layoutType === Accordion
+        ? <Space height=20. />
+        : React.null}
     </>
   } else {
     <>
       <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />
-      <Space />
+      {nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? <Space /> : React.null}
       <ClickableTextElement
         initialIconName="cardv1"
         updateIconName={Some("addwithcircle")}
@@ -57,7 +59,9 @@ let make = (
         textType={TextWrapper.LinkTextBold}
         size=24.
       />
-      <Space height=5. />
+      {nativeProp.configuration.paymentMethodLayout.layoutType === Accordion
+        ? <Space height=20. />
+        : React.null}
     </>
   }
 }

@@ -177,7 +177,7 @@ let applePayItemToObjMapper = dict => {
 }
 
 let getGpayToken = (~obj: SessionsType.sessions, ~appEnv: GlobalVars.envType) => {
-  environment: appEnv == PROD ? "PRODUCTION"->JSON.Encode.string : "Test"->JSON.Encode.string,
+  environment: appEnv !== PROD ? "Test"->JSON.Encode.string : "PRODUCTION"->JSON.Encode.string,
   paymentDataRequest: obj->itemToObject,
 }
 

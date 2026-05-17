@@ -35,7 +35,8 @@ let make = (
     onSectionToggle(sectionKey)
   }
 
-  let {component, borderWidth, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
+  let {component, borderWidth, borderRadius, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   <View ?style>
     {sections
@@ -48,12 +49,13 @@ let make = (
       <View
         key={section.key->Int.toString}
         style={array([
+          getShadowStyle,
           spacedAccordionItems
             ? s({
                 marginBottom: 10.->dp,
                 borderWidth,
                 borderRadius,
-                borderColor: component.borderColor,
+                borderColor: expanded ? component.selected.borderColor : component.borderColor,
               })
             : s({
                 borderWidth,
@@ -79,7 +81,6 @@ let make = (
           <View
             style={array([
               s({
-                paddingBottom: 16.->dp,
                 paddingHorizontal: 24.->dp,
               }),
               contentStyle->Option.getOr(empty),

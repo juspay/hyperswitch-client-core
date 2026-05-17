@@ -2,21 +2,28 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~buttonName, ~color, ~width, ~height=?) => {
+let make = (~buttonName, ~color, ~width, ~height=?, ~borderRadius) => {
   let (themeType, _) = React.useContext(ThemeContext.themeContext)
   let isDarkMode = switch themeType {
   | Light(_) => false
   | Dark(_) => true
   }
 
+  let {payNowButtonShadowConfig} = ThemebasedStyle.useThemeBasedStyle()
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig=payNowButtonShadowConfig, ())
+
   <View
-    style={s({
-      flexDirection: #row,
-      alignItems: #center,
-      justifyContent: #center,
-      width: 100.->pct,
-      backgroundColor: isDarkMode ? "#fff" : color,
-    })}>
+    style={array([
+      getShadowStyle,
+      s({
+        borderRadius,
+        flexDirection: #row,
+        alignItems: #center,
+        justifyContent: #center,
+        width: 100.->pct,
+        backgroundColor: isDarkMode ? "#fff" : color,
+      }),
+    ])}>
     {height->Option.isNone
       ? <Icon name=buttonName width=24. height=24. fill={isDarkMode ? color : "#fff"} />
       : React.null}

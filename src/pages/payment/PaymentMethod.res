@@ -16,7 +16,9 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let {nickname, isNicknameSelected, setEligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {nickname, isNicknameSelected, setEligibilityStatus} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
 
   let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
 
@@ -166,7 +168,9 @@ let make = (
       ~payment_type=accountPaymentMethodData
       ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
       ->Option.getOr(NORMAL),
-      ~payment_type_str=?accountPaymentMethodData->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)->Option.getOr(None),
+      ~payment_type_str=?accountPaymentMethodData
+      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+      ->Option.getOr(None),
       ~appURL=?{
         accountPaymentMethodData->Option.map(accountPaymentMethods =>
           accountPaymentMethods.redirect_url
@@ -188,8 +192,8 @@ let make = (
 
     redirectHook(
       ~body=body->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodData.payment_method_type,
@@ -202,8 +206,28 @@ let make = (
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
     {switch methodType {
     | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
-    | TAB => <TabElement paymentMethodData processRequest checkEligibility isScreenFocus setConfirmButtonData />
+    | TAB =>
+      <TabElement
+        paymentMethodData processRequest checkEligibility isScreenFocus setConfirmButtonData
+      />
     | _ => React.null
+    }}
+    {switch nativeProp.configuration.paymentMethodsConfig->Array.find(paymentMethodConfig => {
+      paymentMethodConfig.paymentMethod == paymentMethodData.payment_method_str
+    }) {
+    | Some(config) =>
+      switch config.message.value {
+      | Some(text) =>
+        <UIUtils.RenderIf condition={text != ""}>
+          <TextWrapper
+            text
+            textType={ModalTextBold}
+            overrideStyle=Some(ReactNative.Style.s({marginBottom: 15.->ReactNative.Style.dp}))
+          />
+        </UIUtils.RenderIf>
+      | None => React.null
+      }
+    | None => React.null
     }}
   </ErrorBoundary>
 }

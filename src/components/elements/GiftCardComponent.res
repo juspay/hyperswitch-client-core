@@ -1,12 +1,9 @@
 open ReactNative
 open Style
 
-module GiftCardComponent = {
+module GiftCardListComponent = {
   @react.component
-  let make = React.memo((
-    ~giftCardArr: array<AccountPaymentMethodType.payment_method_type>,
-    ~setContentHeight,
-  ) => {
+  let make = React.memo((~giftCardArr: array<AccountPaymentMethodType.payment_method_type>) => {
     let (selectedGiftCardType, setSelectedGiftCardType) = React.useState(() =>
       giftCardArr
       ->Array.get(0)
@@ -60,13 +57,8 @@ module GiftCardComponent = {
       }
     }, (selectedGiftCardType, getRequiredFieldsForTabs, country))
 
-    <View
-      style={s({position: #absolute, width: 100.->pct, paddingHorizontal: 2.->dp})}
-      onLayout={(event: Event.layoutEvent) => {
-        let height = event.nativeEvent.layout.height
-        setContentHeight(_ => height)
-      }}>
-      <Space height=30. />
+    <View style={s({paddingHorizontal: 22.->dp, paddingBottom: 20.->dp})}>
+      <Space />
       <CustomPicker
         value=selectedGiftCardType
         setValue=setSelectedGiftCardType
@@ -93,36 +85,16 @@ module GiftCardComponent = {
 
 @react.component
 let make = (~isLoading, ~giftCardArr, ~style=empty) => {
-  let (expandGiftCard, setExpandGiftCard) = React.useState(_ => false)
+  let (expanded, setExpanded) = React.useState(_ => false)
 
   let {
+    primaryColor,
     component,
     borderRadius,
-    bgColor,
     borderWidth,
-    shadowColor,
-    shadowIntensity,
+    shadowConfig,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
-
-  let (contentHeight, setContentHeight) = React.useState(_ => 0.)
-  let animatedHeight = React.useRef(Animated.Value.create(0.))
-
-  React.useEffect2(() => {
-    let toValue = (expandGiftCard ? contentHeight : 0.)->Animated.Value.Timing.fromRawValue
-
-    Animated.timing(
-      animatedHeight.current,
-      {
-        toValue,
-        duration: 300.,
-        useNativeDriver: false,
-        easing: Easing.ease,
-      },
-    )->Animated.start
-
-    None
-  }, (expandGiftCard, contentHeight))
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   {
     !isLoading && giftCardArr->Array.length === 0
@@ -133,23 +105,21 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
             ? <CustomLoader />
             : <View
                 style={array([
-                  bgColor,
                   getShadowStyle,
                   s({
-                    backgroundColor: component.background,
                     borderWidth,
-                    borderColor: component.borderColor,
-                    padding: 20.->dp,
+                    borderColor: expanded ? primaryColor : component.borderColor,
                     borderRadius,
                   }),
                   style,
                 ])}>
                 <CustomPressable
-                  onPress={_ => setExpandGiftCard(v => !v)}
+                  onPress={_ => setExpanded(v => !v)}
                   style={s({
                     flexDirection: #row,
                     alignItems: #center,
                     justifyContent: #"space-between",
+                    padding: 20.->dp,
                   })}>
                   <View
                     style={s({
@@ -164,13 +134,7 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
                   </View>
                   <Icon name="chevron" width=14. height=14. fill="#525866" />
                 </CustomPressable>
-                <Animated.View
-                  style={s({
-                    height: animatedHeight.current->Animated.StyleProp.size,
-                    overflow: #hidden,
-                  })}>
-                  <GiftCardComponent giftCardArr setContentHeight />
-                </Animated.View>
+                {expanded ? <GiftCardListComponent giftCardArr /> : React.null}
               </View>}
         </>
   }

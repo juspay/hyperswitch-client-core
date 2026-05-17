@@ -68,55 +68,92 @@ let make = (
 }
 module WidgetWrapper = {
   @react.component
-  let make = (~width=100.->pct, ~children=React.null) => {
+  let make = (~width=100.->pct, ~children=React.null, ~renderScrollView=true) => {
     let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
-    <ScrollView
-      contentContainerStyle={s({
-        minHeight: 250.->dp,
-        paddingHorizontal: sheetContentPadding->dp,
-        paddingTop: sheetContentPadding->dp,
-        paddingBottom: viewPortContants.bottomInset->dp,
-      })}
-      keyboardShouldPersistTaps={#handled}
-      showsVerticalScrollIndicator=false
-      style={array([s({flexGrow: 1., width}), bgColor])}>
-      children
-    </ScrollView>
+    let contentStyle = s({
+      minHeight: 250.->dp,
+      paddingHorizontal: sheetContentPadding->dp,
+      paddingTop: sheetContentPadding->dp,
+      paddingBottom: viewPortContants.bottomInset->dp,
+    })
+    let containerStyle = array([s({flexGrow: 1., width}), bgColor])
+
+    renderScrollView
+      ? <ScrollView
+          contentContainerStyle=contentStyle
+          keyboardShouldPersistTaps={#handled}
+          showsVerticalScrollIndicator=false
+          style=containerStyle>
+          children
+        </ScrollView>
+      : <View style={array([s({maxHeight: 100.->pct}), contentStyle, containerStyle])}>
+          children
+        </View>
   }
 }
 module Wrapper = {
   @react.component
-  let make = (~onModalClose, ~width=100.->pct, ~children=React.null, ~isLoading) => {
+  let make = (
+    ~onModalClose,
+    ~width=100.->pct,
+    ~children=React.null,
+    ~stickyFooter=?,
+    ~isLoading,
+    ~renderScrollView=true,
+    ~isSavedPaymentScreen,
+  ) => {
     let {bgColor, sheetContentPadding, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
     let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
     let style = React.useMemo0(() => {
       let style = [s({flexGrow: 1., width}), bgColor]
       if WebKit.platform === #androidWebView {
-        style->Array.push(
-          s({
-            borderRadius,
-            overflow: #hidden,
-          }),
-        )
+        style->Array.push(s({borderRadius, overflow: #hidden}))
       }
       array(style)
     })
 
-    <ScrollView
-      contentContainerStyle={s({
-        minHeight: 250.->dp,
-        paddingHorizontal: sheetContentPadding->dp,
-        paddingTop: sheetContentPadding->dp,
-        paddingBottom: viewPortContants.bottomInset->dp,
-      })}
-      keyboardShouldPersistTaps={#handled}
-      showsVerticalScrollIndicator=false
-      style>
-      <ModalHeader onModalClose isLoading />
-      children
-    </ScrollView>
+    let contentStyle = s({
+      minHeight: 250.->dp,
+      paddingHorizontal: sheetContentPadding->dp,
+      paddingTop: sheetContentPadding->dp,
+      // paddingBottom: viewPortContants.bottomInset->dp,
+    })
+
+    let getStickyFooter = style =>
+      switch stickyFooter {
+      | Some(component) => <View style> component </View>
+      | None => React.null
+      }
+
+    renderScrollView
+      ? <View style={array([s({flexShrink: 1.}), style])}>
+          <ScrollView
+            contentContainerStyle=contentStyle
+            keyboardShouldPersistTaps={#handled}
+            showsVerticalScrollIndicator=false>
+            <ModalHeader onModalClose isLoading isSavedPaymentScreen />
+            children
+          </ScrollView>
+          {getStickyFooter(
+            s({
+              paddingHorizontal: sheetContentPadding->dp,
+              paddingTop: (sheetContentPadding /. 2.)->dp,
+              paddingBottom: viewPortContants.bottomInset->dp,
+            }),
+          )}
+        </View>
+      : <View style={array([s({maxHeight: 100.->pct}), contentStyle, style])}>
+          <ModalHeader onModalClose isLoading isSavedPaymentScreen />
+          children
+          {getStickyFooter(
+            s({
+              paddingTop: (sheetContentPadding /. 2.)->dp,
+              paddingBottom: viewPortContants.bottomInset->dp,
+            }),
+          )}
+        </View>
   }
 }

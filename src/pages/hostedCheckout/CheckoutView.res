@@ -103,8 +103,7 @@ let make = (~isDesktop) => {
 
   let (showDetails, setShowDetails) = React.useState(() => false)
   let shadowStyle = ShadowHook.useGetShadowStyle(
-    ~shadowIntensity=100.,
-    ~shadowColor="#00000050",
+    ~shadowConfig={color: Some("#00000050"), opacity: Some(1.), blurRadius: Some(100.), offset: None, intensity: Some(100.)},
     (),
   )
 

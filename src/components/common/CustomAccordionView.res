@@ -5,16 +5,20 @@ open PaymentEvents
 module SectionHeader = {
   @react.component
   let make = (~section: AccordionView.accordionSection, ~isExpanded: bool, ~showRadios: bool) => {
-    let {iconColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
+    let {iconColor, primaryColor, logoConfig, component} = ThemebasedStyle.useThemeBasedStyle()
 
-    <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
+    <View style={s({alignItems: #center, justifyContent: #center})}>
       <View
         style={array([
           s({
             width: 100.->pct,
             flexDirection: #row,
             minWidth: 115.->dp,
-            padding: 20.->dp,
+            paddingHorizontal: 20.->dp,
+            paddingVertical: (
+              section.title === "loading" || logoConfig->Option.isNone ? 20. : 10.
+            )->dp,
+            alignItems: #center,
           }),
         ])}>
         <UIUtils.RenderIf condition={showRadios}>
@@ -23,9 +27,45 @@ module SectionHeader = {
         </UIUtils.RenderIf>
         {section.title === "loading"
           ? <CustomLoader height="18" width="18" />
-          : <Icon
-              name=section.title width=18. height=18. fill={isExpanded ? primaryColor : iconColor}
-            />}
+          : switch logoConfig {
+            | Some(config) =>
+              <View
+                style={s({
+                  backgroundColor: config.colors.backgroundColor,
+                  padding: 10.->dp,
+                  borderRadius: config.borderRadius,
+                  position: #relative,
+                })}>
+                <Icon
+                  name=section.title
+                  width=18.
+                  height=18.
+                  fill={isExpanded
+                    ? config.colors.selected->Option.getOr(primaryColor)
+                    : config.colors.unselected->Option.getOr(iconColor)}
+                />
+                {switch (isExpanded, config.checkedIconForSelection) {
+                | (true, Some(checkedIconConfig)) =>
+                  <Icon
+                    name="selected"
+                    width=checkedIconConfig.size
+                    height=checkedIconConfig.size
+                    fill=checkedIconConfig.color
+                    stroke={checkedIconConfig.stroke->Option.getOr(component.background)}
+                    style={s({
+                      position: #absolute,
+                      bottom: checkedIconConfig.bottom->dp,
+                      right: checkedIconConfig.right->dp,
+                    })}
+                  />
+                | _ => React.null
+                }}
+              </View>
+            | None =>
+              <Icon
+                name=section.title width=18. height=18. fill={isExpanded ? primaryColor : iconColor}
+              />
+            }}
         <Space height=5. />
         {section.title === "loading"
           ? <CustomLoader height="18" width="40" />
@@ -38,12 +78,14 @@ module SectionHeader = {
 module MoreButton = {
   @react.component
   let make = (~handleMoreToggle) => {
-    let {component, borderRadius, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
+    let {component, borderRadius, borderWidth, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
+    let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
-    <View style={s({flex: 1., alignItems: #center, justifyContent: #center, paddingTop: 10.->dp})}>
+    <View style={s({alignItems: #center, justifyContent: #center, paddingTop: 10.->dp})}>
       <CustomPressable
         onPress={_ => handleMoreToggle()}
         style={array([
+          getShadowStyle,
           s({
             width: 100.->pct,
             flexDirection: #row,
@@ -72,16 +114,44 @@ let make = (
   ~allowMultipleExpanded: bool=false,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let layout = nativeProp.configuration.appearance.layout
+  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+    AllApiDataContextNew.allApiDataContext,
+  )
+  let layout = nativeProp.configuration.paymentMethodLayout
 
   let defaultCollapsed = layout.defaultCollapsed
   let maxVisibleItems = layout.maxAccordionItems
   let showRadios = layout.radios
 
-  let (expandedSections, setExpandedSections) = React.useState(_ =>
-    defaultCollapsed ? [] : [0]
-  )
+  let (expandedSections, setExpandedSections) = React.useState(_ => [])
   let (showMore, setShowMore) = React.useState(_ => true)
+
+  React.useEffect3(() => {
+    if accountPaymentMethodData->Option.isSome || customerPaymentMethodData->Option.isSome {
+      let expandIndex = switch layout.savedMethodCustomization.defaultCollapsed
+        ? None
+        : switch hocComponentArr->Array.findIndex(hoc => hoc.name === "Saved") {
+          | -1 => None
+          | index => Some(index)
+          } {
+      | Some(index) => [index]
+      | None => defaultCollapsed ? [] : [0]
+      }
+      setExpandedSections(arr => {
+        if arr->Array.length === 0 {
+          setConfirmButtonData({
+            ...GlobalConfirmButton.defaultConfirmButtonData,
+            loading: false,
+            visible: !(expandIndex->Array.length === 0),
+          })
+          expandIndex
+        } else {
+          arr
+        }
+      })
+    }
+    None
+  }, (accountPaymentMethodData, customerPaymentMethodData, hocComponentArr))
 
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
@@ -156,12 +226,16 @@ let make = (
       allowMultipleExpanded
       spacedAccordionItems=layout.spacedAccordionItems
     />
-    <UIUtils.RenderIf condition={allSections->Array.length > maxVisibleItems && showMore}>
+    <UIUtils.RenderIf
+      condition={allSections->Array.length > maxVisibleItems &&
+      showMore &&
+      accountPaymentMethodData->Option.isSome}>
       <MoreButton
         handleMoreToggle={() => {
           setShowMore(_ => false)
         }}
       />
     </UIUtils.RenderIf>
+    <Space />
   </UIUtils.RenderIf>
 }

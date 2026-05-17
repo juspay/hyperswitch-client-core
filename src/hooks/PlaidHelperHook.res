@@ -12,8 +12,8 @@ let usePlaidProps = () => {
     PlaidTypes.onSuccess: success => {
       retrievePayment(
         Types.Payment,
-        nativeProp.clientSecret,
-        nativeProp.publishableKey,
+        nativeProp.paymentSessionConfig.clientSecret,
+        nativeProp.hyperswitchConfig.publishableKey,
         ~isForceSync=true,
       )
       ->Promise.then(res => {

@@ -54,7 +54,7 @@ let useSamsungPayValidityHook = () => {
   //   }
   //   isPresentInCustPML || isPresentInAccPML
   // }
-  let _isSamsungDevice = nativeProp.hyperParams.deviceBrand->Option.getOr("") == "samsung"
+  let _isSamsungDevice = nativeProp.sdkParams.deviceBrand->Option.getOr("") == "samsung"
 
   let _handleSPay = async () => {
     setState(_ => {

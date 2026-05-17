@@ -68,7 +68,7 @@ let make = () => {
   //   let body: PaymentMethodListType.redirectType = {
   //     client_secret: clientSecret,
   //     return_url: ?Utils.getReturnUrl(
-  //       ~appId=nativeProp.hyperParams.appId,
+  //       ~appId=nativeProp.sdkParams.appId,
   //       ~appURL=allApiData.additionalPMLData.redirect_url,
   //     ),
   //     payment_method: prop.payment_method_str,

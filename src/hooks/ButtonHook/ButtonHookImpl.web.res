@@ -20,15 +20,23 @@ let usePayButton = () => {
   React.useEffect1(() => {
     switch (googlePayStatus, googlePaySessionRef.current) {
     | (#ready, Some(sessionObject)) => {
-        let token = WalletType.getGpayToken(~obj=sessionObject, ~appEnv=nativeProp.env)
+        let token = WalletType.getGpayToken(
+          ~obj=sessionObject,
+          ~appEnv=nativeProp.hyperswitchConfig.environment,
+        )
         let onGooglePayButtonClick = () => {
-          launchGPay(WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env))
+          launchGPay(
+            WalletType.getGpayTokenStringified(
+              ~obj=sessionObject,
+              ~appEnv=nativeProp.hyperswitchConfig.environment,
+            ),
+          )
         }
 
         let paymentClient = Window.google(token.environment)
         let buttonProps: Window.buttonProps = {
           onClick: () => onGooglePayButtonClick(),
-          buttonType: switch nativeProp.configuration.appearance.googlePay.buttonType {
+          buttonType: switch nativeProp.configuration.walletButtons.googlePay.buttonType {
           | BUY => "buy"
           | BOOK => "book"
           | CHECKOUT => "checkout"
@@ -79,7 +87,7 @@ let usePayButton = () => {
           )
           appleWalletButton.setAttribute(
             "type",
-            switch nativeProp.configuration.appearance.applePay.buttonType {
+            switch nativeProp.configuration.walletButtons.applePay.buttonType {
             | #book => "book"
             | #buy => "buy"
             | #checkout => "checkout"

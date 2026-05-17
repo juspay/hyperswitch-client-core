@@ -133,10 +133,12 @@ let processCustomerPaymentMethods = (jsonArray: array<JSON.t>) => {
   })
 }
 
-let sortPaymentListArray = plist => {
+let sortPaymentListArray = (plist, paymentMethodOrder) => {
+  let priorityArr = paymentMethodOrder->Array.length === 0 ? Types.priorityArr : paymentMethodOrder
+
   plist->Array.sort((s1, s2) => {
-    let priority1 = Types.priorityArr->Array.findIndex(x => x == s1.payment_method_type)
-    let priority2 = Types.priorityArr->Array.findIndex(x => x == s2.payment_method_type)
+    let priority1 = priorityArr->Array.findIndex(x => x == s1.payment_method_type)
+    let priority2 = priorityArr->Array.findIndex(x => x == s2.payment_method_type)
     let normalizedPriority1 = priority1 == -1 ? -1 : priority1
     let normalizedPriority2 = priority2 == -1 ? -1 : priority2
     if normalizedPriority1 !== normalizedPriority2 {
@@ -163,12 +165,15 @@ let filterPaymentListArray = plist => {
   )
 }
 
-let jsonToCustomerPaymentMethodType: JSON.t => customerPaymentMethods = res => {
+let jsonToCustomerPaymentMethodType: (JSON.t, array<string>) => customerPaymentMethods = (
+  res,
+  paymentMethodOrder,
+) => {
   let customerPaymentMethodsDict = res->getDictFromJson
   {
     customer_payment_methods: getArray(customerPaymentMethodsDict, "customer_payment_methods")
     ->processCustomerPaymentMethods
-    ->sortPaymentListArray
+    ->sortPaymentListArray(paymentMethodOrder)
     ->filterPaymentListArray,
     is_guest_customer: getBool(customerPaymentMethodsDict, "is_guest_customer", true),
   }

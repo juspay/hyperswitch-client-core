@@ -109,7 +109,7 @@ let make = (~children) => {
 
   let (country, setCountry) = React.useState(_ => None)
   let (initialValueCountry, setInitialValueCountry) = React.useState(_ =>
-    nativeProp.hyperParams.country
+    nativeProp.sdkParams.country
   )
 
   let setCountry = React.useCallback1(country => {
@@ -139,7 +139,7 @@ let make = (~children) => {
     let defaultCountry = switch requiredFieldsFromPML->Dict.get(
       "payment_method_data.billing.address.country",
     ) {
-    | Some("") | None => nativeProp.hyperParams.country
+    | Some("") | None => nativeProp.sdkParams.country
     | Some(country) => country
     }
 
@@ -161,7 +161,7 @@ let make = (~children) => {
     | None | Some("") =>
       requiredFieldsFromPML->Dict.set(
         "payment_method_data.billing.address.country",
-        nativeProp.hyperParams.country,
+        nativeProp.sdkParams.country,
       )
     | _ => ()
     }
@@ -180,7 +180,7 @@ let make = (~children) => {
             initialValues
             ->Dict.get(field.outputPath)
             ->Option.flatMap(JSON.Decode.string)
-            ->Option.getOr(country->Option.getOr(nativeProp.hyperParams.country))
+            ->Option.getOr(country->Option.getOr(nativeProp.sdkParams.country))
 
           let validatedCountry =
             field.options->Array.includes(currentCountry)
@@ -291,7 +291,7 @@ let make = (~children) => {
       | Some("") | None =>
         requiredFieldsFromWallet->Dict.set(
           "payment_method_data.billing.address.country",
-          country->Option.getOr(nativeProp.hyperParams.country),
+          country->Option.getOr(nativeProp.sdkParams.country),
         )
       | _ => ()
       }
@@ -304,7 +304,7 @@ let make = (~children) => {
       | Some("") | None =>
         requiredFieldsFromPML->Dict.set(
           "payment_method_data.billing.address.country",
-          country->Option.getOr(nativeProp.hyperParams.country),
+          country->Option.getOr(nativeProp.sdkParams.country),
         )
       | _ => ()
       }
@@ -314,7 +314,7 @@ let make = (~children) => {
     let defaultCountry = switch requiredFieldsFromSource->Dict.get(
       "payment_method_data.billing.address.country",
     ) {
-    | Some("") | None => nativeProp.hyperParams.country
+    | Some("") | None => nativeProp.sdkParams.country
     | Some(country) => country
     }
 

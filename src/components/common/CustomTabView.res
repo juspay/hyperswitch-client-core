@@ -9,7 +9,7 @@ let make = (
   ~setConfirmButtonData,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let layout = nativeProp.configuration.appearance.layout
+  let layout = nativeProp.configuration.paymentMethodLayout
 
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
   let setIndexInFocus = React.useCallback1(index => {
@@ -34,7 +34,7 @@ let make = (
     None
   }, (indexInFocus, hocComponentArr))
 
-  let {sheetContentPadding, primaryColor, iconColor} = ThemebasedStyle.useThemeBasedStyle()
+  let {sheetContentPadding, iconColor, component} = ThemebasedStyle.useThemeBasedStyle()
 
   let isGridArrangement = layout.paymentMethodsArrangementForTabs === ArrangementGrid
 
@@ -60,7 +60,7 @@ let make = (
                   name=hoc.name
                   width=18.
                   height=18.
-                  fill={indexInFocus === index ? primaryColor : iconColor}
+                  fill={indexInFocus === index ? component.selected.color : iconColor}
                 />,
           label: _ =>
             isLoading
@@ -71,6 +71,9 @@ let make = (
                   | true => CardTextBold
                   | _ => CardText
                   }}
+                  overrideStyle={indexInFocus === index
+                    ? Some(s({color: component.selected.color}))
+                    : None}
                 />,
         },
       )
@@ -107,7 +110,15 @@ let make = (
             ? <Space height=24. />
             : isGridArrangement
             ? <GridTabBar hocComponentArr indexInFocus setIndexInFocus isLoading />
-            : <TabBar isLoading position jumpTo navigationState ?options scrollEnabled=true />}
+            : <TabBar
+                isLoading
+                position
+                jumpTo
+                navigationState
+                ?options
+                scrollEnabled=true
+                activeColor=component.selected.color
+              />}
         renderScene
         style={s({
           marginHorizontal: -.sheetContentPadding->dp,

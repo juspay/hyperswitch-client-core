@@ -201,7 +201,10 @@ let make = (
     switch paymentMethodData.payment_method_type_wallet {
     | GOOGLE_PAY =>
       HyperModule.launchGPay(
-        WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+        WalletType.getGpayTokenStringified(
+          ~obj=sessionObject,
+          ~appEnv=nativeProp.hyperswitchConfig.environment,
+        ),
         confirmGPay,
       )
     | PAYPAL =>
@@ -314,9 +317,14 @@ let make = (
   }, [paymentMethodData.payment_method_type_wallet])
 
   let buttonName = paymentMethodData.payment_method_type->CommonUtils.getDisplayName
-
+  let (loading, _) = React.useContext(LoadingContext.loadingContext)
   <>
     <CustomButton
+      buttonState={switch loading {
+      | ProcessingPayments | ProcessingPaymentsWithOverlay => LoadingButton
+      | PaymentSuccess => Completed
+      | _ => Normal
+      }}
       text={paymentMethodData.payment_method_type->CommonUtils.getDisplayName}
       borderRadius=buttonBorderRadius
       leftIcon=CustomIcon(<Icon name=buttonName width=24. height=32. fill=payNowButtonTextColor />)
@@ -341,7 +349,7 @@ let make = (
           <ApplePayButtonView
             style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
             cornerRadius=buttonBorderRadius
-            buttonType=nativeProp.configuration.appearance.applePay.buttonType
+            buttonType=nativeProp.configuration.walletButtons.applePay.buttonType
             buttonStyle=applePayButtonColor
           />,
         )
@@ -350,12 +358,17 @@ let make = (
           <GooglePayButtonView
             allowedPaymentMethods={WalletType.getAllowedPaymentMethods(~obj=sessionObject)}
             style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
-            buttonType=nativeProp.configuration.appearance.googlePay.buttonType
+            buttonType=nativeProp.configuration.walletButtons.googlePay.buttonType
             buttonStyle=googlePayButtonColor
             borderRadius={buttonBorderRadius}
           />,
         )
-      | PAYPAL => Some(<GenericButtonElement buttonName width=80. color=paypalButonColor />)
+      | PAYPAL =>
+        Some(
+          <GenericButtonElement
+            buttonName width=80. color=paypalButonColor borderRadius={buttonBorderRadius}
+          />,
+        )
       // | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)
       // | PAY_SAFE_CARD => Some(<GenericButtonElement buttonName width=92. color="#008ac9" />)
       // | KLARNA => Some(<GenericButtonElement buttonName width=92. height=32. color="#0B051D" />)

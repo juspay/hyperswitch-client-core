@@ -1,15 +1,12 @@
-let useGetShadowStyle = (~shadowIntensity, ~shadowColor="black", ()) => {
-  let shadowOffsetHeight = shadowIntensity
-  let shadowRadius = shadowIntensity
-  let shadowOpacity = 0.2
-  let shadowOffsetWidth = 0.
+let useGetShadowStyle = (~shadowConfig: SdkTypes.shadowConfig, ()) => {
+  let intensity = shadowConfig.intensity->Option.getOr(2.)
   ReactNative.Style.s({
-    shadowRadius,
-    shadowOpacity,
+    shadowColor: shadowConfig.color->Option.getOr("black"),
+    shadowOpacity: shadowConfig.opacity->Option.getOr(0.2),
+    shadowRadius: shadowConfig.blurRadius->Option.getOr(intensity),
     shadowOffset: {
-      width: shadowOffsetWidth,
-      height: shadowOffsetHeight /. 2.,
+      width: shadowConfig.offset->Option.flatMap(o => o.x)->Option.getOr(intensity /. 2.),
+      height: shadowConfig.offset->Option.flatMap(o => o.y)->Option.getOr(intensity /. 2.),
     },
-    shadowColor,
   })
 }

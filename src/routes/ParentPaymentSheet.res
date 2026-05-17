@@ -10,7 +10,9 @@ let make = () => {
 
   let localeObject = GetLocale.useGetLocalObj()
 
-  let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => true)
+  let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
+
+  let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => displayInSeparateScreen)
   let setIsSavedPaymentScreen = React.useCallback1(isSaved => {
     setIsSavedPaymentScreen(_ => isSaved)
   }, [setIsSavedPaymentScreen])
@@ -24,13 +26,39 @@ let make = () => {
 
   UseWidgetActions.useWidgetActions(~confirmButtonData)
 
-  <FullScreenSheetWrapper isLoading=confirmButtonData.loading>
+  React.useEffect3(() => {
+    if (
+      customerPaymentMethodData->Option.isNone &&
+      nativeProp.configuration.allowsDelayedPaymentMethods &&
+      accountPaymentMethodData->Option.isSome
+    ) {
+      setIsSavedPaymentScreen(false)
+    }
+    None
+  }, (
+    customerPaymentMethodData,
+    accountPaymentMethodData,
+    nativeProp.configuration.allowsDelayedPaymentMethods,
+  ))
+
+  let isLoading = if nativeProp.configuration.allowsDelayedPaymentMethods {
+    !(accountPaymentMethodData->Option.isSome || customerPaymentMethodData->Option.isSome)
+  } else {
+    confirmButtonData.loading
+  }
+
+  <FullScreenSheetWrapper
+    isSavedPaymentScreen
+    isLoading
+    renderScrollView={!(isSavedPaymentScreen && displayInSeparateScreen)}
+    stickyFooter=?{nativeProp.configuration.stickyPayButton
+      ? Some(<GlobalConfirmButton confirmButtonData />)
+      : None}>
     {switch sheetType {
     | ButtonSheet =>
       switch (
         nativeProp.sdkState,
-        !nativeProp.configuration.displaySavedPaymentMethods ||
-        !nativeProp.configuration.appearance.layout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen,
+        !nativeProp.configuration.displaySavedPaymentMethods || !displayInSeparateScreen,
       ) {
       | (PaymentSheet, true)
       | (WidgetPaymentSheet, true)
@@ -39,12 +67,15 @@ let make = () => {
       | (WidgetTabSheet, true)
       | (ButtonSheet, _)
       | (WidgetButtonSheet, _) =>
-        <>
-          <PaymentSheet
-            setConfirmButtonData isLoading=confirmButtonData.loading tabArr elementArr giftCardArr
-          />
-          <Space />
-        </>
+        <PaymentSheet
+          setConfirmButtonData
+          isLoading={confirmButtonData.loading &&
+          accountPaymentMethodData->Option.isNone &&
+          customerPaymentMethodData->Option.isNone}
+          tabArr
+          elementArr
+          giftCardArr
+        />
       | (PaymentSheet, false)
       | (WidgetPaymentSheet, false)
       | (HostedCheckout, false)
@@ -68,6 +99,7 @@ let make = () => {
                   ->Option.map(data => data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                   maxVisibleItems=6
+                  animated=true
                 />
               : <PaymentSheet
                   setConfirmButtonData
@@ -77,9 +109,11 @@ let make = () => {
                   giftCardArr
                 />}
             <Space height=5. />
-            {showSavedScreen
+            {showSavedScreen ||
+            (nativeProp.configuration.allowsDelayedPaymentMethods &&
+            accountPaymentMethodData->Option.isSome)
               ? <>
-                  <Space />
+                  <Space height=5. />
                   <ClickableTextElement
                     initialIconName="addwithcircle"
                     updateIconName={Some("cardv1")}
@@ -95,12 +129,26 @@ let make = () => {
                 </>
               : React.null}
           </>
-        | None => <InitialLoader />
+        | None =>
+          nativeProp.configuration.allowsDelayedPaymentMethods &&
+          accountPaymentMethodData->Option.isSome
+            ? {
+                <PaymentSheet
+                  setConfirmButtonData
+                  isLoading=confirmButtonData.loading
+                  tabArr
+                  elementArr
+                  giftCardArr
+                />
+              }
+            : <InitialLoader />
         }
       | _ => React.null
       }
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
-    <GlobalConfirmButton confirmButtonData />
+    <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
+      <GlobalConfirmButton confirmButtonData />
+    </UIUtils.RenderIf>
   </FullScreenSheetWrapper>
 }

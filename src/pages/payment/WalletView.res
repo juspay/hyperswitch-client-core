@@ -38,6 +38,7 @@ let make = (~isLoading=true, ~elementArr, ~showDisclaimer=false, ~hideDivider=fa
         <UIUtils.RenderIf condition={!hideDivider}>
           <Space height=15. />
           <TextWithLine text=localeObject.orPayUsing isLoading />
+          <Space height=5. />
         </UIUtils.RenderIf>
       </>
     }}

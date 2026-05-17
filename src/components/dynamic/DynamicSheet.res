@@ -35,7 +35,7 @@ let make = (~children, ~handlePress) => {
         {
           toValue: {1000.->Animated.Value.Timing.fromRawValue},
           isInteraction: true,
-          useNativeDriver: false,
+          useNativeDriver: true,
           delay: 0.,
           duration: 300.,
           easing: Easing.linear,

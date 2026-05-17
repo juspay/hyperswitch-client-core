@@ -90,7 +90,9 @@ let make = () => {
       <CustomInput
         state={cvcValue}
         setState={onCvcChange}
-        placeholder={nativeProp.configuration.placeholder.cvv}
+        placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(
+          localeObject.cvcTextLabel,
+        )}
         animateLabel={localeObject.cvcTextLabel}
         keyboardType=#"number-pad"
         enableCrossIcon=false
