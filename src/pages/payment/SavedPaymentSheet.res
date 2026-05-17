@@ -31,6 +31,7 @@ let make = (
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
@@ -410,6 +411,10 @@ let make = (
     ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
     ->Option.getOr(NORMAL) !== NORMAL
 
+  let onAbort = () => {
+    setLoading(FillingDetails)
+  }
+
   let handlePress = _ => {
     switch (
       selectedToken,
@@ -461,52 +466,56 @@ let make = (
               (),
             )
 
-            let timerId = setTimeout(() => {
-              setLoading(FillingDetails)
-              showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-              logger(
-                ~logType=DEBUG,
-                ~value="apple_pay",
-                ~category=USER_EVENT,
-                ~paymentMethod="apple_pay",
-                ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-                (),
-              )
-            }, 5000)
+            let doLaunchApplePay = () => {
+              let timerId = setTimeout(() => {
+                setLoading(FillingDetails)
+                showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+                logger(
+                  ~logType=DEBUG,
+                  ~value="apple_pay",
+                  ~category=USER_EVENT,
+                  ~paymentMethod="apple_pay",
+                  ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+                  (),
+                )
+              }, 5000)
 
-            WebKit.platform === #ios
-              ? HyperModule.launchApplePay(
-                  [
-                    ("session_token_data", sessionObject.session_token_data),
-                    ("payment_request_data", sessionObject.payment_request_data),
-                  ]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object
-                  ->JSON.stringify,
-                  confirmApplePay,
-                  _ => {
-                    logger(
-                      ~logType=DEBUG,
-                      ~value="apple_pay",
-                      ~category=USER_EVENT,
-                      ~paymentMethod="apple_pay",
-                      ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                      (),
-                    )
-                  },
-                  _ => {
-                    clearTimeout(timerId)
-                  },
-                )
-              : launchApplePay(
-                  [
-                    ("session_token_data", sessionObject.session_token_data),
-                    ("payment_request_data", sessionObject.payment_request_data),
-                  ]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object
-                  ->JSON.stringify,
-                )
+              WebKit.platform === #ios
+                ? HyperModule.launchApplePay(
+                    [
+                      ("session_token_data", sessionObject.session_token_data),
+                      ("payment_request_data", sessionObject.payment_request_data),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+                    ->JSON.stringify,
+                    confirmApplePay,
+                    _ => {
+                      logger(
+                        ~logType=DEBUG,
+                        ~value="apple_pay",
+                        ~category=USER_EVENT,
+                        ~paymentMethod="apple_pay",
+                        ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+                        (),
+                      )
+                    },
+                    _ => {
+                      clearTimeout(timerId)
+                    },
+                  )
+                : launchApplePay(
+                    [
+                      ("session_token_data", sessionObject.session_token_data),
+                      ("payment_request_data", sessionObject.payment_request_data),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+                    ->JSON.stringify,
+                  )
+            }
+
+            handleWalletConfirmCallback("apple_pay", doLaunchApplePay, onAbort)->ignore
           }
 
         | GOOGLE_PAY =>
@@ -517,21 +526,33 @@ let make = (
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
           }
-          WebKit.platform === #android
-            ? HyperModule.launchGPay(
-                WalletType.getGpayTokenStringified(
-                  ~obj=sessionObject,
-                  ~appEnv=nativeProp.hyperswitchConfig.environment,
-                ),
-                confirmGPay,
-              )
-            : launchGPay(
-                WalletType.getGpayTokenStringified(
-                  ~obj=sessionObject,
-                  ~appEnv=nativeProp.hyperswitchConfig.environment,
-                ),
-              )
-        | _ => processRequestSaved(token)
+          let doLaunchGPay = () => {
+            WebKit.platform === #android
+              ? HyperModule.launchGPay(
+                  WalletType.getGpayTokenStringified(
+                    ~obj=sessionObject,
+                    ~appEnv=nativeProp.hyperswitchConfig.environment,
+                  ),
+                  confirmGPay,
+                )
+              : launchGPay(
+                  WalletType.getGpayTokenStringified(
+                    ~obj=sessionObject,
+                    ~appEnv=nativeProp.hyperswitchConfig.environment,
+                  ),
+                )
+          }
+          handleWalletConfirmCallback("google_pay", doLaunchGPay, onAbort)->ignore
+        | PAYPAL =>
+          handleWalletConfirmCallback("paypal", () => processRequestSaved(token), onAbort)->ignore
+        | SAMSUNG_PAY =>
+          handleWalletConfirmCallback(
+            "samsung_pay",
+            () => processRequestSaved(token),
+            onAbort,
+          )->ignore
+        | _ =>
+          handleWalletConfirmCallback("wallet", () => processRequestSaved(token), onAbort)->ignore
         }
       | _ => processRequestSaved(token)
       }

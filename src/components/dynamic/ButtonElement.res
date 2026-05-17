@@ -22,6 +22,7 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
+  let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
   let {getRequiredFieldsForButton, setInitialValueCountry} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
   )
@@ -198,113 +199,121 @@ let make = (
       (),
     )
 
-    switch paymentMethodData.payment_method_type_wallet {
-    | GOOGLE_PAY =>
-      HyperModule.launchGPay(
-        WalletType.getGpayTokenStringified(
-          ~obj=sessionObject,
-          ~appEnv=nativeProp.hyperswitchConfig.environment,
-        ),
-        confirmGPay,
-      )
-    | PAYPAL =>
-      if (
-        sessionObject.session_token !== "" &&
-        WebKit.platform == #android &&
-        PaypalModule.payPalModule->Option.isSome
-      ) {
-        PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
-      } else if (
-        paymentMethodData.payment_experience
-        ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
-        ->Option.isSome
-      ) {
-        let redirectData = []->Dict.fromArray->JSON.Encode.object
-        let payment_method_data = [
-          (
-            paymentMethodData.payment_method_str,
-            [(paymentMethodData.payment_method_type ++ "_redirect", redirectData)]
-            ->Dict.fromArray
-            ->JSON.Encode.object,
+    let doProceed = () => {
+      switch paymentMethodData.payment_method_type_wallet {
+      | GOOGLE_PAY =>
+        HyperModule.launchGPay(
+          WalletType.getGpayTokenStringified(
+            ~obj=sessionObject,
+            ~appEnv=nativeProp.hyperswitchConfig.environment,
           ),
-        ]->Dict.fromArray
-
-        processWalletData(payment_method_data)
-      } else {
-        setLoading(FillingDetails)
-        showAlert(~errorType="warning", ~message="Payment Method Unavailable")
-      }
-    | APPLE_PAY =>
-      if (
-        sessionObject.session_token_data == JSON.Encode.null ||
-          sessionObject.payment_request_data == JSON.Encode.null
-      ) {
-        setLoading(FillingDetails)
-        showAlert(~errorType="warning", ~message="Waiting for Sessions API")
-      } else {
-        logger(
-          ~logType=DEBUG,
-          ~value=paymentMethodData.payment_method_type,
-          ~category=USER_EVENT,
-          ~paymentMethod=paymentMethodData.payment_method_type,
-          ~eventName=APPLE_PAY_STARTED_FROM_JS,
-          ~paymentExperience=paymentMethodData.payment_experience,
-          (),
+          confirmGPay,
         )
+      | PAYPAL =>
+        if (
+          sessionObject.session_token !== "" &&
+          WebKit.platform == #android &&
+          PaypalModule.payPalModule->Option.isSome
+        ) {
+          PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
+        } else if (
+          paymentMethodData.payment_experience
+          ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+          ->Option.isSome
+        ) {
+          let redirectData = []->Dict.fromArray->JSON.Encode.object
+          let payment_method_data = [
+            (
+              paymentMethodData.payment_method_str,
+              [(paymentMethodData.payment_method_type ++ "_redirect", redirectData)]
+              ->Dict.fromArray
+              ->JSON.Encode.object,
+            ),
+          ]->Dict.fromArray
 
-        let timerId = setTimeout(() => {
+          processWalletData(payment_method_data)
+        } else {
           setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+          showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+        }
+      | APPLE_PAY =>
+        if (
+          sessionObject.session_token_data == JSON.Encode.null ||
+            sessionObject.payment_request_data == JSON.Encode.null
+        ) {
+          setLoading(FillingDetails)
+          showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+        } else {
           logger(
             ~logType=DEBUG,
             ~value=paymentMethodData.payment_method_type,
             ~category=USER_EVENT,
             ~paymentMethod=paymentMethodData.payment_method_type,
-            ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+            ~eventName=APPLE_PAY_STARTED_FROM_JS,
             ~paymentExperience=paymentMethodData.payment_experience,
             (),
           )
-        }, 5000)
 
-        HyperModule.launchApplePay(
-          [
-            ("session_token_data", sessionObject.session_token_data),
-            ("payment_request_data", sessionObject.payment_request_data),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-          ->JSON.stringify,
-          confirmApplePay,
-          _ => {
+          let timerId = setTimeout(() => {
+            setLoading(FillingDetails)
+            showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
             logger(
               ~logType=DEBUG,
               ~value=paymentMethodData.payment_method_type,
               ~category=USER_EVENT,
               ~paymentMethod=paymentMethodData.payment_method_type,
-              ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
               ~paymentExperience=paymentMethodData.payment_experience,
               (),
             )
-          },
-          _ => {
-            clearTimeout(timerId)
-          },
+          }, 5000)
+
+          HyperModule.launchApplePay(
+            [
+              ("session_token_data", sessionObject.session_token_data),
+              ("payment_request_data", sessionObject.payment_request_data),
+            ]
+            ->Dict.fromArray
+            ->JSON.Encode.object
+            ->JSON.stringify,
+            confirmApplePay,
+            _ => {
+              logger(
+                ~logType=DEBUG,
+                ~value=paymentMethodData.payment_method_type,
+                ~category=USER_EVENT,
+                ~paymentMethod=paymentMethodData.payment_method_type,
+                ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+                ~paymentExperience=paymentMethodData.payment_experience,
+                (),
+              )
+            },
+            _ => {
+              clearTimeout(timerId)
+            },
+          )
+        }
+      | SAMSUNG_PAY =>
+        logger(
+          ~logType=INFO,
+          ~value="Samsung Pay Button Clicked",
+          ~category=USER_EVENT,
+          ~eventName=SAMSUNG_PAY,
+          (),
         )
-      }
-    | SAMSUNG_PAY =>
-      logger(
-        ~logType=INFO,
-        ~value="Samsung Pay Button Clicked",
-        ~category=USER_EVENT,
-        ~eventName=SAMSUNG_PAY,
-        (),
-      )
-    // SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
-    | _ => {
-        setLoading(FillingDetails)
-        processWalletData(Dict.make(), ~useIntentData=true)
+      // SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
+      | _ => {
+          setLoading(FillingDetails)
+          processWalletData(Dict.make(), ~useIntentData=true)
+        }
       }
     }
+    let doAbort = () => {
+      setLoading(FillingDetails)
+    }
+
+    let walletTypeStr = paymentMethodData.payment_method_type_wallet->SdkTypes.walletTypeToStrMapper
+    handleWalletConfirmCallback(walletTypeStr, doProceed, doAbort)->ignore
   }
 
   React.useEffect1(() => {
