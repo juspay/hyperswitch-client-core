@@ -103,7 +103,7 @@ let make = (
     | Cancelled | Simulated =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
-    | Failed(error_message) => 
+    | Failed(error_message) =>
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message=error_message)
     }
@@ -209,6 +209,15 @@ let make = (
       )
     | PAYPAL =>
       if (
+        sessionObject.session_token !== "" &&
+        (WebKit.platform == #android || WebKit.platform == #ios) &&
+        PaypalModule.payPalModule->Option.isSome &&
+        paymentMethodData.payment_experience
+        ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
+        ->Option.isSome
+      ) {
+        launchPaypal(~sessionObject, ~paymentMethodData, ~confirmCallback=confirmPayPal)
+      } else if (
         paymentMethodData.payment_experience
         ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
         ->Option.isSome
@@ -224,16 +233,6 @@ let make = (
         ]->Dict.fromArray
 
         processWalletData(payment_method_data)
-      } else if (
-        sessionObject.session_token !== "" &&
-        (WebKit.platform == #android ||
-        WebKit.platform == #ios)&&
-        PaypalModule.payPalModule->Option.isSome &&
-        paymentMethodData.payment_experience
-        ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
-        ->Option.isSome
-      ) {
-        launchPaypal(~sessionObject, ~paymentMethodData, ~confirmCallback=confirmPayPal)
       } else {
         setLoading(FillingDetails)
         showAlert(~errorType="warning", ~message="Payment Method Unavailable")
@@ -372,7 +371,7 @@ let make = (
             />,
           )
         } else {
-            Some(<GenericButtonElement buttonName width=80. color=paypalButonColor />)
+          Some(<GenericButtonElement buttonName width=80. color=paypalButonColor />)
         }
 
       // | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)

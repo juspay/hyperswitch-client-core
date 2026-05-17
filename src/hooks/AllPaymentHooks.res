@@ -134,26 +134,35 @@ let usePostSessionTokensHook = () => {
   let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
-  (~paymentMethodData: AccountPaymentMethodType.payment_method_type, ~sessionObject: SessionsType.sessions, ()) => {
-    let payment_type_str = accountPaymentMethodData
+  (
+    ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+    ~sessionObject: SessionsType.sessions,
+    (),
+  ) => {
+    let payment_type_str =
+      accountPaymentMethodData
       ->Option.map(a => a.payment_type_str)
       ->Option.getOr(None)
-    
-    let body = PaymentUtils.generatePostSessionTokensBody(
-      ~nativeProp,
-      ~paymentMethodData,
-      ~sessionObject,
-      ~payment_type_str?,
-      (),
-    )->JSON.stringify
-    
-    let paymentId = String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
-    
+
+    let body =
+      PaymentUtils.generatePostSessionTokensBody(
+        ~nativeProp,
+        ~paymentMethodData,
+        ~sessionObject,
+        ~payment_type_str?,
+        (),
+      )->JSON.stringify
+
     APIUtils.fetchApiWrapper(
-      ~uri=`${baseUrl}/payments/${paymentId}/post_session_tokens`,
+      ~uri=`${baseUrl}/payments/${nativeProp.paymentId}/post_session_tokens`,
       ~body,
       ~method=#POST,
-      ~headers=Utils.getHeader(nativeProp.publishableKey, nativeProp.hyperParams.appId),
+      ~headers=Utils.getHeader(
+        ~apiKey=nativeProp.publishableKey,
+        ~appId=nativeProp.hyperParams.appId,
+        ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+        (),
+      ),
       ~eventName=POST_SESSION_TOKENS_CALL,
       ~apiLogWrapper,
     )

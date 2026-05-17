@@ -50,9 +50,10 @@ let make = (
 
   React.useEffect1(() => {
     // if !isScreenFocus {
-      setSelectedToken(customerPaymentMethods->Array.get(0))
-      setSavedCardCvv(_ => None)
-      setSaveCardChecboxSelected(false)
+    setSelectedToken(customerPaymentMethods->Array.get(0))
+    setSavedCardCvv(_ => None)
+    setSaveCardChecboxSelected(false)
+
     // }
     None
   }, [customerPaymentMethods])
@@ -70,7 +71,10 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
 
-  let processRequestSaved = (token: CustomerPaymentMethodType.customer_payment_method_type) => {
+  let processRequestSaved = (
+    token: CustomerPaymentMethodType.customer_payment_method_type,
+    ~isWallet=false,
+  ) => {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -92,22 +96,39 @@ let make = (
       }
     }
 
-    let paymentMethodType = PaymentUtils.generateSavedCardConfirmBody(
-      ~nativeProp,
-      ~payment_token=token.payment_token,
-      ~savedCardCvv,
-      ~appURL=?{
-        accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirect_url
-        )
-      },
-      ~payment_type_str=accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
-      ->Option.getOr(None),
-      ~billing=token.billing,
-      ~screen_height=viewPortContants.screenHeight,
-      ~screen_width=viewPortContants.screenWidth,
-    )
+    let (paymentMethodType, paymentMethod) = if isWallet {
+      (
+        PaymentUtils.generateWalletConfirmBody(
+          ~nativeProp,
+          ~payment_token=token.payment_token,
+          ~payment_method_type=token.payment_method_type,
+          ~payment_type_str=accountPaymentMethodData
+          ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+          ->Option.getOr(None),
+        ),
+        "wallet",
+      )
+    } else {
+      (
+        PaymentUtils.generateSavedCardConfirmBody(
+          ~nativeProp,
+          ~payment_token=token.payment_token,
+          ~savedCardCvv,
+          ~appURL=?{
+            accountPaymentMethodData->Option.map(accountPaymentMethods =>
+              accountPaymentMethods.redirect_url
+            )
+          },
+          ~payment_type_str=accountPaymentMethodData
+          ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+          ->Option.getOr(None),
+          ~billing=token.billing,
+          ~screen_height=viewPortContants.screenHeight,
+          ~screen_width=viewPortContants.screenWidth,
+        ),
+        "card",
+      )
+    }
 
     redirectHook(
       ~body=paymentMethodType->Utils.getStringFromRecord,
@@ -115,7 +136,7 @@ let make = (
       ~clientSecret=nativeProp.clientSecret,
       ~errorCallback,
       ~responseCallback,
-      ~paymentMethod="card",
+      ~paymentMethod,
       (),
     )
   }
@@ -520,7 +541,7 @@ let make = (
             : launchGPay(
                 WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
               )
-        | _ => processRequestSaved(token)
+        | _ => processRequestSaved(token, ~isWallet=true)
         }
       | _ => processRequestSaved(token)
       }
