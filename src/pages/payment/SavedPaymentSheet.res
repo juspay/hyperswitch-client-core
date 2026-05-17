@@ -51,9 +51,10 @@ let make = (
 
   React.useEffect1(() => {
     // if !isScreenFocus {
-      setSelectedToken(customerPaymentMethods->Array.get(0))
-      setSavedCardCvv(_ => None)
-      setSaveCardChecboxSelected(false)
+    setSelectedToken(customerPaymentMethods->Array.get(0))
+    setSavedCardCvv(_ => None)
+    setSaveCardChecboxSelected(false)
+
     // }
     None
   }, [customerPaymentMethods])
@@ -407,8 +408,7 @@ let make = (
   let showDisclaimer =
     accountPaymentMethodData
     ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
-    ->Option.getOr(NORMAL) !== NORMAL &&
-    !nativeProp.configuration.alwaysSendCustomerAcceptance
+    ->Option.getOr(NORMAL) !== NORMAL
 
   let handlePress = _ => {
     switch (
