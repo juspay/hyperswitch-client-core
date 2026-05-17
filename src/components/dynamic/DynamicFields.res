@@ -46,12 +46,13 @@ let make = (
     <UIUtils.RenderIf condition={isCardPayment && !isGiftCardPayment && fields->Array.length > 0}>
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
+        nativeProp.configuration.alwaysSendCustomerAcceptance,
         customerPaymentMethodData->Option.map(data => data.is_guest_customer)->Option.getOr(true),
         accountPaymentMethodData
         ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
         ->Option.getOr(NORMAL),
       ) {
-      | (true, false, NEW_MANDATE | NORMAL) =>
+      | (true, false, false, NEW_MANDATE | NORMAL) =>
         <ReactNative.View
           style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
           <ClickableTextElement

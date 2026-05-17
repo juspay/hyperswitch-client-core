@@ -400,10 +400,13 @@ let make = (
     None
   }, [selectedToken])
 
+  // NOTE: To introduce a new component that shows Terms and conditions.
+  // Terms list that proceeding with payment using card/ saved card/ wallet would save the payment method details
   let showDisclaimer =
     accountPaymentMethodData
     ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
-    ->Option.getOr(NORMAL) !== NORMAL
+    ->Option.getOr(NORMAL) !== NORMAL &&
+    !nativeProp.configuration.alwaysSendCustomerAcceptance
 
   let handlePress = _ => {
     switch (

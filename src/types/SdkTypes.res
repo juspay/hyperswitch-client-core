@@ -226,6 +226,7 @@ type configurationType = {
   allowsPaymentMethodsRequiringShippingAddress: bool,
   displaySavedPaymentMethodsCheckbox: bool,
   displaySavedPaymentMethods: bool,
+  alwaysSendCustomerAcceptance: bool,
   placeholder: placeholder,
   defaultView: bool,
   netceteraSDKApiKey: option<string>,
@@ -838,6 +839,11 @@ let parseConfigurationDict = (configObj, from) => {
       true,
     ),
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
+    alwaysSendCustomerAcceptance: getBool(
+      configObj,
+      "alwaysSendCustomerAcceptance",
+      false,
+    ),
     defaultView: getBool(configObj, "defaultView", false),
     netceteraSDKApiKey: getOptionString(configObj, "netceteraSDKApiKey"),
     placeholder: {
