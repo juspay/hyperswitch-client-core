@@ -18,11 +18,10 @@ let make = (
     borderWidth,
     borderRadius,
     boxBorderColor,
-    shadowColor,
-    shadowIntensity,
+    shadowConfig,
     sheetContentPadding,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let shadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+  let shadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
   let maxHeight = min(viewPortContants.screenHeight -. sheetContentPadding *. 2., maxHeight)

@@ -26,16 +26,11 @@ let make = (
   let {
     payNowButtonColor,
     payNowButtonTextColor,
-    payNowButtonShadowColor,
-    payNowButtonShadowIntensity,
+    payNowButtonShadowConfig,
     component,
     primaryButtonHeight,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let getShadowStyle = ShadowHook.useGetShadowStyle(
-    ~shadowIntensity=payNowButtonShadowIntensity,
-    ~shadowColor=payNowButtonShadowColor,
-    (),
-  )
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig=payNowButtonShadowConfig, ())
 
   let _buttonColor = switch buttonState {
   | Normal => ("#0048a0", "#0570de")
@@ -86,6 +81,7 @@ let make = (
     disabled
     testID={testID->Option.getOr("")}
     style={array([
+      getShadowStyle,
       s({
         height: primaryButtonHeight->dp,
         width: 100.->pct,
@@ -104,7 +100,6 @@ let make = (
     }}>
     <View
       style={array([
-        getShadowStyle,
         s({
           width: 100.->pct,
           height: 100.->pct,

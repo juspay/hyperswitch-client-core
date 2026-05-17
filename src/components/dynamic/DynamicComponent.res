@@ -181,8 +181,8 @@ let make = (~setConfirmButtonData) => {
 
     redirectHook(
       ~body=body->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=payment_method_type,

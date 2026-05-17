@@ -84,8 +84,27 @@ let useScript = (src: string) => {
     let script = querySelector(`script[src="${src}"]`)
     switch script->Nullable.toOption {
     | Some(dom) =>
-      setStatus(_ => dom.getAttribute("data-status"))
-      None
+      let currentStatus = dom.getAttribute("data-status")
+      setStatus(_ => currentStatus)
+      if currentStatus === #loading {
+        let setAttributeFromEvent = (event: event) => {
+          setStatus(_ => event.\"type" === "load" ? #ready : #error)
+          dom.setAttribute(
+            "data-status",
+            (event.\"type" === "load" ? #ready : #error)->getStatusString,
+          )
+        }
+        dom->addEventListenerToElement(#load, setAttributeFromEvent)
+        dom->addEventListenerToElement(#error, setAttributeFromEvent)
+        Some(
+          () => {
+            dom->removeEventListenerFromElement(#load, setAttributeFromEvent)
+            dom->removeEventListenerFromElement(#error, setAttributeFromEvent)
+          },
+        )
+      } else {
+        None
+      }
     | None =>
       let script = createElement("script")
       script.src = src
@@ -121,8 +140,27 @@ let useLink = (src: string) => {
     let link = querySelector(`link[href="${src}"]`)
     switch link->Nullable.toOption {
     | Some(dom) =>
-      setStatus(_ => dom.getAttribute("data-status"))
-      None
+      let currentStatus = dom.getAttribute("data-status")
+      setStatus(_ => currentStatus)
+      if currentStatus === #loading {
+        let setAttributeFromEvent = (event: event) => {
+          setStatus(_ => event.\"type" === "load" ? #ready : #error)
+          dom.setAttribute(
+            "data-status",
+            (event.\"type" === "load" ? #ready : #error)->getStatusString,
+          )
+        }
+        dom->addEventListenerToElement(#load, setAttributeFromEvent)
+        dom->addEventListenerToElement(#error, setAttributeFromEvent)
+        Some(
+          () => {
+            dom->removeEventListenerFromElement(#load, setAttributeFromEvent)
+            dom->removeEventListenerFromElement(#error, setAttributeFromEvent)
+          },
+        )
+      } else {
+        None
+      }
     | None =>
       let link = createElement("link")
       link.href = src

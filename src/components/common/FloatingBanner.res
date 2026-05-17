@@ -32,7 +32,7 @@ let make = (
         {
           toValue: 0.->Animated.Value.Timing.fromRawValue,
           duration: 300.,
-          useNativeDriver: false,
+          useNativeDriver: true,
           easing: Easing.ease,
         },
       )->Animated.start
@@ -42,7 +42,7 @@ let make = (
         {
           toValue: -300.->Animated.Value.Timing.fromRawValue,
           duration: 300.,
-          useNativeDriver: false,
+          useNativeDriver: true,
           easing: Easing.ease,
         },
       )->Animated.start

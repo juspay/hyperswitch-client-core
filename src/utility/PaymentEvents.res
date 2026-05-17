@@ -14,7 +14,7 @@ type emitterFunctions = {
 
 let usePaymentEventEmitter = (): emitterFunctions => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let subscribedEvents = nativeProp.subscribedEvents
+  let subscribedEvents = nativeProp.configuration.subscribedEvents
 
   let emitCardInfo = (~info: cardInfo) => {
     if shouldEmitEvent(~eventType=PaymentMethodInfoCard, ~subscribedEvents) {

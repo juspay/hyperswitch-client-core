@@ -59,7 +59,9 @@ let hyperModule = {
     _,
   ) => ()),
   emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
-  onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) => ()),
+  onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) =>
+    ()
+  ),
 }
 
 let sendMessageToNative = str => {
@@ -107,7 +109,7 @@ let useExitPaymentsheet = () => {
     ->Promise.then(() => {
       logger(
         ~logType=INFO,
-        ~value=nativeProp.hyperParams.appId->Option.getOr(""),
+        ~value=nativeProp.sdkParams.appId->Option.getOr(""),
         ~category=USER_EVENT,
         ~eventName=SDK_CLOSED,
         (),
@@ -150,11 +152,7 @@ let useExitPaymentsheet = () => {
         //   )
         exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
-      ? hyperModule.exitWidgetPaymentsheet(
-        rootTag,
-        apiResStatus->stringifiedResStatus,
-        reset,
-      )
+      ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }
   {exit, simplyExit}

@@ -16,7 +16,7 @@ let make = (~walletType as _: SdkTypes.payment_method_type_wallet) => {
   let (button, _setButton) = React.useState(_ => None)
 
   // React.useEffect1(() => {
-  //   if nativeProp.publishableKey == "" {
+  //   if nativeProp.hyperswitchConfig.publishableKey == "" {
   //     setLoading(ProcessingPayments)
   //   } else {
   //     // setButton(_ =>
@@ -24,7 +24,7 @@ let make = (~walletType as _: SdkTypes.payment_method_type_wallet) => {
   //     //     allApiData.paymentMethodList,
   //     //     allApiData.sessions,
   //     //     walletType,
-  //     //     nativeProp.hyperParams.confirm,
+  //     //     nativeProp.sdkParams.confirm,
   //     //   )
   //     // )
   //     ()
@@ -44,7 +44,7 @@ let make = (~walletType as _: SdkTypes.payment_method_type_wallet) => {
   //         publishableKey: responseFromJava.publishableKey,
   //         clientSecret: responseFromJava.clientSecret,
   //         hyperParams: {
-  //           ...nativeProp.hyperParams,
+  //           ...nativeProp.sdkParams,
   //           confirm: responseFromJava.confirm,
   //         },
   //         configuration: {

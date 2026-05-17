@@ -71,7 +71,10 @@ let confirmCardPayment = (
 
   let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => baseArr
-  | None => baseArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+  | None =>
+    baseArr->Array.concat([
+      ("client_secret", nativeProp.paymentSessionConfig.clientSecret->JSON.Encode.string),
+    ])
   }
 
   billing
@@ -263,7 +266,10 @@ let processRequest = async (
           }
         }
         HyperModule.launchGPay(
-          WalletType.getGpayTokenStringified(~obj=session, ~appEnv=nativeProp.env),
+          WalletType.getGpayTokenStringified(
+            ~obj=session,
+            ~appEnv=nativeProp.hyperswitchConfig.environment,
+          ),
           var => {
             gPayCallback(var)->ignore
           },
@@ -275,22 +281,29 @@ let processRequest = async (
           ~logType=DEBUG,
           ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
           ~url="",
-          ~customLogUrl=nativeProp.customLogUrl,
-          ~env=nativeProp.env,
+          ~customLogUrl=GlobalHooks.getLoggingUrl(
+            ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
+              SdkTypes.defaultCustomEndpointsConfig,
+            ),
+            ~environment=nativeProp.hyperswitchConfig.environment,
+          ),
           ~category=API,
           ~statusCode="",
           ~apiLogType=None,
           ~data=JSON.Encode.null,
-          ~publishableKey=nativeProp.publishableKey,
+          ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
           ~paymentId="",
           ~paymentMethod=None,
           ~paymentExperience=None,
           ~timestamp=0.,
           ~latency=0.,
-          ~version=nativeProp.hyperParams.sdkVersion,
+          ~version=nativeProp.sdkParams.sdkVersion,
           (),
         )
-        headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+        headlessModule.exitHeadless(
+          nativeProp.rootTag,
+          getDefaultError->HyperModule.stringifiedResStatus,
+        )
       }, 5000)
       let applePayCallback = async var => {
         try {
@@ -315,19 +328,23 @@ let processRequest = async (
             ~logType=DEBUG,
             ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
             ~url="",
-            ~customLogUrl=nativeProp.customLogUrl,
-            ~env=nativeProp.env,
+            ~customLogUrl=GlobalHooks.getLoggingUrl(
+              ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
+                SdkTypes.defaultCustomEndpointsConfig,
+              ),
+              ~environment=nativeProp.hyperswitchConfig.environment,
+            ),
             ~category=API,
             ~statusCode="",
             ~apiLogType=None,
             ~data=JSON.Encode.null,
-            ~publishableKey=nativeProp.publishableKey,
+            ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
             ~paymentId="",
             ~paymentMethod=None,
             ~paymentExperience=None,
             ~timestamp=0.,
             ~latency=0.,
-            ~version=nativeProp.hyperParams.sdkVersion,
+            ~version=nativeProp.sdkParams.sdkVersion,
             (),
           )
         },
@@ -337,7 +354,11 @@ let processRequest = async (
       )
     | _ => ()
     }
-  | _ => headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+  | _ =>
+    headlessModule.exitHeadless(
+      nativeProp.rootTag,
+      getDefaultError->HyperModule.stringifiedResStatus,
+    )
   }
 }
 
@@ -437,7 +458,10 @@ let apiHandler = async (
   let customerSavedPMData = await savedPaymentMethodAPICall(nativeProp)
   switch customerSavedPMData {
   | Some(obj) =>
-    let spmData = obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType
+    let spmData =
+      obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
+        nativeProp.configuration.paymentMethodOrder,
+      )
     let sessionSpmData = spmData.customer_payment_methods->Array.filter(data => {
       switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
       | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
@@ -525,7 +549,10 @@ let apiHandler = async (
       )
     }
 
-  | None => customerSavedPMData->getErrorFromResponse->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+  | None =>
+    customerSavedPMData
+    ->getErrorFromResponse
+    ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }
 }
 
@@ -534,21 +561,31 @@ let apiHandler = async (
 let runHeadlessFlow = (
   headlessModule,
   reRegisterCallback,
-  nativeProp,
+  nativeProp: SdkTypes.nativeProp,
   ~getCvc: JSON.t => JSON.t,
 ) => {
-  let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
+  let isPublishableKeyValid = GlobalVars.isValidPK(
+    nativeProp.hyperswitchConfig.environment,
+    nativeProp.hyperswitchConfig.publishableKey,
+  )
 
   let isClientSecretValid = RegExp.test(
     `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
-    nativeProp.clientSecret,
+    nativeProp.paymentSessionConfig.clientSecret,
   )
 
-  if isPublishableKeyValid && (isClientSecretValid || nativeProp.sdkAuthorization != None) {
+  if (
+    isPublishableKeyValid &&
+    (isClientSecretValid || nativeProp.paymentSessionConfig.sdkAuthorization != None)
+  ) {
     apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
   } else if !isPublishableKeyValid {
-    errorOnApiCalls(INVALID_PK(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_PK(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   } else if !isClientSecretValid {
-    errorOnApiCalls(INVALID_CL(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_CL(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   }
 }

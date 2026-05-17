@@ -15,11 +15,10 @@ let make = (
     borderRadius,
     borderWidth,
     bgColor,
-    shadowColor,
-    shadowIntensity,
+    shadowConfig,
     sheetContentPadding,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   let numColumns = {
     let len = hocComponentArr->Array.length
@@ -57,9 +56,9 @@ let make = (
         <View
           style={array([
             s({
-              backgroundColor: component.background,
-              borderWidth: isFocused ? borderWidth +. 1.5 : borderWidth,
-              borderColor: isFocused ? primaryColor : component.borderColor,
+              backgroundColor: isFocused ? component.selected.background : component.background,
+              borderWidth: isFocused ? component.selected.borderWidth : borderWidth,
+              borderColor: isFocused ? component.selected.borderColor : component.borderColor,
               borderRadius,
               padding: (isFocused ? 10. : 11.5)->dp,
               alignItems: #center,

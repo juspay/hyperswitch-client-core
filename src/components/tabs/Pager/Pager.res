@@ -301,8 +301,7 @@ let make = (
   }, (position, tabHeights))
 
   children(~position, ~subscribe, ~jumpTo, ~render=children => {
-    <View
-      ref={containerRef->ReactNative.Ref.value} onLayout style={s({flex: 1., overflow: #hidden})}>
+    <View ref={containerRef->ReactNative.Ref.value} onLayout style={s({overflow: #hidden})}>
       <Animated.View
         style={array([
           s({
@@ -344,7 +343,12 @@ let make = (
               <View
                 key={route.key}
                 style=?{if layout.width != 0. {
-                  Some(s({width: layout.width->dp}))
+                  Some(
+                    s({
+                      width: layout.width->dp,
+                      height: 150.->dp,
+                    }),
+                  )
                 } else if focused {
                   Some(StyleSheet.absoluteFill)
                 } else {
@@ -353,6 +357,7 @@ let make = (
                 <View
                   onLayout={(event: Event.layoutEvent) => {
                     if route.title->Option.getOr("") !== "loading" {
+                      Console.log2("route.title", route.title)
                       let prevHeight = measuredTabHeights.current->Array.get(i)->Option.getOr(0.)
                       let newHeight = event.nativeEvent.layout.height
                       if newHeight > 10. && Math.abs(newHeight -. prevHeight) > 10. {

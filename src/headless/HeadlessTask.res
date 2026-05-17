@@ -18,12 +18,7 @@ let make = (~props) => {
     }
   }
 
-  HeadlessCommon.runHeadlessFlow(
-    headlessModule,
-    reRegisterCallback,
-    nativeProp,
-    ~getCvc,
-  )
+  HeadlessCommon.runHeadlessFlow(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
 
   React.null
 }

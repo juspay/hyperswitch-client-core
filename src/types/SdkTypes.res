@@ -26,38 +26,6 @@ let walletNameToTypeMapper = str => {
   }
 }
 
-type savedCard = {
-  cardScheme?: string,
-  // walletType?: string,
-  name?: string,
-  cardHolderName?: string,
-  cardNumber?: string,
-  expiry_date?: string,
-  payment_token?: string,
-  paymentMethodId?: string,
-  mandate_id?: string,
-  nick_name?: string,
-  isDefaultPaymentMethod?: bool,
-  requiresCVV: bool,
-  created?: string,
-  lastUsedAt?: string,
-}
-
-type savedWallet = {
-  payment_method_type?: string,
-  walletType?: string,
-  payment_token?: string,
-  paymentMethodId?: string,
-  isDefaultPaymentMethod?: bool,
-  created?: string,
-  lastUsedAt?: string,
-}
-
-// type savedDataType =
-//   | SAVEDLISTCARD(savedCard)
-//   | SAVEDLISTWALLET(savedWallet)
-//   | NONE
-
 type customPickerType = {
   label: string,
   value: string,
@@ -78,12 +46,14 @@ type colors = {
   error: option<string>,
   loaderBackground: option<string>,
   loaderForeground: option<string>,
+  selectedComponentBackground: option<string>,
+  selectedComponentBorder: option<string>,
+  selectedComponentBorderWidth: option<float>,
+  selectedComponentDivider: option<string>,
+  selectedComponentText: option<string>,
 }
 
-type defaultColors = {light: option<colors>, dark: option<colors>}
-type colorType =
-  | Colors(colors)
-  | DefaultColors(defaultColors)
+type colorType = {light: option<colors>, dark: option<colors>}
 
 // IOS Specific
 type offsetType = {
@@ -122,61 +92,51 @@ type primaryButtonColor = {
   text: option<string>,
   border: option<string>,
 }
-type primaryButtonColorType =
-  | PrimaryButtonColor(option<primaryButtonColor>)
-  | PrimaryButtonDefault({light: option<primaryButtonColor>, dark: option<primaryButtonColor>})
+type primaryButtonColorType = {light: option<primaryButtonColor>, dark: option<primaryButtonColor>}
 
 type primaryButton = {
   shapes: option<shapes>,
   primaryButtonColor: option<primaryButtonColorType>,
 }
 
-type googlePayButtonType = BUY | BOOK | CHECKOUT | DONATE | ORDER | PAY | SUBSCRIBE | PLAIN
+type themeType =
+  Default | Light | Dark | Minimal | FlatMinimal | Brutal | Glass | Skeu | Clay | Charcoal | Soft
 
-type googlePayThemeBaseStyle = {
-  light: ReactNative.Appearance.t,
-  dark: ReactNative.Appearance.t,
+type logoColors = {
+  backgroundColor: ReactNative.Color.t,
+  selected?: ReactNative.Color.t,
+  unselected?: ReactNative.Color.t,
+}
+type logoThemeBasedColors = {light: option<logoColors>, dark: option<logoColors>}
+
+type checkedIconColors = {
+  color?: ReactNative.Color.t,
+  stroke?: ReactNative.Color.t,
+}
+type checkedIconThemeBasedColors = {
+  light: option<checkedIconColors>,
+  dark: option<checkedIconColors>,
+}
+type checkedIconConfig = {
+  colors: option<checkedIconThemeBasedColors>,
+  size?: float,
+  bottom?: float,
+  right?: float,
 }
 
-type googlePayConfiguration = {
-  buttonType: googlePayButtonType,
-  buttonStyle: option<googlePayThemeBaseStyle>,
+type logoConfig = {
+  borderRadius: option<float>,
+  colors: option<logoThemeBasedColors>,
+  checkedIconForSelection: option<checkedIconConfig>,
 }
-
-type applePayButtonType = [
-  | #buy
-  | #setUp
-  | #inStore
-  | #donate
-  | #checkout
-  | #book
-  | #subscribe
-  | #plain
-]
-type applePayButtonStyle = [#white | #whiteOutline | #black]
-
-type applePayThemeBaseStyle = {
-  light: applePayButtonStyle,
-  dark: applePayButtonStyle,
-}
-
-type applePayConfiguration = {
-  buttonType: applePayButtonType,
-  buttonStyle: option<applePayThemeBaseStyle>,
-}
-
-type themeType = Default | Light | Dark | Minimal | FlatMinimal
 
 type appearance = {
-  locale: option<LocaleDataType.localeTypes>,
+  theme: themeType,
   colors: option<colorType>,
   shapes: option<shapes>,
   font: option<font>,
   primaryButton: option<primaryButton>,
-  googlePay: googlePayConfiguration,
-  applePay: applePayConfiguration,
-  theme: themeType,
-  layout: LayoutTypes.layout,
+  logo: option<logoConfig>,
 }
 
 type address = {
@@ -208,32 +168,85 @@ type customerConfiguration = {
 }
 
 type placeholder = {
-  cardNumber: string,
-  expiryDate: string,
-  cvv: string,
+  cardNumber: option<string>,
+  expiryDate: option<string>,
+  cvv: option<string>,
 }
 
+type googlePayButtonType = BUY | BOOK | CHECKOUT | DONATE | ORDER | PAY | SUBSCRIBE | PLAIN
+type googlePayThemeBaseStyle = {light: ReactNative.Appearance.t, dark: ReactNative.Appearance.t}
+type googlePayConfiguration = {
+  visibility: LayoutTypes.visibility,
+  buttonType: googlePayButtonType,
+  buttonStyle: option<googlePayThemeBaseStyle>,
+}
+
+type applePayButtonType = [
+  | #buy
+  | #setUp
+  | #inStore
+  | #donate
+  | #checkout
+  | #book
+  | #subscribe
+  | #plain
+]
+type applePayButtonStyle = [#white | #whiteOutline | #black]
+type applePayThemeBaseStyle = {light: applePayButtonStyle, dark: applePayButtonStyle}
+type applePayConfiguration = {
+  visibility: LayoutTypes.visibility,
+  buttonType: applePayButtonType,
+  buttonStyle: option<applePayThemeBaseStyle>,
+}
+
+type payPalButtonType = PAYPAL | CHECKOUT | BUY_NOW | PAY
+type payPalButtonStyle = GOLD | BLUE | WHITE | BLACK | SILVER
+type payPalThemeBaseStyle = {light: payPalButtonStyle, dark: payPalButtonStyle}
+type payPalConfiguration = {
+  visibility: LayoutTypes.visibility,
+  buttonType: payPalButtonType,
+  buttonStyle: option<payPalThemeBaseStyle>,
+}
+
+type walletButtonsConfiguration = {
+  googlePay: googlePayConfiguration,
+  applePay: applePayConfiguration,
+  payPal: payPalConfiguration,
+}
+
+type displayMode = [#default_sdk_message | #custom_message | #hidden]
+type customMessage = {value: option<string>, displayMode: displayMode}
+type paymentMethodConfig = {paymentMethod: string, message: customMessage}
+
 type configurationType = {
-  allowsDelayedPaymentMethods: bool,
   appearance: appearance,
-  shippingDetails: option<addressDetails>,
-  primaryButtonLabel: option<string>,
-  paymentSheetHeaderText: option<string>,
-  savedPaymentScreenHeaderText: option<string>,
   merchantDisplayName: string,
-  defaultBillingDetails: option<addressDetails>,
-  primaryButtonColor: option<string>,
+  allowsDelayedPaymentMethods: bool,
   allowsPaymentMethodsRequiringShippingAddress: bool,
   displaySavedPaymentMethodsCheckbox: bool,
   displaySavedPaymentMethods: bool,
-  alwaysSendCustomerAcceptance: bool,
-  placeholder: placeholder,
-  defaultView: bool,
-  netceteraSDKApiKey: option<string>,
   displayDefaultSavedPaymentIcon: bool,
-  enablePartialLoading: bool,
+  displayPayButton: bool,
+  stickyPayButton: bool,
   disableBranding: bool,
-  hideConfirmButton: bool,
+  preloadCardElement: bool,
+  primaryButtonLabel: option<string>,
+  paymentSheetHeaderLabel: option<string>,
+  savedPaymentSheetHeaderLabel: option<string>,
+  netceteraSDKApiKey: option<string>,
+  locale: option<LocaleDataType.localeTypes>,
+  subscribedEvents: array<PaymentEventTypes.events>,
+  customer: option<customerConfiguration>,
+  placeholder: placeholder,
+  billingDetails: option<addressDetails>,
+  shippingDetails: option<addressDetails>,
+  walletButtons: walletButtonsConfiguration,
+  redirectionInfo: LayoutTypes.visibility,
+  alwaysSendCustomerAcceptance: bool,
+  paymentMethodsConfig: array<paymentMethodConfig>,
+  opensCardScannerAutomatically: bool,
+  paymentMethodOrder: array<string>,
+  paymentMethodLayout: LayoutTypes.layout,
 }
 
 type sdkState =
@@ -289,73 +302,72 @@ let sdkStateToStrMapper = sdkState => {
   }
 }
 
-type hyperParams = {
+type overrideEndpoints = {
+  customBackendEndpoint: option<string>,
+  customLoggingEndpoint: option<string>,
+  customAssetEndpoint: option<string>,
+}
+
+type customEndpointsConfig = {
+  overrideEndpoints: option<overrideEndpoints>,
+  commonEnpoint: option<string>,
+}
+
+let defaultCustomEndpointsConfig: customEndpointsConfig = {
+  overrideEndpoints: None,
+  commonEnpoint: None,
+}
+
+type hyperswitchConfig = {
+  publishableKey: string,
+  profileId: option<string>,
+  environment: GlobalVars.envType,
+  customEndpoints: option<customEndpointsConfig>,
+}
+
+type paymentSessionConfig = {
+  clientSecret: string,
+  sdkAuthorization: option<string>,
+  paymentId: string,
+}
+
+type insets = {
+  bottom: option<float>,
+  top: option<float>,
+  left: option<float>,
+  right: option<float>,
+}
+
+type sdkParams = {
+  sessionId: string,
+  sdkVersion: string,
   confirm: bool,
-  appId?: string,
+  appId: option<string>,
   country: string,
   userAgent: option<string>,
-  launchTime?: float,
-  sdkVersion: string,
+  launchTime: option<float>,
   device_model: option<string>,
   os_type: option<string>,
   os_version: option<string>,
   deviceBrand: option<string>,
-  bottomInset: option<float>,
-  topInset: option<float>,
-  leftInset: option<float>,
-  rightInset: option<float>,
+  insets: option<insets>,
 }
 
 type nativeProp = {
-  publishableKey: string,
-  clientSecret: string,
-  paymentId: string,
-  ephemeralKey: option<string>,
-  customBackendUrl: option<string>,
-  customLogUrl: option<string>,
-  sessionId: string,
-  from: string,
-  configuration: configurationType,
-  env: GlobalVars.envType,
-  sdkState: sdkState,
   rootTag: int,
-  hyperParams: hyperParams,
-  customParams: Dict.t<JSON.t>,
-  subscribedEvents: array<PaymentEventTypes.events>,
-  widgetId: string,
-  sdkAuthorization: option<string>,
+  sdkState: sdkState,
+  hyperswitchConfig: hyperswitchConfig,
+  paymentSessionConfig: paymentSessionConfig,
+  sdkParams: sdkParams,
+  configuration: configurationType,
 }
 
 let defaultAppearance: appearance = {
-  locale: None,
-  colors: switch WebKit.platform {
-  | #android =>
-    Some(
-      DefaultColors({
-        light: None,
-        dark: None,
-      }),
-    )
-  | #ios =>
-    Some(
-      Colors({
-        primary: None,
-        background: None,
-        componentBackground: None,
-        componentBorder: None,
-        componentDivider: None,
-        componentText: None,
-        primaryText: None,
-        secondaryText: None,
-        placeholderText: None,
-        icon: None,
-        error: None,
-        loaderBackground: None,
-        loaderForeground: None,
-      }),
-    )
-  | _ => None
-  },
+  theme: Default,
+  colors: Some({
+    light: None,
+    dark: None,
+  }),
   shapes: Some({
     borderRadius: None,
     borderWidth: None,
@@ -379,455 +391,229 @@ let defaultAppearance: appearance = {
       borderWidth: None,
       shadow: None,
     }),
-    primaryButtonColor: switch WebKit.platform {
-    | #android =>
-      Some(
-        PrimaryButtonDefault({
-          light: Some({
-            background: None,
-            text: None,
-            border: None,
-          }),
-          dark: Some({
-            background: None,
-            text: None,
-            border: None,
-          }),
-        }),
-      )
-    | #ios =>
-      Some(
-        PrimaryButtonColor(
-          Some({
-            background: None,
-            text: None,
-            border: None,
-          }),
-        ),
-      )
-    | _ => None
-    },
+    primaryButtonColor: Some({
+      light: Some({
+        background: None,
+        text: None,
+        border: None,
+      }),
+      dark: Some({
+        background: None,
+        text: None,
+        border: None,
+      }),
+    }),
   }),
-  googlePay: {
-    buttonType: PLAIN,
-    buttonStyle: None,
-  },
-  applePay: {
-    buttonType: #plain,
-    buttonStyle: None,
-  },
-  theme: Default,
-  layout: {
-    layoutType: Tab,
-    showOneClickWalletsOnTop: true,
-    paymentMethodsArrangementForTabs: ArrangementDefault,
-    defaultCollapsed: false,
-    radios: false,
-    spacedAccordionItems: false,
-    maxAccordionItems: 4,
-    savedMethodCustomization: {
-      groupingBehavior: {displayInSeparateScreen: true, groupByPaymentMethods: false},
-    },
-  },
+  logo: None,
 }
 
-let getColorFromDict = (colorDict, keys: NativeSdkPropsKeys.keys) => {
-  primary: retOptionalStr(getProp(keys.primary, colorDict)),
-  background: retOptionalStr(getProp(keys.background, colorDict)),
-  componentBackground: retOptionalStr(getProp(keys.componentBackground, colorDict)),
-  componentBorder: retOptionalStr(getProp(keys.componentBorder, colorDict)),
-  componentDivider: retOptionalStr(getProp(keys.componentDivider, colorDict)),
-  componentText: retOptionalStr(getProp(keys.componentText, colorDict)),
-  primaryText: retOptionalStr(getProp(keys.primaryText, colorDict)),
-  secondaryText: retOptionalStr(getProp(keys.secondaryText, colorDict)),
-  placeholderText: retOptionalStr(getProp(keys.placeholderText, colorDict)),
-  icon: retOptionalStr(getProp(keys.icon, colorDict)),
-  error: retOptionalStr(getProp(keys.error, colorDict)),
-  loaderBackground: retOptionalStr(getProp(keys.loadingBgColor, colorDict)),
-  loaderForeground: retOptionalStr(getProp(keys.loadingFgColor, colorDict)),
+let parseColorDict = (d: Dict.t<JSON.t>): colors => {
+  primary: getOptionString(d, "primary"),
+  background: getOptionString(d, "background"),
+  componentBackground: getOptionString(d, "componentBackground"),
+  componentBorder: getOptionString(d, "componentBorder"),
+  componentDivider: getOptionString(d, "componentDivider"),
+  componentText: getOptionString(d, "componentText"),
+  primaryText: getOptionString(d, "primaryText"),
+  secondaryText: getOptionString(d, "secondaryText"),
+  placeholderText: getOptionString(d, "placeholderText"),
+  icon: getOptionString(d, "icon"),
+  error: getOptionString(d, "error"),
+  loaderBackground: getOptionString(d, "loaderBackground"),
+  loaderForeground: getOptionString(d, "loaderForeground"),
+  selectedComponentBackground: getOptionString(d, "selectedComponentBackground"),
+  selectedComponentBorder: getOptionString(d, "selectedComponentBorder"),
+  selectedComponentBorderWidth: getOptionFloat(d, "selectedComponentBorderWidth"),
+  selectedComponentDivider: getOptionString(d, "selectedComponentDivider"),
+  selectedComponentText: getOptionString(d, "selectedComponentText"),
 }
 
-let getPrimaryButtonColorFromDict = (primaryButtonColorDict, keys: NativeSdkPropsKeys.keys) => {
+let parseShadowDict = (d: Dict.t<JSON.t>): shadowConfig => {
+  let offsetDict = getOptionalObj(d, "offset")->Option.getOr(Dict.make())
   {
-    background: retOptionalStr(getProp(keys.primaryButton_background, primaryButtonColorDict)),
-    text: retOptionalStr(getProp(keys.primaryButton_text, primaryButtonColorDict)),
-    border: retOptionalStr(getProp(keys.primaryButton_border, primaryButtonColorDict)),
+    color: getOptionString(d, "color"),
+    opacity: getOptionFloat(d, "opacity"),
+    blurRadius: getOptionFloat(d, "blurRadius"),
+    offset: Some({
+      x: getOptionFloat(offsetDict, "x"),
+      y: getOptionFloat(offsetDict, "y"),
+    }),
+    intensity: getOptionFloat(d, "intensity"),
   }
 }
 
-let getAppearanceObj = (
-  appearanceDict: Dict.t<JSON.t>,
-  keys: NativeSdkPropsKeys.keys,
-  from: string,
-) => {
-  let fontDict = getObj(appearanceDict, keys.font, Dict.make())
-  let primaryButtonDict = getObj(appearanceDict, keys.primaryButton, Dict.make())
-  let primaryButtonShapesDict = switch keys.primaryButton_shapes {
-  | "" => primaryButtonDict
-  | _ => getObj(primaryButtonDict, keys.primaryButton_shapes, Dict.make())
-  }
+let parseShapesDict = (d: Dict.t<JSON.t>): shapes => {
+  borderRadius: getOptionFloat(d, "borderRadius"),
+  borderWidth: getOptionFloat(d, "borderWidth"),
+  shadow: getOptionalObj(d, "shadow")->Option.map(parseShadowDict),
+}
 
-  let googlePayDict = getObj(appearanceDict, "googlePay", Dict.make())
-  let googlePayButtonStyle = getOptionalObj(googlePayDict, "buttonStyle")
+let parsePrimaryButtonColorDict = (d: Dict.t<JSON.t>): primaryButtonColor => {
+  background: getOptionString(d, "background"),
+  text: getOptionString(d, "text"),
+  border: getOptionString(d, "border"),
+}
 
-  let applePayDict = getObj(appearanceDict, "applePay", Dict.make())
-  let applePayButtonStyle = getOptionalObj(applePayDict, "buttonStyle")
+let parseAppearance = (d: Dict.t<JSON.t>): appearance => {
+  let colorsDict = getOptionalObj(d, "colors")->Option.getOr(Dict.make())
+  let lightDict = getOptionalObj(colorsDict, "light")
+  let darkDict = getOptionalObj(colorsDict, "dark")
+
+  let fontDict = getOptionalObj(d, "font")->Option.getOr(Dict.make())
+  let shapesDict = getOptionalObj(d, "shapes")->Option.getOr(Dict.make())
+  let primaryButtonDict = getOptionalObj(d, "primaryButton")->Option.getOr(Dict.make())
+  let primaryButtonShapesDict =
+    getOptionalObj(primaryButtonDict, "shapes")->Option.getOr(Dict.make())
+  let primaryButtonColorsDict =
+    getOptionalObj(primaryButtonDict, "colors")->Option.getOr(Dict.make())
+  let pbLightDict = getOptionalObj(primaryButtonColorsDict, "light")
+  let pbDarkDict = getOptionalObj(primaryButtonColorsDict, "dark")
 
   {
-    locale: switch retOptionalStr(getProp(keys.locale, appearanceDict)) {
-    | Some(str) => LocaleDataType.localeStringToType(str)
-    | _ => Some(En)
-    },
-    colors: from == "rn" || from == "flutter"
-      ? {
-          let colors = getObj(appearanceDict, keys.colors, Dict.make())
-
-          let colorsLightDict = colors->Dict.get(keys.light)->Option.flatMap(JSON.Decode.object)
-
-          let colorsDarkDict = colors->Dict.get(keys.dark)->Option.flatMap(JSON.Decode.object)
-
-          Some(
-            colorsLightDict === None && colorsDarkDict === None
-              ? Colors(getColorFromDict(colors, keys))
-              : DefaultColors({
-                  light: Some(getColorFromDict(colorsLightDict->Option.getOr(Dict.make()), keys)),
-                  dark: Some(getColorFromDict(colorsDarkDict->Option.getOr(Dict.make()), keys)),
-                }),
-          )
-        }
-      : switch keys.colors {
-        | "" =>
-          let colorsLightDict = getObj(appearanceDict, keys.light, Dict.make())
-          let colorsDarkDict = getObj(appearanceDict, keys.dark, Dict.make())
-          Some(
-            DefaultColors({
-              light: Some(getColorFromDict(colorsLightDict, keys)),
-              dark: Some(getColorFromDict(colorsDarkDict, keys)),
-            }),
-          )
-        | _ =>
-          let colors = getObj(appearanceDict, keys.colors, Dict.make())
-          Some(Colors(getColorFromDict(colors, keys)))
-        },
-    shapes: {
-      let shapesDict = getObj(appearanceDict, keys.shapes, Dict.make())
-      let shadowDict = getObj(
-        keys.shapes == "" ? appearanceDict : shapesDict,
-        keys.shadow,
-        Dict.make(),
-      )
-      let offsetDict = getObj(shadowDict, keys.shadow_offset, Dict.make())
-      Some({
-        borderRadius: retOptionalFloat(getProp(keys.borderRadius, shapesDict)),
-        borderWidth: retOptionalFloat(getProp(keys.borderWidth, shapesDict)),
-        shadow: Some({
-          color: retOptionalStr(getProp(keys.shadow_color, shadowDict)),
-          opacity: retOptionalFloat(getProp(keys.shadow_opacity, shadowDict)),
-          blurRadius: retOptionalFloat(getProp(keys.shadow_blurRadius, shadowDict)),
-          offset: Some({
-            x: retOptionalFloat(getProp(keys.x, offsetDict)),
-            y: retOptionalFloat(getProp(keys.y, offsetDict)),
-          }),
-          intensity: retOptionalFloat(getProp(keys.shadow_intensity, shadowDict)),
-        }),
-      })
-    },
-    font: Some({
-      family: switch switch ReactNative.Platform.os {
-      | #ios | #android => retOptionalStr(getProp(keys.family, fontDict))
-      | _ => retOptionalStr(getProp("family", fontDict))
-      } {
-      | Some(str) => CustomFont(str)
-      | None =>
-        switch ReactNative.Platform.os {
-        | #ios => DefaultIOS
-        | #android => DefaultAndroid
-        | _ => DefaultWeb
-        }
-      }->Some,
-      scale: retOptionalFloat(getProp(keys.scale, fontDict)),
-      headingTextSizeAdjust: retOptionalFloat(getProp(keys.headingTextSizeAdjust, fontDict)),
-      subHeadingTextSizeAdjust: retOptionalFloat(getProp(keys.subHeadingTextSizeAdjust, fontDict)),
-      placeholderTextSizeAdjust: retOptionalFloat(
-        getProp(keys.placeholderTextSizeAdjust, fontDict),
-      ),
-      buttonTextSizeAdjust: retOptionalFloat(getProp(keys.buttonTextSizeAdjust, fontDict)),
-      errorTextSizeAdjust: retOptionalFloat(getProp(keys.errorTextSizeAdjust, fontDict)),
-      linkTextSizeAdjust: retOptionalFloat(getProp(keys.linkTextSizeAdjust, fontDict)),
-      modalTextSizeAdjust: retOptionalFloat(getProp(keys.modalTextSizeAdjust, fontDict)),
-      cardTextSizeAdjust: retOptionalFloat(getProp(keys.cardTextSizeAdjust, fontDict)),
-    }),
-    primaryButton: Some({
-      shapes: Some({
-        borderRadius: retOptionalFloat(
-          getProp(keys.primaryButton_borderRadius, primaryButtonShapesDict),
-        ),
-        borderWidth: retOptionalFloat(
-          getProp(keys.primaryButton_borderWidth, primaryButtonShapesDict),
-        ),
-        shadow: {
-          let primaryButtonShadowDict = getObj(
-            keys.primaryButton_shapes == "" ? appearanceDict : primaryButtonShapesDict,
-            keys.primaryButton_shadow,
-            Dict.make(),
-          )
-          let primaryButtonOffsetDict = getObj(
-            primaryButtonShadowDict,
-            keys.primaryButton_offset,
-            Dict.make(),
-          )
-          Some({
-            color: retOptionalStr(getProp(keys.primaryButton_color, primaryButtonShadowDict)),
-            opacity: retOptionalFloat(getProp(keys.primaryButton_opacity, primaryButtonShadowDict)),
-            blurRadius: retOptionalFloat(
-              getProp(keys.primaryButton_blurRadius, primaryButtonShadowDict),
-            ),
-            offset: Some({
-              x: retOptionalFloat(getProp(keys.x, primaryButtonOffsetDict)),
-              y: retOptionalFloat(getProp(keys.y, primaryButtonOffsetDict)),
-            }),
-            intensity: retOptionalFloat(
-              getProp(keys.primaryButton_intensity, primaryButtonShadowDict),
-            ),
-          })
-        },
-      }),
-      primaryButtonColor: from == "rn" || from == "flutter"
-        ? {
-            let primaryButtonColors = getObj(
-              primaryButtonDict,
-              keys.primaryButton_color,
-              Dict.make(),
-            )
-
-            let primaryButtonColorsLightDict =
-              primaryButtonColors
-              ->Dict.get(keys.primaryButton_light)
-              ->Option.flatMap(JSON.Decode.object)
-
-            let primaryButtonColorsDarkDict =
-              primaryButtonColors
-              ->Dict.get(keys.primaryButton_dark)
-              ->Option.flatMap(JSON.Decode.object)
-
-            Some(
-              primaryButtonColorsLightDict === None && primaryButtonColorsDarkDict === None
-                ? PrimaryButtonColor(Some(getPrimaryButtonColorFromDict(primaryButtonColors, keys)))
-                : PrimaryButtonDefault({
-                    light: Some(
-                      getPrimaryButtonColorFromDict(
-                        primaryButtonColorsLightDict->Option.getOr(Dict.make()),
-                        keys,
-                      ),
-                    ),
-                    dark: Some(
-                      getPrimaryButtonColorFromDict(
-                        primaryButtonColorsDarkDict->Option.getOr(Dict.make()),
-                        keys,
-                      ),
-                    ),
-                  }),
-            )
-          }
-        : switch keys.primaryButton_color {
-          | "" =>
-            Some(PrimaryButtonColor(Some(getPrimaryButtonColorFromDict(primaryButtonDict, keys))))
-          | _ =>
-            let primaryButtonColorLightDict = getObj(
-              primaryButtonDict,
-              keys.primaryButton_light,
-              Dict.make(),
-            )
-
-            let primaryButtonColorDarkDict = getObj(
-              primaryButtonDict,
-              keys.primaryButton_dark,
-              Dict.make(),
-            )
-
-            Some(
-              PrimaryButtonDefault({
-                light: Some(getPrimaryButtonColorFromDict(primaryButtonColorLightDict, keys)),
-                dark: Some(getPrimaryButtonColorFromDict(primaryButtonColorDarkDict, keys)),
-              }),
-            )
-          },
-    }),
-    googlePay: {
-      buttonType: switch getString(googlePayDict, "buttonType", "") {
-      | "BUY" => BUY
-      | "BOOK" => BOOK
-      | "CHECKOUT" => CHECKOUT
-      | "DONATE" => DONATE
-      | "ORDER" => ORDER
-      | "PAY" => PAY
-      | "SUBSCRIBE" => SUBSCRIBE
-      | _ => PLAIN
-      },
-      buttonStyle: googlePayButtonStyle->Option.map(googlePayButtonStyle => {
-        let style: googlePayThemeBaseStyle = {
-          light: switch getString(googlePayButtonStyle, "light", "") {
-          | "light" => #light
-          | "dark" => #dark
-          | _ => #dark
-          },
-          dark: switch getString(googlePayButtonStyle, "dark", "") {
-          | "light" => #light
-          | "dark" => #dark
-          | _ => #light
-          },
-        }
-        style
-      }),
-    },
-    applePay: {
-      buttonType: switch getString(applePayDict, "buttonType", "") {
-      | "buy" => #buy
-      | "setUp" => #setUp
-      | "inStore" => #inStore
-      | "donate" => #donate
-      | "checkout" => #checkout
-      | "book" => #book
-      | "subscribe" => #subscribe
-      | _ => #plain
-      },
-      buttonStyle: applePayButtonStyle->Option.map(applePayButtonStyle => {
-        let style: applePayThemeBaseStyle = {
-          light: switch getString(applePayButtonStyle, "light", "") {
-          | "white" => #white
-          | "whiteOutline" => #whiteOutline
-          | "black" => #black
-          | _ => #black
-          },
-          dark: switch getString(applePayButtonStyle, "dark", "") {
-          | "white" => #white
-          | "whiteOutline" => #whiteOutline
-          | "black" => #black
-          | _ => #white
-          },
-        }
-        style
-      }),
-    },
-    theme: switch getString(appearanceDict, "theme", "") {
+    theme: switch getString(d, "theme", "") {
     | "Light" => Light
     | "Dark" => Dark
     | "Minimal" => Minimal
     | "FlatMinimal" => FlatMinimal
+    | "Brutal" => Brutal
+    | "Glass" => Glass
+    | "Skeu" => Skeu
+    | "Clay" => Clay
+    | "Charcoal" => Charcoal
+    | "Soft" => Soft
     | _ => Default
     },
-    layout: LayoutTypes.parseLayout(appearanceDict),
+    colors: Some({
+      light: Some(parseColorDict(lightDict->Option.getOr(Dict.make()))),
+      dark: Some(parseColorDict(darkDict->Option.getOr(Dict.make()))),
+    }),
+    shapes: Some(parseShapesDict(shapesDict)),
+    font: Some({
+      family: switch getOptionString(fontDict, "family") {
+      | Some(str) => Some(CustomFont(str))
+      | None =>
+        Some(
+          switch ReactNative.Platform.os {
+          | #ios => DefaultIOS
+          | #android => DefaultAndroid
+          | _ => DefaultWeb
+          },
+        )
+      },
+      scale: getOptionFloat(fontDict, "scale"),
+      headingTextSizeAdjust: getOptionFloat(fontDict, "headingTextSizeAdjust"),
+      subHeadingTextSizeAdjust: getOptionFloat(fontDict, "subHeadingTextSizeAdjust"),
+      placeholderTextSizeAdjust: getOptionFloat(fontDict, "placeholderTextSizeAdjust"),
+      buttonTextSizeAdjust: getOptionFloat(fontDict, "buttonTextSizeAdjust"),
+      errorTextSizeAdjust: getOptionFloat(fontDict, "errorTextSizeAdjust"),
+      linkTextSizeAdjust: getOptionFloat(fontDict, "linkTextSizeAdjust"),
+      modalTextSizeAdjust: getOptionFloat(fontDict, "modalTextSizeAdjust"),
+      cardTextSizeAdjust: getOptionFloat(fontDict, "cardTextSizeAdjust"),
+    }),
+    primaryButton: Some({
+      shapes: Some(parseShapesDict(primaryButtonShapesDict)),
+      primaryButtonColor: Some({
+        light: Some(parsePrimaryButtonColorDict(pbLightDict->Option.getOr(Dict.make()))),
+        dark: Some(parsePrimaryButtonColorDict(pbDarkDict->Option.getOr(Dict.make()))),
+      }),
+    }),
+    logo: getOptionalObj(d, "logo")->Option.map(logoDict => {
+      borderRadius: getOptionFloat(logoDict, "borderRadius"),
+      colors: getOptionalObj(logoDict, "colors")->Option.map((colorsDict): logoThemeBasedColors => {
+        light: getOptionalObj(colorsDict, "light")->Option.map(
+          (l): logoColors => {
+            backgroundColor: getString(l, "backgroundColor", "transparent"),
+            selected: ?getOptionString(l, "selected"),
+            unselected: ?getOptionString(l, "unselected"),
+          },
+        ),
+        dark: getOptionalObj(colorsDict, "dark")->Option.map(
+          (l): logoColors => {
+            backgroundColor: getString(l, "backgroundColor", "transparent"),
+            selected: ?getOptionString(l, "selected"),
+            unselected: ?getOptionString(l, "unselected"),
+          },
+        ),
+      }),
+      checkedIconForSelection: getOptionalObj(
+        logoDict,
+        "checkedIconForSelection",
+      )->Option.map(iconDict => {
+        colors: getOptionalObj(iconDict, "colors")->Option.map(
+          (colorsDict): checkedIconThemeBasedColors => {
+            light: getOptionalObj(colorsDict, "light")->Option.map(
+              (l): checkedIconColors => {
+                color: ?getOptionString(l, "color"),
+                stroke: ?getOptionString(l, "stroke"),
+              },
+            ),
+            dark: getOptionalObj(colorsDict, "dark")->Option.map(
+              (l): checkedIconColors => {
+                color: ?getOptionString(l, "color"),
+                stroke: ?getOptionString(l, "stroke"),
+              },
+            ),
+          },
+        ),
+        size: ?getOptionFloat(iconDict, "size"),
+        bottom: ?getOptionFloat(iconDict, "bottom"),
+        right: ?getOptionFloat(iconDict, "right"),
+      }),
+    }),
   }
 }
 
-let getPrimaryColor = (colors, ~theme=Default) =>
-  switch colors {
-  | Colors(c) => c.primary
-  | DefaultColors(df) =>
-    switch theme {
-    | Dark => df.dark->Option.flatMap(d => d.primary)
-    | _ => df.light->Option.flatMap(l => l.primary)
-    }
+let getPrimaryColor = (colors: colorType, ~theme=Default) =>
+  switch theme {
+  | Dark => colors.dark->Option.flatMap(d => d.primary)
+  | _ => colors.light->Option.flatMap(l => l.primary)
   }
 
-let parseConfigurationDict = (configObj, from) => {
-  let shippingDetailsDict =
-    configObj->Dict.get("shippingDetails")->Option.flatMap(JSON.Decode.object)
-  let billingDetailsDict = getObj(configObj, "defaultBillingDetails", Dict.make())
+let parseAddressDict = d => {
+  first_name: ?getOptionString(d, "first_name"),
+  last_name: ?getOptionString(d, "last_name"),
+  city: ?getOptionString(d, "city"),
+  country: ?getOptionString(d, "country"),
+  line1: ?getOptionString(d, "line1"),
+  line2: ?getOptionString(d, "line2"),
+  zip: ?getOptionString(d, "postalCode"),
+  state: ?getOptionString(d, "state"),
+}
 
-  let _customerDict = configObj->Dict.get("customer")->Option.flatMap(JSON.Decode.object)
-  let addressDict = getOptionalObj(billingDetailsDict, "address")
-  let billingName =
-    getOptionString(billingDetailsDict, "name")
-    ->Option.getOr("default")
-    ->String.split(" ")
+let parsePhoneDict = d => {
+  number: ?getOptionString(d, "number"),
+  country_code: ?getOptionString(d, "code"),
+}
 
-  let appearanceDict = configObj->Dict.get("appearance")->Option.flatMap(JSON.Decode.object)
-  let appearance = {
-    from == "rn" || from == "flutter" || WebKit.platform === #web
-      ? switch appearanceDict {
-        | Some(appObj) => getAppearanceObj(appObj, NativeSdkPropsKeys.rnKeys, from)
-        | None => defaultAppearance
-        }
-      : switch appearanceDict {
-        | Some(appObj) =>
-          switch WebKit.platform {
-          | #ios | #iosWebView => getAppearanceObj(appObj, NativeSdkPropsKeys.iosKeys, from)
-          | #android | #androidWebView =>
-            getAppearanceObj(appObj, NativeSdkPropsKeys.androidKeys, from)
-          | _ => defaultAppearance
-          }
-        | None => defaultAppearance
-        }
-  }
+let parseAddressDetails = (d: Dict.t<JSON.t>): option<addressDetails> => {
+  let address = getOptionalObj(d, "address")->Option.map(parseAddressDict)
+  let phone = getOptionalObj(d, "phone")->Option.map(parsePhoneDict)
+  let email = getOptionString(d, "email")
+  address === None && phone === None && email === None ? None : Some({address, phone, email})
+}
+
+let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
+  let appearance =
+    configObj
+    ->Dict.get("appearance")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.mapOr(defaultAppearance, parseAppearance)
+
   let placeholderDict =
     configObj
     ->Dict.get("placeholder")
     ->Option.flatMap(JSON.Decode.object)
     ->Option.getOr(Dict.make())
 
-  let configuration = {
-    allowsDelayedPaymentMethods: getBool(configObj, "allowsDelayedPaymentMethods", false),
+  let walletButtonsDict = getObj(configObj, "walletButtonsConfiguration", Dict.make())
+  let googlePayDict = getObj(walletButtonsDict, "googlePay", Dict.make())
+  let applePayDict = getObj(walletButtonsDict, "applePay", Dict.make())
+  let payPalDict = getObj(walletButtonsDict, "payPal", Dict.make())
+
+  {
     appearance,
-    shippingDetails: switch shippingDetailsDict {
-    | Some(shippingObj) =>
-      let addressObj = getOptionalObj(shippingObj, "address")
-      let (first_name, last_name) = getOptionString(shippingObj, "name")->splitName
-      addressObj->Option.map(addressObj => {
-        address: Some({
-          first_name,
-          last_name,
-          city: ?getOptionString(addressObj, "city"),
-          country: ?getOptionString(addressObj, "country"),
-          line1: ?getOptionString(addressObj, "line1"),
-          line2: ?getOptionString(addressObj, "line2"),
-          zip: ?getOptionString(addressObj, "postalCode"),
-          state: ?getOptionString(addressObj, "state"),
-        }),
-        phone: Some({
-          number: ?getOptionString(shippingObj, "phoneNumber"),
-        }),
-        //isCheckboxSelected: getOptionBool(shippingObj, "isCheckboxSelected"),
-        email: None, //getOptionString(shippingObj, "email"),
-        //name: None, getOptionString(shippingObj, "name"),
-      })
-    | None => None
-    },
-    primaryButtonLabel: getOptionString(configObj, "primaryButtonLabel"),
-    paymentSheetHeaderText: getOptionString(configObj, "paymentSheetHeaderLabel"),
-    savedPaymentScreenHeaderText: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
-    displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
-    hideConfirmButton: getBool(configObj, "hideConfirmButton", false),
-    enablePartialLoading: getBool(configObj, "enablePartialLoading", false),
-    // customer: switch customerDict {
-    // | Some(obj) =>
-    //   Some({
-    //     id: getOptionString(obj, "id"),
-    //     ephemeralKeySecret: getOptionString(obj, "ephemeralKeySecret"),
-    //   })
-    // | _ => None
-    // },
     merchantDisplayName: getString(configObj, "merchantDisplayName", ""),
-    defaultBillingDetails: addressDict->Option.map(addressDict => {
-      address: Some({
-        first_name: ?(
-          billingName->Array.get(0) === Some("default") ? None : billingName->Array.get(0)
-        ),
-        last_name: ?(billingName->Array.length > 1 ? billingName[1] : None),
-        city: ?getOptionString(addressDict, "city"),
-        country: ?getOptionString(addressDict, "country"),
-        line1: ?getOptionString(addressDict, "line1"),
-        line2: ?getOptionString(addressDict, "line2"),
-        zip: ?getOptionString(addressDict, "postalCode"),
-        state: ?getOptionString(addressDict, "state"),
-      }),
-      phone: Some({
-        number: ?getOptionString(billingDetailsDict, "phoneNumber"),
-      }),
-      email: None, //getOptionString(billingDetailsDict, "email"),
-      //name: None, getOptionString(billingDetailsDict, "name"),
-    }),
-    primaryButtonColor: getOptionString(configObj, "primaryButtonColor"),
+    allowsDelayedPaymentMethods: getBool(configObj, "allowsDelayedPaymentMethods", false),
     allowsPaymentMethodsRequiringShippingAddress: getBool(
       configObj,
       "allowsPaymentMethodsRequiringShippingAddress",
@@ -839,116 +625,221 @@ let parseConfigurationDict = (configObj, from) => {
       true,
     ),
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
-    alwaysSendCustomerAcceptance: getBool(
-      configObj,
-      "alwaysSendCustomerAcceptance",
-      false,
-    ),
-    defaultView: getBool(configObj, "defaultView", false),
-    netceteraSDKApiKey: getOptionString(configObj, "netceteraSDKApiKey"),
-    placeholder: {
-      cardNumber: getString(placeholderDict, "cardNumber", "1234 1234 1234 1234"),
-      expiryDate: getString(placeholderDict, "expiryDate", "MM / YY"),
-      cvv: getString(placeholderDict, "cvv", "CVC"),
-    },
+    displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
+    displayPayButton: getBool(configObj, "displayPayButton", displayPayButton),
+    stickyPayButton: getBool(configObj, "stickyPayButton", false),
     disableBranding: getBool(configObj, "disableBranding", false),
+    preloadCardElement: getBool(configObj, "preloadCardElement", false),
+    primaryButtonLabel: getOptionString(configObj, "primaryButtonLabel"),
+    paymentSheetHeaderLabel: getOptionString(configObj, "paymentSheetHeaderLabel"),
+    savedPaymentSheetHeaderLabel: getOptionString(configObj, "savedPaymentSheetHeaderLabel"),
+    netceteraSDKApiKey: getOptionString(configObj, "netceteraSDKApiKey"),
+    locale: switch getOptionString(configObj, "locale") {
+    | Some(str) => LocaleDataType.localeStringToType(str)
+    | None => Some(En)
+    },
+    subscribedEvents: configObj
+    ->Dict.get("subscribedEvents")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.getOr([])
+    ->Array.map(e => e->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString),
+    customer: configObj
+    ->Dict.get("customer")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.map(d => {
+      id: getOptionString(d, "id"),
+      ephemeralKeySecret: getOptionString(d, "ephemeralKeySecret"),
+    }),
+    placeholder: {
+      cardNumber: getOptionString(placeholderDict, "cardNumber"),
+      expiryDate: getOptionString(placeholderDict, "expiryDate"),
+      cvv: getOptionString(placeholderDict, "cvv"),
+    },
+    billingDetails: configObj
+    ->Dict.get("billingDetails")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(parseAddressDetails),
+    shippingDetails: configObj
+    ->Dict.get("shippingDetails")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(parseAddressDetails),
+    walletButtons: {
+      googlePay: {
+        visibility: switch getString(googlePayDict, "visibility", "") {
+        | "hidden" => Hidden
+        | _ => Shown
+        },
+        buttonType: switch getString(googlePayDict, "buttonType", "") {
+        | "BUY" => BUY
+        | "BOOK" => BOOK
+        | "CHECKOUT" => CHECKOUT
+        | "DONATE" => DONATE
+        | "ORDER" => ORDER
+        | "PAY" => PAY
+        | "SUBSCRIBE" => SUBSCRIBE
+        | _ => PLAIN
+        },
+        buttonStyle: getOptionalObj(googlePayDict, "buttonStyle")->Option.map((
+          s
+        ): googlePayThemeBaseStyle => {
+          light: switch getString(s, "light", "") {
+          | "light" => #light
+          | _ => #dark
+          },
+          dark: switch getString(s, "dark", "") {
+          | "dark" => #dark
+          | _ => #light
+          },
+        }),
+      },
+      applePay: {
+        visibility: switch getString(applePayDict, "visibility", "") {
+        | "hidden" => Hidden
+        | _ => Shown
+        },
+        buttonType: switch getString(applePayDict, "buttonType", "") {
+        | "buy" => #buy
+        | "setUp" => #setUp
+        | "inStore" => #inStore
+        | "donate" => #donate
+        | "checkout" => #checkout
+        | "book" => #book
+        | "subscribe" => #subscribe
+        | _ => #plain
+        },
+        buttonStyle: getOptionalObj(applePayDict, "buttonStyle")->Option.map((
+          s
+        ): applePayThemeBaseStyle => {
+          light: switch getString(s, "light", "") {
+          | "white" => #white
+          | "whiteOutline" => #whiteOutline
+          | _ => #black
+          },
+          dark: switch getString(s, "dark", "") {
+          | "black" => #black
+          | "whiteOutline" => #whiteOutline
+          | _ => #white
+          },
+        }),
+      },
+      payPal: {
+        visibility: switch getString(payPalDict, "visibility", "") {
+        | "hidden" => Hidden
+        | _ => Shown
+        },
+        buttonType: PAYPAL,
+        buttonStyle: Some({light: GOLD, dark: BLUE}),
+      },
+    },
+    redirectionInfo: switch getString(configObj, "redirectionInfo", "shown") {
+    | "shown" => Shown
+    | _ => Hidden
+    },
+    alwaysSendCustomerAcceptance: getBool(configObj, "alwaysSendCustomerAcceptance", false),
+    paymentMethodsConfig: configObj
+    ->Dict.get("paymentMethodsConfig")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.getOr([])
+    ->Array.filterMap(item =>
+      item
+      ->JSON.Decode.object
+      ->Option.map(obj => {
+        paymentMethod: getString(obj, "paymentMethod", ""),
+        message: switch getOptionString(obj, "message") {
+        | Some(str) => {value: Some(str), displayMode: #custom_message}
+        | None => {value: None, displayMode: #default_sdk_message}
+        },
+      })
+    ),
+    opensCardScannerAutomatically: getBool(configObj, "opensCardScannerAutomatically", false),
+    paymentMethodOrder: configObj
+    ->Dict.get("paymentMethodOrder")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.getOr([])
+    ->Array.filterMap(JSON.Decode.string)
+    ->Array.toReversed,
+    paymentMethodLayout: LayoutTypes.parseLayout(configObj),
   }
-  configuration
 }
 
+let parseSdkState = str =>
+  switch str {
+  | "payment" => PaymentSheet
+  | "tabSheet" => TabSheet
+  | "buttonSheet" => ButtonSheet
+  | "widgetPaymentSheet" => WidgetPaymentSheet
+  | "widgetTabSheet" => WidgetTabSheet
+  | "widgetButtonSheet" => WidgetButtonSheet
+  | "hostedCheckout" => HostedCheckout
+  | "google_pay" => CustomWidget(GOOGLE_PAY)
+  | "paypal" => CustomWidget(PAYPAL)
+  | "card" => CardWidget
+  | "paymentMethodsManagement" => PaymentMethodsManagement
+  | "expressCheckout" => ExpressCheckoutWidget
+  | "cvcWidget" => CvcWidget
+  | "headless" => Headless
+  | _ => NoView
+  }
+
 let nativeJsonToRecord = (jsonFromNative, rootTag) => {
-  let dictfromNative = jsonFromNative->JSON.Decode.object->Option.getOr(Dict.make())
-  let configurationDict = getObj(dictfromNative, "configuration", Dict.make())
-  let from = getOptionString(dictfromNative, "from")->Option.getOr("native")
+  let d = jsonFromNative->JSON.Decode.object->Option.getOr(Dict.make())
 
-  let publishableKey = getString(dictfromNative, "publishableKey", "")
-  let customBackendUrl = switch getOptionString(dictfromNative, "customBackendUrl") {
-  | Some("") => None
-  | val => val
-  }
-  let customLogUrl = switch getOptionString(dictfromNative, "customLogUrl") {
-  | Some("") => None
-  | val => val
-  }
+  let hc = getObj(d, "hyperswitchConfig", Dict.make())
+  let ps = getObj(d, "paymentSessionConfig", Dict.make())
+  let sp = getObj(d, "sdkParams", Dict.make())
 
-  let sdkAuthorization = switch getOptionString(dictfromNative, "sdkAuthorization") {
-  | Some("") => None
-  | val => val
+  let clientSecret = getString(ps, "clientSecret", "")
+  let sdkAuthorization = switch getOptionString(ps, "sdkAuthorization") {
+  | Some("") | None => None
+  | v => v
   }
-
-  let clientSecret = getString(dictfromNative, "clientSecret", "")
   let paymentId = switch sdkAuthorization {
-  | Some(sdkAuth) => {
-      let sdkAuthData = sdkAuth->Utils.getSdkAuthorizationData
-      sdkAuthData.paymentId->Option.getOr(
-        String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr(""),
-      )
-    }
-  | None => String.split(clientSecret, "_secret_")->Array.get(0)->Option.getOr("")
+  | Some(auth) =>
+    Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
+      clientSecret->String.split("_secret_")->Array.get(0)->Option.getOr(""),
+    )
+  | None => clientSecret->String.split("_secret_")->Array.get(0)->Option.getOr("")
   }
-
-  let hyperParams = getObj(dictfromNative, "hyperParams", Dict.make())
 
   {
-    from,
-    env: GlobalVars.checkEnv(publishableKey),
     rootTag,
-    publishableKey,
-    clientSecret,
-    paymentId,
-    ephemeralKey: getOptionString(dictfromNative, "ephemeralKey"),
-    customBackendUrl,
-    customLogUrl,
-    sdkAuthorization,
-    sessionId: getString(dictfromNative, "sessionId", ""),
-    widgetId: getString(dictfromNative, "widgetId", ""),
-    sdkState: switch getString(dictfromNative, "type", "") {
-    | "payment" => PaymentSheet
-    | "tabSheet" => TabSheet
-    | "buttonSheet" => ButtonSheet
-    | "widgetPaymentSheet" => WidgetPaymentSheet
-    | "widgetTabSheet" => WidgetTabSheet
-    | "widgetButtonSheet" => WidgetButtonSheet
-    | "hostedCheckout" => HostedCheckout
-    | "google_pay" => CustomWidget(GOOGLE_PAY)
-    | "paypal" => CustomWidget(PAYPAL)
-    | "card" => CardWidget
-    | "paymentMethodsManagement" => PaymentMethodsManagement
-    | "expressCheckout" => ExpressCheckoutWidget
-    | "cvcWidget" => CvcWidget
-    | "headless" => Headless
-    | _ => NoView
+    sdkState: getString(d, "type", "")->parseSdkState,
+    hyperswitchConfig: {
+      publishableKey: getString(hc, "publishableKey", ""),
+      profileId: getOptionString(hc, "profileId"),
+      environment: GlobalVars.checkEnv(getString(hc, "publishableKey", "")),
+      customEndpoints: None,
     },
-    configuration: parseConfigurationDict(configurationDict, from),
-    hyperParams: {
-      appId: ?getOptionString(hyperParams, "appId"),
-      country: switch getOptionString(hyperParams, "country") {
+    paymentSessionConfig: {
+      clientSecret,
+      sdkAuthorization,
+      paymentId,
+    },
+    sdkParams: {
+      sessionId: getString(sp, "sessionId", ""),
+      sdkVersion: getString(sp, "sdkVersion", ""),
+      confirm: getBool(sp, "confirm", false),
+      appId: getOptionString(sp, "appId"),
+      country: switch getOptionString(sp, "country") {
       | Some("") | None => defaultCountry
-      | Some(country) => country
+      | Some(c) => c
       },
-      userAgent: getOptionString(hyperParams, "user-agent"),
-      confirm: getBool(hyperParams, "confirm", false),
-      launchTime: ?getOptionFloat(hyperParams, "launchTime"),
-      sdkVersion: getString(hyperParams, "sdkVersion", ""),
-      device_model: getOptionString(hyperParams, "device_model"),
-      os_type: getOptionString(hyperParams, "os_type"),
-      os_version: getOptionString(hyperParams, "os_version"),
-      deviceBrand: getOptionString(hyperParams, "deviceBrand"),
-      bottomInset: getOptionFloat(hyperParams, "bottomInset"),
-      topInset: getOptionFloat(hyperParams, "topInset"),
-      leftInset: getOptionFloat(hyperParams, "leftInset"),
-      rightInset: getOptionFloat(hyperParams, "rightInset"),
+      userAgent: getOptionString(sp, "user-agent"),
+      launchTime: getOptionFloat(sp, "launchTime"),
+      device_model: getOptionString(sp, "device_model"),
+      os_type: getOptionString(sp, "os_type"),
+      os_version: getOptionString(sp, "os_version"),
+      deviceBrand: getOptionString(sp, "deviceBrand"),
+      insets: Some({
+        bottom: getOptionFloat(sp, "bottomInset"),
+        top: getOptionFloat(sp, "topInset"),
+        left: getOptionFloat(sp, "leftInset"),
+        right: getOptionFloat(sp, "rightInset"),
+      }),
     },
-    customParams: getObj(dictfromNative, "customParams", Dict.make()),
-    subscribedEvents: switch dictfromNative->Dict.get("subscribedEvents") {
-    | Some(json) =>
-      json
-      ->JSON.Decode.array
-      ->Option.getOr([])
-      ->Array.map(event =>
-        event->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString
-      )
-    | None => []
-    },
+    configuration: parseConfigurationDict(
+      getObj(d, "configuration", Dict.make()),
+      getString(d, "type", "")->parseSdkState === PaymentSheet,
+    ),
   }
 }

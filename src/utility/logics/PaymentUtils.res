@@ -33,11 +33,11 @@ let generateCardConfirmBody = (
 ): PaymentConfirmTypes.redirectType => {
   let isMandate = payment_type !== NORMAL
   {
-    client_secret: ?switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+    client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
     | Some(_) => None
-    | None => Some(nativeProp.clientSecret)
+    | None => Some(nativeProp.paymentSessionConfig.clientSecret)
     },
-    return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+    return_url: ?Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL),
     payment_method: payment_method_str,
     payment_method_type,
     ?payment_method_data,
@@ -57,35 +57,32 @@ let generateCardConfirmBody = (
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
               online: {
-                user_agent: ?nativeProp.hyperParams.userAgent,
+                user_agent: ?nativeProp.sdkParams.userAgent,
               },
             }
           })
         : None
     ),
     browser_info: {
-      user_agent: ?nativeProp.hyperParams.userAgent,
+      user_agent: ?nativeProp.sdkParams.userAgent,
       accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
-      language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
+      language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
       color_depth: 32,
       screen_height: ?screen_height->Option.map(Int.fromFloat),
       screen_width: ?screen_width->Option.map(Int.fromFloat),
       time_zone: Date.make()->Date.getTimezoneOffset,
       java_enabled: true,
       java_script_enabled: true,
-      device_model: ?nativeProp.hyperParams.device_model,
-      os_type: ?nativeProp.hyperParams.os_type,
-      os_version: ?nativeProp.hyperParams.os_version,
+      device_model: ?nativeProp.sdkParams.device_model,
+      os_type: ?nativeProp.sdkParams.os_type,
+      os_version: ?nativeProp.sdkParams.os_version,
     },
   }
 }
 
 let generateSessionsTokenBody = (~clientSecret, ~paymentId, ~sdkAuthorization=?, ~wallet) => {
   let baseArr = [
-    (
-      "payment_id",
-      paymentId->JSON.Encode.string,
-    ),
+    ("payment_id", paymentId->JSON.Encode.string),
     ("wallets", wallet->JSON.Encode.array),
   ]
   let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
@@ -100,6 +97,7 @@ let generateSessionsTokenBody = (~clientSecret, ~paymentId, ~sdkAuthorization=?,
 
 let generateSavedCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
+  ~payment_method,
   ~payment_token,
   ~savedCardCvv,
   ~payment_type_str,
@@ -108,14 +106,14 @@ let generateSavedCardConfirmBody = (
   ~screen_width=?,
   ~billing=?,
 ): PaymentConfirmTypes.redirectType => {
-  client_secret: ?switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => None
-  | None => Some(nativeProp.clientSecret)
+  | None => Some(nativeProp.paymentSessionConfig.clientSecret)
   },
-  payment_method: "card",
+  payment_method,
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  return_url: ?Utils.getReturnUrl(~appId=nativeProp.hyperParams.appId, ~appURL),
+  return_url: ?Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL),
   payment_method_data: ?billing->Option.map(address =>
     [("billing", address->Utils.getJsonObjectFromRecord)]
     ->Dict.fromArray
@@ -123,18 +121,18 @@ let generateSavedCardConfirmBody = (
   ),
   payment_type: ?payment_type_str,
   browser_info: {
-    user_agent: ?nativeProp.hyperParams.userAgent,
+    user_agent: ?nativeProp.sdkParams.userAgent,
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
-    language: LocaleDataType.localeTypeToString(nativeProp.configuration.appearance.locale),
+    language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
     color_depth: 32,
     screen_height: ?screen_height->Option.map(Int.fromFloat),
     screen_width: ?screen_width->Option.map(Int.fromFloat),
     time_zone: Date.make()->Date.getTimezoneOffset,
     java_enabled: true,
     java_script_enabled: true,
-    device_model: ?nativeProp.hyperParams.device_model,
-    os_type: ?nativeProp.hyperParams.os_type,
-    os_version: ?nativeProp.hyperParams.os_version,
+    device_model: ?nativeProp.sdkParams.device_model,
+    os_type: ?nativeProp.sdkParams.os_type,
+    os_version: ?nativeProp.sdkParams.os_version,
   },
 }
 let generateWalletConfirmBody = (
@@ -143,9 +141,9 @@ let generateWalletConfirmBody = (
   ~payment_method_type,
   ~payment_type_str,
 ): PaymentConfirmTypes.redirectType => {
-  client_secret: ?switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => None
-  | None => Some(nativeProp.clientSecret)
+  | None => Some(nativeProp.paymentSessionConfig.clientSecret)
   },
   payment_token,
   payment_method: "wallet",

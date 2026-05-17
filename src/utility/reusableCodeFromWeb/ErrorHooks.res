@@ -28,16 +28,16 @@ let useShowErrorOrWarning = () => {
 let useErrorWarningValidationOnLoad = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
+  let isPublishableKeyValid = GlobalVars.isValidPK(
+    nativeProp.hyperswitchConfig.environment,
+    nativeProp.hyperswitchConfig.publishableKey,
+  )
 
-  let isValid = switch nativeProp.sdkAuthorization->Utils.getNonEmptyOption {
+  let isValid = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => true
   | None =>
     isPublishableKeyValid &&
-    RegExp.test(
-      `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
-      nativeProp.clientSecret,
-    )
+    RegExp.test(`.+_secret_[A-Za-z0-9]+`->Js.Re.fromString, nativeProp.paymentSessionConfig.clientSecret)
   }
 
   let showErrorOrWarning = useShowErrorOrWarning()
@@ -57,7 +57,12 @@ let useErrorWarningValidationOnLoad = () => {
           ~dynamicStr="Either sdkAuthorization or both clientSecret and publishableKey must be provided",
           (),
         )
-      | CardWidget | CustomWidget(_) | ExpressCheckoutWidget | CvcWidget | NoView | PaymentMethodsManagement => ()
+      | CardWidget
+      | CustomWidget(_)
+      | ExpressCheckoutWidget
+      | CvcWidget
+      | NoView
+      | PaymentMethodsManagement => ()
       }
     }
   }

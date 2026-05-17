@@ -31,6 +31,7 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
   let (clicked, setClicked) = React.useState(_ => false)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let localeObject = GetLocale.useGetLocalObj()
+  let (loading, _) = React.useContext(LoadingContext.loadingContext)
   <View>
     <View style={s({flexDirection: #row, gap: 8.->dp, alignItems: #center})}>
       <Icon name={"ach bank transfer"} height=20. width=20. />
@@ -99,6 +100,11 @@ let make = (~data: PaymentConfirmTypes.ach_credit_transfer) => {
     </View>
     <Space height=28.0 />
     <CustomButton
+      buttonState={switch loading {
+      | ProcessingPayments | ProcessingPaymentsWithOverlay => LoadingButton
+      | PaymentSuccess => Completed
+      | _ => Normal
+      }}
       text={clicked ? localeObject.doneText : localeObject.copyToClipboard}
       borderRadius=4.
       onPress={_ => {

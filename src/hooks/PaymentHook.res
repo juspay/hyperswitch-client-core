@@ -23,12 +23,18 @@ let usePayment = (
   ) => {
     if WebKit.platform === #android {
       HyperModule.launchGPay(
-        WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+        WalletType.getGpayTokenStringified(
+          ~obj=sessionObject,
+          ~appEnv=nativeProp.hyperswitchConfig.environment,
+        ),
         gPayResponseHandler,
       )
     } else {
       webkitLaunchGPay(
-        WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
+        WalletType.getGpayTokenStringified(
+          ~obj=sessionObject,
+          ~appEnv=nativeProp.hyperswitchConfig.environment,
+        ),
       )
     }
   }
@@ -109,6 +115,7 @@ let usePayment = (
       PaymentUtils.generateSavedCardConfirmBody(
         ~nativeProp,
         ~payment_token=activePaymentToken,
+        ~payment_method="card",
         ~savedCardCvv,
         ~payment_type_str,
       ),
@@ -119,8 +126,8 @@ let usePayment = (
 
     fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodType,
@@ -148,8 +155,8 @@ let usePayment = (
 
     fetchAndRedirect(
       ~body=paymentBodyWithDynamicFields->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodType,

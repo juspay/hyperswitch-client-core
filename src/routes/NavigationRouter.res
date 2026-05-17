@@ -17,15 +17,15 @@ let make = () => {
   let logger = LoggerHook.useLoggerHook()
 
   React.useEffect1(() => {
-    let launchTime = nativeProp.hyperParams.launchTime->Option.getOr(Date.now())
+    let launchTime = nativeProp.sdkParams.launchTime->Option.getOr(Date.now())
     let latency = Date.now() -. launchTime
-    let appId = nativeProp.hyperParams.appId->Option.getOr("") ++ ".hyperswitch://"
+    let appId = nativeProp.sdkParams.appId->Option.getOr("") ++ ".hyperswitch://"
     logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
     error()
 
-    //KountModule.launchKountIfAvailable(nativeProp.clientSecret, _x => ())
-    // if (nativeProp.clientSecret != "" || nativeProp.paymentMethodId != "") &&
-    //   nativeProp.publishableKey != ""
+    //KountModule.launchKountIfAvailable(nativeProp.paymentSessionConfig.clientSecret, _x => ())
+    // if (nativeProp.paymentSessionConfig.clientSecret != "" || nativeProp.paymentMethodId != "") &&
+    //   nativeProp.hyperswitchConfig.publishableKey != ""
     if nativeProp.sdkState !== CvcWidget {
       let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
         if ErrorUtils.isError(accountPaymentMethodData) {
@@ -38,6 +38,7 @@ let make = () => {
         } else {
           let pmlResponse = AccountPaymentMethodType.jsonToAccountPaymentMethodType(
             accountPaymentMethodData,
+            nativeProp.configuration.paymentMethodOrder,
           )
           if pmlResponse.payment_methods->Array.length === 0 {
             errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
@@ -49,11 +50,14 @@ let make = () => {
 
       let handleCustomerPaymentMethodsResponse = customerPaymentMethodData => {
         setCustomerPaymentMethodData(_ => Some(
-          CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(customerPaymentMethodData),
+          CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
+            customerPaymentMethodData,
+            nativeProp.configuration.paymentMethodOrder,
+          ),
         ))
       }
 
-      if nativeProp.configuration.enablePartialLoading {
+      if nativeProp.configuration.allowsDelayedPaymentMethods {
         customerPaymentMethods()
         ->Promise.then(customerPaymentMethodData => {
           handleCustomerPaymentMethodsResponse(customerPaymentMethodData)
