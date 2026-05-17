@@ -46,7 +46,8 @@ let generateCardConfirmBody = (
     payment_type: ?payment_type_str,
     customer_acceptance: ?(
       payment_token->Option.isNone &&
-      ((isNicknameSelected && isMandate) ||
+      (nativeProp.configuration.alwaysSendCustomerAcceptance ||
+      (isNicknameSelected && isMandate) ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
       payment_type === NORMAL && isNicknameSelected ||
       payment_type === SETUP_MANDATE) &&
