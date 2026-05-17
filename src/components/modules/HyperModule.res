@@ -15,7 +15,7 @@ type hyperModule = {
   notifyWidgetPaymentResult: (int, string) => unit,
   emitPaymentEvent: (int, string, JSON.t) => unit,
   onUpdateIntentEvent: (int, string, string) => unit,
-  onPaymentConfirmButtonCallback: (int, string, bool => unit) => unit,
+  onPaymentConfirmButtonClick: (int, string, bool => unit) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -61,9 +61,9 @@ let hyperModule = {
   ) => ()),
   emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
   onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) => ()),
-  onPaymentConfirmButtonCallback: getFunctionFromModule(
+  onPaymentConfirmButtonClick: getFunctionFromModule(
     hyperModuleDict,
-    "onPaymentConfirmButtonCallback",
+    "onPaymentConfirmButtonClick",
     (_, _, _) => (),
   ),
 }
@@ -192,6 +192,6 @@ let updateWidgetHeight = (height: int) => {
   hyperModule.updateWidgetHeight(height)
 }
 
-let onPaymentConfirmButtonCallback = (rootTag: int, payload: JSON.t, callback: bool => unit) => {
-  hyperModule.onPaymentConfirmButtonCallback(rootTag, payload->JSON.stringify, callback)
+let onPaymentConfirmButtonClick = (rootTag: int, payload: JSON.t, callback: bool => unit) => {
+  hyperModule.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
 }

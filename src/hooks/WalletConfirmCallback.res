@@ -1,5 +1,5 @@
 // Hook to gate wallet payment flows behind a native callback.
-// Notifies native via onPaymentConfirmButtonCallback and waits for
+// Notifies native via onPaymentConfirmButtonClick and waits for
 // native to invoke the callback with a boolean.
 // true  => proceed with wallet launch
 // false => abort (reset loading state)
@@ -18,7 +18,7 @@ let useWalletConfirmCallback = () => {
         ->Dict.fromArray
         ->JSON.Encode.object
 
-      HyperModule.onPaymentConfirmButtonCallback(
+      HyperModule.onPaymentConfirmButtonClick(
         nativeProp.rootTag,
         payload,
         shouldProceed => {

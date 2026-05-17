@@ -16,7 +16,7 @@ type hyperModule = {
   updateWidgetHeight: int => unit,
   emitPaymentEvent: (string, string, JSON.t) => unit,
   onUpdateIntentEvent: (int, string, string) => unit,
-  onPaymentConfirmButtonCallback: (int, string, bool => unit) => unit,
+  onPaymentConfirmButtonClick: (int, string, bool => unit) => unit,
 }
 
 type useExitPaymentsheetReturnType = {
