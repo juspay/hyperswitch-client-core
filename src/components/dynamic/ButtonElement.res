@@ -14,6 +14,7 @@ let make = (
   let logger = LoggerHook.useLoggerHook()
   let {
     paypalButonColor,
+    paypalButtonLabel,
     googlePayButtonColor,
     applePayButtonColor,
     buttonBorderRadius,
@@ -367,6 +368,7 @@ let make = (
             <PaypalButtonView
               style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
               buttonColor={paypalButonColor}
+              buttonLabel={paypalButtonLabel}
               borderRadius={buttonBorderRadius}
             />,
           )

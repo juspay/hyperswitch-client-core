@@ -165,6 +165,18 @@ type applePayConfiguration = {
   buttonStyle: option<applePayThemeBaseStyle>,
 }
 
+type payPalButtonType = PAYPAL | CHECKOUT | BUY_NOW | PAY
+type payPalButtonStyle = GOLD | BLUE | WHITE | BLACK | SILVER
+type payPalThemeBaseStyle = {
+  light: payPalButtonStyle,
+  dark: payPalButtonStyle,
+}
+
+type payPalConfiguration = {
+  buttonType: payPalButtonType,
+  buttonStyle: option<payPalThemeBaseStyle>,
+}
+
 type themeType = Default | Light | Dark | Minimal | FlatMinimal
 
 type appearance = {
@@ -175,6 +187,7 @@ type appearance = {
   primaryButton: option<primaryButton>,
   googlePay: googlePayConfiguration,
   applePay: applePayConfiguration,
+  payPal: payPalConfiguration,
   theme: themeType,
   layout: LayoutTypes.layout,
 }
@@ -413,6 +426,10 @@ let defaultAppearance: appearance = {
   },
   applePay: {
     buttonType: #plain,
+    buttonStyle: None,
+  },
+  payPal: {
+    buttonType: PAYPAL,
     buttonStyle: None,
   },
   theme: Default,
@@ -707,6 +724,37 @@ let getAppearanceObj = (
         }
         style
       }),
+    },
+    payPal: {
+      let payPalDict = getObj(appearanceDict, "payPal", Dict.make())
+      let payPalButtonStyle = getOptionalObj(payPalDict, "buttonStyle")
+      {
+        buttonType: switch getString(payPalDict, "buttonType", "") {
+        | "CHECKOUT" => CHECKOUT
+        | "BUY_NOW" => BUY_NOW
+        | "PAY" => PAY
+        | _ => PAYPAL
+        },
+        buttonStyle: payPalButtonStyle->Option.map(payPalButtonStyle => {
+          let style: payPalThemeBaseStyle = {
+            light: switch getString(payPalButtonStyle, "light", "") {
+            | "blue" => BLUE
+            | "white" => WHITE
+            | "black" => BLACK
+            | "silver" => SILVER
+            | _ => GOLD
+            },
+            dark: switch getString(payPalButtonStyle, "dark", "") {
+            | "blue" => BLUE
+            | "white" => WHITE
+            | "black" => BLACK
+            | "silver" => SILVER
+            | _ => GOLD
+            },
+          }
+          style
+        }),
+      }
     },
     theme: switch getString(appearanceDict, "theme", "") {
     | "Light" => Light
