@@ -371,6 +371,22 @@ let getErrorFromResponse = data => {
   }
 }
 
+let getBrowserInfo = (nativeProp: SdkTypes.nativeProp) => {
+  let browserInfo: PaymentConfirmTypes.online = {
+    user_agent: ?nativeProp.sdkParams.userAgent,
+    accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+    language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
+    color_depth: 32,
+    time_zone: Date.make()->Date.getTimezoneOffset,
+    java_enabled: true,
+    java_script_enabled: true,
+    device_model: ?nativeProp.sdkParams.device_model,
+    os_type: ?nativeProp.sdkParams.os_type,
+    os_version: ?nativeProp.sdkParams.os_version,
+  }
+  browserInfo->Utils.getJsonObjectFromRecord
+}
+
 let generateWalletConfirmBody = (
   ~nativeProp,
   ~data: CustomerPaymentMethodType.customer_payment_method_type,
@@ -398,7 +414,11 @@ let generateWalletConfirmBody = (
       ->Dict.fromArray
       ->JSON.Encode.object,
     ),
+    ("browser_info", getBrowserInfo(nativeProp)),
   ]
+  Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL=Some(""))
+  ->Option.map(url => baseArr->Array.push(("return_url", url->JSON.Encode.string)))
+  ->Option.getOr()
   let bodyArr = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => baseArr
   | None =>

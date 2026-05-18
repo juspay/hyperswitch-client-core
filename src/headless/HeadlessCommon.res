@@ -263,6 +263,13 @@ let confirmCardPayment = (
     ))
   })
   ->Option.getOr()
+  Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL=Some(""))
+  ->Option.map(url => {
+    bodyArr->Array.push(("return_url", url->JSON.Encode.string))
+  })
+  ->Option.getOr()
+
+  bodyArr->Array.push(("browser_info", getBrowserInfo(nativeProp)))
 
   let body =
     bodyArr
