@@ -263,7 +263,7 @@ let confirmCardPayment = (
     ))
   })
   ->Option.getOr()
-  Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL=Some(""))
+  Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId)
   ->Option.map(url => {
     bodyArr->Array.push(("return_url", url->JSON.Encode.string))
   })

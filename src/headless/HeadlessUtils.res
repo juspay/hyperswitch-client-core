@@ -416,7 +416,7 @@ let generateWalletConfirmBody = (
     ),
     ("browser_info", getBrowserInfo(nativeProp)),
   ]
-  Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL=Some(""))
+  Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId)
   ->Option.map(url => baseArr->Array.push(("return_url", url->JSON.Encode.string)))
   ->Option.getOr()
   let bodyArr = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
