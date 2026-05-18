@@ -827,7 +827,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       publishableKey: getString(hc, "publishableKey", ""),
       profileId: getOptionString(hc, "profileId"),
       environment: GlobalVars.checkEnv(getString(hc, "publishableKey", "")),
-      customEndpoints: parseEndpointsConfig(getObj(hc, "customEndpointsConfig", Dict.make())),
+      customEndpoints: parseEndpointsConfig(getObj(hc, "customEndpoints", Dict.make())),
     },
     paymentSessionConfig: {
       clientSecret,
