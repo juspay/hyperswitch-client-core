@@ -8,25 +8,13 @@ import {TurboModuleRegistry} from 'react-native';
 export interface Spec extends TurboModule {
   sendMessageToNative(message: string): void;
 
-  launchApplePay(
-    requestObj: string,
-    callback: (result: Object) => void,
-  ): void;
+  launchApplePay(requestObj: string, callback: (result: Object) => void): void;
 
-  startApplePay(
-    requestObj: string,
-    callback: (result: Object) => void,
-  ): void;
+  startApplePay(requestObj: string, callback: (result: Object) => void): void;
 
-  presentApplePay(
-    requestObj: string,
-    callback: (result: Object) => void,
-  ): void;
+  presentApplePay(requestObj: string, callback: (result: Object) => void): void;
 
-  launchGPay(
-    requestObj: string,
-    callback: (result: Object) => void,
-  ): void;
+  launchGPay(requestObj: string, callback: (result: Object) => void): void;
 
   exitPaymentsheet(rootTag: number, result: string, reset: boolean): void;
 
@@ -40,7 +28,12 @@ export interface Spec extends TurboModule {
 
   exitCardForm(result: string): void;
 
-  exitWidgetPaymentsheet(rootTag: number, widgetId: string, result: string, reset: boolean): void;
+  exitWidgetPaymentsheet(
+    rootTag: number,
+    widgetId: string,
+    result: string,
+    reset: boolean,
+  ): void;
 
   launchWidgetPaymentSheet(
     requestObj: string,
@@ -50,9 +43,14 @@ export interface Spec extends TurboModule {
   updateWidgetHeight(height: number): void;
 
   onAddPaymentMethod(data: string): void;
-  
+
   emitPaymentEvent(eventType: string, payload: Object): void;
 
+  onPaymentConfirmButtonCallback(
+    rootTag: number,
+    payload: string,
+    callback: (shouldProceed: boolean) => void,
+  ): void;
 }
 
 /**

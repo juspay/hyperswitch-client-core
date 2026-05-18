@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~children, ~isLoading) => {
+let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~stickyFooter=?) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -69,7 +69,10 @@ let make = (~children, ~isLoading) => {
         minWidth: 302.->dp,
       })}>
       <CustomView onDismiss=onModalClose>
-        <CustomView.Wrapper onModalClose isLoading> {children} </CustomView.Wrapper>
+        <CustomView.Wrapper
+          onModalClose isLoading renderScrollView isSavedPaymentScreen ?stickyFooter>
+          {children}
+        </CustomView.Wrapper>
       </CustomView>
     </Animated.View>
     <LoadingOverlay />

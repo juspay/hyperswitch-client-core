@@ -5,11 +5,13 @@ open Style
 let make = (~text, ~isLoading) => {
   <View style={s({alignItems: #center, justifyContent: #center, flexDirection: #row})}>
     <View
-      style={s({height: 1.->dp, marginHorizontal: 10.->dp, backgroundColor: "#CCCCCC", flex: 1.})}
+      style={s({height: 1.->dp, marginHorizontal: 10.->dp, backgroundColor: "#9ca3af", flex: 1.})}
     />
-    {isLoading ? <CustomLoader width="100" height="20" /> : <TextWrapper text textType=ModalText />}
+    {isLoading
+      ? <CustomLoader width="100" height="20" />
+      : <TextWrapper text textType={ModalTextBold} overrideStyle=Some(s({color: "#9ca3af"})) />}
     <View
-      style={s({height: 1.->dp, marginHorizontal: 10.->dp, backgroundColor: "#CCCCCC", flex: 1.})}
+      style={s({height: 1.->dp, marginHorizontal: 10.->dp, backgroundColor: "#9ca3af", flex: 1.})}
     />
   </View>
 }

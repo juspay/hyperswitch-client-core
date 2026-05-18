@@ -1,6 +1,5 @@
 @module("./ShadowHookImpl")
 external useGetShadowStyle: (
-  ~shadowIntensity: float,
-  ~shadowColor: ReactNative.Color.t=?,
+  ~shadowConfig: SdkTypes.shadowConfig,
   unit,
 ) => ReactNative.Style.t = "useGetShadowStyle"

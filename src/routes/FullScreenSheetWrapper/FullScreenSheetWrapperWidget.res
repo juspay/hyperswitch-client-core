@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~children) => {
+let make = (~children, ~renderScrollView) => {
   let sheetFlex = AnimatedValue.useAnimatedValue(0.)
   React.useEffect0(() => {
     Animated.timing(
@@ -24,7 +24,7 @@ let make = (~children) => {
       justifyContent: #center,
     })}>
     <Animated.View style={s({maxHeight: 100.->pct})}>
-      <CustomView.WidgetWrapper> {children} </CustomView.WidgetWrapper>
+      <CustomView.WidgetWrapper renderScrollView> {children} </CustomView.WidgetWrapper>
     </Animated.View>
     <LoadingOverlay />
   </View>

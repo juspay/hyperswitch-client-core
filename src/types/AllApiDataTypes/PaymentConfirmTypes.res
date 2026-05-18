@@ -93,7 +93,7 @@ let defaultCancelError = {
 }
 let defaultSuccess = {
   type_: "",
-  status: "Processing",
+  status: "processing",
   code: "",
   message: "",
 }

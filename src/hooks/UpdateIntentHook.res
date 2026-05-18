@@ -83,7 +83,14 @@ let useUpdateIntentListener = (
           switch intentData.sdkAuthorization {
           | Some(sdkAuth) if sdkAuth !== "" =>
             // Update nativeProp with new sdkAuthorization
-            setNativeProp({...currentNativeProp, sdkAuthorization: Some(sdkAuth)})
+            // This triggers a re-render and the NavigationRouter effect will refetch
+            setNativeProp({
+              ...currentNativeProp,
+              paymentSessionConfig: {
+                ...currentNativeProp.paymentSessionConfig,
+                sdkAuthorization: Some(sdkAuth),
+              },
+            })
 
             let hasError = ref(false)
 
@@ -124,6 +131,7 @@ let useUpdateIntentListener = (
               } else {
                 let pmlResponse = AccountPaymentMethodType.jsonToAccountPaymentMethodType(
                   accountPaymentMethodData,
+                  nativeProp.configuration.paymentMethodOrder,
                 )
                 setAccountPaymentMethodData(_ => Some(pmlResponse))
               }
@@ -134,6 +142,7 @@ let useUpdateIntentListener = (
                 _ => Some(
                   CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
                     customerPaymentMethodData,
+                    nativeProp.configuration.paymentMethodOrder,
                   ),
                 ),
               )
@@ -155,8 +164,8 @@ let useUpdateIntentListener = (
 
             // Build headers and URIs with new sdkAuthorization
             let headers = Utils.getHeader(
-              ~apiKey=currentNativeProp.publishableKey,
-              ~appId=currentNativeProp.hyperParams.appId,
+              ~apiKey=currentNativeProp.hyperswitchConfig.publishableKey,
+              ~appId=currentNativeProp.sdkParams.appId,
               ~sdkAuthorization=sdkAuth,
               (),
             )
@@ -185,8 +194,8 @@ let useUpdateIntentListener = (
               APIUtils.fetchApiWrapper(
                 ~uri=`${baseUrl}/payments/session_tokens`,
                 ~body=PaymentUtils.generateSessionsTokenBody(
-                  ~clientSecret=currentNativeProp.clientSecret,
-                  ~paymentId=currentNativeProp.paymentId,
+                  ~clientSecret=currentNativeProp.paymentSessionConfig.clientSecret,
+                  ~paymentId=currentNativeProp.paymentSessionConfig.paymentId,
                   ~sdkAuthorization=sdkAuth,
                   ~wallet=[],
                 ),

@@ -40,6 +40,166 @@ let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
   )
 }
 
+@val external dummy: React.ref<RescriptCore.Nullable.t<RescriptCore.intervalId>> = "null"
+
+let browserRedirectionHandler = async (
+  ~nativeProp,
+  ~openUrl,
+  ~responseCallback,
+  ~errorCallback,
+  ~useEphemeralWebSession=false,
+) => {
+  let res = await BrowserHook.openUrl(
+    openUrl,
+    Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),
+    dummy,
+    ~useEphemeralWebSession,
+    ~appearance=nativeProp.configuration.appearance,
+  )
+
+  switch res.status {
+  | Success => responseCallback(~status=PaymentConfirmTypes.defaultSuccess)
+  | Cancel => errorCallback(~errorMessage=PaymentConfirmTypes.defaultCancelError)
+  | Failed => errorCallback(~errorMessage=PaymentConfirmTypes.defaultConfirmError)
+  | _ =>
+    errorCallback(
+      ~errorMessage={
+        ...PaymentConfirmTypes.defaultConfirmError,
+        status: res->JSON.stringifyAny->Option.getOr(""),
+      },
+    )
+  }
+}
+
+let handleDefaultPaymentFlows = (
+  ~nativeProp,
+  ~status,
+  ~reUri,
+  ~error: PaymentConfirmTypes.error,
+  ~responseCallback,
+  ~errorCallback,
+) => {
+  let terminalStatusHandler = () => {PaymentConfirmTypes.status, message: "", code: "", type_: ""}
+
+  switch status {
+  | "succeeded" =>
+    logWrapper(
+      ~logType=INFO,
+      ~eventName=PAYMENT_SUCCESS,
+      ~url="",
+      ~customLogUrl=GlobalHooks.getLoggingUrl(
+        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
+          SdkTypes.defaultCustomEndpointsConfig,
+        ),
+        ~environment=nativeProp.hyperswitchConfig.environment,
+      ),
+      ~category=API,
+      ~statusCode="",
+      ~apiLogType=None,
+      ~data=JSON.Encode.null,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~paymentId="",
+      ~paymentMethod=None,
+      ~paymentExperience=None,
+      ~timestamp=0.,
+      ~latency=0.,
+      ~version=nativeProp.sdkParams.sdkVersion,
+      (),
+    )
+    responseCallback(~status=terminalStatusHandler())
+  | "requires_capture"
+  | "processing"
+  | "requires_confirmation"
+  | "requires_merchant_action" =>
+    responseCallback(~status=terminalStatusHandler())
+  | "requires_customer_action" =>
+    terminalStatusHandler()->ignore
+
+    logWrapper(
+      ~logType=INFO,
+      ~eventName=REDIRECTING_USER,
+      ~url=reUri,
+      ~customLogUrl=GlobalHooks.getLoggingUrl(
+        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
+          SdkTypes.defaultCustomEndpointsConfig,
+        ),
+        ~environment=nativeProp.hyperswitchConfig.environment,
+      ),
+      ~category=API,
+      ~statusCode="",
+      ~apiLogType=None,
+      ~data=JSON.Encode.null,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~paymentId="",
+      ~paymentMethod=None,
+      ~paymentExperience=None,
+      ~timestamp=0.,
+      ~latency=0.,
+      ~version=nativeProp.sdkParams.sdkVersion,
+      (),
+    )
+    browserRedirectionHandler(
+      ~nativeProp,
+      ~openUrl=reUri,
+      ~responseCallback,
+      ~errorCallback,
+      ~useEphemeralWebSession=true,
+    )->ignore
+
+  | _statusVal =>
+    logWrapper(
+      ~logType=ERROR,
+      ~eventName=PAYMENT_FAILED,
+      ~url=reUri,
+      ~customLogUrl=GlobalHooks.getLoggingUrl(
+        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
+          SdkTypes.defaultCustomEndpointsConfig,
+        ),
+        ~environment=nativeProp.hyperswitchConfig.environment,
+      ),
+      ~category=API,
+      ~statusCode="",
+      ~apiLogType=None,
+      ~data=JSON.Encode.null,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~paymentId="",
+      ~paymentMethod=None,
+      ~paymentExperience=None,
+      ~timestamp=0.,
+      ~latency=0.,
+      ~version=nativeProp.sdkParams.sdkVersion,
+      (),
+    )
+    errorCallback(~errorMessage=error)
+    terminalStatusHandler()->ignore
+  }
+}
+
+let handleApiRes = (
+  ~nativeProp,
+  ~status,
+  ~reUri,
+  ~error: PaymentConfirmTypes.error,
+  ~nextAction: option<PaymentConfirmTypes.nextAction>=?,
+  ~responseCallback,
+  ~errorCallback,
+) => {
+  switch nextAction->PaymentUtils.getActionType {
+  // | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
+  // | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
+  // | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
+  | _ =>
+    handleDefaultPaymentFlows(
+      ~nativeProp,
+      ~status,
+      ~reUri,
+      ~error,
+      ~responseCallback,
+      ~errorCallback,
+    )
+  }
+}
+
 let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => {
   let res = await confirmAPICall(nativeProp, body, sdkAuthorization)
   let confirmRes =
@@ -47,9 +207,25 @@ let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => 
     ->Option.getOr(JSON.Encode.null)
     ->Utils.getDictFromJson
     ->PaymentConfirmTypes.itemToObjMapper
-  headlessModule.exitHeadless(
-    nativeProp.rootTag,
-    confirmRes.error->HyperModule.stringifiedResStatus,
+
+  let {nextAction, status, error} = confirmRes
+
+  let responseCallback = (~status) => {
+    headlessModule.exitHeadless(nativeProp.rootTag, status->HyperModule.stringifiedResStatus)
+  }
+
+  let errorCallback = (~errorMessage) => {
+    headlessModule.exitHeadless(nativeProp.rootTag, errorMessage->HyperModule.stringifiedResStatus)
+  }
+
+  handleApiRes(
+    ~nativeProp,
+    ~status,
+    ~reUri=nextAction.redirectToUrl,
+    ~error,
+    ~nextAction,
+    ~responseCallback,
+    ~errorCallback,
   )
 }
 
@@ -71,7 +247,10 @@ let confirmCardPayment = (
 
   let bodyArr = switch sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => baseArr
-  | None => baseArr->Array.concat([("client_secret", nativeProp.clientSecret->JSON.Encode.string)])
+  | None =>
+    baseArr->Array.concat([
+      ("client_secret", nativeProp.paymentSessionConfig.clientSecret->JSON.Encode.string),
+    ])
   }
 
   billing
@@ -263,7 +442,10 @@ let processRequest = async (
           }
         }
         HyperModule.launchGPay(
-          WalletType.getGpayTokenStringified(~obj=session, ~appEnv=nativeProp.env),
+          WalletType.getGpayTokenStringified(
+            ~obj=session,
+            ~appEnv=nativeProp.hyperswitchConfig.environment,
+          ),
           var => {
             gPayCallback(var)->ignore
           },
@@ -275,22 +457,29 @@ let processRequest = async (
           ~logType=DEBUG,
           ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
           ~url="",
-          ~customLogUrl=nativeProp.customLogUrl,
-          ~env=nativeProp.env,
+          ~customLogUrl=GlobalHooks.getLoggingUrl(
+            ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
+              SdkTypes.defaultCustomEndpointsConfig,
+            ),
+            ~environment=nativeProp.hyperswitchConfig.environment,
+          ),
           ~category=API,
           ~statusCode="",
           ~apiLogType=None,
           ~data=JSON.Encode.null,
-          ~publishableKey=nativeProp.publishableKey,
+          ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
           ~paymentId="",
           ~paymentMethod=None,
           ~paymentExperience=None,
           ~timestamp=0.,
           ~latency=0.,
-          ~version=nativeProp.hyperParams.sdkVersion,
+          ~version=nativeProp.sdkParams.sdkVersion,
           (),
         )
-        headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+        headlessModule.exitHeadless(
+          nativeProp.rootTag,
+          getDefaultError->HyperModule.stringifiedResStatus,
+        )
       }, 5000)
       let applePayCallback = async var => {
         try {
@@ -315,19 +504,23 @@ let processRequest = async (
             ~logType=DEBUG,
             ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
             ~url="",
-            ~customLogUrl=nativeProp.customLogUrl,
-            ~env=nativeProp.env,
+            ~customLogUrl=GlobalHooks.getLoggingUrl(
+              ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
+                SdkTypes.defaultCustomEndpointsConfig,
+              ),
+              ~environment=nativeProp.hyperswitchConfig.environment,
+            ),
             ~category=API,
             ~statusCode="",
             ~apiLogType=None,
             ~data=JSON.Encode.null,
-            ~publishableKey=nativeProp.publishableKey,
+            ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
             ~paymentId="",
             ~paymentMethod=None,
             ~paymentExperience=None,
             ~timestamp=0.,
             ~latency=0.,
-            ~version=nativeProp.hyperParams.sdkVersion,
+            ~version=nativeProp.sdkParams.sdkVersion,
             (),
           )
         },
@@ -337,7 +530,11 @@ let processRequest = async (
       )
     | _ => ()
     }
-  | _ => headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.stringifiedResStatus)
+  | _ =>
+    headlessModule.exitHeadless(
+      nativeProp.rootTag,
+      getDefaultError->HyperModule.stringifiedResStatus,
+    )
   }
 }
 
@@ -437,7 +634,10 @@ let apiHandler = async (
   let customerSavedPMData = await savedPaymentMethodAPICall(nativeProp)
   switch customerSavedPMData {
   | Some(obj) =>
-    let spmData = obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType
+    let spmData =
+      obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
+        nativeProp.configuration.paymentMethodOrder,
+      )
     let sessionSpmData = spmData.customer_payment_methods->Array.filter(data => {
       switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
       | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
@@ -525,7 +725,10 @@ let apiHandler = async (
       )
     }
 
-  | None => customerSavedPMData->getErrorFromResponse->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+  | None =>
+    customerSavedPMData
+    ->getErrorFromResponse
+    ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }
 }
 
@@ -534,21 +737,31 @@ let apiHandler = async (
 let runHeadlessFlow = (
   headlessModule,
   reRegisterCallback,
-  nativeProp,
+  nativeProp: SdkTypes.nativeProp,
   ~getCvc: JSON.t => JSON.t,
 ) => {
-  let isPublishableKeyValid = GlobalVars.isValidPK(nativeProp.env, nativeProp.publishableKey)
+  let isPublishableKeyValid = GlobalVars.isValidPK(
+    nativeProp.hyperswitchConfig.environment,
+    nativeProp.hyperswitchConfig.publishableKey,
+  )
 
   let isClientSecretValid = RegExp.test(
     `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
-    nativeProp.clientSecret,
+    nativeProp.paymentSessionConfig.clientSecret,
   )
 
-  if isPublishableKeyValid && (isClientSecretValid || nativeProp.sdkAuthorization != None) {
+  if (
+    isPublishableKeyValid &&
+    (isClientSecretValid || nativeProp.paymentSessionConfig.sdkAuthorization != None)
+  ) {
     apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
   } else if !isPublishableKeyValid {
-    errorOnApiCalls(INVALID_PK(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_PK(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   } else if !isClientSecretValid {
-    errorOnApiCalls(INVALID_CL(Error, Static("")))->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    errorOnApiCalls(INVALID_CL(Error, Static("")))->(
+      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+    )
   }
 }

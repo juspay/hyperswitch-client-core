@@ -33,7 +33,7 @@ let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
         </View>
         <View
           style={s({
-            flex: 1.,
+            width: 100.->pct,
             alignItems: #center,
             justifyContent: #center,
             paddingVertical: 48.->dp,

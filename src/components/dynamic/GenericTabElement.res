@@ -37,9 +37,9 @@ let make = (
       let data = value()
       switch field.fieldType {
       | CountrySelect =>
-        setCountry(Some(data->Option.getOr(nativeProp.hyperParams.country)))
+        setCountry(Some(data->Option.getOr(nativeProp.sdkParams.country)))
         setTimeout(() => {
-          input.onChange(data->Option.getOr(nativeProp.hyperParams.country))
+          input.onChange(data->Option.getOr(nativeProp.sdkParams.country))
         }, 0)->ignore
       | _ => input.onChange(data->Option.getOr(""))
       }

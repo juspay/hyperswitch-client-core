@@ -15,6 +15,7 @@ type hyperModule = {
   notifyWidgetPaymentResult: (int, string) => unit,
   emitPaymentEvent: (int, string, JSON.t) => unit,
   onUpdateIntentEvent: (int, string, string) => unit,
+  onPaymentConfirmButtonClick: (int, string, bool => unit) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -60,6 +61,11 @@ let hyperModule = {
   ) => ()),
   emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
   onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) => ()),
+  onPaymentConfirmButtonClick: getFunctionFromModule(
+    hyperModuleDict,
+    "onPaymentConfirmButtonClick",
+    (_, _, _) => (),
+  ),
 }
 
 let sendMessageToNative = str => {
@@ -107,7 +113,7 @@ let useExitPaymentsheet = () => {
     ->Promise.then(() => {
       logger(
         ~logType=INFO,
-        ~value=nativeProp.hyperParams.appId->Option.getOr(""),
+        ~value=nativeProp.sdkParams.appId->Option.getOr(""),
         ~category=USER_EVENT,
         ~eventName=SDK_CLOSED,
         (),
@@ -150,11 +156,7 @@ let useExitPaymentsheet = () => {
         //   )
         exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
-      ? hyperModule.exitWidgetPaymentsheet(
-        rootTag,
-        apiResStatus->stringifiedResStatus,
-        reset,
-      )
+      ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
       : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }
   {exit, simplyExit}
@@ -188,4 +190,8 @@ let launchWidgetPaymentSheet = (requestObj: string, callback) => {
 
 let updateWidgetHeight = (height: int) => {
   hyperModule.updateWidgetHeight(height)
+}
+
+let onPaymentConfirmButtonClick = (rootTag: int, payload: JSON.t, callback: bool => unit) => {
+  hyperModule.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
 }

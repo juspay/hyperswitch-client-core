@@ -4,7 +4,10 @@ open Style
 @react.component
 let make = () => {
   let mediaView = WindowDimension.useMediaView()
-  let shadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity=16., ~shadowColor="#0000000f", ())
+  let shadowStyle = ShadowHook.useGetShadowStyle(
+    ~shadowConfig={color: Some("#0000000f"), opacity: Some(1.), blurRadius: Some(16.), offset: None, intensity: Some(16.)},
+    (),
+  )
 
   let isDesktop = mediaView === Desktop
 

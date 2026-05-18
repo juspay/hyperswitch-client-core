@@ -13,6 +13,7 @@ let make = (
   ~style=empty,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
   let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
@@ -30,6 +31,7 @@ let make = (
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
@@ -63,13 +65,13 @@ let make = (
   let prevStatusRef = React.useRef(None)
 
   let {
+    bgColor,
     borderWidth,
     borderRadius,
     component,
-    shadowIntensity,
-    shadowColor,
+    shadowConfig,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   let processRequestSaved = (
     token: CustomerPaymentMethodType.customer_payment_method_type,
@@ -112,7 +114,8 @@ let make = (
       (
         PaymentUtils.generateSavedCardConfirmBody(
           ~nativeProp,
-          ~payment_token=token.payment_token,
+          ~payment_method=token.payment_method_str,
+      ~payment_token=token.payment_token,
           ~savedCardCvv,
           ~appURL=?{
             accountPaymentMethodData->Option.map(accountPaymentMethods =>
@@ -132,8 +135,8 @@ let make = (
 
     redirectHook(
       ~body=paymentMethodType->Utils.getStringFromRecord,
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod,
@@ -248,8 +251,8 @@ let make = (
 
     redirectHook(
       ~body=body->JSON.stringifyAny->Option.getOr(""),
-      ~publishableKey=nativeProp.publishableKey,
-      ~clientSecret=nativeProp.clientSecret,
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodData.payment_method_type,
@@ -421,10 +424,16 @@ let make = (
     None
   }, [selectedToken])
 
+  // NOTE: To introduce a new component that shows Terms and conditions.
+  // Terms list that proceeding with payment using card/ saved card/ wallet would save the payment method details
   let showDisclaimer =
     accountPaymentMethodData
     ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
     ->Option.getOr(NORMAL) !== NORMAL
+
+  let onAbort = () => {
+    setLoading(FillingDetails)
+  }
 
   let handlePress = _ => {
     switch (
@@ -477,52 +486,56 @@ let make = (
               (),
             )
 
-            let timerId = setTimeout(() => {
-              setLoading(FillingDetails)
-              showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-              logger(
-                ~logType=DEBUG,
-                ~value="apple_pay",
-                ~category=USER_EVENT,
-                ~paymentMethod="apple_pay",
-                ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-                (),
-              )
-            }, 5000)
+            let doLaunchApplePay = () => {
+              let timerId = setTimeout(() => {
+                setLoading(FillingDetails)
+                showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+                logger(
+                  ~logType=DEBUG,
+                  ~value="apple_pay",
+                  ~category=USER_EVENT,
+                  ~paymentMethod="apple_pay",
+                  ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
+                  (),
+                )
+              }, 5000)
 
-            WebKit.platform === #ios
-              ? HyperModule.launchApplePay(
-                  [
-                    ("session_token_data", sessionObject.session_token_data),
-                    ("payment_request_data", sessionObject.payment_request_data),
-                  ]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object
-                  ->JSON.stringify,
-                  confirmApplePay,
-                  _ => {
-                    logger(
-                      ~logType=DEBUG,
-                      ~value="apple_pay",
-                      ~category=USER_EVENT,
-                      ~paymentMethod="apple_pay",
-                      ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                      (),
-                    )
-                  },
-                  _ => {
-                    clearTimeout(timerId)
-                  },
-                )
-              : launchApplePay(
-                  [
-                    ("session_token_data", sessionObject.session_token_data),
-                    ("payment_request_data", sessionObject.payment_request_data),
-                  ]
-                  ->Dict.fromArray
-                  ->JSON.Encode.object
-                  ->JSON.stringify,
-                )
+              WebKit.platform === #ios
+                ? HyperModule.launchApplePay(
+                    [
+                      ("session_token_data", sessionObject.session_token_data),
+                      ("payment_request_data", sessionObject.payment_request_data),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+                    ->JSON.stringify,
+                    confirmApplePay,
+                    _ => {
+                      logger(
+                        ~logType=DEBUG,
+                        ~value="apple_pay",
+                        ~category=USER_EVENT,
+                        ~paymentMethod="apple_pay",
+                        ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
+                        (),
+                      )
+                    },
+                    _ => {
+                      clearTimeout(timerId)
+                    },
+                  )
+                : launchApplePay(
+                    [
+                      ("session_token_data", sessionObject.session_token_data),
+                      ("payment_request_data", sessionObject.payment_request_data),
+                    ]
+                    ->Dict.fromArray
+                    ->JSON.Encode.object
+                    ->JSON.stringify,
+                  )
+            }
+
+            handleWalletConfirmCallback("apple_pay", doLaunchApplePay, onAbort)->ignore
           }
 
         | GOOGLE_PAY =>
@@ -533,15 +546,33 @@ let make = (
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
           }
-          WebKit.platform === #android
-            ? HyperModule.launchGPay(
-                WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-                confirmGPay,
-              )
-            : launchGPay(
-                WalletType.getGpayTokenStringified(~obj=sessionObject, ~appEnv=nativeProp.env),
-              )
-        | _ => processRequestSaved(token, ~isWallet=true)
+          let doLaunchGPay = () => {
+            WebKit.platform === #android
+              ? HyperModule.launchGPay(
+                  WalletType.getGpayTokenStringified(
+                    ~obj=sessionObject,
+                    ~appEnv=nativeProp.hyperswitchConfig.environment,
+                  ),
+                  confirmGPay,
+                )
+              : launchGPay(
+                  WalletType.getGpayTokenStringified(
+                    ~obj=sessionObject,
+                    ~appEnv=nativeProp.hyperswitchConfig.environment,
+                  ),
+                )
+          }
+          handleWalletConfirmCallback("google_pay", doLaunchGPay, onAbort)->ignore
+        | PAYPAL =>
+          handleWalletConfirmCallback("paypal", () => processRequestSaved(token), onAbort)->ignore
+        | SAMSUNG_PAY =>
+          handleWalletConfirmCallback(
+            "samsung_pay",
+            () => processRequestSaved(token, ~isWallet=true),
+            onAbort,
+          )->ignore
+        | _ =>
+          handleWalletConfirmCallback("wallet", () => processRequestSaved(token), onAbort)->ignore
         }
       | _ => processRequestSaved(token)
       }
@@ -641,17 +672,24 @@ let make = (
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
-    <Space />
+    <UIUtils.RenderIf condition=displayInSeparateScreen>
+      <Space />
+    </UIUtils.RenderIf>
     <View
       style={array([
-        getShadowStyle,
+        displayInSeparateScreen || nativeProp.configuration.paymentMethodLayout.layoutType === Tabs
+          ? s({
+              borderRadius,
+              borderWidth,
+              borderColor: component.borderColor,
+            })
+          : empty,
+        bgColor,
+        nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? getShadowStyle : empty,
         s({
-          paddingHorizontal: 16.->dp,
+          flexShrink: 1.,
           paddingVertical: 5.->dp,
-          borderRadius,
-          borderWidth,
-          borderColor: component.borderColor,
-          backgroundColor: component.background,
+          backgroundColor: ?(displayInSeparateScreen ? Some(component.background) : None),
         }),
         style,
       ])}>
@@ -668,7 +706,7 @@ let make = (
     </View>
     {showDisclaimer && savedCardCvv->Option.isSome
       ? <View style={s({paddingHorizontal: 2.->dp})}>
-          <Space />
+          // <Space />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
@@ -678,8 +716,9 @@ let make = (
             setIsSelected={setSaveCardChecboxSelected}
             textType={TextWrapper.ModalText}
           />
-          <Space height=5. />
+          // <Space height=5. />
+          <Space />
         </View>
-      : React.null}
+      : <Space height=4. />}
   </ErrorBoundary>
 }

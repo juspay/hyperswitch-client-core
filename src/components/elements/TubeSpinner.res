@@ -32,7 +32,7 @@ let make = (~loaderColor=?, ~size=?) => {
         {
           toValue: -1.->Animated.Value.Timing.fromRawValue,
           isInteraction: true,
-          useNativeDriver: false,
+          useNativeDriver: true,
           delay: 0.,
           duration: 800.,
           easing: Easing.linear,

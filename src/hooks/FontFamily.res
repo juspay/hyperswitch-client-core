@@ -22,6 +22,8 @@ let useCustomFontFamily = () => {
   switch ThemebasedStyle.itemToObj(
     ThemebasedStyle.lightRecord,
     nativeProp.configuration.appearance,
+    nativeProp.configuration.walletButtons,
+    nativeProp.configuration.locale,
     false,
   ).fontFamily {
   | CustomFont(font) =>

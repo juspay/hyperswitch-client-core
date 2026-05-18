@@ -80,7 +80,9 @@ let setupWidgetActionListener = (~onWidgetAction: NativeModulesType.widgetAction
   })
 }
 
-let setupUpdateIntentInitListener = (~onUpdateIntentInit: NativeModulesType.updateIntentData => unit) => {
+let setupUpdateIntentInitListener = (
+  ~onUpdateIntentInit: NativeModulesType.updateIntentData => unit,
+) => {
   setupNativeEventListener("updateIntentInit", var => {
     switch var->JSON.Decode.object {
     | Some(dict) =>
@@ -93,7 +95,9 @@ let setupUpdateIntentInitListener = (~onUpdateIntentInit: NativeModulesType.upda
   })
 }
 
-let setupUpdateIntentCompleteListener = (~onUpdateIntentComplete: NativeModulesType.updateIntentData => unit) => {
+let setupUpdateIntentCompleteListener = (
+  ~onUpdateIntentComplete: NativeModulesType.updateIntentData => unit,
+) => {
   setupNativeEventListener("updateIntentComplete", var => {
     switch var->JSON.Decode.object {
     | Some(dict) =>

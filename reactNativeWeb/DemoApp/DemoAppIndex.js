@@ -1,87 +1,223 @@
 let defaultProps = {
-  local: false,
+  type: 'payment',
+  hyperswitchConfig: {
+    publishableKey: '',
+    profileId: '',
+    environment: 'sandbox',
+  },
+  paymentSessionConfig: {
+    sdkAuthorization: '',
+  },
   configuration: {
-    paymentSheetHeaderLabel: 'Add a payment method',
+    paymentSheetHeaderLabel: 'Select a payment method',
     savedPaymentSheetHeaderLabel: 'Saved payment method',
-    allowsDelayedPaymentMethods: true,
+    allowsDelayedPaymentMethods: false,
     merchantDisplayName: 'Example, Inc.',
-    // disableSavedCardScreen: true,
-    // paymentSheetHeaderText: 'Hello world',
-    // savedPaymentScreenHeaderText: 'Testing....',
     allowsPaymentMethodsRequiringShippingAddress: false,
-    googlePay: {
-      environment: 'Test',
-      countryCode: 'US',
-      currencyCode: 'US',
+    displaySavedPaymentMethodsCheckbox: true,
+    displaySavedPaymentMethods: true,
+    displayDefaultSavedPaymentIcon: true,
+    displayPayButton: true,
+    disableBranding: true,
+    // preloadCardElement: false,
+    primaryButtonLabel: 'Pay Now',
+    netceteraSDKApiKey: '',
+    locale: 'en',
+    subscribedEvents: ['onSuccess', 'onFailed', 'onCancelled'],
+    paymentMethodLayout: {
+      type: 'tabs',
+      radios: false,
+      maxAccordionItems: 3,
+      paymentMethodsArrangementForTabs: "auto",
+      spacedAccordionItems: true,
+      defaultCollapsed: true,
+      savedMethodCustomization: {
+        defaultCollapsed: false,
+        hideCardExpiry: true,
+        hideCVCError: false,
+        cvcIcon: 'shown',
+        groupingBehavior: {
+          displayInSeparateScreen: true,
+          groupByPaymentMethods: false,
+        },
+      },
     },
-    // displaySavedPaymentMethodsCheckbox: false,
-    // shippingDetails: {
-    //   address: {
-    //     city: 'city',
-    //     country: 'US',
-    //     line1: 'US',
-    //     line2: 'line2',
-    //     postalCode: '560060',
-    //     state: 'California',
-    //   },
-    //   name: 'Shipping INC',
-    // },
-    // displaySavedPaymentMethods: false,
     appearance: {
       theme: 'Light',
-      layout: {
-        type: 'accordion',
-        spacedAccordionItems: true,
-        savedMethodCustomization: {
-          groupingBehavior: {
-            displayInSeparateScreen: false,
-            groupByPaymentMethods: false,
-          }
-        }
+      colors: {
+        light: {
+          primary: '#006DF9',
+          background: '#FFFFFF',
+          componentBackground: '#F6F8F9',
+          componentBorder: '#E0E0E0',
+          componentDivider: '#E0E0E0',
+          componentText: '#000000',
+          primaryText: '#000000',
+          secondaryText: '#767676',
+          placeholderText: '#9E9E9E',
+          icon: '#000000',
+          error: '#FF0000',
+          loaderBackground: '#F6F8F9',
+          loaderForeground: '#006DF9',
+          selectedComponentBackground: '#EBF2FF',
+          selectedComponentBorder: '#006DF9',
+          selectedComponentBorderWidth: 2.0,
+          selectedComponentDivider: '#E0E0E0',
+          selectedComponentText: '#000000',
+        },
+        dark: {
+          primary: '#006DF9',
+          background: '#FFFFFF',
+          componentBackground: '#F6F8F9',
+          componentBorder: '#E0E0E0',
+          componentDivider: '#E0E0E0',
+          componentText: '#000000',
+          primaryText: '#000000',
+          secondaryText: '#767676',
+          placeholderText: '#9E9E9E',
+          icon: '#000000',
+          error: '#FF0000',
+          loaderBackground: '#F6F8F9',
+          loaderForeground: '#006DF9',
+          selectedComponentBackground: '#1a3a5c',
+          selectedComponentBorder: '#0057c7',
+          selectedComponentBorderWidth: 2.0,
+          selectedComponentDivider: '#e6e6e6',
+          selectedComponentText: '#ffffff',
+        },
       },
-      // colors:{
-      //   background:"rgb(58, 23, 84)",
-      //   primary:"#fff",
-      //   componentBorder: "#00000050",
-      //   componentBackground: "#00000030",
-      // },
-      // shapes:{
-      //   borderRadius:8.0
-      // },
-      // primaryButton:{
-      //   shapes:{
-      //     borderRadius:8.0
-      //   },
-      //   colors: {
-      //     text: "#000"
-      //   }
-      // },
-      // locale: "fr",
-      // typography: {
-        // family: 'Montserrat',
-        // sizeScaleFactor: 0.9
-      // },
+      shapes: {
+        borderRadius: 8.0,
+        borderWidth: 1.0,
+        shadow: {
+          color: '#000000',
+          opacity: 0.2,
+          blurRadius: 4.0,
+          intensity: 4.0,
+          offset: { x: 2.0, y: 2.0 },
+        },
+      },
+      font: {
+        family: 'Roboto',
+        scale: 1.0,
+      },
+      primaryButton: {
+        shapes: {
+          borderRadius: 8.0,
+          borderWidth: 2.5,
+          shadow: {
+            color: '#000000',
+            opacity: 1.0,
+            blurRadius: 0.0,
+            intensity: 4.0,
+            offset: { x: 4.0, y: 4.0 },
+          },
+        },
+        colors: {
+          light: {
+            background: '#FFE500',
+            text: '#000000',
+            border: '#000000',
+          },
+          dark: {
+            background: '#FFE500',
+            text: '#000000',
+            border: '#000000',
+          },
+        },
+      },
+      logo: {
+        borderRadius: 50,
+        colors: {
+          light: {
+            backgroundColor: 'black',
+            unselected: 'white',
+          },
+          dark: {
+            backgroundColor: 'white',
+            unselected: 'black',
+          },
+        },
+        checkedIconForSelection: {
+          colors: {
+            light: {
+              color: '#15b600',
+            },
+            dark: {
+              color: '#15b600',
+            },
+          },
+        },
+      },
     },
-    displayMergedSavedMethods: true,
+    walletButtonsConfiguration: {
+      googlePay: {
+        buttonType: 'buy',
+        buttonStyle: { light: 'dark', dark: 'light' },
+      },
+      applePay: {
+        buttonType: 'donate',
+        buttonStyle: { light: 'black', dark: 'white' },
+      },
+    },
+    placeholder: {
+      cardNumber: '4242 4242 4242 4242',
+      expiryDate: 'MM / YY',
+      cvv: 'CVC',
+    },
+    redirectionInfo: 'hidden',
+    stickyPayButton: true,
+    // alwaysSendCustomerAcceptance: false,
+    paymentMethodsConfig: [{ paymentMethod: 'card', message: '' }, { paymentMethod: 'wallet', message: '' }],
+    // opensCardScannerAutomatically: false,
+    paymentMethodOrder: ["apple_pay", "google_pay", "paypal", "samsung_pay", "credit", "klarna",],
+    billingDetails: {
+      email: 'john@example.com',
+      phone: { code: '+91', number: '9999999999' },
+      address: {
+        first_name: 'John',
+        last_name: 'Doe',
+        city: 'San Francisco',
+        country: 'US',
+        line1: '123 Main St',
+        line2: 'Apt 4B',
+        postalCode: '94102',
+        state: 'CA',
+      },
+    },
+    shippingDetails: {
+      phone: { code: '+91', number: '9999999999' },
+      address: {
+        first_name: 'John',
+        last_name: 'Doe',
+        city: 'San Francisco',
+        country: 'US',
+        line1: '123 Main St',
+        line2: 'Apt 4B',
+        postalCode: '94102',
+        state: 'CA',
+      },
+    },
+    customer: {
+      id: 'cus_xxxxxxxxxxxx',
+      ephemeralKeySecret: 'ephem_xxxxxxxxxxxx',
+    },
   },
-  hyperParams: {
-    ip: '13.232.74.226',
-    'user-agent':
-      'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:35.0) Gecko/20100101 Firefox/35.',
+  sdkParams: {
+    sessionId: '',
+    sdkVersion: '1.0.0',
+    confirm: false,
+    'user-agent': navigator.userAgent,
     launchTime: Date.now(),
-    // country: 'AT',
+    appId: 'com.example.myapp',
+    country: 'US',
+    device_model: 'iPhone',
+    os_type: 'iOS',
+    os_version: '18.5',
+    deviceBrand: 'Apple',
   },
-  from: 'rn',
-  type: 'payment',
-
-    // | "payment" => PaymentSheet
-    // | "tabSheet" => TabSheet
-    // | "buttonSheet" => ButtonSheet
-    // | "widgetPaymentSheet" => WidgetPaymentSheet
-    // | "widgetTabSheet" => WidgetTabSheet
-    // | "widgetButtonSheet" => WidgetButtonSheet
-
 };
+
 const TRUSTED_ORIGINS = [
   'http://127.0.0.1:8082',
   'http://localhost:8083',
@@ -96,14 +232,15 @@ const initReactNativeWeb = async () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
-      defaultProps.publishableKey = data.publishableKey;
-      defaultProps.sdkAuthorization = data.sdkAuthorization;
-      defaultProps.local = true;
+      defaultProps.hyperswitchConfig.publishableKey = data.publishableKey;
+      defaultProps.hyperswitchConfig.profileId = data.profileId ?? '';
+      defaultProps.paymentSessionConfig.sdkAuthorization =
+        data.sdkAuthorization ?? '';
 
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage(
-          JSON.stringify({initialProps: {props: defaultProps}}),
+          JSON.stringify({ initialProps: { props: defaultProps } }),
           TRUSTED_ORIGINS[0],
         );
       } else {
@@ -137,9 +274,8 @@ const initReactNativeWeb = async () => {
 
         const statusElement = document.getElementById('status');
         if (statusElement) {
-          statusElement.textContent = `Status: ${data.status} ${
-            data.message ? 'Message: ' + data.message : ''
-          }`.toUpperCase();
+          statusElement.textContent = `Status: ${data.status} ${data.message ? 'Message: ' + data.message : ''
+            }`.toUpperCase();
         } else {
           console.error('Status element not found.');
         }

@@ -1,5 +1,6 @@
 type confirmButtonData = {
   loading: bool,
+  visible?: bool,
   handlePress: unit => unit,
   payment_method_type: string,
   payment_experience?: array<AccountPaymentMethodType.payment_experience>,
@@ -9,6 +10,7 @@ type confirmButtonData = {
 
 let defaultConfirmButtonData = {
   loading: true,
+  visible: true,
   handlePress: _ => (),
   payment_method_type: "loading",
   errorText: None,
@@ -20,10 +22,10 @@ let make = (~confirmButtonData) => {
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   <UIUtils.RenderIf
-    condition={!nativeProp.configuration.hideConfirmButton && (
-      sheetType === DynamicFieldsSheet ||
-        (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet)
-    )}>
+    condition={nativeProp.configuration.displayPayButton &&
+    confirmButtonData.visible->Option.getOr(true) &&
+    (sheetType === DynamicFieldsSheet ||
+      (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet))}>
     <ConfirmButton
       loading=confirmButtonData.loading
       handlePress=confirmButtonData.handlePress
@@ -32,6 +34,5 @@ let make = (~confirmButtonData) => {
       customerPaymentExperience=?confirmButtonData.customer_payment_experience
       errorText=confirmButtonData.errorText
     />
-    <Space height=15. />
   </UIUtils.RenderIf>
 }

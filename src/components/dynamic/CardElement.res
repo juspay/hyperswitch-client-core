@@ -191,7 +191,6 @@ let make = (
         None
       }, (cardNumber, expireDate, cvc, brand))
 
-
       React.useEffect1(() => {
         let isValid = cardValid(cardNumber, brand)
         let isMaxLength = isCardNumberEqualsMax(cardNumber, brand)
@@ -244,7 +243,9 @@ let make = (
                 reference=Some(cardRef)
                 state={cardNumberInput.value->Option.getOr("")}
                 setState={text => onChangeCardNumber(text, expireRef)}
-                placeholder=nativeProp.configuration.placeholder.cardNumber
+                placeholder={nativeProp.configuration.placeholder.cardNumber->Option.getOr(
+                  localeObject.cardNumberLabel,
+                )}
                 keyboardType=#"number-pad"
                 isValid={cardNumberMeta.error->Option.isNone ||
                 !cardNumberMeta.touched ||
@@ -252,7 +253,7 @@ let make = (
                 maxLength=Some(23)
                 borderTopLeftRadius=borderRadius
                 borderTopRightRadius=borderRadius
-                borderBottomWidth=borderWidth
+                borderBottomWidth={borderWidth /. 2.}
                 borderLeftWidth=borderWidth
                 borderRightWidth=borderWidth
                 borderTopWidth=borderWidth
@@ -314,7 +315,9 @@ let make = (
                   reference={Some(expireRef)}
                   state=expireDate
                   setState={text => onChangeCardExpire(text, cvvRef)}
-                  placeholder=nativeProp.configuration.placeholder.expiryDate
+                  placeholder={nativeProp.configuration.placeholder.expiryDate->Option.getOr(
+                    localeObject.validThruText,
+                  )}
                   keyboardType=#"number-pad"
                   enableCrossIcon=false
                   isValid={((cardExpiryYearMeta.error->Option.isNone ||
@@ -322,8 +325,8 @@ let make = (
                   cardExpiryYearMeta.active) && expireDate->String.length < 7) ||
                     (expireDate->String.length === 7 && checkCardExpiry(expireDate))}
                   maxLength=Some(7)
-                  borderTopWidth=0.25
-                  borderRightWidth=borderWidth
+                  borderTopWidth={borderWidth /. 2.}
+                  borderRightWidth={borderWidth /. 2.}
                   borderTopLeftRadius=0.
                   borderTopRightRadius=0.
                   borderBottomRightRadius=0.
@@ -358,8 +361,8 @@ let make = (
                 <CustomInput
                   name={TestUtils.cvcInputTestId}
                   reference={Some(cvvRef)}
-                  borderTopWidth=0.25
-                  borderLeftWidth=0.5
+                  borderTopWidth={borderWidth /. 2.}
+                  borderLeftWidth={borderWidth /. 2.}
                   borderTopLeftRadius=0.
                   borderTopRightRadius=0.
                   borderBottomLeftRadius=0.
@@ -373,7 +376,9 @@ let make = (
                   cardCvcMeta.active}
                   maxLength=Some(4)
                   setState={text => onChangeCvv(text, nullRef)}
-                  placeholder=nativeProp.configuration.placeholder.cvv
+                  placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(
+                    localeObject.cvcTextLabel,
+                  )}
                   keyboardType=#"number-pad"
                   enableCrossIcon=false
                   onFocus={() => {

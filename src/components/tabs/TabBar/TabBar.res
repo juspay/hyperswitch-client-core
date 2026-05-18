@@ -482,7 +482,9 @@ let make = (
         flexGrow: 1.,
         flexDirection: #row,
         flexWrap: #nowrap,
-        padding: (sheetContentPadding -. 6.)->dp,
+        marginVertical: (sheetContentPadding -. 6.)->dp,
+        marginLeft: (sheetContentPadding -. 6.)->dp,
+        paddingRight: (sheetContentPadding -. 6.)->dp,
       }),
       // scrollEnabled->Option.getOr(false) ? s({width: tabBarWidth->dp}) : empty,
       contentContainerStyle->Option.getOr(empty),
@@ -526,7 +528,7 @@ let make = (
   <Animated.View
     ref={containerRef->ReactNative.Ref.value}
     onLayout
-    style={array([s({zIndex: 1}), style->Option.getOr(empty)])}>
+    style={array([s({zIndex: 1, marginRight: 20.->dp}), style->Option.getOr(empty)])}>
     <View style={s({overflow: #scroll})}>
       <Animated.FlatList
         data={routes}

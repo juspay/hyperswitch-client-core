@@ -301,8 +301,7 @@ let make = (
   }, (position, tabHeights))
 
   children(~position, ~subscribe, ~jumpTo, ~render=children => {
-    <View
-      ref={containerRef->ReactNative.Ref.value} onLayout style={s({flex: 1., overflow: #hidden})}>
+    <View ref={containerRef->ReactNative.Ref.value} onLayout style={s({overflow: #hidden})}>
       <Animated.View
         style={array([
           s({
@@ -344,8 +343,12 @@ let make = (
               <View
                 key={route.key}
                 style=?{if layout.width != 0. {
-                  Some(s({width: layout.width->dp}))
-                } else if focused {
+                  Some(
+                    s({
+                      width: layout.width->dp,
+                    }),
+                  )
+                } else if focused && index > 0 {
                   Some(StyleSheet.absoluteFill)
                 } else {
                   None

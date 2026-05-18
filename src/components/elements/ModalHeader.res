@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~onModalClose, ~isLoading=false) => {
+let make = (~onModalClose, ~isLoading=false, ~isSavedPaymentScreen) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {sheetType, setSheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -26,7 +26,9 @@ let make = (~onModalClose, ~isLoading=false) => {
     } else if isLoading {
       <View />
     } else {
-      switch nativeProp.configuration.paymentSheetHeaderText {
+      switch isSavedPaymentScreen
+        ? nativeProp.configuration.savedPaymentSheetHeaderLabel
+        : nativeProp.configuration.paymentSheetHeaderLabel {
       | Some(var) =>
         <View style={s({maxWidth: 60.->pct})}>
           <TextWrapper text={var} textType={HeadingBold} />
@@ -39,9 +41,8 @@ let make = (~onModalClose, ~isLoading=false) => {
       {isLoading
         ? <CustomLoader width="60" height="20" />
         : <>
-            {nativeProp.env === GlobalVars.PROD
-              ? React.null
-              : <View
+            {nativeProp.hyperswitchConfig.environment !== GlobalVars.PROD
+              ? <View
                   style={s({
                     backgroundColor: "#ffdd93",
                     marginHorizontal: 5.->dp,
@@ -53,7 +54,8 @@ let make = (~onModalClose, ~isLoading=false) => {
                     text="Test Mode"
                     overrideStyle=Some(s({color: "black"}))
                   />
-                </View>}
+                </View>
+              : React.null}
             <CustomPressable onPress={_ => onModalClose()}>
               <Icon name="close" width=16. height=16. fill=iconColor />
             </CustomPressable>

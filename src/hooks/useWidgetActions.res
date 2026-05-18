@@ -5,7 +5,16 @@ let useNotifyValidationFailure = () => {
 
   () => {
     switch nativeProp.sdkState {
-    | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet =>
+    | PaymentSheet
+    | ButtonSheet
+    | TabSheet
+    | WidgetPaymentSheet
+    | WidgetButtonSheet
+    | WidgetTabSheet
+    | HostedCheckout
+    | CardWidget
+    | ExpressCheckoutWidget
+    | PaymentMethodsManagement =>
       HyperModule.hyperModule.notifyWidgetPaymentResult(
         nativeProp.rootTag,
         PaymentConfirmTypes.formValidationError->HyperModule.stringifiedResStatus,

@@ -9,7 +9,7 @@ type iconType =
 let make = (
   ~state,
   ~setState,
-  ~placeholder="Enter the text here",
+  ~placeholder,
   ~placeholderTextColor=None,
   ~width=100.->pct,
   ~height: float=46.,
@@ -58,12 +58,11 @@ let make = (
     errorTextInputColor,
     normalTextInputBoderColor,
     component,
-    shadowColor,
-    shadowIntensity,
+    shadowConfig,
     placeholderTextSizeAdjust,
     fontScale,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowIntensity, ~shadowColor, ())
+  let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   let (showPass, setShowPass) = React.useState(_ => secureTextEntry)
   let (isFocused, setIsFocused) = React.useState(_ => false)
@@ -73,6 +72,7 @@ let make = (
   let shadowStyle = enableShadow ? getShadowStyle : empty
 
   let animatedValue = AnimatedValue.useAnimatedValue(0.)
+  let (loading, _) = React.useContext(LoadingContext.loadingContext)
 
   React.useEffect1(() => {
     animatedValue->Animated.Value.setValue(state === "" ? 0. : 1.)
@@ -96,7 +96,7 @@ let make = (
     None
   }, (isFocused, state))
 
-  <View style={style->Option.getOr(s({width: 100.->pct}))}>
+  <View style={style->Option.getOr(s({width: width}))}>
     {heading != ""
       ? <TextWrapper textType={PlaceholderText}>
           {React.string(heading)}
@@ -189,6 +189,12 @@ let make = (
             s({
               fontStyle: #normal,
               color: textColor,
+              opacity: {
+                switch loading {
+                | ProcessingPayments | ProcessingPaymentsWithOverlay => 0.5
+                | _ => 1.
+                }
+              },
               fontFamily,
               fontSize: (fontSize +. placeholderTextSizeAdjust) *. fontScale,
               ?textAlign,

@@ -16,3 +16,11 @@ let isValidPK = (env: envType, publishableKey) => {
   | (INTEG, pk) => pk->String.startsWith("pk_snd_")
   }
 }
+
+let getEnv = (env: string) => {
+  switch env->String.toUpperCase {
+  | "INTEG" => INTEG
+  | "SANDBOX" => SANDBOX
+  | _ => PROD
+  }
+}

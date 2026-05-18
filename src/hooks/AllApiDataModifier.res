@@ -22,23 +22,37 @@ let useAccountPaymentMethodModifier = () => {
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
   React.useMemo3(() => {
-    let groupingBehavior =
-      nativeProp.configuration.appearance.layout.savedMethodCustomization.groupingBehavior
+    let groupingBehavior = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior
 
     // Show a merged "Saved" tab only when displayInSeparateScreen=false AND groupByPaymentMethods=false
     let showMergedSavedTab =
       !groupingBehavior.displayInSeparateScreen && !groupingBehavior.groupByPaymentMethods
 
     let (initialTabArr, initialElementArr) = if showMergedSavedTab {
-      customerPaymentMethodData
-      ->Option.map(customerPaymentMethods => {
+      switch customerPaymentMethodData {
+      | None =>
+        switch nativeProp.sdkState {
+        | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet => (
+            [
+              {
+                name: "Saved",
+                paymentMethodType: "saved_payment_method",
+                componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) =>
+                  <InitialLoader />,
+              },
+            ],
+            [],
+          )
+        | _ => ([], [])
+        }
+      | Some(customerPaymentMethods) =>
         switch nativeProp.sdkState {
         | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet =>
-          let customerPaymentMethods =
-            customerPaymentMethods.customer_payment_methods->Array.filter(
-              customer_payment_method_type =>
-                customer_payment_method_type.payment_method !== WALLET,
-            )
+          let customerPaymentMethods = customerPaymentMethods.customer_payment_methods
+          // ->Array.filter(
+          //   customer_payment_method_type =>
+          //     customer_payment_method_type.payment_method !== WALLET,
+          // )
           (
             customerPaymentMethods->Array.length > 0
               ? [
@@ -53,7 +67,7 @@ let useAccountPaymentMethodModifier = () => {
                         merchantName={accountPaymentMethodData
                         ->Option.map(data => data.merchant_name)
                         ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
-                        animated=false
+                        animated=true
                         style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
                       />,
                   },
@@ -72,8 +86,7 @@ let useAccountPaymentMethodModifier = () => {
           ([], [])
         | _ => ([], [])
         }
-      })
-      ->Option.getOr(([], []))
+      }
     } else {
       ([], [])
     }
@@ -154,8 +167,8 @@ let useAccountPaymentMethodModifier = () => {
 
             let savedCardMethods =
               customerPaymentMethodData
-              ->Option.map(cpm =>
-                cpm.customer_payment_methods->Array.filter(m => m.payment_method === CARD)
+              ->Option.map(
+                cpm => cpm.customer_payment_methods->Array.filter(m => m.payment_method === CARD),
               )
               ->Option.getOr([])
 
@@ -176,10 +189,7 @@ let useAccountPaymentMethodModifier = () => {
                     componentHoc: isGroupByPMCard
                       ? (~isScreenFocus, ~setConfirmButtonData) =>
                           <SavedCardToggleTab
-                            isScreenFocus
-                            setConfirmButtonData
-                            paymentMethodData
-                            savedCardMethods
+                            isScreenFocus setConfirmButtonData paymentMethodData savedCardMethods
                           />
                       : (~isScreenFocus, ~setConfirmButtonData) =>
                           <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
@@ -192,10 +202,7 @@ let useAccountPaymentMethodModifier = () => {
                 componentHoc: isGroupByPMCard
                   ? (~isScreenFocus, ~setConfirmButtonData) =>
                       <SavedCardToggleTab
-                        isScreenFocus
-                        setConfirmButtonData
-                        paymentMethodData
-                        savedCardMethods
+                        isScreenFocus setConfirmButtonData paymentMethodData savedCardMethods
                       />
                   : (~isScreenFocus, ~setConfirmButtonData) =>
                       <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
@@ -220,10 +227,11 @@ let useAccountPaymentMethodModifier = () => {
         name: "loading",
         paymentMethodType: "loading",
         componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) => <>
-          <Space height=20. />
+          <Space height=10. />
           <CustomLoader />
           <Space height=10. />
           <CustomLoader />
+          <Space height=20. />
         </>,
       }
 
