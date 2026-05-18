@@ -24,9 +24,11 @@ let useAccountPaymentMethodModifier = () => {
   React.useMemo3(() => {
     let groupingBehavior = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior
 
-    // Show a merged "Saved" tab only when displayInSeparateScreen=false AND groupByPaymentMethods=false
+    // Show a merged "Saved" tab only when displaySavedPaymentMethods=true AND displayInSeparateScreen=false AND groupByPaymentMethods=false
     let showMergedSavedTab =
-      !groupingBehavior.displayInSeparateScreen && !groupingBehavior.groupByPaymentMethods
+      nativeProp.configuration.displaySavedPaymentMethods &&
+      !groupingBehavior.displayInSeparateScreen &&
+      !groupingBehavior.groupByPaymentMethods
 
     let (initialTabArr, initialElementArr) = if showMergedSavedTab {
       switch customerPaymentMethodData {
