@@ -734,20 +734,23 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
         | _ => PAYPAL
         },
         buttonStyle: getOptionalObj(payPalDict, "buttonStyle")->Option.map(s => {
-          light: switch getString(s, "light", "") {
-          | "blue" => BLUE
-          | "white" => WHITE
-          | "black" => BLACK
-          | "silver" => SILVER
-          | _ => GOLD
-          },
-          dark: switch getString(s, "dark", "") {
-          | "gold" => GOLD
-          | "white" => WHITE
-          | "black" => BLACK
-          | "silver" => SILVER
-          | _ => WHITE
-          },
+          let payPalThemeBaseStyle: payPalThemeBaseStyle = {
+            light: switch getString(s, "light", "") {
+            | "blue" => BLUE
+            | "white" => WHITE
+            | "black" => BLACK
+            | "silver" => SILVER
+            | _ => GOLD
+            },
+            dark: switch getString(s, "dark", "") {
+            | "gold" => GOLD
+            | "white" => WHITE
+            | "black" => BLACK
+            | "silver" => SILVER
+            | _ => WHITE
+            },
+          }
+          payPalThemeBaseStyle
         }),
       },
     },
