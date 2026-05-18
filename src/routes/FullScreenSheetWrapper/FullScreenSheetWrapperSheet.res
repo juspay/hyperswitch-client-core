@@ -42,7 +42,7 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
             1000.->Animated.Value.Timing.fromRawValue
           },
           isInteraction: true,
-          useNativeDriver: true,
+          useNativeDriver: false,
           delay: 0.,
           duration: 300.,
           easing: Easing.linear,

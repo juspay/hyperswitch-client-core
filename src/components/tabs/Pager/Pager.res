@@ -346,10 +346,9 @@ let make = (
                   Some(
                     s({
                       width: layout.width->dp,
-                      height: 150.->dp,
                     }),
                   )
-                } else if focused {
+                } else if focused && index > 0 {
                   Some(StyleSheet.absoluteFill)
                 } else {
                   None
@@ -357,7 +356,6 @@ let make = (
                 <View
                   onLayout={(event: Event.layoutEvent) => {
                     if route.title->Option.getOr("") !== "loading" {
-                      Console.log2("route.title", route.title)
                       let prevHeight = measuredTabHeights.current->Array.get(i)->Option.getOr(0.)
                       let newHeight = event.nativeEvent.layout.height
                       if newHeight > 10. && Math.abs(newHeight -. prevHeight) > 10. {

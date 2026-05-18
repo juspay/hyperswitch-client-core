@@ -81,7 +81,7 @@ let make = (
     disabled
     testID={testID->Option.getOr("")}
     style={array([
-      getShadowStyle,
+      children->Option.isNone ? getShadowStyle : empty,
       s({
         height: primaryButtonHeight->dp,
         width: 100.->pct,

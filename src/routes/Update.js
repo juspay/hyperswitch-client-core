@@ -16,8 +16,13 @@ const NewApp = props => {
 };
 
 const SentryApp = React.memo(props => {
-  initiateSentry(process.env.SENTRY_DSN, process.env.SENTRY_ENV);
-  return sentryReactNative.wrap(NewApp)(props);
+  const dsn = process.env.SENTRY_DSN
+  if (dsn) {
+    initiateSentry(dsn, process.env.SENTRY_ENV);
+    return sentryReactNative.wrap(NewApp)(props);
+  } else {
+    return NewApp(props);
+  }
 });
 
 export default (

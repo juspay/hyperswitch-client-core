@@ -88,6 +88,7 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
   let (expanded, setExpanded) = React.useState(_ => false)
 
   let {
+    bgColor,
     primaryColor,
     component,
     borderRadius,
@@ -105,6 +106,7 @@ let make = (~isLoading, ~giftCardArr, ~style=empty) => {
             ? <CustomLoader />
             : <View
                 style={array([
+                  bgColor,
                   getShadowStyle,
                   s({
                     borderWidth,

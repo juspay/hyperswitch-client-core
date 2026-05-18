@@ -664,7 +664,7 @@ let make = (
               borderColor: component.borderColor,
             })
           : empty,
-        displayInSeparateScreen ? bgColor : empty,
+        bgColor,
         nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? getShadowStyle : empty,
         s({
           flexShrink: 1.,

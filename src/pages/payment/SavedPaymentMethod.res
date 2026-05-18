@@ -409,7 +409,7 @@ let make = (
   }
 
   animated
-    ? <View style={s({flex: 1.})}>
+    ? <View style={ReactNative.Platform.os === #web ? s({flex: 1.}) : empty}>
         <ScrollView
           keyboardShouldPersistTaps=#handled
           showsVerticalScrollIndicator=false

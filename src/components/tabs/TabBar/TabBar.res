@@ -484,6 +484,7 @@ let make = (
         flexWrap: #nowrap,
         marginVertical: (sheetContentPadding -. 6.)->dp,
         marginLeft: (sheetContentPadding -. 6.)->dp,
+        paddingRight: (sheetContentPadding -. 6.)->dp,
       }),
       // scrollEnabled->Option.getOr(false) ? s({width: tabBarWidth->dp}) : empty,
       contentContainerStyle->Option.getOr(empty),

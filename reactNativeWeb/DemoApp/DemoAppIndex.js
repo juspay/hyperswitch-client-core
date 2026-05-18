@@ -11,7 +11,7 @@ let defaultProps = {
   configuration: {
     paymentSheetHeaderLabel: 'Select a payment method',
     savedPaymentSheetHeaderLabel: 'Saved payment method',
-    allowsDelayedPaymentMethods: true,
+    allowsDelayedPaymentMethods: false,
     merchantDisplayName: 'Example, Inc.',
     allowsPaymentMethodsRequiringShippingAddress: false,
     displaySavedPaymentMethodsCheckbox: true,
@@ -25,9 +25,10 @@ let defaultProps = {
     locale: 'en',
     subscribedEvents: ['onSuccess', 'onFailed', 'onCancelled'],
     paymentMethodLayout: {
-      type: 'accordion',
+      type: 'tabs',
       radios: false,
       maxAccordionItems: 3,
+      paymentMethodsArrangementForTabs: "auto",
       spacedAccordionItems: true,
       defaultCollapsed: true,
       savedMethodCustomization: {
@@ -36,7 +37,7 @@ let defaultProps = {
         hideCVCError: false,
         cvcIcon: 'shown',
         groupingBehavior: {
-          displayInSeparateScreen: false,
+          displayInSeparateScreen: true,
           groupByPaymentMethods: false,
         },
       },
@@ -169,7 +170,7 @@ let defaultProps = {
     // alwaysSendCustomerAcceptance: false,
     paymentMethodsConfig: [{ paymentMethod: 'card', message: '' }, { paymentMethod: 'wallet', message: '' }],
     // opensCardScannerAutomatically: false,
-    paymentMethodOrder: ["apple_pay", "google_pay", "paypal", "samsung_pay", "klarna", "credit"],
+    paymentMethodOrder: ["apple_pay", "google_pay", "paypal", "samsung_pay", "credit", "klarna",],
     billingDetails: {
       email: 'john@example.com',
       phone: { code: '+91', number: '9999999999' },
