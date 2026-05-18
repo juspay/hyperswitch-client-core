@@ -110,11 +110,6 @@ let make = (
         ~payment_method=token.payment_method_str,
         ~payment_token=token.payment_token,
         ~savedCardCvv,
-        ~appURL=?{
-          accountPaymentMethodData->Option.map(accountPaymentMethods =>
-            accountPaymentMethods.redirect_url
-          )
-        },
         ~payment_type_str=accountPaymentMethodData
         ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
         ->Option.getOr(None),

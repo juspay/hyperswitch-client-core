@@ -101,7 +101,6 @@ let generateSavedCardConfirmBody = (
   ~payment_token,
   ~savedCardCvv,
   ~payment_type_str,
-  ~appURL: option<string>=?,
   ~screen_height=?,
   ~screen_width=?,
   ~billing=?,
@@ -113,7 +112,7 @@ let generateSavedCardConfirmBody = (
   payment_method,
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  return_url: ?Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL),
+  return_url: ?Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),
   payment_method_data: ?billing->Option.map(address =>
     [("billing", address->Utils.getJsonObjectFromRecord)]
     ->Dict.fromArray
