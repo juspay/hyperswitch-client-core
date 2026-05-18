@@ -1,3 +1,25 @@
+# [1.11.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.10.2...v1.11.0) (2026-05-18)
+
+
+### Bug Fixes
+
+* cvv error padding issue ([#513](https://github.com/juspay/hyperswitch-client-core/issues/513)) ([9bf27a5](https://github.com/juspay/hyperswitch-client-core/commit/9bf27a5121328b44535cf31694cafbf78817265c))
+* fixed setState renderer bug ([#510](https://github.com/juspay/hyperswitch-client-core/issues/510)) ([0f6c82a](https://github.com/juspay/hyperswitch-client-core/commit/0f6c82afc9fcac328ba2abf3614e37f904dad511))
+* respect displaySavedPaymentMethods in accordion view ([#511](https://github.com/juspay/hyperswitch-client-core/issues/511)) ([de30cc5](https://github.com/juspay/hyperswitch-client-core/commit/de30cc55950770382d4ae924b534ce58ed1d1166))
+* using styling from native prop for paypal ([#512](https://github.com/juspay/hyperswitch-client-core/issues/512)) ([1a0f3ac](https://github.com/juspay/hyperswitch-client-core/commit/1a0f3acad684c3ac6fda6ad29278b95a92e1305f))
+
+
+### Features
+
+* add alwaysSendCustomerAcceptance prop ([#502](https://github.com/juspay/hyperswitch-client-core/issues/502)) ([befad04](https://github.com/juspay/hyperswitch-client-core/commit/befad04c564ebf94cff53459a897067c201a77c8))
+* add browser info and return URL handling in payment confirmation ([#514](https://github.com/juspay/hyperswitch-client-core/issues/514)) ([01508e1](https://github.com/juspay/hyperswitch-client-core/commit/01508e1e4ca50396c26fc73b20f3a3b2fce4260d))
+* Add new layouts and themes with breaking changes for refactor ([#505](https://github.com/juspay/hyperswitch-client-core/issues/505)) ([b35b702](https://github.com/juspay/hyperswitch-client-core/commit/b35b7020fe826f4101e0bb0f4bd379b0c3bdbf02))
+* add parseEndpointsConfig for custom endpoint configuration ([#509](https://github.com/juspay/hyperswitch-client-core/issues/509)) ([a6e4ba1](https://github.com/juspay/hyperswitch-client-core/commit/a6e4ba182495f8580b506df259bb0e98b066757c))
+* added isCvcComplete event ([#503](https://github.com/juspay/hyperswitch-client-core/issues/503)) ([e50067c](https://github.com/juspay/hyperswitch-client-core/commit/e50067cbb7e9d94f06253ac180d45d1f695b927c))
+* implement wallet confirmation callback for payment flows ([#507](https://github.com/juspay/hyperswitch-client-core/issues/507)) ([bbda5d2](https://github.com/juspay/hyperswitch-client-core/commit/bbda5d2017ff8de94e578b48736c86da4d8aefa6))
+* integrated paypal sdk flow ([#432](https://github.com/juspay/hyperswitch-client-core/issues/432)) ([5edf9fa](https://github.com/juspay/hyperswitch-client-core/commit/5edf9fa9f7000e22f978625c7e487cd855ffe225))
+* redirection in headless ([05b4d58](https://github.com/juspay/hyperswitch-client-core/commit/05b4d584a752ecbe163399e1ec3c4c3d95a7f95e))
+
 ## [1.10.1](https://github.com/juspay/hyperswitch-client-core/compare/v1.10.0...v1.10.1) (2026-05-01)
 
 
