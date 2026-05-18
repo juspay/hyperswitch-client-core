@@ -727,8 +727,28 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
         | "hidden" => Hidden
         | _ => Shown
         },
-        buttonType: PAYPAL,
-        buttonStyle: Some({light: GOLD, dark: BLUE}),
+        buttonType: switch getString(payPalDict, "buttonType", "") {
+        | "checkout" => CHECKOUT
+        | "buynow" => BUY_NOW
+        | "pay" => PAY
+        | _ => PAYPAL
+        },
+        buttonStyle: getOptionalObj(payPalDict, "buttonStyle")->Option.map(s => {
+          light: switch getString(s, "light", "") {
+          | "blue" => BLUE
+          | "white" => WHITE
+          | "black" => BLACK
+          | "silver" => SILVER
+          | _ => GOLD
+          },
+          dark: switch getString(s, "dark", "") {
+          | "gold" => GOLD
+          | "white" => WHITE
+          | "black" => BLACK
+          | "silver" => SILVER
+          | _ => WHITE
+          },
+        }),
       },
     },
     redirectionInfo: switch getString(configObj, "redirectionInfo", "shown") {
