@@ -53,6 +53,7 @@ let make = () => {
           CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
             customerPaymentMethodData,
             nativeProp.configuration.paymentMethodOrder,
+            nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
           ),
         ))
       }

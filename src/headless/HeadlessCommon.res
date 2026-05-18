@@ -637,6 +637,7 @@ let apiHandler = async (
     let spmData =
       obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
         nativeProp.configuration.paymentMethodOrder,
+        nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
       )
     let sessionSpmData = spmData.customer_payment_methods->Array.filter(data => {
       switch (data.payment_method_type_wallet, ReactNative.Platform.os) {

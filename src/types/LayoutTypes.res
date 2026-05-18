@@ -14,6 +14,7 @@ type savedMethodCustomization = {
   cvcIcon: visibility,
   groupingBehavior: groupingBehavior,
   defaultCollapsed: bool,
+  hiddenPaymentMethods: array<string>,
 }
 
 type layout = {
@@ -41,6 +42,7 @@ let defaultLayout: layout = {
     cvcIcon: Shown,
     defaultCollapsed: false,
     groupingBehavior: {displayInSeparateScreen: true, groupByPaymentMethods: false},
+    hiddenPaymentMethods: [],
   },
 }
 
@@ -97,6 +99,11 @@ let parseLayout = (configObj: Dict.t<JSON.t>) => {
             }
           },
           defaultCollapsed: getBool(savedMethodCustomizationDict, "defaultCollapsed", false),
+          hiddenPaymentMethods: savedMethodCustomizationDict
+          ->Dict.get("hiddenPaymentMethods")
+          ->Option.flatMap(JSON.Decode.array)
+          ->Option.getOr([])
+          ->Array.filterMap(JSON.Decode.string),
         },
       }
     }
