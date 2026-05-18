@@ -22,7 +22,7 @@ let make = (
 
     let {input: phoneNumberInput, meta: phoneNumberMeta} = ReactFinalForm.useField(
       phoneNumberConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.Phone)}
+      ~config={validate: createFieldValidator(Validation.Phone)},
     )
 
     React.useEffect1(() => {
@@ -33,9 +33,7 @@ let make = (
           switch phoneNumberInput.value {
           | None | Some("") => (
               res.countries
-              ->Array.find(countryData =>
-                countryData.country_code === country
-              )
+              ->Array.find(countryData => countryData.country_code === country)
               ->Option.map(country => country.phone_number_code),
               None,
             )
@@ -43,9 +41,7 @@ let make = (
             switch PhoneNumberValidation.formatPhoneNumber(phoneNumber, res.countries) {
             | ("", phone) => (
                 res.countries
-                ->Array.find(countryData =>
-                  countryData.country_code === country
-                )
+                ->Array.find(countryData => countryData.country_code === country)
                 ->Option.map(country => country.phone_number_code),
                 Some(phone),
               )

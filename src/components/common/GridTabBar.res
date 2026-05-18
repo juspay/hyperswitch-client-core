@@ -69,18 +69,12 @@ let make = (
           {isLoading
             ? <CustomLoader height="18" width="18" />
             : <Icon
-                name=hoc.name
-                width=18.
-                height=18.
-                fill={isFocused ? primaryColor : iconColor}
+                name=hoc.name width=18. height=18. fill={isFocused ? primaryColor : iconColor}
               />}
           <Space height=2. />
           {isLoading
             ? <CustomLoader height="18" width="40" />
-            : <TextWrapper
-                text=hoc.name
-                textType={isFocused ? CardTextBold : CardText}
-              />}
+            : <TextWrapper text=hoc.name textType={isFocused ? CardTextBold : CardText} />}
         </View>
       </CustomPressable>
     })

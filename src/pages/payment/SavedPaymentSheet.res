@@ -95,23 +95,34 @@ let make = (
       }
     }
 
-    let paymentMethodType = PaymentUtils.generateSavedCardConfirmBody(
-      ~nativeProp,
-      ~payment_method=token.payment_method_str,
-      ~payment_token=token.payment_token,
-      ~savedCardCvv,
-      ~appURL=?{
-        accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirect_url
-        )
-      },
-      ~payment_type_str=accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
-      ->Option.getOr(None),
-      ~billing=token.billing,
-      ~screen_height=viewPortContants.screenHeight,
-      ~screen_width=viewPortContants.screenWidth,
-    )
+    let paymentMethodType = if token.payment_method === WALLET {
+      PaymentUtils.generateWalletConfirmBody(
+        ~nativeProp,
+        ~payment_token=token.payment_token,
+        ~payment_method_type=token.payment_method_type,
+        ~payment_type_str=accountPaymentMethodData
+        ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+        ->Option.getOr(None),
+      )
+    } else {
+      PaymentUtils.generateSavedCardConfirmBody(
+        ~nativeProp,
+        ~payment_method=token.payment_method_str,
+        ~payment_token=token.payment_token,
+        ~savedCardCvv,
+        ~appURL=?{
+          accountPaymentMethodData->Option.map(accountPaymentMethods =>
+            accountPaymentMethods.redirect_url
+          )
+        },
+        ~payment_type_str=accountPaymentMethodData
+        ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+        ->Option.getOr(None),
+        ~billing=token.billing,
+        ~screen_height=viewPortContants.screenHeight,
+        ~screen_width=viewPortContants.screenWidth,
+      )
+    }
 
     redirectHook(
       ~body=paymentMethodType->Utils.getStringFromRecord,
@@ -119,7 +130,7 @@ let make = (
       ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~errorCallback,
       ~responseCallback,
-      ~paymentMethod="card",
+      ~paymentMethod=token.payment_method_str,
       (),
     )
   }

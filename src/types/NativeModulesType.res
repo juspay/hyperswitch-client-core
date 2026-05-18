@@ -24,7 +24,6 @@ type useExitPaymentsheetReturnType = {
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
 
-
 // Widget action types that can be triggered from native side
 type widgetActionType = ConfirmPayment | ConfirmCvcPayment
 
@@ -92,7 +91,9 @@ type updateIntentData = {
   sdkAuthorization: option<string>,
 }
 
-let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<updateIntentData> => {
+let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<
+  updateIntentData,
+> => {
   let rootTag = dict->getInt("rootTag", -1)
   let sdkAuthorization = dict->getOptionString("sdkAuthorization")
 

@@ -60,7 +60,9 @@ let hyperModule = {
     _,
   ) => ()),
   emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
-  onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) => ()),
+  onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) =>
+    ()
+  ),
   onPaymentConfirmButtonClick: getFunctionFromModule(
     hyperModuleDict,
     "onPaymentConfirmButtonClick",

@@ -22,6 +22,7 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
 
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
+  let launchPaypal = PaypalHooks.usePaypalLaunch()
   let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
   let {getRequiredFieldsForButton, setInitialValueCountry} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
@@ -103,7 +104,9 @@ let make = (
     | Cancelled | Simulated =>
       setLoading(FillingDetails)
       showAlert(~errorType="warning", ~message="Payment was Cancelled")
-    | Failed(error_message) => showAlert(~errorType="error", ~message=error_message)
+    | Failed(error_message) =>
+      setLoading(FillingDetails)
+      showAlert(~errorType="error", ~message=error_message)
     }
   }
 
@@ -212,10 +215,13 @@ let make = (
       | PAYPAL =>
         if (
           sessionObject.session_token !== "" &&
-          WebKit.platform == #android &&
-          PaypalModule.payPalModule->Option.isSome
+          (WebKit.platform == #android || WebKit.platform == #ios) &&
+          PaypalModule.isAvailable &&
+          paymentMethodData.payment_experience
+          ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
+          ->Option.isSome
         ) {
-          PaypalModule.launchPayPal(sessionObject.session_token, confirmPayPal)
+          launchPaypal(~sessionObject, ~paymentMethodData, ~confirmCallback=confirmPayPal)
         } else if (
           paymentMethodData.payment_experience
           ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
@@ -373,11 +379,25 @@ let make = (
           />,
         )
       | PAYPAL =>
-        Some(
-          <GenericButtonElement
-            buttonName width=80. color=paypalButonColor borderRadius={buttonBorderRadius}
-          />,
-        )
+        if PaypalModule.isAvailable {
+          Some(
+            <PaypalButtonView
+              style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
+              buttonColor={paypalButonColor}
+              buttonLabel={nativeProp.configuration.walletButtons.payPal.buttonType}
+              borderRadius={WebKit.platform == #android
+                ? buttonBorderRadius *. 3.
+                : buttonBorderRadius}
+            />,
+          )
+        } else {
+          Some(
+            <GenericButtonElement
+              buttonName width=80. color="#ffc439" borderRadius={buttonBorderRadius}
+            />,
+          )
+        }
+
       // | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)
       // | PAY_SAFE_CARD => Some(<GenericButtonElement buttonName width=92. color="#008ac9" />)
       // | KLARNA => Some(<GenericButtonElement buttonName width=92. height=32. color="#0B051D" />)

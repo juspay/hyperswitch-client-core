@@ -37,7 +37,10 @@ let useErrorWarningValidationOnLoad = () => {
   | Some(_) => true
   | None =>
     isPublishableKeyValid &&
-    RegExp.test(`.+_secret_[A-Za-z0-9]+`->Js.Re.fromString, nativeProp.paymentSessionConfig.clientSecret)
+    RegExp.test(
+      `.+_secret_[A-Za-z0-9]+`->Js.Re.fromString,
+      nativeProp.paymentSessionConfig.clientSecret,
+    )
   }
 
   let showErrorOrWarning = useShowErrorOrWarning()
