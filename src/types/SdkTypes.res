@@ -781,6 +781,25 @@ let parseSdkState = str =>
   | _ => NoView
   }
 
+let parseEndpointsConfig = (d: Dict.t<JSON.t>): option<customEndpointsConfig> => {
+  let overrideEndpointsObj = getOptionalObj(d, "overrideEndpoints")
+  let overrideEndpoints = overrideEndpointsObj->Option.map(obj => {
+    customBackendEndpoint: getOptionString(obj, "customBackendEndpoint"),
+    customLoggingEndpoint: getOptionString(obj, "customLoggingEndpoint"),
+    customAssetEndpoint: getOptionString(obj, "customAssetEndpoint"),
+  })
+
+  let commonEndpoint = getOptionString(d, "commonEndpoint")
+
+  switch (commonEndpoint, overrideEndpoints) {
+  | (Some(endpoint), None) => Some({overrideEndpoints: None, commonEnpoint: Some(endpoint)})
+  | (None, Some(endpoints)) => Some({overrideEndpoints: Some(endpoints), commonEnpoint: None})
+  | (Some(endpoint), Some(endpoints)) =>
+    Some({overrideEndpoints: Some(endpoints), commonEnpoint: Some(endpoint)})
+  | _ => None
+  }
+}
+
 let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   let d = jsonFromNative->JSON.Decode.object->Option.getOr(Dict.make())
 
@@ -808,7 +827,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       publishableKey: getString(hc, "publishableKey", ""),
       profileId: getOptionString(hc, "profileId"),
       environment: GlobalVars.checkEnv(getString(hc, "publishableKey", "")),
-      customEndpoints: None,
+      customEndpoints: parseEndpointsConfig(getObj(hc, "customEndpointsConfig", Dict.make())),
     },
     paymentSessionConfig: {
       clientSecret,
