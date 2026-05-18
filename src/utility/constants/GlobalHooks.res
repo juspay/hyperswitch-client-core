@@ -10,15 +10,15 @@ let getUrlFromNativeProp = (~urlType, ~customEndpoints: SdkTypes.customEndpoints
   | #backend =>
     customEndpoints.overrideEndpoints
     ->Option.map(endpoints => endpoints.customBackendEndpoint)
-    ->Option.getOr(customEndpoints.commonEnpoint->Option.map(endpoint => endpoint ++ backendPath))
+    ->Option.getOr(customEndpoints.commonEndpoint->Option.map(endpoint => endpoint ++ backendPath))
   | #logs =>
     customEndpoints.overrideEndpoints
     ->Option.map(endpoints => endpoints.customLoggingEndpoint)
-    ->Option.getOr(customEndpoints.commonEnpoint->Option.map(endpoint => endpoint ++ logsPath))
+    ->Option.getOr(customEndpoints.commonEndpoint->Option.map(endpoint => endpoint ++ logsPath))
   | #assets =>
     customEndpoints.overrideEndpoints
     ->Option.map(endpoints => endpoints.customAssetEndpoint)
-    ->Option.getOr(customEndpoints.commonEnpoint->Option.map(endpoint => endpoint ++ assetsPath))
+    ->Option.getOr(customEndpoints.commonEndpoint->Option.map(endpoint => endpoint ++ assetsPath))
   }
 }
 

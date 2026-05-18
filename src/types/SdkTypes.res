@@ -310,12 +310,12 @@ type overrideEndpoints = {
 
 type customEndpointsConfig = {
   overrideEndpoints: option<overrideEndpoints>,
-  commonEnpoint: option<string>,
+  commonEndpoint: option<string>,
 }
 
 let defaultCustomEndpointsConfig: customEndpointsConfig = {
   overrideEndpoints: None,
-  commonEnpoint: None,
+  commonEndpoint: None,
 }
 
 type hyperswitchConfig = {
@@ -815,10 +815,10 @@ let parseEndpointsConfig = (d: Dict.t<JSON.t>): option<customEndpointsConfig> =>
   let commonEndpoint = getOptionString(d, "commonEndpoint")
 
   switch (commonEndpoint, overrideEndpoints) {
-  | (Some(endpoint), None) => Some({overrideEndpoints: None, commonEnpoint: Some(endpoint)})
-  | (None, Some(endpoints)) => Some({overrideEndpoints: Some(endpoints), commonEnpoint: None})
+  | (Some(endpoint), None) => Some({overrideEndpoints: None, commonEndpoint: Some(endpoint)})
+  | (None, Some(endpoints)) => Some({overrideEndpoints: Some(endpoints), commonEndpoint: None})
   | (Some(endpoint), Some(endpoints)) =>
-    Some({overrideEndpoints: Some(endpoints), commonEnpoint: Some(endpoint)})
+    Some({overrideEndpoints: Some(endpoints), commonEndpoint: Some(endpoint)})
   | _ => None
   }
 }
