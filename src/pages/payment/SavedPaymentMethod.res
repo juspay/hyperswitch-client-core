@@ -26,14 +26,22 @@ module CVVComponent = {
     let errorMsgText = !isCvcValid ? Some(localeObject.inCompleteCVCErrorText) : None
     let onCvvChange = cvv => setSavedCardCvv(_ => Some(Validation.formatCVCNumber(cvv, cardScheme)))
 
-    <>
+    <View
+      style={s({
+        display: #flex,
+        flexDirection: #column,
+        alignItems: #"flex-end",
+      })}>
       <View
         style={s({
+          flex: 1.,
           display: #flex,
           flexDirection: #row,
           alignItems: #center,
           paddingHorizontal: hideCardExpiry ? 7.5->dp : 47.5->dp,
-          marginTop: hideCardExpiry ? 0.->dp : 10.->dp,
+          marginTop: hideCardExpiry
+            ? (errorMsgText->Option.isSome && !hideCVCError ? 2. : 0.)->dp
+            : 10.->dp,
         })}>
         {hideCardExpiry
           ? React.null
@@ -70,18 +78,8 @@ module CVVComponent = {
               )}
         />
       </View>
-      {errorMsgText->Option.isSome && !hideCVCError
-        ? <View
-            style={s({
-              position: #absolute,
-              left: ?(hideCardExpiry ? None : Some(16.->pct)),
-              right: ?(hideCardExpiry ? Some(0.->pct) : None),
-              bottom: (hideCardExpiry ? -15. : -5.)->pct,
-            })}>
-            <ErrorText text=errorMsgText />
-          </View>
-        : React.null}
-    </>
+      {errorMsgText->Option.isSome && !hideCVCError ? <ErrorText text=errorMsgText /> : React.null}
+    </View>
   }
 }
 module PMWithNickNameComponent = {
@@ -186,7 +184,6 @@ module PaymentMethodListView = {
     ~setSavedCardCvv,
     ~isPaymentMethodSelected,
     ~setSelectedToken,
-    ~displayInSeparateScreen,
   ) => {
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
     let hideCardExpiry = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hideCardExpiry
@@ -209,9 +206,9 @@ module PaymentMethodListView = {
       }}
       style={s({
         minHeight: 60.->dp,
-        paddingVertical: (hideCardExpiry ? 0. : 16.)->dp,
+        paddingVertical: (hideCardExpiry ? 5. : 16.)->dp,
         borderBottomWidth: {
-          isButtomBorder && displayInSeparateScreen ? 1.0 : 0.
+          isButtomBorder ? 1.0 : 0.
         },
         borderBottomColor: component.borderColor,
         justifyContent: #center,
@@ -323,7 +320,6 @@ let make = (
         ->Option.map(token => token.payment_method_id === savedPaymentMethod.payment_method_id)
         ->Option.getOr(i === 0)}
         setSelectedToken
-        displayInSeparateScreen
       />
     })
     ->React.array

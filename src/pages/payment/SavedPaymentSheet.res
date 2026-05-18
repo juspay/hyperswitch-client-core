@@ -668,7 +668,6 @@ let make = (
         nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? getShadowStyle : empty,
         s({
           flexShrink: 1.,
-          paddingVertical: 5.->dp,
           backgroundColor: ?(displayInSeparateScreen ? Some(component.background) : None),
         }),
         style,
