@@ -224,7 +224,6 @@ type themeBasedStyleObj = {
   modalTextSizeAdjust: float,
   cardTextSizeAdjust: float,
   paypalButonColor: ReactNative.Color.t,
-  paypalButtonLabel: string,
   samsungPayButtonColor: ReactNative.Color.t,
   applePayButtonColor: SdkTypes.applePayButtonStyle,
   googlePayButtonColor: Appearance.t,
@@ -328,7 +327,6 @@ let darkRecord = {
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
   paypalButonColor: "#ffffff",
-  paypalButtonLabel: "paypal",
   samsungPayButtonColor: "#000000",
   payNowButtonTextColor: "#fff",
   applePayButtonColor: #white,
@@ -434,7 +432,6 @@ let lightRecord = {
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
   paypalButonColor: "#F6C657",
-  paypalButtonLabel: "paypal",
   applePayButtonColor: #black,
   samsungPayButtonColor: "#000000",
   googlePayButtonColor: #dark,
@@ -753,7 +750,6 @@ let brutalRecord = {
   modalTextSizeAdjust: 0.,
   cardTextSizeAdjust: 0.,
   paypalButonColor: "#ffc439",
-  paypalButtonLabel: "paypal",
   applePayButtonColor: #black,
   googlePayButtonColor: #light,
   samsungPayButtonColor: "#000000",
@@ -1373,17 +1369,11 @@ let itemToObj = (
   | None => themeObj.applePayButtonColor
   }
 
-  let paypalOverrideStyle = switch appearance.payPal.buttonStyle {
+  let paypalOverrideStyle = switch walletButtons.payPal.buttonStyle {
   | Some(val) => isDarkMode ? val.dark : val.light
   | None => isDarkMode ? WHITE : GOLD
   }
 
-  let paypalButtonLabel = switch appearance.payPal.buttonType {
-  | CHECKOUT => "checkout"
-  | BUY_NOW => "buynow"
-  | PAY => "pay"
-  | PAYPAL => "paypal"
-  }
   {
     primaryButtonHeight: themeObj.primaryButtonHeight,
     platform: themeObj.platform,
@@ -1673,7 +1663,6 @@ let itemToObj = (
     | SILVER => "silver"
     | GOLD => "gold"
     },
-    paypalButtonLabel,
     samsungPayButtonColor: themeObj.samsungPayButtonColor,
     applePayButtonColor: applePayOverrideStyle,
     googlePayButtonColor: gpayOverrideStyle,

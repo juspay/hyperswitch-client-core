@@ -47,7 +47,7 @@ let generateCardConfirmBody = (
     customer_acceptance: ?(
       payment_token->Option.isNone &&
       (nativeProp.configuration.alwaysSendCustomerAcceptance ||
-      (isNicknameSelected && isMandate) ||
+      isNicknameSelected && isMandate ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
       payment_type === NORMAL && isNicknameSelected ||
       payment_type === SETUP_MANDATE) &&
@@ -159,17 +159,19 @@ let generatePostSessionTokensBody = (
   (),
 ): JSON.t => {
   let sdkData = [("token", JSON.Encode.string(""))]->Dict.fromArray->JSON.Encode.object
-  
-  let walletInner = [
-    (paymentMethodData.payment_method_type ++ "_sdk", sdkData),
-  ]->Dict.fromArray->JSON.Encode.object
 
-  let paymentMethodDataBody = [
-    ("wallet", walletInner),
-  ]->Dict.fromArray->JSON.Encode.object
+  let walletInner =
+    [(paymentMethodData.payment_method_type ++ "_sdk", sdkData)]
+    ->Dict.fromArray
+    ->JSON.Encode.object
+
+  let paymentMethodDataBody =
+    [("wallet", walletInner)]
+    ->Dict.fromArray
+    ->JSON.Encode.object
 
   let connector = switch sessionObject.connector {
-  | "" => 
+  | "" =>
     paymentMethodData.payment_experience
     ->Array.get(0)
     ->Option.map(_ => [paymentMethodData.payment_method_type])
@@ -178,15 +180,17 @@ let generatePostSessionTokensBody = (
   }
 
   [
-    ("payment_id", String.split(nativeProp.clientSecret, "_secret_")->Array.get(0)->Option.getOr("")->JSON.Encode.string),
+    ("payment_id", nativeProp.paymentSessionConfig.paymentId->JSON.Encode.string),
     ("payment_method_type", JSON.Encode.string(paymentMethodData.payment_method_type)),
     ("payment_method", JSON.Encode.string("wallet")),
-    ("client_secret", JSON.Encode.string(nativeProp.clientSecret)),
+    ("client_secret", JSON.Encode.string(nativeProp.paymentSessionConfig.clientSecret)),
     ("payment_experience", JSON.Encode.string("invoke_sdk_client")),
     ("connector", connector->Array.map(JSON.Encode.string)->JSON.Encode.array),
     ("payment_method_data", paymentMethodDataBody),
     ("payment_type", JSON.Encode.string(payment_type_str->Option.getOr("normal"))),
-  ]->Dict.fromArray->JSON.Encode.object
+  ]
+  ->Dict.fromArray
+  ->JSON.Encode.object
 }
 
 let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {

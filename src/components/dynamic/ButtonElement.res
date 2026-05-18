@@ -14,13 +14,19 @@ let make = (
   let logger = LoggerHook.useLoggerHook()
   let {
     paypalButonColor,
-    paypalButtonLabel,
     googlePayButtonColor,
     applePayButtonColor,
     buttonBorderRadius,
     primaryButtonHeight,
     payNowButtonTextColor,
   } = ThemebasedStyle.useThemeBasedStyle()
+
+  let paypalButtonLabel = switch nativeProp.configuration.walletButtons.payPal.buttonType {
+  | CHECKOUT => "checkout"
+  | BUY_NOW => "buynow"
+  | PAY => "pay"
+  | PAYPAL => "paypal"
+  }
 
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let launchPaypal = PaypalHooks.usePaypalLaunch()

@@ -12,8 +12,7 @@ let usePaypalLaunch = () => {
         ("orderId", data.orderId->JSON.Encode.string),
         ("payerId", data.payerId->JSON.Encode.string),
       ]->Dict.fromArray
-    | PaypalModule.Cancelled =>
-      [("status", "cancelled"->JSON.Encode.string)]->Dict.fromArray
+    | PaypalModule.Cancelled => [("status", "cancelled"->JSON.Encode.string)]->Dict.fromArray
     | PaypalModule.Failed(error) =>
       [
         ("status", "failed"->JSON.Encode.string),
@@ -22,7 +21,11 @@ let usePaypalLaunch = () => {
     }
   }
 
-  (~sessionObject: SessionsType.sessions, ~paymentMethodData: AccountPaymentMethodType.payment_method_type, ~confirmCallback: Dict.t<JSON.t> => unit) => {
+  (
+    ~sessionObject: SessionsType.sessions,
+    ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+    ~confirmCallback: Dict.t<JSON.t> => unit,
+  ) => {
     let needsPostSessionTokens = switch sessionObject.sdk_next_action {
     | JSON.Object(dict) =>
       switch dict->Dict.get("next_action") {
@@ -33,8 +36,8 @@ let usePaypalLaunch = () => {
     }
 
     let clientId = sessionObject.session_token
-    let environment = nativeProp.env == PROD ? "PRODUCTION" : "SANDBOX"
-    let returnUrl = switch nativeProp.hyperParams.appId {
+    let environment = nativeProp.hyperswitchConfig.environment == PROD ? "PRODUCTION" : "SANDBOX"
+    let returnUrl = switch nativeProp.sdkParams.appId {
     | Some(appId) => appId ++ ".paypal"
     | None => ""
     }

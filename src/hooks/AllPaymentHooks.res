@@ -154,13 +154,13 @@ let usePostSessionTokensHook = () => {
       )->JSON.stringify
 
     APIUtils.fetchApiWrapper(
-      ~uri=`${baseUrl}/payments/${nativeProp.paymentId}/post_session_tokens`,
+      ~uri=`${baseUrl}/payments/${nativeProp.paymentSessionConfig.paymentId}/post_session_tokens`,
       ~body,
       ~method=#POST,
       ~headers=Utils.getHeader(
-        ~apiKey=nativeProp.publishableKey,
-        ~appId=nativeProp.hyperParams.appId,
-        ~sdkAuthorization=nativeProp.sdkAuthorization->Option.getOr(""),
+        ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+        ~appId=nativeProp.sdkParams.appId,
+        ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
         (),
       ),
       ~eventName=POST_SESSION_TOKENS_CALL,
