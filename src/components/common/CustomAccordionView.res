@@ -127,7 +127,12 @@ let make = (
   let (showMore, setShowMore) = React.useState(_ => true)
 
   React.useEffect3(() => {
-    if accountPaymentMethodData->Option.isSome || customerPaymentMethodData->Option.isSome {
+    if (
+      accountPaymentMethodData->Option.isSome ||
+        customerPaymentMethodData
+        ->Option.map(c => c.customer_payment_methods->Array.length > 0)
+        ->Option.getOr(false)
+    ) {
       let expandIndex = switch layout.savedMethodCustomization.defaultCollapsed
         ? None
         : switch hocComponentArr->Array.findIndex(hoc => hoc.name === "Saved") {

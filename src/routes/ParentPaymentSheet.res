@@ -26,26 +26,28 @@ let make = () => {
 
   UseWidgetActions.useWidgetActions(~confirmButtonData)
 
-  React.useEffect3(() => {
+  React.useEffect2(() => {
     if (
-      customerPaymentMethodData->Option.isNone &&
-      nativeProp.configuration.allowsDelayedPaymentMethods &&
-      accountPaymentMethodData->Option.isSome
+      accountPaymentMethodData->Option.isSome && (
+          nativeProp.configuration.allowsDelayedPaymentMethods
+            ? customerPaymentMethodData->Option.isNone
+            : customerPaymentMethodData
+              ->Option.map(data => data.customer_payment_methods->Array.length === 0)
+              ->Option.getOr(true)
+        )
     ) {
       setIsSavedPaymentScreen(false)
     }
     None
-  }, (
-    customerPaymentMethodData,
-    accountPaymentMethodData,
-    nativeProp.configuration.allowsDelayedPaymentMethods,
-  ))
+  }, (customerPaymentMethodData, accountPaymentMethodData))
 
-  let isLoading = if nativeProp.configuration.allowsDelayedPaymentMethods {
-    !(accountPaymentMethodData->Option.isSome || customerPaymentMethodData->Option.isSome)
-  } else {
-    confirmButtonData.loading
-  }
+  let isLoading = React.useMemo3(() => {
+    if nativeProp.configuration.allowsDelayedPaymentMethods {
+      !(accountPaymentMethodData->Option.isSome || customerPaymentMethodData->Option.isSome)
+    } else {
+      confirmButtonData.loading
+    }
+  }, (accountPaymentMethodData, customerPaymentMethodData, confirmButtonData))
 
   <FullScreenSheetWrapper
     isSavedPaymentScreen
