@@ -78,13 +78,14 @@ module SectionHeader = {
 module MoreButton = {
   @react.component
   let make = (~handleMoreToggle) => {
-    let {component, borderRadius, borderWidth, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
+    let {bgColor, component, borderRadius, borderWidth, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
     let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
     <View style={s({alignItems: #center, justifyContent: #center, paddingTop: 10.->dp})}>
       <CustomPressable
         onPress={_ => handleMoreToggle()}
         style={array([
+          bgColor,
           getShadowStyle,
           s({
             width: 100.->pct,
@@ -127,12 +128,13 @@ let make = (
   let (showMore, setShowMore) = React.useState(_ => true)
 
   React.useEffect3(() => {
-    if (
+    let hasData =
       accountPaymentMethodData->Option.isSome ||
         customerPaymentMethodData
         ->Option.map(c => c.customer_payment_methods->Array.length > 0)
         ->Option.getOr(false)
-    ) {
+
+    if hasData && expandedSections->Array.length === 0 {
       let expandIndex = switch layout.savedMethodCustomization.defaultCollapsed
         ? None
         : switch hocComponentArr->Array.findIndex(hoc => hoc.name === "Saved") {
@@ -142,18 +144,12 @@ let make = (
       | Some(index) => [index]
       | None => defaultCollapsed ? [] : [0]
       }
-      setExpandedSections(arr => {
-        if arr->Array.length === 0 {
-          setConfirmButtonData({
-            ...GlobalConfirmButton.defaultConfirmButtonData,
-            loading: false,
-            visible: !(expandIndex->Array.length === 0),
-          })
-          expandIndex
-        } else {
-          arr
-        }
+      setConfirmButtonData({
+        ...GlobalConfirmButton.defaultConfirmButtonData,
+        loading: false,
+        visible: !(expandIndex->Array.length === 0),
       })
+      setExpandedSections(_ => expandIndex)
     }
     None
   }, (accountPaymentMethodData, customerPaymentMethodData, hocComponentArr))

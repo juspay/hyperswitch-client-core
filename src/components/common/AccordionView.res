@@ -35,7 +35,7 @@ let make = (
     onSectionToggle(sectionKey)
   }
 
-  let {component, borderWidth, borderRadius, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
+  let {bgColor, component, borderWidth, borderRadius, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   <View ?style>
@@ -49,6 +49,7 @@ let make = (
       <View
         key={section.key->Int.toString}
         style={array([
+          bgColor,
           getShadowStyle,
           spacedAccordionItems
             ? s({
