@@ -158,8 +158,6 @@ let make = (
           ""
         }
       
-      let pms = suffix === "_sdk" ? "wallet" : paymentMethodData.payment_method_str
-      
       (
         [
           (
@@ -182,7 +180,7 @@ let make = (
           ),
         ]->Dict.fromArray,
         tabDict,
-        pms,
+        paymentMethodData.payment_method_str,
       )
     }
 
