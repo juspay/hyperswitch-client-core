@@ -143,6 +143,7 @@ let useUpdateIntentListener = (
                   CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
                     customerPaymentMethodData,
                     nativeProp.configuration.paymentMethodOrder,
+                    nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
                   ),
                 ),
               )

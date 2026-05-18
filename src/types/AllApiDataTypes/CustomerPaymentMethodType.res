@@ -153,7 +153,7 @@ let sortPaymentListArray = (plist, paymentMethodOrder) => {
   plist
 }
 
-let filterPaymentListArray = plist => {
+let filterPaymentListArray = (plist, hiddenPaymentMethods) => {
   plist->Array.filter(v =>
     switch (WebKit.platform, v.payment_method_type_wallet) {
     | (#android, APPLE_PAY)
@@ -162,19 +162,21 @@ let filterPaymentListArray = plist => {
     | (#iosWebView, GOOGLE_PAY) => false
     | _ => true
     }
-  )
+
+  )->Array.filter(v => !(hiddenPaymentMethods->Array.includes(v.payment_method_type)))
 }
 
-let jsonToCustomerPaymentMethodType: (JSON.t, array<string>) => customerPaymentMethods = (
+let jsonToCustomerPaymentMethodType: (JSON.t, array<string>, array<string>) => customerPaymentMethods = (
   res,
   paymentMethodOrder,
+  hiddenPaymentMethods,
 ) => {
   let customerPaymentMethodsDict = res->getDictFromJson
   {
     customer_payment_methods: getArray(customerPaymentMethodsDict, "customer_payment_methods")
     ->processCustomerPaymentMethods
     ->sortPaymentListArray(paymentMethodOrder)
-    ->filterPaymentListArray,
+    ->filterPaymentListArray(hiddenPaymentMethods),
     is_guest_customer: getBool(customerPaymentMethodsDict, "is_guest_customer", true),
   }
 }
