@@ -47,7 +47,7 @@ let generateCardConfirmBody = (
     customer_acceptance: ?(
       payment_token->Option.isNone &&
       (nativeProp.configuration.alwaysSendCustomerAcceptance ||
-      isNicknameSelected && isMandate ||
+      (isNicknameSelected && isMandate) ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
       payment_type === NORMAL && isNicknameSelected ||
       payment_type === SETUP_MANDATE) &&
@@ -182,7 +182,7 @@ let generatePostSessionTokensBody = (
   [
     ("payment_id", nativeProp.paymentSessionConfig.paymentId->JSON.Encode.string),
     ("payment_method_type", JSON.Encode.string(paymentMethodData.payment_method_type)),
-    ("payment_method", JSON.Encode.string("wallet")),
+    ("payment_method", JSON.Encode.string(paymentMethodData.payment_method_str)),
     ("client_secret", JSON.Encode.string(nativeProp.paymentSessionConfig.clientSecret)),
     ("payment_experience", JSON.Encode.string("invoke_sdk_client")),
     ("connector", connector->Array.map(JSON.Encode.string)->JSON.Encode.array),

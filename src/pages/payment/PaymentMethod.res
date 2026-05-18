@@ -104,11 +104,11 @@ let make = (
     }
 
     let getExperienceSuffix = (experiences: array<AccountPaymentMethodType.payment_experience>) => {
-      let hasSDKFlow = experiences
-        ->Array.some(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
+      let hasSDKFlow =
+        experiences->Array.some(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
 
-      let hasRedirectFlow = experiences
-        ->Array.some(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+      let hasRedirectFlow =
+        experiences->Array.some(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
 
       if hasSDKFlow {
         "_sdk"
@@ -119,7 +119,11 @@ let make = (
       }
     }
 
-    let (paymentMethodDataDict, tabDict, paymentMethodStr) = switch paymentMethodData.payment_method {
+    let (
+      paymentMethodDataDict,
+      tabDict,
+      paymentMethodStr,
+    ) = switch paymentMethodData.payment_method {
     | CARD =>
       switch nickname {
       | Some(name) => (
@@ -149,15 +153,14 @@ let make = (
         paymentMethodData.payment_method_str,
       )
     | pm =>
-      let suffix = 
-        if pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL {
-          paymentMethodData.payment_experience->getExperienceSuffix
-        } else if paymentMethodData.payment_method_type === "cashapp" {
-          "_qr"
-        } else {
-          ""
-        }
-      
+      let suffix = if pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL {
+        paymentMethodData.payment_experience->getExperienceSuffix
+      } else if paymentMethodData.payment_method_type === "cashapp" {
+        "_qr"
+      } else {
+        ""
+      }
+
       (
         [
           (

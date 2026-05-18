@@ -1,6 +1,6 @@
 type props = {
-  buttonColor?: string,
-  buttonLabel?: string,
+  buttonColor?: SdkTypes.payPalButtonStyle,
+  buttonLabel?: SdkTypes.payPalButtonType,
   borderRadius?: float,
   style?: ReactNative.Style.t,
 }

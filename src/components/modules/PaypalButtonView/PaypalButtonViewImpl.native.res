@@ -5,6 +5,4 @@ type props = {
   style?: ReactNative.Style.t,
 }
 
-let make: React.component<props> = ReactNative.NativeModules.requireNativeComponent(
-  "PaypalButton",
-)
+let make: React.component<props> = ReactNative.NativeModules.requireNativeComponent("PaypalButton")

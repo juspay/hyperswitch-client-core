@@ -87,7 +87,7 @@ let itemToObjMapper = dict => {
         delayed_session_token: getBool(dict, "delayed_session_token", false),
         connector: getString(dict, "connector", ""),
         sdk_next_action: getJsonObjectFromDict(dict, "sdk_next_action"),
-        secrets: getJsonObjectFromDict(dict, "transaction_info"),
+        secrets: getJsonObjectFromDict(dict, "secrets"),
         session_token_data: getJsonObjectFromDict(dict, "session_token_data"),
         payment_request_data: getJsonObjectFromDict(dict, "payment_request_data"),
         connector_reference_id: getJsonObjectFromDict(dict, "connector_reference_id"),

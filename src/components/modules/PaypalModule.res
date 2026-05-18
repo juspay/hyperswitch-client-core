@@ -25,7 +25,7 @@ type module_ = {
 let (launchPayPalMod, isAvailable) = switch try {
   require("@juspay-tech/react-native-hyperswitch-paypal")->Some
 } catch {
-  | _ => None
+| _ => None
 } {
 | Some(mod) => (mod.launchPayPal, mod.isAvailable)
 | None => ((_, _) => (), false)
@@ -46,5 +46,3 @@ let launchPayPal = (requestObj: string, callback: paypalCallbackStatus => unit) 
   | _ => callback(Failed("PayPal module not available"))
   }
 }
-
-let payPalModule = if isAvailable { Some() } else { None }

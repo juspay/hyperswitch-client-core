@@ -5,7 +5,13 @@ open Style
 let make = () => {
   let mediaView = WindowDimension.useMediaView()
   let shadowStyle = ShadowHook.useGetShadowStyle(
-    ~shadowConfig={color: Some("#0000000f"), opacity: Some(1.), blurRadius: Some(16.), offset: None, intensity: Some(16.)},
+    ~shadowConfig={
+      color: Some("#0000000f"),
+      opacity: Some(1.),
+      blurRadius: Some(16.),
+      offset: None,
+      intensity: Some(16.),
+    },
     (),
   )
 

@@ -23,12 +23,14 @@ let fetchApi = (
   body->then(body => {
     Fetch.fetch(
       uri,
-      {
-        method: method_,
-        ?body,
-        headers: Fetch.Headers.fromObject(headers->Utils.getJsonObjectFromRecord),
-        ?mode,
-      }: Fetch.Request.init,
+      (
+        {
+          method: method_,
+          ?body,
+          headers: Fetch.Headers.fromObject(headers->Utils.getJsonObjectFromRecord),
+          ?mode,
+        }: Fetch.Request.init
+      ),
     )
     ->catch(err => {
       exception Error(string)

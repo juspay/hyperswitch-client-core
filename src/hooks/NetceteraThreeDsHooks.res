@@ -228,7 +228,8 @@ let useExternalThreeDs = () => {
         (),
       )
       let headers = switch sdkAuthorization->String.length > 0 {
-      | true => [("Content-Type", "application/json"), ("Authorization", sdkAuthorization)]->Dict.fromArray
+      | true =>
+        [("Content-Type", "application/json"), ("Authorization", sdkAuthorization)]->Dict.fromArray
       | false => [("Content-Type", "application/json")]->Dict.fromArray
       }
       APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=#POST)

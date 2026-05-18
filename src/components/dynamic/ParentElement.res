@@ -19,7 +19,9 @@ let make = (
 ) => {
   switch element {
   | CARD(fields) if fields->Array.length > 0 =>
-    <CardElement fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility />
+    <CardElement
+      fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
+    />
   | CRYPTO(fields) if fields->Array.length > 0 =>
     <CryptoElement fields createFieldValidator formatValue ?accessible />
   | EMAIL(fields) if fields->Array.length > 0 =>

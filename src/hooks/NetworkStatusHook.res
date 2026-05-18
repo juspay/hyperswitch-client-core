@@ -9,13 +9,13 @@ let useNetworkStatus = () => {
     try {
       let headers = Dict.make()
       headers->Dict.set("Cache-Control", "no-cache")
-      
+
       let response = await APIUtils.fetchApi(
         ~uri=`${baseUrl}/health`,
         ~method_=#GET,
         ~headers,
         ~mode=#cors,
-        ~dontUseDefaultHeader=true
+        ~dontUseDefaultHeader=true,
       )
 
       let statusCode = response->Fetch.Response.status->string_of_int

@@ -21,13 +21,6 @@ let make = (
     payNowButtonTextColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
-  let paypalButtonLabel = switch nativeProp.configuration.walletButtons.payPal.buttonType {
-  | CHECKOUT => "checkout"
-  | BUY_NOW => "buynow"
-  | PAY => "pay"
-  | PAYPAL => "paypal"
-  }
-
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let launchPaypal = PaypalHooks.usePaypalLaunch()
   let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
@@ -223,12 +216,12 @@ let make = (
         if (
           sessionObject.session_token !== "" &&
           (WebKit.platform == #android || WebKit.platform == #ios) &&
-          PaypalModule.payPalModule->Option.isSome &&
+          PaypalModule.isAvailable &&
           paymentMethodData.payment_experience
           ->Array.find(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
-        ->Option.isSome
-      ) {
-        launchPaypal(~sessionObject, ~paymentMethodData, ~confirmCallback=confirmPayPal)
+          ->Option.isSome
+        ) {
+          launchPaypal(~sessionObject, ~paymentMethodData, ~confirmCallback=confirmPayPal)
         } else if (
           paymentMethodData.payment_experience
           ->Array.find(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
@@ -386,22 +379,21 @@ let make = (
           />,
         )
       | PAYPAL =>
-        if PaypalModule.payPalModule->Option.isSome {
+        if PaypalModule.isAvailable {
           Some(
             <PaypalButtonView
               style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
               buttonColor={paypalButonColor}
-              buttonLabel={paypalButtonLabel}
+              buttonLabel={nativeProp.configuration.walletButtons.payPal.buttonType}
               borderRadius={buttonBorderRadius}
             />,
           )
         } else {
-         
-        Some(
-          <GenericButtonElement
-            buttonName width=80. color=paypalButonColor borderRadius={buttonBorderRadius}
-          />,
-        )
+          Some(
+            <GenericButtonElement
+              buttonName width=80. color="#ffc439" borderRadius={buttonBorderRadius}
+            />,
+          )
         }
 
       // | SKRILL => Some(<GenericButtonElement buttonName width=42. color="#910590" />)

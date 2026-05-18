@@ -89,28 +89,33 @@ let useProcessPayButtonResult = () => {
         }
       }
     | PAYPAL =>
-      let status = var
+      let status =
+        var
         ->Dict.get("status")
         ->Option.flatMap(JSON.Decode.string)
         ->Option.getOr("")
       switch status->PaypalTypes.parseStatus {
       | Success =>
-        let orderId = var
+        let orderId =
+          var
           ->Dict.get("orderId")
           ->Option.flatMap(JSON.Decode.string)
           ->Option.getOr("")
-        let payerId = var
+        let payerId =
+          var
           ->Dict.get("payerId")
           ->Option.flatMap(JSON.Decode.string)
           ->Option.getOr("")
-        let paymentDataDict = [
-          ("token", orderId->JSON.Encode.string),
-          ("payerId", payerId->JSON.Encode.string),
-        ]->Dict.fromArray
+        let paymentDataDict =
+          [
+            ("token", orderId->JSON.Encode.string),
+            ("payerId", payerId->JSON.Encode.string),
+          ]->Dict.fromArray
         Success(paymentDataDict, None, None)
       | Cancelled => Cancelled
       | Failed =>
-        let errorMessage = var
+        let errorMessage =
+          var
           ->Dict.get("error_message")
           ->Option.flatMap(JSON.Decode.string)
           ->Option.getOr("PayPal payment failed")

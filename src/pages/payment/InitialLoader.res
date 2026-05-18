@@ -4,12 +4,7 @@ open Style
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let {
-    borderWidth,
-    borderRadius,
-    component,
-    shadowConfig,
-  } = ThemebasedStyle.useThemeBasedStyle()
+  let {borderWidth, borderRadius, component, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   <>

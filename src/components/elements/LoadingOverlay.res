@@ -14,21 +14,15 @@ let make = () => {
 
   switch loading {
   | ProcessingPayments | ProcessingPaymentsWithOverlay =>
-    let showProcessingOverlay = loading === ProcessingPaymentsWithOverlay ||
-      switch nativeProps.sdkState {
-      | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet => true
-      | _ => false
-      }
-
     <Portal>
       <View
         style={array([
           s({
             flex: 1.,
-            opacity: showProcessingOverlay ? 0.90 : 1.0,
+            opacity: loading === ProcessingPaymentsWithOverlay ? 0.90 : 1.0,
             borderRadius,
           }),
-          showProcessingOverlay ? bgColor : s({backgroundColor: "transparent"}),
+          loading === ProcessingPaymentsWithOverlay ? bgColor : s({backgroundColor: "transparent"}),
         ])}>
         {switch nativeProps.sdkState {
         | CardWidget | CustomWidget(_) =>
@@ -61,7 +55,7 @@ let make = () => {
             // />
             <View style={s({flex: 1., justifyContent: #center, alignItems: #center})}>
               // <HyperLoaderAnimation />
-              {showProcessingOverlay
+              {loading === ProcessingPaymentsWithOverlay
                 ? <PaymentSheetProcessingElement />
                 : React.null}
             </View>

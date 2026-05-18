@@ -141,7 +141,7 @@ let useAccountPaymentMethodModifier = () => {
               ? Some()
               : None
           | PAYPAL =>
-            exp->Option.isSome && PaypalModule.payPalModule->Option.isSome
+            exp->Option.isSome && PaypalModule.isAvailable
               ? Some()
               : switch paymentMethodData.payment_experience->Array.find(
                   x => x.payment_experience_type_decode === REDIRECT_TO_URL,
