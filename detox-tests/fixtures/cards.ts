@@ -189,6 +189,18 @@ export const testCards = {
     declined: stripeCards.declinedCard,
 };
 
+// COBADGE CARDS (Cards supporting multiple brands)
+export const cobadgeCards = {
+    // Visa + CartesBancaires cobadge card
+    visaCartesBancaires: createCard('4010061700000021', 'Visa', '123', '04', '44'),
+    // Other known cobadge cards can be added here
+};
+
+export const cobadgeCardBrands = {
+    VISA: 'Visa',
+    CARTES_BANCAIRES: 'CartesBancaires',
+};
+
 // CARD BRANDS ENUM
 export enum CardBrand {
     VISA = 'Visa',

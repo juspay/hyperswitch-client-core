@@ -35,32 +35,30 @@ const createPaymentBody = {
 }
 
 class CreateBody {
-    body: any
-    constructor() {
-        // Deep clone to prevent shared state between test suites
-        this.body = JSON.parse(JSON.stringify(createPaymentBody))
-    }
-    get() {
-        return this.body
-    }
+  body: any;
+  constructor() {
+    // Create a deep copy to avoid sharing references between instances
+    this.body = JSON.parse(JSON.stringify(createPaymentBody));
+  }
+  get() {
+    return this.body;
+  }
 
-    removeBilling() {
-        delete this.body["billing"];
-        return this
-    }
-    removeShipping() {
-        delete this.body["shipping"];
-        return this
-    }
-    addKey(key, value) {
-        this.body[key] = value
-    }
+  removeBilling() {
+    delete this.body['billing'];
+    return this;
+  }
+  removeShipping() {
+    delete this.body['shipping'];
+    return this;
+  }
+  addKey(key, value) {
+    this.body[key] = value;
+  }
 
-    removeKey(key, value) {
-        if (this.body.hasOwnProperty(key))
-            delete this.body[key];
-    }
-
+  removeKey(key, value) {
+    if (this.body.hasOwnProperty(key)) delete this.body[key];
+  }
 }
 
 const setCreateBodyForTestAutomation = async (body) => {
