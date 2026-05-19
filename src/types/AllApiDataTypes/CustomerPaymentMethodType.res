@@ -60,7 +60,7 @@ let parseSavedCard = (cardDict: Js.Dict.t<JSON.t>) => {
     card_holder_name: cardDict->getString("card_holder_name", ""),
     card_fingerprint: cardDict->getOptionString("card_fingerprint"),
     nick_name: cardDict->getOptionString("nick_name"),
-    card_network: cardDict->getString("card_network", ""),
+    card_network: cardDict->getString("card_network", cardDict->getString("scheme", "")),
     card_isin: cardDict->getString("card_isin", ""),
     card_issuer: cardDict->getString("card_issuer", ""),
     card_type: cardDict->getString("card_type", ""),
