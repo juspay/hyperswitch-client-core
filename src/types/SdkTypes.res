@@ -97,6 +97,7 @@ type primaryButtonColorType = {light: option<primaryButtonColor>, dark: option<p
 type primaryButton = {
   shapes: option<shapes>,
   primaryButtonColor: option<primaryButtonColorType>,
+  height: option<float>,
 }
 
 type themeType =
@@ -403,6 +404,7 @@ let defaultAppearance: appearance = {
         border: None,
       }),
     }),
+    height: None,
   }),
   logo: None,
 }
@@ -516,6 +518,7 @@ let parseAppearance = (d: Dict.t<JSON.t>): appearance => {
         light: Some(parsePrimaryButtonColorDict(pbLightDict->Option.getOr(Dict.make()))),
         dark: Some(parsePrimaryButtonColorDict(pbDarkDict->Option.getOr(Dict.make()))),
       }),
+      height: getOptionFloat(primaryButtonDict, "height"),
     }),
     logo: getOptionalObj(d, "logo")->Option.map(logoDict => {
       borderRadius: getOptionFloat(logoDict, "borderRadius"),

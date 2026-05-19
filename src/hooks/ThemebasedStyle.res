@@ -1375,7 +1375,10 @@ let itemToObj = (
   }
 
   {
-    primaryButtonHeight: themeObj.primaryButtonHeight,
+    primaryButtonHeight: switch appearance.primaryButton {
+    | Some({height: Some(h)}) => h
+    | _ => themeObj.primaryButtonHeight
+    },
     platform: themeObj.platform,
     bgColor: getStyleProp(
       ~override=switch appearanceColor {
