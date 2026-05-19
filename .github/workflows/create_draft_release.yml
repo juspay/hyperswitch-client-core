@@ -209,6 +209,21 @@ jobs:
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: github-actions[bot]@users.noreply.github.com
         run: |
+          # Prepare submodules on main before bundle generation
+          cd android
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git pull origin main
+          cd ..
+          
+          cd ios
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout main
+          git pull origin main
+          cd ..
+          
           # Build bundles in parallel
           yarn re:build
           yarn bundle:android &&
@@ -216,10 +231,6 @@ jobs:
           
           # Update Android bundle only
           cd android
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout main
-          git pull origin main
           git add ./app/src/main/assets/hyperswitch.bundle
           
           if ! git diff --staged --quiet; then
@@ -230,11 +241,6 @@ jobs:
           
           # Update iOS bundle only
           cd ios
-          git checkout main
-          git pull origin main
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
           git add ./hyperswitchSDK/Core/Resources/hyperswitch.bundle
           
           if ! git diff --staged --quiet; then
