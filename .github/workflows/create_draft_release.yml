@@ -3,11 +3,11 @@ name: Create Draft Release
 on:
   workflow_dispatch:
     inputs:
-      shared_code: 
+      shared_code:
         description: 'Branch name for the shared-code'
         required: true
         type: string
-        default: "main"
+        default: 'main'
       versioning_type:
         description: 'Versioning Type'
         required: true
@@ -42,7 +42,7 @@ jobs:
       PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
       SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
       INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
-      
+
     steps:
       - name: Check Admin Permission
         uses: actions/github-script@v7
@@ -51,7 +51,7 @@ jobs:
             const actor = context.actor;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            
+
             try {
               const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
                 owner,
@@ -79,9 +79,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          
+
       - name: Install Dependencies
-        run: | 
+        run: |
           corepack enable
           yarn install
 
@@ -120,17 +120,17 @@ jobs:
         run: |
           CUSTOM_VERSION="${{ github.event.inputs.custom_version }}"
           echo "Applying custom version: $CUSTOM_VERSION"
-          
+
           # Update package.json version
           jq --arg version "$CUSTOM_VERSION" '.version = $version' package.json > package.json.tmp
           mv package.json.tmp package.json
-          
+
           # Commit version changes
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add package.json
           git commit -m "chore(release): v$CUSTOM_VERSION [skip ci]" || echo "No changes to commit"
-          
+
           # Create and push tag
           git tag "v$CUSTOM_VERSION" -m "Release v$CUSTOM_VERSION"
           git push origin main --follow-tags
@@ -154,10 +154,10 @@ jobs:
           # Get the latest tag before the current one
           PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
           CURRENT_VERSION="${{ env.VERSION }}"
-          
+
           echo "## Release Notes for v$CURRENT_VERSION" > release_notes.md
           echo "" >> release_notes.md
-          
+
           if [ -n "$PREVIOUS_TAG" ]; then
             echo "### What's Changed" >> release_notes.md
             echo "" >> release_notes.md
@@ -181,7 +181,7 @@ jobs:
           else
             echo "Initial release" >> release_notes.md
           fi
-          
+
           # Save release notes to environment
           {
             echo 'RELEASE_NOTES<<EOF'
@@ -194,7 +194,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           # Update all submodules to their latest commits on their default branches
           git submodule update --init --recursive
           SHARED_CODE_BRANCH="${{ github.event.inputs.shared_code }}"
@@ -211,32 +211,32 @@ jobs:
         run: |
           # Build bundles in parallel
           yarn re:build
-          yarn bundle:android &&
-          yarn bundle:ios
-          
+
           # Update Android bundle only
           cd android
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout main
           git pull origin main
+          yarn bundle:android
           git add ./app/src/main/assets/hyperswitch.bundle
-          
+
           if ! git diff --staged --quiet; then
             git commit -m "chore(release): v${{ env.VERSION }} Android Bundle update [skip ci]"
             git push origin main
           fi
           cd ..
-          
+
           # Update iOS bundle only
           cd ios
           git checkout main
           git pull origin main
+          yarn bundle:ios
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           git add ./hyperswitchSDK/Core/Resources/hyperswitch.bundle
-          
+
           if ! git diff --staged --quiet; then
             git commit -m "chore(release): v${{ env.VERSION }} iOS Bundle update [skip ci]"
             git push origin main
