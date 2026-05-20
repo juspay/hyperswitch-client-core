@@ -225,6 +225,7 @@ type configurationType = {
   allowsDelayedPaymentMethods: bool,
   allowsPaymentMethodsRequiringShippingAddress: bool,
   displaySavedPaymentMethodsCheckbox: bool,
+  savedPaymentMethodsCheckboxCheckedByDefault: bool,
   displaySavedPaymentMethods: bool,
   displayDefaultSavedPaymentIcon: bool,
   displayPayButton: bool,
@@ -625,6 +626,11 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     displaySavedPaymentMethodsCheckbox: getBool(
       configObj,
       "displaySavedPaymentMethodsCheckbox",
+      true,
+    ),
+    savedPaymentMethodsCheckboxCheckedByDefault: getBool(
+      configObj,
+      "savedPaymentMethodsCheckboxCheckedByDefault",
       true,
     ),
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
