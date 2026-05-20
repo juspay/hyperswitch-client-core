@@ -59,6 +59,7 @@ type eventName =
   | POST_SESSION_TOKENS_CALL_INIT
   | POST_SESSION_TOKENS_CALL
   | CARD_SCHEME_SELECTION
+  | NFC_CARD_READ
 
 type logFile = {
   timestamp: string,
