@@ -26,7 +26,7 @@ let defaultProps = {
     subscribedEvents: ['onSuccess', 'onFailed', 'onCancelled'],
     splitCardFields: true,
     paymentMethodLayout: {
-      type: 'tabs',
+      type: 'accordion',
       radios: false,
       maxAccordionItems: 3,
       paymentMethodsArrangementForTabs: "auto",

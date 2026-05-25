@@ -523,7 +523,13 @@ let make = (
                 transform: [translateY(~translateY=bounceAnim.current->Animated.StyleProp.size)],
                 position: #absolute,
                 bottom: (
-                  nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? 5. : -5.
+                  nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
+                    ? 10.
+                    : nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection
+                    ? 8.
+                    : nativeProp.configuration.paymentMethodLayout.layoutType === Tabs
+                    ? 10.
+                    : -2.
                 )->dp,
                 alignSelf: #center,
                 color: "#aaa",
