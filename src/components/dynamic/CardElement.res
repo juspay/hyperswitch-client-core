@@ -318,7 +318,6 @@ let make = (
             </View>
             <View
               style={s({
-                flex: 1.,
                 flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
                 gap: ?(splitCardFields ? Some(gap->dp) : None),
               })}>

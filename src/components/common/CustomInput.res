@@ -154,8 +154,8 @@ let make = (
                 ->Animated.Interpolation.interpolate({
                   inputRange: [0., 1.],
                   outputRange: [
-                    `${inputHeight->Float.toString}px`,
-                    `${(inputHeight *. 0.5)->Float.toString}px`,
+                    "100%",
+                    `${((inputHeight +. 10.) /. 1.4)->Float.toString}%`,
                   ]->Animated.Interpolation.fromStringArray,
                 })
                 ->Animated.StyleProp.size,

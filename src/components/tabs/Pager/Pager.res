@@ -348,7 +348,7 @@ let make = (
                       width: layout.width->dp,
                     }),
                   )
-                } else if focused && index > 0 {
+                } else if focused {
                   Some(StyleSheet.absoluteFill)
                 } else {
                   None
