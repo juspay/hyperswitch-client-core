@@ -373,7 +373,7 @@ let getErrorFromResponse = data => {
 
 let getBrowserInfo = (nativeProp: SdkTypes.nativeProp) => {
   let browserInfo: PaymentConfirmTypes.online = {
-    user_agent: ?nativeProp.sdkParams.userAgent,
+    user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
     language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
     color_depth: 32,

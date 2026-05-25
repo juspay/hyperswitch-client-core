@@ -16,6 +16,7 @@ type hyperModule = {
   emitPaymentEvent: (int, string, JSON.t) => unit,
   onUpdateIntentEvent: (int, string, string) => unit,
   onPaymentConfirmButtonClick: (int, string, bool => unit) => unit,
+  openIframeBridge: (string, int, string => unit) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -68,6 +69,7 @@ let hyperModule = {
     "onPaymentConfirmButtonClick",
     (_, _, _) => (),
   ),
+  openIframeBridge: getFunctionFromModule(hyperModuleDict, "openIframeBridge", (_, _, _) => ()),
 }
 
 let sendMessageToNative = str => {
@@ -197,4 +199,8 @@ let updateWidgetHeight = (height: int) => {
 let onPaymentConfirmButtonClick = (_: int, _: JSON.t, callback: bool => unit) => {
   callback(true)
   // hyperModule.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
+}
+
+let openIframeBridge = (url: string, timeoutMs: int, callback: string => unit) => {
+  hyperModule.openIframeBridge(url, timeoutMs, callback)
 }

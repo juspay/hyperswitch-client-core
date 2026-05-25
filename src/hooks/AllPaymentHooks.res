@@ -227,6 +227,8 @@ let useRedirectHook = () => {
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let browserRedirectionHandler = useBrowserHook()
   let retrievePayment = useRetrieveHook()
+  let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()
+  let redirectionFailureHandler = BrowserRedirectionHooks.useBrowserRedirectionFailedHook()
   let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
@@ -357,11 +359,87 @@ let useRedirectHook = () => {
       }
     }
 
+    let handleInvokeDDCFlow = (~nextAction) => {
+      let {iframeUrl, timeoutMs} =
+        (nextAction->Option.getOr(defaultNextAction)).ddc_data
+        ->Option.getOr(DdcTypes.defaultDdcData)
+      HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
+        if rawMessage === "" {
+          errorCallback(
+            ~errorMessage={
+              status: "failed",
+              message: "DDC failed or timed out",
+              type_: "invoke_ddc_error",
+              code: "ddc_failure",
+            },
+            ~closeSDK=true,
+            (),
+          )
+        } else {
+          let parsed = rawMessage->JSON.parseExn->Utils.getDictFromJson
+          let nextActionType =
+            parsed
+            ->Dict.get("next_action")
+            ->Option.flatMap(JSON.Decode.object)
+            ->Option.flatMap(d => d->Dict.get("type"))
+            ->Option.flatMap(JSON.Decode.string)
+            ->Option.getOr("")
+          let redirectUrl =
+            parsed
+            ->Dict.get("next_action")
+            ->Option.flatMap(JSON.Decode.object)
+            ->Option.flatMap(d => d->Dict.get("url"))
+            ->Option.flatMap(JSON.Decode.string)
+            ->Option.getOr("")
+          switch nextActionType {
+          | "redirect_to_url" if redirectUrl !== "" =>
+            if (
+              redirectUrl->String.includes("status=succeeded") ||
+              redirectUrl->String.includes("status=processing") ||
+              redirectUrl->String.includes("status=requires_capture") ||
+              redirectUrl->String.includes("status=partially_captured")
+            ) {
+              let _ = (async () => {
+                let s = await retrievePayment(Payment, clientSecret, publishableKey)
+                redirectionSuccessHandler(~s, ~errorCallback, ~responseCallback)
+              })()
+            } else if (
+              redirectUrl->String.includes("status=failed") ||
+              redirectUrl->String.includes("status=requires_payment_method")
+            ) {
+              redirectionFailureHandler(~errorCallback)
+            } else {
+              browserRedirectionHandler(
+                ~clientSecret,
+                ~publishableKey,
+                ~openUrl=redirectUrl,
+                ~responseCallback,
+                ~errorCallback,
+                ~paymentMethod,
+              )->ignore
+            }
+          | _ =>
+            errorCallback(
+              ~errorMessage={
+                status: "failed",
+                message: `DDC failed: invalid next action type - ${nextActionType}`,
+                type_: "invoke_ddc_error",
+                code: "ddc_failure",
+              },
+              ~closeSDK=true,
+              (),
+            )
+          }
+        }
+      })
+    }
+
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       switch nextAction->PaymentUtils.getActionType {
       | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
       | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
       | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
+      | "invoke_ddc" => handleInvokeDDCFlow(~nextAction)
       | _ => handleDefaultPaymentFlows(~status, ~reUri, ~error)
       }
     }

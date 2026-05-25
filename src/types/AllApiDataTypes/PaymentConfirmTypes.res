@@ -68,6 +68,7 @@ type nextAction = {
   threeDsData?: threeDsData,
   session_token?: sessionToken,
   bank_transfer_steps_and_charges_detail?: bank_transfer_steps_and_charges_details,
+  ddc_data?: DdcTypes.ddcData,
 }
 type error = {message?: string, code?: string, type_?: string, status?: string}
 type intent = {nextAction: nextAction, status: string, error: error}
@@ -167,6 +168,16 @@ let getNextAction = (dict, str) => {
     {
       redirectToUrl: getString(json, "redirect_to_url", ""),
       type_: getString(json, "type", ""),
+      ddc_data: json
+        ->Dict.get("ddc_data")
+        ->Option.flatMap(JSON.Decode.object)
+        ->Option.map(ddcDict => {
+          DdcTypes.iframeUrl: getString(ddcDict, "iframe_url", ""),
+          timeoutMs: getOptionFloat(ddcDict, "timeout_ms")
+            ->Option.getOr(30000.)
+            ->Int.fromFloat,
+        })
+        ->Option.getOr(DdcTypes.defaultDdcData),
       threeDsData: {
         threeDsAuthorizeUrl: getString(threeDSDataDict, "three_ds_authorize_url", ""),
         threeDsAuthenticationUrl: getString(threeDSDataDict, "three_ds_authentication_url", ""),

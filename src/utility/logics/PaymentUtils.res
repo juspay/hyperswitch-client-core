@@ -57,14 +57,14 @@ let generateCardConfirmBody = (
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
               online: {
-                user_agent: ?nativeProp.sdkParams.userAgent,
+                user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
               },
             }
           })
         : None
     ),
     browser_info: {
-      user_agent: ?nativeProp.sdkParams.userAgent,
+      user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
       accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
       language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
       color_depth: 32,
@@ -120,7 +120,7 @@ let generateSavedCardConfirmBody = (
   ),
   payment_type: ?payment_type_str,
   browser_info: {
-    user_agent: ?nativeProp.sdkParams.userAgent,
+    user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
     language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
     color_depth: 32,
