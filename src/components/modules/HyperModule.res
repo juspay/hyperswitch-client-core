@@ -16,7 +16,7 @@ type hyperModule = {
   emitPaymentEvent: (int, string, JSON.t) => unit,
   onUpdateIntentEvent: (int, string, string) => unit,
   onPaymentConfirmButtonClick: (int, string, bool => unit) => unit,
-  openDDCWebView: (string, int, string => unit) => unit,
+  openIframeBridge: (string, int, string => unit) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
@@ -69,7 +69,7 @@ let hyperModule = {
     "onPaymentConfirmButtonClick",
     (_, _, _) => (),
   ),
-  openDDCWebView: getFunctionFromModule(hyperModuleDict, "openDDCWebView", (_, _, _) => ()),
+  openIframeBridge: getFunctionFromModule(hyperModuleDict, "openIframeBridge", (_, _, _) => ()),
 }
 
 let sendMessageToNative = str => {
@@ -201,6 +201,6 @@ let onPaymentConfirmButtonClick = (_: int, _: JSON.t, callback: bool => unit) =>
   // hyperModule.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
 }
 
-let openDDCWebView = (url: string, timeoutMs: int, callback: string => unit) => {
-  hyperModule.openDDCWebView(url, timeoutMs, callback)
+let openIframeBridge = (url: string, timeoutMs: int, callback: string => unit) => {
+  hyperModule.openIframeBridge(url, timeoutMs, callback)
 }
