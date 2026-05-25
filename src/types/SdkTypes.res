@@ -205,11 +205,13 @@ type applePayConfiguration = {
 
 type payPalButtonType = PAYPAL | CHECKOUT | BUY_NOW | PAY
 type payPalButtonStyle = GOLD | BLUE | WHITE | BLACK | SILVER
+type payPalButtonSize = SMALL | MEDIUM | LARGE
 type payPalThemeBaseStyle = {light: payPalButtonStyle, dark: payPalButtonStyle}
 type payPalConfiguration = {
   visibility: LayoutTypes.visibility,
   buttonType: payPalButtonType,
   buttonStyle: option<payPalThemeBaseStyle>,
+  buttonSize: payPalButtonSize,
 }
 
 type walletButtonsConfiguration = {
@@ -746,6 +748,11 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
         | "buynow" => BUY_NOW
         | "pay" => PAY
         | _ => PAYPAL
+        },
+        buttonSize: switch getString(payPalDict, "buttonSize", "") {
+        | "small" => SMALL
+        | "large" => LARGE
+        | _ => MEDIUM
         },
         buttonStyle: getOptionalObj(payPalDict, "buttonStyle")->Option.map(s => {
           let payPalThemeBaseStyle: payPalThemeBaseStyle = {

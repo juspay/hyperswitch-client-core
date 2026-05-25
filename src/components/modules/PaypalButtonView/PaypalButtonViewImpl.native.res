@@ -1,6 +1,7 @@
 type props = {
   buttonColor?: string,
   buttonLabel?: string,
+  buttonSize?: string,
   borderRadius?: float,
   style?: ReactNative.Style.t,
 }

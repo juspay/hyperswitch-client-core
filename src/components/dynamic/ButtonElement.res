@@ -385,6 +385,7 @@ let make = (
               style={s({height: primaryButtonHeight->dp, width: 100.->pct})}
               buttonColor={paypalButonColor}
               buttonLabel={nativeProp.configuration.walletButtons.payPal.buttonType}
+              buttonSize={nativeProp.configuration.walletButtons.payPal.buttonSize}
               borderRadius={WebKit.platform == #android
                 ? buttonBorderRadius *. 3.
                 : buttonBorderRadius}
