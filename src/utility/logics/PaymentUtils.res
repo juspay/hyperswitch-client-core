@@ -14,19 +14,6 @@ let showUseExisitingSavedCardsBtn = (
   displaySavedPaymentMethods
 }
 
-let resolveUserAgent = (~nativeProp: SdkTypes.nativeProp) =>
-  switch nativeProp.sdkParams.userAgent->Utils.getNonEmptyOption {
-  | Some(ua) => ua
-  | None =>
-    switch WebKit.platform {
-    | #ios | #iosWebView =>
-      "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
-    | #android | #androidWebView =>
-      "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36"
-    | #web | #next => ""
-    }
-  }
-
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_method_str: string,
@@ -60,7 +47,7 @@ let generateCardConfirmBody = (
     customer_acceptance: ?(
       payment_token->Option.isNone &&
       (nativeProp.configuration.alwaysSendCustomerAcceptance ||
-      (isNicknameSelected && isMandate) ||
+      isNicknameSelected && isMandate ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
       payment_type === NORMAL && isNicknameSelected ||
       payment_type === SETUP_MANDATE) &&
@@ -70,14 +57,14 @@ let generateCardConfirmBody = (
               acceptance_type: "online",
               accepted_at: Date.now()->Date.fromTime->Date.toISOString,
               online: {
-                user_agent: resolveUserAgent(~nativeProp),
+                user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
               },
             }
           })
         : None
     ),
     browser_info: {
-      user_agent: resolveUserAgent(~nativeProp),
+      user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
       accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
       language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
       color_depth: 32,
@@ -133,7 +120,7 @@ let generateSavedCardConfirmBody = (
   ),
   payment_type: ?payment_type_str,
   browser_info: {
-    user_agent: resolveUserAgent(~nativeProp),
+    user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
     language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
     color_depth: 32,

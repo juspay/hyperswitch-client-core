@@ -464,3 +464,16 @@ let rec pruneUnusedFieldsFromDict = (
 
   newDict
 }
+
+let resolveUserAgent = (~userAgent: option<string>) =>
+  switch userAgent->getNonEmptyOption {
+  | Some(ua) => ua
+  | None =>
+    switch WebKit.platform {
+    | #ios
+    | #iosWebView => "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148"
+    | #android
+    | #androidWebView => "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36"
+    | #web | #next => ""
+    }
+  }
