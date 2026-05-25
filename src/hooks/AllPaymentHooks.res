@@ -357,11 +357,41 @@ let useRedirectHook = () => {
       }
     }
 
+    let handleInvokeDDCFlow = (~nextAction) => {
+      let {iframeUrl, timeoutMs} =
+        (nextAction->Option.getOr(defaultNextAction)).ddc_data
+        ->Option.getOr(DdcTypes.defaultDdcData)
+      HyperModule.openDDCWebView(iframeUrl, timeoutMs, redirectUrl => {
+        if redirectUrl === "" {
+          errorCallback(
+            ~errorMessage={
+              status: "failed",
+              message: "DDC failed or timed out",
+              type_: "invoke_ddc_error",
+              code: "ddc_failure",
+            },
+            ~closeSDK=true,
+            (),
+          )
+        } else {
+          browserRedirectionHandler(
+            ~clientSecret,
+            ~publishableKey,
+            ~openUrl=redirectUrl,
+            ~responseCallback,
+            ~errorCallback,
+            ~paymentMethod,
+          )->ignore
+        }
+      })
+    }
+
     let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       switch nextAction->PaymentUtils.getActionType {
       | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
       | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
       | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
+      | "invoke_ddc" => handleInvokeDDCFlow(~nextAction)
       | _ => handleDefaultPaymentFlows(~status, ~reUri, ~error)
       }
     }
