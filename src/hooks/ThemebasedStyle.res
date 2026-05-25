@@ -236,6 +236,7 @@ type themeBasedStyleObj = {
   normalTextInputBoderColor: string,
   shadowConfig: SdkTypes.shadowConfig,
   primaryButtonHeight: float,
+  inputHeight: float,
   disclaimerBackgroundColor: string,
   disclaimerTextColor: string,
   instructionalTextColor: string,
@@ -246,6 +247,14 @@ type themeBasedStyleObj = {
   sheetContentPadding: float,
   errorMessageSpacing: float,
   logoConfig: option<resolvedLogoConfig>,
+  gap: float,
+}
+
+let defaultCheckedIconForSelection: resolvedCheckedIconConfig = {
+  color: "#15b600",
+  size: 18.,
+  bottom: -2.,
+  right: -2.,
 }
 
 let defaultResolvedLogoConfig: resolvedLogoConfig = {
@@ -254,10 +263,12 @@ let defaultResolvedLogoConfig: resolvedLogoConfig = {
     backgroundColor: "#2e2e2e",
     unselected: "white",
   },
+  checkedIconForSelection: defaultCheckedIconForSelection,
 }
 
 let darkRecord = {
   primaryButtonHeight: 45.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "#00000025",
   bgColor: styles["dark_bgColor"],
@@ -360,9 +371,11 @@ let darkRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 let lightRecord = {
   primaryButtonHeight: 45.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "#00000070",
   bgColor: styles["light_bgColor"],
@@ -465,10 +478,12 @@ let lightRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let minimal = {
   primaryButtonHeight: 48.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "#00000030",
   bgColor: styles["minimal_bgColor"],
@@ -571,10 +586,12 @@ let minimal = {
   detailsViewTextValueColor: "#111827",
   silverBorderColor: "#D1D5DB",
   logoConfig: None,
+  gap: 16.,
 }
 
 let flatMinimal = {
   primaryButtonHeight: 48.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "#00000050",
   bgColor: styles["flatMinimal_bgColor"],
@@ -677,10 +694,12 @@ let flatMinimal = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let brutalRecord = {
   primaryButtonHeight: 48.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "#00000040",
   bgColor: styles["brutal_bgColor"],
@@ -783,10 +802,12 @@ let brutalRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let glassRecord = {
   primaryButtonHeight: 48.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "rgba(0,0,0,0.6)",
   bgColor: styles["glass_bgColor"],
@@ -892,10 +913,12 @@ let glassRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let skeuRecord = {
   primaryButtonHeight: 48.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "rgba(60,40,20,0.45)",
   bgColor: styles["skeu_bgColor"],
@@ -1001,10 +1024,12 @@ let skeuRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let clayRecord = {
   primaryButtonHeight: 52.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "rgba(30,20,80,0.35)",
   bgColor: styles["clay_bgColor"],
@@ -1110,10 +1135,12 @@ let clayRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let charcoalRecord = {
   primaryButtonHeight: 48.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "rgba(0,0,0,0.2)",
   bgColor: styles["charcoal_bgColor"],
@@ -1216,10 +1243,12 @@ let charcoalRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let softRecord = {
   primaryButtonHeight: 48.,
+  inputHeight: 46.,
   platform: "android",
   paymentSheetOverlay: "rgba(49,57,77,0.25)",
   bgColor: styles["soft_bgColor"],
@@ -1322,6 +1351,7 @@ let softRecord = {
   sheetContentPadding: 20.,
   errorMessageSpacing: 4.,
   logoConfig: None,
+  gap: 16.,
 }
 
 let some = (~override, ~fn, ~default) => {
@@ -1378,6 +1408,14 @@ let itemToObj = (
     primaryButtonHeight: switch appearance.primaryButton {
     | Some({height: Some(h)}) => h
     | _ => themeObj.primaryButtonHeight
+    },
+    inputHeight: switch appearance.shapes {
+    | Some({inputHeight: Some(h)}) => h
+    | _ => themeObj.inputHeight
+    },
+    gap: switch appearance.shapes {
+    | Some({gap: Some(gap)}) => gap
+    | _ => themeObj.gap
     },
     platform: themeObj.platform,
     bgColor: getStyleProp(
@@ -1801,7 +1839,10 @@ let itemToObj = (
       | None => None
       }->Option.orElse(themeObj.shadowConfig.intensity),
     },
-    paymentSheetOverlay: themeObj.paymentSheetOverlay,
+    paymentSheetOverlay: switch appearanceColor {
+    | Some({overlay: Some(o)}) => o
+    | _ => themeObj.paymentSheetOverlay
+    },
     disclaimerBackgroundColor: themeObj.disclaimerBackgroundColor,
     disclaimerTextColor: themeObj.disclaimerTextColor,
     instructionalTextColor: themeObj.instructionalTextColor,
@@ -1819,11 +1860,11 @@ let itemToObj = (
       let checkedIconForSelection = logoConfig.checkedIconForSelection->Option.map(iconConfig => {
         let iconColors = iconConfig.colors->Option.flatMap(c => isDarkMode ? c.dark : c.light)
         {
-          color: iconColors->Option.flatMap(c => c.color)->Option.getOr("green"),
+          color: iconColors->Option.flatMap(c => c.color)->Option.getOr(defaultCheckedIconForSelection.color),
           stroke: ?iconColors->Option.flatMap(c => c.stroke),
-          size: iconConfig.size->Option.getOr(18.),
-          bottom: iconConfig.bottom->Option.getOr(-2.),
-          right: iconConfig.right->Option.getOr(-2.),
+          size: iconConfig.size->Option.getOr(defaultCheckedIconForSelection.size),
+          bottom: iconConfig.bottom->Option.getOr(defaultCheckedIconForSelection.bottom),
+          right: iconConfig.right->Option.getOr(defaultCheckedIconForSelection.right),
         }
       })
       {

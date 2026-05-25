@@ -8,6 +8,7 @@ let make = (
   ~setConfirmButtonData,
   ~merchantName,
   ~isScreenFocus=true,
+  ~setIsScreenFocus=_ => (),
   ~animated=true,
   ~maxVisibleItems=?,
   ~style=empty,
@@ -634,16 +635,19 @@ let make = (
   }, (selectedToken, savedCardCvv))
 
   React.useEffect(() => {
-    let confirmButton = {
-      GlobalConfirmButton.loading: false,
-      handlePress,
-      payment_method_type: selectedToken
-      ->Option.map(token => token.payment_method_type)
-      ->Option.getOr("Saved Payment"),
-      customer_payment_experience: ?selectedToken->Option.map(token => token.payment_experience),
-      errorText,
+    if isScreenFocus {
+      let confirmButton = {
+        GlobalConfirmButton.loading: false,
+        handlePress,
+        payment_method_type: selectedToken
+        ->Option.map(token => token.payment_method_type)
+        ->Option.getOr("Saved Payment"),
+        customer_payment_experience: ?selectedToken->Option.map(token => token.payment_experience),
+        errorText,
+        visible: true,
+      }
+      setConfirmButtonData(confirmButton)
     }
-    setConfirmButtonData(confirmButton)
 
     None
   }, (
@@ -655,6 +659,7 @@ let make = (
     savedCardCvv,
     errorText,
     isSaveCardCheckboxSelected,
+    isScreenFocus,
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
@@ -663,7 +668,9 @@ let make = (
     </UIUtils.RenderIf>
     <View
       style={array([
-        displayInSeparateScreen || nativeProp.configuration.paymentMethodLayout.layoutType === Tabs
+        displayInSeparateScreen ||
+        (nativeProp.configuration.paymentMethodLayout.layoutType === Tabs &&
+          !nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection)
           ? s({
               borderRadius,
               borderWidth,
@@ -671,7 +678,10 @@ let make = (
             })
           : empty,
         bgColor,
-        nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? getShadowStyle : empty,
+        nativeProp.configuration.paymentMethodLayout.layoutType === Tabs &&
+          !nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection
+          ? getShadowStyle
+          : empty,
         s({
           flexShrink: 1.,
           backgroundColor: ?(displayInSeparateScreen ? Some(component.background) : None),
@@ -685,6 +695,7 @@ let make = (
         savedCardCvv
         setSavedCardCvv
         isScreenFocus
+        setIsScreenFocus
         animated
         ?maxVisibleItems
       />

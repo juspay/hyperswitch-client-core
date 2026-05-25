@@ -8,7 +8,7 @@ let make = (
   ~isCardPayment,
   ~accessible=?,
 ) => {
-  let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
   switch (fields->Array.get(0), fields->Array.get(1)) {
   | (Some(firstNameConfig), Some(lastNameConfig)) =>
     let {input: firstNameInput, meta: firstNameMeta} = ReactFinalForm.useField(
@@ -20,7 +20,7 @@ let make = (
       ~config={validate: createFieldValidator(Validation.LastName)},
     )
     <React.Fragment>
-      <View style={s({marginBottom: 16.->dp})}>
+      <View style={s({marginBottom: gap->dp})}>
         {
           let (inputValue, setInputValue) = React.useState(() => "")
           React.useEffect2(() => {

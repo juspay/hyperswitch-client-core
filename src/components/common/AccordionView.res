@@ -35,7 +35,13 @@ let make = (
     onSectionToggle(sectionKey)
   }
 
-  let {bgColor, component, borderWidth, borderRadius, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
+  let {
+    bgColor,
+    component,
+    borderWidth,
+    borderRadius,
+    shadowConfig,
+  } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   <View ?style>

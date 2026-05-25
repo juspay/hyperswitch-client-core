@@ -10,7 +10,7 @@ let make = (
   ~accessible=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {country, setCountry} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
@@ -177,7 +177,7 @@ let make = (
 
   let renderField = (field: SuperpositionTypes.fieldConfig) => {
     <React.Fragment key={field.outputPath}>
-      <View style={s({marginBottom: 16.->dp})}>
+      <View style={s({marginBottom: gap->dp})}>
         <ReactFinalForm.Field
           name=field.outputPath
           validate=Some(createFieldValidator(getValidationRuleFromFieldType(field.fieldType)))>

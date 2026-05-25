@@ -28,7 +28,8 @@ let useAccountPaymentMethodModifier = () => {
     let showMergedSavedTab =
       nativeProp.configuration.displaySavedPaymentMethods &&
       !groupingBehavior.displayInSeparateScreen &&
-      !groupingBehavior.groupByPaymentMethods
+      !groupingBehavior.groupByPaymentMethods &&
+      !groupingBehavior.displayInSeparateSection
 
     let (initialTabArr, initialElementArr) = if showMergedSavedTab {
       switch customerPaymentMethodData {

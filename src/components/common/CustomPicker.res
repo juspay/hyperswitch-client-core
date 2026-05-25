@@ -36,7 +36,6 @@ let make = (
     bgColor,
     component,
     iconColor,
-    borderRadius,
     borderWidth,
   } = ThemebasedStyle.useThemeBasedStyle()
   let (nativeProps, _) = React.useContext(NativePropContext.nativePropContext)
@@ -63,10 +62,6 @@ let make = (
         borderLeftWidth=borderWidth
         borderRightWidth=borderWidth
         borderBottomWidth=borderWidth
-        borderTopLeftRadius=borderRadius
-        borderTopRightRadius=borderRadius
-        borderBottomLeftRadius=borderRadius
-        borderBottomRightRadius=borderRadius
         placeholder=placeholderText
         editable=false
         textColor=component.color
@@ -141,14 +136,6 @@ let make = (
             }}
             keyboardType=#default
             textColor=component.color
-            borderBottomLeftRadius=borderRadius
-            borderBottomRightRadius=borderRadius
-            borderTopLeftRadius=borderRadius
-            borderTopRightRadius=borderRadius
-            borderTopWidth=borderWidth
-            borderBottomWidth=borderWidth
-            borderLeftWidth=borderWidth
-            borderRightWidth=borderWidth
             ?accessible
           />
           <Space />

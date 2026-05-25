@@ -4,7 +4,12 @@ open PaymentEvents
 
 module SectionHeader = {
   @react.component
-  let make = (~section: AccordionView.accordionSection, ~isExpanded: bool, ~showRadios: bool) => {
+  let make = (
+    ~section: AccordionView.accordionSection,
+    ~isExpanded: bool,
+    ~showRadios: bool,
+    ~showCheckedIconForSelection: bool,
+  ) => {
     let {iconColor, primaryColor, logoConfig, component} = ThemebasedStyle.useThemeBasedStyle()
 
     <View style={s({alignItems: #center, justifyContent: #center})}>
@@ -16,7 +21,7 @@ module SectionHeader = {
             minWidth: 115.->dp,
             paddingHorizontal: 20.->dp,
             paddingVertical: (
-              section.title === "loading" || logoConfig->Option.isNone ? 20. : 10.
+              section.title !== "loading" && logoConfig->Option.isNone ? 20. : 10.
             )->dp,
             alignItems: #center,
           }),
@@ -44,8 +49,13 @@ module SectionHeader = {
                     ? config.colors.selected->Option.getOr(primaryColor)
                     : config.colors.unselected->Option.getOr(iconColor)}
                 />
-                {switch (isExpanded, config.checkedIconForSelection) {
-                | (true, Some(checkedIconConfig)) =>
+                {switch (
+                  isExpanded && showCheckedIconForSelection,
+                  config.checkedIconForSelection->Option.getOr(
+                    ThemebasedStyle.defaultCheckedIconForSelection,
+                  ),
+                ) {
+                | (true, checkedIconConfig) =>
                   <Icon
                     name="selected"
                     width=checkedIconConfig.size
@@ -68,7 +78,7 @@ module SectionHeader = {
             }}
         <Space height=5. />
         {section.title === "loading"
-          ? <CustomLoader height="18" width="40" />
+          ? <CustomLoader radius=Some(40.) width="40" height="40" />
           : <TextWrapper text=section.title textType=CardTextBold />}
       </View>
     </View>
@@ -78,7 +88,13 @@ module SectionHeader = {
 module MoreButton = {
   @react.component
   let make = (~handleMoreToggle) => {
-    let {bgColor, component, borderRadius, borderWidth, shadowConfig} = ThemebasedStyle.useThemeBasedStyle()
+    let {
+      bgColor,
+      component,
+      borderRadius,
+      borderWidth,
+      shadowConfig,
+    } = ThemebasedStyle.useThemeBasedStyle()
     let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
     <View style={s({alignItems: #center, justifyContent: #center, paddingTop: 10.->dp})}>
@@ -113,6 +129,7 @@ let make = (
   ~isLoading=true,
   ~setConfirmButtonData,
   ~allowMultipleExpanded: bool=false,
+  ~onAllCollapsed: bool => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
@@ -147,7 +164,11 @@ let make = (
       setConfirmButtonData({
         ...GlobalConfirmButton.defaultConfirmButtonData,
         loading: false,
-        visible: !(expandIndex->Array.length === 0),
+        visible: !(expandIndex->Array.length === 0) ||
+        (customerPaymentMethodData
+        ->Option.map(c => c.customer_payment_methods->Array.length > 0)
+        ->Option.getOr(false) &&
+          layout.savedMethodCustomization.groupingBehavior.displayInSeparateSection),
       })
       setExpandedSections(_ => expandIndex)
     }
@@ -172,6 +193,11 @@ let make = (
     })
   }
 
+  React.useEffect1(() => {
+    onAllCollapsed(expandedSections->Array.length === 0)
+    None
+  }, [expandedSections])
+
   let allSections = hocComponentArr->Array.mapWithIndex((hoc, index) => {
     AccordionView.key: index,
     title: hoc.name,
@@ -186,7 +212,12 @@ let make = (
   }
 
   let renderSectionHeader = (~section: AccordionView.accordionSection, ~isExpanded: bool) => {
-    <SectionHeader section isExpanded showRadios />
+    <SectionHeader
+      section
+      isExpanded
+      showRadios
+      showCheckedIconForSelection=nativeProp.configuration.paymentMethodLayout.showCheckedIconForSelection
+    />
   }
 
   let renderSectionContent = (~section: AccordionView.accordionSection) => {

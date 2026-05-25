@@ -12,7 +12,6 @@ let make = (
   ~placeholder,
   ~placeholderTextColor=None,
   ~width=100.->pct,
-  ~height: float=46.,
   ~secureTextEntry=false,
   ~keyboardType=#default,
   ~iconLeft: iconType=NoIcon,
@@ -30,14 +29,14 @@ let make = (
   ~onPressIconRight=?,
   ~isValid=true,
   ~showEyeIconaftersecureTextEntry=false,
-  ~borderTopWidth=1.,
-  ~borderBottomWidth=1.,
-  ~borderLeftWidth=1.,
-  ~borderRightWidth=1.,
-  ~borderTopLeftRadius=7.,
-  ~borderTopRightRadius=7.,
-  ~borderBottomLeftRadius=7.,
-  ~borderBottomRightRadius=7.,
+  ~borderTopWidth=?,
+  ~borderBottomWidth=?,
+  ~borderLeftWidth=?,
+  ~borderRightWidth=?,
+  ~borderTopLeftRadius=?,
+  ~borderTopRightRadius=?,
+  ~borderBottomLeftRadius=?,
+  ~borderBottomRightRadius=?,
   ~onFocus=() => (),
   ~onBlur=() => (),
   ~textColor="black",
@@ -52,6 +51,8 @@ let make = (
   ~accessible=?,
 ) => {
   let {
+    borderWidth,
+    borderRadius,
     placeholderColor,
     bgColor,
     primaryColor,
@@ -61,6 +62,7 @@ let make = (
     shadowConfig,
     placeholderTextSizeAdjust,
     fontScale,
+    inputHeight,
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
@@ -110,15 +112,15 @@ let make = (
         bgColor,
         s({
           backgroundColor: component.background,
-          borderTopWidth,
-          borderBottomWidth,
-          borderLeftWidth,
-          borderRightWidth,
-          borderTopLeftRadius,
-          borderTopRightRadius,
-          borderBottomLeftRadius,
-          borderBottomRightRadius,
-          height: height->dp,
+          borderTopWidth: borderTopWidth->Option.getOr(borderWidth),
+          borderBottomWidth: borderBottomWidth->Option.getOr(borderWidth),
+          borderLeftWidth: borderLeftWidth->Option.getOr(borderWidth),
+          borderRightWidth: borderRightWidth->Option.getOr(borderWidth),
+          borderTopLeftRadius: borderTopLeftRadius->Option.getOr(borderRadius),
+          borderTopRightRadius: borderTopRightRadius->Option.getOr(borderRadius),
+          borderBottomLeftRadius: borderBottomLeftRadius->Option.getOr(borderRadius),
+          borderBottomRightRadius: borderBottomRightRadius->Option.getOr(borderRadius),
+          height: inputHeight->dp,
           flexDirection: #row,
           borderColor: isValid
             ? isFocused ? primaryColor : normalTextInputBoderColor
@@ -151,7 +153,10 @@ let make = (
                 height: animatedValue
                 ->Animated.Interpolation.interpolate({
                   inputRange: [0., 1.],
-                  outputRange: ["100%", "40%"]->Animated.Interpolation.fromStringArray,
+                  outputRange: [
+                    `${inputHeight->Float.toString}px`,
+                    `${(inputHeight *. 0.5)->Float.toString}px`,
+                  ]->Animated.Interpolation.fromStringArray,
                 })
                 ->Animated.StyleProp.size,
                 justifyContent: #center,
@@ -199,7 +204,7 @@ let make = (
               fontSize: (fontSize +. placeholderTextSizeAdjust) *. fontScale,
               ?textAlign,
             }),
-            s({padding: 0.->dp, height: (height -. 10.)->dp, width: 100.->pct}),
+            s({padding: 0.->dp, height: (inputHeight *. 0.7)->dp, width: 100.->pct}),
           ])}
           testID=name
           secureTextEntry=showPass

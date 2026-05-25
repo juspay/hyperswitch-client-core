@@ -139,12 +139,14 @@ let make = (
   ~formatValue as _,
   ~accessible=?,
 ) => {
+  let {gap} = ThemebasedStyle.useThemeBasedStyle()
+
   fields
   ->Array.map(field => {
     let placeholder = GetLocale.getLocalString(field.displayName)
 
     <React.Fragment key={field.outputPath}>
-      <View style={s({marginBottom: 16.->dp})}>
+      <View style={s({marginBottom: gap->dp})}>
         <ReactFinalForm.Field
           name=field.outputPath validate=Some(createFieldValidator(Validation.Required))>
           {fieldProps => <DatePicker fieldProps placeholder accessible />}

@@ -17,9 +17,12 @@ module CardBrandAndScanCardIcon = {
     ~cvvRef,
     ~cardBrand,
     ~setCardBrand,
+    ~cardBrandIcon,
   ) => {
     <View style={s({flexDirection: #row, alignItems: #center})}>
-      <CardSchemeComponent eligibleCardSchemes showCardSchemeDropDown cardBrand setCardBrand />
+      <CardSchemeComponent
+        eligibleCardSchemes showCardSchemeDropDown cardBrand setCardBrand cardBrandIcon
+      />
       <UIUtils.RenderIf condition={isScanCardAvailable && !cardNumberFilled}>
         <ScanCardButton onScanCard expireRef cvvRef />
       </UIUtils.RenderIf>
@@ -61,6 +64,7 @@ let make = (
         borderRadius,
         borderWidth,
         primaryColor,
+        gap,
       } = ThemebasedStyle.useThemeBasedStyle()
       let localeObject = GetLocale.useGetLocalObj()
       let cardRef = React.useRef(Nullable.null)
@@ -234,10 +238,16 @@ let make = (
         }
       }
 
+      let splitCardFields = nativeProp.configuration.splitCardFields
+
       <React.Fragment>
-        <View style={s({marginBottom: 16.->dp})}>
+        <View style={s({marginBottom: gap->dp})}>
           <View style={s({width: 100.->pct, borderRadius})}>
-            <View style={s({width: 100.->pct})}>
+            <View
+              style={s({
+                width: 100.->pct,
+                marginBottom: ?(splitCardFields ? Some(gap->dp) : None),
+              })}>
               <CustomInput
                 name={TestUtils.cardNumberInputTestId}
                 reference=Some(cardRef)
@@ -251,14 +261,9 @@ let make = (
                 !cardNumberMeta.touched ||
                 cardNumberMeta.active}
                 maxLength=Some(23)
-                borderTopLeftRadius=borderRadius
-                borderTopRightRadius=borderRadius
-                borderBottomWidth={borderWidth /. 2.}
-                borderLeftWidth=borderWidth
-                borderRightWidth=borderWidth
-                borderTopWidth=borderWidth
-                borderBottomLeftRadius=0.
-                borderBottomRightRadius=0.
+                borderBottomWidth=?{splitCardFields ? None : Some(borderWidth /. 2.)}
+                borderBottomLeftRadius=?{splitCardFields ? None : Some(0.)}
+                borderBottomRightRadius=?{splitCardFields ? None : Some(0.)}
                 textColor={{
                   cardNumberMeta.error->Option.isNone ||
                   !cardNumberMeta.touched ||
@@ -281,6 +286,7 @@ let make = (
                     cvvRef
                     cardBrand={cardNetworkInput.value->Option.getOr("")}
                     setCardBrand=cardNetworkInput.onChange
+                    cardBrandIcon=nativeProp.configuration.paymentMethodLayout.cardBrandIcon
                   />,
                 )
                 onFocus={() => {
@@ -303,13 +309,20 @@ let make = (
                 animateLabel=localeObject.cardNumberLabel
                 ?accessible
               />
+              <UIUtils.RenderIf condition={splitCardFields}>
+                {switch (cardNumberMeta.error, cardNumberMeta.touched) {
+                | (Some(error), true) => <ErrorText text={Some(error)} />
+                | _ => React.null
+                }}
+              </UIUtils.RenderIf>
             </View>
             <View
               style={s({
-                width: 100.->pct,
+                flex: 1.,
                 flexDirection: localeObject.localeDirection === "rtl" ? #"row-reverse" : #row,
+                gap: ?(splitCardFields ? Some(gap->dp) : None),
               })}>
-              <View style={s({width: 50.->pct})}>
+              <View style={s({flex: 1.})}>
                 <CustomInput
                   name={TestUtils.expiryInputTestId}
                   reference={Some(expireRef)}
@@ -325,14 +338,11 @@ let make = (
                   cardExpiryYearMeta.active) && expireDate->String.length < 7) ||
                     (expireDate->String.length === 7 && checkCardExpiry(expireDate))}
                   maxLength=Some(7)
-                  borderTopWidth={borderWidth /. 2.}
-                  borderRightWidth={borderWidth /. 2.}
-                  borderTopLeftRadius=0.
-                  borderTopRightRadius=0.
-                  borderBottomRightRadius=0.
-                  borderBottomLeftRadius=borderRadius
-                  borderBottomWidth=borderWidth
-                  borderLeftWidth=borderWidth
+                  borderTopWidth=?{splitCardFields ? None : Some(borderWidth /. 2.)}
+                  borderRightWidth=?{splitCardFields ? None : Some(borderWidth /. 2.)}
+                  borderTopLeftRadius=?{splitCardFields ? None : Some(0.)}
+                  borderTopRightRadius=?{splitCardFields ? None : Some(0.)}
+                  borderBottomRightRadius=?{splitCardFields ? None : Some(0.)}
                   textColor={((cardExpiryYearMeta.error->Option.isNone ||
                   !cardExpiryYearMeta.touched ||
                   cardExpiryYearMeta.active) && expireDate->String.length < 7) ||
@@ -356,16 +366,26 @@ let make = (
                   animateLabel=localeObject.validThruText
                   ?accessible
                 />
+                <UIUtils.RenderIf condition={splitCardFields}>
+                  {switch (
+                    cardExpiryYearMeta.error,
+                    (expireDate->String.length > 0 || !cardExpiryYearMeta.touched) &&
+                      (expireDate->String.length < 7 || checkCardExpiry(expireDate)),
+                  ) {
+                  | (Some(error), false) => <ErrorText text={Some(error)} />
+                  | _ => React.null
+                  }}
+                </UIUtils.RenderIf>
               </View>
-              <View style={s({width: 50.->pct})}>
+              <View style={s({flex: 1.})}>
                 <CustomInput
                   name={TestUtils.cvcInputTestId}
                   reference={Some(cvvRef)}
-                  borderTopWidth={borderWidth /. 2.}
-                  borderLeftWidth={borderWidth /. 2.}
-                  borderTopLeftRadius=0.
-                  borderTopRightRadius=0.
-                  borderBottomLeftRadius=0.
+                  borderTopWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
+                  borderLeftWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
+                  borderTopLeftRadius={splitCardFields ? borderRadius : 0.}
+                  borderTopRightRadius={splitCardFields ? borderRadius : 0.}
+                  borderBottomLeftRadius={splitCardFields ? borderRadius : 0.}
                   borderBottomRightRadius=borderRadius
                   borderBottomWidth=borderWidth
                   borderRightWidth=borderWidth
@@ -392,28 +412,30 @@ let make = (
                   cardCvcMeta.active
                     ? component.color
                     : dangerColor}
-                  iconRight=CustomIcon(
-                    <View
-                      style={s({
-                        height: 46.->dp,
-                        display: #flex,
-                        flexDirection: #row,
-                        justifyContent: #center,
-                        alignItems: #center,
-                      })}>
-                      <Icon
-                        name="cvv"
-                        height=32.
-                        width=32.
-                        fill={checkCardCVC(
-                          cardCvcInput.value->Option.getOr(""),
-                          cardNetworkInput.value->Option.getOr(""),
-                        )
-                          ? primaryColor
-                          : "#858F97"}
-                      />
-                    </View>,
-                  )
+                  iconRight={nativeProp.configuration.paymentMethodLayout.cvcIcon === Shown
+                    ? CustomIcon(
+                        <View
+                          style={s({
+                            height: 46.->dp,
+                            display: #flex,
+                            flexDirection: #row,
+                            justifyContent: #center,
+                            alignItems: #center,
+                          })}>
+                          <Icon
+                            name="cvv"
+                            height=32.
+                            width=32.
+                            fill={checkCardCVC(
+                              cardCvcInput.value->Option.getOr(""),
+                              cardNetworkInput.value->Option.getOr(""),
+                            )
+                              ? primaryColor
+                              : "#858F97"}
+                          />
+                        </View>,
+                      )
+                    : NoIcon}
                   onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
                     if (
                       ev.nativeEvent.key == "Backspace" &&
@@ -428,35 +450,53 @@ let make = (
                   animateLabel=localeObject.cvcTextLabel
                   ?accessible
                 />
+                <UIUtils.RenderIf condition={splitCardFields}>
+                  {switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
+                  | (Some(error), true, false) => <ErrorText text={Some(error)} />
+                  | _ =>
+                    switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
+                    | (Some(error), true) => <ErrorText text={Some(error)} />
+                    | _ =>
+                      switch eligibilityStatus {
+                      | DynamicFieldsContext.Denied =>
+                        <ErrorText text={Some(localeObject.cardNotEligibleText)} />
+                      | DynamicFieldsContext.Pending => React.null
+                      | _ => React.null
+                      }
+                    }
+                  }}
+                </UIUtils.RenderIf>
               </View>
             </View>
           </View>
-          {switch (cardNumberMeta.error, cardNumberMeta.touched) {
-          | (Some(error), true) => <ErrorText text={Some(error)} />
-          | _ =>
-            switch (
-              cardExpiryYearMeta.error,
-              (expireDate->String.length > 0 || !cardExpiryYearMeta.touched) &&
-                (expireDate->String.length < 7 || checkCardExpiry(expireDate)),
-            ) {
-            | (Some(error), false) => <ErrorText text={Some(error)} />
+          <UIUtils.RenderIf condition={!splitCardFields}>
+            {switch (cardNumberMeta.error, cardNumberMeta.touched) {
+            | (Some(error), true) => <ErrorText text={Some(error)} />
             | _ =>
-              switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
-              | (Some(error), true, false) => <ErrorText text={Some(error)} />
+              switch (
+                cardExpiryYearMeta.error,
+                (expireDate->String.length > 0 || !cardExpiryYearMeta.touched) &&
+                  (expireDate->String.length < 7 || checkCardExpiry(expireDate)),
+              ) {
+              | (Some(error), false) => <ErrorText text={Some(error)} />
               | _ =>
-                switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
-                | (Some(error), true) => <ErrorText text={Some(error)} />
+                switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
+                | (Some(error), true, false) => <ErrorText text={Some(error)} />
                 | _ =>
-                  switch eligibilityStatus {
-                  | DynamicFieldsContext.Denied =>
-                    <ErrorText text={Some(localeObject.cardNotEligibleText)} />
-                  | DynamicFieldsContext.Pending => React.null
-                  | _ => React.null
+                  switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
+                  | (Some(error), true) => <ErrorText text={Some(error)} />
+                  | _ =>
+                    switch eligibilityStatus {
+                    | DynamicFieldsContext.Denied =>
+                      <ErrorText text={Some(localeObject.cardNotEligibleText)} />
+                    | DynamicFieldsContext.Pending => React.null
+                    | _ => React.null
+                    }
                   }
                 }
               }
-            }
-          }}
+            }}
+          </UIUtils.RenderIf>
         </View>
       </React.Fragment>
     }

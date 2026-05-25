@@ -8,7 +8,7 @@ let make = (
   ~formatValue as _,
   ~accessible=?,
 ) => {
-  let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
 
   let fieldData = fields->Array.map(fieldConfig => {
     let {input, meta} = ReactFinalForm.useField(
@@ -23,7 +23,7 @@ let make = (
   switch fieldData->Array.get(0) {
   | Some((input, meta)) =>
     <React.Fragment>
-      <View style={s({marginBottom: 16.->dp})}>
+      <View style={s({marginBottom: gap->dp})}>
         {
           let handleInputChange = (value: string) => {
             onChangeArray->Array.forEach(onChange => {

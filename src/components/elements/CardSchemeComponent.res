@@ -44,13 +44,22 @@ module CardSchemeSelectionPopoverElement = {
 }
 
 @react.component
-let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardBrand) => {
+let make = (
+  ~eligibleCardSchemes,
+  ~showCardSchemeDropDown,
+  ~cardBrand,
+  ~setCardBrand,
+  ~cardBrandIcon: LayoutTypes.cardBrandVisibility,
+) => {
   let logger = LoggerHook.useLoggerHook()
 
   let dropDownIconWidth = AnimatedValue.useAnimatedValue(0.)
   let fadeAnim = AnimatedValue.useAnimatedValue(1.)
 
-  let ((_, cardBrandForShow), setCardBrandForShow) = React.useState(_ => (0, "visa"))
+  let ((_, cardBrandForShow), setCardBrandForShow) = React.useState(_ => (
+    0,
+    cardBrandIcon === Animated ? "visa" : "waitcard",
+  ))
 
   let scaleAnim = fadeAnim->Animated.Value.interpolate({
     inputRange: [0., 1.],
@@ -117,26 +126,30 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
     })
   }
 
-  React.useLayoutEffect1(() => {
-    if cardBrand === "" {
-      startContinuousAnimation()
-      Some(
-        () => {
-          switch animationRef.current {
-          | Some(animation) => animation->Animated.stop
-          | None => ()
-          }
-        },
-      )
-    } else {
-      switch animationRef.current {
-      | Some(animation) => animation->Animated.stop
-      | None => ()
+  React.useLayoutEffect2(() => {
+    if cardBrandIcon === Animated {
+      if cardBrand === "" {
+        startContinuousAnimation()
+        Some(
+          () => {
+            switch animationRef.current {
+            | Some(animation) => animation->Animated.stop
+            | None => ()
+            }
+          },
+        )
+      } else {
+        switch animationRef.current {
+        | Some(animation) => animation->Animated.stop
+        | None => ()
+        }
+        fadeAnim->Animated.Value.setValue(1.)
+        None
       }
-      fadeAnim->Animated.Value.setValue(1.)
+    } else {
       None
     }
-  }, [cardBrand])
+  }, (cardBrand, cardBrandIcon))
 
   React.useEffect(() => {
     Animated.timing(
@@ -166,7 +179,7 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
     None
   }, [showCardSchemeDropDown])
 
-  <View>
+  <UIUtils.RenderIf condition={cardBrandIcon !== Hidden && !(cardBrandIcon === HideDefault && cardBrand === "")}>
     <Tooltip
       disabled={!showCardSchemeDropDown}
       maxWidth=200.
@@ -203,5 +216,5 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
         </Animated.View>
       </View>
     </Tooltip>
-  </View>
+  </UIUtils.RenderIf>
 }

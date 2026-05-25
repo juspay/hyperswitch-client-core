@@ -11,6 +11,7 @@ module CVVComponent = {
     ~hideCardExpiry,
     ~hideCVCError,
     ~hideCvcIcon,
+    ~placeholderCVC,
   ) => {
     let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
 
@@ -30,7 +31,8 @@ module CVVComponent = {
       style={s({
         display: #flex,
         flexDirection: #column,
-        alignItems: #"flex-end",
+        alignItems: hideCardExpiry ? #"flex-end" : #"flex-start",
+        marginHorizontal: hideCardExpiry ? 7.5->dp : 47.5->dp,
       })}>
       <View
         style={s({
@@ -38,7 +40,7 @@ module CVVComponent = {
           display: #flex,
           flexDirection: #row,
           alignItems: #center,
-          paddingHorizontal: hideCardExpiry ? 7.5->dp : 47.5->dp,
+          width: ?(hideCardExpiry ? None : Some(100.->pct)),
           marginTop: hideCardExpiry
             ? (errorMsgText->Option.isSome && !hideCVCError ? 2. : 0.)->dp
             : 10.->dp,
@@ -51,13 +53,13 @@ module CVVComponent = {
         <CustomInput
           state={savedCardCvv->Option.getOr("")}
           setState={onCvvChange}
-          placeholder="123"
+          placeholder={hideCardExpiry
+            ? placeholderCVC->Option.getOr(localeObject.cvcTextLabel)
+            : "123"}
           animateLabel="CVC"
-          fontSize=12.
           keyboardType=#"number-pad"
           enableCrossIcon=false
           width={(hideCvcIcon ? 72. : 100.)->dp}
-          height=40.
           isValid={isCvcValid}
           onFocus={() => {
             setIsCvcFocus(_ => true)
@@ -89,7 +91,10 @@ module PMWithNickNameComponent = {
     ~isPaymentMethodSelected,
   ) => {
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-    let {iconColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
+    let {component, iconColor, primaryColor, logoConfig} = ThemebasedStyle.useThemeBasedStyle()
+    let logoConfig = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection
+      ? logoConfig
+      : None
 
     let nickName = switch savedPaymentMethod.card {
     | Some(card) => card.nick_name
@@ -98,8 +103,8 @@ module PMWithNickNameComponent = {
     let isDefaultPm = savedPaymentMethod.default_payment_method_set
 
     <View style={s({display: #flex, flexDirection: #column})}>
-      {switch nickName {
-      | Some(val) =>
+      {switch (nickName, logoConfig->Option.isNone) {
+      | (Some(val), true) =>
         val != ""
           ? <View style={s({display: #flex, flexDirection: #row, alignItems: #center})}>
               <TextWrapper
@@ -114,33 +119,106 @@ module PMWithNickNameComponent = {
                 : React.null}
             </View>
           : React.null
-      | None => React.null
+      | _ => React.null
       }}
       <View style={s({display: #flex, flexDirection: #row, alignItems: #center})}>
-        <Icon
-          name={switch savedPaymentMethod.card {
-          | Some(card) =>
-            switch card.card_network {
-            | "" => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-            | card_network => card_network
-            }
-          | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-          }}
-          height=26.
-          width=26.
-          fill={isPaymentMethodSelected ? primaryColor : iconColor}
-        />
+        {switch logoConfig {
+        | Some(config) =>
+          <View
+            style={s({
+              backgroundColor: config.colors.backgroundColor,
+              padding: 10.->dp,
+              borderRadius: config.borderRadius,
+              position: #relative,
+            })}>
+            <Icon
+              name={switch savedPaymentMethod.card {
+              | Some(card) =>
+                switch card.card_network {
+                | "" =>
+                  card.scheme === ""
+                    ? savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+                    : card.scheme
+                | card_network => card_network
+                }
+              | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+              }}
+              height=18.
+              width=18.
+              fill={isPaymentMethodSelected ? primaryColor : iconColor}
+            />
+            {switch (
+              isPaymentMethodSelected &&
+              nativeProp.configuration.paymentMethodLayout.showCheckedIconForSelection,
+              config.checkedIconForSelection->Option.getOr(
+                ThemebasedStyle.defaultCheckedIconForSelection,
+              ),
+            ) {
+            | (true, checkedIconConfig) =>
+              <Icon
+                name="selected"
+                width=checkedIconConfig.size
+                height=checkedIconConfig.size
+                fill=checkedIconConfig.color
+                stroke={checkedIconConfig.stroke->Option.getOr(component.background)}
+                style={s({
+                  position: #absolute,
+                  bottom: checkedIconConfig.bottom->dp,
+                  right: checkedIconConfig.right->dp,
+                })}
+              />
+            | _ => React.null
+            }}
+          </View>
+        | None =>
+          <Icon
+            name={switch savedPaymentMethod.card {
+            | Some(card) =>
+              switch card.card_network {
+              | "" =>
+                card.scheme === ""
+                  ? savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+                  : card.scheme
+              | card_network => card_network
+              }
+            | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+            }}
+            height=26.
+            width=26.
+            fill={isPaymentMethodSelected ? primaryColor : iconColor}
+          />
+        }}
         <Space width=8. />
-        <TextWrapper
-          text={switch savedPaymentMethod.card {
-          | Some(card) => "●●●● "->String.concat(card.last4_digits)
-          | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+        <View style={s({flexDirection: #column})}>
+          {switch (nickName, logoConfig->Option.isNone) {
+          | (Some(val), false) =>
+            val != ""
+              ? <View style={s({display: #flex, flexDirection: #row, alignItems: #center})}>
+                  <TextWrapper
+                    text={val->String.length > 15
+                      ? val->String.slice(~start=0, ~end=13)->String.concat("..")
+                      : val}
+                    textType={CardTextBold}
+                  />
+                  <Space height=5. />
+                  {nativeProp.configuration.displayDefaultSavedPaymentIcon && isDefaultPm
+                    ? <Icon name="defaultTick" height=14. width=14. fill="black" />
+                    : React.null}
+                </View>
+              : React.null
+          | _ => React.null
           }}
-          textType={switch savedPaymentMethod.card {
-          | Some(_) => CardText
-          | None => CardTextBold
-          }}
-        />
+          <TextWrapper
+            text={switch savedPaymentMethod.card {
+            | Some(card) => "●●●● "->String.concat(card.last4_digits)
+            | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+            }}
+            textType={switch savedPaymentMethod.card {
+            | Some(_) => CardText
+            | None => CardTextBold
+            }}
+          />
+        </View>
       </View>
     </View>
   }
@@ -184,11 +262,15 @@ module PaymentMethodListView = {
     ~setSavedCardCvv,
     ~isPaymentMethodSelected,
     ~setSelectedToken,
+    ~setIsScreenFocus,
   ) => {
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
     let hideCardExpiry = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hideCardExpiry
     let localeObj = GetLocale.useGetLocalObj()
-    let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
+    let {primaryColor, component, logoConfig} = ThemebasedStyle.useThemeBasedStyle()
+    let logoConfig = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection
+      ? logoConfig
+      : None
     let emitter = PaymentEvents.usePaymentEventEmitter()
 
     <CustomPressable
@@ -197,6 +279,7 @@ module PaymentMethodListView = {
           setSavedCardCvv(_ => None)
         }
         setSelectedToken(Some(savedPaymentMethod))
+        setIsScreenFocus(true)
         let event = PaymentEvents.buildPaymentMethodStatusEvent(
           ~paymentMethod=savedPaymentMethod.payment_method_str,
           ~paymentMethodType=savedPaymentMethod.payment_method_type,
@@ -207,9 +290,9 @@ module PaymentMethodListView = {
       style={s({
         minHeight: 60.->dp,
         paddingVertical: (hideCardExpiry ? 5. : 16.)->dp,
-        borderBottomWidth: {
-          isButtomBorder ? 1.0 : 0.
-        },
+        // borderBottomWidth: {
+        //   isButtomBorder ? 1.0 : 0.
+        // },
         borderBottomColor: component.borderColor,
         justifyContent: #center,
       })}>
@@ -224,8 +307,10 @@ module PaymentMethodListView = {
           gap: 8.->dp,
         })}>
         <View style={s({flexDirection: #row, alignItems: #center, flex: 1., height: 100.->pct})}>
-          <CustomRadioButton size=20.5 selected=isPaymentMethodSelected color=primaryColor />
-          <Space />
+          {logoConfig->Option.isNone
+            ? <CustomRadioButton size=20.5 selected=isPaymentMethodSelected color=primaryColor />
+            : React.null}
+          {logoConfig->Option.isNone ? <Space /> : React.null}
           <PMWithNickNameComponent savedPaymentMethod isPaymentMethodSelected />
         </View>
         {switch (hideCardExpiry, savedPaymentMethod.card) {
@@ -243,6 +328,7 @@ module PaymentMethodListView = {
                 hideCVCError=nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hideCVCError
                 hideCvcIcon={nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.cvcIcon ===
                   Hidden}
+                placeholderCVC={nativeProp.configuration.placeholder.cvv}
               />
             : React.null
         | (false, Some(card)) =>
@@ -275,6 +361,7 @@ module PaymentMethodListView = {
             hideCVCError=nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hideCVCError
             hideCvcIcon={nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.cvcIcon ===
               Hidden}
+            placeholderCVC={nativeProp.configuration.placeholder.cvv}
           />
         : React.null}
     </CustomPressable>
@@ -291,6 +378,7 @@ let make = (
   ~isScreenFocus as _,
   ~animated,
   ~maxVisibleItems: int=3,
+  ~setIsScreenFocus,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (showMore, setShowMore) = React.useState(_ => !animated)
@@ -320,6 +408,7 @@ let make = (
         ->Option.map(token => token.payment_method_id === savedPaymentMethod.payment_method_id)
         ->Option.getOr(i === 0)}
         setSelectedToken
+        setIsScreenFocus
       />
     })
     ->React.array
@@ -331,6 +420,7 @@ let make = (
         condition={customerPaymentMethods->Array.length > maxVisibleItems && showMore}>
         <MoreButton
           handleMoreToggle={() => {
+            setIsScreenFocus(true)
             setShowMore(_ => false)
           }}
         />

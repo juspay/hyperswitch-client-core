@@ -1,10 +1,12 @@
 open Utils
 
 type visibility = Hidden | Shown
+type cardBrandVisibility = Hidden | Animated | Standard | HideDefault 
 type layoutType = Tabs | Accordion
 type paymentMethodsArrangement = ArrangementDefault | ArrangementGrid
 type groupingBehavior = {
   displayInSeparateScreen: bool,
+  displayInSeparateSection: bool,
   groupByPaymentMethods: bool,
 }
 
@@ -25,6 +27,9 @@ type layout = {
   radios: bool,
   spacedAccordionItems: bool,
   maxAccordionItems: int,
+  cvcIcon: visibility,
+  cardBrandIcon: cardBrandVisibility,
+  showCheckedIconForSelection: bool,
   savedMethodCustomization: savedMethodCustomization,
 }
 
@@ -36,12 +41,19 @@ let defaultLayout: layout = {
   radios: false,
   spacedAccordionItems: true,
   maxAccordionItems: 4,
+  cvcIcon: Shown,
+  cardBrandIcon: Animated,
+  showCheckedIconForSelection: false,
   savedMethodCustomization: {
     hideCardExpiry: false,
     hideCVCError: false,
     cvcIcon: Shown,
     defaultCollapsed: false,
-    groupingBehavior: {displayInSeparateScreen: true, groupByPaymentMethods: false},
+    groupingBehavior: {
+      displayInSeparateScreen: true,
+      displayInSeparateSection: false,
+      groupByPaymentMethods: false,
+    },
     hiddenPaymentMethods: [],
   },
 }
@@ -75,10 +87,25 @@ let parseLayout = (configObj: Dict.t<JSON.t>) => {
         radios: getBool(obj, "radios", true),
         spacedAccordionItems: getBool(obj, "spacedAccordionItems", false),
         maxAccordionItems: getInt(obj, "maxAccordionItems", 4),
+        cvcIcon: switch getString(obj, "cvcIcon", "shown") {
+        | "hidden" => Hidden
+        | _ => Shown
+        },
+        cardBrandIcon: switch getString(obj, "cardBrandIcon", "animated") {
+        | "hidden" => Hidden
+        | "standard" => Standard
+        | "hideDefault" => HideDefault
+        | _ => Animated
+        },
+        showCheckedIconForSelection: getBool(obj, "showCheckedIconForSelection", false),
         savedMethodCustomization: {
           hideCardExpiry: getBool(savedMethodCustomizationDict, "hideCardExpiry", false),
           hideCVCError: getBool(savedMethodCustomizationDict, "hideCVCError", false),
-          cvcIcon: switch getString(savedMethodCustomizationDict, "cvcIcon", "") {
+          cvcIcon: switch getString(
+            savedMethodCustomizationDict,
+            "cvcIcon",
+            getString(obj, "cvcIcon", "shown"),
+          ) {
           | "hidden" => Hidden
           | _ => Shown
           },
@@ -87,12 +114,14 @@ let parseLayout = (configObj: Dict.t<JSON.t>) => {
           ->Option.flatMap(JSON.Decode.object) {
           | Some(gbObj) => {
               displayInSeparateScreen: getBool(gbObj, "displayInSeparateScreen", true),
+              displayInSeparateSection: getBool(gbObj, "displayInSeparateSection", false),
               groupByPaymentMethods: getBool(gbObj, "groupByPaymentMethods", false),
             }
           | None =>
             switch getString(savedMethodCustomizationDict, "groupingBehavior", "default") {
             | "groupByPaymentMethods" => {
                 displayInSeparateScreen: false,
+                displayInSeparateSection: false,
                 groupByPaymentMethods: true,
               }
             | _ => defaultLayout.savedMethodCustomization.groupingBehavior

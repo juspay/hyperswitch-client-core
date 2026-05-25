@@ -46,6 +46,7 @@ type colors = {
   error: option<string>,
   loaderBackground: option<string>,
   loaderForeground: option<string>,
+  overlay: option<string>,
   selectedComponentBackground: option<string>,
   selectedComponentBorder: option<string>,
   selectedComponentBorderWidth: option<float>,
@@ -72,6 +73,8 @@ type shapes = {
   borderRadius: option<float>,
   borderWidth: option<float>,
   shadow: option<shadowConfig>, // IOS Specific
+  inputHeight: option<float>,
+  gap: option<float>,
 }
 
 type font = {
@@ -248,6 +251,7 @@ type configurationType = {
   opensCardScannerAutomatically: bool,
   paymentMethodOrder: array<string>,
   paymentMethodLayout: LayoutTypes.layout,
+  splitCardFields: bool,
 }
 
 type sdkState =
@@ -373,6 +377,8 @@ let defaultAppearance: appearance = {
     borderRadius: None,
     borderWidth: None,
     shadow: None,
+    inputHeight: None,
+    gap: None,
   }),
   font: Some({
     family: None,
@@ -391,6 +397,8 @@ let defaultAppearance: appearance = {
       borderRadius: None,
       borderWidth: None,
       shadow: None,
+      inputHeight: None,
+      gap: None,
     }),
     primaryButtonColor: Some({
       light: Some({
@@ -423,6 +431,7 @@ let parseColorDict = (d: Dict.t<JSON.t>): colors => {
   error: getOptionString(d, "error"),
   loaderBackground: getOptionString(d, "loaderBackground"),
   loaderForeground: getOptionString(d, "loaderForeground"),
+  overlay: getOptionString(d, "overlay"),
   selectedComponentBackground: getOptionString(d, "selectedComponentBackground"),
   selectedComponentBorder: getOptionString(d, "selectedComponentBorder"),
   selectedComponentBorderWidth: getOptionFloat(d, "selectedComponentBorderWidth"),
@@ -448,6 +457,8 @@ let parseShapesDict = (d: Dict.t<JSON.t>): shapes => {
   borderRadius: getOptionFloat(d, "borderRadius"),
   borderWidth: getOptionFloat(d, "borderWidth"),
   shadow: getOptionalObj(d, "shadow")->Option.map(parseShadowDict),
+  inputHeight: getOptionFloat(d, "inputHeight"),
+  gap: getOptionFloat(d, "gap"),
 }
 
 let parsePrimaryButtonColorDict = (d: Dict.t<JSON.t>): primaryButtonColor => {
@@ -785,6 +796,7 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     ->Array.filterMap(JSON.Decode.string)
     ->Array.toReversed,
     paymentMethodLayout: LayoutTypes.parseLayout(configObj),
+    splitCardFields: getBool(configObj, "splitCardFields", false),
   }
 }
 

@@ -376,6 +376,7 @@ let make = () => {
             hideCVCError=nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hideCVCError
             hideCvcIcon={nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.cvcIcon ===
               Hidden}
+            placeholderCVC={nativeProp.configuration.placeholder.cvv}
           />
         : React.null
     | _ => React.null

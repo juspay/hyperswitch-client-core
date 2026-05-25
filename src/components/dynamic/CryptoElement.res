@@ -28,6 +28,8 @@ let make = (
     }
   }
 
+  let {gap} = ThemebasedStyle.useThemeBasedStyle()
+
   switch (fields->Array.get(0), fields->Array.get(1)) {
   | (Some(currencyConfig), Some(networkConfig)) =>
     let {input: currencyInput, meta: currencyMeta} = ReactFinalForm.useField(
@@ -42,7 +44,7 @@ let make = (
 
     <>
       <React.Fragment>
-        <View style={s({marginBottom: 16.->dp})}>
+        <View style={s({marginBottom: gap->dp})}>
           {
             let handlePickerChange = (value: unit => option<string>) => {
               currencyInput.onChange(value()->Option.getOr(""))
@@ -74,7 +76,7 @@ let make = (
         </View>
       </React.Fragment>
       <React.Fragment>
-        <View style={s({marginBottom: 16.->dp})}>
+        <View style={s({marginBottom: gap->dp})}>
           {
             let handlePickerChange = (value: unit => option<string>) => {
               networkInput.onChange(value()->Option.getOr(""))

@@ -14,8 +14,6 @@ let make = () => {
   let {
     component,
     dangerColor,
-    borderRadius,
-    borderWidth,
     primaryColor,
   } = ThemebasedStyle.useThemeBasedStyle()
 
@@ -110,14 +108,6 @@ let make = () => {
       maxLength=Some(4)
       isValid={isCvcValid}
       secureTextEntry=true
-      borderTopLeftRadius=borderRadius
-      borderTopRightRadius=borderRadius
-      borderBottomLeftRadius=borderRadius
-      borderBottomRightRadius=borderRadius
-      borderTopWidth=borderWidth
-      borderBottomWidth=borderWidth
-      borderLeftWidth=borderWidth
-      borderRightWidth=borderWidth
       textColor={isCvcValid ? component.color : dangerColor}
       onFocus={() => {
         setIsFocused(_ => true)

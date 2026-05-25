@@ -9,7 +9,7 @@ let make = (
   ~accessible=?,
 ) => {
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
-  let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+  let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
 
   let {country} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
@@ -69,7 +69,7 @@ let make = (
     }, [countryStateData])
 
     <React.Fragment>
-      <View style={s({marginBottom: 16.->dp})}>
+      <View style={s({marginBottom: gap->dp})}>
         <View style={s({flexDirection: #row})}>
           {
             let handlePickerChange = (value: unit => option<string>) => {
