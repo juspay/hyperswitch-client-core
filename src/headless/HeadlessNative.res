@@ -2,7 +2,7 @@ open ReactNative
 
 type headlessModule = {
   initialisePaymentSession: (JSON.t => unit) => unit,
-  getPaymentSession: (JSON.t, JSON.t, JSON.t, JSON.t => unit) => unit,
+  getPaymentSession: (int, JSON.t, JSON.t, JSON.t, JSON.t => unit) => unit,
   exitHeadless: (int, string) => unit,
 }
 
@@ -38,6 +38,7 @@ let initialise = headless => {
       _ => (),
     ),
     getPaymentSession: getFunctionFromModule(hyperSwitchHeadlessDict, "getPaymentSession", (
+      _,
       _,
       _,
       _,

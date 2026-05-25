@@ -6,7 +6,7 @@ open SdkTypes
 open HeadlessUtils
 
 type headlessModule = {
-  getPaymentSession: (JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
+  getPaymentSession: (int, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
   exitHeadless: (int, string) => unit,
 }
 
@@ -24,13 +24,14 @@ let makeHeadlessModule = (): headlessModule => {
   }
 
   {
-    getPaymentSession: getFn("getPaymentSession", (_, _, _, _) => ()),
+    getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
     exitHeadless: getFn("exitHeadless", (_, _) => ()),
   }
 }
 
 let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
   headlessModule.getPaymentSession(
+    rootTag,
     error->Utils.getJsonObjectFromRecord,
     error->Utils.getJsonObjectFromRecord,
     []->Utils.getJsonObjectFromRecord,
@@ -590,6 +591,7 @@ let getPaymentSession = (
       (
         () => {
           headlessModule.getPaymentSession(
+            nativeProp.rootTag,
             defaultSpmData,
             lastUsedSpmData,
             spmData->Utils.getJsonObjectFromRecord,
