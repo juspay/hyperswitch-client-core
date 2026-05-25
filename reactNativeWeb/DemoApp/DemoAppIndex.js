@@ -26,14 +26,14 @@ let defaultProps = {
     subscribedEvents: ['onSuccess', 'onFailed', 'onCancelled'],
     splitCardFields: true,
     paymentMethodLayout: {
-      type: 'accordion',
+      type: 'tabs',
       radios: false,
       maxAccordionItems: 3,
       paymentMethodsArrangementForTabs: "auto",
       spacedAccordionItems: true,
       defaultCollapsed: true,
       cvcIcon: 'hidden',
-      cardBrandIcon: 'hideDefault',
+      cardBrandIcon: 'hideGeneric',
       showCheckedIconForSelection: true,
       savedMethodCustomization: {
         savedLogo: 'hidden',
@@ -43,7 +43,7 @@ let defaultProps = {
         cvcIcon: 'hidden',
         groupingBehavior: {
           displayInSeparateScreen: false,
-          displayInSeparateSection: true,
+          // displayInSeparateSection: true,
           groupByPaymentMethods: false,
         },
         hiddenPaymentMethods: ["apple_pay", "google_pay", "paypal"],

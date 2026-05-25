@@ -1,7 +1,7 @@
 open Utils
 
 type visibility = Hidden | Shown
-type cardBrandVisibility = Hidden | Animated | Standard | HideDefault 
+type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric 
 type layoutType = Tabs | Accordion
 type paymentMethodsArrangement = ArrangementDefault | ArrangementGrid
 type groupingBehavior = {
@@ -94,7 +94,7 @@ let parseLayout = (configObj: Dict.t<JSON.t>) => {
         cardBrandIcon: switch getString(obj, "cardBrandIcon", "animated") {
         | "hidden" => Hidden
         | "standard" => Standard
-        | "hideDefault" => HideDefault
+        | "hideGeneric" => HideGeneric
         | _ => Animated
         },
         showCheckedIconForSelection: getBool(obj, "showCheckedIconForSelection", false),

@@ -179,7 +179,7 @@ let make = (
     None
   }, [showCardSchemeDropDown])
 
-  <UIUtils.RenderIf condition={cardBrandIcon !== Hidden && !(cardBrandIcon === HideDefault && cardBrand === "")}>
+  <UIUtils.RenderIf condition={cardBrandIcon !== Hidden && !(cardBrandIcon === HideGeneric && cardBrand === "")}>
     <Tooltip
       disabled={!showCardSchemeDropDown}
       maxWidth=200.
