@@ -1,3 +1,11 @@
+# [1.12.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.11.3...v1.12.0) (2026-05-25)
+
+
+### Features
+
+* added paypal button size customization ([#518](https://github.com/juspay/hyperswitch-client-core/issues/518)) ([b62bd4a](https://github.com/juspay/hyperswitch-client-core/commit/b62bd4a6b709eb9a3fe2f230fbfdba0f1aec1706))
+* added wpg DDC with webView ([#520](https://github.com/juspay/hyperswitch-client-core/issues/520)) ([7881118](https://github.com/juspay/hyperswitch-client-core/commit/7881118540a92b81864f9f71dbf527bc65f16a1c))
+
 # [1.11.0](https://github.com/juspay/hyperswitch-client-core/compare/v1.10.2...v1.11.0) (2026-05-18)
 
 
