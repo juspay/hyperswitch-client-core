@@ -2776,13 +2776,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@juspay-tech/react-native-hyperswitch-paypal@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "@juspay-tech/react-native-hyperswitch-paypal@npm:1.0.1"
+"@juspay-tech/react-native-hyperswitch-paypal@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@juspay-tech/react-native-hyperswitch-paypal@npm:1.0.2"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 536d86415456973960e3501dcd7d556000e74194570312a72b3c8700281e58970240856f839a3697d1f43622d1e0eed6bdaa69240dd44dd8833e82370b42c1e0
+  checksum: b7475e7bf5bf63030b025198897174d8ef06fc27fa9c6bd29e645001036d7b4b911a5d8c48e3eb6bcfc2c5a31cb8f8cd4f0658d8b04864291ffb8c882f47bfd4
   languageName: node
   linkType: hard
 
@@ -10617,7 +10617,7 @@ __metadata:
     "@commitlint/config-conventional": ^17.0.3
     "@glennsl/rescript-fetch": 0.2.3
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.2
-    "@juspay-tech/react-native-hyperswitch-paypal": ^1.0.1
+    "@juspay-tech/react-native-hyperswitch-paypal": ^1.0.2
     "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.3
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
     "@react-native-community/cli": 18.0.1
