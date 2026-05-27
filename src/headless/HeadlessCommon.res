@@ -59,7 +59,36 @@ let browserRedirectionHandler = async (
   )
 
   switch res.status {
-  | Success => responseCallback(~status=PaymentConfirmTypes.defaultSuccess)
+  | Success => {
+      let s = await retrieveAPICall(nativeProp)
+      let isNullResponse =
+        s->Option.map(json => json == JSON.Encode.null)->Option.getOr(true)
+      if isNullResponse {
+        errorCallback(~errorMessage=PaymentConfirmTypes.defaultConfirmError)
+      } else {
+        let status =
+          s
+          ->Option.flatMap(JSON.Decode.object)
+          ->Option.flatMap(d => d->Dict.get("status"))
+          ->Option.flatMap(JSON.Decode.string)
+          ->Option.getOr("")
+        switch status {
+        | "succeeded"
+        | "processing"
+        | "requires_capture"
+        | "requires_confirmation"
+        | "cancelled"
+        | "requires_merchant_action" =>
+          responseCallback(
+            ~status=({status, message: "", code: "", type_: ""}: PaymentConfirmTypes.error),
+          )
+        | _ =>
+          errorCallback(
+            ~errorMessage=({status, message: "", type_: "", code: ""}: PaymentConfirmTypes.error),
+          )
+        }
+      }
+    }
   | Cancel => errorCallback(~errorMessage=PaymentConfirmTypes.defaultCancelError)
   | Failed => errorCallback(~errorMessage=PaymentConfirmTypes.defaultConfirmError)
   | _ =>
@@ -176,6 +205,89 @@ let handleDefaultPaymentFlows = (
   }
 }
 
+let handleInvokeDDCFlow = (
+  ~nativeProp,
+  ~nextAction: option<PaymentConfirmTypes.nextAction>,
+  ~responseCallback,
+  ~errorCallback,
+) => {
+  let {iframeUrl, timeoutMs} =
+    (nextAction->Option.getOr(PaymentConfirmTypes.defaultNextAction)).ddc_data
+    ->Option.getOr(DdcTypes.defaultDdcData)
+  HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
+    if rawMessage === "" {
+      errorCallback(
+        ~errorMessage=(
+          {
+            status: "failed",
+            message: "DDC failed or timed out",
+            type_: "invoke_ddc_error",
+            code: "ddc_failure",
+          }: PaymentConfirmTypes.error
+        ),
+      )
+    } else {
+      let parsed = rawMessage->JSON.parseExn->Utils.getDictFromJson
+
+      let nextActionObj =
+        parsed->Dict.get("next_action")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+      let nextActionType =
+        nextActionObj->Dict.get("type")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+      let redirectUrl =
+        nextActionObj->Dict.get("url")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+
+
+      switch nextActionType {
+      | "redirect_to_url" if redirectUrl !== "" =>
+        if (
+          redirectUrl->String.includes("status=succeeded") ||
+          redirectUrl->String.includes("status=processing") ||
+          redirectUrl->String.includes("status=requires_capture") ||
+          redirectUrl->String.includes("status=partially_captured")
+        ) {
+          let _ = (async () => {
+            let s = await retrieveAPICall(nativeProp)
+            let status =
+              s
+              ->Option.flatMap(JSON.Decode.object)
+              ->Option.flatMap(d => d->Dict.get("status"))
+              ->Option.flatMap(JSON.Decode.string)
+              ->Option.getOr("")
+            responseCallback(
+              ~status=({status, message: "", code: "", type_: ""}: PaymentConfirmTypes.error),
+            )
+          })()
+        } else if (
+          redirectUrl->String.includes("status=failed") ||
+          redirectUrl->String.includes("status=requires_payment_method")
+        ) {
+          errorCallback(
+            ~errorMessage=({status: "failed", message: "", type_: "", code: ""}: PaymentConfirmTypes.error),
+          )
+        } else {
+          browserRedirectionHandler(
+            ~nativeProp,
+            ~openUrl=redirectUrl,
+            ~responseCallback,
+            ~errorCallback,
+          )->ignore
+        }
+      | _ =>
+        errorCallback(
+          ~errorMessage=(
+            {
+              status: "failed",
+              message: `DDC failed: invalid next action type - ${nextActionType}`,
+              type_: "invoke_ddc_error",
+              code: "ddc_failure",
+            }: PaymentConfirmTypes.error
+          ),
+        )
+      }
+    }
+  })
+}
+
 let handleApiRes = (
   ~nativeProp,
   ~status,
@@ -189,6 +301,8 @@ let handleApiRes = (
   // | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
   // | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
   // | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
+  | "invoke_ddc" =>
+    handleInvokeDDCFlow(~nativeProp, ~nextAction, ~responseCallback, ~errorCallback)
   | _ =>
     handleDefaultPaymentFlows(
       ~nativeProp,

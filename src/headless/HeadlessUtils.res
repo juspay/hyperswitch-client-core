@@ -287,6 +287,32 @@ let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) =
   )
 }
 
+let retrieveAPICall = (nativeProp: SdkTypes.nativeProp) => {
+  let paymentId = nativeProp.paymentSessionConfig.paymentId
+  let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => `${getBaseUrl(nativeProp)}/payments/${paymentId}?force_sync=true`
+  | None =>
+    let clientSecret = nativeProp.paymentSessionConfig.clientSecret
+    `${getBaseUrl(nativeProp)}/payments/${paymentId}?force_sync=true&client_secret=${clientSecret}`
+  }
+  let headers = Utils.getHeader(
+    ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+    ~appId=nativeProp.sdkParams.appId,
+    ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+    (),
+  )
+  handleApiCall(
+    ~uri,
+    ~method=#GET,
+    ~headers,
+    ~nativeProp,
+    ~eventName=RETRIEVE_CALL,
+    ~processSuccess=json => Some(json),
+    ~processError=error => Some(error),
+    ~processCatch=_ => Some(JSON.Encode.null),
+  )
+}
+
 let errorOnApiCalls = (inputKey: ErrorUtils.errorKey, ~dynamicStr="") => {
   let (type_, str) = switch inputKey {
   | INVALID_PK(var) => var
