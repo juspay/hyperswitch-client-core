@@ -135,9 +135,10 @@ let make = (
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
+  let {setSheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let layout = nativeProp.configuration.paymentMethodLayout
 
-  let defaultCollapsed = layout.defaultCollapsed
+  let defaultCollapsed = layout.layoutType === LayoutTypes.Catalog || layout.defaultCollapsed
   let maxVisibleItems = layout.maxAccordionItems
   let showRadios = layout.radios
 
@@ -178,19 +179,23 @@ let make = (
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
   let handleSectionToggle = (sectionKey: int) => {
-    setExpandedSections(prevExpanded => {
-      if allowMultipleExpanded {
-        if prevExpanded->Array.includes(sectionKey) {
-          prevExpanded->Array.filter(key => key !== sectionKey)
+    if layout.layoutType === Catalog {
+      setSheetType(DynamicFieldsContext.FullScreenSheet(sectionKey))
+    } else {
+      setExpandedSections(prevExpanded => {
+        if allowMultipleExpanded {
+          if prevExpanded->Array.includes(sectionKey) {
+            prevExpanded->Array.filter(key => key !== sectionKey)
+          } else {
+            prevExpanded->Array.concat([sectionKey])
+          }
+        } else if prevExpanded->Array.includes(sectionKey) {
+          []
         } else {
-          prevExpanded->Array.concat([sectionKey])
+          [sectionKey]
         }
-      } else if prevExpanded->Array.includes(sectionKey) {
-        []
-      } else {
-        [sectionKey]
-      }
-    })
+      })
+    }
   }
 
   React.useEffect1(() => {

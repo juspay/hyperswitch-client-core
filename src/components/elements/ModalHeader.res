@@ -10,7 +10,6 @@ let make = (~onModalClose, ~isLoading=false, ~isSavedPaymentScreen) => {
   <View
     style={s({
       display: #flex,
-      flexGrow: ?(ReactNative.Platform.os !== #web ? Some(1.) : None),
       flexDirection: #row,
       alignItems: #center,
       justifyContent: #"space-between",

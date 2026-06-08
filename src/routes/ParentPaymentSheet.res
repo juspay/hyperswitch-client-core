@@ -49,6 +49,9 @@ let make = () => {
     }
   }, (accountPaymentMethodData, customerPaymentMethodData, confirmButtonData))
 
+  let renderPaymentSheet = (~isLoading) =>
+    <PaymentSheet setConfirmButtonData isLoading tabArr elementArr giftCardArr />
+
   <FullScreenSheetWrapper
     isSavedPaymentScreen
     isLoading
@@ -57,6 +60,15 @@ let make = () => {
       ? Some(<GlobalConfirmButton confirmButtonData />)
       : None}>
     {switch sheetType {
+    | FullScreenSheet(idx) =>
+      switch tabArr->Array.get(idx) {
+      | Some(hoc) =>
+        <>
+          <Space />
+          {hoc.componentHoc(~isScreenFocus=true, ~setConfirmButtonData)}
+        </>
+      | None => renderPaymentSheet(~isLoading=confirmButtonData.loading)
+      }
     | ButtonSheet =>
       switch (
         nativeProp.sdkState,
@@ -69,15 +81,13 @@ let make = () => {
       | (WidgetTabSheet, true)
       | (ButtonSheet, _)
       | (WidgetButtonSheet, _) =>
-        <PaymentSheet
-          setConfirmButtonData
-          isLoading={confirmButtonData.loading &&
-          accountPaymentMethodData->Option.isNone &&
-          customerPaymentMethodData->Option.isNone}
-          tabArr
-          elementArr
-          giftCardArr
-        />
+        renderPaymentSheet(
+          ~isLoading={
+            confirmButtonData.loading &&
+            accountPaymentMethodData->Option.isNone &&
+            customerPaymentMethodData->Option.isNone
+          },
+        )
       | (PaymentSheet, false)
       | (WidgetPaymentSheet, false)
       | (HostedCheckout, false)
@@ -103,13 +113,7 @@ let make = () => {
                   maxVisibleItems=6
                   animated=true
                 />
-              : <PaymentSheet
-                  setConfirmButtonData
-                  isLoading=confirmButtonData.loading
-                  tabArr
-                  elementArr
-                  giftCardArr
-                />}
+              : renderPaymentSheet(~isLoading=confirmButtonData.loading)}
             <Space height=5. />
             {showSavedScreen ||
             (nativeProp.configuration.allowsDelayedPaymentMethods &&
@@ -134,15 +138,7 @@ let make = () => {
         | None =>
           nativeProp.configuration.allowsDelayedPaymentMethods &&
           accountPaymentMethodData->Option.isSome
-            ? {
-                <PaymentSheet
-                  setConfirmButtonData
-                  isLoading=confirmButtonData.loading
-                  tabArr
-                  elementArr
-                  giftCardArr
-                />
-              }
+            ? renderPaymentSheet(~isLoading=confirmButtonData.loading)
             : <InitialLoader />
         }
       | _ => React.null

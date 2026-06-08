@@ -10,7 +10,7 @@ type walletDataRecord = {
   useIntentData: bool,
 }
 
-type sheetType = ButtonSheet | DynamicFieldsSheet
+type sheetType = ButtonSheet | DynamicFieldsSheet | FullScreenSheet(int)
 
 type eligibilityStatus = Denied | Allowed | Pending
 
@@ -106,6 +106,11 @@ let make = (~children) => {
   let setSheetType = React.useCallback1(val => {
     setSheetType(_ => val)
   }, [setSheetType])
+
+  React.useEffect0(() => {
+    let cleanup = NativeEventListener.setupOnBackListener(~onBack=() => setSheetType(ButtonSheet))
+    Some(cleanup)
+  })
 
   let (country, setCountry) = React.useState(_ => None)
   let (initialValueCountry, setInitialValueCountry) = React.useState(_ =>
