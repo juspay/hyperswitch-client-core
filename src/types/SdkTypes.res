@@ -360,6 +360,14 @@ type sdkParams = {
   insets: option<insets>,
 }
 
+type prefetchedApiData = {
+  accountPaymentMethods: option<JSON.t>,
+  customerPaymentMethods: option<JSON.t>,
+  sessionTokens: option<JSON.t>,
+  fetchedAt: option<float>,
+  paymentId: option<string>,
+}
+
 type nativeProp = {
   rootTag: int,
   sdkState: sdkState,
@@ -367,6 +375,7 @@ type nativeProp = {
   paymentSessionConfig: paymentSessionConfig,
   sdkParams: sdkParams,
   configuration: configurationType,
+  prefetchedApiData: option<prefetchedApiData>,
 }
 
 let defaultAppearance: appearance = {
@@ -905,5 +914,17 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       getObj(d, "configuration", Dict.make()),
       getString(d, "type", "")->parseSdkState === PaymentSheet,
     ),
+    prefetchedApiData: switch Dict.get(d, "prefetchedApiData") {
+    | None => None
+    | Some(json) =>
+      let prefetchDict = json->JSON.Decode.object->Option.getOr(Dict.make())
+      Some({
+        accountPaymentMethods: Dict.get(prefetchDict, "accountPaymentMethods"),
+        customerPaymentMethods: Dict.get(prefetchDict, "customerPaymentMethods"),
+        sessionTokens: Dict.get(prefetchDict, "sessionTokens"),
+        fetchedAt: getOptionFloat(prefetchDict, "fetchedAt"),
+        paymentId: getOptionString(prefetchDict, "paymentId"),
+      })
+    },
   }
 }

@@ -188,6 +188,30 @@ let getBaseUrl = nativeProp => {
   )
 }
 
+let accountPaymentMethodAPICall = nativeProp => {
+  let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => `${getBaseUrl(nativeProp)}/account/payment_methods`
+  | None =>
+    `${getBaseUrl(nativeProp)}/account/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
+  }
+
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=PAYMENT_METHODS_CALL,
+    ~method=#GET,
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
+    ~processSuccess=json => json,
+    ~processError=error => error,
+    ~processCatch=_ => JSON.Encode.null,
+  )
+}
+
 let savedPaymentMethodAPICall = nativeProp => {
   let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => Some(`${getBaseUrl(nativeProp)}/customers/payment_methods`)

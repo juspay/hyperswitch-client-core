@@ -23,10 +23,11 @@ let make = () => {
     logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
     error()
 
+    let cleanupRef = ref(None)
+
     //KountModule.launchKountIfAvailable(nativeProp.paymentSessionConfig.clientSecret, _x => ())
     // if (nativeProp.paymentSessionConfig.clientSecret != "" || nativeProp.paymentMethodId != "") &&
-    //   nativeProp.hyperswitchConfig.publishableKey != ""
-    if nativeProp.sdkState !== CvcWidget {
+    //   nativeProp.hyperswitchConfig.publishableKey !=     if nativeProp.sdkState !== CvcWidget {
       let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
         if ErrorUtils.isError(accountPaymentMethodData) {
           errorOnApiCalls(
@@ -58,32 +59,7 @@ let make = () => {
         ))
       }
 
-      if nativeProp.configuration.allowsDelayedPaymentMethods {
-        customerPaymentMethods()
-        ->Promise.then(customerPaymentMethodData => {
-          handleCustomerPaymentMethodsResponse(customerPaymentMethodData)
-          Promise.resolve()
-        })
-        ->ignore
-
-        accountPaymentMethods()
-        ->Promise.then(accountPaymentMethodData => {
-          handleAccountPaymentMethodsResponse(accountPaymentMethodData)
-          Promise.resolve()
-        })
-        ->ignore
-      } else {
-        Promise.all2((customerPaymentMethods(), accountPaymentMethods()))
-        ->Promise.then(((customerPaymentMethodData, accountPaymentMethodData)) => {
-          handleCustomerPaymentMethodsResponse(customerPaymentMethodData)
-          handleAccountPaymentMethodsResponse(accountPaymentMethodData)
-          Promise.resolve()
-        })
-        ->ignore
-      }
-
-      sessionToken()
-      ->Promise.then(sessionTokenData => {
+      let handleSessionTokenResponse = sessionTokenData => {
         if sessionTokenData->ErrorUtils.isError {
           if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
             errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
@@ -96,11 +72,97 @@ let make = () => {
           | None => setSessionTokenData(_ => Some([]))
           }
         }
-        Promise.resolve()
-      })
-      ->ignore
+      }
+
+      switch nativeProp.prefetchedApiData {
+      | None =>
+        // No prefetch triggered: make API calls normally
+        if nativeProp.configuration.allowsDelayedPaymentMethods {
+          customerPaymentMethods()
+          ->Promise.then(data => {
+            handleCustomerPaymentMethodsResponse(data)
+            Promise.resolve()
+          })
+          ->ignore
+
+          accountPaymentMethods()
+          ->Promise.then(data => {
+            handleAccountPaymentMethodsResponse(data)
+            Promise.resolve()
+          })
+          ->ignore
+        } else {
+          Promise.all2((customerPaymentMethods(), accountPaymentMethods()))
+          ->Promise.then(((customerData, accountData)) => {
+            handleCustomerPaymentMethodsResponse(customerData)
+            handleAccountPaymentMethodsResponse(accountData)
+            Promise.resolve()
+          })
+          ->ignore
+        }
+
+        sessionToken()
+        ->Promise.then(data => {
+          handleSessionTokenResponse(data)
+          Promise.resolve()
+        })
+        ->ignore
+
+      | Some({accountPaymentMethods: None, customerPaymentMethods: None, sessionTokens: None}) =>
+        // Prefetch in progress: subscribe to prefetchApiDataReady event, do NOT re-make API calls
+        let unsubRef = ref(() => ())
+        let unsub = NativeEventListener.setupNativeEventListener("prefetchApiDataReady", payload => {
+          unsubRef.contents()
+          let dict = payload->Utils.getDictFromJson
+          let incomingPaymentId =
+            Dict.get(dict, "paymentId")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+          if (
+            incomingPaymentId === nativeProp.paymentSessionConfig.paymentId ||
+            incomingPaymentId === ""
+          ) {
+            Dict.get(dict, "accountPaymentMethods")->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
+            Dict.get(dict, "customerPaymentMethods")->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
+            Dict.get(dict, "sessionTokens")->Option.map(handleSessionTokenResponse)->Option.getOr()
+          }
+        })
+        unsubRef := unsub
+        cleanupRef := Some(unsub)
+
+      | Some({accountPaymentMethods: prefetchedAPM, customerPaymentMethods: prefetchedCPM, sessionTokens: prefetchedST, fetchedAt}) =>
+        let isStale =
+          fetchedAt
+          ->Option.map(t => Date.now() -. t > 5. *. 60. *. 1000.)
+          ->Option.getOr(false)
+        if isStale {
+          // Data older than 5 min — discard and make fresh API calls
+          accountPaymentMethods()
+          ->Promise.then(data => {
+            handleAccountPaymentMethodsResponse(data)
+            Promise.resolve()
+          })
+          ->ignore
+          customerPaymentMethods()
+          ->Promise.then(data => {
+            handleCustomerPaymentMethodsResponse(data)
+            Promise.resolve()
+          })
+          ->ignore
+          sessionToken()
+          ->Promise.then(data => {
+            handleSessionTokenResponse(data)
+            Promise.resolve()
+          })
+          ->ignore
+        } else {
+          // Prefetch done and fresh — use data directly
+          prefetchedAPM->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
+          prefetchedCPM->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
+          prefetchedST->Option.map(handleSessionTokenResponse)->Option.getOr()
+        }
+      }
     }
-    None
+
+    cleanupRef.contents
   }, [nativeProp])
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)

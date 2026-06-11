@@ -8,6 +8,7 @@ open HeadlessUtils
 type headlessModule = {
   getPaymentSession: (int, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
   exitHeadless: (int, string) => unit,
+  storePrefetchedApiData: (int, JSON.t) => unit,
 }
 
 let makeHeadlessModule = (): headlessModule => {
@@ -26,6 +27,7 @@ let makeHeadlessModule = (): headlessModule => {
   {
     getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
     exitHeadless: getFn("exitHeadless", (_, _) => ()),
+    storePrefetchedApiData: getFn("storePrefetchedApiData", (_, _) => ()),
   }
 }
 
@@ -754,7 +756,11 @@ let apiHandler = async (
   nativeProp,
   ~getCvc: JSON.t => JSON.t,
 ) => {
-  let customerSavedPMData = await savedPaymentMethodAPICall(nativeProp)
+  let prefetch = nativeProp.prefetchedApiData
+  let customerSavedPMData = switch prefetch->Option.flatMap(d => d.customerPaymentMethods) {
+  | Some(json) => Some(json)
+  | None => await savedPaymentMethodAPICall(nativeProp)
+  }
   switch customerSavedPMData {
   | Some(obj) =>
     let spmData =
@@ -784,7 +790,10 @@ let apiHandler = async (
     })
 
     if sessionSpmData->Array.length > 0 {
-      let session = await sessionAPICall(nativeProp)
+      let session = switch prefetch->Option.flatMap(d => d.sessionTokens) {
+      | Some(json) => json
+      | None => await sessionAPICall(nativeProp)
+      }
 
       if session->ErrorUtils.isError {
         if session->ErrorUtils.getErrorCode == "\"IR_16\"" {
@@ -854,6 +863,32 @@ let apiHandler = async (
     ->getErrorFromResponse
     ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }
+}
+
+// Fetch all 3 APIs in parallel, store results natively, then exit headless.
+// Called when headlessType == "prefetch" in HeadlessTask.
+let prefetchApiHandler = async (headlessModule, nativeProp) => {
+  let (accountPM, customerPM, sessionTok) = await Promise.all3((
+    accountPaymentMethodAPICall(nativeProp),
+    savedPaymentMethodAPICall(nativeProp),
+    sessionAPICall(nativeProp),
+  ))
+  let data =
+    [
+      ("accountPaymentMethods", accountPM),
+      ("customerPaymentMethods", customerPM->Option.getOr(JSON.Encode.null)),
+      ("sessionTokens", sessionTok),
+      ("sdkAuthorization", nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string),
+      ("fetchedAt", Date.now()->JSON.Encode.float),
+      ("paymentId", nativeProp.paymentSessionConfig.paymentId->JSON.Encode.string),
+    ]
+    ->Dict.fromArray
+    ->JSON.Encode.object
+  headlessModule.storePrefetchedApiData(nativeProp.rootTag, data)
+  headlessModule.exitHeadless(
+    nativeProp.rootTag,
+    ({status: "prefetch_complete", message: "", code: "", type_: ""}: PaymentConfirmTypes.error)->HyperModule.stringifiedResStatus,
+  )
 }
 
 // Validate nativeProp and run the headless flow.
