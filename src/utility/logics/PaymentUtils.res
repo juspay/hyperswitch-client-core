@@ -80,6 +80,95 @@ let generateCardConfirmBody = (
   }
 }
 
+let getPaymentExperienceSuffix = (
+  experiences: array<AccountPaymentMethodType.payment_experience>,
+) => {
+  let hasSDKFlow =
+    experiences->Array.some(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
+
+  let hasRedirectFlow =
+    experiences->Array.some(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
+
+  if hasSDKFlow {
+    "_sdk"
+  } else if hasRedirectFlow {
+    "_redirect"
+  } else {
+    ""
+  }
+}
+
+let getPaymentMethodDataForConfirm = (
+  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~nickname: option<string>,
+  ~walletDict: option<Dict.t<JSON.t>>,
+  ~tabDict: Dict.t<JSON.t>,
+) => {
+  switch paymentMethodData.payment_method {
+  | CARD =>
+    switch nickname {
+    | Some(name) => (
+        [
+          (
+            "payment_method_data",
+            [
+              (
+                paymentMethodData.payment_method_str,
+                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
+              ),
+            ]
+            ->Dict.fromArray
+            ->Js.Json.object_,
+          ),
+        ]->Dict.fromArray,
+        tabDict,
+        paymentMethodData.payment_method_str,
+      )
+    | None => (Dict.make(), tabDict, paymentMethodData.payment_method_str)
+    }
+  | REWARD => (
+      [
+        ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
+      ]->Dict.fromArray,
+      Dict.make(),
+      paymentMethodData.payment_method_str,
+    )
+  | pm =>
+    let suffix = if pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL {
+      paymentMethodData.payment_experience->getPaymentExperienceSuffix
+    } else if paymentMethodData.payment_method_type === "cashapp" {
+      "_qr"
+    } else {
+      ""
+    }
+
+    (
+      [
+        (
+          "payment_method_data",
+          [
+            (
+              paymentMethodData.payment_method_str,
+              [
+                (
+                  paymentMethodData.payment_method_type ++ suffix,
+                  walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                ),
+              ]
+              ->Dict.fromArray
+              ->Js.Json.object_,
+            ),
+          ]
+          ->Dict.fromArray
+          ->Js.Json.object_,
+        ),
+      ]->Dict.fromArray,
+      tabDict,
+      paymentMethodData.payment_method_str,
+    )
+  }
+}
+
 let generateSessionsTokenBody = (~clientSecret, ~paymentId, ~sdkAuthorization=?, ~wallet) => {
   let baseArr = [
     ("payment_id", paymentId->JSON.Encode.string),

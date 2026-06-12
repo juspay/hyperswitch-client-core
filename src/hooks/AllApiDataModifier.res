@@ -7,6 +7,7 @@ type hoc = {
   name: string,
   paymentMethodType: string,
   componentHoc: componentHoc,
+  paymentMethodData: option<AccountPaymentMethodType.payment_method_type>,
 }
 
 type walletProp = {
@@ -42,6 +43,7 @@ let useAccountPaymentMethodModifier = () => {
                 paymentMethodType: "saved_payment_method",
                 componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) =>
                   <InitialLoader />,
+                paymentMethodData: None,
               },
             ],
             [],
@@ -73,6 +75,7 @@ let useAccountPaymentMethodModifier = () => {
                         animated=true
                         style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
                       />,
+                    paymentMethodData: None,
                   },
                 ]
               : [],
@@ -196,6 +199,7 @@ let useAccountPaymentMethodModifier = () => {
                           />
                       : (~isScreenFocus, ~setConfirmButtonData) =>
                           <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                    paymentMethodData: isGroupByPMCard ? None : Some(paymentMethodData),
                   })
 
             | TabSheet | WidgetTabSheet =>
@@ -209,6 +213,7 @@ let useAccountPaymentMethodModifier = () => {
                       />
                   : (~isScreenFocus, ~setConfirmButtonData) =>
                       <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />,
+                paymentMethodData: isGroupByPMCard ? None : Some(paymentMethodData),
               })
             | ButtonSheet | WidgetButtonSheet =>
               elementArr->Array.push(
@@ -236,6 +241,7 @@ let useAccountPaymentMethodModifier = () => {
           <CustomLoader />
           <Space height=20. />
         </>,
+        paymentMethodData: None,
       }
 
       switch nativeProp.sdkState {

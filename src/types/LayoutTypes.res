@@ -1,7 +1,7 @@
 open Utils
 
 type visibility = Hidden | Shown
-type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric 
+type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric
 type layoutType = Tabs | Accordion | Catalog
 type paymentMethodsArrangement = ArrangementDefault | ArrangementGrid
 type groupingBehavior = {
@@ -34,7 +34,7 @@ type layout = {
 }
 
 let defaultLayout: layout = {
-  layoutType:   Tabs,
+  layoutType: Tabs,
   showOneClickWalletsOnTop: true,
   paymentMethodsArrangementForTabs: ArrangementDefault,
   defaultCollapsed: true,
@@ -61,6 +61,7 @@ let defaultLayout: layout = {
 let parseLayout = (configObj: Dict.t<JSON.t>) => {
   let layoutRaw = configObj->Dict.get("paymentMethodLayout")
   let layoutObj = layoutRaw->Option.flatMap(JSON.Decode.object)
+
   switch layoutObj {
   | Some(obj) => {
       let savedMethodCustomizationDict =

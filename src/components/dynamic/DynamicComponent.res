@@ -14,6 +14,7 @@ let make = (~setConfirmButtonData) => {
     getRequiredFieldsForButton,
     country,
     setInitialValueCountry,
+    eligibilityStatus,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let {
@@ -28,15 +29,14 @@ let make = (~setConfirmButtonData) => {
     useIntentData,
   } = walletData
   let payment_method = paymentMethodData.payment_method
-  let payment_method_str = paymentMethodData.payment_method_str
   let payment_method_type = paymentMethodData.payment_method_type
-  let payment_method_type_wallet = paymentMethodData.payment_method_type_wallet
   let payment_experience = paymentMethodData.payment_experience
 
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let checkEligibility = EligibilityHook.useCheckEligibility(~paymentMethodData)
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
@@ -104,53 +104,20 @@ let make = (~setConfirmButtonData) => {
       }
     }
 
-    let paymentMethodDataDict = switch payment_method {
-    | CARD =>
-      switch nickname {
-      | Some(name) =>
-        [
-          (
-            "payment_method_data",
-            [
-              (
-                payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
-              ),
-            ]
-            ->Dict.fromArray
-            ->Js.Json.object_,
-          ),
-        ]->Dict.fromArray
-      | None => Dict.make()
-      }
-    | pm =>
-      [
-        (
-          "payment_method_data",
-          [
-            (
-              payment_method_str,
-              [
-                (
-                  payment_method_type ++ (
-                    pm === PAY_LATER || payment_method_type_wallet === PAYPAL ? "_redirect" : ""
-                  ),
-                  walletDict->Option.getOr(Dict.make())->Js.Json.object_,
-                ),
-              ]
-              ->Dict.fromArray
-              ->Js.Json.object_,
-            ),
-          ]
-          ->Dict.fromArray
-          ->Js.Json.object_,
-        ),
-      ]->Dict.fromArray
-    }
+    let (
+      paymentMethodDataDict,
+      tabDict,
+      paymentMethodStr,
+    ) = PaymentUtils.getPaymentMethodDataForConfirm(
+      ~paymentMethodData,
+      ~nickname,
+      ~walletDict,
+      ~tabDict,
+    )
 
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,
-      ~payment_method_str,
+      ~payment_method_str=paymentMethodStr,
       ~payment_method_type,
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
@@ -193,7 +160,11 @@ let make = (~setConfirmButtonData) => {
   }
 
   let handlePress = _ => {
-    if isFormValid || missingRequiredFields->Array.length === 0 {
+    // Only gate on eligibility for card payments; non-card methods skip the check
+    let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
+    if isEligibilityBlocked {
+      ()
+    } else if isFormValid || missingRequiredFields->Array.length === 0 {
       processRequest(
         CommonUtils.mergeDict(initialValues, formData),
         Some(walletDict),
@@ -215,7 +186,7 @@ let make = (~setConfirmButtonData) => {
     ~isPristine,
   )
 
-  React.useEffect3(() => {
+  React.useEffect4(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -226,7 +197,7 @@ let make = (~setConfirmButtonData) => {
     setConfirmButtonData(confirmButton)
 
     None
-  }, (walletData, isFormValid, formData))
+  }, (walletData, isFormValid, formData, eligibilityStatus))
 
   <ReactNative.View
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>
@@ -241,6 +212,7 @@ let make = (~setConfirmButtonData) => {
       isCardPayment
       enabledCardSchemes
       accessible=true
+      checkEligibility
     />
   </ReactNative.View>
 }

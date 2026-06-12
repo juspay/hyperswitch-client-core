@@ -135,7 +135,9 @@ let make = (
   let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
-  let {setSheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {getRequiredFieldsForButton, setInitialValueCountry, setSheetType} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
   let layout = nativeProp.configuration.paymentMethodLayout
 
   let defaultCollapsed = layout.layoutType === LayoutTypes.Catalog || layout.defaultCollapsed
@@ -152,7 +154,7 @@ let make = (
         ->Option.map(c => c.customer_payment_methods->Array.length > 0)
         ->Option.getOr(false)
 
-    if hasData && expandedSections->Array.length === 0 {
+    if layout.layoutType !== Catalog && hasData && expandedSections->Array.length === 0 {
       let expandIndex = switch layout.savedMethodCustomization.defaultCollapsed
         ? None
         : switch hocComponentArr->Array.findIndex(hoc => hoc.name === "Saved") {
@@ -178,23 +180,44 @@ let make = (
 
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
-  let handleSectionToggle = (sectionKey: int) => {
-    if layout.layoutType === Catalog {
-      setSheetType(DynamicFieldsContext.FullScreenSheet(sectionKey))
-    } else {
-      setExpandedSections(prevExpanded => {
-        if allowMultipleExpanded {
-          if prevExpanded->Array.includes(sectionKey) {
-            prevExpanded->Array.filter(key => key !== sectionKey)
-          } else {
-            prevExpanded->Array.concat([sectionKey])
-          }
-        } else if prevExpanded->Array.includes(sectionKey) {
-          []
+  let toggleSection = (sectionKey: int) => {
+    setExpandedSections(prevExpanded => {
+      if allowMultipleExpanded {
+        if prevExpanded->Array.includes(sectionKey) {
+          prevExpanded->Array.filter(key => key !== sectionKey)
         } else {
-          [sectionKey]
+          prevExpanded->Array.concat([sectionKey])
         }
-      })
+      } else if prevExpanded->Array.includes(sectionKey) {
+        []
+      } else {
+        [sectionKey]
+      }
+    })
+  }
+
+  let handleSectionToggle = (sectionKey: int) => {
+    let catalogHoc =
+      layout.layoutType === LayoutTypes.Catalog ? hocComponentArr->Array.get(sectionKey) : None
+
+    switch catalogHoc {
+    | Some(hoc) if hoc.name === "Saved" => setSheetType(DynamicFieldsContext.SavedMethodsSheet)
+    | Some(hoc) =>
+      switch hoc.paymentMethodData {
+      | Some(paymentMethodData) =>
+        let (_, _, defaultCountry) = getRequiredFieldsForButton(
+          ~forceSheet=true,
+          paymentMethodData,
+          Dict.make(),
+          None,
+          None,
+          true,
+          None,
+        )
+        setInitialValueCountry(defaultCountry)
+      | None => toggleSection(sectionKey)
+      }
+    | None => toggleSection(sectionKey)
     }
   }
 

@@ -60,15 +60,6 @@ let make = () => {
       ? Some(<GlobalConfirmButton confirmButtonData />)
       : None}>
     {switch sheetType {
-    | FullScreenSheet(idx) =>
-      switch tabArr->Array.get(idx) {
-      | Some(hoc) =>
-        <>
-          <Space />
-          {hoc.componentHoc(~isScreenFocus=true, ~setConfirmButtonData)}
-        </>
-      | None => renderPaymentSheet(~isLoading=confirmButtonData.loading)
-      }
     | ButtonSheet =>
       switch (
         nativeProp.sdkState,
@@ -144,6 +135,25 @@ let make = () => {
       | _ => React.null
       }
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
+    | SavedMethodsSheet =>
+      switch customerPaymentMethodData->Option.map(customerPaymentMethods =>
+        customerPaymentMethods.customer_payment_methods
+      ) {
+      | Some(customerPaymentMethods) =>
+        <>
+          <Space />
+          <SavedPaymentSheet
+            customerPaymentMethods
+            setConfirmButtonData
+            merchantName={accountPaymentMethodData
+            ->Option.map(data => data.merchant_name)
+            ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
+            maxVisibleItems=6
+            animated=true
+          />
+        </>
+      | None => React.null
+      }
     }}
     <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
       <GlobalConfirmButton confirmButtonData />
