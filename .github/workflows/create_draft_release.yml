@@ -7,7 +7,7 @@ on:
         description: 'Branch name for the shared-code'
         required: true
         type: string
-        default: "main"
+        default: "v1.9.0-patch"
       versioning_type:
         description: 'Versioning Type'
         required: true
@@ -23,7 +23,7 @@ on:
       generate_release_notes:
         description: 'Generate release notes for custom version'
         required: false
-        default: true
+        default: false
         type: boolean
 
 permissions:
@@ -42,7 +42,6 @@ jobs:
       PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
       SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
       INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
-      
     steps:
       - name: Check Admin Permission
         uses: actions/github-script@v7
@@ -218,20 +217,20 @@ jobs:
           cd android
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout main
-          git pull origin main
+          git checkout 1.3.0-patch.1
+          git pull origin 1.3.0-patch.1
           git add ./app/src/main/assets/hyperswitch.bundle
           
           if ! git diff --staged --quiet; then
             git commit -m "chore(release): v${{ env.VERSION }} Android Bundle update [skip ci]"
-            git push origin main
+            git push origin 1.3.0-patch.1
           fi
           cd ..
           
           # Update iOS bundle only
           cd ios
-          git checkout main
-          git pull origin main
+          git checkout fix/appearance-locale
+          git pull origin fix/appearance-locale
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           
@@ -239,7 +238,7 @@ jobs:
           
           if ! git diff --staged --quiet; then
             git commit -m "chore(release): v${{ env.VERSION }} iOS Bundle update [skip ci]"
-            git push origin main
+            git push origin fix/appearance-locale
           fi
 
       # - name: Create GitHub Release
