@@ -131,8 +131,8 @@ jobs:
           git commit -m "chore(release): v$CUSTOM_VERSION [skip ci]" || echo "No changes to commit"
           
           # Create and push tag
-          git tag "v$CUSTOM_VERSION" -m "Release v$CUSTOM_VERSION"
-          git push origin main --follow-tags
+          git tag "$CUSTOM_VERSION" -m "Release v$CUSTOM_VERSION"
+          git push origin v1.9.0-patch --follow-tags
 
       - name: Check if Version Changed
         run: |
