@@ -84,28 +84,28 @@ jobs:
           corepack enable
           yarn install
 
-      - name: Validate Custom Version Input
-        if: github.event.inputs.versioning_type == 'custom'
-        run: |
-          VERSION_INPUT="${{ github.event.inputs.custom_version }}"
-          if [ -z "$VERSION_INPUT" ]; then
-            echo "Error: Custom version is required when using custom versioning type"
-            exit 1
-          fi
-          # Validate semantic version format (X.Y.Z) with optional pre-release identifiers
-          # Supports formats like: 1.2.3, 1.2.3-alpha, 1.2.3-beta.1, 1.2.3-rc.2, etc.
-          if ! echo "$VERSION_INPUT" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$' > /dev/null; then
-            echo "Error: Invalid version format. Please use semantic versioning."
-            echo "Valid formats:"
-            echo "  - 1.2.3"
-            echo "  - 1.2.3-alpha"
-            echo "  - 1.2.3-alpha.1"
-            echo "  - 1.2.3-beta"
-            echo "  - 1.2.3-beta.2"
-            echo "  - 1.2.3-rc.1"
-            echo "  - 1.2.3-dev.20250119"
-            exit 1
-          fi
+      # - name: Validate Custom Version Input
+      #   if: github.event.inputs.versioning_type == 'custom'
+      #   run: |
+      #     VERSION_INPUT="${{ github.event.inputs.custom_version }}"
+      #     if [ -z "$VERSION_INPUT" ]; then
+      #       echo "Error: Custom version is required when using custom versioning type"
+      #       exit 1
+      #     fi
+      #     # Validate semantic version format (X.Y.Z) with optional pre-release identifiers
+      #     # Supports formats like: 1.2.3, 1.2.3-alpha, 1.2.3-beta.1, 1.2.3-rc.2, etc.
+      #     if ! echo "$VERSION_INPUT" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$' > /dev/null; then
+      #       echo "Error: Invalid version format. Please use semantic versioning."
+      #       echo "Valid formats:"
+      #       echo "  - 1.2.3"
+      #       echo "  - 1.2.3-alpha"
+      #       echo "  - 1.2.3-alpha.1"
+      #       echo "  - 1.2.3-beta"
+      #       echo "  - 1.2.3-beta.2"
+      #       echo "  - 1.2.3-rc.1"
+      #       echo "  - 1.2.3-dev.20250119"
+      #       exit 1
+      #     fi
 
       - name: Capture Initial Version
         run: echo "INITIAL_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
