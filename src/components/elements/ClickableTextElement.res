@@ -27,7 +27,13 @@ let make = (
     />
     <Space width=gap />
     <TextWrapper
-      text textType overrideStyle={Some(s({flex: 1., color: ?(isLink ? Some(linkColor) : None)}))}
+      text
+      textType
+      overrideStyle={if isLink {
+        Some(s({flex: 1., color: ?Some(linkColor)}))
+      } else {
+        Some(s({flex: 1.}))
+      }}
     />
   </CustomPressable>
 }
