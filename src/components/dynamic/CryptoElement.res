@@ -29,18 +29,37 @@ let make = (
   }
 
   let {gap} = ThemebasedStyle.useThemeBasedStyle()
-
-  switch (fields->Array.get(0), fields->Array.get(1)) {
+  let localeObject = GetLocale.useGetLocalObj()
+  let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
+  let currencyConfig =
+    fields->Array.find((f: SuperpositionTypes.fieldConfig) =>
+      f.fieldRenderType === SuperpositionTypes.CryptoCurrency
+    )
+  let networkConfig =
+    fields->Array.find((f: SuperpositionTypes.fieldConfig) =>
+      f.fieldRenderType === SuperpositionTypes.CryptoNetwork
+    )
+  switch (currencyConfig, networkConfig) {
   | (Some(currencyConfig), Some(networkConfig)) =>
     let {input: currencyInput, meta: currencyMeta} = ReactFinalForm.useField(
-      currencyConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.Required)},
+      currencyConfig.confirmRequestWritePath,
+      ~config={validate: createFieldValidator(Validation.Required(None))},
     )
 
     let {input: networkInput, meta: networkMeta} = ReactFinalForm.useField(
-      networkConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.Required)},
+      networkConfig.confirmRequestWritePath,
+      ~config={validate: createFieldValidator(Validation.Required(None))},
     )
+
+    React.useEffect1(() => {
+      let validNetworks = getNetworkArray(currencyInput.value)
+      switch networkInput.value {
+      | Some(network) if network !== "" && !(validNetworks->Array.includes(network)) =>
+        networkInput.onChange("")
+      | _ => ()
+      }
+      None
+    }, [currencyInput.value->Option.getOr("")])
 
     <>
       <React.Fragment>
@@ -53,11 +72,14 @@ let make = (
               <CustomPicker
                 value=currencyInput.value
                 setValue=handlePickerChange
-                items={currencyConfig.options->Array.map(opt => {
+                items={currencyConfig.dropdownOptions->Option.getOr([])->Array.map(opt => {
                   SdkTypes.label: opt,
                   value: opt,
                 })}
-                placeholderText={GetLocale.getLocalString(currencyConfig.displayName)}
+                placeholderText={FieldLabelResolver.resolvePlaceholder(
+                  currencyConfig,
+                  getLocalized,
+                )}
                 isValid={currencyMeta.error->Option.isNone ||
                 !currencyMeta.touched ||
                 currencyMeta.active}
@@ -96,7 +118,7 @@ let make = (
                 }}
                 setValue=handlePickerChange
                 items
-                placeholderText={GetLocale.getLocalString(networkConfig.displayName)}
+                placeholderText={FieldLabelResolver.resolvePlaceholder(networkConfig, getLocalized)}
                 isValid={networkMeta.error->Option.isNone ||
                 !networkMeta.touched ||
                 networkMeta.active}

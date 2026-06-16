@@ -2,6 +2,48 @@ open ReactNative
 open Style
 open Validation
 
+let isCountryDropdown = (field: SuperpositionTypes.fieldConfig) =>
+  field.fieldRenderType === Country ||
+    (field.fieldRenderType === Dropdown && field.confirmRequestWritePath->String.endsWith(".country"))
+
+let isPhoneCodeDropdown = (field: SuperpositionTypes.fieldConfig) =>
+  field.fieldRenderType === Dropdown && field.confirmRequestWritePath->String.endsWith(".country_code")
+
+let isStateDropdown = (field: SuperpositionTypes.fieldConfig) =>
+  field.fieldRenderType === State ||
+    (field.fieldRenderType === Dropdown && field.confirmRequestWritePath->String.endsWith(".state"))
+
+let toRnKeyboardType = (kb: option<string>) =>
+  switch kb {
+  | Some("numeric") => #numeric
+  | Some("email-address") => #"email-address"
+  | Some("phone-pad") => #"phone-pad"
+  | Some(_) | None => #default
+  }
+
+let getValidationRuleForField = (field: SuperpositionTypes.fieldConfig) =>
+  switch field.fieldRenderType {
+  | CardNumber => CardNumber
+  | Cvc => CardCVC("default")
+  | Email => Email
+  | Phone => Phone
+  | CardExpiryMonth
+  | CardExpiryYear
+  | CardNetwork
+  | PhoneCountryCode
+  | CryptoCurrency
+  | CryptoNetwork
+  | Generic
+  | Dropdown
+  | Date
+  | DateOfBirth
+  | State
+  | Country
+  | FirstName
+  | LastName
+  | CardHolderName => Required(None)
+  }
+
 @react.component
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
@@ -13,77 +55,39 @@ let make = (
   let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)
   let {country, setCountry} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
-
-  let getValidationRuleFromFieldType = (fieldType: SuperpositionTypes.fieldType) => {
-    switch fieldType {
-    | CardNumberTextInput => CardNumber
-    | CvcPasswordInput => CardCVC("default")
-    | EmailInput => Email
-    | PhoneInput => Phone
-    // | TextInput | PasswordInput => MinLength(1)
-    | _ => Required
-    }
-  }
+  let localeObject = GetLocale.useGetLocalObj()
+  let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
 
   let renderFieldInput = (
     field: SuperpositionTypes.fieldConfig,
     {input, meta}: ReactFinalForm.Field.fieldProps,
   ) => {
     let handleInputChange = (value: string) => {
-      let formattedValue = value //formatValue(value, field.fieldType)
-      input.onChange(formattedValue)
+      input.onChange(value)
     }
     let handlePickerChange = (value: unit => option<string>) => {
       let data = value()
-      switch field.fieldType {
-      | CountrySelect =>
+      if isCountryDropdown(field) {
         setCountry(Some(data->Option.getOr(nativeProp.sdkParams.country)))
         setTimeout(() => {
           input.onChange(data->Option.getOr(nativeProp.sdkParams.country))
         }, 0)->ignore
-      | _ => input.onChange(data->Option.getOr(""))
+      } else {
+        input.onChange(data->Option.getOr(""))
       }
     }
 
-    let placeholder = GetLocale.getLocalString(field.displayName)
+    let placeholder = FieldLabelResolver.resolvePlaceholder(field, getLocalized)
 
-    switch field.fieldType {
-    | CardNumberTextInput
-    | CvcPasswordInput
-    | TextInput
-    | PasswordInput
-    | EmailInput
-    | PhoneInput
-    | MonthSelect
-    | YearSelect
-    | DatePicker =>
-      <>
-        <CustomInput
-          state={input.value->Option.getOr("")}
-          setState=handleInputChange
-          placeholder
-          enableCrossIcon=false
-          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
-          onFocus={_ => input.onFocus()}
-          onBlur={_ => input.onBlur()}
-          textColor={meta.error->Option.isNone || !meta.touched || meta.active
-            ? component.color
-            : dangerColor}
-          ?accessible
-        />
-        {switch (meta.error, meta.touched, meta.active) {
-        | (Some(error), true, false) => <ErrorText text={Some(error)} />
-        | _ => React.null
-        }}
-      </>
-    | CountrySelect =>
+    switch field.fieldRenderType {
+    | Country | Dropdown if isCountryDropdown(field) =>
       <>
         <CustomPicker
           value=input.value
           setValue=handlePickerChange
           items={switch countryStateData {
           | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
-            field.options->AddressUtils.getCountryData(res.countries)
+            field.dropdownOptions->Option.getOr([])->AddressUtils.getCountryData(res.countries)
           | _ => []
           }}
           placeholderText=placeholder
@@ -99,7 +103,7 @@ let make = (
         | _ => React.null
         }}
       </>
-    | CountryCodeSelect =>
+    | Dropdown if isPhoneCodeDropdown(field) =>
       <>
         <CustomPicker
           value={input.value}
@@ -122,49 +126,75 @@ let make = (
         | _ => React.null
         }}
       </>
-    | StateSelect =>
-      let items = switch countryStateData {
-      | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
-        AddressUtils.getStateData(statesAndCountryVal.states, country)
-      | _ => []
-      }
-      <>
-        <CustomPicker
-          value={switch input.value {
-          | None | Some("") => input.value
-          | Some(value) =>
-            items->Array.find(c => c.value === value || c.label === value)->Option.map(c => c.label)
+    | State | Dropdown if isStateDropdown(field) => {
+        let items = switch countryStateData {
+        | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
+          AddressUtils.getStateData(statesAndCountryVal.states, country)
+        | _ => []
+        }
+        <>
+          <CustomPicker
+            value={switch input.value {
+            | None | Some("") => input.value
+            | Some(value) =>
+              items->Array.find(c => c.value === value || c.label === value)->Option.map(c => c.label)
+            }}
+            setValue=handlePickerChange
+            items
+            placeholderText=placeholder
+            isValid={meta.error->Option.isNone || !meta.touched || meta.active}
+            isLoading=false
+            onFocus={_ => input.onFocus()}
+            onBlur={_ => input.onBlur()}
+            ?accessible
+          />
+          {switch (meta.error, meta.touched, meta.active) {
+          | (Some(error), true, false) => <ErrorText text={Some(error)} />
+          | _ => React.null
           }}
-          setValue=handlePickerChange
-          items
-          placeholderText=placeholder
-          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
-          isLoading=false
-          onFocus={_ => input.onFocus()}
-          onBlur={_ => input.onBlur()}
-          ?accessible
-        />
-        {switch (meta.error, meta.touched, meta.active) {
-        | (Some(error), true, false) => <ErrorText text={Some(error)} />
-        | _ => React.null
-        }}
-      </>
-    | CurrencySelect | DropdownSelect =>
+        </>
+      }
+    | Dropdown if field.dropdownOptions->Option.getOr([])->Array.length > 0 => {
+        let isLanguageDropdown =
+          field.confirmRequestWritePath->String.includes("language_preference")
+        <>
+          <CustomPicker
+            value=input.value
+            setValue=handlePickerChange
+            items={field.dropdownOptions->Option.getOr([])->Array.map(opt => {
+              SdkTypes.label: isLanguageDropdown
+                ? `${LocaleDataType.localeStringToLocaleName(opt)} - ${opt}`
+                : opt,
+              value: opt,
+            })}
+            placeholderText=placeholder
+            isValid={meta.error->Option.isNone || !meta.touched || meta.active}
+            isLoading=false
+            onFocus={_ => input.onFocus()}
+            onBlur={_ => input.onBlur()}
+            ?accessible
+          />
+          {switch (meta.error, meta.touched, meta.active) {
+          | (Some(error), true, false) => <ErrorText text={Some(error)} />
+          | _ => React.null
+          }}
+        </>
+      }
+    | _ =>
       <>
-        <CustomPicker
-          value=input.value
-          setValue=handlePickerChange
-          items={field.options->Array.map(opt => {
-            SdkTypes.label: placeholder === "Language"
-              ? `${LocaleDataType.localeStringToLocaleName(opt)} - ${opt}`
-              : opt,
-            value: opt,
-          })}
-          placeholderText=placeholder
+        <CustomInput
+          state={input.value->Option.getOr("")}
+          setState=handleInputChange
+          placeholder
+          enableCrossIcon=false
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
-          isLoading=false
           onFocus={_ => input.onFocus()}
           onBlur={_ => input.onBlur()}
+          textColor={meta.error->Option.isNone || !meta.touched || meta.active
+            ? component.color
+            : dangerColor}
+          maxLength={field.maxInputLength}
+          keyboardType={toRnKeyboardType(field.keyboardType)}
           ?accessible
         />
         {switch (meta.error, meta.touched, meta.active) {
@@ -176,15 +206,23 @@ let make = (
   }
 
   let renderField = (field: SuperpositionTypes.fieldConfig) => {
-    <React.Fragment key={field.outputPath}>
+    <React.Fragment key={field.confirmRequestWritePath}>
       <View style={s({marginBottom: gap->dp})}>
         <ReactFinalForm.Field
-          name=field.outputPath
-          validate=Some(createFieldValidator(getValidationRuleFromFieldType(field.fieldType)))>
+          name=field.confirmRequestWritePath
+          validate=Some(createFieldValidator(getValidationRuleForField(field)))>
           {fieldProps => renderFieldInput(field, fieldProps)}
         </ReactFinalForm.Field>
       </View>
     </React.Fragment>
   }
-  {fields->Array.map(renderField)->React.array}
+  {fields
+  ->Array.filter((field: SuperpositionTypes.fieldConfig) =>
+    switch field.fieldRenderType {
+    | Generic | Dropdown | Country | State => true
+    | _ => false
+    }
+  )
+  ->Array.map(renderField)
+  ->React.array}
 }

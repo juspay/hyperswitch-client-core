@@ -1,3 +1,6 @@
+
+external importJSON: string => promise<JSON.t> = "import"
+
 type data =
   | Localdata(CountryStateDataHookTypes.countryStateData)
   | FetchData(CountryStateDataHookTypes.countryStateData)
@@ -64,7 +67,7 @@ let make = (~children) => {
   let s3Path = "/jsons/location/en.json"
   let (state, setState) = React.useState(_ => None)
   React.useEffect0(() => {
-    ConfigurationService.importJSON(`../../shared-code/assets/v2/${s3Path}`)
+    importJSON(`../../shared-code/assets/v2/${s3Path}`)
     ->Promise.then(res => {
       setState(_ => Some(S3ApiHook.decodeJsonTocountryStateData(res)))
       Promise.resolve()

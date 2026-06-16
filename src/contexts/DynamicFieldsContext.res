@@ -100,7 +100,12 @@ let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
-  let getSuperpositionFinalFields = ConfigurationService.useConfigurationService()
+  let superpositionConfig = React.useContext(
+    SuperpositionConfigContext.superpositionConfigContext,
+  )
+  let getSuperpositionFinalFields = ConfigurationService.useConfigurationService(
+    ~rawConfigs=superpositionConfig.raw_configs,
+  )
 
   let (sheetType, setSheetType) = React.useState(_ => ButtonSheet)
   let setSheetType = React.useCallback1(val => {
@@ -125,12 +130,12 @@ let make = (~children) => {
     formData,
     isScreenFocus,
   ) => {
-    let eligibleConnectors = switch paymentMethodData.payment_method {
-    | CARD =>
-      paymentMethodData.card_networks->AccountPaymentMethodType.getEligibleConnectorFromCardNetwork
-    | _ =>
-      paymentMethodData.payment_experience->AccountPaymentMethodType.getEligibleConnectorFromPaymentExperience
-    }
+    let eligibleConnectors =
+      SdkConfigParser.getEligibleConnectorsFromPaymentMethods(
+        superpositionConfig.payment_methods,
+        paymentMethodData.payment_method_str,
+        paymentMethodData.payment_method_type,
+      )->Array.map(JSON.Encode.string)
 
     let requiredFieldsFromPML = SuperpositionHelper.extractFieldValuesFromPML(
       paymentMethodData.required_fields,
@@ -172,24 +177,23 @@ let make = (~children) => {
       requiredFieldsFromPML,
     )
 
-    // Validate CountrySelect fields against their allowed options
     missingRequiredFields->Array.forEach(field => {
-      switch field.fieldType {
-      | CountrySelect => {
-          let currentCountry =
-            initialValues
-            ->Dict.get(field.outputPath)
-            ->Option.flatMap(JSON.Decode.string)
-            ->Option.getOr(country->Option.getOr(nativeProp.sdkParams.country))
+      let isCountryDropdown =
+        (field.fieldRenderType === Dropdown || field.fieldRenderType === Country) &&
+          field.confirmRequestWritePath->String.endsWith(".country")
+      if isCountryDropdown {
+        let currentCountry =
+          initialValues
+          ->Dict.get(field.confirmRequestWritePath)
+          ->Option.flatMap(JSON.Decode.string)
+          ->Option.getOr(country->Option.getOr(nativeProp.sdkParams.country))
 
-          let validatedCountry =
-            field.options->Array.includes(currentCountry)
-              ? currentCountry
-              : field.options->Array.get(0)->Option.getOr(SdkTypes.defaultCountry)
+        let validatedCountry =
+          field.dropdownOptions->Option.getOr([])->Array.includes(currentCountry)
+            ? currentCountry
+            : field.dropdownOptions->Option.getOr([])->Array.get(0)->Option.getOr(SdkTypes.defaultCountry)
 
-          initialValues->Dict.set(field.outputPath, JSON.Encode.string(validatedCountry))
-        }
-      | _ => ()
+        initialValues->Dict.set(field.confirmRequestWritePath, JSON.Encode.string(validatedCountry))
       }
     })
 
@@ -265,16 +269,12 @@ let make = (~children) => {
     useIntentData,
     formData,
   ) => {
-    let eligibleConnectors = switch paymentMethodData.payment_method {
-    | CARD =>
-      paymentMethodData.card_networks
-      ->Array.get(0)
-      ->Option.mapOr([], network => network.eligible_connectors)
-    | _ =>
-      paymentMethodData.payment_experience
-      ->Array.get(0)
-      ->Option.mapOr([], experience => experience.eligible_connectors)
-    }
+    let eligibleConnectors =
+      SdkConfigParser.getEligibleConnectorsFromPaymentMethods(
+        superpositionConfig.payment_methods,
+        paymentMethodData.payment_method_str,
+        paymentMethodData.payment_method_type,
+      )->Array.map(JSON.Encode.string)
 
     let requiredFieldsFromSource = if (
       accountPaymentMethodData
@@ -350,7 +350,7 @@ let make = (~children) => {
           Utils.pruneUnusedFieldsFromDict(
             data,
             "",
-            _requiredFields->Array.map(field => field.outputPath),
+            _requiredFields->Array.map(field => field.confirmRequestWritePath),
           )
         | None => initialValues
         },

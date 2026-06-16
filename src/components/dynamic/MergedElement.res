@@ -9,10 +9,20 @@ let make = (
   ~accessible=?,
 ) => {
   let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
+  let localeObject = GetLocale.useGetLocalObj()
+  let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
 
-  let fieldData = fields->Array.map(fieldConfig => {
+  let emailFields =
+    fields->Array.filter((f: SuperpositionTypes.fieldConfig) =>
+      switch f.fieldRenderType {
+      | Email => true
+      | _ => false
+      }
+    )
+
+  let fieldData = emailFields->Array.map(fieldConfig => {
     let {input, meta} = ReactFinalForm.useField(
-      fieldConfig.outputPath,
+      fieldConfig.confirmRequestWritePath,
       ~config={validate: createFieldValidator(Validation.Email)},
     )
     (input, meta)
@@ -34,7 +44,10 @@ let make = (
             <CustomInput
               state={input.value->Option.getOr("")}
               setState=handleInputChange
-              placeholder={GetLocale.getLocalString("Email")}
+              placeholder={emailFields
+              ->Array.get(0)
+              ->Option.map(f => FieldLabelResolver.resolvePlaceholder(f, getLocalized))
+              ->Option.getOr("Email")}
               enableCrossIcon=false
               isValid={meta.error->Option.isNone || !meta.touched || meta.active}
               onFocus={_ => {

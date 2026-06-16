@@ -19,9 +19,10 @@ let useAccountPaymentMethodModifier = () => {
   let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
+  let superpositionConfig = React.useContext(SuperpositionConfigContext.superpositionConfigContext)
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
-  React.useMemo3(() => {
+  React.useMemo4(() => {
     let groupingBehavior = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior
 
     // Show a merged "Saved" tab only when displaySavedPaymentMethods=true AND displayInSeparateScreen=false AND groupByPaymentMethods=false
@@ -94,6 +95,14 @@ let useAccountPaymentMethodModifier = () => {
       ([], [])
     }
 
+    let isInSuperposition = (paymentMethodData: AccountPaymentMethodType.payment_method_type) =>
+      superpositionConfig.payment_methods->Array.some((pm: SdkConfigTypes.sdkPaymentMethod) =>
+        pm.payment_method === paymentMethodData.payment_method_str &&
+          pm.payment_method_types->Array.some((
+            pmt: SdkConfigTypes.sdkPaymentMethodType,
+          ) => pmt.payment_method_type === paymentMethodData.payment_method_type)
+      )
+
     switch accountPaymentMethodData {
     | Some(accountPaymentMethodData) =>
       accountPaymentMethodData.payment_methods->Array.reduce(
@@ -162,7 +171,7 @@ let useAccountPaymentMethodModifier = () => {
             }
           }
 
-          if walletExperience->Option.isSome {
+          if walletExperience->Option.isSome && isInSuperposition(paymentMethodData) {
             let isGroupByPMCard =
               !groupingBehavior.displayInSeparateScreen &&
               groupingBehavior.groupByPaymentMethods &&
@@ -267,7 +276,12 @@ let useAccountPaymentMethodModifier = () => {
       | _ => ([], [], [])
       }
     }
-  }, (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData))
+  }, (
+    accountPaymentMethodData,
+    customerPaymentMethodData,
+    sessionTokenData,
+    superpositionConfig.payment_methods,
+  ))
 }
 
 let useAddWebPaymentButton = () => {

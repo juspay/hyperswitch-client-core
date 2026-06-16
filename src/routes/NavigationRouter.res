@@ -104,7 +104,6 @@ let make = () => {
   }, [nativeProp])
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
-  ConfigurationService.useConfigurationService()->ignore
 
   UpdateIntentHook.useUpdateIntentListener(
     ~setAccountPaymentMethodData,
