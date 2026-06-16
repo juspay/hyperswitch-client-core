@@ -49,7 +49,9 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
 
   let dropDownIconWidth = AnimatedValue.useAnimatedValue(0.)
   let fadeAnim = AnimatedValue.useAnimatedValue(1.)
-
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let showCardBrandAnimation = nativeProp.configuration.card.showAnimatedCardBrandIcon
+  let showCardBrandIcon = nativeProp.configuration.card.showCardBrandIcon
   let ((_, cardBrandForShow), setCardBrandForShow) = React.useState(_ => (0, "visa"))
 
   let scaleAnim = fadeAnim->Animated.Value.interpolate({
@@ -59,6 +61,18 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
   })
 
   let animationRef = React.useRef(None)
+
+  let iconName = if cardBrand !== "" {
+    showCardBrandIcon ? cardBrand : ""
+  } else if showCardBrandAnimation {
+    cardBrandForShow
+  } else if showCardBrandIcon {
+    "waitcard"
+  } else {
+    ""
+  }
+  
+  let shouldAnimate = cardBrand === "" && showCardBrandAnimation
 
   let rec startContinuousAnimation = () => {
     let fadeOutSequence = Animated.sequence([
@@ -118,7 +132,7 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
   }
 
   React.useLayoutEffect1(() => {
-    if cardBrand === "" {
+    if shouldAnimate {
       startContinuousAnimation()
       Some(
         () => {
@@ -136,7 +150,7 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
       fadeAnim->Animated.Value.setValue(1.)
       None
     }
-  }, [cardBrand])
+  }, [shouldAnimate])
 
   React.useEffect(() => {
     Animated.timing(
@@ -181,19 +195,17 @@ let make = (~eligibleCardSchemes, ~showCardSchemeDropDown, ~cardBrand, ~setCardB
           justifyContent: #center,
           alignItems: #center,
         })}>
-        <Animated.View
-          style={s({
-            opacity: fadeAnim->Animated.StyleProp.float,
-            transform: [scale(~scale=scaleAnim->Animated.StyleProp.float)],
-          })}>
-          <Icon
-            name={cardBrand === "" ? cardBrandForShow : cardBrand}
-            height=32.
-            width=32.
-            fill="black"
-            fallbackIcon="waitcard"
-          />
-        </Animated.View>
+        {switch iconName {
+        | "" => React.null
+        | _ =>
+          <Animated.View
+            style={s({
+              opacity: shouldAnimate ? fadeAnim->Animated.StyleProp.float : 1.,
+              transform: shouldAnimate ? [scale(~scale=scaleAnim->Animated.StyleProp.float)] : [],
+            })}>
+            <Icon name={iconName} height=32. width=32. fill="black" fallbackIcon="waitcard" />
+          </Animated.View>
+        }}
         <Animated.View style={s({width: dropDownIconWidth->Animated.StyleProp.size})}>
           <UIUtils.RenderIf condition={showCardSchemeDropDown}>
             <View style={s({marginLeft: 8.->dp})}>

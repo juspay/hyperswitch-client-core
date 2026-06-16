@@ -168,6 +168,11 @@ type applePayConfiguration = {
 type themeType = Default | Light | Dark | Minimal | FlatMinimal
 type layoutType = Tab | Accordion | SpacedAccordion
 
+type cardConfiguration = {
+  showAnimatedCardBrandIcon: bool,
+  showCardBrandIcon: bool,
+}
+
 type appearance = {
   locale: option<LocaleDataType.localeTypes>,
   colors: option<colorType>,
@@ -234,6 +239,7 @@ type configurationType = {
   enablePartialLoading: bool,
   displayMergedSavedMethods: bool,
   disableBranding: bool,
+  card: cardConfiguration,
 }
 
 type sdkState =
@@ -755,9 +761,16 @@ let parseConfigurationDict = (configObj, from) => {
     ->Option.flatMap(JSON.Decode.object)
     ->Option.getOr(Dict.make())
 
+
+  let cardDict = getObj(configObj, "card", Dict.make())
+
   let configuration = {
     allowsDelayedPaymentMethods: getBool(configObj, "allowsDelayedPaymentMethods", false),
     appearance,
+    card: {
+      showAnimatedCardBrandIcon: getBool(cardDict, "showAnimatedCardBrandIcon", false),
+      showCardBrandIcon: getBool(cardDict, "showCardBrandIcon", true),
+    },
     shippingDetails: switch shippingDetailsDict {
     | Some(shippingObj) =>
       let addressObj = getOptionalObj(shippingObj, "address")
