@@ -129,9 +129,48 @@ let useSessionTokenHook = () => {
   }
 }
 
+//add a hook for /sdk-config
+let useSdkConfigHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  () => {
+    let uri = `${baseUrl}/v1/sdk/configs/web/sdk_config.json`
+
+    let clientSecret = {
+      let fromConfig = nativeProp.paymentSessionConfig.clientSecret
+      if fromConfig->String.length > 0 {
+        fromConfig
+      } else {
+        switch nativeProp.paymentSessionConfig.sdkAuthorization {
+        | Some(auth) => Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr("")
+        | None => ""
+        }
+      }
+    }
+
+    let headers = Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      (),
+    )
+    if clientSecret->String.length > 0 {
+      headers->Dict.set("client-secret", clientSecret)
+    }
+
+    APIUtils.fetchApiWrapper(
+      ~uri,
+      ~method=#GET,
+      ~headers,
+      ~eventName=LoggerTypes.CONFIG_CALL,
+      ~apiLogWrapper,
+    )
+  }
+}
+
 let usePostSessionTokensHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   (
@@ -171,7 +210,7 @@ let usePostSessionTokensHook = () => {
 
 let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
   let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()

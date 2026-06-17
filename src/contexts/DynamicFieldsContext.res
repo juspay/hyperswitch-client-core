@@ -99,10 +99,10 @@ module Provider = {
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
-  let superpositionConfig = React.useContext(
-    SuperpositionConfigContext.superpositionConfigContext,
+  let (accountPaymentMethodData, _, _, sdkConfigData) = React.useContext(
+    AllApiDataContextNew.allApiDataContext,
   )
+  let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
   let getSuperpositionFinalFields = ConfigurationService.useConfigurationService(
     ~rawConfigs=superpositionConfig.raw_configs,
   )

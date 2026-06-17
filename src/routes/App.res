@@ -16,7 +16,7 @@ module ContextWrapper = {
               <CountryStateDataContext>
                 <LoadingContext>
                   <BannerContext>
-                    <SuperpositionConfigContext> children </SuperpositionConfigContext>
+                    children
                   </BannerContext>
                 </LoadingContext>
               </CountryStateDataContext>

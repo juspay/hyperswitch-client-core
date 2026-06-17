@@ -16,10 +16,10 @@ type walletProp = {
 
 let useAccountPaymentMethodModifier = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
-  let superpositionConfig = React.useContext(SuperpositionConfigContext.superpositionConfigContext)
+  let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
   React.useMemo4(() => {
@@ -285,7 +285,7 @@ let useAccountPaymentMethodModifier = () => {
 }
 
 let useAddWebPaymentButton = () => {
-  let (accountPaymentMethodData, _, sessionTokenData) = React.useContext(
+  let (accountPaymentMethodData, _, sessionTokenData, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (addApplePay, addGooglePay) =
