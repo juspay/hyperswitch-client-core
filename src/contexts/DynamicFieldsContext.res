@@ -178,9 +178,7 @@ let make = (~children) => {
     )
 
     missingRequiredFields->Array.forEach(field => {
-      let isCountryDropdown =
-        (field.fieldRenderType === Dropdown || field.fieldRenderType === Country) &&
-          field.confirmRequestWritePath->String.endsWith(".country")
+      let isCountryDropdown = field.fieldRenderType === Country
       if isCountryDropdown {
         let currentCountry =
           initialValues

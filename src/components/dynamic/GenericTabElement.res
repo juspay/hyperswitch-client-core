@@ -2,17 +2,6 @@ open ReactNative
 open Style
 open Validation
 
-let isCountryDropdown = (field: SuperpositionTypes.fieldConfig) =>
-  field.fieldRenderType === Country ||
-    (field.fieldRenderType === Dropdown && field.confirmRequestWritePath->String.endsWith(".country"))
-
-let isPhoneCodeDropdown = (field: SuperpositionTypes.fieldConfig) =>
-  field.fieldRenderType === Dropdown && field.confirmRequestWritePath->String.endsWith(".country_code")
-
-let isStateDropdown = (field: SuperpositionTypes.fieldConfig) =>
-  field.fieldRenderType === State ||
-    (field.fieldRenderType === Dropdown && field.confirmRequestWritePath->String.endsWith(".state"))
-
 let toRnKeyboardType = (kb: option<string>) =>
   switch kb {
   | Some("numeric") => #numeric
@@ -67,7 +56,7 @@ let make = (
     }
     let handlePickerChange = (value: unit => option<string>) => {
       let data = value()
-      if isCountryDropdown(field) {
+      if field.fieldRenderType === Country {
         setCountry(Some(data->Option.getOr(nativeProp.sdkParams.country)))
         setTimeout(() => {
           input.onChange(data->Option.getOr(nativeProp.sdkParams.country))
@@ -80,7 +69,7 @@ let make = (
     let placeholder = FieldLabelResolver.resolvePlaceholder(field, getLocalized)
 
     switch field.fieldRenderType {
-    | Country | Dropdown if isCountryDropdown(field) =>
+    | Country =>
       <>
         <CustomPicker
           value=input.value
@@ -103,30 +92,7 @@ let make = (
         | _ => React.null
         }}
       </>
-    | Dropdown if isPhoneCodeDropdown(field) =>
-      <>
-        <CustomPicker
-          value={input.value}
-          setValue=handlePickerChange
-          items={switch countryStateData {
-          | Localdata(res) | FetchData(res: CountryStateDataHookTypes.countryStateData) =>
-            AddressUtils.getPhoneCodeData(res.countries)
-          | _ => []
-          }}
-          placeholderText=placeholder
-          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
-          isLoading=false
-          onFocus={_ => input.onFocus()}
-          onBlur={_ => input.onBlur()}
-          isCountryStateFields=true
-          ?accessible
-        />
-        {switch (meta.error, meta.touched, meta.active) {
-        | (Some(error), true, false) => <ErrorText text={Some(error)} />
-        | _ => React.null
-        }}
-      </>
-    | State | Dropdown if isStateDropdown(field) => {
+    | State => {
         let items = switch countryStateData {
         | FetchData(statesAndCountryVal) | Localdata(statesAndCountryVal) =>
           AddressUtils.getStateData(statesAndCountryVal.states, country)
@@ -155,16 +121,12 @@ let make = (
         </>
       }
     | Dropdown if field.dropdownOptions->Option.getOr([])->Array.length > 0 => {
-        let isLanguageDropdown =
-          field.confirmRequestWritePath->String.includes("language_preference")
         <>
           <CustomPicker
             value=input.value
             setValue=handlePickerChange
             items={field.dropdownOptions->Option.getOr([])->Array.map(opt => {
-              SdkTypes.label: isLanguageDropdown
-                ? `${LocaleDataType.localeStringToLocaleName(opt)} - ${opt}`
-                : opt,
+              SdkTypes.label: opt,
               value: opt,
             })}
             placeholderText=placeholder

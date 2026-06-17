@@ -30,6 +30,17 @@ module CardBrandAndScanCardIcon = {
   }
 }
 
+let useOptionalCardField = (
+  config: option<SuperpositionTypes.fieldConfig>,
+  ~sentinel,
+  ~validate,
+) => {
+  let present = config->Option.isSome
+  let path = config->Option.mapOr(sentinel, c => c.confirmRequestWritePath)
+  let {input, meta} = ReactFinalForm.useField(path, ~config={validate: ?validate})
+  (present, input, meta)
+}
+
 @react.component
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
@@ -86,30 +97,23 @@ let make = (
         ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
-      let hasNetwork = cardNetworkConfig->Option.isSome
-      let hasCvc = cardCvcConfig->Option.isSome
-      let cardNetworkPath =
-        cardNetworkConfig
-        ->Option.map(c => c.confirmRequestWritePath)
-        ->Option.getOr("__card_network_unbound")
-      let cardCvcPath =
-        cardCvcConfig
-        ->Option.map(c => c.confirmRequestWritePath)
-        ->Option.getOr("__card_cvc_unbound")
-
-      let {input: cardNetworkInput, meta: cardNetworkMeta} = ReactFinalForm.useField(
-        cardNetworkPath,
-        ~config={
-          validate: ?(hasNetwork && enabledCardSchemes->Array.length > 0
+      let (_hasNetwork, cardNetworkInput, cardNetworkMeta) = useOptionalCardField(
+        cardNetworkConfig,
+        ~sentinel="__card_network_unbound",
+        ~validate={
+          cardNetworkConfig->Option.isSome && enabledCardSchemes->Array.length > 0
             ? Some(createFieldValidator(CardNetwork(enabledCardSchemes)))
-            : None),
+            : None
         },
       )
 
-      let {input: cardCvcInput, meta: cardCvcMeta} = ReactFinalForm.useField(
-        cardCvcPath,
-        ~config={
-          validate: ?(hasCvc ? Some(createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr("")))) : None),
+      let (hasCvc, cardCvcInput, cardCvcMeta) = useOptionalCardField(
+        cardCvcConfig,
+        ~sentinel="__card_cvc_unbound",
+        ~validate={
+          cardCvcConfig->Option.isSome
+            ? Some(createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr(""))))
+            : None
         },
       )
 
