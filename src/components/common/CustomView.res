@@ -129,7 +129,7 @@ module Wrapper = {
       }
 
     renderScrollView
-      ? <View style={array([s({flexShrink: 1.}), style])}>
+      ? <SafeAreaView style={array([s({flexShrink: 1.}), style])}>
           <ScrollView
             contentContainerStyle=contentStyle
             keyboardShouldPersistTaps={#handled}
@@ -144,7 +144,7 @@ module Wrapper = {
               paddingBottom: viewPortContants.bottomInset->dp,
             }),
           )}
-        </View>
+        </SafeAreaView>
       : <View style={array([s({maxHeight: 100.->pct}), contentStyle, style])}>
           <ModalHeader onModalClose isLoading isSavedPaymentScreen />
           children
@@ -154,6 +154,7 @@ module Wrapper = {
               paddingBottom: viewPortContants.bottomInset->dp,
             }),
           )}
+          <SafeAreaView />
         </View>
   }
 }
