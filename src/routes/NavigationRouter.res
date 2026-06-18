@@ -71,13 +71,13 @@ let make = () => {
         if ErrorUtils.isError(configResponse) {
           errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(configResponse)))), ())
         } else if configResponse == JSON.Encode.null {
-          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
+          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
         } else {
           let parsed = SdkConfigParser.itemToObjMapper(configResponse)
           if isValidConfig(parsed) {
             setSdkConfigData(_ => Some(parsed))
           } else {
-            handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
+            handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
           }
         }
       }
