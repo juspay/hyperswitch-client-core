@@ -196,9 +196,9 @@ let updateWidgetHeight = (height: int) => {
   hyperModule.updateWidgetHeight(height)
 }
 
-let onPaymentConfirmButtonClick = (_: int, _: JSON.t, callback: bool => unit) => {
-  callback(true)
-  // hyperModule.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
+let onPaymentConfirmButtonClick = (rootTag: int, payload: JSON.t, callback: bool => unit) => {
+  // callback(true)
+  hyperModule.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
 }
 
 let openIframeBridge = (url: string, timeoutMs: int, callback: string => unit) => {
