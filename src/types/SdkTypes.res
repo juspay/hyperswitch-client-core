@@ -865,13 +865,23 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   | None => clientSecret->String.split("_secret_")->Array.get(0)->Option.getOr("")
   }
 
+  let publishableKey = switch sdkAuthorization {
+  | Some(auth) => Utils.getSdkAuthorizationData(auth).publishableKey->Option.getOr(getString(hc, "publishableKey", ""))
+  | None => getString(hc, "publishableKey", "")
+  }
+
+  let profileId = switch sdkAuthorization{
+  | Some(auth) => Utils.getSdkAuthorizationData(auth).profileId
+  | None => getOptionString(hc, "profileId")
+  }
+
   {
     rootTag,
     sdkState: getString(d, "type", "")->parseSdkState,
     hyperswitchConfig: {
-      publishableKey: getString(hc, "publishableKey", ""),
-      profileId: getOptionString(hc, "profileId"),
-      environment: GlobalVars.checkEnv(getString(hc, "publishableKey", "")),
+      publishableKey: publishableKey,
+      profileId: profileId,
+      environment: GlobalVars.checkEnv(publishableKey),
       customEndpoints: parseEndpointsConfig(getObj(hc, "customEndpoints", Dict.make())),
     },
     paymentSessionConfig: {
