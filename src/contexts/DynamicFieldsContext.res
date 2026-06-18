@@ -95,6 +95,22 @@ module Provider = {
   let make = React.Context.provider(dynamicFieldsContext)
 }
 
+let buildIntentData = (flatByWritePath: Dict.t<string>): JSON.t => {
+  let prefix = "payment_method_data."
+  let byReadPath = Dict.make()
+  flatByWritePath
+  ->Dict.toArray
+  ->Array.forEach(((writePath, value)) =>
+    byReadPath->Dict.set(
+      writePath->String.startsWith(prefix)
+        ? writePath->String.sliceToEnd(~start=prefix->String.length)
+        : writePath,
+      value,
+    )
+  )
+  byReadPath->SuperpositionHelper.convertFlatDictToNestedObject->JSON.Encode.object
+}
+
 @react.component
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
@@ -174,7 +190,7 @@ let make = (~children) => {
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
-      requiredFieldsFromPML,
+      buildIntentData(requiredFieldsFromPML),
     )
 
     missingRequiredFields->Array.forEach(field => {
@@ -335,7 +351,7 @@ let make = (~children) => {
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
-      requiredFieldsFromSource,
+      buildIntentData(requiredFieldsFromSource),
     )
 
     let isFieldsMissing = missingRequiredFields->Array.length > 0

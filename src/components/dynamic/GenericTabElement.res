@@ -28,6 +28,8 @@ let getValidationRuleForField = (field: SuperpositionTypes.fieldConfig) =>
   | DateOfBirth
   | State
   | Country
+  | LanguagePreference
+  | BankNamesSelect
   | FirstName
   | LastName
   | CardHolderName => Required(None)
@@ -120,7 +122,9 @@ let make = (
           }}
         </>
       }
-    | Dropdown if field.dropdownOptions->Option.getOr([])->Array.length > 0 => {
+    | Dropdown
+    | LanguagePreference
+    | BankNamesSelect if field.dropdownOptions->Option.getOr([])->Array.length > 0 => {
         <>
           <CustomPicker
             value=input.value
@@ -181,7 +185,7 @@ let make = (
   {fields
   ->Array.filter((field: SuperpositionTypes.fieldConfig) =>
     switch field.fieldRenderType {
-    | Generic | Dropdown | Country | State => true
+    | Generic | Dropdown | Country | State | LanguagePreference | BankNamesSelect => true
     | _ => false
     }
   )

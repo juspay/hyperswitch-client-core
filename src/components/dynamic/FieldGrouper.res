@@ -17,7 +17,7 @@ let classify = (field: SuperpositionTypes.fieldConfig): category =>
   | Phone | PhoneCountryCode => Phone
   | CryptoCurrency | CryptoNetwork => Crypto
   | Date | DateOfBirth => Date
-  | Generic | Dropdown | Country | State => Generic
+  | Generic | Dropdown | Country | State | LanguagePreference | BankNamesSelect => Generic
   }
 
 let toElement = (cat: category, fields): elementType =>
