@@ -335,17 +335,36 @@ let make = (
         | Cancelled | Simulated =>
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Payment was Cancelled")
+          HyperModule.hyperModule.notifyWidgetPaymentResult(
+            nativeProp.rootTag,
+            PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
+          )
         | Failed(error_message) =>
           setLoading(FillingDetails)
           showAlert(~errorType="error", ~message=error_message)
+          HyperModule.hyperModule.notifyWidgetPaymentResult(
+            nativeProp.rootTag,
+            {
+              ...PaymentConfirmTypes.walletError,
+              message: error_message,
+            }->HyperModule.stringifiedResStatus,
+          )
         }
       | None =>
         setLoading(FillingDetails)
         showAlert(~errorType="error", ~message="Technical Error")
+        HyperModule.hyperModule.notifyWidgetPaymentResult(
+          nativeProp.rootTag,
+          PaymentConfirmTypes.defaultConfirmError->HyperModule.stringifiedResStatus,
+        )
       }
     | None =>
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message="Technical Error")
+      HyperModule.hyperModule.notifyWidgetPaymentResult(
+        nativeProp.rootTag,
+        PaymentConfirmTypes.defaultConfirmError->HyperModule.stringifiedResStatus,
+      )
     }
   }
 
@@ -378,24 +397,50 @@ let make = (
         | Cancelled =>
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Cancelled")
+          HyperModule.hyperModule.notifyWidgetPaymentResult(
+            nativeProp.rootTag,
+            PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
+          )
         | Simulated => setTimeout(() => {
             setLoading(FillingDetails)
             showAlert(
               ~errorType="warning",
               ~message="Apple Pay is not supported in Simulated Environment",
             )
+            HyperModule.hyperModule.notifyWidgetPaymentResult(
+              nativeProp.rootTag,
+              {
+                ...PaymentConfirmTypes.walletError,
+                message: "Apple Pay is not supported in Simulated Environment",
+              }->HyperModule.stringifiedResStatus,
+            )
           }, 2000)->ignore
         | Failed(error_message) =>
           setLoading(FillingDetails)
           showAlert(~errorType="error", ~message=error_message)
+          HyperModule.hyperModule.notifyWidgetPaymentResult(
+            nativeProp.rootTag,
+            {
+              ...PaymentConfirmTypes.walletError,
+              message: error_message,
+            }->HyperModule.stringifiedResStatus,
+          )
         }
       | None =>
         setLoading(FillingDetails)
         showAlert(~errorType="error", ~message="Technical Error")
+        HyperModule.hyperModule.notifyWidgetPaymentResult(
+          nativeProp.rootTag,
+          PaymentConfirmTypes.defaultConfirmError->HyperModule.stringifiedResStatus,
+        )
       }
     | None =>
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message="Technical Error")
+      HyperModule.hyperModule.notifyWidgetPaymentResult(
+        nativeProp.rootTag,
+        PaymentConfirmTypes.defaultConfirmError->HyperModule.stringifiedResStatus,
+      )
     }
   }
 
