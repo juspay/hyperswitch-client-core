@@ -16,6 +16,16 @@ module.exports = {
   devServer: {
     open: true,
     port: 8083,
+    watchFiles: [
+      path.join(__dirname, '..', 'hyperswitch-lite-sdk.js'),
+    ],
+    static: [
+      {
+        directory: path.join(__dirname, '..'),
+        publicPath: '/',
+        watch: true,
+      },
+    ],
   },
   resolve: {
     extensions: [

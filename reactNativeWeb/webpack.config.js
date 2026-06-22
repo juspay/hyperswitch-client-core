@@ -111,20 +111,38 @@ const excludeConfiguration = {
 module.exports = {
   entry: {
     app: path.join(__dirname, 'index.web.js'),
+    headless: path.join(__dirname, 'headless-webview.js'),
   },
   output: {
     path: path.resolve(appDirectory, 'dist'),
-    filename: 'index.bundle.js',
+    filename: '[name].bundle.js',
     publicPath: `${repoPublicPath}/`,
   },
   devtool: 'source-map',
   devServer: {
     hot: true,
     port: 8082,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    },
+    watchFiles: [
+      {
+        paths: [path.join(__dirname, 'hyperswitch-lite-sdk.js')],
+        options: { usePolling: true },
+      },
+    ],
+    static: [
+      {
+        directory: path.resolve(__dirname),
+        publicPath: '/',
+      },
+    ],
     historyApiFallback: {
       rewrites: [
         {from: /^\/redirect/, to: '/redirect.html'},
-        {from: /./, to: '/index.html'},
+        {from: /^\/(?!.*\.js$).*$/, to: '/index.html'},
       ],
     },
   },
@@ -176,6 +194,11 @@ module.exports = {
       template: path.join(__dirname, 'redirect.html'),
       filename: 'redirect.html',
       chunks: [],
+    }),
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, 'headless.html'),
+      filename: 'headless.html',
+      chunks: ['headless'],
     }),
     new webpack.HotModuleReplacementPlugin(),
     isDevelopment && new ReactRefreshWebpackPlugin(),
