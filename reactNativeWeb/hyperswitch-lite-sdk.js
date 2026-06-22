@@ -420,7 +420,7 @@
       }
 
       const iframe = document.createElement('iframe');
-      iframe.src = `${this._instance.sdkOrigin}/index.html`;
+      iframe.src = `${this._instance.sdkOrigin}/element.html`;
       iframe.style.cssText = 'width:100%;height:100%;border:0;';
       iframe.allow = 'payment';
       container.appendChild(iframe);
@@ -429,7 +429,7 @@
 
       const props = {
         ...this._props,
-        type: this._options.type || 'paymentElement',
+        type: this._options.type || 'widgetPaymentSheet',
       };
 
       const self = this;
@@ -480,6 +480,12 @@
           clearTimeout(timer);
           resolve(data);
         };
+
+        safePostMessage(
+          this._iframe.contentWindow,
+          { triggerWidgetAction: { actionType: 'CONFIRM_PAYMENT_ACTION', rootTag: 1 } },
+          this._instance.sdkOrigin
+        );
       });
     }
 

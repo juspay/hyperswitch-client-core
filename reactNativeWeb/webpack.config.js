@@ -42,6 +42,8 @@ const babelLoaderConfiguration = {
   // Add every directory that needs to be compiled by Babel during the build.
   include: [
     path.resolve(__dirname, 'index.web.js'), // Entry to your application
+    path.resolve(__dirname, 'headless-webview.js'),
+    path.resolve(__dirname, 'element-webview.js'),
     path.resolve(__dirname, '../App.js'), // Change this to your main App file
     path.resolve(__dirname, '../src'),
     ...compileNodeModules,
@@ -112,6 +114,7 @@ module.exports = {
   entry: {
     app: path.join(__dirname, 'index.web.js'),
     headless: path.join(__dirname, 'headless-webview.js'),
+    element: path.join(__dirname, 'element-webview.js'),
   },
   output: {
     path: path.resolve(appDirectory, 'dist'),
@@ -199,6 +202,11 @@ module.exports = {
       template: path.join(__dirname, 'headless.html'),
       filename: 'headless.html',
       chunks: ['headless'],
+    }),
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, 'element.html'),
+      filename: 'element.html',
+      chunks: ['element'],
     }),
     new webpack.HotModuleReplacementPlugin(),
     isDevelopment && new ReactRefreshWebpackPlugin(),
