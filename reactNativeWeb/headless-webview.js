@@ -7,12 +7,12 @@ const headlessName = appJson.headless;
 
 // ── PostMessage bridge for HyperHeadless native module ──────────────────────
 
-const callbackStore = {};
+const callbackStore = new Map();
 const TRUSTED_ORIGINS = ['*']; // In production, restrict to parent origin
 
 const hyperHeadlessBridge = {
   getPaymentSession(rootTag, defaultPM, lastUsedPM, allPMs, callback) {
-    callbackStore[rootTag] = callback;
+    callbackStore.set(rootTag, callback);
     console.log('Posting payment session request to parent', {
       rootTag,
       defaultPM,
@@ -38,7 +38,7 @@ const hyperHeadlessBridge = {
       },
       '*',
     );
-    delete callbackStore[rootTag];
+    callbackStore.delete(rootTag);
   },
 };
 
@@ -70,7 +70,12 @@ window.addEventListener('message', (event) => {
     return;
   }
 
-  const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+  let data;
+  try {
+    data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+  } catch {
+    return;
+  }
 
   if (data.type === 'headless:init') {
     bootHeadless(data.props);
@@ -79,8 +84,8 @@ window.addEventListener('message', (event) => {
 
   if (data.type === 'headless:confirm') {
     const rootTag = data.rootTag ?? 0;
-    const cb = callbackStore[rootTag];
-    if (cb) {
+    const cb = callbackStore.get(rootTag);
+    if (typeof cb === 'function') {
       cb({
         paymentToken: data.token,
         cvc: data.cvc ?? null,
