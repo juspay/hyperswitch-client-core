@@ -27,7 +27,8 @@ let make = () => {
 
     //KountModule.launchKountIfAvailable(nativeProp.paymentSessionConfig.clientSecret, _x => ())
     // if (nativeProp.paymentSessionConfig.clientSecret != "" || nativeProp.paymentMethodId != "") &&
-    //   nativeProp.hyperswitchConfig.publishableKey !=     if nativeProp.sdkState !== CvcWidget {
+    //   nativeProp.hyperswitchConfig.publishableKey != ""
+    if nativeProp.sdkState !== CvcWidget {
       let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
         if ErrorUtils.isError(accountPaymentMethodData) {
           errorOnApiCalls(
@@ -108,31 +109,54 @@ let make = () => {
         })
         ->ignore
 
-      | Some({accountPaymentMethods: None, customerPaymentMethods: None, sessionTokens: None}) =>
+      | Some({fetchedAt: None}) =>
         // Prefetch in progress: subscribe to prefetchApiDataReady event, do NOT re-make API calls
+        let unsubscribed = ref(false)
         let unsubRef = ref(() => ())
+        let timerRef = ref(Nullable.null)
+        let doUnsub = () => {
+          if !unsubscribed.contents {
+            unsubscribed := true
+            unsubRef.contents()
+            Nullable.forEach(timerRef.contents, id => clearTimeout(id))
+          }
+        }
         let unsub = NativeEventListener.setupNativeEventListener("prefetchApiDataReady", payload => {
-          unsubRef.contents()
+          doUnsub()
           let dict = payload->Utils.getDictFromJson
           let incomingPaymentId =
             Dict.get(dict, "paymentId")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-          if (
-            incomingPaymentId === nativeProp.paymentSessionConfig.paymentId ||
-            incomingPaymentId === ""
-          ) {
+          if incomingPaymentId === nativeProp.paymentSessionConfig.paymentId {
             Dict.get(dict, "accountPaymentMethods")->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
             Dict.get(dict, "customerPaymentMethods")->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
             Dict.get(dict, "sessionTokens")->Option.map(handleSessionTokenResponse)->Option.getOr()
           }
         })
         unsubRef := unsub
-        cleanupRef := Some(unsub)
+        timerRef := Nullable.make(setTimeout(() => {
+          doUnsub()
+          customerPaymentMethods()->Promise.then(data => {
+            handleCustomerPaymentMethodsResponse(data)
+            Promise.resolve()
+          })->ignore
+          accountPaymentMethods()->Promise.then(data => {
+            handleAccountPaymentMethodsResponse(data)
+            Promise.resolve()
+          })->ignore
+          sessionToken()->Promise.then(data => {
+            handleSessionTokenResponse(data)
+            Promise.resolve()
+          })->ignore
+        }, 10000))
+        cleanupRef := Some(doUnsub)
 
-      | Some({accountPaymentMethods: prefetchedAPM, customerPaymentMethods: prefetchedCPM, sessionTokens: prefetchedST, fetchedAt}) =>
-        let isStale =
-          fetchedAt
-          ->Option.map(t => Date.now() -. t > 5. *. 60. *. 1000.)
-          ->Option.getOr(false)
+      | Some({
+          accountPaymentMethods: prefetchedAPM,
+          customerPaymentMethods: prefetchedCPM,
+          sessionTokens: prefetchedST,
+          fetchedAt: Some(fetchedAtValue),
+        }) =>
+        let isStale = Date.now() -. fetchedAtValue > 5. *. 60. *. 1000.
         if isStale {
           // Data older than 5 min — discard and make fresh API calls
           accountPaymentMethods()

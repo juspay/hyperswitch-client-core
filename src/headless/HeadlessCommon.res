@@ -63,8 +63,7 @@ let browserRedirectionHandler = async (
   switch res.status {
   | Success => {
       let s = await retrieveAPICall(nativeProp)
-      let isNullResponse =
-        s->Option.map(json => json == JSON.Encode.null)->Option.getOr(true)
+      let isNullResponse = s->Option.map(json => json == JSON.Encode.null)->Option.getOr(true)
       if isNullResponse {
         errorCallback(~errorMessage=PaymentConfirmTypes.defaultConfirmError)
       } else {
@@ -214,8 +213,9 @@ let handleInvokeDDCFlow = (
   ~errorCallback,
 ) => {
   let {iframeUrl, timeoutMs} =
-    (nextAction->Option.getOr(PaymentConfirmTypes.defaultNextAction)).ddc_data
-    ->Option.getOr(DdcTypes.defaultDdcData)
+    (nextAction->Option.getOr(PaymentConfirmTypes.defaultNextAction)).ddc_data->Option.getOr(
+      DdcTypes.defaultDdcData,
+    )
   HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
     if rawMessage === "" {
       errorCallback(
@@ -232,12 +232,14 @@ let handleInvokeDDCFlow = (
       let parsed = rawMessage->JSON.parseExn->Utils.getDictFromJson
 
       let nextActionObj =
-        parsed->Dict.get("next_action")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+        parsed
+        ->Dict.get("next_action")
+        ->Option.flatMap(JSON.Decode.object)
+        ->Option.getOr(Dict.make())
       let nextActionType =
         nextActionObj->Dict.get("type")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
       let redirectUrl =
         nextActionObj->Dict.get("url")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-
 
       switch nextActionType {
       | "redirect_to_url" if redirectUrl !== "" =>
@@ -247,24 +249,28 @@ let handleInvokeDDCFlow = (
           redirectUrl->String.includes("status=requires_capture") ||
           redirectUrl->String.includes("status=partially_captured")
         ) {
-          let _ = (async () => {
-            let s = await retrieveAPICall(nativeProp)
-            let status =
-              s
-              ->Option.flatMap(JSON.Decode.object)
-              ->Option.flatMap(d => d->Dict.get("status"))
-              ->Option.flatMap(JSON.Decode.string)
-              ->Option.getOr("")
-            responseCallback(
-              ~status=({status, message: "", code: "", type_: ""}: PaymentConfirmTypes.error),
-            )
-          })()
+          let _ = (
+            async () => {
+              let s = await retrieveAPICall(nativeProp)
+              let status =
+                s
+                ->Option.flatMap(JSON.Decode.object)
+                ->Option.flatMap(d => d->Dict.get("status"))
+                ->Option.flatMap(JSON.Decode.string)
+                ->Option.getOr("")
+              responseCallback(
+                ~status=({status, message: "", code: "", type_: ""}: PaymentConfirmTypes.error),
+              )
+            }
+          )()
         } else if (
           redirectUrl->String.includes("status=failed") ||
-          redirectUrl->String.includes("status=requires_payment_method")
+            redirectUrl->String.includes("status=requires_payment_method")
         ) {
           errorCallback(
-            ~errorMessage=({status: "failed", message: "", type_: "", code: ""}: PaymentConfirmTypes.error),
+            ~errorMessage=(
+              {status: "failed", message: "", type_: "", code: ""}: PaymentConfirmTypes.error
+            ),
           )
         } else {
           browserRedirectionHandler(
@@ -303,8 +309,7 @@ let handleApiRes = (
   // | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
   // | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
   // | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
-  | "invoke_ddc" =>
-    handleInvokeDDCFlow(~nativeProp, ~nextAction, ~responseCallback, ~errorCallback)
+  | "invoke_ddc" => handleInvokeDDCFlow(~nativeProp, ~nextAction, ~responseCallback, ~errorCallback)
   | _ =>
     handleDefaultPaymentFlows(
       ~nativeProp,
@@ -748,6 +753,37 @@ let getPaymentSession = (
   }
 }
 
+// Wait for "prefetchApiDataReady" event when prefetch is in progress.
+// Resolves with the event payload dict, or an empty dict on 10s timeout (falls back to API calls).
+let waitForPrefetchData = (paymentId: string): Promise.t<Dict.t<JSON.t>> => {
+  Promise.make((resolve, _) => {
+    let unsubscribed = ref(false)
+    let unsubRef = ref(() => ())
+    let timerRef = ref(Nullable.null)
+    let doUnsub = () => {
+      if !unsubscribed.contents {
+        unsubscribed := true
+        unsubRef.contents()
+        Nullable.forEach(timerRef.contents, id => clearTimeout(id))
+      }
+    }
+    let unsub = NativeEventListener.setupNativeEventListener("prefetchApiDataReady", payload => {
+      let dict = payload->Utils.getDictFromJson
+      let incomingPaymentId =
+        dict->Dict.get("paymentId")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+      if incomingPaymentId === paymentId {
+        doUnsub()
+        resolve(dict)
+      }
+    })
+    unsubRef := unsub
+    timerRef := Nullable.make(setTimeout(() => {
+          doUnsub()
+          resolve(Dict.make())
+        }, 10000))
+  })
+}
+
 // Main orchestrator: fetch saved payment methods, session tokens, set up payment session.
 // ~getCvc: function that returns the CVC value given the native callback response.
 let apiHandler = async (
@@ -757,7 +793,16 @@ let apiHandler = async (
   ~getCvc: JSON.t => JSON.t,
 ) => {
   let prefetch = nativeProp.prefetchedApiData
-  let customerSavedPMData = switch prefetch->Option.flatMap(d => d.customerPaymentMethods) {
+  let (resolvedCustomerPM, resolvedSessionTokens) = switch prefetch {
+  | Some({fetchedAt: None}) =>
+    let eventDict = await waitForPrefetchData(nativeProp.paymentSessionConfig.paymentId)
+    (Dict.get(eventDict, "customerPaymentMethods"), Dict.get(eventDict, "sessionTokens"))
+  | _ => (
+      prefetch->Option.flatMap(d => d.customerPaymentMethods),
+      prefetch->Option.flatMap(d => d.sessionTokens),
+    )
+  }
+  let customerSavedPMData = switch resolvedCustomerPM {
   | Some(json) => Some(json)
   | None => await savedPaymentMethodAPICall(nativeProp)
   }
@@ -790,7 +835,7 @@ let apiHandler = async (
     })
 
     if sessionSpmData->Array.length > 0 {
-      let session = switch prefetch->Option.flatMap(d => d.sessionTokens) {
+      let session = switch resolvedSessionTokens {
       | Some(json) => json
       | None => await sessionAPICall(nativeProp)
       }
@@ -865,8 +910,6 @@ let apiHandler = async (
   }
 }
 
-// Fetch all 3 APIs in parallel, store results natively, then exit headless.
-// Called when headlessType == "prefetch" in HeadlessTask.
 let prefetchApiHandler = async (headlessModule, nativeProp) => {
   let (accountPM, customerPM, sessionTok) = await Promise.all3((
     accountPaymentMethodAPICall(nativeProp),
@@ -878,7 +921,10 @@ let prefetchApiHandler = async (headlessModule, nativeProp) => {
       ("accountPaymentMethods", accountPM),
       ("customerPaymentMethods", customerPM->Option.getOr(JSON.Encode.null)),
       ("sessionTokens", sessionTok),
-      ("sdkAuthorization", nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string),
+      (
+        "sdkAuthorization",
+        nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string,
+      ),
       ("fetchedAt", Date.now()->JSON.Encode.float),
       ("paymentId", nativeProp.paymentSessionConfig.paymentId->JSON.Encode.string),
     ]
@@ -887,7 +933,9 @@ let prefetchApiHandler = async (headlessModule, nativeProp) => {
   headlessModule.storePrefetchedApiData(nativeProp.rootTag, data)
   headlessModule.exitHeadless(
     nativeProp.rootTag,
-    ({status: "prefetch_complete", message: "", code: "", type_: ""}: PaymentConfirmTypes.error)->HyperModule.stringifiedResStatus,
+    (
+      {status: "prefetch_complete", message: "", code: "", type_: ""}: PaymentConfirmTypes.error
+    )->HyperModule.stringifiedResStatus,
   )
 }
 
