@@ -11,11 +11,7 @@ let make = () => {
   let (isFocused, setIsFocused) = React.useState(_ => false)
   let emitter = PaymentEvents.usePaymentEventEmitter()
   let localeObject = GetLocale.useGetLocalObj()
-  let {
-    component,
-    dangerColor,
-    primaryColor,
-  } = ThemebasedStyle.useThemeBasedStyle()
+  let {component, dangerColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
 
   let cardNetwork = ""
 
@@ -35,8 +31,8 @@ let make = () => {
   let emitCvcStatusEvent = (~focused: bool, ~blur: bool) => {
     emitter.emitCvcStatus(
       ~event={
-        isCvcFocused: focused,
-        isCvcBlur: blur,
+        isCvcFocused: Some(focused),
+        isCvcBlur: Some(blur),
         isCvcEmpty,
         isCvcComplete,
       },
