@@ -1,3 +1,10 @@
+let isValidConfig = (value: SdkConfigTypes.sdkConfigValue) =>
+  switch value.raw_configs->Option.flatMap(JSON.Decode.object) {
+  | Some(dict) =>
+    dict->Dict.get("default_configs")->Option.isSome || dict->Dict.get("contexts")->Option.isSome
+  | None => false
+  }
+
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -5,10 +12,12 @@ let make = () => {
   let accountPaymentMethods = AllPaymentHooks.usePaymentMethodHook()
   let customerPaymentMethods = AllPaymentHooks.usePaymentMethodHook(~customerLevel=true)
   let sessionToken = AllPaymentHooks.useSessionTokenHook()
+  let sdkConfig = AllPaymentHooks.useSdkConfigHook()
 
   let (accountPaymentMethodData, setAccountPaymentMethodData) = React.useState(_ => None)
   let (customerPaymentMethodData, setCustomerPaymentMethodData) = React.useState(_ => None)
   let (sessionTokenData, setSessionTokenData) = React.useState(_ => None)
+  let (sdkConfigData, setSdkConfigData) = React.useState(_ => None)
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
@@ -58,6 +67,21 @@ let make = () => {
         ))
       }
 
+      let handleSdkConfigResponse = configResponse => {
+        if ErrorUtils.isError(configResponse) {
+          errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(configResponse)))), ())
+        } else if configResponse == JSON.Encode.null {
+          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
+        } else {
+          let parsed = SdkConfigParser.itemToObjMapper(configResponse)
+          if isValidConfig(parsed) {
+            setSdkConfigData(_ => Some(parsed))
+          } else {
+            handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
+          }
+        }
+      }
+
       if nativeProp.configuration.allowsDelayedPaymentMethods {
         customerPaymentMethods()
         ->Promise.then(customerPaymentMethodData => {
@@ -99,12 +123,18 @@ let make = () => {
         Promise.resolve()
       })
       ->ignore
+
+      sdkConfig()
+      ->Promise.then(configResponse => {
+        handleSdkConfigResponse(configResponse)
+        Promise.resolve()
+      })
+      ->ignore
     }
     None
   }, [nativeProp])
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
-  ConfigurationService.useConfigurationService()->ignore
 
   UpdateIntentHook.useUpdateIntentListener(
     ~setAccountPaymentMethodData,
@@ -112,7 +142,8 @@ let make = () => {
     ~setSessionTokenData,
   )
 
-  <AllApiDataContextNew accountPaymentMethodData customerPaymentMethodData sessionTokenData>
+  <AllApiDataContextNew
+    accountPaymentMethodData customerPaymentMethodData sessionTokenData sdkConfigData>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
     <DynamicFieldsContext>

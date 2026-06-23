@@ -6,7 +6,7 @@ let make = (
   ~savedCardMethods: CustomerPaymentMethodType.customer_payment_methods,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
   let hasSavedCards = savedCardMethods->Array.length > 0

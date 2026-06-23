@@ -30,6 +30,17 @@ module CardBrandAndScanCardIcon = {
   }
 }
 
+let useOptionalCardField = (
+  config: option<SuperpositionTypes.fieldConfig>,
+  ~sentinel,
+  ~validate,
+) => {
+  let present = config->Option.isSome
+  let path = config->Option.mapOr(sentinel, c => c.confirmRequestWritePath)
+  let {input, meta} = ReactFinalForm.useField(path, ~config={validate: ?validate})
+  (present, input, meta)
+}
+
 @react.component
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
@@ -39,20 +50,16 @@ let make = (
   ~accessible=?,
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
-  switch (
-    fields->Array.get(0),
-    fields->Array.get(1),
-    fields->Array.get(2),
-    fields->Array.get(3),
-    fields->Array.get(4),
-  ) {
-  | (
-      Some(cardNumberConfig),
-      Some(cardExpiryMonthConfig),
-      Some(cardExpiryYearConfig),
-      Some(cardCvcConfig),
-      Some(cardNetworkConfig),
-    ) => {
+  let findField = (renderType: SuperpositionTypes.fieldType) =>
+    fields->Array.find((f: SuperpositionTypes.fieldConfig) => f.fieldRenderType === renderType)
+  let cardNumberConfig = findField(SuperpositionTypes.CardNumber)
+  let cardExpiryMonthConfig = findField(SuperpositionTypes.CardExpiryMonth)
+  let cardExpiryYearConfig = findField(SuperpositionTypes.CardExpiryYear)
+  let cardCvcConfig = findField(SuperpositionTypes.Cvc)
+  let cardNetworkConfig = findField(SuperpositionTypes.CardNetwork)
+
+  switch (cardNumberConfig, cardExpiryMonthConfig, cardExpiryYearConfig) {
+  | (Some(cardNumberConfig), Some(cardExpiryMonthConfig), Some(cardExpiryYearConfig)) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
       let {eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
       let emitter = PaymentEvents.usePaymentEventEmitter()
@@ -73,7 +80,7 @@ let make = (
       let nullRef = React.useRef(Nullable.null)
 
       let {input: cardNumberInput, meta: cardNumberMeta} = ReactFinalForm.useField(
-        cardNumberConfig.outputPath,
+        cardNumberConfig.confirmRequestWritePath,
         ~config={
           validate: createFieldValidator(CardNumber),
           format: formatValue(CardNumber),
@@ -81,23 +88,33 @@ let make = (
       )
 
       let {input: cardExpiryMonthInput, meta: _cardExpiryMonthMeta} = ReactFinalForm.useField(
-        cardExpiryMonthConfig.outputPath,
+        cardExpiryMonthConfig.confirmRequestWritePath,
         ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
       let {input: cardExpiryYearInput, meta: cardExpiryYearMeta} = ReactFinalForm.useField(
-        cardExpiryYearConfig.outputPath,
+        cardExpiryYearConfig.confirmRequestWritePath,
         ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
-      let {input: cardNetworkInput, meta: cardNetworkMeta} = ReactFinalForm.useField(
-        cardNetworkConfig.outputPath,
-        ~config={validate: createFieldValidator(CardNetwork(enabledCardSchemes))},
+      let (_hasNetwork, cardNetworkInput, cardNetworkMeta) = useOptionalCardField(
+        cardNetworkConfig,
+        ~sentinel="__card_network_unbound",
+        ~validate={
+          cardNetworkConfig->Option.isSome && enabledCardSchemes->Array.length > 0
+            ? Some(createFieldValidator(CardNetwork(enabledCardSchemes)))
+            : None
+        },
       )
 
-      let {input: cardCvcInput, meta: cardCvcMeta} = ReactFinalForm.useField(
-        cardCvcConfig.outputPath,
-        ~config={validate: createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr("")))},
+      let (hasCvc, cardCvcInput, cardCvcMeta) = useOptionalCardField(
+        cardCvcConfig,
+        ~sentinel="__card_cvc_unbound",
+        ~validate={
+          cardCvcConfig->Option.isSome
+            ? Some(createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr(""))))
+            : None
+        },
       )
 
       let (
@@ -338,10 +355,14 @@ let make = (
                     (expireDate->String.length === 7 && checkCardExpiry(expireDate))}
                   maxLength=Some(7)
                   borderTopWidth=?{splitCardFields ? None : Some(borderWidth /. 2.)}
-                  borderRightWidth=?{splitCardFields ? None : Some(borderWidth /. 2.)}
+                  borderRightWidth=?{splitCardFields
+                    ? None
+                    : Some(hasCvc ? borderWidth /. 2. : borderWidth)}
                   borderTopLeftRadius=?{splitCardFields ? None : Some(0.)}
                   borderTopRightRadius=?{splitCardFields ? None : Some(0.)}
-                  borderBottomRightRadius=?{splitCardFields ? None : Some(0.)}
+                  borderBottomRightRadius=?{splitCardFields
+                    ? None
+                    : Some(hasCvc ? 0. : borderRadius)}
                   textColor={((cardExpiryYearMeta.error->Option.isNone ||
                   !cardExpiryYearMeta.touched ||
                   cardExpiryYearMeta.active) && expireDate->String.length < 7) ||
@@ -376,6 +397,7 @@ let make = (
                   }}
                 </UIUtils.RenderIf>
               </View>
+               <UIUtils.RenderIf condition={hasCvc}>
               <View style={s({flex: 1.})}>
                 <CustomInput
                   name={TestUtils.cvcInputTestId}
@@ -466,6 +488,7 @@ let make = (
                   }}
                 </UIUtils.RenderIf>
               </View>
+              </UIUtils.RenderIf>
             </View>
           </View>
           <UIUtils.RenderIf condition={!splitCardFields}>

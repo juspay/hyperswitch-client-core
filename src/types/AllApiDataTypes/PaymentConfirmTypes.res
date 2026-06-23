@@ -86,6 +86,13 @@ let defaultConfirmError = {
   message: "An unknown error has occurred please retry",
 }
 
+let defaultConfigError = {
+  type_: "config_error",
+  status: "failed",
+  code: "sdk_config_failed",
+  message: "Unable to load the payment configuration. Please retry.",
+}
+
 let defaultCancelError = {
   type_: "",
   status: "cancelled",

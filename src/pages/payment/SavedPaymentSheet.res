@@ -15,7 +15,7 @@ let make = (
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
-  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {getRequiredFieldsForButton, nickname} = React.useContext(

@@ -3,6 +3,14 @@ let useGetLocalObj = () => {
   localeStrings
 }
 
+let lookupLocaleString = (localeObject, key) =>
+  localeObject
+  ->Utils.getJsonObjectFromRecord
+  ->JSON.Decode.object
+  ->Option.flatMap(dict => dict->Dict.get(key))
+  ->Option.flatMap(JSON.Decode.string)
+  ->Option.filter(value => value !== "")
+
 let getLocalString = displayName => {
   let localeObject = useGetLocalObj()
   switch displayName {

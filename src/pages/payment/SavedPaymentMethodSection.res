@@ -4,7 +4,7 @@ open Style
 @react.component
 let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: bool => unit) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
 
