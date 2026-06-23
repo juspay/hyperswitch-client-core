@@ -1,8 +1,8 @@
 open Utils
 
 type visibility = Hidden | Shown
-type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric 
-type layoutType = Tabs | Accordion
+type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric
+type layoutType = Tabs | Accordion | Catalog
 type paymentMethodsArrangement = ArrangementDefault | ArrangementGrid
 type groupingBehavior = {
   displayInSeparateScreen: bool,
@@ -72,6 +72,7 @@ let parseLayout = (configObj: Dict.t<JSON.t>) => {
       {
         layoutType: switch getString(obj, "type", "tabs") {
         | "accordion" | "spacedAccordion" => Accordion
+        | "catalog" => Catalog
         | _ => Tabs
         },
         showOneClickWalletsOnTop: getBool(obj, "showOneClickWalletsOnTop", true),

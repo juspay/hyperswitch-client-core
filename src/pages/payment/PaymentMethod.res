@@ -16,66 +16,9 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let {nickname, isNicknameSelected, setEligibilityStatus} = React.useContext(
-    DynamicFieldsContext.dynamicFieldsContext,
-  )
+  let {nickname, isNicknameSelected} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
-
-  let checkEligibility = (cardNumberOpt: option<string>) => {
-    switch cardNumberOpt {
-    | None => setEligibilityStatus(_ => Allowed)
-    | Some(cardNumber) =>
-      let shouldCheck =
-        accountPaymentMethodData
-        ->Option.flatMap(d => d.sdk_next_action)
-        ->Option.mapOr(false, action => action == "eligibility_check")
-
-      if shouldCheck {
-        setEligibilityStatus(_ => Pending)
-        let pmData =
-          [
-            (
-              paymentMethodData.payment_method_str,
-              [("card_number", cardNumber->JSON.Encode.string)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        callEligibilityCheck(
-          ~paymentMethodType=paymentMethodData.payment_method_str,
-          ~paymentMethodData=pmData,
-        )
-        ->Promise.then(json => {
-          let nextActionJson =
-            json
-            ->Utils.getDictFromJson
-            ->Utils.getOptionalObj("sdk_next_action")
-            ->Option.flatMap(d => d->Dict.get("next_action"))
-          let isDenied = switch nextActionJson {
-          | Some(json) =>
-            switch JSON.Decode.string(json) {
-            | Some("deny") => true
-            | Some(_) => false
-            | None => json->Utils.getDictFromJson->Dict.get("deny")->Option.isSome
-            }
-          | None => false
-          }
-          setEligibilityStatus(_ => isDenied ? Denied : Allowed)
-          Promise.resolve()
-        })
-        ->Promise.catch(_ => {
-          setEligibilityStatus(_ => Allowed)
-          Promise.resolve()
-        })
-        ->ignore
-      } else {
-        setEligibilityStatus(_ => Allowed)
-      }
-    }
-  }
+  let checkEligibility = EligibilityHook.useCheckEligibility(~paymentMethodData)
 
   let processRequest = (
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
@@ -103,89 +46,16 @@ let make = (
       }
     }
 
-    let getExperienceSuffix = (experiences: array<AccountPaymentMethodType.payment_experience>) => {
-      let hasSDKFlow =
-        experiences->Array.some(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
-
-      let hasRedirectFlow =
-        experiences->Array.some(exp => exp.payment_experience_type_decode == REDIRECT_TO_URL)
-
-      if hasSDKFlow {
-        "_sdk"
-      } else if hasRedirectFlow {
-        "_redirect"
-      } else {
-        ""
-      }
-    }
-
     let (
       paymentMethodDataDict,
       tabDict,
       paymentMethodStr,
-    ) = switch paymentMethodData.payment_method {
-    | CARD =>
-      switch nickname {
-      | Some(name) => (
-          [
-            (
-              "payment_method_data",
-              [
-                (
-                  paymentMethodData.payment_method_str,
-                  [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
-                ),
-              ]
-              ->Dict.fromArray
-              ->Js.Json.object_,
-            ),
-          ]->Dict.fromArray,
-          tabDict,
-          paymentMethodData.payment_method_str,
-        )
-      | None => (Dict.make(), tabDict, paymentMethodData.payment_method_str)
-      }
-    | REWARD => (
-        [
-          ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
-        ]->Dict.fromArray,
-        Dict.make(),
-        paymentMethodData.payment_method_str,
-      )
-    | pm =>
-      let suffix = if pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL {
-        paymentMethodData.payment_experience->getExperienceSuffix
-      } else if paymentMethodData.payment_method_type === "cashapp" {
-        "_qr"
-      } else {
-        ""
-      }
-
-      (
-        [
-          (
-            "payment_method_data",
-            [
-              (
-                paymentMethodData.payment_method_str,
-                [
-                  (
-                    paymentMethodData.payment_method_type ++ suffix,
-                    walletDict->Option.getOr(Dict.make())->Js.Json.object_,
-                  ),
-                ]
-                ->Dict.fromArray
-                ->Js.Json.object_,
-              ),
-            ]
-            ->Dict.fromArray
-            ->Js.Json.object_,
-          ),
-        ]->Dict.fromArray,
-        tabDict,
-        paymentMethodData.payment_method_str,
-      )
-    }
+    ) = PaymentUtils.getPaymentMethodDataForConfirm(
+      ~paymentMethodData,
+      ~nickname,
+      ~walletDict,
+      ~tabDict,
+    )
 
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,

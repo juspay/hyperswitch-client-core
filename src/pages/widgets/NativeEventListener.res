@@ -109,3 +109,6 @@ let setupUpdateIntentCompleteListener = (
     }
   })
 }
+
+let setupOnBackListener = (~onBack: unit => unit) =>
+  setupNativeEventListener("navigateBack", _ => onBack())

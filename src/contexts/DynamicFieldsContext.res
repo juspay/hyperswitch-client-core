@@ -10,7 +10,7 @@ type walletDataRecord = {
   useIntentData: bool,
 }
 
-type sheetType = ButtonSheet | DynamicFieldsSheet
+type sheetType = ButtonSheet | DynamicFieldsSheet | SavedMethodsSheet
 
 type eligibilityStatus = Denied | Allowed | Pending
 
@@ -31,6 +31,7 @@ type dynamicFieldsData = {
     string,
   ),
   getRequiredFieldsForButton: (
+    ~forceSheet: bool=?,
     AccountPaymentMethodType.payment_method_type,
     RescriptCore.Dict.t<Core__JSON.t>,
     option<SdkTypes.addressDetails>,
@@ -57,7 +58,7 @@ let dynamicFieldsContext = React.createContext({
   sheetType: ButtonSheet,
   setSheetType: _ => (),
   getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false, ""),
-  getRequiredFieldsForButton: (_, _, _, _, _, _) => (true, Dict.make(), ""),
+  getRequiredFieldsForButton: (~forceSheet as _=?, _, _, _, _, _, _) => (true, Dict.make(), ""),
   country: SdkTypes.defaultCountry,
   setCountry: _ => (),
   setInitialValueCountry: _ => (),
@@ -127,6 +128,11 @@ let make = (~children) => {
   let setSheetType = React.useCallback1(val => {
     setSheetType(_ => val)
   }, [setSheetType])
+
+  React.useEffect0(() => {
+    let cleanup = NativeEventListener.setupOnBackListener(~onBack=() => setSheetType(ButtonSheet))
+    Some(cleanup)
+  })
 
   let (country, setCountry) = React.useState(_ => None)
   let (initialValueCountry, setInitialValueCountry) = React.useState(_ =>
@@ -276,6 +282,7 @@ let make = (~children) => {
   )
 
   let getRequiredFieldsForButton = (
+    ~forceSheet=false,
     paymentMethodData: AccountPaymentMethodType.payment_method_type,
     walletDict,
     billingAddress,
@@ -356,7 +363,7 @@ let make = (~children) => {
 
     let isFieldsMissing = missingRequiredFields->Array.length > 0
 
-    if isFieldsMissing {
+    if isFieldsMissing || forceSheet {
       setWalletData(
         ~missingRequiredFields,
         ~initialValues=switch formData {

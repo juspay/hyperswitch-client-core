@@ -49,6 +49,9 @@ let make = () => {
     }
   }, (accountPaymentMethodData, customerPaymentMethodData, confirmButtonData))
 
+  let renderPaymentSheet = (~isLoading) =>
+    <PaymentSheet setConfirmButtonData isLoading tabArr elementArr giftCardArr />
+
   <FullScreenSheetWrapper
     isSavedPaymentScreen
     isLoading
@@ -69,15 +72,13 @@ let make = () => {
       | (WidgetTabSheet, true)
       | (ButtonSheet, _)
       | (WidgetButtonSheet, _) =>
-        <PaymentSheet
-          setConfirmButtonData
-          isLoading={confirmButtonData.loading &&
-          accountPaymentMethodData->Option.isNone &&
-          customerPaymentMethodData->Option.isNone}
-          tabArr
-          elementArr
-          giftCardArr
-        />
+        renderPaymentSheet(
+          ~isLoading={
+            confirmButtonData.loading &&
+            accountPaymentMethodData->Option.isNone &&
+            customerPaymentMethodData->Option.isNone
+          },
+        )
       | (PaymentSheet, false)
       | (WidgetPaymentSheet, false)
       | (HostedCheckout, false)
@@ -103,13 +104,7 @@ let make = () => {
                   maxVisibleItems=6
                   animated=true
                 />
-              : <PaymentSheet
-                  setConfirmButtonData
-                  isLoading=confirmButtonData.loading
-                  tabArr
-                  elementArr
-                  giftCardArr
-                />}
+              : renderPaymentSheet(~isLoading=confirmButtonData.loading)}
             <Space height=5. />
             {showSavedScreen ||
             (nativeProp.configuration.allowsDelayedPaymentMethods &&
@@ -134,20 +129,31 @@ let make = () => {
         | None =>
           nativeProp.configuration.allowsDelayedPaymentMethods &&
           accountPaymentMethodData->Option.isSome
-            ? {
-                <PaymentSheet
-                  setConfirmButtonData
-                  isLoading=confirmButtonData.loading
-                  tabArr
-                  elementArr
-                  giftCardArr
-                />
-              }
+            ? renderPaymentSheet(~isLoading=confirmButtonData.loading)
             : <InitialLoader />
         }
       | _ => React.null
       }
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
+    | SavedMethodsSheet =>
+      switch customerPaymentMethodData->Option.map(customerPaymentMethods =>
+        customerPaymentMethods.customer_payment_methods
+      ) {
+      | Some(customerPaymentMethods) =>
+        <>
+          <Space />
+          <SavedPaymentSheet
+            customerPaymentMethods
+            setConfirmButtonData
+            merchantName={accountPaymentMethodData
+            ->Option.map(data => data.merchant_name)
+            ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
+            maxVisibleItems=6
+            animated=true
+          />
+        </>
+      | None => React.null
+      }
     }}
     <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
       <GlobalConfirmButton confirmButtonData />

@@ -116,7 +116,7 @@ module Wrapper = {
     })
 
     let contentStyle = s({
-      minHeight: 250.->dp,
+      minHeight: 100.->dp,
       paddingHorizontal: sheetContentPadding->dp,
       paddingTop: sheetContentPadding->dp,
       // paddingBottom: viewPortContants.bottomInset->dp,

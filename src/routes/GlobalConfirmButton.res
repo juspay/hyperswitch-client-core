@@ -24,7 +24,7 @@ let make = (~confirmButtonData) => {
   <UIUtils.RenderIf
     condition={nativeProp.configuration.displayPayButton &&
     confirmButtonData.visible->Option.getOr(true) &&
-    (sheetType === DynamicFieldsSheet ||
+    (sheetType === DynamicFieldsSheet || sheetType === SavedMethodsSheet ||
       (nativeProp.sdkState !== ButtonSheet && nativeProp.sdkState !== WidgetButtonSheet))}>
     <ConfirmButton
       loading=confirmButtonData.loading
