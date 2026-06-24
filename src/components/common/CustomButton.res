@@ -8,7 +8,7 @@ type iconType = CustomIcon(React.element) | NoIcon
 
 @react.component
 let make = (
-  ~loadingText="Loading..",
+  ~loadingText="Loading...",
   ~buttonState: buttonState=Normal,
   ~text=?,
   ~buttonType: buttonType=Primary,

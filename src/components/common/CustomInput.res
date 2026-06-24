@@ -12,6 +12,7 @@ let make = (
   ~placeholder,
   ~placeholderTextColor=None,
   ~width=100.->pct,
+  ~height=?,
   ~secureTextEntry=false,
   ~keyboardType=#default,
   ~iconLeft: iconType=NoIcon,
@@ -64,6 +65,8 @@ let make = (
     fontScale,
     inputHeight,
   } = ThemebasedStyle.useThemeBasedStyle()
+
+  let inputHeight = height->Option.getOr(inputHeight)
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
   let (showPass, setShowPass) = React.useState(_ => secureTextEntry)

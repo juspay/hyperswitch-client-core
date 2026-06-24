@@ -13,7 +13,7 @@ module CVVComponent = {
     ~hideCvcIcon,
     ~placeholderCVC,
   ) => {
-    let {component, dangerColor} = ThemebasedStyle.useThemeBasedStyle()
+    let {component, dangerColor, inputHeight} = ThemebasedStyle.useThemeBasedStyle()
 
     let (isCvcFocus, setIsCvcFocus) = React.useState(_ => false)
 
@@ -60,6 +60,7 @@ module CVVComponent = {
           keyboardType=#"number-pad"
           enableCrossIcon=false
           width={(hideCvcIcon ? 72. : 100.)->dp}
+          height={inputHeight *. 0.9}
           isValid={isCvcValid}
           onFocus={() => {
             setIsCvcFocus(_ => true)
@@ -290,9 +291,9 @@ module PaymentMethodListView = {
       style={s({
         minHeight: 60.->dp,
         paddingVertical: (hideCardExpiry ? 5. : 16.)->dp,
-        // borderBottomWidth: {
-        //   isButtomBorder ? 1.0 : 0.
-        // },
+        borderBottomWidth: {
+          isButtomBorder ? 1.0 : 0.
+        },
         borderBottomColor: component.borderColor,
         justifyContent: #center,
       })}>
@@ -517,26 +518,18 @@ let make = (
           {content}
         </ScrollView>
         {isScrollable
-          ? <Animated.Text
+          ? <Animated.View
               style={s({
                 opacity: fadeAnim.current->Animated.StyleProp.float,
                 transform: [translateY(~translateY=bounceAnim.current->Animated.StyleProp.size)],
                 position: #absolute,
-                bottom: (
-                  nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
-                    ? 10.
-                    : nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection
-                    ? 8.
-                    : nativeProp.configuration.paymentMethodLayout.layoutType === Tabs
-                    ? 10.
-                    : -2.
-                )->dp,
+                bottom: 5.->dp,
                 alignSelf: #center,
                 color: "#aaa",
                 fontSize: 12.,
               })}>
-              {"Scroll for more ↓"->React.string}
-            </Animated.Text>
+              <Icon name="scroll" width={24.} height={24.} />
+            </Animated.View>
           : React.null}
       </View>
     : content

@@ -132,6 +132,7 @@ app.get('/create-payment-intent', async (req, res) => {
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
       sdkAuthorization: response.data.sdk_authorization,
+      clientSecret: response.data.client_secret,
       paymentId: response.data.payment_id,
       profileId: PROFILE_ID,
     });

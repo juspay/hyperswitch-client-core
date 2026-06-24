@@ -42,7 +42,7 @@ let defaultLayout: layout = {
   spacedAccordionItems: true,
   maxAccordionItems: 4,
   cvcIcon: Shown,
-  cardBrandIcon: Animated,
+  cardBrandIcon: Standard,
   showCheckedIconForSelection: false,
   savedMethodCustomization: {
     hideCardExpiry: false,
