@@ -794,7 +794,7 @@ let apiHandler = async (
 ) => {
   let prefetch = nativeProp.prefetchedApiData
   let (resolvedCustomerPM, resolvedSessionTokens) = switch prefetch {
-  | Some({fetchedAt: None}) =>
+  | Some({paymentId: None}) =>
     let eventDict = await waitForPrefetchData(nativeProp.paymentSessionConfig.paymentId)
     (Dict.get(eventDict, "customerPaymentMethods"), Dict.get(eventDict, "sessionTokens"))
   | _ => (
@@ -925,7 +925,6 @@ let prefetchApiHandler = async (headlessModule, nativeProp) => {
         "sdkAuthorization",
         nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string,
       ),
-      ("fetchedAt", Date.now()->JSON.Encode.float),
       ("paymentId", nativeProp.paymentSessionConfig.paymentId->JSON.Encode.string),
     ]
     ->Dict.fromArray

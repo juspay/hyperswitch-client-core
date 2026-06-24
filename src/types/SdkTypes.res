@@ -364,7 +364,6 @@ type prefetchedApiData = {
   accountPaymentMethods: option<JSON.t>,
   customerPaymentMethods: option<JSON.t>,
   sessionTokens: option<JSON.t>,
-  fetchedAt: option<float>,
   paymentId: option<string>,
 }
 
@@ -922,7 +921,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
         accountPaymentMethods: Dict.get(prefetchDict, "accountPaymentMethods"),
         customerPaymentMethods: Dict.get(prefetchDict, "customerPaymentMethods"),
         sessionTokens: Dict.get(prefetchDict, "sessionTokens"),
-        fetchedAt: getOptionFloat(prefetchDict, "fetchedAt"),
         paymentId: getOptionString(prefetchDict, "paymentId"),
       })
     },

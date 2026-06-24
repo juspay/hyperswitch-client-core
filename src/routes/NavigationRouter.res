@@ -109,7 +109,7 @@ let make = () => {
         })
         ->ignore
 
-      | Some({fetchedAt: None}) =>
+      | Some({paymentId: None}) =>
         // Prefetch in progress: subscribe to prefetchApiDataReady event, do NOT re-make API calls
         let unsubscribed = ref(false)
         let unsubRef = ref(() => ())
@@ -127,8 +127,8 @@ let make = () => {
           let incomingPaymentId =
             Dict.get(dict, "paymentId")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
           if incomingPaymentId === nativeProp.paymentSessionConfig.paymentId {
-            Dict.get(dict, "accountPaymentMethods")->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
             Dict.get(dict, "customerPaymentMethods")->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
+            Dict.get(dict, "accountPaymentMethods")->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
             Dict.get(dict, "sessionTokens")->Option.map(handleSessionTokenResponse)->Option.getOr()
           }
         })
@@ -154,35 +154,11 @@ let make = () => {
           accountPaymentMethods: prefetchedAPM,
           customerPaymentMethods: prefetchedCPM,
           sessionTokens: prefetchedST,
-          fetchedAt: Some(fetchedAtValue),
+          paymentId: Some(_),
         }) =>
-        let isStale = Date.now() -. fetchedAtValue > 5. *. 60. *. 1000.
-        if isStale {
-          // Data older than 5 min — discard and make fresh API calls
-          accountPaymentMethods()
-          ->Promise.then(data => {
-            handleAccountPaymentMethodsResponse(data)
-            Promise.resolve()
-          })
-          ->ignore
-          customerPaymentMethods()
-          ->Promise.then(data => {
-            handleCustomerPaymentMethodsResponse(data)
-            Promise.resolve()
-          })
-          ->ignore
-          sessionToken()
-          ->Promise.then(data => {
-            handleSessionTokenResponse(data)
-            Promise.resolve()
-          })
-          ->ignore
-        } else {
-          // Prefetch done and fresh — use data directly
-          prefetchedAPM->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
-          prefetchedCPM->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
-          prefetchedST->Option.map(handleSessionTokenResponse)->Option.getOr()
-        }
+        prefetchedCPM->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
+        prefetchedAPM->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
+        prefetchedST->Option.map(handleSessionTokenResponse)->Option.getOr()
       }
     }
 
