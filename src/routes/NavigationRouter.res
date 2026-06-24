@@ -69,7 +69,10 @@ let make = () => {
 
       let handleSdkConfigResponse = configResponse => {
         if ErrorUtils.isError(configResponse) {
-          errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(configResponse)))), ())
+          errorOnApiCalls(
+            INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(configResponse)))),
+            (),
+          )
         } else if configResponse == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
         } else {

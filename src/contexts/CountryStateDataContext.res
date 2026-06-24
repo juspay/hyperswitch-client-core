@@ -1,4 +1,3 @@
-
 external importJSON: string => promise<JSON.t> = "import"
 
 type data =

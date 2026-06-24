@@ -1,7 +1,7 @@
 open Utils
 
 type visibility = Hidden | Shown
-type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric 
+type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric
 type layoutType = Tabs | Accordion
 type paymentMethodsArrangement = ArrangementDefault | ArrangementGrid
 type groupingBehavior = {

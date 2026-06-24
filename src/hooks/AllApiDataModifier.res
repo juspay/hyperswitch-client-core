@@ -16,9 +16,12 @@ type walletProp = {
 
 let useAccountPaymentMethodModifier = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, sdkConfigData) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let (
+    accountPaymentMethodData,
+    customerPaymentMethodData,
+    sessionTokenData,
+    sdkConfigData,
+  ) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
@@ -98,9 +101,10 @@ let useAccountPaymentMethodModifier = () => {
     let isInSuperposition = (paymentMethodData: AccountPaymentMethodType.payment_method_type) =>
       superpositionConfig.payment_methods->Array.some((pm: SdkConfigTypes.sdkPaymentMethod) =>
         pm.payment_method === paymentMethodData.payment_method_str &&
-          pm.payment_method_types->Array.some((
-            pmt: SdkConfigTypes.sdkPaymentMethodType,
-          ) => pmt.payment_method_type === paymentMethodData.payment_method_type)
+          pm.payment_method_types->Array.some(
+            (pmt: SdkConfigTypes.sdkPaymentMethodType) =>
+              pmt.payment_method_type === paymentMethodData.payment_method_type,
+          )
       )
 
     switch accountPaymentMethodData {

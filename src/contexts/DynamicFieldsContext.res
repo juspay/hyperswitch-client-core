@@ -205,7 +205,10 @@ let make = (~children) => {
         let validatedCountry =
           field.dropdownOptions->Option.getOr([])->Array.includes(currentCountry)
             ? currentCountry
-            : field.dropdownOptions->Option.getOr([])->Array.get(0)->Option.getOr(SdkTypes.defaultCountry)
+            : field.dropdownOptions
+              ->Option.getOr([])
+              ->Array.get(0)
+              ->Option.getOr(SdkTypes.defaultCountry)
 
         initialValues->Dict.set(field.confirmRequestWritePath, JSON.Encode.string(validatedCountry))
       }

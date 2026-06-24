@@ -397,97 +397,97 @@ let make = (
                   }}
                 </UIUtils.RenderIf>
               </View>
-               <UIUtils.RenderIf condition={hasCvc}>
-              <View style={s({flex: 1.})}>
-                <CustomInput
-                  name={TestUtils.cvcInputTestId}
-                  reference={Some(cvvRef)}
-                  borderTopWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
-                  borderLeftWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
-                  borderTopLeftRadius={splitCardFields ? borderRadius : 0.}
-                  borderTopRightRadius={splitCardFields ? borderRadius : 0.}
-                  borderBottomLeftRadius={splitCardFields ? borderRadius : 0.}
-                  borderBottomRightRadius=borderRadius
-                  borderBottomWidth=borderWidth
-                  borderRightWidth=borderWidth
-                  secureTextEntry=true
-                  state={cardCvcInput.value->Option.getOr("")}
-                  isValid={cardCvcMeta.error->Option.isNone ||
-                  !cardCvcMeta.touched ||
-                  cardCvcMeta.active}
-                  maxLength=Some(4)
-                  setState={text => onChangeCvv(text, nullRef)}
-                  placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(
-                    localeObject.cvcTextLabel,
-                  )}
-                  keyboardType=#"number-pad"
-                  enableCrossIcon=false
-                  onFocus={() => {
-                    cardCvcInput.onFocus()
-                  }}
-                  onBlur={() => {
-                    cardCvcInput.onBlur()
-                  }}
-                  textColor={cardCvcMeta.error->Option.isNone ||
-                  !cardCvcMeta.touched ||
-                  cardCvcMeta.active
-                    ? component.color
-                    : dangerColor}
-                  iconRight={nativeProp.configuration.paymentMethodLayout.cvcIcon === Shown
-                    ? CustomIcon(
-                        <View
-                          style={s({
-                            height: 46.->dp,
-                            display: #flex,
-                            flexDirection: #row,
-                            justifyContent: #center,
-                            alignItems: #center,
-                          })}>
-                          <Icon
-                            name="cvv"
-                            height=32.
-                            width=32.
-                            fill={checkCardCVC(
-                              cardCvcInput.value->Option.getOr(""),
-                              cardNetworkInput.value->Option.getOr(""),
-                            )
-                              ? primaryColor
-                              : "#858F97"}
-                          />
-                        </View>,
-                      )
-                    : NoIcon}
-                  onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
-                    if (
-                      ev.nativeEvent.key == "Backspace" &&
-                        cardCvcInput.value->Option.getOr("") == ""
-                    ) {
-                      switch expireRef.current->Nullable.toOption {
-                      | None => ()
-                      | Some(ref) => ref->TextInputElement.focus
+              <UIUtils.RenderIf condition={hasCvc}>
+                <View style={s({flex: 1.})}>
+                  <CustomInput
+                    name={TestUtils.cvcInputTestId}
+                    reference={Some(cvvRef)}
+                    borderTopWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
+                    borderLeftWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
+                    borderTopLeftRadius={splitCardFields ? borderRadius : 0.}
+                    borderTopRightRadius={splitCardFields ? borderRadius : 0.}
+                    borderBottomLeftRadius={splitCardFields ? borderRadius : 0.}
+                    borderBottomRightRadius=borderRadius
+                    borderBottomWidth=borderWidth
+                    borderRightWidth=borderWidth
+                    secureTextEntry=true
+                    state={cardCvcInput.value->Option.getOr("")}
+                    isValid={cardCvcMeta.error->Option.isNone ||
+                    !cardCvcMeta.touched ||
+                    cardCvcMeta.active}
+                    maxLength=Some(4)
+                    setState={text => onChangeCvv(text, nullRef)}
+                    placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(
+                      localeObject.cvcTextLabel,
+                    )}
+                    keyboardType=#"number-pad"
+                    enableCrossIcon=false
+                    onFocus={() => {
+                      cardCvcInput.onFocus()
+                    }}
+                    onBlur={() => {
+                      cardCvcInput.onBlur()
+                    }}
+                    textColor={cardCvcMeta.error->Option.isNone ||
+                    !cardCvcMeta.touched ||
+                    cardCvcMeta.active
+                      ? component.color
+                      : dangerColor}
+                    iconRight={nativeProp.configuration.paymentMethodLayout.cvcIcon === Shown
+                      ? CustomIcon(
+                          <View
+                            style={s({
+                              height: 46.->dp,
+                              display: #flex,
+                              flexDirection: #row,
+                              justifyContent: #center,
+                              alignItems: #center,
+                            })}>
+                            <Icon
+                              name="cvv"
+                              height=32.
+                              width=32.
+                              fill={checkCardCVC(
+                                cardCvcInput.value->Option.getOr(""),
+                                cardNetworkInput.value->Option.getOr(""),
+                              )
+                                ? primaryColor
+                                : "#858F97"}
+                            />
+                          </View>,
+                        )
+                      : NoIcon}
+                    onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
+                      if (
+                        ev.nativeEvent.key == "Backspace" &&
+                          cardCvcInput.value->Option.getOr("") == ""
+                      ) {
+                        switch expireRef.current->Nullable.toOption {
+                        | None => ()
+                        | Some(ref) => ref->TextInputElement.focus
+                        }
                       }
-                    }
-                  }}
-                  animateLabel=localeObject.cvcTextLabel
-                  ?accessible
-                />
-                <UIUtils.RenderIf condition={splitCardFields}>
-                  {switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
-                  | (Some(error), true, false) => <ErrorText text={Some(error)} />
-                  | _ =>
-                    switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
-                    | (Some(error), true) => <ErrorText text={Some(error)} />
+                    }}
+                    animateLabel=localeObject.cvcTextLabel
+                    ?accessible
+                  />
+                  <UIUtils.RenderIf condition={splitCardFields}>
+                    {switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
+                    | (Some(error), true, false) => <ErrorText text={Some(error)} />
                     | _ =>
-                      switch eligibilityStatus {
-                      | DynamicFieldsContext.Denied =>
-                        <ErrorText text={Some(localeObject.cardNotEligibleText)} />
-                      | DynamicFieldsContext.Pending => React.null
-                      | _ => React.null
+                      switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
+                      | (Some(error), true) => <ErrorText text={Some(error)} />
+                      | _ =>
+                        switch eligibilityStatus {
+                        | DynamicFieldsContext.Denied =>
+                          <ErrorText text={Some(localeObject.cardNotEligibleText)} />
+                        | DynamicFieldsContext.Pending => React.null
+                        | _ => React.null
+                        }
                       }
-                    }
-                  }}
-                </UIUtils.RenderIf>
-              </View>
+                    }}
+                  </UIUtils.RenderIf>
+                </View>
               </UIUtils.RenderIf>
             </View>
           </View>

@@ -72,7 +72,9 @@ let make = (
               <CustomPicker
                 value=currencyInput.value
                 setValue=handlePickerChange
-                items={currencyConfig.dropdownOptions->Option.getOr([])->Array.map(opt => {
+                items={currencyConfig.dropdownOptions
+                ->Option.getOr([])
+                ->Array.map(opt => {
                   SdkTypes.label: opt,
                   value: opt,
                 })}

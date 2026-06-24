@@ -1860,7 +1860,9 @@ let itemToObj = (
       let checkedIconForSelection = logoConfig.checkedIconForSelection->Option.map(iconConfig => {
         let iconColors = iconConfig.colors->Option.flatMap(c => isDarkMode ? c.dark : c.light)
         {
-          color: iconColors->Option.flatMap(c => c.color)->Option.getOr(defaultCheckedIconForSelection.color),
+          color: iconColors
+          ->Option.flatMap(c => c.color)
+          ->Option.getOr(defaultCheckedIconForSelection.color),
           stroke: ?iconColors->Option.flatMap(c => c.stroke),
           size: iconConfig.size->Option.getOr(defaultCheckedIconForSelection.size),
           bottom: iconConfig.bottom->Option.getOr(defaultCheckedIconForSelection.bottom),

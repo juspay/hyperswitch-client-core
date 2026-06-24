@@ -405,8 +405,9 @@ let useRedirectHook = () => {
 
     let handleInvokeDDCFlow = (~nextAction) => {
       let {iframeUrl, timeoutMs} =
-        (nextAction->Option.getOr(defaultNextAction)).ddc_data
-        ->Option.getOr(DdcTypes.defaultDdcData)
+        (nextAction->Option.getOr(defaultNextAction)).ddc_data->Option.getOr(
+          DdcTypes.defaultDdcData,
+        )
       HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
         if rawMessage === "" {
           errorCallback(
@@ -443,13 +444,15 @@ let useRedirectHook = () => {
               redirectUrl->String.includes("status=requires_capture") ||
               redirectUrl->String.includes("status=partially_captured")
             ) {
-              let _ = (async () => {
-                let s = await retrievePayment(Payment, clientSecret, publishableKey)
-                redirectionSuccessHandler(~s, ~errorCallback, ~responseCallback)
-              })()
+              let _ = (
+                async () => {
+                  let s = await retrievePayment(Payment, clientSecret, publishableKey)
+                  redirectionSuccessHandler(~s, ~errorCallback, ~responseCallback)
+                }
+              )()
             } else if (
               redirectUrl->String.includes("status=failed") ||
-              redirectUrl->String.includes("status=requires_payment_method")
+                redirectUrl->String.includes("status=requires_payment_method")
             ) {
               redirectionFailureHandler(~errorCallback)
             } else {

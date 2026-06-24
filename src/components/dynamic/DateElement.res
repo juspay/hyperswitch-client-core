@@ -160,8 +160,7 @@ let make = (
     <React.Fragment key={field.confirmRequestWritePath}>
       <View style={s({marginBottom: gap->dp})}>
         <ReactFinalForm.Field
-          name=field.confirmRequestWritePath
-          validate=Some(createFieldValidator(validationRule))>
+          name=field.confirmRequestWritePath validate=Some(createFieldValidator(validationRule))>
           {fieldProps => <DatePicker fieldProps placeholder accessible />}
         </ReactFinalForm.Field>
       </View>

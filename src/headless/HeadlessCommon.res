@@ -61,8 +61,7 @@ let browserRedirectionHandler = async (
   switch res.status {
   | Success => {
       let s = await retrieveAPICall(nativeProp)
-      let isNullResponse =
-        s->Option.map(json => json == JSON.Encode.null)->Option.getOr(true)
+      let isNullResponse = s->Option.map(json => json == JSON.Encode.null)->Option.getOr(true)
       if isNullResponse {
         errorCallback(~errorMessage=PaymentConfirmTypes.defaultConfirmError)
       } else {
@@ -212,8 +211,9 @@ let handleInvokeDDCFlow = (
   ~errorCallback,
 ) => {
   let {iframeUrl, timeoutMs} =
-    (nextAction->Option.getOr(PaymentConfirmTypes.defaultNextAction)).ddc_data
-    ->Option.getOr(DdcTypes.defaultDdcData)
+    (nextAction->Option.getOr(PaymentConfirmTypes.defaultNextAction)).ddc_data->Option.getOr(
+      DdcTypes.defaultDdcData,
+    )
   HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
     if rawMessage === "" {
       errorCallback(
@@ -230,12 +230,14 @@ let handleInvokeDDCFlow = (
       let parsed = rawMessage->JSON.parseExn->Utils.getDictFromJson
 
       let nextActionObj =
-        parsed->Dict.get("next_action")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+        parsed
+        ->Dict.get("next_action")
+        ->Option.flatMap(JSON.Decode.object)
+        ->Option.getOr(Dict.make())
       let nextActionType =
         nextActionObj->Dict.get("type")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
       let redirectUrl =
         nextActionObj->Dict.get("url")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-
 
       switch nextActionType {
       | "redirect_to_url" if redirectUrl !== "" =>
@@ -245,24 +247,28 @@ let handleInvokeDDCFlow = (
           redirectUrl->String.includes("status=requires_capture") ||
           redirectUrl->String.includes("status=partially_captured")
         ) {
-          let _ = (async () => {
-            let s = await retrieveAPICall(nativeProp)
-            let status =
-              s
-              ->Option.flatMap(JSON.Decode.object)
-              ->Option.flatMap(d => d->Dict.get("status"))
-              ->Option.flatMap(JSON.Decode.string)
-              ->Option.getOr("")
-            responseCallback(
-              ~status=({status, message: "", code: "", type_: ""}: PaymentConfirmTypes.error),
-            )
-          })()
+          let _ = (
+            async () => {
+              let s = await retrieveAPICall(nativeProp)
+              let status =
+                s
+                ->Option.flatMap(JSON.Decode.object)
+                ->Option.flatMap(d => d->Dict.get("status"))
+                ->Option.flatMap(JSON.Decode.string)
+                ->Option.getOr("")
+              responseCallback(
+                ~status=({status, message: "", code: "", type_: ""}: PaymentConfirmTypes.error),
+              )
+            }
+          )()
         } else if (
           redirectUrl->String.includes("status=failed") ||
-          redirectUrl->String.includes("status=requires_payment_method")
+            redirectUrl->String.includes("status=requires_payment_method")
         ) {
           errorCallback(
-            ~errorMessage=({status: "failed", message: "", type_: "", code: ""}: PaymentConfirmTypes.error),
+            ~errorMessage=(
+              {status: "failed", message: "", type_: "", code: ""}: PaymentConfirmTypes.error
+            ),
           )
         } else {
           browserRedirectionHandler(
@@ -301,8 +307,7 @@ let handleApiRes = (
   // | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
   // | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
   // | "display_bank_transfer_information" => handleBankTransferFlow(~nextAction)
-  | "invoke_ddc" =>
-    handleInvokeDDCFlow(~nativeProp, ~nextAction, ~responseCallback, ~errorCallback)
+  | "invoke_ddc" => handleInvokeDDCFlow(~nativeProp, ~nextAction, ~responseCallback, ~errorCallback)
   | _ =>
     handleDefaultPaymentFlows(
       ~nativeProp,

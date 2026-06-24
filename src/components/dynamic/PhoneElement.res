@@ -3,7 +3,12 @@ open Style
 
 module SinglePhoneInput = {
   @react.component
-  let make = (~config: SuperpositionTypes.fieldConfig, ~createFieldValidator, ~getLocalized, ~accessible=?) => {
+  let make = (
+    ~config: SuperpositionTypes.fieldConfig,
+    ~createFieldValidator,
+    ~getLocalized,
+    ~accessible=?,
+  ) => {
     let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
     let {input, meta} = ReactFinalForm.useField(
       config.confirmRequestWritePath,

@@ -12,13 +12,12 @@ let make = (
   let localeObject = GetLocale.useGetLocalObj()
   let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
 
-  let emailFields =
-    fields->Array.filter((f: SuperpositionTypes.fieldConfig) =>
-      switch f.fieldRenderType {
-      | Email => true
-      | _ => false
-      }
-    )
+  let emailFields = fields->Array.filter((f: SuperpositionTypes.fieldConfig) =>
+    switch f.fieldRenderType {
+    | Email => true
+    | _ => false
+    }
+  )
 
   let fieldData = emailFields->Array.map(fieldConfig => {
     let {input, meta} = ReactFinalForm.useField(

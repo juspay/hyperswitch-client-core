@@ -32,7 +32,8 @@ let getValidationRuleForField = (field: SuperpositionTypes.fieldConfig) =>
   | BankNamesSelect
   | FirstName
   | LastName
-  | CardHolderName => Required(None)
+  | CardHolderName =>
+    Required(None)
   }
 
 @react.component
@@ -105,7 +106,9 @@ let make = (
             value={switch input.value {
             | None | Some("") => input.value
             | Some(value) =>
-              items->Array.find(c => c.value === value || c.label === value)->Option.map(c => c.label)
+              items
+              ->Array.find(c => c.value === value || c.label === value)
+              ->Option.map(c => c.label)
             }}
             setValue=handlePickerChange
             items
@@ -124,28 +127,29 @@ let make = (
       }
     | Dropdown
     | LanguagePreference
-    | BankNamesSelect if field.dropdownOptions->Option.getOr([])->Array.length > 0 => {
-        <>
-          <CustomPicker
-            value=input.value
-            setValue=handlePickerChange
-            items={field.dropdownOptions->Option.getOr([])->Array.map(opt => {
-              SdkTypes.label: opt,
-              value: opt,
-            })}
-            placeholderText=placeholder
-            isValid={meta.error->Option.isNone || !meta.touched || meta.active}
-            isLoading=false
-            onFocus={_ => input.onFocus()}
-            onBlur={_ => input.onBlur()}
-            ?accessible
-          />
-          {switch (meta.error, meta.touched, meta.active) {
-          | (Some(error), true, false) => <ErrorText text={Some(error)} />
-          | _ => React.null
-          }}
-        </>
-      }
+    | BankNamesSelect if field.dropdownOptions->Option.getOr([])->Array.length > 0 =>
+      <>
+        <CustomPicker
+          value=input.value
+          setValue=handlePickerChange
+          items={field.dropdownOptions
+          ->Option.getOr([])
+          ->Array.map(opt => {
+            SdkTypes.label: opt,
+            value: opt,
+          })}
+          placeholderText=placeholder
+          isValid={meta.error->Option.isNone || !meta.touched || meta.active}
+          isLoading=false
+          onFocus={_ => input.onFocus()}
+          onBlur={_ => input.onBlur()}
+          ?accessible
+        />
+        {switch (meta.error, meta.touched, meta.active) {
+        | (Some(error), true, false) => <ErrorText text={Some(error)} />
+        | _ => React.null
+        }}
+      </>
     | _ =>
       <>
         <CustomInput
@@ -182,13 +186,16 @@ let make = (
       </View>
     </React.Fragment>
   }
-  {fields
-  ->Array.filter((field: SuperpositionTypes.fieldConfig) =>
-    switch field.fieldRenderType {
-    | Generic | Dropdown | Country | State | LanguagePreference | BankNamesSelect => true
-    | _ => false
-    }
-  )
-  ->Array.map(renderField)
-  ->React.array}
+
+  {
+    fields
+    ->Array.filter((field: SuperpositionTypes.fieldConfig) =>
+      switch field.fieldRenderType {
+      | Generic | Dropdown | Country | State | LanguagePreference | BankNamesSelect => true
+      | _ => false
+      }
+    )
+    ->Array.map(renderField)
+    ->React.array
+  }
 }
