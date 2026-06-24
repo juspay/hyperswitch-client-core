@@ -866,6 +866,23 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
       ),
       statePlaceholder: Utils.getString(res, "statePlaceholder", defaultLocale.statePlaceholder),
       upiIdPlaceholder: Utils.getString(res, "upiIdPlaceholder", defaultLocale.upiIdPlaceholder),
+      loadingText: Utils.getString(res, "loadingText", defaultLocale.loadingText),
+      completeButtonText: Utils.getString(
+        res,
+        "completeButtonText",
+        defaultLocale.completeButtonText,
+      ),
+      processingText: Utils.getString(res, "processingText", defaultLocale.processingText),
+      processingRequestText: Utils.getString(
+        res,
+        "processingRequestText",
+        defaultLocale.processingRequestText,
+      ),
+      processingRequestSubtext: Utils.getString(
+        res,
+        "processingRequestSubtext",
+        defaultLocale.processingRequestSubtext,
+      ),
     }
   | None => defaultLocale
   }
