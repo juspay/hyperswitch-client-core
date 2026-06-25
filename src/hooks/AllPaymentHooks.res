@@ -140,33 +140,24 @@ let useSdkConfigHook = () => {
     | #android | #androidWebView => "android"
     | #web | #next => "web"
     }
-    let uri = `${baseUrl}/v1/sdk/configs/${platform}/sdk_config.json`
-
-    let clientSecret = {
-      let fromConfig = nativeProp.paymentSessionConfig.clientSecret
-      if fromConfig->String.length > 0 {
-        fromConfig
-      } else {
-        switch nativeProp.paymentSessionConfig.sdkAuthorization {
-        | Some(auth) => Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr("")
-        | None => ""
-        }
-      }
+    let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+    | Some(auth) =>
+      Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
+        nativeProp.paymentSessionConfig.clientSecret,
+      )
+    | None => nativeProp.paymentSessionConfig.clientSecret
     }
-
-    let headers = Utils.getHeader(
-      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~appId=nativeProp.sdkParams.appId,
-      (),
-    )
-    if clientSecret->String.length > 0 {
-      headers->Dict.set("client-secret", clientSecret)
-    }
+    let uri = `${baseUrl}/v1/sdk/configs/${platform}/sdk_config.json?client_secret=${clientSecret}`
 
     APIUtils.fetchApiWrapper(
       ~uri,
       ~method=#GET,
-      ~headers,
+      ~headers=Utils.getHeader(
+        ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+        ~appId=nativeProp.sdkParams.appId,
+        ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+        (),
+      ),
       ~eventName=LoggerTypes.CONFIG_CALL,
       ~apiLogWrapper,
     )
