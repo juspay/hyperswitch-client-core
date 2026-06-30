@@ -10,15 +10,20 @@ let make = (~props) => {
   let reRegisterCallback = ref(() => ())
   let nativeProp = nativeJsonToRecord(props, 0)
 
-  // In HeadlessTask, CVC comes from the native callback response (response["cvc"])
-  let getCvc = (response: JSON.t) => {
-    switch response->Utils.getDictFromJson->Dict.get("cvc") {
-    | Some(cvc) => cvc
-    | None => JSON.Encode.null
-    }
-  }
+  let headlessType = props->Utils.getDictFromJson->Utils.getString("headlessType", "")
 
-  HeadlessCommon.runHeadlessFlow(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
+  switch headlessType {
+  | "prefetch" => HeadlessCommon.prefetchApiHandler(headlessModule, nativeProp)->ignore
+  | _ =>
+    // In HeadlessTask, CVC comes from the native callback response (response["cvc"])
+    let getCvc = (response: JSON.t) => {
+      switch response->Utils.getDictFromJson->Dict.get("cvc") {
+      | Some(cvc) => cvc
+      | None => JSON.Encode.null
+      }
+    }
+    HeadlessCommon.runHeadlessFlow(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
+  }
 
   React.null
 }
