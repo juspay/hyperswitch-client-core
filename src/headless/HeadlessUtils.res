@@ -282,6 +282,38 @@ let sessionAPICall = nativeProp => {
   )
 }
 
+let sdkConfigAPICall = (nativeProp: SdkTypes.nativeProp) => {
+  let platform = switch WebKit.platform {
+  | #ios | #iosWebView => "ios"
+  | #android | #androidWebView => "android"
+  | #web | #next => "web"
+  }
+  let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+  | Some(auth) =>
+    Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
+      nativeProp.paymentSessionConfig.clientSecret,
+    )
+  | None => nativeProp.paymentSessionConfig.clientSecret
+  }
+  let uri = `${getBaseUrl(nativeProp)}/v1/sdk/configs/${platform}/sdk_config.json?client_secret=${clientSecret}`
+
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=LoggerTypes.CONFIG_CALL,
+    ~method=#GET,
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
+    ~processSuccess=json => json,
+    ~processError=error => error,
+    ~processCatch=_ => JSON.Encode.null,
+  )
+}
+
 let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) => {
   let paymentId =
     sdkAuthorization

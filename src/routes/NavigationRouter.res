@@ -130,18 +130,18 @@ let handleSessionTokenResponse = sessionTokenData => {
             Promise.resolve()
           })
           ->ignore
-    
-      sdkConfig()
-      ->Promise.then(configResponse => {
-        handleSdkConfigResponse(configResponse)
-        Promise.resolve()
-      })
-      ->ignore
-    }
+        }
 
         sessionToken()
         ->Promise.then(data => {
           handleSessionTokenResponse(data)
+          Promise.resolve()
+        })
+        ->ignore
+
+        sdkConfig()
+        ->Promise.then(configResponse => {
+          handleSdkConfigResponse(configResponse)
           Promise.resolve()
         })
         ->ignore
@@ -167,6 +167,7 @@ let handleSessionTokenResponse = sessionTokenData => {
             Dict.get(dict, "customerPaymentMethods")->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
             Dict.get(dict, "accountPaymentMethods")->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
             Dict.get(dict, "sessionTokens")->Option.map(handleSessionTokenResponse)->Option.getOr()
+            // Dict.get(dict, "sdkConfig")->Option.map(handleSdkConfigResponse)->Option.getOr()
           }
         })
         unsubRef := unsub
@@ -184,18 +185,38 @@ let handleSessionTokenResponse = sessionTokenData => {
             handleSessionTokenResponse(data)
             Promise.resolve()
           })->ignore
+          // sdkConfig()->Promise.then(configResponse => {
+          //   handleSdkConfigResponse(configResponse)
+          //   Promise.resolve()
+          // })->ignore
         }, 10000))
         cleanupRef := Some(doUnsub)
+
+        sdkConfig()
+        ->Promise.then(configResponse => {
+          handleSdkConfigResponse(configResponse)
+          Promise.resolve()
+        })
+        ->ignore
 
       | Some({
           accountPaymentMethods: prefetchedAPM,
           customerPaymentMethods: prefetchedCPM,
           sessionTokens: prefetchedST,
+          sdkConfig: _prefetchedSdkConfig,
           paymentId: Some(_),
         }) =>
         prefetchedCPM->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
         prefetchedAPM->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
         prefetchedST->Option.map(handleSessionTokenResponse)->Option.getOr()
+        // prefetchedSdkConfig->Option.map(handleSdkConfigResponse)->Option.getOr()
+
+        sdkConfig()
+        ->Promise.then(configResponse => {
+          handleSdkConfigResponse(configResponse)
+          Promise.resolve()
+        })
+        ->ignore
       }
     }
 
