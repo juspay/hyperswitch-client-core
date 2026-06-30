@@ -114,3 +114,8 @@ regexes = [".*ZeYpcB05LhwoIg7CL.*"]
 description = "Ignore dummy cs in Client Core"
 commits = ["62f5e1803d3a441abfe9323d28df4952f11b77c6", "2555f9f5f34c40388ea3614ca99c65ec4680f626"]
 regexes = [".*client_secret.*p.*_.*_secret_.*"]
+
+[[allowlists]]
+description = "Ignore surchargeMsgAmountPart2 in Shared"
+commits = ["835b11a6ba461e7a3de901119a026a4341800425"]
+regexes = [".*surchargeMsgAmountPart2.*"]

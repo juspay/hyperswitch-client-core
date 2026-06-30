@@ -1,7 +1,7 @@
 open Utils
 
 type visibility = Hidden | Shown
-type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric 
+type cardBrandVisibility = Hidden | Animated | Standard | HideGeneric
 type layoutType = Tabs | Accordion
 type paymentMethodsArrangement = ArrangementDefault | ArrangementGrid
 type groupingBehavior = {
@@ -42,7 +42,7 @@ let defaultLayout: layout = {
   spacedAccordionItems: true,
   maxAccordionItems: 4,
   cvcIcon: Shown,
-  cardBrandIcon: Animated,
+  cardBrandIcon: Standard,
   showCheckedIconForSelection: false,
   savedMethodCustomization: {
     hideCardExpiry: false,

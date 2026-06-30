@@ -8,7 +8,7 @@ type iconType = CustomIcon(React.element) | NoIcon
 
 @react.component
 let make = (
-  ~loadingText="Loading..",
+  ~loadingText=?,
   ~buttonState: buttonState=Normal,
   ~text=?,
   ~buttonType: buttonType=Primary,
@@ -31,6 +31,8 @@ let make = (
     primaryButtonHeight,
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig=payNowButtonShadowConfig, ())
+  let localeObject = GetLocale.useGetLocalObj()
+  let loadingText = loadingText->Option.getOr(localeObject.loadingText)
 
   let _buttonColor = switch buttonState {
   | Normal => ("#0048a0", "#0570de")
@@ -134,7 +136,7 @@ let make = (
               <TextWrapper
                 text={switch buttonState {
                 | LoadingButton => loadingText
-                | Completed => "Complete"
+                | Completed => localeObject.completeButtonText
                 | _ => textStr
                 }}
                 // textType=CardText

@@ -1,6 +1,41 @@
 open ReactNative
 open Style
 
+module SinglePhoneInput = {
+  @react.component
+  let make = (
+    ~config: SuperpositionTypes.fieldConfig,
+    ~createFieldValidator,
+    ~getLocalized,
+    ~accessible=?,
+  ) => {
+    let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
+    let {input, meta} = ReactFinalForm.useField(
+      config.confirmRequestWritePath,
+      ~config={validate: createFieldValidator(Validation.Phone)},
+    )
+    <View style={s({marginBottom: gap->dp})}>
+      <CustomInput
+        state={input.value->Option.getOr("")}
+        setState={value => input.onChange(value)}
+        placeholder={FieldLabelResolver.resolvePlaceholder(config, getLocalized)}
+        enableCrossIcon=false
+        isValid={meta.error->Option.isNone || !meta.touched || meta.active}
+        onFocus={_ => input.onFocus()}
+        onBlur={_ => input.onBlur()}
+        textColor={meta.error->Option.isNone || !meta.touched || meta.active
+          ? component.color
+          : dangerColor}
+        ?accessible
+      />
+      {switch (meta.error, meta.touched, meta.active) {
+      | (Some(error), true, false) => <ErrorText text={Some(error)} />
+      | _ => React.null
+      }}
+    </View>
+  }
+}
+
 @react.component
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
@@ -13,15 +48,25 @@ let make = (
 
   let {country} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  switch (fields->Array.get(0), fields->Array.get(1)) {
+  let localeObject = GetLocale.useGetLocalObj()
+  let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
+  let phoneCodeConfig =
+    fields->Array.find((f: SuperpositionTypes.fieldConfig) =>
+      f.fieldRenderType === SuperpositionTypes.PhoneCountryCode
+    )
+  let phoneNumberConfig =
+    fields->Array.find((f: SuperpositionTypes.fieldConfig) =>
+      f.fieldRenderType === SuperpositionTypes.Phone
+    )
+  switch (phoneCodeConfig, phoneNumberConfig) {
   | (Some(phoneCodeConfig), Some(phoneNumberConfig)) =>
     let {input: phoneCodeInput, meta: phoneCodeMeta} = ReactFinalForm.useField(
-      phoneCodeConfig.outputPath,
-      ~config={validate: createFieldValidator(Validation.Required)},
+      phoneCodeConfig.confirmRequestWritePath,
+      ~config={validate: createFieldValidator(Validation.Required(None))},
     )
 
     let {input: phoneNumberInput, meta: phoneNumberMeta} = ReactFinalForm.useField(
-      phoneNumberConfig.outputPath,
+      phoneNumberConfig.confirmRequestWritePath,
       ~config={validate: createFieldValidator(Validation.Phone)},
     )
 
@@ -84,7 +129,7 @@ let make = (
                 AddressUtils.getPhoneCodeData(res.countries)
               | _ => []
               }}
-              placeholderText=phoneCodeConfig.displayName
+              placeholderText={FieldLabelResolver.resolvePlaceholder(phoneCodeConfig, getLocalized)}
               isValid={phoneCodeMeta.error->Option.isNone ||
               !phoneCodeMeta.touched ||
               phoneCodeMeta.active}
@@ -99,14 +144,13 @@ let make = (
           <Space width=10. />
           {
             let handleInputChange = (value: string) => {
-              let formattedValue = value //formatValue(value, phoneNumberConfig.fieldType)
-              phoneNumberInput.onChange(formattedValue)
+              phoneNumberInput.onChange(value)
             }
             <CustomInput
               style={s({flex: 1.})}
               state={phoneNumberInput.value->Option.getOr("")}
               setState=handleInputChange
-              placeholder={GetLocale.getLocalString(phoneNumberConfig.displayName)}
+              placeholder={FieldLabelResolver.resolvePlaceholder(phoneNumberConfig, getLocalized)}
               enableCrossIcon=false
               isValid={phoneNumberMeta.error->Option.isNone ||
               !phoneNumberMeta.touched ||
@@ -136,6 +180,8 @@ let make = (
         }}
       </View>
     </React.Fragment>
-  | _ => React.null
+  | (None, Some(phoneNumberConfig)) =>
+    <SinglePhoneInput config=phoneNumberConfig createFieldValidator getLocalized ?accessible />
+  | (Some(_), None) | (None, None) => React.null
   }
 }

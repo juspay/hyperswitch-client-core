@@ -14,7 +14,7 @@ let make = (
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {

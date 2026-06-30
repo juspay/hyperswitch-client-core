@@ -174,7 +174,6 @@ let styles = {
 }
 
 type themeBasedStyleObj = {
-  platform: string,
   bgColor: ReactNative.Style.t,
   paymentSheetOverlay: string,
   loadingBgColor: string,
@@ -266,10 +265,115 @@ let defaultResolvedLogoConfig: resolvedLogoConfig = {
   checkedIconForSelection: defaultCheckedIconForSelection,
 }
 
-let darkRecord = {
-  primaryButtonHeight: 45.,
+let defaultFontFamily: SdkTypes.fontFamilyTypes = switch WebKit.platform {
+| #ios | #iosWebView => DefaultIOS
+| #android | #androidWebView => DefaultAndroid
+| #web | #next => DefaultWeb
+}
+
+let baseThemeRecord: themeBasedStyleObj = {
   inputHeight: 46.,
-  platform: "android",
+  status_color,
+  locale: En,
+  fontFamily: defaultFontFamily,
+  fontScale: 1.,
+  headingTextSizeAdjust: 0.,
+  subHeadingTextSizeAdjust: 0.,
+  placeholderTextSizeAdjust: 0.,
+  buttonTextSizeAdjust: 0.,
+  errorTextSizeAdjust: 0.,
+  linkTextSizeAdjust: 0.,
+  modalTextSizeAdjust: 0.,
+  cardTextSizeAdjust: 0.,
+  sheetContentPadding: 20.,
+  errorMessageSpacing: 4.,
+  logoConfig: None,
+  gap: 16.,
+  primaryButtonHeight: 45.,
+  paymentSheetOverlay: "",
+  bgColor: styles["light_bgColor"],
+  loadingBgColor: "",
+  loadingFgColor: "",
+  bgTransparentColor: styles["light_bgTransparentColor"],
+  textPrimary: styles["light_textPrimary"],
+  textSecondary: styles["light_textSecondary"],
+  textSecondaryBold: styles["light_textSecondary_Bold"],
+  placeholderColor: "",
+  textInputBg: styles["light_textInputBg"],
+  iconColor: "",
+  lineBorderColor: "",
+  linkColor: "#000000",
+  disableBgColor: "#000000",
+  filterHeaderColor: "#000000",
+  filterOptionTextColor: [],
+  tooltipTextColor: "#000000",
+  tooltipBackgroundColor: "#000000",
+  boxColor: styles["light_boxColor"],
+  boxBorderColor: styles["light_boxBorderColor"],
+  dropDownSelectAll: [],
+  fadedColor: [],
+  detailViewToolTipText: "",
+  summarisedViewSingleStatHeading: "",
+  switchThumbColor: "",
+  shimmerColor: [],
+  lastOffset: "",
+  dangerColor: "",
+  orderDisableButton: "",
+  toastColorConfig: {backgroundColor: "#000000", textColor: "#000000"},
+  primaryColor: "#000000",
+  borderRadius: 0.,
+  borderWidth: 0.,
+  buttonBorderRadius: 0.,
+  buttonBorderWidth: 0.,
+  component: {
+    background: "#000000",
+    borderColor: "#000000",
+    dividerColor: "#000000",
+    color: "#000000",
+    selected: {
+      background: "#000000",
+      borderColor: "#000000",
+      borderWidth: 0.,
+      dividerColor: "#000000",
+      color: "#000000",
+    },
+  },
+  paypalButonColor: SdkTypes.GOLD,
+  samsungPayButtonColor: "#000000",
+  applePayButtonColor: #black,
+  googlePayButtonColor: #light,
+  payNowButtonColor: "#000000",
+  payNowButtonTextColor: "",
+  payNowButtonBorderColor: "",
+  payNowButtonShadowConfig: {
+    color: None,
+    opacity: None,
+    blurRadius: None,
+    offset: None,
+    intensity: None,
+  },
+  focusedTextInputBoderColor: "",
+  errorTextInputColor: "",
+  normalTextInputBoderColor: "",
+  shadowConfig: {
+    color: None,
+    opacity: None,
+    blurRadius: None,
+    offset: None,
+    intensity: None,
+  },
+  disclaimerBackgroundColor: "",
+  disclaimerTextColor: "",
+  instructionalTextColor: "",
+  poweredByTextColor: "",
+  detailsViewTextKeyColor: "",
+  detailsViewTextValueColor: "",
+  silverBorderColor: "",
+}
+
+let darkRecord = {
+  ...baseThemeRecord,
+  primaryButtonHeight: 45.,
   paymentSheetOverlay: "#00000025",
   bgColor: styles["dark_bgColor"],
   loadingBgColor: "#3e3e3e90",
@@ -292,7 +396,6 @@ let darkRecord = {
   boxBorderColor: styles["dark_boxBorderColor"],
   dropDownSelectAll: [["#202124", "#202124", "#202124"], ["#202124", "#202124", "#202124"]],
   fadedColor: ["rgba(0, 0, 0, 0.75)", "rgba(0, 0, 0,1)"],
-  status_color,
   detailViewToolTipText: "rgba(25, 26, 26, 0.75)",
   summarisedViewSingleStatHeading: "#F6F8F9",
   switchThumbColor: "#f4f3f4",
@@ -322,21 +425,6 @@ let darkRecord = {
       color: "#ffffff",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.WHITE,
   samsungPayButtonColor: "#000000",
   payNowButtonTextColor: "#fff",
@@ -368,15 +456,10 @@ let darkRecord = {
   detailsViewTextKeyColor: "#999999",
   detailsViewTextValueColor: "#333333",
   silverBorderColor: "#CCCCCC",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 let lightRecord = {
+  ...baseThemeRecord,
   primaryButtonHeight: 45.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "#00000070",
   bgColor: styles["light_bgColor"],
   loadingBgColor: "rgb(220,220,220)",
@@ -399,7 +482,6 @@ let lightRecord = {
   boxBorderColor: styles["light_boxBorderColor"],
   dropDownSelectAll: [["#E7EAF1", "#E7EAF1", "#E7EAF1"], ["#F1F5FA", "#FDFEFF", "#F1F5FA"]],
   fadedColor: ["#CCCFD450", "rgba(53, 64, 82, 0.5)"],
-  status_color,
   detailViewToolTipText: "rgba(246, 248, 249, 0.75)",
   summarisedViewSingleStatHeading: "#354052",
   switchThumbColor: "white",
@@ -429,21 +511,6 @@ let lightRecord = {
       color: "#006DF9",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #black,
   samsungPayButtonColor: "#000000",
@@ -475,16 +542,11 @@ let lightRecord = {
   detailsViewTextKeyColor: "#999999",
   detailsViewTextValueColor: "#333333",
   silverBorderColor: "#CCCCCC",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let minimal = {
+  ...baseThemeRecord,
   primaryButtonHeight: 48.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "#00000030",
   bgColor: styles["minimal_bgColor"],
   loadingBgColor: "#E8EAED",
@@ -507,7 +569,6 @@ let minimal = {
   boxBorderColor: styles["minimal_boxBorderColor"],
   dropDownSelectAll: [["#EFF6FF", "#EFF6FF", "#EFF6FF"], ["#F9FAFB", "#FFFFFF", "#F9FAFB"]],
   fadedColor: ["#E5E7EB", "rgba(55,65,81,0.5)"],
-  status_color,
   detailViewToolTipText: "#FFFFFF",
   summarisedViewSingleStatHeading: "#111827",
   switchThumbColor: "#FFFFFF",
@@ -537,21 +598,6 @@ let minimal = {
       color: "#0570DE",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   samsungPayButtonColor: "#111827",
   applePayButtonColor: #black,
@@ -576,8 +622,6 @@ let minimal = {
     offset: Some({x: Some(0.), y: Some(2.)}),
     intensity: Some(4.),
   },
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
   disclaimerBackgroundColor: "#FFFBEB",
   disclaimerTextColor: "#92400E",
   instructionalTextColor: "#9CA3AF",
@@ -585,14 +629,11 @@ let minimal = {
   detailsViewTextKeyColor: "#9CA3AF",
   detailsViewTextValueColor: "#111827",
   silverBorderColor: "#D1D5DB",
-  logoConfig: None,
-  gap: 16.,
 }
 
 let flatMinimal = {
+  ...baseThemeRecord,
   primaryButtonHeight: 48.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "#00000050",
   bgColor: styles["flatMinimal_bgColor"],
   loadingBgColor: "#1E2130",
@@ -615,7 +656,6 @@ let flatMinimal = {
   boxBorderColor: styles["flatMinimal_boxBorderColor"],
   dropDownSelectAll: [["#1A2040", "#1A2040", "#1A2040"], ["#1E2130", "#1E2130", "#1E2130"]],
   fadedColor: ["rgba(46,50,72,0.6)", "rgba(232,234,240,0.3)"],
-  status_color,
   detailViewToolTipText: "#FFFFFF",
   summarisedViewSingleStatHeading: "#E8EAF0",
   switchThumbColor: "#3541FF",
@@ -645,21 +685,6 @@ let flatMinimal = {
       color: "#E8EAF0",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #white,
   googlePayButtonColor: #dark,
@@ -691,16 +716,11 @@ let flatMinimal = {
   detailsViewTextKeyColor: "#8A90A0",
   detailsViewTextValueColor: "#E8EAF0",
   silverBorderColor: "#2E3248",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let brutalRecord = {
+  ...baseThemeRecord,
   primaryButtonHeight: 48.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "#00000040",
   bgColor: styles["brutal_bgColor"],
   loadingBgColor: "#B8FF9F",
@@ -723,7 +743,6 @@ let brutalRecord = {
   boxBorderColor: styles["brutal_boxBorderColor"],
   dropDownSelectAll: [["#FFE500", "#FFE500", "#FFE500"], ["#B8FF9F", "#B8FF9F", "#B8FF9F"]],
   fadedColor: ["rgba(0,0,0,0.1)", "rgba(0,0,0,0.3)"],
-  status_color,
   detailViewToolTipText: "#000000",
   summarisedViewSingleStatHeading: "#000000",
   switchThumbColor: "#FFE500",
@@ -753,21 +772,6 @@ let brutalRecord = {
       color: "#000000",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #black,
   googlePayButtonColor: #light,
@@ -799,16 +803,11 @@ let brutalRecord = {
   detailsViewTextKeyColor: "#555555",
   detailsViewTextValueColor: "#000000",
   silverBorderColor: "#000000",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let glassRecord = {
+  ...baseThemeRecord,
   primaryButtonHeight: 48.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "rgba(0,0,0,0.6)",
   bgColor: styles["glass_bgColor"],
   loadingBgColor: "rgba(255,255,255,0.12)",
@@ -834,7 +833,6 @@ let glassRecord = {
     ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.12)", "rgba(255,255,255,0.12)"],
   ],
   fadedColor: ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.2)"],
-  status_color,
   detailViewToolTipText: "#F1F5F9",
   summarisedViewSingleStatHeading: "#F1F5F9",
   switchThumbColor: "#A78BFA",
@@ -864,21 +862,6 @@ let glassRecord = {
       color: "#F1F5F9",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #black,
   googlePayButtonColor: #dark,
@@ -910,16 +893,11 @@ let glassRecord = {
   detailsViewTextKeyColor: "#94A3B8",
   detailsViewTextValueColor: "#F1F5F9",
   silverBorderColor: "rgba(255,255,255,0.2)",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let skeuRecord = {
+  ...baseThemeRecord,
   primaryButtonHeight: 48.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "rgba(60,40,20,0.45)",
   bgColor: styles["skeu_bgColor"],
   loadingBgColor: "#D4B896",
@@ -945,7 +923,6 @@ let skeuRecord = {
     [["#FFFFFF", "#FFFFFF", "#FFFFFF"]],
   ]->Array.flat,
   fadedColor: ["rgba(90,74,58,0.08)", "rgba(90,74,58,0.2)"],
-  status_color,
   detailViewToolTipText: "#1A1A1A",
   summarisedViewSingleStatHeading: "#1A1A1A",
   switchThumbColor: "#C6881A",
@@ -975,21 +952,6 @@ let skeuRecord = {
       color: "#5A3A10",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #black,
   googlePayButtonColor: #light,
@@ -1021,16 +983,11 @@ let skeuRecord = {
   detailsViewTextKeyColor: "#7A6A58",
   detailsViewTextValueColor: "#1A1A1A",
   silverBorderColor: "#C9B99A",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let clayRecord = {
+  ...baseThemeRecord,
   primaryButtonHeight: 52.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "rgba(30,20,80,0.35)",
   bgColor: styles["clay_bgColor"],
   loadingBgColor: "#D4D0FF",
@@ -1056,7 +1013,6 @@ let clayRecord = {
     [["#FFFFFF", "#FFFFFF", "#FFFFFF"]],
   ]->Array.flat,
   fadedColor: ["rgba(108,99,255,0.06)", "rgba(108,99,255,0.18)"],
-  status_color,
   detailViewToolTipText: "#1A1A2E",
   summarisedViewSingleStatHeading: "#1A1A2E",
   switchThumbColor: "#6C63FF",
@@ -1086,21 +1042,6 @@ let clayRecord = {
       color: "#4A40CC",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #black,
   googlePayButtonColor: #light,
@@ -1132,16 +1073,11 @@ let clayRecord = {
   detailsViewTextKeyColor: "#7A7AAA",
   detailsViewTextValueColor: "#1A1A2E",
   silverBorderColor: "#D4D0FF",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let charcoalRecord = {
+  ...baseThemeRecord,
   primaryButtonHeight: 48.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "rgba(0,0,0,0.2)",
   bgColor: styles["charcoal_bgColor"],
   loadingBgColor: "#E8E8E8",
@@ -1164,7 +1100,6 @@ let charcoalRecord = {
   boxBorderColor: styles["charcoal_boxBorderColor"],
   dropDownSelectAll: [["#E0E0E0", "#E0E0E0", "#E0E0E0"], ["#EAEAEA", "#EAEAEA", "#EAEAEA"]],
   fadedColor: ["rgba(0,0,0,0.06)", "rgba(0,0,0,0.15)"],
-  status_color,
   detailViewToolTipText: "#F2F2F2",
   summarisedViewSingleStatHeading: "#1A1A1A",
   switchThumbColor: "#FFFFFF",
@@ -1194,21 +1129,6 @@ let charcoalRecord = {
       color: "#FFFFFF",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #black,
   googlePayButtonColor: #light,
@@ -1240,16 +1160,11 @@ let charcoalRecord = {
   detailsViewTextKeyColor: "#888888",
   detailsViewTextValueColor: "#1A1A1A",
   silverBorderColor: "#D8D8D8",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let softRecord = {
+  ...baseThemeRecord,
   primaryButtonHeight: 48.,
-  inputHeight: 46.,
-  platform: "android",
   paymentSheetOverlay: "rgba(49,57,77,0.25)",
   bgColor: styles["soft_bgColor"],
   loadingBgColor: "#CDD5E0",
@@ -1272,7 +1187,6 @@ let softRecord = {
   boxBorderColor: styles["soft_boxBorderColor"],
   dropDownSelectAll: [["#D8E0EC", "#D8E0EC", "#D8E0EC"], ["#E4EBF5", "#E4EBF5", "#E4EBF5"]],
   fadedColor: ["rgba(163,177,198,0.3)", "rgba(163,177,198,0.6)"],
-  status_color,
   detailViewToolTipText: "#FFFFFF",
   summarisedViewSingleStatHeading: "#31394D",
   switchThumbColor: "#FFFFFF",
@@ -1302,21 +1216,6 @@ let softRecord = {
       color: "#4A90E2",
     },
   },
-  locale: En,
-  fontFamily: switch WebKit.platform {
-  | #ios | #iosWebView => DefaultIOS
-  | #android | #androidWebView => DefaultAndroid
-  | #web | #next => DefaultWeb
-  },
-  fontScale: 1.,
-  headingTextSizeAdjust: 0.,
-  subHeadingTextSizeAdjust: 0.,
-  placeholderTextSizeAdjust: 0.,
-  buttonTextSizeAdjust: 0.,
-  errorTextSizeAdjust: 0.,
-  linkTextSizeAdjust: 0.,
-  modalTextSizeAdjust: 0.,
-  cardTextSizeAdjust: 0.,
   paypalButonColor: SdkTypes.GOLD,
   applePayButtonColor: #black,
   googlePayButtonColor: #light,
@@ -1348,10 +1247,6 @@ let softRecord = {
   detailsViewTextKeyColor: "#8090A8",
   detailsViewTextValueColor: "#31394D",
   silverBorderColor: "rgba(163,177,198,0.5)",
-  sheetContentPadding: 20.,
-  errorMessageSpacing: 4.,
-  logoConfig: None,
-  gap: 16.,
 }
 
 let some = (~override, ~fn, ~default) => {
@@ -1404,6 +1299,28 @@ let itemToObj = (
   | None => isDarkMode ? WHITE : GOLD
   }
 
+  let fromColor = getter => appearanceColor->Option.flatMap(getter)
+
+  let resolveTextSize = (getter, max: float, default: float): float =>
+    switch appearance.font->Option.flatMap(getter) {
+    | Some(size) => size >= max ? max : size
+    | None => default
+    }
+
+  let resolveShadow = (
+    shapes: option<SdkTypes.shapes>,
+    default: SdkTypes.shadowConfig,
+  ): SdkTypes.shadowConfig => {
+    let shadow = shapes->Option.flatMap(o => o.shadow)
+    {
+      color: shadow->Option.flatMap(s => s.color)->Option.orElse(default.color),
+      opacity: shadow->Option.flatMap(s => s.opacity)->Option.orElse(default.opacity),
+      blurRadius: shadow->Option.flatMap(s => s.blurRadius)->Option.orElse(default.blurRadius),
+      offset: shadow->Option.flatMap(s => s.offset)->Option.orElse(default.offset),
+      intensity: shadow->Option.flatMap(s => s.intensity)->Option.orElse(default.intensity),
+    }
+  }
+
   {
     primaryButtonHeight: switch appearance.primaryButton {
     | Some({height: Some(h)}) => h
@@ -1417,69 +1334,41 @@ let itemToObj = (
     | Some({gap: Some(gap)}) => gap
     | _ => themeObj.gap
     },
-    platform: themeObj.platform,
     bgColor: getStyleProp(
-      ~override=switch appearanceColor {
-      | Some(obj) => obj.background
-      | _ => None
-      },
+      ~override=fromColor(c => c.background),
       ~fn=val => s({backgroundColor: val}),
       ~default=themeObj.bgColor,
     ),
     loadingBgColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.loaderBackground
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.loaderBackground),
       ~defaultProp=themeObj.loadingBgColor,
     ),
     loadingFgColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.loaderBackground
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.loaderBackground),
       ~defaultProp=themeObj.loadingFgColor,
     ),
     bgTransparentColor: styles["light_bgTransparentColor"],
     textPrimary: getStyleProp(
-      ~override=switch appearanceColor {
-      | Some(obj) => obj.primaryText
-      | _ => None
-      },
+      ~override=fromColor(c => c.primaryText),
       ~fn=val => s({color: val}),
       ~default=themeObj.textPrimary,
     ),
     textSecondary: getStyleProp(
-      ~override=switch appearanceColor {
-      | Some(obj) => obj.secondaryText
-      | _ => None
-      },
+      ~override=fromColor(c => c.secondaryText),
       ~fn=val => s({color: val}),
       ~default=themeObj.textSecondary,
     ),
     textSecondaryBold: getStyleProp(
-      ~override=switch appearanceColor {
-      | Some(obj) => obj.secondaryText
-      | _ => None
-      },
+      ~override=fromColor(c => c.secondaryText),
       ~fn=val => s({color: val}),
       ~default=themeObj.textSecondaryBold,
     ),
     placeholderColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.placeholderText
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.placeholderText),
       ~defaultProp=themeObj.placeholderColor,
     ),
     textInputBg: themeObj.textInputBg,
-    iconColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.icon
-      | _ => None
-      },
-      ~defaultProp=themeObj.iconColor,
-    ),
+    iconColor: getStrProp(~overRideProp=fromColor(c => c.icon), ~defaultProp=themeObj.iconColor),
     lineBorderColor: themeObj.lineBorderColor,
     linkColor: themeObj.linkColor,
     disableBgColor: themeObj.disableBgColor,
@@ -1498,10 +1387,7 @@ let itemToObj = (
     shimmerColor: themeObj.shimmerColor,
     lastOffset: themeObj.lastOffset,
     dangerColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.error
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.error),
       ~defaultProp=themeObj.dangerColor,
     ),
     orderDisableButton: themeObj.orderDisableButton,
@@ -1510,10 +1396,7 @@ let itemToObj = (
       textColor: themeObj.toastColorConfig.textColor,
     },
     primaryColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.primary
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.primary),
       ~defaultProp=themeObj.primaryColor,
     ),
     borderRadius: getStrProp(
@@ -1546,67 +1429,40 @@ let itemToObj = (
     ),
     component: {
       background: getStrProp(
-        ~overRideProp=switch appearanceColor {
-        | Some(obj) => obj.componentBackground
-        | _ => None
-        },
+        ~overRideProp=fromColor(c => c.componentBackground),
         ~defaultProp=themeObj.component.background,
       ),
       borderColor: getStrProp(
-        ~overRideProp=switch appearanceColor {
-        | Some(obj) => obj.componentBorder
-        | _ => None
-        },
+        ~overRideProp=fromColor(c => c.componentBorder),
         ~defaultProp=themeObj.component.borderColor,
       ),
       dividerColor: getStrProp(
-        ~overRideProp=switch appearanceColor {
-        | Some(obj) => obj.componentDivider
-        | _ => None
-        },
+        ~overRideProp=fromColor(c => c.componentDivider),
         ~defaultProp=themeObj.component.dividerColor,
       ),
       color: getStrProp(
-        ~overRideProp=switch appearanceColor {
-        | Some(obj) => obj.componentText
-        | _ => None
-        },
+        ~overRideProp=fromColor(c => c.componentText),
         ~defaultProp=themeObj.component.color,
       ),
       selected: {
         background: getStrProp(
-          ~overRideProp=switch appearanceColor {
-          | Some(obj) => obj.selectedComponentBackground
-          | _ => None
-          },
+          ~overRideProp=fromColor(c => c.selectedComponentBackground),
           ~defaultProp=themeObj.component.selected.background,
         ),
         borderColor: getStrProp(
-          ~overRideProp=switch appearanceColor {
-          | Some(obj) => obj.selectedComponentBorder
-          | _ => None
-          },
+          ~overRideProp=fromColor(c => c.selectedComponentBorder),
           ~defaultProp=themeObj.component.selected.borderColor,
         ),
         borderWidth: getStrProp(
-          ~overRideProp=switch appearanceColor {
-          | Some(obj) => obj.selectedComponentBorderWidth
-          | _ => None
-          },
+          ~overRideProp=fromColor(c => c.selectedComponentBorderWidth),
           ~defaultProp=themeObj.component.selected.borderWidth,
         ),
         dividerColor: getStrProp(
-          ~overRideProp=switch appearanceColor {
-          | Some(obj) => obj.selectedComponentDivider
-          | _ => None
-          },
+          ~overRideProp=fromColor(c => c.selectedComponentDivider),
           ~defaultProp=themeObj.component.selected.dividerColor,
         ),
         color: getStrProp(
-          ~overRideProp=switch appearanceColor {
-          | Some(obj) => obj.selectedComponentText
-          | _ => None
-          },
+          ~overRideProp=fromColor(c => c.selectedComponentText),
           ~defaultProp=themeObj.component.selected.color,
         ),
       },
@@ -1631,72 +1487,46 @@ let itemToObj = (
       }
     | None => themeObj.fontScale
     },
-    headingTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.headingTextSizeAdjust {
-      | Some(size) => size >= maxTextSize.maxHeadingTextSize ? maxTextSize.maxHeadingTextSize : size
-      | None => themeObj.headingTextSizeAdjust
-      }
-    | None => themeObj.headingTextSizeAdjust
-    },
-    subHeadingTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.subHeadingTextSizeAdjust {
-      | Some(size) =>
-        size >= maxTextSize.maxSubHeadingTextSize ? maxTextSize.maxSubHeadingTextSize : size
-      | None => themeObj.subHeadingTextSizeAdjust
-      }
-    | None => themeObj.subHeadingTextSizeAdjust
-    },
-    placeholderTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.placeholderTextSizeAdjust {
-      | Some(size) =>
-        size >= maxTextSize.maxPlaceholderTextSize ? maxTextSize.maxPlaceholderTextSize : size
-      | None => themeObj.placeholderTextSizeAdjust
-      }
-    | None => themeObj.placeholderTextSizeAdjust
-    },
-    buttonTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.buttonTextSizeAdjust {
-      | Some(size) => size >= maxTextSize.maxButtonTextSize ? maxTextSize.maxButtonTextSize : size
-      | None => themeObj.buttonTextSizeAdjust
-      }
-    | None => themeObj.buttonTextSizeAdjust
-    },
-    errorTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.errorTextSizeAdjust {
-      | Some(size) => size >= maxTextSize.maxErrorTextSize ? maxTextSize.maxErrorTextSize : size
-      | None => themeObj.errorTextSizeAdjust
-      }
-    | None => themeObj.errorTextSizeAdjust
-    },
-    linkTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.linkTextSizeAdjust {
-      | Some(size) => size >= maxTextSize.maxLinkTextSize ? maxTextSize.maxLinkTextSize : size
-      | None => themeObj.linkTextSizeAdjust
-      }
-    | None => themeObj.linkTextSizeAdjust
-    },
-    modalTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.modalTextSizeAdjust {
-      | Some(size) => size >= maxTextSize.maxModalTextSize ? maxTextSize.maxModalTextSize : size
-      | None => themeObj.modalTextSizeAdjust
-      }
-    | None => themeObj.modalTextSizeAdjust
-    },
-    cardTextSizeAdjust: switch appearance.font {
-    | Some(obj) =>
-      switch obj.cardTextSizeAdjust {
-      | Some(size) => size >= maxTextSize.maxCardTextSize ? maxTextSize.maxCardTextSize : size
-      | None => themeObj.cardTextSizeAdjust
-      }
-    | None => themeObj.cardTextSizeAdjust
-    },
+    headingTextSizeAdjust: resolveTextSize(
+      f => f.headingTextSizeAdjust,
+      maxTextSize.maxHeadingTextSize,
+      themeObj.headingTextSizeAdjust,
+    ),
+    subHeadingTextSizeAdjust: resolveTextSize(
+      f => f.subHeadingTextSizeAdjust,
+      maxTextSize.maxSubHeadingTextSize,
+      themeObj.subHeadingTextSizeAdjust,
+    ),
+    placeholderTextSizeAdjust: resolveTextSize(
+      f => f.placeholderTextSizeAdjust,
+      maxTextSize.maxPlaceholderTextSize,
+      themeObj.placeholderTextSizeAdjust,
+    ),
+    buttonTextSizeAdjust: resolveTextSize(
+      f => f.buttonTextSizeAdjust,
+      maxTextSize.maxButtonTextSize,
+      themeObj.buttonTextSizeAdjust,
+    ),
+    errorTextSizeAdjust: resolveTextSize(
+      f => f.errorTextSizeAdjust,
+      maxTextSize.maxErrorTextSize,
+      themeObj.errorTextSizeAdjust,
+    ),
+    linkTextSizeAdjust: resolveTextSize(
+      f => f.linkTextSizeAdjust,
+      maxTextSize.maxLinkTextSize,
+      themeObj.linkTextSizeAdjust,
+    ),
+    modalTextSizeAdjust: resolveTextSize(
+      f => f.modalTextSizeAdjust,
+      maxTextSize.maxModalTextSize,
+      themeObj.modalTextSizeAdjust,
+    ),
+    cardTextSizeAdjust: resolveTextSize(
+      f => f.cardTextSizeAdjust,
+      maxTextSize.maxCardTextSize,
+      themeObj.cardTextSizeAdjust,
+    ),
     paypalButonColor: paypalOverrideStyle,
     samsungPayButtonColor: themeObj.samsungPayButtonColor,
     applePayButtonColor: applePayOverrideStyle,
@@ -1734,111 +1564,20 @@ let itemToObj = (
       },
       ~defaultProp=themeObj.payNowButtonBorderColor,
     ),
-    payNowButtonShadowConfig: {
-      color: switch btnShape {
-      | Some(obj) =>
-        switch obj.shadow {
-        | Some(s) => s.color
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.payNowButtonShadowConfig.color),
-      opacity: switch btnShape {
-      | Some(obj) =>
-        switch obj.shadow {
-        | Some(s) => s.opacity
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.payNowButtonShadowConfig.opacity),
-      blurRadius: switch btnShape {
-      | Some(obj) =>
-        switch obj.shadow {
-        | Some(s) => s.blurRadius
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.payNowButtonShadowConfig.blurRadius),
-      offset: switch btnShape {
-      | Some(obj) =>
-        switch obj.shadow {
-        | Some(s) => s.offset
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.payNowButtonShadowConfig.offset),
-      intensity: switch btnShape {
-      | Some(obj) =>
-        switch obj.shadow {
-        | Some(s) => s.intensity
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.payNowButtonShadowConfig.intensity),
-    },
+    payNowButtonShadowConfig: resolveShadow(btnShape, themeObj.payNowButtonShadowConfig),
     focusedTextInputBoderColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.componentBorder
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.componentBorder),
       ~defaultProp=themeObj.focusedTextInputBoderColor,
     ),
     errorTextInputColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.error
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.error),
       ~defaultProp=themeObj.dangerColor,
     ),
     normalTextInputBoderColor: getStrProp(
-      ~overRideProp=switch appearanceColor {
-      | Some(obj) => obj.componentBorder
-      | _ => None
-      },
+      ~overRideProp=fromColor(c => c.componentBorder),
       ~defaultProp=themeObj.component.borderColor,
     ),
-    shadowConfig: {
-      color: switch appearance.shapes {
-      | Some(shapeObj) =>
-        switch shapeObj.shadow {
-        | Some(s) => s.color
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.shadowConfig.color),
-      opacity: switch appearance.shapes {
-      | Some(shapeObj) =>
-        switch shapeObj.shadow {
-        | Some(s) => s.opacity
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.shadowConfig.opacity),
-      blurRadius: switch appearance.shapes {
-      | Some(shapeObj) =>
-        switch shapeObj.shadow {
-        | Some(s) => s.blurRadius
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.shadowConfig.blurRadius),
-      offset: switch appearance.shapes {
-      | Some(shapeObj) =>
-        switch shapeObj.shadow {
-        | Some(s) => s.offset
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.shadowConfig.offset),
-      intensity: switch appearance.shapes {
-      | Some(shapeObj) =>
-        switch shapeObj.shadow {
-        | Some(s) => s.intensity
-        | None => None
-        }
-      | None => None
-      }->Option.orElse(themeObj.shadowConfig.intensity),
-    },
+    shadowConfig: resolveShadow(appearance.shapes, themeObj.shadowConfig),
     paymentSheetOverlay: switch appearanceColor {
     | Some({overlay: Some(o)}) => o
     | _ => themeObj.paymentSheetOverlay
@@ -1860,7 +1599,9 @@ let itemToObj = (
       let checkedIconForSelection = logoConfig.checkedIconForSelection->Option.map(iconConfig => {
         let iconColors = iconConfig.colors->Option.flatMap(c => isDarkMode ? c.dark : c.light)
         {
-          color: iconColors->Option.flatMap(c => c.color)->Option.getOr(defaultCheckedIconForSelection.color),
+          color: iconColors
+          ->Option.flatMap(c => c.color)
+          ->Option.getOr(defaultCheckedIconForSelection.color),
           stroke: ?iconColors->Option.flatMap(c => c.stroke),
           size: iconConfig.size->Option.getOr(defaultCheckedIconForSelection.size),
           bottom: iconConfig.bottom->Option.getOr(defaultCheckedIconForSelection.bottom),

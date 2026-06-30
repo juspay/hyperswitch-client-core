@@ -129,9 +129,44 @@ let useSessionTokenHook = () => {
   }
 }
 
+//add a hook for /sdk-config
+let useSdkConfigHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let apiLogWrapper = LoggerHook.useApiLogWrapper()
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  () => {
+    let platform = switch WebKit.platform {
+    | #ios | #iosWebView => "ios"
+    | #android | #androidWebView => "android"
+    | #web | #next => "web"
+    }
+    let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+    | Some(auth) =>
+      Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
+        nativeProp.paymentSessionConfig.clientSecret,
+      )
+    | None => nativeProp.paymentSessionConfig.clientSecret
+    }
+    let uri = `${baseUrl}/v1/sdk/configs/${platform}/sdk_config.json?client_secret=${clientSecret}`
+
+    APIUtils.fetchApiWrapper(
+      ~uri,
+      ~method=#GET,
+      ~headers=Utils.getHeader(
+        ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+        ~appId=nativeProp.sdkParams.appId,
+        ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+        (),
+      ),
+      ~eventName=LoggerTypes.CONFIG_CALL,
+      ~apiLogWrapper,
+    )
+  }
+}
+
 let usePostSessionTokensHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   (
@@ -171,7 +206,7 @@ let usePostSessionTokensHook = () => {
 
 let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
   let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()
@@ -361,8 +396,9 @@ let useRedirectHook = () => {
 
     let handleInvokeDDCFlow = (~nextAction) => {
       let {iframeUrl, timeoutMs} =
-        (nextAction->Option.getOr(defaultNextAction)).ddc_data
-        ->Option.getOr(DdcTypes.defaultDdcData)
+        (nextAction->Option.getOr(defaultNextAction)).ddc_data->Option.getOr(
+          DdcTypes.defaultDdcData,
+        )
       HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
         if rawMessage === "" {
           errorCallback(
@@ -399,13 +435,15 @@ let useRedirectHook = () => {
               redirectUrl->String.includes("status=requires_capture") ||
               redirectUrl->String.includes("status=partially_captured")
             ) {
-              let _ = (async () => {
-                let s = await retrievePayment(Payment, clientSecret, publishableKey)
-                redirectionSuccessHandler(~s, ~errorCallback, ~responseCallback)
-              })()
+              let _ = (
+                async () => {
+                  let s = await retrievePayment(Payment, clientSecret, publishableKey)
+                  redirectionSuccessHandler(~s, ~errorCallback, ~responseCallback)
+                }
+              )()
             } else if (
               redirectUrl->String.includes("status=failed") ||
-              redirectUrl->String.includes("status=requires_payment_method")
+                redirectUrl->String.includes("status=requires_payment_method")
             ) {
               redirectionFailureHandler(~errorCallback)
             } else {

@@ -62,9 +62,10 @@ module DatePicker = {
         {label: "Nov", value: "11"},
         {label: "Dec", value: "12"},
       ]
+      let currentYear = Date.make()->Date.getFullYear
       let yearItems = []
       Belt.Range.forEach(0, 125, y => {
-        let yearStr = (2025 - y)->Int.toString
+        let yearStr = (currentYear - y)->Int.toString
         yearItems->Array.push({SdkTypes.label: yearStr, value: yearStr})
       })
       (dayItems, monthItems, yearItems)
@@ -140,15 +141,26 @@ let make = (
   ~accessible=?,
 ) => {
   let {gap} = ThemebasedStyle.useThemeBasedStyle()
-
+  let localeObject = GetLocale.useGetLocalObj()
+  let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
   fields
+  ->Array.filter((f: SuperpositionTypes.fieldConfig) =>
+    switch f.fieldRenderType {
+    | Date | DateOfBirth => true
+    | _ => false
+    }
+  )
   ->Array.map(field => {
-    let placeholder = GetLocale.getLocalString(field.displayName)
+    let placeholder = FieldLabelResolver.resolvePlaceholder(field, getLocalized)
+    let validationRule = switch field.fieldRenderType {
+    | DateOfBirth => Validation.DateOfBirth
+    | _ => Validation.Required(None)
+    }
 
-    <React.Fragment key={field.outputPath}>
+    <React.Fragment key={field.confirmRequestWritePath}>
       <View style={s({marginBottom: gap->dp})}>
         <ReactFinalForm.Field
-          name=field.outputPath validate=Some(createFieldValidator(Validation.Required))>
+          name=field.confirmRequestWritePath validate=Some(createFieldValidator(validationRule))>
           {fieldProps => <DatePicker fieldProps placeholder accessible />}
         </ReactFinalForm.Field>
       </View>

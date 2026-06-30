@@ -4,6 +4,7 @@ open Style
 @react.component
 let make = () => {
   let {component} = ThemebasedStyle.useThemeBasedStyle()
+  let localeObject = GetLocale.useGetLocalObj()
 
   let (paymentProcessingText, setPaymentProcessingText) = React.useState(_ => ".")
 
@@ -34,12 +35,12 @@ let make = () => {
     <TubeSpinner size=60. />
     <Space />
     <View style={s({display: #flex, flexDirection: #row})}>
-      <TextWrapper text={"Processing Your Request"} textType={HeadingBold} />
+      <TextWrapper text={localeObject.processingRequestText} textType={HeadingBold} />
       <View style={s({marginLeft: 2.->dp, width: 20.->dp})}>
         <TextWrapper text={paymentProcessingText} textType={HeadingBold} />
       </View>
     </View>
     <Space height=15. />
-    <TextWrapper text="Please do not press back or close this screen" textType={ModalText} />
+    <TextWrapper text={localeObject.processingRequestSubtext} textType={ModalText} />
   </View>
 }

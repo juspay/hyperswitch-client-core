@@ -1,5 +1,4 @@
 open ReactNative
-open ParentElement
 
 @react.component
 let make = (
@@ -16,86 +15,12 @@ let make = (
   ~isFocused: bool=false,
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
-  let categorizedFields = React.useMemo1(() => {
-    fields->Array.reduce(([], [], [], [], [], [], [], []), (
-      (
-        cardFields,
-        emailFields,
-        billingNameFields,
-        billingPhoneFields,
-        billingOtherFields,
-        cryptoFields,
-        datePickerFields,
-        otherFields,
-      ),
-      fieldConfig: SuperpositionTypes.fieldConfig,
-    ) => {
-      let fieldName = fieldConfig.name
-
-      if fieldName->String.startsWith("card.") {
-        cardFields->Array.push(fieldConfig)
-      } else if fieldConfig.fieldType === EmailInput {
-        emailFields->Array.push(fieldConfig)
-      } else if (
-        fieldName->String.includes("billing.address.first_name") ||
-          fieldName->String.includes("billing.address.last_name")
-      ) {
-        billingNameFields->Array.push(fieldConfig)
-      } else if (
-        fieldConfig.fieldType === CountryCodeSelect || fieldConfig.fieldType === PhoneInput
-      ) {
-        billingPhoneFields->Array.push(fieldConfig)
-      } else if fieldName->String.includes("billing.address.") {
-        billingOtherFields->Array.push(fieldConfig)
-      } else if fieldName->String.includes("crypto.") {
-        cryptoFields->Array.push(fieldConfig)
-      } else if fieldConfig.fieldType === DatePicker {
-        datePickerFields->Array.push(fieldConfig)
-      } else {
-        otherFields->Array.push(fieldConfig)
-      }
-      (
-        cardFields,
-        emailFields,
-        billingNameFields,
-        billingPhoneFields,
-        billingOtherFields,
-        cryptoFields,
-        datePickerFields,
-        otherFields,
-      )
-    })
-  }, [fields])
-
-  let (
-    cardFields,
-    emailFields,
-    billingNameFields,
-    billingPhoneFields,
-    billingOtherFields,
-    cryptoFields,
-    datePickerFields,
-    otherFields,
-  ) = categorizedFields
-
-  let elements = [
-    CARD(cardFields),
-    GENERIC(otherFields),
-    CRYPTO(cryptoFields),
-    EMAIL(emailFields),
-    DATE(datePickerFields),
-  ]
-
-  let addressElements = [
-    FULLNAME(billingNameFields),
-    GENERIC(billingOtherFields),
-    PHONE(billingPhoneFields),
-  ]
+  let groups = React.useMemo1(() => FieldGrouper.groupFields(fields), [fields])
 
   let localeObject = GetLocale.useGetLocalObj()
 
   let createFieldValidator = (validationRule: Validation.validationRule) => {
-    Validation.createFieldValidator(validationRule, ~enabledCardSchemes, ~localeObject)
+    Validation.createFieldValidator([validationRule], ~enabledCardSchemes, ~localeObject)
   }
 
   let formatValue = Validation.formatValue
@@ -122,10 +47,10 @@ let make = (
 
       <View>
         <AddressEmitterInsideForm isFocused />
-        {elements
-        ->Array.mapWithIndex((element, index) =>
+        {groups
+        ->Array.map(element =>
           <ParentElement
-            key={index->Int.toString}
+            key={FieldGrouper.keyOf(element)}
             element
             createFieldValidator
             formatValue
@@ -136,14 +61,6 @@ let make = (
           />
         )
         ->React.array}
-        <AddressElement
-          addressElements
-          createFieldValidator
-          formatValue
-          isCardPayment
-          enabledCardSchemes
-          ?accessible
-        />
       </View>
     }}
   />

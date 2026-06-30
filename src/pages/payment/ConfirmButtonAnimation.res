@@ -44,7 +44,7 @@ let make = (
       | PaymentSuccess => Completed
       | _ => Normal
       }}
-      loadingText="Processing..."
+      loadingText={localeObject.processingText}
       backgroundColor={payNowButtonColor}
       text={displayText == "Pay Now" ? localeObject.payNowButton : displayText}
       testID={TestUtils.payButtonTestId}

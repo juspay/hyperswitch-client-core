@@ -30,6 +30,17 @@ module CardBrandAndScanCardIcon = {
   }
 }
 
+let useOptionalCardField = (
+  config: option<SuperpositionTypes.fieldConfig>,
+  ~sentinel,
+  ~validate,
+) => {
+  let present = config->Option.isSome
+  let path = config->Option.mapOr(sentinel, c => c.confirmRequestWritePath)
+  let {input, meta} = ReactFinalForm.useField(path, ~config={validate: ?validate})
+  (present, input, meta)
+}
+
 @react.component
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
@@ -39,20 +50,16 @@ let make = (
   ~accessible=?,
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
-  switch (
-    fields->Array.get(0),
-    fields->Array.get(1),
-    fields->Array.get(2),
-    fields->Array.get(3),
-    fields->Array.get(4),
-  ) {
-  | (
-      Some(cardNumberConfig),
-      Some(cardExpiryMonthConfig),
-      Some(cardExpiryYearConfig),
-      Some(cardCvcConfig),
-      Some(cardNetworkConfig),
-    ) => {
+  let findField = (renderType: SuperpositionTypes.fieldType) =>
+    fields->Array.find((f: SuperpositionTypes.fieldConfig) => f.fieldRenderType === renderType)
+  let cardNumberConfig = findField(SuperpositionTypes.CardNumber)
+  let cardExpiryMonthConfig = findField(SuperpositionTypes.CardExpiryMonth)
+  let cardExpiryYearConfig = findField(SuperpositionTypes.CardExpiryYear)
+  let cardCvcConfig = findField(SuperpositionTypes.Cvc)
+  let cardNetworkConfig = findField(SuperpositionTypes.CardNetwork)
+
+  switch (cardNumberConfig, cardExpiryMonthConfig, cardExpiryYearConfig) {
+  | (Some(cardNumberConfig), Some(cardExpiryMonthConfig), Some(cardExpiryYearConfig)) => {
       let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
       let {eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
       let emitter = PaymentEvents.usePaymentEventEmitter()
@@ -73,7 +80,7 @@ let make = (
       let nullRef = React.useRef(Nullable.null)
 
       let {input: cardNumberInput, meta: cardNumberMeta} = ReactFinalForm.useField(
-        cardNumberConfig.outputPath,
+        cardNumberConfig.confirmRequestWritePath,
         ~config={
           validate: createFieldValidator(CardNumber),
           format: formatValue(CardNumber),
@@ -81,23 +88,33 @@ let make = (
       )
 
       let {input: cardExpiryMonthInput, meta: _cardExpiryMonthMeta} = ReactFinalForm.useField(
-        cardExpiryMonthConfig.outputPath,
+        cardExpiryMonthConfig.confirmRequestWritePath,
         ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
       let {input: cardExpiryYearInput, meta: cardExpiryYearMeta} = ReactFinalForm.useField(
-        cardExpiryYearConfig.outputPath,
+        cardExpiryYearConfig.confirmRequestWritePath,
         ~config={validate: createFieldValidator(CardExpiry(expireDate))},
       )
 
-      let {input: cardNetworkInput, meta: cardNetworkMeta} = ReactFinalForm.useField(
-        cardNetworkConfig.outputPath,
-        ~config={validate: createFieldValidator(CardNetwork(enabledCardSchemes))},
+      let (_hasNetwork, cardNetworkInput, cardNetworkMeta) = useOptionalCardField(
+        cardNetworkConfig,
+        ~sentinel="__card_network_unbound",
+        ~validate={
+          cardNetworkConfig->Option.isSome && enabledCardSchemes->Array.length > 0
+            ? Some(createFieldValidator(CardNetwork(enabledCardSchemes)))
+            : None
+        },
       )
 
-      let {input: cardCvcInput, meta: cardCvcMeta} = ReactFinalForm.useField(
-        cardCvcConfig.outputPath,
-        ~config={validate: createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr("")))},
+      let (hasCvc, cardCvcInput, cardCvcMeta) = useOptionalCardField(
+        cardCvcConfig,
+        ~sentinel="__card_cvc_unbound",
+        ~validate={
+          cardCvcConfig->Option.isSome
+            ? Some(createFieldValidator(CardCVC(cardNetworkInput.value->Option.getOr(""))))
+            : None
+        },
       )
 
       let (
@@ -338,10 +355,14 @@ let make = (
                     (expireDate->String.length === 7 && checkCardExpiry(expireDate))}
                   maxLength=Some(7)
                   borderTopWidth=?{splitCardFields ? None : Some(borderWidth /. 2.)}
-                  borderRightWidth=?{splitCardFields ? None : Some(borderWidth /. 2.)}
+                  borderRightWidth=?{splitCardFields
+                    ? None
+                    : Some(hasCvc ? borderWidth /. 2. : borderWidth)}
                   borderTopLeftRadius=?{splitCardFields ? None : Some(0.)}
                   borderTopRightRadius=?{splitCardFields ? None : Some(0.)}
-                  borderBottomRightRadius=?{splitCardFields ? None : Some(0.)}
+                  borderBottomRightRadius=?{splitCardFields
+                    ? None
+                    : Some(hasCvc ? 0. : borderRadius)}
                   textColor={((cardExpiryYearMeta.error->Option.isNone ||
                   !cardExpiryYearMeta.touched ||
                   cardExpiryYearMeta.active) && expireDate->String.length < 7) ||
@@ -376,96 +397,98 @@ let make = (
                   }}
                 </UIUtils.RenderIf>
               </View>
-              <View style={s({flex: 1.})}>
-                <CustomInput
-                  name={TestUtils.cvcInputTestId}
-                  reference={Some(cvvRef)}
-                  borderTopWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
-                  borderLeftWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
-                  borderTopLeftRadius={splitCardFields ? borderRadius : 0.}
-                  borderTopRightRadius={splitCardFields ? borderRadius : 0.}
-                  borderBottomLeftRadius={splitCardFields ? borderRadius : 0.}
-                  borderBottomRightRadius=borderRadius
-                  borderBottomWidth=borderWidth
-                  borderRightWidth=borderWidth
-                  secureTextEntry=true
-                  state={cardCvcInput.value->Option.getOr("")}
-                  isValid={cardCvcMeta.error->Option.isNone ||
-                  !cardCvcMeta.touched ||
-                  cardCvcMeta.active}
-                  maxLength=Some(4)
-                  setState={text => onChangeCvv(text, nullRef)}
-                  placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(
-                    localeObject.cvcTextLabel,
-                  )}
-                  keyboardType=#"number-pad"
-                  enableCrossIcon=false
-                  onFocus={() => {
-                    cardCvcInput.onFocus()
-                  }}
-                  onBlur={() => {
-                    cardCvcInput.onBlur()
-                  }}
-                  textColor={cardCvcMeta.error->Option.isNone ||
-                  !cardCvcMeta.touched ||
-                  cardCvcMeta.active
-                    ? component.color
-                    : dangerColor}
-                  iconRight={nativeProp.configuration.paymentMethodLayout.cvcIcon === Shown
-                    ? CustomIcon(
-                        <View
-                          style={s({
-                            height: 46.->dp,
-                            display: #flex,
-                            flexDirection: #row,
-                            justifyContent: #center,
-                            alignItems: #center,
-                          })}>
-                          <Icon
-                            name="cvv"
-                            height=32.
-                            width=32.
-                            fill={checkCardCVC(
-                              cardCvcInput.value->Option.getOr(""),
-                              cardNetworkInput.value->Option.getOr(""),
-                            )
-                              ? primaryColor
-                              : "#858F97"}
-                          />
-                        </View>,
-                      )
-                    : NoIcon}
-                  onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
-                    if (
-                      ev.nativeEvent.key == "Backspace" &&
-                        cardCvcInput.value->Option.getOr("") == ""
-                    ) {
-                      switch expireRef.current->Nullable.toOption {
-                      | None => ()
-                      | Some(ref) => ref->TextInputElement.focus
+              <UIUtils.RenderIf condition={hasCvc}>
+                <View style={s({flex: 1.})}>
+                  <CustomInput
+                    name={TestUtils.cvcInputTestId}
+                    reference={Some(cvvRef)}
+                    borderTopWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
+                    borderLeftWidth={splitCardFields ? borderWidth : borderWidth /. 2.}
+                    borderTopLeftRadius={splitCardFields ? borderRadius : 0.}
+                    borderTopRightRadius={splitCardFields ? borderRadius : 0.}
+                    borderBottomLeftRadius={splitCardFields ? borderRadius : 0.}
+                    borderBottomRightRadius=borderRadius
+                    borderBottomWidth=borderWidth
+                    borderRightWidth=borderWidth
+                    secureTextEntry=true
+                    state={cardCvcInput.value->Option.getOr("")}
+                    isValid={cardCvcMeta.error->Option.isNone ||
+                    !cardCvcMeta.touched ||
+                    cardCvcMeta.active}
+                    maxLength=Some(4)
+                    setState={text => onChangeCvv(text, nullRef)}
+                    placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(
+                      localeObject.cvcTextLabel,
+                    )}
+                    keyboardType=#"number-pad"
+                    enableCrossIcon=false
+                    onFocus={() => {
+                      cardCvcInput.onFocus()
+                    }}
+                    onBlur={() => {
+                      cardCvcInput.onBlur()
+                    }}
+                    textColor={cardCvcMeta.error->Option.isNone ||
+                    !cardCvcMeta.touched ||
+                    cardCvcMeta.active
+                      ? component.color
+                      : dangerColor}
+                    iconRight={nativeProp.configuration.paymentMethodLayout.cvcIcon === Shown
+                      ? CustomIcon(
+                          <View
+                            style={s({
+                              height: 46.->dp,
+                              display: #flex,
+                              flexDirection: #row,
+                              justifyContent: #center,
+                              alignItems: #center,
+                            })}>
+                            <Icon
+                              name="cvv"
+                              height=32.
+                              width=32.
+                              fill={checkCardCVC(
+                                cardCvcInput.value->Option.getOr(""),
+                                cardNetworkInput.value->Option.getOr(""),
+                              )
+                                ? primaryColor
+                                : "#858F97"}
+                            />
+                          </View>,
+                        )
+                      : NoIcon}
+                    onKeyPress={(ev: TextInput.KeyPressEvent.t) => {
+                      if (
+                        ev.nativeEvent.key == "Backspace" &&
+                          cardCvcInput.value->Option.getOr("") == ""
+                      ) {
+                        switch expireRef.current->Nullable.toOption {
+                        | None => ()
+                        | Some(ref) => ref->TextInputElement.focus
+                        }
                       }
-                    }
-                  }}
-                  animateLabel=localeObject.cvcTextLabel
-                  ?accessible
-                />
-                <UIUtils.RenderIf condition={splitCardFields}>
-                  {switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
-                  | (Some(error), true, false) => <ErrorText text={Some(error)} />
-                  | _ =>
-                    switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
-                    | (Some(error), true) => <ErrorText text={Some(error)} />
+                    }}
+                    animateLabel=localeObject.cvcTextLabel
+                    ?accessible
+                  />
+                  <UIUtils.RenderIf condition={splitCardFields}>
+                    {switch (cardCvcMeta.error, cardCvcMeta.touched, cardCvcMeta.active) {
+                    | (Some(error), true, false) => <ErrorText text={Some(error)} />
                     | _ =>
-                      switch eligibilityStatus {
-                      | DynamicFieldsContext.Denied =>
-                        <ErrorText text={Some(localeObject.cardNotEligibleText)} />
-                      | DynamicFieldsContext.Pending => React.null
-                      | _ => React.null
+                      switch (cardNetworkMeta.error, cardNetworkMeta.touched) {
+                      | (Some(error), true) => <ErrorText text={Some(error)} />
+                      | _ =>
+                        switch eligibilityStatus {
+                        | DynamicFieldsContext.Denied =>
+                          <ErrorText text={Some(localeObject.cardNotEligibleText)} />
+                        | DynamicFieldsContext.Pending => React.null
+                        | _ => React.null
+                        }
                       }
-                    }
-                  }}
-                </UIUtils.RenderIf>
-              </View>
+                    }}
+                  </UIUtils.RenderIf>
+                </View>
+              </UIUtils.RenderIf>
             </View>
           </View>
           <UIUtils.RenderIf condition={!splitCardFields}>

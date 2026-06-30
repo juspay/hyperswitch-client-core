@@ -86,6 +86,13 @@ let defaultConfirmError = {
   message: "An unknown error has occurred please retry",
 }
 
+let defaultConfigError = {
+  type_: "config_error",
+  status: "failed",
+  code: "sdk_config_failed",
+  message: "Unable to load the payment configuration. Please retry.",
+}
+
 let defaultCancelError = {
   type_: "",
   status: "cancelled",
@@ -169,15 +176,15 @@ let getNextAction = (dict, str) => {
       redirectToUrl: getString(json, "redirect_to_url", ""),
       type_: getString(json, "type", ""),
       ddc_data: json
-        ->Dict.get("ddc_data")
-        ->Option.flatMap(JSON.Decode.object)
-        ->Option.map(ddcDict => {
-          DdcTypes.iframeUrl: getString(ddcDict, "iframe_url", ""),
-          timeoutMs: getOptionFloat(ddcDict, "timeout_ms")
-            ->Option.getOr(30000.)
-            ->Int.fromFloat,
-        })
-        ->Option.getOr(DdcTypes.defaultDdcData),
+      ->Dict.get("ddc_data")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.map(ddcDict => {
+        DdcTypes.iframeUrl: getString(ddcDict, "iframe_url", ""),
+        timeoutMs: getOptionFloat(ddcDict, "timeout_ms")
+        ->Option.getOr(30000.)
+        ->Int.fromFloat,
+      })
+      ->Option.getOr(DdcTypes.defaultDdcData),
       threeDsData: {
         threeDsAuthorizeUrl: getString(threeDSDataDict, "three_ds_authorize_url", ""),
         threeDsAuthenticationUrl: getString(threeDSDataDict, "three_ds_authentication_url", ""),

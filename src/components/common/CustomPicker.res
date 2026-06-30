@@ -32,12 +32,7 @@ let make = (
   }, [isCountryStateFields])
   let pickerRef = React.useRef(Nullable.null)
   let searchInputRef = React.useRef(Nullable.null)
-  let {
-    bgColor,
-    component,
-    iconColor,
-    borderWidth,
-  } = ThemebasedStyle.useThemeBasedStyle()
+  let {bgColor, component, iconColor, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
   let (nativeProps, _) = React.useContext(NativePropContext.nativePropContext)
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let {bgTransparentColor} = ThemebasedStyle.useThemeBasedStyle()
