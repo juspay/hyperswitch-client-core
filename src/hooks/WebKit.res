@@ -14,6 +14,12 @@ let (platform, platformString) = if Next.getNextEnv == "next" {
   (#web, "web")
 }
 
+let platformGroup = switch platform {
+| #ios | #iosWebView => "ios"
+| #android | #androidWebView => "android"
+| #web | #next => "web"
+}
+
 type useWebKit = {
   exitPaymentSheet: string => unit,
   sdkInitialised: string => unit,

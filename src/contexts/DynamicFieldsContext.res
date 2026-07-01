@@ -123,6 +123,10 @@ let make = (~children) => {
     ~rawConfigs=superpositionConfig.raw_configs,
   )
 
+  let (profile_id, processor_merchant_id, organization_id) = SdkConfigParser.getProfileContext(
+    superpositionConfig.context_used,
+  )
+
   let (sheetType, setSheetType) = React.useState(_ => ButtonSheet)
   let setSheetType = React.useCallback1(val => {
     setSheetType(_ => val)
@@ -176,6 +180,10 @@ let make = (~children) => {
       | Some(val) => val
       | None => defaultCountry
       },
+      platform: WebKit.platformGroup,
+      profile_id: ?profile_id,
+      processor_merchant_id: ?processor_merchant_id,
+      organization_id: ?organization_id,
     }
 
     switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
@@ -349,6 +357,10 @@ let make = (~children) => {
       | Some(val) => val
       | None => defaultCountry
       },
+      platform: WebKit.platformGroup,
+      profile_id: ?profile_id,
+      processor_merchant_id: ?processor_merchant_id,
+      organization_id: ?organization_id,
     }
 
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
