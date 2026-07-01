@@ -135,11 +135,6 @@ let useSdkConfigHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   () => {
-    let platform = switch WebKit.platform {
-    | #ios | #iosWebView => "ios"
-    | #android | #androidWebView => "android"
-    | #web | #next => "web"
-    }
     let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
     | Some(auth) =>
       Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
@@ -147,7 +142,7 @@ let useSdkConfigHook = () => {
       )
     | None => nativeProp.paymentSessionConfig.clientSecret
     }
-    let uri = `${baseUrl}/v1/sdk/configs/${platform}/sdk_config.json?client_secret=${clientSecret}`
+    let uri = `${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`
 
     APIUtils.fetchApiWrapper(
       ~uri,
