@@ -128,23 +128,29 @@ module Wrapper = {
       | None => React.null
       }
 
+    let scrollViewWrapperStyle = array([s({flexShrink: 1.}), style])
+    let scrollViewContent =
+      <>
+        <ScrollView
+          contentContainerStyle=contentStyle
+          keyboardShouldPersistTaps={#handled}
+          showsVerticalScrollIndicator=false>
+          <ModalHeader onModalClose isLoading isSavedPaymentScreen />
+          children
+        </ScrollView>
+        {getStickyFooter(
+          s({
+            paddingHorizontal: sheetContentPadding->dp,
+            paddingTop: (sheetContentPadding /. 2.)->dp,
+            paddingBottom: viewPortContants.bottomInset->dp,
+          }),
+        )}
+      </>
+
     renderScrollView
-      ? <View style={array([s({flexShrink: 1.}), style])}>
-          <ScrollView
-            contentContainerStyle=contentStyle
-            keyboardShouldPersistTaps={#handled}
-            showsVerticalScrollIndicator=false>
-            <ModalHeader onModalClose isLoading isSavedPaymentScreen />
-            children
-          </ScrollView>
-          {getStickyFooter(
-            s({
-              paddingHorizontal: sheetContentPadding->dp,
-              paddingTop: (sheetContentPadding /. 2.)->dp,
-              paddingBottom: viewPortContants.bottomInset->dp,
-            }),
-          )}
-        </View>
+      ? Platform.os === #ios
+          ? <SafeAreaView style=scrollViewWrapperStyle> scrollViewContent </SafeAreaView>
+          : <View style=scrollViewWrapperStyle> scrollViewContent </View>
       : <View style={array([s({maxHeight: 100.->pct}), contentStyle, style])}>
           <ModalHeader onModalClose isLoading isSavedPaymentScreen />
           children
@@ -154,6 +160,7 @@ module Wrapper = {
               paddingBottom: viewPortContants.bottomInset->dp,
             }),
           )}
+          {Platform.os === #ios ? <SafeAreaView /> : React.null}
         </View>
   }
 }
