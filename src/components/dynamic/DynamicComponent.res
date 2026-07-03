@@ -112,12 +112,16 @@ let make = (~setConfirmButtonData) => {
     | CARD =>
       switch nickname {
       | Some(name) =>
+        let nickKey =
+          SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize
+            ? "vault_card"
+            : payment_method_str
         [
           (
             "payment_method_data",
             [
               (
-                payment_method_str,
+                nickKey,
                 [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
               ),
             ]
