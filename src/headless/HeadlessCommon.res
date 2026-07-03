@@ -911,19 +911,18 @@ let apiHandler = async (
 }
 
 let prefetchApiHandler = async (headlessModule, nativeProp) => {
-  // let (accountPM, customerPM, sessionTok, sdkCfg) = await Promise.all4((
-  let (accountPM, customerPM, sessionTok) = await Promise.all3((
+  let (accountPM, customerPM, sessionTok, sdkCfg) = await Promise.all4((
     accountPaymentMethodAPICall(nativeProp),
     savedPaymentMethodAPICall(nativeProp),
     sessionAPICall(nativeProp),
-    // sdkConfigAPICall(nativeProp),
+    sdkConfigAPICall(nativeProp),
   ))
   let data =
     [
       ("accountPaymentMethods", accountPM),
       ("customerPaymentMethods", customerPM->Option.getOr(JSON.Encode.null)),
       ("sessionTokens", sessionTok),
-      // ("sdkConfig", sdkCfg),
+      ("sdkConfig", sdkCfg),
       (
         "sdkAuthorization",
         nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string,
