@@ -55,6 +55,21 @@ let defaultToken = {
   allowed_brands: [],
 }
 
+type vaultData = {
+  vault_id: string,
+  environment: string,
+}
+
+type providerConfig = {
+  vault_type: string,
+  vault_data: vaultData,
+}
+
+type sessionData = {
+  sessionTokens: array<sessions>,
+  vaultDetails: option<providerConfig>,
+}
+
 let getWallet = str => {
   switch str {
   | "apple_pay" => APPLE_PAY
@@ -67,41 +82,63 @@ let getWallet = str => {
 open Utils
 
 let itemToObjMapper = dict => {
-  dict
-  ->Dict.get("session_token")
-  ->Option.flatMap(JSON.Decode.array)
-  ->Option.map(arr => {
-    arr->Array.map(json => {
-      let dict = json->getDictFromJson
+  let sessionTokens =
+    dict
+    ->Dict.get("session_token")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.map(arr =>
+      arr->Array.map(json => {
+        let dict = json->getDictFromJson
+        {
+          wallet_name: getString(dict, "wallet_name", "")->getWallet,
+          session_token: getString(dict, "session_token", ""),
+          session_id: getString(dict, "session_id", ""),
+          merchant_info: getJsonObjectFromDict(dict, "merchant_info"),
+          allowed_payment_methods: getArray(dict, "allowed_payment_methods"),
+          transaction_info: getJsonObjectFromDict(dict, "transaction_info"),
+          shipping_address_required: getBool(dict, "shipping_address_required", false),
+          billing_address_required: getBool(dict, "billing_address_required", false),
+          email_required: getBool(dict, "email_required", false),
+          shipping_address_parameters: getJsonObjectFromDict(dict, "shipping_address_parameters"),
+          delayed_session_token: getBool(dict, "delayed_session_token", false),
+          connector: getString(dict, "connector", ""),
+          sdk_next_action: getJsonObjectFromDict(dict, "sdk_next_action"),
+          secrets: getJsonObjectFromDict(dict, "secrets"),
+          session_token_data: getJsonObjectFromDict(dict, "session_token_data"),
+          payment_request_data: getJsonObjectFromDict(dict, "payment_request_data"),
+          connector_reference_id: getJsonObjectFromDict(dict, "connector_reference_id"),
+          connector_sdk_public_key: getJsonObjectFromDict(dict, "connector_sdk_public_key"),
+          connector_merchant_id: getJsonObjectFromDict(dict, "connector_merchant_id"),
+          merchant: getJsonObjectFromDict(dict, "merchant"),
+          order_number: getString(dict, "order_number", ""),
+          service_id: getString(dict, "service_id", ""),
+          amount: getJsonObjectFromDict(dict, "amount"),
+          protocol: getString(dict, "protocol", ""),
+          allowed_brands: getArray(dict, "allowed_brands"),
+        }
+      })
+    )
+
+  let vaultDetails =
+    dict
+    ->Dict.get("vault_details")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.map(vd => {
+      let vdData =
+        vd->Dict.get("vault_data")->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
       {
-        wallet_name: getString(dict, "wallet_name", "")->getWallet,
-        session_token: getString(dict, "session_token", ""),
-        session_id: getString(dict, "session_id", ""),
-        merchant_info: getJsonObjectFromDict(dict, "merchant_info"),
-        allowed_payment_methods: getArray(dict, "allowed_payment_methods"),
-        transaction_info: getJsonObjectFromDict(dict, "transaction_info"),
-        shipping_address_required: getBool(dict, "shipping_address_required", false),
-        billing_address_required: getBool(dict, "billing_address_required", false),
-        email_required: getBool(dict, "email_required", false),
-        shipping_address_parameters: getJsonObjectFromDict(dict, "shipping_address_parameters"),
-        delayed_session_token: getBool(dict, "delayed_session_token", false),
-        connector: getString(dict, "connector", ""),
-        sdk_next_action: getJsonObjectFromDict(dict, "sdk_next_action"),
-        secrets: getJsonObjectFromDict(dict, "secrets"),
-        session_token_data: getJsonObjectFromDict(dict, "session_token_data"),
-        payment_request_data: getJsonObjectFromDict(dict, "payment_request_data"),
-        connector_reference_id: getJsonObjectFromDict(dict, "connector_reference_id"),
-        connector_sdk_public_key: getJsonObjectFromDict(dict, "connector_sdk_public_key"),
-        connector_merchant_id: getJsonObjectFromDict(dict, "connector_merchant_id"),
-        merchant: getJsonObjectFromDict(dict, "merchant"),
-        order_number: getString(dict, "order_number", ""),
-        service_id: getString(dict, "service_id", ""),
-        amount: getJsonObjectFromDict(dict, "amount"),
-        protocol: getString(dict, "protocol", ""),
-        allowed_brands: getArray(dict, "allowed_brands"),
+        vault_type: getString(vd, "vault_type", ""),
+        vault_data: {
+          vault_id: getString(vdData, "vault_id", ""),
+          environment: getString(vdData, "environment", ""),
+        },
       }
     })
-  })
+
+  switch (sessionTokens, vaultDetails) {
+  | (None, None) => None
+  | _ => Some({sessionTokens: sessionTokens->Option.getOr([]), vaultDetails: vaultDetails})
+  }
 }
 
 let jsonToSessionTokenType = sessionTokenData => {

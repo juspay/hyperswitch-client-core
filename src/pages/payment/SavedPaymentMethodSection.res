@@ -4,8 +4,12 @@ open Style
 @react.component
 let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: bool => unit) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
+  )
+  let shouldShowSavedPaymentMethods = PaymentUtils.shouldShowSavedPaymentMethods(
+    ~sdkConfigData,
+    ~sessionTokenData,
   )
 
   let {
@@ -23,7 +27,8 @@ let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: 
     {switch customerPaymentMethodData {
     | Some(customerPaymentMethods) =>
       <UIUtils.RenderIf
-        condition={customerPaymentMethods.customer_payment_methods->Array.length > 0}>
+        condition={shouldShowSavedPaymentMethods &&
+        customerPaymentMethods.customer_payment_methods->Array.length > 0}>
         <Space />
         <View
           style={array([

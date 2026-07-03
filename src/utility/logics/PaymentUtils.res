@@ -2,6 +2,105 @@ let checkIfMandate = (paymentType: PaymentMethodType.mandateType) => {
   paymentType == NEW_MANDATE || paymentType == SETUP_MANDATE
 }
 
+let buildVaultCard = (data: option<JSON.t>): option<JSON.t> => {
+  let body =
+    data
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(obj =>
+      switch obj->Dict.get("tokens") {
+      | Some(_) as tokens => tokens
+      | None => obj->Dict.get("raw")
+      }
+    )
+  let card =
+    body
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.map(obj =>
+      switch obj->Dict.get("vault_card")->Option.flatMap(JSON.Decode.object) {
+      | Some(inner) => inner
+      | None => obj
+      }
+    )
+
+  card->Option.flatMap(card => {
+    let getStr = key => card->Dict.get(key)->Option.flatMap(JSON.Decode.string)
+    let cardNumber = getStr("card_number")
+
+    let (expMonth, expYear) = switch (getStr("card_exp_month"), getStr("card_exp_year")) {
+    | (Some(_), Some(_)) as split => split
+    | _ =>
+      switch getStr("expiration_date") {
+      | Some(exp) if exp->String.includes("/") =>
+        let parts = exp->String.split("/")->Array.map(String.trim)
+        (parts->Array.get(0), parts->Array.get(1))
+      | Some(exp) if exp->String.length >= 4 =>
+        (Some(exp->String.slice(~start=0, ~end=2)), Some(exp->String.sliceToEnd(~start=2)))
+      | _ => (None, None)
+      }
+    }
+
+    let lastFour = switch getStr("last_four") {
+    | Some(_) as v => v
+    | None => cardNumber->Option.map(cn => cn->String.sliceToEnd(~start=cn->String.length - 4))
+    }
+    let binNumber = switch getStr("bin_number") {
+    | Some(_) as v => v
+    | None =>
+      cardNumber->Option.flatMap(cn =>
+        cn->String.length >= 6 ? Some(cn->String.slice(~start=0, ~end=6)) : None
+      )
+    }
+
+    let out = Dict.make()
+    let setStr = (key, valOpt) =>
+      valOpt->Option.forEach(v => out->Dict.set(key, JSON.Encode.string(v)))
+    setStr("card_number", cardNumber)
+    setStr("card_exp_month", expMonth)
+    setStr("card_exp_year", expYear)
+    setStr("card_cvc", getStr("card_cvc"))
+    setStr("last_four", lastFour)
+    setStr("bin_number", binNumber)
+
+    out->Dict.toArray->Array.length > 0 ? Some(out->JSON.Encode.object) : None
+  })
+}
+
+let buildVaultPmd = (data: option<JSON.t>): option<Dict.t<JSON.t>> =>
+  buildVaultCard(data)->Option.map(vaultCard =>
+    [
+      ("payment_method_data", [("vault_card", vaultCard)]->Dict.fromArray->JSON.Encode.object),
+    ]->Dict.fromArray
+  )
+
+let buildVaultCvc = (data: option<JSON.t>): option<string> =>
+  data
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.flatMap(obj =>
+    switch obj->Dict.get("tokens") {
+    | Some(_) as tokens => tokens
+    | None => obj->Dict.get("raw")
+    }
+  )
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.flatMap(obj => obj->Dict.get("card_cvc"))
+  ->Option.flatMap(JSON.Decode.string)
+
+// Builds the saved-card `payment_method_data` merging optional billing with the
+// tokenized CVC. VGS-tokenized CVC goes under `vault_card_token.card_cvc`.
+let buildSavedPmd = (~billing, ~vaultCvcToken: option<string>): option<JSON.t> => {
+  let arr = []
+  billing->Option.forEach(address =>
+    arr->Array.push(("billing", address->Utils.getJsonObjectFromRecord))
+  )
+  vaultCvcToken->Option.forEach(token =>
+    arr->Array.push((
+      "vault_card_token",
+      [("card_cvc", token->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object,
+    ))
+  )
+  arr->Array.length > 0 ? Some(arr->Dict.fromArray->JSON.Encode.object) : None
+}
+
 let showUseExisitingSavedCardsBtn = (
   ~isGuestCustomer,
   ~pmList,
@@ -13,6 +112,10 @@ let showUseExisitingSavedCardsBtn = (
   (mandateType == PaymentMethodType.NEW_MANDATE || mandateType == NORMAL) &&
   displaySavedPaymentMethods
 }
+
+let shouldShowSavedPaymentMethods = (~sdkConfigData, ~sessionTokenData) =>
+  SdkConfigTypes.getVaultingAction(sdkConfigData) !== Tokenize ||
+  sessionTokenData->Option.flatMap((d: SessionsType.sessionData) => d.vaultDetails)->Option.isSome
 
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
@@ -104,6 +207,7 @@ let generateSavedCardConfirmBody = (
   ~screen_height=?,
   ~screen_width=?,
   ~billing=?,
+  ~vaultCvcToken=?,
 ): PaymentConfirmTypes.redirectType => {
   client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => None
@@ -111,13 +215,15 @@ let generateSavedCardConfirmBody = (
   },
   payment_method,
   payment_token,
-  card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  return_url: ?Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),
-  payment_method_data: ?billing->Option.map(address =>
-    [("billing", address->Utils.getJsonObjectFromRecord)]
-    ->Dict.fromArray
-    ->JSON.Encode.object
+  card_cvc: ?(
+    vaultCvcToken->Option.isSome
+      ? None
+      : savedCardCvv->Option.isSome
+      ? Some(savedCardCvv->Option.getOr(""))
+      : None
   ),
+  return_url: ?Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),
+  payment_method_data: ?buildSavedPmd(~billing, ~vaultCvcToken),
   payment_type: ?payment_type_str,
   browser_info: {
     user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),

@@ -9,7 +9,7 @@ let make = (
   ~methodType=TAB,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, _, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
@@ -119,6 +119,10 @@ let make = (
       }
     }
 
+    let nickKey =
+      SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize
+        ? "vault_card"
+        : paymentMethodData.payment_method_str
     let (
       paymentMethodDataDict,
       tabDict,
@@ -132,7 +136,7 @@ let make = (
               "payment_method_data",
               [
                 (
-                  paymentMethodData.payment_method_str,
+                  nickKey,
                   [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
                 ),
               ]

@@ -13,7 +13,12 @@ let make = (
     isNicknameValid,
     setInitialValueCountry,
     eligibilityStatus,
+    vaultSubmitRef,
+    vaultFormValid,
+    setVaultShowErrors,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let (_, _, _, sdkConfigData) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
   let setFormData = React.useCallback1(data => {
@@ -49,23 +54,65 @@ let make = (
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
+  let isVaultCard =
+    SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize &&
+      paymentMethodData.payment_method === CARD
+  let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
+
+  React.useEffect2(() => {
+    if isVaultCard {
+      setIsFormValid(vaultFormValid)
+    }
+    None
+  }, (isVaultCard, vaultFormValid))
+
   let handlePress = _ => {
-    // Only gate on eligibility for card payments; non-card methods skip the check
-    let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
-    if isEligibilityBlocked {
-      ()
-    } else if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        None,
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
-    } else {
-      switch formMethods {
-      | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
-      | None => ()
+    if isVaultCard {
+      if isEligibilityBlocked {
+        ()
+      } else if !vaultFormValid {
+        setVaultShowErrors(true)
+        notifyValidationFailure()
+      } else {
+        switch vaultSubmitRef->Option.flatMap(r => r.current) {
+        | Some(submit) =>
+          setLoading(ProcessingPayments)
+          submit()
+          ->Promise.thenResolve((res: DynamicFieldsContext.vaultSubmitResult) => {
+            switch (res.status, PaymentUtils.buildVaultPmd(res.data)) {
+            | ("success", Some(vaultPmd)) =>
+              processRequest(
+                CommonUtils.mergeDict(CommonUtils.mergeDict(initialValues, formData), vaultPmd),
+                None,
+                formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+              )
+            | _ =>
+              setLoading(FillingDetails)
+              notifyValidationFailure()
+            }
+          })
+          ->ignore
+        | None => notifyValidationFailure()
+        }
       }
-      notifyValidationFailure()
+    } else {
+      // Only gate on eligibility for card payments; non-card methods skip the check
+      let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
+      if isEligibilityBlocked {
+        ()
+      } else if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+        processRequest(
+          CommonUtils.mergeDict(initialValues, formData),
+          None,
+          formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+        )
+      } else {
+        switch formMethods {
+        | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+        | None => ()
+        }
+        notifyValidationFailure()
+      }
     }
   }
 

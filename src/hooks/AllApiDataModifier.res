@@ -25,7 +25,12 @@ let useAccountPaymentMethodModifier = () => {
   let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
-  React.useMemo4(() => {
+  let shouldShowSavedPaymentMethods = PaymentUtils.shouldShowSavedPaymentMethods(
+    ~sdkConfigData,
+    ~sessionTokenData,
+  )
+
+  React.useMemo5(() => {
     let groupingBehavior = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior
 
     // Show a merged "Saved" tab only when displaySavedPaymentMethods=true AND displayInSeparateScreen=false AND groupByPaymentMethods=false
@@ -33,7 +38,8 @@ let useAccountPaymentMethodModifier = () => {
       nativeProp.configuration.displaySavedPaymentMethods &&
       !groupingBehavior.displayInSeparateScreen &&
       !groupingBehavior.groupByPaymentMethods &&
-      !groupingBehavior.displayInSeparateSection
+      !groupingBehavior.displayInSeparateSection &&
+      shouldShowSavedPaymentMethods
 
     let (initialTabArr, initialElementArr) = if showMergedSavedTab {
       switch customerPaymentMethodData {
@@ -107,9 +113,17 @@ let useAccountPaymentMethodModifier = () => {
           )
       )
 
+    let vaultMisconfigured =
+      SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize &&
+        sessionTokenData->Option.flatMap(d => d.vaultDetails)->Option.isNone
+
     switch accountPaymentMethodData {
     | Some(accountPaymentMethodData) =>
-      accountPaymentMethodData.payment_methods->Array.reduce(
+      accountPaymentMethodData.payment_methods
+      ->Array.filter((pmd: AccountPaymentMethodType.payment_method_type) =>
+        !(vaultMisconfigured && pmd.payment_method === CARD)
+      )
+      ->Array.reduce(
         (initialTabArr, initialElementArr, []),
         (
           (tabArr, elementArr, giftCardArr): (
@@ -121,7 +135,7 @@ let useAccountPaymentMethodModifier = () => {
         ) => {
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
-            sessionData
+            sessionData.sessionTokens
             ->Array.find(item => item.wallet_name == paymentMethodData.payment_method_type_wallet)
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
@@ -182,11 +196,13 @@ let useAccountPaymentMethodModifier = () => {
               paymentMethodData.payment_method === CARD
 
             let savedCardMethods =
-              customerPaymentMethodData
-              ->Option.map(
-                cpm => cpm.customer_payment_methods->Array.filter(m => m.payment_method === CARD),
-              )
-              ->Option.getOr([])
+              shouldShowSavedPaymentMethods
+                ? customerPaymentMethodData
+                  ->Option.map(
+                    cpm => cpm.customer_payment_methods->Array.filter(m => m.payment_method === CARD),
+                  )
+                  ->Option.getOr([])
+                : []
 
             switch nativeProp.sdkState {
             | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
@@ -285,6 +301,7 @@ let useAccountPaymentMethodModifier = () => {
     customerPaymentMethodData,
     sessionTokenData,
     superpositionConfig.payment_methods,
+    shouldShowSavedPaymentMethods,
   ))
 }
 
@@ -304,7 +321,7 @@ let useAddWebPaymentButton = () => {
         accountPaymentMethodData.payment_methods->Array.forEach(paymentMethodData => {
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
-            sessionData
+            sessionData.sessionTokens
             ->Array.find(item => item.wallet_name == paymentMethodData.payment_method_type_wallet)
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken

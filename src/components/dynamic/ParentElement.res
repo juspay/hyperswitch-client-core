@@ -17,11 +17,16 @@ let make = (
   ~accessible=?,
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
+  let (_, _, _, sdkConfigData) = React.useContext(AllApiDataContextNew.allApiDataContext)
   switch element {
   | CARD(fields) if fields->Array.length > 0 =>
-    <CardElement
-      fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
-    />
+    SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize
+      ? <VaultElement
+          fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
+        />
+      : <CardElement
+          fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
+        />
   | CRYPTO(fields) if fields->Array.length > 0 =>
     <CryptoElement fields createFieldValidator formatValue ?accessible />
   | EMAIL(fields) if fields->Array.length > 0 =>
