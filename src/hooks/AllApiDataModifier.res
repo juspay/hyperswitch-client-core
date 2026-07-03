@@ -16,16 +16,13 @@ type walletProp = {
 
 let useAccountPaymentMethodModifier = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (
-    accountPaymentMethodData,
-    customerPaymentMethodData,
-    sessionTokenData,
-    sdkConfigData,
-  ) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (combinedPML, sessionTokenData, sdkConfigData) = React.useContext(
+    AllApiDataContextNew.allApiDataContext,
+  )
   let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
-  React.useMemo4(() => {
+  React.useMemo3(() => {
     let groupingBehavior = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior
 
     // Show a merged "Saved" tab only when displaySavedPaymentMethods=true AND displayInSeparateScreen=false AND groupByPaymentMethods=false
@@ -36,7 +33,7 @@ let useAccountPaymentMethodModifier = () => {
       !groupingBehavior.displayInSeparateSection
 
     let (initialTabArr, initialElementArr) = if showMergedSavedTab {
-      switch customerPaymentMethodData {
+      switch combinedPML {
       | None =>
         switch nativeProp.sdkState {
         | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet => (
@@ -71,8 +68,8 @@ let useAccountPaymentMethodModifier = () => {
                         isScreenFocus
                         customerPaymentMethods
                         setConfirmButtonData
-                        merchantName={accountPaymentMethodData
-                        ->Option.map(data => data.merchant_name)
+                        merchantName={combinedPML
+                        ->Option.map(data => data.intent_data.merchant_name)
                         ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                         animated=true
                         style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
@@ -98,24 +95,15 @@ let useAccountPaymentMethodModifier = () => {
       ([], [])
     }
 
-    let isInSuperposition = (paymentMethodData: AccountPaymentMethodType.payment_method_type) =>
-      superpositionConfig.payment_methods->Array.some((pm: SdkConfigTypes.sdkPaymentMethod) =>
-        pm.payment_method === paymentMethodData.payment_method_str &&
-          pm.payment_method_types->Array.some(
-            (pmt: SdkConfigTypes.sdkPaymentMethodType) =>
-              pmt.payment_method_type === paymentMethodData.payment_method_type,
-          )
-      )
-
-    switch accountPaymentMethodData {
-    | Some(accountPaymentMethodData) =>
-      accountPaymentMethodData.payment_methods->Array.reduce(
+    switch combinedPML {
+    | Some(combinedPML) =>
+      combinedPML.payment_methods_enabled->Array.reduce(
         (initialTabArr, initialElementArr, []),
         (
           (tabArr, elementArr, giftCardArr): (
             array<hoc>,
             array<React.element>,
-            array<AccountPaymentMethodType.payment_method_type>,
+            array<CombinedPMLType.pmEnabled>,
           ),
           paymentMethodData,
         ) => {
@@ -175,18 +163,14 @@ let useAccountPaymentMethodModifier = () => {
             }
           }
 
-          if walletExperience->Option.isSome && isInSuperposition(paymentMethodData) {
+          if walletExperience->Option.isSome {
             let isGroupByPMCard =
               !groupingBehavior.displayInSeparateScreen &&
               groupingBehavior.groupByPaymentMethods &&
               paymentMethodData.payment_method === CARD
 
             let savedCardMethods =
-              customerPaymentMethodData
-              ->Option.map(
-                cpm => cpm.customer_payment_methods->Array.filter(m => m.payment_method === CARD),
-              )
-              ->Option.getOr([])
+              combinedPML.customer_payment_methods->Array.filter(m => m.payment_method === CARD)
 
             switch nativeProp.sdkState {
             | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
@@ -280,16 +264,11 @@ let useAccountPaymentMethodModifier = () => {
       | _ => ([], [], [])
       }
     }
-  }, (
-    accountPaymentMethodData,
-    customerPaymentMethodData,
-    sessionTokenData,
-    superpositionConfig.payment_methods,
-  ))
+  }, (combinedPML, sessionTokenData, superpositionConfig.payment_methods))
 }
 
 let useAddWebPaymentButton = () => {
-  let (accountPaymentMethodData, _, sessionTokenData, _) = React.useContext(
+  let (combinedPML, sessionTokenData, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (addApplePay, addGooglePay) =
@@ -299,9 +278,9 @@ let useAddWebPaymentButton = () => {
 
   React.useMemo2(() => {
     if ReactNative.Platform.os === #web {
-      switch accountPaymentMethodData {
-      | Some(accountPaymentMethodData) =>
-        accountPaymentMethodData.payment_methods->Array.forEach(paymentMethodData => {
+      switch combinedPML {
+      | Some(combinedPML) =>
+        combinedPML.payment_methods_enabled->Array.forEach(paymentMethodData => {
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
             sessionData
@@ -352,7 +331,7 @@ let useAddWebPaymentButton = () => {
       | None => ()
       }
     }
-  }, (accountPaymentMethodData, sessionTokenData))
+  }, (combinedPML, sessionTokenData))
 }
 
 let useWidgetListModifier = () => {

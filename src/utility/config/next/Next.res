@@ -9,10 +9,7 @@ let getNextEnv = try {
 }
 
 @module("./NextImpl")
-external clistRes: JSON.t = "clistRes"
-
-@module("./NextImpl")
-external listRes: JSON.t = "listRes"
+external combinedRes: JSON.t = "combinedRes"
 
 @module("./NextImpl")
 external sessionsRes: JSON.t = "sessionsRes"

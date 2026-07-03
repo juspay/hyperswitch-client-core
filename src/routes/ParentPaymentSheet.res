@@ -1,7 +1,7 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (combinedPML, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
@@ -26,28 +26,25 @@ let make = () => {
 
   UseWidgetActions.useWidgetActions(~confirmButtonData)
 
-  React.useEffect2(() => {
+  React.useEffect1(() => {
     if (
-      accountPaymentMethodData->Option.isSome && (
-          nativeProp.configuration.allowsDelayedPaymentMethods
-            ? customerPaymentMethodData->Option.isNone
-            : customerPaymentMethodData
-              ->Option.map(data => data.customer_payment_methods->Array.length === 0)
-              ->Option.getOr(true)
-        )
+      combinedPML->Option.isSome &&
+        combinedPML
+        ->Option.map(data => data.customer_payment_methods->Array.length === 0)
+        ->Option.getOr(true)
     ) {
       setIsSavedPaymentScreen(false)
     }
     None
-  }, (customerPaymentMethodData, accountPaymentMethodData))
+  }, [combinedPML])
 
-  let isLoading = React.useMemo3(() => {
+  let isLoading = React.useMemo2(() => {
     if nativeProp.configuration.allowsDelayedPaymentMethods {
-      !(accountPaymentMethodData->Option.isSome || customerPaymentMethodData->Option.isSome)
+      !(combinedPML->Option.isSome)
     } else {
       confirmButtonData.loading
     }
-  }, (accountPaymentMethodData, customerPaymentMethodData, confirmButtonData))
+  }, (combinedPML, confirmButtonData))
 
   <FullScreenSheetWrapper
     isSavedPaymentScreen
@@ -72,8 +69,7 @@ let make = () => {
         <PaymentSheet
           setConfirmButtonData
           isLoading={confirmButtonData.loading &&
-          accountPaymentMethodData->Option.isNone &&
-          customerPaymentMethodData->Option.isNone}
+          combinedPML->Option.isNone}
           tabArr
           elementArr
           giftCardArr
@@ -83,22 +79,22 @@ let make = () => {
       | (HostedCheckout, false)
       | (WidgetTabSheet, false)
       | (TabSheet, false) =>
-        switch customerPaymentMethodData->Option.map(customerPaymentMethods =>
-          customerPaymentMethods.customer_payment_methods
+        switch combinedPML->Option.map(data =>
+          data.customer_payment_methods
         ) {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
             customerPaymentMethods->Array.length > 0 &&
-              accountPaymentMethodData
-              ->Option.map(data => data.payment_type)
+              combinedPML
+              ->Option.map(data => data.intent_data.payment_type)
               ->Option.getOr(NORMAL) !== SETUP_MANDATE
           <>
             {isSavedPaymentScreen && showSavedScreen
               ? <SavedPaymentSheet
                   customerPaymentMethods
                   setConfirmButtonData
-                  merchantName={accountPaymentMethodData
-                  ->Option.map(data => data.merchant_name)
+                  merchantName={combinedPML
+                  ->Option.map(data => data.intent_data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                   maxVisibleItems=6
                   animated=true
@@ -113,7 +109,7 @@ let make = () => {
             <Space height=5. />
             {showSavedScreen ||
             (nativeProp.configuration.allowsDelayedPaymentMethods &&
-            accountPaymentMethodData->Option.isSome)
+            combinedPML->Option.isSome)
               ? <>
                   <Space height=5. />
                   <ClickableTextElement
@@ -133,7 +129,7 @@ let make = () => {
           </>
         | None =>
           nativeProp.configuration.allowsDelayedPaymentMethods &&
-          accountPaymentMethodData->Option.isSome
+          combinedPML->Option.isSome
             ? {
                 <PaymentSheet
                   setConfirmButtonData

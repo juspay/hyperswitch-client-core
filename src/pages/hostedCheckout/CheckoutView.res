@@ -49,7 +49,7 @@ module Divider = {
 module CheckoutDetails = {
   @react.component
   let make = (
-    ~accountPaymentMethodData: option<AccountPaymentMethodType.accountPaymentMethods>,
+    ~accountPaymentMethodData: option<CombinedPMLType.combinedPML>,
     ~textSecondary,
   ) => {
     <>
@@ -57,7 +57,7 @@ module CheckoutDetails = {
       {switch accountPaymentMethodData {
       | Some(data) =>
         <LineItem
-          label={`${data.merchant_name->String.toUpperCase} Subscription`}
+          label={`${data.intent_data.merchant_name->String.toUpperCase} Subscription`}
           value="$399.00"
           sublabel="Billed monthly"
           subvalue="$399.00 per seat"
@@ -98,7 +98,7 @@ module CheckoutDetails = {
 
 @react.component
 let make = (~isDesktop) => {
-  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let {textSecondary} = ThemebasedStyle.useThemeBasedStyle()
 
   let (showDetails, setShowDetails) = React.useState(() => false)
@@ -155,7 +155,7 @@ let make = (~isDesktop) => {
                 height={isDesktop ? 24. : 18.}
               />
               <TextWrapper
-                text={data.merchant_name->String.toUpperCase}
+                text={data.intent_data.merchant_name->String.toUpperCase}
                 textType={HeadingBold}
                 overrideStyle={Some(s({fontSize: isDesktop ? 32. : 24., fontWeight: #700}))}
               />
@@ -205,7 +205,7 @@ let make = (~isDesktop) => {
               height={isDesktop ? 24. : 18.}
             />
             <TextWrapper
-              text={data.merchant_name->String.toUpperCase}
+              text={data.intent_data.merchant_name->String.toUpperCase}
               textType={HeadingBold}
               overrideStyle={Some(s({fontSize: isDesktop ? 32. : 24., fontWeight: #700}))}
             />
@@ -227,7 +227,7 @@ let make = (~isDesktop) => {
         {switch accountPaymentMethodData {
         | Some(data) =>
           <TextWrapper
-            text={`Subscribe to ${data.merchant_name} Subscription`}
+            text={`Subscribe to ${data.intent_data.merchant_name} Subscription`}
             textType={Subheading}
             overrideStyle={Some(textSecondary)}
           />

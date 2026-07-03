@@ -152,7 +152,7 @@ let generateWalletConfirmBody = (
 
 let generatePostSessionTokensBody = (
   ~nativeProp: SdkTypes.nativeProp,
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: CombinedPMLType.pmEnabled,
   ~sessionObject: SessionsType.sessions,
   ~payment_type_str: option<string>=?,
   (),
@@ -200,7 +200,7 @@ let getActionType = (nextActionObj: option<PaymentConfirmTypes.nextAction>) => {
 let getCardNetworks = cardNetworks => {
   switch cardNetworks {
   | Some(cardNetworks) =>
-    cardNetworks->Array.map((item: AccountPaymentMethodType.card_networks) => item.card_network)
+    cardNetworks->Array.map((item: CombinedPMLType.cardNetwork) => item.card_network)
   | None => []
   }
 }

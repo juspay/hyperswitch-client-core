@@ -2,14 +2,14 @@ type methodType = TAB | ELEMENT | WIDGET
 
 @react.component
 let make = (
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: CombinedPMLType.pmEnabled,
   ~isScreenFocus: bool=false,
   ~setConfirmButtonData=_ => (),
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
   ~methodType=TAB,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (combinedPML, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
@@ -27,8 +27,8 @@ let make = (
     | None => setEligibilityStatus(_ => Allowed)
     | Some(cardNumber) =>
       let shouldCheck =
-        accountPaymentMethodData
-        ->Option.flatMap(d => d.sdk_next_action)
+        combinedPML
+        ->Option.flatMap(d => d.sdk_next_action.next_action)
         ->Option.mapOr(false, action => action == "eligibility_check")
 
       if shouldCheck {
@@ -103,7 +103,7 @@ let make = (
       }
     }
 
-    let getExperienceSuffix = (experiences: array<AccountPaymentMethodType.payment_experience>) => {
+    let getExperienceSuffix = (experiences: array<CombinedPMLType.paymentExperience>) => {
       let hasSDKFlow =
         experiences->Array.some(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
 
@@ -194,23 +194,21 @@ let make = (
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
-      ~payment_type=accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+      ~payment_type=combinedPML
+      ->Option.map(data => data.intent_data.payment_type)
       ->Option.getOr(NORMAL),
-      ~payment_type_str=?accountPaymentMethodData
-      ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type_str)
+      ~payment_type_str=?combinedPML
+      ->Option.map(data => data.intent_data.payment_type_str)
       ->Option.getOr(None),
       ~appURL=?{
-        accountPaymentMethodData->Option.map(accountPaymentMethods =>
-          accountPaymentMethods.redirect_url
-        )
+        combinedPML->Option.map(data => data.intent_data.return_url)
       },
       ~isSaveCardCheckboxVisible={
         paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=customerPaymentMethodData
-      ->Option.map(customerPaymentMethods => customerPaymentMethods.is_guest_customer)
+      ~isGuestCustomer=combinedPML
+      ->Option.map(data => data.intent_data.is_guest_customer)
       ->Option.getOr(true),
       ~isNicknameSelected,
       ~email?,

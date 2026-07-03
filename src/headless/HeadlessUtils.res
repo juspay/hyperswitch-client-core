@@ -188,23 +188,23 @@ let getBaseUrl = nativeProp => {
   )
 }
 
-let savedPaymentMethodAPICall = nativeProp => {
-  let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(_) => Some(`${getBaseUrl(nativeProp)}/customers/payment_methods`)
-  | None =>
-    Some(
-      `${getBaseUrl(
-          nativeProp,
-        )}/customers/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`,
+let clientAPICall = nativeProp => {
+  let paymentId = nativeProp.paymentSessionConfig.paymentId
+  let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+  | Some(auth) =>
+    Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
+      nativeProp.paymentSessionConfig.clientSecret,
     )
+  | None => nativeProp.paymentSessionConfig.clientSecret
   }
+  let uri = Some(`${getBaseUrl(nativeProp)}/payments/${paymentId}/client?client_secret=${clientSecret}`)
 
   switch uri {
   | Some(uri) =>
     handleApiCall(
       ~uri,
       ~nativeProp,
-      ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
+      ~eventName=COMBINE_PML_CALL,
       ~method=#GET,
       ~headers=Utils.getHeader(
         ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
@@ -415,7 +415,7 @@ let getBrowserInfo = (nativeProp: SdkTypes.nativeProp) => {
 
 let generateWalletConfirmBody = (
   ~nativeProp,
-  ~data: CustomerPaymentMethodType.customer_payment_method_type,
+  ~data: CombinedPMLType.customerPM,
   ~payment_method_data,
   ~payment_type_str=?,
 ) => {
