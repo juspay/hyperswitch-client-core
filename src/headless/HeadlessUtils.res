@@ -188,6 +188,30 @@ let getBaseUrl = nativeProp => {
   )
 }
 
+let accountPaymentMethodAPICall = nativeProp => {
+  let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(_) => `${getBaseUrl(nativeProp)}/account/payment_methods`
+  | None =>
+    `${getBaseUrl(nativeProp)}/account/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
+  }
+
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=PAYMENT_METHODS_CALL,
+    ~method=#GET,
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
+    ~processSuccess=json => json,
+    ~processError=error => error,
+    ~processCatch=_ => JSON.Encode.null,
+  )
+}
+
 let savedPaymentMethodAPICall = nativeProp => {
   let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => Some(`${getBaseUrl(nativeProp)}/customers/payment_methods`)
@@ -252,6 +276,38 @@ let sessionAPICall = nativeProp => {
     ~eventName=SESSIONS_CALL,
     ~headers,
     ~body,
+    ~processSuccess=json => json,
+    ~processError=error => error,
+    ~processCatch=_ => JSON.Encode.null,
+  )
+}
+
+let sdkConfigAPICall = (nativeProp: SdkTypes.nativeProp) => {
+  let platform = switch WebKit.platform {
+  | #ios | #iosWebView => "ios"
+  | #android | #androidWebView => "android"
+  | #web | #next => "web"
+  }
+  let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+  | Some(auth) =>
+    Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
+      nativeProp.paymentSessionConfig.clientSecret,
+    )
+  | None => nativeProp.paymentSessionConfig.clientSecret
+  }
+  let uri = `${getBaseUrl(nativeProp)}/v1/sdk/configs/${platform}/sdk_config.json?client_secret=${clientSecret}`
+
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=LoggerTypes.CONFIG_CALL,
+    ~method=#GET,
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
     ~processSuccess=json => json,
     ~processError=error => error,
     ~processCatch=_ => JSON.Encode.null,
