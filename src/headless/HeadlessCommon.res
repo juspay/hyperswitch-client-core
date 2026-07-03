@@ -807,7 +807,7 @@ let apiHandler = async (
       } else if session != JSON.Encode.null {
         switch session->Utils.getDictFromJson->SessionsType.itemToObjMapper {
         | Some(sessions) =>
-          let walletNameArray = sessions->Array.map(wallet => wallet.wallet_name)
+          let walletNameArray = sessions.sessionTokens->Array.map(wallet => wallet.wallet_name)
           let filteredSessionSpmData =
             sessionSpmData->Array.filter(data =>
               walletNameArray->Array.includes(data.payment_method_type_wallet)
@@ -820,7 +820,7 @@ let apiHandler = async (
             reRegisterCallback,
             nativeProp,
             filteredSpmData,
-            Some(sessions),
+            Some(sessions.sessionTokens),
             ~getCvc,
           )
         | None =>

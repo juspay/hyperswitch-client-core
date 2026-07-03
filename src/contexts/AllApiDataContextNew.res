@@ -1,7 +1,7 @@
 let allApiDataContext = React.createContext((
   (None: option<AccountPaymentMethodType.accountPaymentMethods>),
   (None: option<CustomerPaymentMethodType.customerPaymentMethods>),
-  (None: option<array<SessionsType.sessions>>),
+  (None: option<SessionsType.sessionData>),
   (None: option<SdkConfigTypes.sdkConfigValue>),
 ))
 

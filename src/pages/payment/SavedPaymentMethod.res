@@ -27,6 +27,10 @@ module CVVComponent = {
     let errorMsgText = !isCvcValid ? Some(localeObject.inCompleteCVCErrorText) : None
     let onCvvChange = cvv => setSavedCardCvv(_ => Some(Validation.formatCVCNumber(cvv, cardScheme)))
 
+    let (_, _, _, sdkConfigData) = React.useContext(AllApiDataContextNew.allApiDataContext)
+    let configReady = sdkConfigData->Option.isSome
+    let useVaultCvc = SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize
+
     <View
       style={s({
         display: #flex,
@@ -50,38 +54,44 @@ module CVVComponent = {
           : <View style={s({width: {50.->dp}})}>
               <TextWrapper text="CVC:" textType={ModalText} />
             </View>}
-        <CustomInput
-          state={savedCardCvv->Option.getOr("")}
-          setState={onCvvChange}
-          placeholder={hideCardExpiry
-            ? placeholderCVC->Option.getOr(localeObject.cvcTextLabel)
-            : "123"}
-          animateLabel="CVC"
-          keyboardType=#"number-pad"
-          enableCrossIcon=false
-          width={(hideCvcIcon ? 72. : 100.)->dp}
-          height={inputHeight *. 0.9}
-          isValid={isCvcValid}
-          onFocus={() => {
-            setIsCvcFocus(_ => true)
-          }}
-          onBlur={() => {
-            setIsCvcFocus(_ => false)
-          }}
-          secureTextEntry=true
-          textColor={isCvcValid ? component.color : dangerColor}
-          iconRight=?{hideCvcIcon
-            ? None
-            : Some(
-                CustomIcon({
-                  Validation.checkCardCVC(savedCardCvv->Option.getOr(""), cardScheme)
-                    ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
-                    : <Icon name="cvvempty" height=35. width=35. fill="black" />
-                }),
-              )}
-        />
+        {!configReady
+          ? React.null
+          : useVaultCvc
+          ? <VaultCvcElement ?placeholderCVC width={hideCvcIcon ? 72. : 110.} hideCardExpiry />
+          : <CustomInput
+              state={savedCardCvv->Option.getOr("")}
+              setState={onCvvChange}
+              placeholder={hideCardExpiry
+                ? placeholderCVC->Option.getOr(localeObject.cvcTextLabel)
+                : "123"}
+              animateLabel="CVC"
+              keyboardType=#"number-pad"
+              enableCrossIcon=false
+              width={(hideCvcIcon ? 72. : 100.)->dp}
+              height={inputHeight *. 0.9}
+              isValid={isCvcValid}
+              onFocus={() => {
+                setIsCvcFocus(_ => true)
+              }}
+              onBlur={() => {
+                setIsCvcFocus(_ => false)
+              }}
+              secureTextEntry=true
+              textColor={isCvcValid ? component.color : dangerColor}
+              iconRight=?{hideCvcIcon
+                ? None
+                : Some(
+                    CustomIcon({
+                      Validation.checkCardCVC(savedCardCvv->Option.getOr(""), cardScheme)
+                        ? <Icon name="cvvfilled" height=35. width=35. fill="black" />
+                        : <Icon name="cvvempty" height=35. width=35. fill="black" />
+                    }),
+                  )}
+            />}
       </View>
-      {errorMsgText->Option.isSome && !hideCVCError ? <ErrorText text=errorMsgText /> : React.null}
+      {configReady && !useVaultCvc && errorMsgText->Option.isSome && !hideCVCError
+        ? <ErrorText text=errorMsgText />
+        : React.null}
     </View>
   }
 }

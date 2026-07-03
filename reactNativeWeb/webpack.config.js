@@ -151,6 +151,9 @@ module.exports = {
       'react-native-plaid-link-sdk': 'react-native-web',
       '@react-native-clipboard/clipboard':
         'react-native-web/dist/exports/Clipboard',
+      '@basis-theory/react-native-elements': 'react-native-web',
+      '@evervault/react-native': 'react-native-web',
+      'skyflow-react-native': 'react-native-web'      
     },
   },
   optimization: {
@@ -182,6 +185,9 @@ module.exports = {
     new webpack.DefinePlugin({
       // See: https://github.com/necolas/react-native-web/issues/349
       __DEV__: JSON.stringify(false),
+    }),
+    new webpack.ProvidePlugin({
+      process: "process/browser",
     }),
   ].filter(Boolean),
 };

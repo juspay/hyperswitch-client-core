@@ -14,6 +14,14 @@ type sheetType = ButtonSheet | DynamicFieldsSheet
 
 type eligibilityStatus = Denied | Allowed | Pending
 
+type vaultSubmitResult = {
+  status: string,
+  data: option<JSON.t>,
+  errors: option<JSON.t>,
+}
+
+type vaultSubmitFn = unit => promise<vaultSubmitResult>
+
 type dynamicFieldsData = {
   formDataRef: option<React.ref<RescriptCore.Dict.t<JSON.t>>>,
   sheetType: sheetType,
@@ -50,6 +58,11 @@ type dynamicFieldsData = {
   setIsNicknameValid: bool => unit,
   eligibilityStatus: eligibilityStatus,
   setEligibilityStatus: (eligibilityStatus => eligibilityStatus) => unit,
+  vaultSubmitRef: option<React.ref<option<vaultSubmitFn>>>,
+  vaultFormValid: bool,
+  setVaultFormValid: bool => unit,
+  vaultShowErrors: bool,
+  setVaultShowErrors: bool => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -89,6 +102,11 @@ let dynamicFieldsContext = React.createContext({
   setIsNicknameValid: _ => (),
   eligibilityStatus: Allowed,
   setEligibilityStatus: _ => (),
+  vaultSubmitRef: None,
+  vaultFormValid: false,
+  setVaultFormValid: _ => (),
+  vaultShowErrors: false,
+  setVaultShowErrors: _ => (),
 })
 
 module Provider = {
@@ -114,6 +132,21 @@ let buildIntentData = (flatByWritePath: Dict.t<string>): JSON.t => {
 @react.component
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
+  let vaultSubmitRef = Some(React.useRef(None))
+  let (vaultFormValid, setVaultFormValid) = React.useState(_ => false)
+  let setVaultFormValid = React.useCallback1(valid => {
+    setVaultFormValid(_ => valid)
+  }, [setVaultFormValid])
+  let (vaultShowErrors, setVaultShowErrors) = React.useState(_ => false)
+  let setVaultShowErrors = React.useCallback1(show => {
+    setVaultShowErrors(_ => show)
+  }, [setVaultShowErrors])
+  React.useEffect1(() => {
+    if vaultFormValid {
+      setVaultShowErrors(false)
+    }
+    None
+  }, [vaultFormValid])
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, _, _, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
@@ -176,6 +209,7 @@ let make = (~children) => {
       | Some(val) => val
       | None => defaultCountry
       },
+      platform: WebKit.platformString,
     }
 
     switch requiredFieldsFromPML->Dict.get("payment_method_data.billing.address.country") {
@@ -349,6 +383,7 @@ let make = (~children) => {
       | Some(val) => val
       | None => defaultCountry
       },
+      platform: WebKit.platformString,
     }
 
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
@@ -429,6 +464,11 @@ let make = (~children) => {
       setIsNicknameValid,
       eligibilityStatus,
       setEligibilityStatus,
+      vaultSubmitRef,
+      vaultFormValid,
+      setVaultFormValid,
+      vaultShowErrors,
+      setVaultShowErrors,
     }>
     children
   </Provider>

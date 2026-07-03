@@ -1,7 +1,7 @@
 @react.component
 let make = (~setConfirmButtonData) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, _, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
@@ -14,6 +14,10 @@ let make = (~setConfirmButtonData) => {
     getRequiredFieldsForButton,
     country,
     setInitialValueCountry,
+    vaultSubmitRef,
+    vaultFormValid,
+    setVaultShowErrors,
+    eligibilityStatus,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let {
@@ -192,8 +196,47 @@ let make = (~setConfirmButtonData) => {
     )->ignore
   }
 
+  let isVaultCard =
+    SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize && payment_method === CARD
+  let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
+
+  React.useEffect2(() => {
+    if isVaultCard {
+      setIsFormValid(vaultFormValid)
+    }
+    None
+  }, (isVaultCard, vaultFormValid))
+
   let handlePress = _ => {
-    if isFormValid || missingRequiredFields->Array.length === 0 {
+    if isVaultCard {
+      if isEligibilityBlocked {
+        ()
+      } else if !vaultFormValid {
+        setVaultShowErrors(true)
+        notifyValidationFailure()
+      } else {
+        switch vaultSubmitRef->Option.flatMap(r => r.current) {
+        | Some(submit) =>
+          setLoading(ProcessingPayments)
+          submit()
+          ->Promise.thenResolve((res: DynamicFieldsContext.vaultSubmitResult) => {
+            switch (res.status, PaymentUtils.buildVaultPmd(res.data)) {
+            | ("success", Some(vaultPmd)) =>
+              processRequest(
+                CommonUtils.mergeDict(CommonUtils.mergeDict(initialValues, formData), vaultPmd),
+                Some(walletDict),
+                formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+              )
+            | _ =>
+              setLoading(FillingDetails)
+              notifyValidationFailure()
+            }
+          })
+          ->ignore
+        | None => notifyValidationFailure()
+        }
+      }
+    } else if isFormValid || missingRequiredFields->Array.length === 0 {
       processRequest(
         CommonUtils.mergeDict(initialValues, formData),
         Some(walletDict),

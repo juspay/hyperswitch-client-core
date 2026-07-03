@@ -1,7 +1,7 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
@@ -11,6 +11,10 @@ let make = () => {
   let localeObject = GetLocale.useGetLocalObj()
 
   let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
+  let shouldShowSavedPaymentMethods = PaymentUtils.shouldShowSavedPaymentMethods(
+    ~sdkConfigData,
+    ~sessionTokenData,
+  )
 
   let (isSavedPaymentScreen, setIsSavedPaymentScreen) = React.useState(_ => displayInSeparateScreen)
   let setIsSavedPaymentScreen = React.useCallback1(isSaved => {
@@ -60,7 +64,9 @@ let make = () => {
     | ButtonSheet =>
       switch (
         nativeProp.sdkState,
-        !nativeProp.configuration.displaySavedPaymentMethods || !displayInSeparateScreen,
+        !nativeProp.configuration.displaySavedPaymentMethods ||
+        !displayInSeparateScreen ||
+        !shouldShowSavedPaymentMethods,
       ) {
       | (PaymentSheet, true)
       | (WidgetPaymentSheet, true)
@@ -89,6 +95,7 @@ let make = () => {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
             customerPaymentMethods->Array.length > 0 &&
+              shouldShowSavedPaymentMethods &&
               accountPaymentMethodData
               ->Option.map(data => data.payment_type)
               ->Option.getOr(NORMAL) !== SETUP_MANDATE

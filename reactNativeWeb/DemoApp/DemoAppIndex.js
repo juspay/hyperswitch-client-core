@@ -4,6 +4,7 @@ let defaultProps = {
     publishableKey: '',
     profileId: '',
     environment: 'sandbox',
+    // customEndpoints: {commonEndpoint: ""}
   },
   paymentSessionConfig: {
     sdkAuthorization: '',

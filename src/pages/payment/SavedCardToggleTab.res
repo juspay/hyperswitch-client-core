@@ -6,10 +6,16 @@ let make = (
   ~savedCardMethods: CustomerPaymentMethodType.customer_payment_methods,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (accountPaymentMethodData, _, sessionTokenData, sdkConfigData) = React.useContext(
+    AllApiDataContextNew.allApiDataContext,
+  )
   let localeObject = GetLocale.useGetLocalObj()
+  let shouldShowSavedPaymentMethods = PaymentUtils.shouldShowSavedPaymentMethods(
+    ~sdkConfigData,
+    ~sessionTokenData,
+  )
 
-  let hasSavedCards = savedCardMethods->Array.length > 0
+  let hasSavedCards = shouldShowSavedPaymentMethods && savedCardMethods->Array.length > 0
 
   let (showSavedView, setShowSavedView) = React.useState(_ => hasSavedCards)
   let setShowSavedView = React.useCallback1(value => {

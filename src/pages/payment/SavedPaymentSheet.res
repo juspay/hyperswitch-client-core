@@ -15,12 +15,22 @@ let make = (
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
-  let (accountPaymentMethodData, customerPaymentMethodData, sessionTokenData, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
-  let {getRequiredFieldsForButton, nickname} = React.useContext(
-    DynamicFieldsContext.dynamicFieldsContext,
-  )
+  let (
+    accountPaymentMethodData,
+    customerPaymentMethodData,
+    sessionTokenData,
+    sdkConfigData,
+  ) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let {
+    getRequiredFieldsForButton,
+    nickname,
+    vaultSubmitRef,
+    vaultFormValid,
+    setVaultShowErrors,
+  } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let isVaultCvc =
+    SdkConfigTypes.getVaultingAction(sdkConfigData) == Tokenize &&
+      sessionTokenData->Option.flatMap(d => d.vaultDetails)->Option.isSome
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
@@ -74,7 +84,11 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
-  let processRequestSaved = (token: CustomerPaymentMethodType.customer_payment_method_type) => {
+  let processRequestSaved = (
+    token: CustomerPaymentMethodType.customer_payment_method_type,
+    ~vaultCvcToken=?,
+    (),
+  ) => {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -117,6 +131,7 @@ let make = (
         ~billing=token.billing,
         ~screen_height=viewPortContants.screenHeight,
         ~screen_width=viewPortContants.screenWidth,
+        ~vaultCvcToken?,
       )
     }
 
@@ -418,6 +433,12 @@ let make = (
     ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
     ->Option.getOr(NORMAL) !== NORMAL
 
+  let requiresSavedCardCvcConsent = switch selectedToken {
+  | Some(token) if token.payment_method === CARD && token.requires_cvv =>
+    isVaultCvc ? vaultFormValid : savedCardCvv->Option.isSome
+  | _ => false
+  }
+
   let onAbort = () => {
     setLoading(FillingDetails)
   }
@@ -425,34 +446,58 @@ let make = (
   let handlePress = _ => {
     switch (
       selectedToken,
-      !showDisclaimer ||
-      (showDisclaimer && (isSaveCardCheckboxSelected || savedCardCvv->Option.isNone)),
+      !showDisclaimer || isSaveCardCheckboxSelected || !requiresSavedCardCvcConsent,
     ) {
     | (Some(token), true) =>
       switch token.payment_method {
       | CARD =>
-        token.requires_cvv &&
-        (savedCardCvv->Option.isNone ||
-          !Validation.cvcNumberInRange(
-            savedCardCvv->Option.getOr(""),
-            token.card
-            ->Option.map(card => card.card_network)
-            ->Option.getOr(""),
-          ))
-          ? {
-              if savedCardCvv->Option.isNone {
-                setSavedCardCvv(_ => Some(""))
-              }
-              setLoading(FillingDetails)
-              notifyValidationFailure()
+        if isVaultCvc && token.requires_cvv {
+          if !vaultFormValid {
+            setVaultShowErrors(true)
+            setLoading(FillingDetails)
+            notifyValidationFailure()
+          } else {
+            switch vaultSubmitRef->Option.flatMap(r => r.current) {
+            | Some(submit) =>
+              setLoading(ProcessingPayments)
+              submit()
+              ->Promise.thenResolve((res: DynamicFieldsContext.vaultSubmitResult) => {
+                switch (res.status, PaymentUtils.buildVaultCvc(res.data)) {
+                | ("success", Some(vgsCvc)) =>
+                  processRequestSaved(token, ~vaultCvcToken=vgsCvc, ())
+                | _ =>
+                  setLoading(FillingDetails)
+                  notifyValidationFailure()
+                }
+              })
+              ->ignore
+            | None => notifyValidationFailure()
             }
-          : processRequestSaved(token)
+          }
+        } else if (
+          token.requires_cvv &&
+          (savedCardCvv->Option.isNone ||
+            !Validation.cvcNumberInRange(
+              savedCardCvv->Option.getOr(""),
+              token.card
+              ->Option.map(card => card.card_network)
+              ->Option.getOr(""),
+            ))
+        ) {
+          if savedCardCvv->Option.isNone {
+            setSavedCardCvv(_ => Some(""))
+          }
+          setLoading(FillingDetails)
+          notifyValidationFailure()
+        } else {
+          processRequestSaved(token, ())
+        }
       | WALLET =>
         switch token.payment_method_type_wallet {
         | APPLE_PAY =>
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
-            sessionData
+            sessionData.sessionTokens
             ->Array.find(item => item.wallet_name == APPLE_PAY)
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
@@ -528,7 +573,7 @@ let make = (
         | GOOGLE_PAY =>
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
-            sessionData
+            sessionData.sessionTokens
             ->Array.find(item => item.wallet_name == GOOGLE_PAY)
             ->Option.getOr(SessionsType.defaultToken)
           | _ => SessionsType.defaultToken
@@ -551,17 +596,17 @@ let make = (
           }
           handleWalletConfirmCallback("google_pay", doLaunchGPay, onAbort)->ignore
         | PAYPAL =>
-          handleWalletConfirmCallback("paypal", () => processRequestSaved(token), onAbort)->ignore
+          handleWalletConfirmCallback("paypal", () => processRequestSaved(token, ()), onAbort)->ignore
         | SAMSUNG_PAY =>
           handleWalletConfirmCallback(
             "samsung_pay",
-            () => processRequestSaved(token),
+            () => processRequestSaved(token, ()),
             onAbort,
           )->ignore
         | _ =>
-          handleWalletConfirmCallback("wallet", () => processRequestSaved(token), onAbort)->ignore
+          handleWalletConfirmCallback("wallet", () => processRequestSaved(token, ()), onAbort)->ignore
         }
-      | _ => processRequestSaved(token)
+      | _ => processRequestSaved(token, ())
       }
     | _ =>
       setLoading(FillingDetails)
@@ -660,6 +705,8 @@ let make = (
     errorText,
     isSaveCardCheckboxSelected,
     isScreenFocus,
+    requiresSavedCardCvcConsent,
+    vaultFormValid,
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
@@ -700,7 +747,7 @@ let make = (
         ?maxVisibleItems
       />
     </View>
-    {showDisclaimer && savedCardCvv->Option.isSome
+    {showDisclaimer && requiresSavedCardCvcConsent
       ? <View style={s({paddingHorizontal: 2.->dp})}>
           // <Space />
           <ClickableTextElement

@@ -1,0 +1,51 @@
+diff --git a/node_modules/@vgs/collect-react-native/lib/commonjs/collector/VGSCollect.js b/node_modules/@vgs/collect-react-native/lib/commonjs/collector/VGSCollect.js
+index 1d493fe..0dce3eb 100644
+--- a/node_modules/@vgs/collect-react-native/lib/commonjs/collector/VGSCollect.js
++++ b/node_modules/@vgs/collect-react-native/lib/commonjs/collector/VGSCollect.js
+@@ -503,7 +503,11 @@ class VGSCollect {
+     const parsedUrl = this.parseURL(resultUrl);
+     if (parsedUrl) {
+       // Return a canonical URL so reserved chars are encoded, not stripped.
+-      return parsedUrl.toString();
++      let canonical = parsedUrl.toString();
++      if (!resultUrl.endsWith('/') && canonical.endsWith('/')) {
++        canonical = canonical.slice(0, -1);
++      }
++      return canonical;
+     } else {
+       throw new _errors.VGSError(_errors.VGSErrorCode.InvalidConfigurationURL, 'Invalid URL', {
+         URL: resultUrl
+diff --git a/node_modules/@vgs/collect-react-native/lib/module/collector/VGSCollect.js b/node_modules/@vgs/collect-react-native/lib/module/collector/VGSCollect.js
+index 5247de7..4d937d0 100644
+--- a/node_modules/@vgs/collect-react-native/lib/module/collector/VGSCollect.js
++++ b/node_modules/@vgs/collect-react-native/lib/module/collector/VGSCollect.js
+@@ -497,7 +497,11 @@ class VGSCollect {
+     const parsedUrl = this.parseURL(resultUrl);
+     if (parsedUrl) {
+       // Return a canonical URL so reserved chars are encoded, not stripped.
+-      return parsedUrl.toString();
++      let canonical = parsedUrl.toString();
++      if (!resultUrl.endsWith('/') && canonical.endsWith('/')) {
++        canonical = canonical.slice(0, -1);
++      }
++      return canonical;
+     } else {
+       throw new VGSError(VGSErrorCode.InvalidConfigurationURL, 'Invalid URL', {
+         URL: resultUrl
+diff --git a/node_modules/@vgs/collect-react-native/src/collector/VGSCollect.ts b/node_modules/@vgs/collect-react-native/src/collector/VGSCollect.ts
+index 5849c2e..3df0fa4 100644
+--- a/node_modules/@vgs/collect-react-native/src/collector/VGSCollect.ts
++++ b/node_modules/@vgs/collect-react-native/src/collector/VGSCollect.ts
+@@ -598,7 +598,11 @@ class VGSCollect {
+ 
+     if (parsedUrl) {
+       // Return a canonical URL so reserved chars are encoded, not stripped.
+-      return parsedUrl.toString();
++      let canonical = parsedUrl.toString();
++      if (!resultUrl.endsWith('/') && canonical.endsWith('/')) {
++        canonical = canonical.slice(0, -1);
++      }
++      return canonical;
+     } else {
+       throw new VGSError(VGSErrorCode.InvalidConfigurationURL, 'Invalid URL', {
+         URL: resultUrl,

@@ -120,7 +120,7 @@ let make = () => {
         } else if sessionTokenData != JSON.Null {
           switch sessionTokenData->SessionsType.jsonToSessionTokenType {
           | Some(sessions) => setSessionTokenData(_ => Some(sessions))
-          | None => setSessionTokenData(_ => Some([]))
+          | None => setSessionTokenData(_ => Some({sessionTokens: [], vaultDetails: None}))
           }
         }
         Promise.resolve()
