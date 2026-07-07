@@ -202,20 +202,10 @@ let make = (~children) => {
     | _ => ()
     }
 
-    let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+    let (_requiredFields, _missingRequiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       buildIntentData(requiredFieldsFromPML),
-    )
-
-    let fieldsToRender = _requiredFields->Array.filter(field =>
-      switch field.renderWhenPrefilled {
-      | Some(true) => true
-      | _ =>
-        missingRequiredFields->Array.some(missingField =>
-          missingField.confirmRequestWritePath === field.confirmRequestWritePath
-        )
-      }
     )
 
     fieldsToRender->Array.forEach(field => {
@@ -380,20 +370,10 @@ let make = (~children) => {
       organization_id: ?organization_id,
     }
 
-    let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+    let (_requiredFields, missingRequiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       buildIntentData(requiredFieldsFromSource),
-    )
-
-    let fieldsToRender = _requiredFields->Array.filter(field =>
-      switch field.renderWhenPrefilled {
-      | Some(true) => true
-      | _ =>
-        missingRequiredFields->Array.some(missingField =>
-          missingField.confirmRequestWritePath === field.confirmRequestWritePath
-        )
-      }
     )
 
     let isFieldsMissing = missingRequiredFields->Array.length > 0
