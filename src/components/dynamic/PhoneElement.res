@@ -12,7 +12,11 @@ module SinglePhoneInput = {
     let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
     let {input, meta} = ReactFinalForm.useField(
       config.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.Phone)},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(config, ~fallback=Validation.Phone),
+        ),
+      },
     )
     <View style={s({marginBottom: gap->dp})}>
       <CustomInput
@@ -62,12 +66,20 @@ let make = (
   | (Some(phoneCodeConfig), Some(phoneNumberConfig)) =>
     let {input: phoneCodeInput, meta: phoneCodeMeta} = ReactFinalForm.useField(
       phoneCodeConfig.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.Required(None))},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(phoneCodeConfig, ~fallback=Validation.Required(None)),
+        ),
+      },
     )
 
     let {input: phoneNumberInput, meta: phoneNumberMeta} = ReactFinalForm.useField(
       phoneNumberConfig.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.Phone)},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(phoneNumberConfig, ~fallback=Validation.Phone),
+        ),
+      },
     )
 
     React.useEffect1(() => {

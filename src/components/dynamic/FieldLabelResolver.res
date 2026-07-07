@@ -10,3 +10,13 @@ let resolvePlaceholder = (
     | None => field.defaultLabelText
     }
   }
+
+let resolveLabel = (field: SuperpositionTypes.fieldConfig, getLocalized: string => option<string>) =>
+  switch field.merchantProvidedDisplayName {
+  | Some(text) if text !== "" => text
+  | _ =>
+    switch field.labelLocalizationKey {
+    | Some(key) => getLocalized(key)->Option.getOr(field.defaultLabelText)
+    | None => field.defaultLabelText
+    }
+  }

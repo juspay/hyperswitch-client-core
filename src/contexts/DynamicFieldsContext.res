@@ -208,7 +208,17 @@ let make = (~children) => {
       buildIntentData(requiredFieldsFromPML),
     )
 
-    missingRequiredFields->Array.forEach(field => {
+    let fieldsToRender = _requiredFields->Array.filter(field =>
+      switch field.renderWhenPrefilled {
+      | Some(true) => true
+      | _ =>
+        missingRequiredFields->Array.some(missingField =>
+          missingField.confirmRequestWritePath === field.confirmRequestWritePath
+        )
+      }
+    )
+
+    fieldsToRender->Array.forEach(field => {
       let isCountryDropdown = field.fieldRenderType === Country
       if isCountryDropdown {
         let currentCountry =
@@ -230,7 +240,7 @@ let make = (~children) => {
     })
 
     (
-      missingRequiredFields,
+      fieldsToRender,
       CommonUtils.mergeDict(
         switch formDataRef {
         | Some(ref) => CommonUtils.mergeDict(initialValues, ref.current)
@@ -376,11 +386,21 @@ let make = (~children) => {
       buildIntentData(requiredFieldsFromSource),
     )
 
+    let fieldsToRender = _requiredFields->Array.filter(field =>
+      switch field.renderWhenPrefilled {
+      | Some(true) => true
+      | _ =>
+        missingRequiredFields->Array.some(missingField =>
+          missingField.confirmRequestWritePath === field.confirmRequestWritePath
+        )
+      }
+    )
+
     let isFieldsMissing = missingRequiredFields->Array.length > 0
 
     if isFieldsMissing {
       setWalletData(
-        ~missingRequiredFields,
+        ~missingRequiredFields=fieldsToRender,
         ~initialValues=switch formData {
         | Some(data) =>
           Utils.pruneUnusedFieldsFromDict(

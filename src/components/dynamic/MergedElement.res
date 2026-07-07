@@ -22,7 +22,11 @@ let make = (
   let fieldData = emailFields->Array.map(fieldConfig => {
     let {input, meta} = ReactFinalForm.useField(
       fieldConfig.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.Email)},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(fieldConfig, ~fallback=Validation.Email),
+        ),
+      },
     )
     (input, meta)
   })
