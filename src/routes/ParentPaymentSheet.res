@@ -8,7 +8,7 @@ let make = () => {
     AllApiDataContextNew.allApiDataContext,
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+  let (viewPortConstants, _) = React.useContext(ViewportContext.viewPortContext)
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
 
   let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
@@ -154,11 +154,11 @@ let make = () => {
       }
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
-     <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
+    <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
       <View
         style={s({
           paddingTop: (sheetContentPadding /. 2.)->dp,
-          paddingBottom: viewPortContants.bottomInset->dp,
+          paddingBottom: viewPortConstants.bottomInset->dp,
         })}>
         <GlobalConfirmButton confirmButtonData />
       </View>
