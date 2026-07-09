@@ -167,6 +167,11 @@ let make = (~children) => {
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
       payment_method_type: paymentMethodData.payment_method_type,
+      platform: switch WebKit.platform {
+      | #ios | #iosWebView => "ios"
+      | #android | #androidWebView => "android"
+      | #web | #next => "web"
+      },
       mandate_type: accountPaymentMethodData
       ->Option.map(data => data.payment_type === NORMAL ? "non_mandate" : "mandate")
       ->Option.getOr("non_mandate"),
@@ -338,6 +343,11 @@ let make = (~children) => {
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
       payment_method_type: paymentMethodData.payment_method_type,
+      platform: switch WebKit.platform {
+      | #ios | #iosWebView => "ios"
+      | #android | #androidWebView => "android"
+      | #web | #next => "web"
+      },
       mandate_type: accountPaymentMethodData
       ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
       ->Option.getOr(NORMAL) === NORMAL
