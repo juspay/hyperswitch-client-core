@@ -202,7 +202,7 @@ let make = (~children) => {
     | _ => ()
     }
 
-    let (_requiredFields, _missingRequiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
+    let (_requiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       buildIntentData(requiredFieldsFromPML),
@@ -370,13 +370,13 @@ let make = (~children) => {
       organization_id: ?organization_id,
     }
 
-    let (_requiredFields, missingRequiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
+    let (_requiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       buildIntentData(requiredFieldsFromSource),
     )
 
-    let isFieldsMissing = missingRequiredFields->Array.length > 0
+    let isFieldsMissing = fieldsToRender->Array.length > 0
 
     if isFieldsMissing {
       setWalletData(
