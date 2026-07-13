@@ -119,6 +119,13 @@ let make = (~children) => {
     AllApiDataContextNew.allApiDataContext,
   )
   let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
+  let profile = superpositionConfig.account_config->Option.flatMap(ac => ac.profile)
+  let collectBillingDetailsFromWalletConnector = SdkConfigParser.getCollectBillingDetailsFromWalletConnector(
+    profile,
+  )
+  let collectShippingDetailsFromWalletConnector = SdkConfigParser.getCollectShippingDetailsFromWalletConnector(
+    profile,
+  )
   let getSuperpositionFinalFields = ConfigurationService.useConfigurationService(
     ~rawConfigs=superpositionConfig.raw_configs,
   )
@@ -174,8 +181,8 @@ let make = (~children) => {
       mandate_type: accountPaymentMethodData
       ->Option.map(data => data.payment_type === NORMAL ? "non_mandate" : "mandate")
       ->Option.getOr("non_mandate"),
-      collect_billing_details_from_wallet_connector: "required",
-      collect_shipping_details_from_wallet_connector: "required",
+      always_collect_billing_details_from_wallet_connector: collectBillingDetailsFromWalletConnector,
+      always_collect_shipping_details_from_wallet_connector: collectShippingDetailsFromWalletConnector,
       country: switch country {
       | Some(val) => val
       | None => defaultCountry
@@ -351,8 +358,8 @@ let make = (~children) => {
       ->Option.getOr(NORMAL) === NORMAL
         ? "non_mandate"
         : "mandate",
-      collect_billing_details_from_wallet_connector: "required",
-      collect_shipping_details_from_wallet_connector: "required",
+      always_collect_billing_details_from_wallet_connector: collectBillingDetailsFromWalletConnector,
+      always_collect_shipping_details_from_wallet_connector: collectShippingDetailsFromWalletConnector,
       country: switch country {
       | Some(val) => val
       | None => defaultCountry
