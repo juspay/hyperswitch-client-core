@@ -7,7 +7,7 @@ open LoggerTypes
 let make = () => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
-  let (clientList, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
@@ -48,7 +48,7 @@ let make = () => {
 
   let firstPaymentMethod = {
     let pmList =
-      clientList->Option.map(data => data.customer_payment_methods)
+      clientData->Option.map(data => data.customer_payment_methods)
     let platform = ReactNative.Platform.os
 
     pmList

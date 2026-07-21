@@ -2,14 +2,14 @@ type methodType = TAB | ELEMENT | WIDGET
 
 @react.component
 let make = (
-  ~paymentMethodData: ClientListType.paymentMethodEnabled,
+  ~paymentMethodData: ClientResponseType.paymentMethodEnabled,
   ~isScreenFocus: bool=false,
   ~setConfirmButtonData=_ => (),
   ~sessionObject: SessionsType.sessions=SessionsType.defaultToken,
   ~methodType=TAB,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientList, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
@@ -27,7 +27,7 @@ let make = (
     | None => setEligibilityStatus(_ => Allowed)
     | Some(cardNumber) =>
       let shouldCheck =
-        clientList
+        clientData
         ->Option.flatMap(d => d.sdk_next_action.next_action)
         ->Option.mapOr(false, action => action == "eligibility_check")
 
@@ -103,7 +103,7 @@ let make = (
       }
     }
 
-    let getExperienceSuffix = (experiences: array<ClientListType.paymentExperience>) => {
+    let getExperienceSuffix = (experiences: array<ClientResponseType.paymentExperience>) => {
       let hasSDKFlow =
         experiences->Array.some(exp => exp.payment_experience_type_decode == INVOKE_SDK_CLIENT)
 
@@ -194,20 +194,20 @@ let make = (
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
-      ~payment_type=clientList
+      ~payment_type=clientData
       ->Option.map(data => data.intent_data.payment_type)
       ->Option.getOr(NORMAL),
-      ~payment_type_str=?clientList
+      ~payment_type_str=?clientData
       ->Option.map(data => data.intent_data.payment_type_str)
       ->Option.getOr(None),
       ~appURL=?{
-        clientList->Option.map(data => data.intent_data.return_url)
+        clientData->Option.map(data => data.intent_data.return_url)
       },
       ~isSaveCardCheckboxVisible={
         paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=clientList
+      ~isGuestCustomer=clientData
       ->Option.map(data => data.intent_data.is_guest_customer)
       ->Option.getOr(true),
       ~isNicknameSelected,

@@ -61,13 +61,13 @@ let useRetrieveHook = () => {
   }
 }
 
-let useFetchClientList = () => {
+let useFetchClientData = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   () => {
     switch WebKit.platform {
-    | #next => Promise.resolve(Next.clientListRes)
+    | #next => Promise.resolve(Next.clientResponse)
     | _ =>
       let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
       | Some(auth) =>
@@ -155,16 +155,16 @@ let useSdkConfigHook = () => {
 
 let usePostSessionTokensHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientList, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   (
-    ~paymentMethodData: ClientListType.paymentMethodEnabled,
+    ~paymentMethodData: ClientResponseType.paymentMethodEnabled,
     ~sessionObject: SessionsType.sessions,
     (),
   ) => {
     let payment_type_str =
-      clientList
+      clientData
       ->Option.map(a => a.intent_data.payment_type_str)
       ->Option.getOr(None)
 
@@ -195,7 +195,7 @@ let usePostSessionTokensHook = () => {
 
 let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
-  let (clientList, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
   let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()
@@ -214,7 +214,7 @@ let useBrowserHook = () => {
       openUrl,
       Utils.getReturnUrl(
         ~appId=nativeProp.sdkParams.appId,
-        ~appURL=clientList->Option.map(combined => combined.intent_data.return_url),
+        ~appURL=clientData->Option.map(data => data.intent_data.return_url),
       ),
       intervalId,
       ~useEphemeralWebSession,
@@ -263,7 +263,7 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<array<ClientListType.paymentExperience>>=?,
+    ~paymentExperience: option<array<ClientResponseType.paymentExperience>>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     ~isCardPayment=false,
     (),

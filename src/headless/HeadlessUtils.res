@@ -188,7 +188,7 @@ let getBaseUrl = nativeProp => {
   )
 }
 
-let fetchClientList = nativeProp => {
+let fetchClientData = nativeProp => {
   let paymentId = nativeProp.paymentSessionConfig.paymentId
   let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
   | Some(auth) =>
@@ -415,7 +415,7 @@ let getBrowserInfo = (nativeProp: SdkTypes.nativeProp) => {
 
 let generateWalletConfirmBody = (
   ~nativeProp,
-  ~data: ClientListType.customerPaymentMethod,
+  ~data: ClientResponseType.customerPaymentMethod,
   ~payment_method_data,
   ~payment_type_str=?,
 ) => {

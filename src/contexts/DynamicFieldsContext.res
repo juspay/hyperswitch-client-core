@@ -4,7 +4,7 @@ type walletDataRecord = {
   walletDict: Dict.t<JSON.t>,
   isCardPayment: bool,
   enabledCardSchemes: array<string>,
-  paymentMethodData: ClientListType.paymentMethodEnabled,
+  paymentMethodData: ClientResponseType.paymentMethodEnabled,
   billingAddress: option<SdkTypes.addressDetails>,
   shippingAddress: option<SdkTypes.addressDetails>,
   useIntentData: bool,
@@ -19,7 +19,7 @@ type dynamicFieldsData = {
   sheetType: sheetType,
   setSheetType: sheetType => unit,
   getRequiredFieldsForTabs: (
-    ClientListType.paymentMethodEnabled,
+    ClientResponseType.paymentMethodEnabled,
     Dict.t<JSON.t>,
     bool,
   ) => (
@@ -31,7 +31,7 @@ type dynamicFieldsData = {
     string,
   ),
   getRequiredFieldsForButton: (
-    ClientListType.paymentMethodEnabled,
+    ClientResponseType.paymentMethodEnabled,
     RescriptCore.Dict.t<Core__JSON.t>,
     option<SdkTypes.addressDetails>,
     option<SdkTypes.addressDetails>,
@@ -113,7 +113,7 @@ let buildIntentData = (flatByWritePath: Dict.t<string>): JSON.t => {
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientList, _, sdkConfigData) = React.useContext(
+  let (clientData, _, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
@@ -151,7 +151,7 @@ let make = (~children) => {
   }, [setInitialValueCountry])
 
   let getRequiredFieldsForTabs = (
-    paymentMethodData: ClientListType.paymentMethodEnabled,
+    paymentMethodData: ClientResponseType.paymentMethodEnabled,
     formData,
     isScreenFocus,
   ) => {
@@ -162,13 +162,13 @@ let make = (~children) => {
         paymentMethodData.payment_method_type,
       )->Array.map(JSON.Encode.string)
 
-    let intentPrefillValues = switch clientList->Option.flatMap(data =>
+    let intentPrefillValues = switch clientData->Option.flatMap(data =>
       data.intent_data.billing
     ) {
     | Some(billingAddress) =>
       AddressUtils.getFlatAddressDict(
         ~billingAddress,
-        ~shippingAddress=clientList->Option.flatMap(data => data.intent_data.shipping),
+        ~shippingAddress=clientData->Option.flatMap(data => data.intent_data.shipping),
       )
     | None => Dict.make()
     }
@@ -183,7 +183,7 @@ let make = (~children) => {
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
       payment_method_type: paymentMethodData.payment_method_type,
-      mandate_type: clientList
+      mandate_type: clientData
       ->Option.map(data => data.intent_data.payment_type === NORMAL ? "non_mandate" : "mandate")
       ->Option.getOr("non_mandate"),
       always_collect_billing_details_from_wallet_connector: collectBillingDetailsFromWalletConnector,
@@ -297,7 +297,7 @@ let make = (~children) => {
   )
 
   let getRequiredFieldsForButton = (
-    paymentMethodData: ClientListType.paymentMethodEnabled,
+    paymentMethodData: ClientResponseType.paymentMethodEnabled,
     walletDict,
     billingAddress,
     shippingAddress,
@@ -330,13 +330,13 @@ let make = (~children) => {
       }
       requiredFieldsFromWallet
     } else {
-      let intentPrefillValues = switch clientList->Option.flatMap(data =>
+      let intentPrefillValues = switch clientData->Option.flatMap(data =>
         data.intent_data.billing
       ) {
       | Some(billingAddress) =>
         AddressUtils.getFlatAddressDict(
           ~billingAddress,
-          ~shippingAddress=clientList->Option.flatMap(data => data.intent_data.shipping),
+          ~shippingAddress=clientData->Option.flatMap(data => data.intent_data.shipping),
         )
       | None => Dict.make()
       }
@@ -361,8 +361,8 @@ let make = (~children) => {
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
       payment_method_type: paymentMethodData.payment_method_type,
-      mandate_type: clientList
-      ->Option.map(combined => combined.intent_data.payment_type)
+      mandate_type: clientData
+      ->Option.map(data => data.intent_data.payment_type)
       ->Option.getOr(NORMAL) === NORMAL
         ? "non_mandate"
         : "mandate",

@@ -14,7 +14,7 @@ let make = (
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientList, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {
@@ -55,8 +55,8 @@ let make = (
       {switch (
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
         nativeProp.configuration.alwaysSendCustomerAcceptance,
-        clientList->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
-        clientList
+        clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
+        clientData
         ->Option.map(data => data.intent_data.payment_type)
         ->Option.getOr(NORMAL),
       ) {
@@ -77,10 +77,10 @@ let make = (
       | _ => React.null
       }}
       {switch (
-        clientList->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
+        clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
         isNicknameSelected,
         nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-        clientList
+        clientData
         ->Option.map(data => data.intent_data.payment_type)
         ->Option.getOr(NORMAL),
       ) {

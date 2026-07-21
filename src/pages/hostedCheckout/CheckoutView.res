@@ -49,12 +49,12 @@ module Divider = {
 module CheckoutDetails = {
   @react.component
   let make = (
-    ~accountPaymentMethodData: option<ClientListType.clientList>,
+    ~clientData: option<ClientResponseType.clientResponse>,
     ~textSecondary,
   ) => {
     <>
       <Space height={40.} />
-      {switch accountPaymentMethodData {
+      {switch clientData {
       | Some(data) =>
         <LineItem
           label={`${data.intent_data.merchant_name->String.toUpperCase} Subscription`}
@@ -98,7 +98,7 @@ module CheckoutDetails = {
 
 @react.component
 let make = (~isDesktop) => {
-  let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let {textSecondary} = ThemebasedStyle.useThemeBasedStyle()
 
   let (showDetails, setShowDetails) = React.useState(() => false)
@@ -133,7 +133,7 @@ let make = (~isDesktop) => {
           }),
           shadowStyle,
         ])}>
-        {switch accountPaymentMethodData {
+        {switch clientData {
         | Some(data) =>
           <View
             style={s({
@@ -172,7 +172,7 @@ let make = (~isDesktop) => {
           </View>
         | None => React.null
         }}
-        <CheckoutDetails accountPaymentMethodData textSecondary />
+        <CheckoutDetails clientData textSecondary />
         <Space />
       </View>
     </FloatingBanner>
@@ -183,7 +183,7 @@ let make = (~isDesktop) => {
         paddingHorizontal: 20.->dp,
       })}>
       <Space height={isDesktop ? 40. : 20.} />
-      {switch accountPaymentMethodData {
+      {switch clientData {
       | Some(data) =>
         <View
           style={s({
@@ -224,7 +224,7 @@ let make = (~isDesktop) => {
       }}
       <View style=?{isDesktop ? None : Some(s({alignItems: #center}))}>
         <Space height={40.} />
-        {switch accountPaymentMethodData {
+        {switch clientData {
         | Some(data) =>
           <TextWrapper
             text={`Subscribe to ${data.intent_data.merchant_name} Subscription`}
@@ -254,7 +254,7 @@ let make = (~isDesktop) => {
           </View>
         </View>
       </View>
-      {isDesktop ? <CheckoutDetails accountPaymentMethodData textSecondary /> : React.null}
+      {isDesktop ? <CheckoutDetails clientData textSecondary /> : React.null}
     </View>
   </>
 }

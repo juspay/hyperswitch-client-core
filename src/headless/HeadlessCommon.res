@@ -402,7 +402,7 @@ let confirmGPay = (
   headlessModule,
   reRegisterCallback,
   var,
-  data: ClientListType.customerPaymentMethod,
+  data: ClientResponseType.customerPaymentMethod,
   nativeProp,
 ) => {
   let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -453,7 +453,7 @@ let confirmApplePay = (
   headlessModule,
   reRegisterCallback,
   var,
-  data: ClientListType.customerPaymentMethod,
+  data: ClientResponseType.customerPaymentMethod,
   nativeProp,
 ) => {
   switch var
@@ -536,7 +536,7 @@ let processRequest = async (
   headlessModule,
   reRegisterCallback,
   nativeProp,
-  data: ClientListType.customerPaymentMethod,
+  data: ClientResponseType.customerPaymentMethod,
   response,
   sessions: option<array<SessionsType.sessions>>,
   ~getCvc: JSON.t => JSON.t,
@@ -671,7 +671,7 @@ let getPaymentSession = (
   headlessModule,
   reRegisterCallback,
   nativeProp,
-  spmData: ClientListType.customerPaymentMethods,
+  spmData: ClientResponseType.customerPaymentMethods,
   sessions: option<array<SessionsType.sessions>>,
   ~getCvc: JSON.t => JSON.t,
 ) => {
@@ -684,8 +684,8 @@ let getPaymentSession = (
     }
 
     let lastUsedSpmData = switch spmData->Array.reduce(None, (
-      a: option<ClientListType.customerPaymentMethod>,
-      b: ClientListType.customerPaymentMethod,
+      a: option<ClientResponseType.customerPaymentMethod>,
+      b: ClientResponseType.customerPaymentMethod,
     ) => {
       let lastUsedAtA = switch a {
       | Some(a) => Some(a.last_used_at)
@@ -759,11 +759,11 @@ let apiHandler = async (
   nativeProp,
   ~getCvc: JSON.t => JSON.t,
 ) => {
-  let customerSavedPMData = await fetchClientList(nativeProp)
-  switch customerSavedPMData {
-  | Some(obj) =>
+  let clientResponse = await fetchClientData(nativeProp)
+  switch clientResponse {
+  | Some(response) =>
     let spmData =
-      obj->ClientListType.jsonToCustomerPaymentMethods(
+      response->ClientResponseType.jsonToCustomerPaymentMethods(
         nativeProp.configuration.paymentMethodOrder,
         nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
       )
@@ -855,7 +855,7 @@ let apiHandler = async (
     }
 
   | None =>
-    customerSavedPMData
+    clientResponse
     ->getErrorFromResponse
     ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }

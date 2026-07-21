@@ -86,7 +86,7 @@ type intentData = {
   shipping: option<SdkTypes.addressDetails>,
 }
 
-type clientList = {
+type clientResponse = {
   payment_methods_enabled: array<paymentMethodEnabled>,
   customer_payment_methods: customerPaymentMethods,
   sdk_next_action: sdkNextAction,
@@ -354,12 +354,12 @@ let jsonToCustomerPaymentMethods = (
   ->filterCustomerPaymentMethods(hiddenPaymentMethods)
 }
 
-let jsonToClientList = (
+let parseClientResponse = (
   res: JSON.t,
   sdkConfig: SdkConfigTypes.sdkConfigValue,
   paymentMethodOrder: array<string>,
   hiddenPaymentMethods: array<string>,
-): clientList => {
+): clientResponse => {
   let dict = res->getDictFromJson
   let intentDataDict = dict->getOptionalObj("intent_data")->Option.getOr(Dict.make())
 

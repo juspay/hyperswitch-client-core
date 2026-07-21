@@ -1,7 +1,7 @@
 @react.component
 let make = (~setConfirmButtonData) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientList, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
@@ -155,19 +155,19 @@ let make = (~setConfirmButtonData) => {
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
-      ~payment_type=clientList
+      ~payment_type=clientData
       ->Option.map(data => data.intent_data.payment_type)
       ->Option.getOr(NORMAL),
-      ~payment_type_str=?clientList
+      ~payment_type_str=?clientData
       ->Option.map(data => data.intent_data.payment_type_str)
       ->Option.getOr(None),
       ~appURL=?{
-        clientList->Option.map(data => data.intent_data.return_url)
+        clientData->Option.map(data => data.intent_data.return_url)
       },
       ~isSaveCardCheckboxVisible={
         payment_method === CARD && nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=clientList
+      ~isGuestCustomer=clientData
       ->Option.map(data => data.intent_data.is_guest_customer)
       ->Option.getOr(true),
       ~isNicknameSelected,

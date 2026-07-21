@@ -4,7 +4,7 @@ open PaymentEvents
 
 @react.component
 let make = (
-  ~customerPaymentMethods: ClientListType.customerPaymentMethods,
+  ~customerPaymentMethods: ClientResponseType.customerPaymentMethods,
   ~setConfirmButtonData,
   ~merchantName,
   ~isScreenFocus=true,
@@ -15,7 +15,7 @@ let make = (
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
-  let (clientList, sessionTokenData, _) = React.useContext(
+  let (clientData, sessionTokenData, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {getRequiredFieldsForButton, nickname} = React.useContext(
@@ -74,7 +74,7 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
-  let processRequestSaved = (token: ClientListType.customerPaymentMethod) => {
+  let processRequestSaved = (token: ClientResponseType.customerPaymentMethod) => {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -101,7 +101,7 @@ let make = (
         ~nativeProp,
         ~payment_token=token.payment_token,
         ~payment_method_type=token.payment_method_type,
-        ~payment_type_str=clientList
+        ~payment_type_str=clientData
         ->Option.map(data => data.intent_data.payment_type_str)
         ->Option.getOr(None),
       )
@@ -111,7 +111,7 @@ let make = (
         ~payment_method=token.payment_method_str,
         ~payment_token=token.payment_token,
         ~savedCardCvv,
-        ~payment_type_str=clientList
+        ~payment_type_str=clientData
         ->Option.map(data => data.intent_data.payment_type_str)
         ->Option.getOr(None),
         ~billing=token.billing,
@@ -132,7 +132,7 @@ let make = (
   }
 
   let processRequest = (
-    paymentMethodData: ClientListType.paymentMethodEnabled,
+    paymentMethodData: ClientResponseType.paymentMethodEnabled,
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
@@ -211,20 +211,20 @@ let make = (
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
-      ~payment_type=clientList
+      ~payment_type=clientData
       ->Option.map(data => data.intent_data.payment_type)
       ->Option.getOr(NORMAL),
-      ~payment_type_str=?clientList
+      ~payment_type_str=?clientData
       ->Option.map(data => data.intent_data.payment_type_str)
       ->Option.getOr(None),
       ~appURL=?{
-        clientList->Option.map(data => data.intent_data.return_url)
+        clientData->Option.map(data => data.intent_data.return_url)
       },
       ~isSaveCardCheckboxVisible={
         paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=clientList
+      ~isGuestCustomer=clientData
       ->Option.map(data => data.intent_data.is_guest_customer)
       ->Option.getOr(true),
       ~isNicknameSelected=false,
@@ -317,10 +317,10 @@ let make = (
   // }, (country, paymentMethodData))
 
   let confirmGPay = var => {
-    switch clientList {
-    | Some(combined) =>
+    switch clientData {
+    | Some(data) =>
       let paymentMethodData =
-        combined.payment_methods_enabled->Array.find(payment_method_type =>
+        data.payment_methods_enabled->Array.find(payment_method_type =>
           payment_method_type.payment_method_type_wallet === GOOGLE_PAY
         )
       switch paymentMethodData {
@@ -348,10 +348,10 @@ let make = (
   }
 
   let confirmApplePay = (var: dict<JSON.t>) => {
-    switch clientList {
-    | Some(combined) =>
+    switch clientData {
+    | Some(data) =>
       let paymentMethodData =
-        combined.payment_methods_enabled->Array.find(payment_method_type =>
+        data.payment_methods_enabled->Array.find(payment_method_type =>
           payment_method_type.payment_method_type_wallet === APPLE_PAY
         )
 
@@ -412,7 +412,7 @@ let make = (
   // NOTE: To introduce a new component that shows Terms and conditions.
   // Terms list that proceeding with payment using card/ saved card/ wallet would save the payment method details
   let showDisclaimer =
-    clientList
+    clientData
     ->Option.map(data => data.intent_data.payment_type)
     ->Option.getOr(NORMAL) !== NORMAL
 
@@ -649,7 +649,7 @@ let make = (
 
     None
   }, (
-    clientList,
+    clientData,
     customerPaymentMethods,
     sessionTokenData,
     setConfirmButtonData,

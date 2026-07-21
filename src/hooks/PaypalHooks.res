@@ -23,7 +23,7 @@ let usePaypalLaunch = () => {
 
   (
     ~sessionObject: SessionsType.sessions,
-    ~paymentMethodData: ClientListType.paymentMethodEnabled,
+    ~paymentMethodData: ClientResponseType.paymentMethodEnabled,
     ~confirmCallback: Dict.t<JSON.t> => unit,
   ) => {
     let needsPostSessionTokens = switch sessionObject.sdk_next_action {

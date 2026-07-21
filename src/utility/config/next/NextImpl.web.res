@@ -1,4 +1,4 @@
-let clistRes = `
+let clientResponse = `
 {"customer_payment_methods":[],"is_guest_customer":true}
 `->JSON.parseExn
 

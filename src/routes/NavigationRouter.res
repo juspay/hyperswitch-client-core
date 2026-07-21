@@ -11,7 +11,7 @@ let make = () => {
 
   let sessionToken = AllPaymentHooks.useSessionTokenHook()
   let sdkConfig = AllPaymentHooks.useSdkConfigHook()
-  let clientPaymentMethods = AllPaymentHooks.useFetchClientList()
+  let fetchClientData = AllPaymentHooks.useFetchClientData()
 
   let (clientResponse, setClientResponse) = React.useState(_ => None)
   let (sessionTokenData, setSessionTokenData) = React.useState(_ => None)
@@ -97,7 +97,7 @@ let make = () => {
       })
       ->ignore
 
-      clientPaymentMethods()
+      fetchClientData()
       ->Promise.then(clientResp => {
         handleClientResponse(clientResp)
         Promise.resolve()
@@ -107,17 +107,17 @@ let make = () => {
     None
   }, [nativeProp])
 
-  // Parse the /client response + sdk_config into the response-shaped clientList
+  // Parse the /client response + sdk_config into the response-shaped clientData
   // the UI consumes. Derive only once BOTH are present — sdk_config supplies each
   // method's payment_experience (and, at the consumer, the collect flags), and a
   // config failure is terminal (handler above closes the sheet), so this never
   // deadlocks and never renders config-dependent methods with empty experience.
-  let clientListData = React.useMemo3(() => {
+  let clientData = React.useMemo3(() => {
     switch (clientResponse, sdkConfigData) {
     | (Some(clientResp), Some(cfg)) =>
       let order = nativeProp.configuration.paymentMethodOrder
       let hidden = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
-      Some(ClientListType.jsonToClientList(clientResp, cfg, order, hidden))
+      Some(ClientResponseType.parseClientResponse(clientResp, cfg, order, hidden))
     | _ => None
     }
   }, (clientResponse, sdkConfigData, nativeProp))
@@ -126,7 +126,7 @@ let make = () => {
 
   UpdateIntentHook.useUpdateIntentListener(~setClientResponse, ~setSessionTokenData)
 
-  <AllApiDataContextNew clientListData sessionTokenData sdkConfigData>
+  <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
     <DynamicFieldsContext>

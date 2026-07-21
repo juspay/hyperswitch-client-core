@@ -1,12 +1,12 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientList, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
+  let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.usePaymentMethodModifier()
 
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -27,7 +27,7 @@ let make = () => {
   UseWidgetActions.useWidgetActions(~confirmButtonData)
 
   React.useEffect1(() => {
-    let hasNoSavedMethods = switch clientList {
+    let hasNoSavedMethods = switch clientData {
     | Some(data) => data.customer_payment_methods->Array.length === 0
     | None => false
     }
@@ -35,15 +35,15 @@ let make = () => {
       setIsSavedPaymentScreen(false)
     }
     None
-  }, [clientList])
+  }, [clientData])
 
   let isLoading = React.useMemo2(() => {
     if nativeProp.configuration.allowsDelayedPaymentMethods {
-      !(clientList->Option.isSome)
+      !(clientData->Option.isSome)
     } else {
       confirmButtonData.loading
     }
-  }, (clientList, confirmButtonData))
+  }, (clientData, confirmButtonData))
 
   <FullScreenSheetWrapper
     isSavedPaymentScreen
@@ -68,7 +68,7 @@ let make = () => {
         <PaymentSheet
           setConfirmButtonData
           isLoading={confirmButtonData.loading &&
-          clientList->Option.isNone}
+          clientData->Option.isNone}
           tabArr
           elementArr
           giftCardArr
@@ -78,13 +78,13 @@ let make = () => {
       | (HostedCheckout, false)
       | (WidgetTabSheet, false)
       | (TabSheet, false) =>
-        switch clientList->Option.map(data =>
+        switch clientData->Option.map(data =>
           data.customer_payment_methods
         ) {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
             customerPaymentMethods->Array.length > 0 &&
-              clientList
+              clientData
               ->Option.map(data => data.intent_data.payment_type)
               ->Option.getOr(NORMAL) !== SETUP_MANDATE
           <>
@@ -92,7 +92,7 @@ let make = () => {
               ? <SavedPaymentSheet
                   customerPaymentMethods
                   setConfirmButtonData
-                  merchantName={clientList
+                  merchantName={clientData
                   ->Option.map(data => data.intent_data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                   maxVisibleItems=6
