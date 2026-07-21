@@ -11,7 +11,7 @@ let make = () => {
 
   let sessionToken = AllPaymentHooks.useSessionTokenHook()
   let sdkConfig = AllPaymentHooks.useSdkConfigHook()
-  let clientPaymentMethods = AllPaymentHooks.useGetClientPaymentMethods()
+  let clientPaymentMethods = AllPaymentHooks.useFetchClientList()
 
   let (clientResponse, setClientResponse) = React.useState(_ => None)
   let (sessionTokenData, setSessionTokenData) = React.useState(_ => None)
@@ -43,9 +43,9 @@ let make = () => {
         } else if clientResp == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          let pmEnabled =
+          let paymentMethodEnabled =
             clientResp->Utils.getDictFromJson->Utils.getArray("payment_methods_enabled")
-          if pmEnabled->Array.length === 0 {
+          if paymentMethodEnabled->Array.length === 0 {
             errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
           } else {
             setClientResponse(_ => Some(clientResp))
@@ -107,17 +107,17 @@ let make = () => {
     None
   }, [nativeProp])
 
-  // Parse the /client response + sdk_config into the response-shaped combinedPML
+  // Parse the /client response + sdk_config into the response-shaped clientList
   // the UI consumes. Derive only once BOTH are present — sdk_config supplies each
   // method's payment_experience (and, at the consumer, the collect flags), and a
   // config failure is terminal (handler above closes the sheet), so this never
   // deadlocks and never renders config-dependent methods with empty experience.
-  let combinedPMLData = React.useMemo3(() => {
+  let clientListData = React.useMemo3(() => {
     switch (clientResponse, sdkConfigData) {
     | (Some(clientResp), Some(cfg)) =>
       let order = nativeProp.configuration.paymentMethodOrder
       let hidden = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
-      Some(CombinedPMLType.jsonToCombinedPML(clientResp, cfg, order, hidden))
+      Some(ClientListType.jsonToClientList(clientResp, cfg, order, hidden))
     | _ => None
     }
   }, (clientResponse, sdkConfigData, nativeProp))
@@ -126,7 +126,7 @@ let make = () => {
 
   UpdateIntentHook.useUpdateIntentListener(~setClientResponse, ~setSessionTokenData)
 
-  <AllApiDataContextNew combinedPMLData sessionTokenData sdkConfigData>
+  <AllApiDataContextNew clientListData sessionTokenData sdkConfigData>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
     <DynamicFieldsContext>

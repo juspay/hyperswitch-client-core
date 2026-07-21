@@ -2,11 +2,11 @@
 let make = (
   ~isScreenFocus,
   ~setConfirmButtonData,
-  ~paymentMethodData: CombinedPMLType.pmEnabled,
-  ~savedCardMethods: CombinedPMLType.customer_payment_methods,
+  ~paymentMethodData: ClientListType.paymentMethodEnabled,
+  ~savedCardMethods: ClientListType.customerPaymentMethods,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (combinedPML, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientList, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
   let hasSavedCards = savedCardMethods->Array.length > 0
@@ -17,7 +17,7 @@ let make = (
   }, [setShowSavedView])
 
   let merchantName =
-    combinedPML
+    clientList
     ->Option.map(data => data.intent_data.merchant_name)
     ->Option.getOr(nativeProp.configuration.merchantDisplayName)
 

@@ -4,7 +4,7 @@ open PaymentEvents
 
 @react.component
 let make = (
-  ~paymentMethodData: CombinedPMLType.pmEnabled,
+  ~paymentMethodData: ClientListType.paymentMethodEnabled,
   ~sessionObject,
   ~processRequest,
 ) => {

@@ -165,7 +165,7 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
                 ~uri=clientUri,
                 ~method=#GET,
                 ~headers,
-                ~eventName=LoggerTypes.COMBINE_PML_CALL,
+                ~eventName=LoggerTypes.CLIENT_LIST_CALL,
                 ~apiLogWrapper,
               ),
               // Session tokens

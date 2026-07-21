@@ -49,7 +49,7 @@ module Divider = {
 module CheckoutDetails = {
   @react.component
   let make = (
-    ~accountPaymentMethodData: option<CombinedPMLType.combinedPML>,
+    ~accountPaymentMethodData: option<ClientListType.clientList>,
     ~textSecondary,
   ) => {
     <>

@@ -188,7 +188,7 @@ let getBaseUrl = nativeProp => {
   )
 }
 
-let clientAPICall = nativeProp => {
+let fetchClientList = nativeProp => {
   let paymentId = nativeProp.paymentSessionConfig.paymentId
   let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
   | Some(auth) =>
@@ -204,7 +204,7 @@ let clientAPICall = nativeProp => {
     handleApiCall(
       ~uri,
       ~nativeProp,
-      ~eventName=COMBINE_PML_CALL,
+      ~eventName=CLIENT_LIST_CALL,
       ~method=#GET,
       ~headers=Utils.getHeader(
         ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
@@ -415,7 +415,7 @@ let getBrowserInfo = (nativeProp: SdkTypes.nativeProp) => {
 
 let generateWalletConfirmBody = (
   ~nativeProp,
-  ~data: CombinedPMLType.customerPM,
+  ~data: ClientListType.customerPaymentMethod,
   ~payment_method_data,
   ~payment_type_str=?,
 ) => {

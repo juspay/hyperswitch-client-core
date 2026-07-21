@@ -57,7 +57,7 @@ let handleApiCall = async (
     ~apiLogType: LoggerTypes.apiLogType,
     ~data: Core__JSON.t,
     ~paymentMethod: string=?,
-    ~paymentExperience: array<CombinedPMLType.paymentExperience>=?,
+    ~paymentExperience: array<ClientListType.paymentExperience>=?,
     unit,
   ) => unit,
   ~processSuccess: Core__JSON.t => 'a,

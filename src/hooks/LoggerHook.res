@@ -16,7 +16,7 @@ let useCalculateLatency = () => {
       }
     | "RETRIEVE_CALL"
     | "CONFIRM_CALL"
-    | "COMBINE_PML_CALL"
+    | "CLIENT_LIST_CALL"
     | "SESSIONS_CALL" => {
         let logRequestTimestamp = events->Dict.get(eventName ++ "_INIT")
         switch (logRequestTimestamp, isRequest) {
@@ -148,7 +148,7 @@ let useLoggerHook = () => {
       firstEvent,
       paymentMethod: paymentMethod->Option.getOr(""),
       paymentExperience: ?switch paymentExperience {
-      | Some(payment_experience: array<CombinedPMLType.paymentExperience>) =>
+      | Some(payment_experience: array<ClientListType.paymentExperience>) =>
         payment_experience
         ->Array.get(0)
         ->Option.map(paymentExperience => paymentExperience.payment_experience_type)

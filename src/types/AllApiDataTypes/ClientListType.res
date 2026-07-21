@@ -13,7 +13,7 @@ type paymentExperience = {
   eligible_connectors: eligible_connectors,
 }
 
-type pmEnabled = {
+type paymentMethodEnabled = {
   payment_method: PaymentMethodType.paymentMethod,
   payment_method_str: string,
   payment_method_type: string,
@@ -39,7 +39,7 @@ type savedCardType = {
   saved_to_locker: bool,
 }
 
-type customerPM = {
+type customerPaymentMethod = {
   payment_token: string,
   payment_method_id: string,
   customer_id: string,
@@ -64,7 +64,7 @@ type customerPM = {
   mandate_id?: string,
 }
 
-type customer_payment_methods = array<customerPM>
+type customerPaymentMethods = array<customerPaymentMethod>
 
 type sdkNextAction = {
   next_action: option<string>,
@@ -86,9 +86,9 @@ type intentData = {
   shipping: option<SdkTypes.addressDetails>,
 }
 
-type combinedPML = {
-  payment_methods_enabled: array<pmEnabled>,
-  customer_payment_methods: customer_payment_methods,
+type clientList = {
+  payment_methods_enabled: array<paymentMethodEnabled>,
+  customer_payment_methods: customerPaymentMethods,
   sdk_next_action: sdkNextAction,
   intent_data: intentData,
 }
@@ -107,13 +107,13 @@ let createKey = (paymentMethodStr: string, paymentMethodType: string) => {
   `${paymentMethodStr}:${normalizedType}`
 }
 
-let mergePaymentMethods = (existing: pmEnabled, new: pmEnabled): pmEnabled => {
+let mergePaymentMethods = (existing: paymentMethodEnabled, new: paymentMethodEnabled): paymentMethodEnabled => {
   ...existing,
   card_networks: existing.card_networks->Array.concat(new.card_networks),
   payment_experience: existing.payment_experience->Array.concat(new.payment_experience),
 }
 
-let sortPaymentMethodsEnabled = (plist: array<pmEnabled>, paymentMethodOrder) => {
+let sortPaymentMethodsEnabled = (plist: array<paymentMethodEnabled>, paymentMethodOrder) => {
   plist->Array.sort((s1, s2) => {
     let priorityArr =
       paymentMethodOrder->Array.length === 0 ? Types.priorityArr : paymentMethodOrder
@@ -149,7 +149,7 @@ let parsePaymentExperienceArray = (experienceArray: array<JSON.t>) => {
   })
 }
 
-let sortCustomerPaymentMethods = (plist: customer_payment_methods, paymentMethodOrder) => {
+let sortCustomerPaymentMethods = (plist: customerPaymentMethods, paymentMethodOrder) => {
   let priorityArr = paymentMethodOrder->Array.length === 0 ? Types.priorityArr : paymentMethodOrder
 
   plist->Array.sort((s1, s2) => {
@@ -169,7 +169,7 @@ let sortCustomerPaymentMethods = (plist: customer_payment_methods, paymentMethod
   plist
 }
 
-let filterCustomerPaymentMethods = (plist: customer_payment_methods, hiddenPaymentMethods) => {
+let filterCustomerPaymentMethods = (plist: customerPaymentMethods, hiddenPaymentMethods) => {
   plist
   ->Array.filter(v =>
     switch (WebKit.platform, v.payment_method_type_wallet) {
@@ -208,9 +208,9 @@ let parseIntentAddress = (container: Dict.t<JSON.t>): SdkTypes.addressDetails =>
 
 // ---- parsers ----
 
-// One flat `payment_methods_enabled` entry → a decoded pmEnabled.
+// One flat `payment_methods_enabled` entry → a decoded paymentMethodEnabled.
 // `payment_experience` is filled from sdk_config later (attachPaymentExperience).
-let parsePmEnabled = (itemDict: Js.Dict.t<JSON.t>): pmEnabled => {
+let parsePaymentMethodEnabled = (itemDict: Js.Dict.t<JSON.t>): paymentMethodEnabled => {
   let paymentMethodStr = itemDict->getString("payment_method", "")
   let paymentMethodTypeStr = itemDict->getString("payment_method_type", "")
 
@@ -235,7 +235,7 @@ let parsePmEnabled = (itemDict: Js.Dict.t<JSON.t>): pmEnabled => {
 // Collapse duplicates (card debit + credit) using createKey + mergePaymentMethods.
 let processFlatPaymentMethods = (jsonArray: array<JSON.t>) => {
   let resultDict = jsonArray->Array.reduce(Dict.make(), (accMap, item) => {
-    let parsed = parsePmEnabled(item->getDictFromJson)
+    let parsed = parsePaymentMethodEnabled(item->getDictFromJson)
     let normalizedParsed = {
       ...parsed,
       payment_method_type: normalizeCardType(parsed.payment_method_str, parsed.payment_method_type),
@@ -251,7 +251,7 @@ let processFlatPaymentMethods = (jsonArray: array<JSON.t>) => {
 }
 
 // Enrich a method's payment_experience from sdk_config (criteria == payment_experience).
-let attachPaymentExperience = (item: pmEnabled, sdkConfig: SdkConfigTypes.sdkConfigValue): pmEnabled => {
+let attachPaymentExperience = (item: paymentMethodEnabled, sdkConfig: SdkConfigTypes.sdkConfigValue): paymentMethodEnabled => {
   ...item,
   payment_experience: SdkConfigParser.getPaymentExperienceFromPaymentMethods(
     sdkConfig.payment_methods,
@@ -264,7 +264,7 @@ let attachPaymentExperience = (item: pmEnabled, sdkConfig: SdkConfigTypes.sdkCon
   }),
 }
 
-let parseCustomerPM = (dict: Js.Dict.t<JSON.t>, ~customerId): customerPM => {
+let parseCustomerPaymentMethod = (dict: Js.Dict.t<JSON.t>, ~customerId): customerPaymentMethod => {
   let paymentMethodStr = dict->getString("payment_method", "")
   let paymentMethodTypeStr = dict->getString("payment_method_type", "")
 
@@ -339,27 +339,27 @@ let parseIntentData = (dict: Dict.t<JSON.t>): intentData => {
 
 // Customer saved-cards depend only on the /client response (no sdk_config), so
 // headless can use this directly.
-let jsonToCustomerPML = (
+let jsonToCustomerPaymentMethods = (
   res: JSON.t,
   paymentMethodOrder: array<string>,
   hiddenPaymentMethods: array<string>,
-): customer_payment_methods => {
+): customerPaymentMethods => {
   let dict = res->getDictFromJson
   let intentData = dict->getOptionalObj("intent_data")->Option.getOr(Dict.make())
 
   dict
   ->getArray("customer_payment_methods")
-  ->Array.map(item => item->getDictFromJson->parseCustomerPM(~customerId=intentData->getString("customer_id", "")))
+  ->Array.map(item => item->getDictFromJson->parseCustomerPaymentMethod(~customerId=intentData->getString("customer_id", "")))
   ->sortCustomerPaymentMethods(paymentMethodOrder)
   ->filterCustomerPaymentMethods(hiddenPaymentMethods)
 }
 
-let jsonToCombinedPML = (
+let jsonToClientList = (
   res: JSON.t,
   sdkConfig: SdkConfigTypes.sdkConfigValue,
   paymentMethodOrder: array<string>,
   hiddenPaymentMethods: array<string>,
-): combinedPML => {
+): clientList => {
   let dict = res->getDictFromJson
   let intentDataDict = dict->getOptionalObj("intent_data")->Option.getOr(Dict.make())
 
@@ -369,7 +369,7 @@ let jsonToCombinedPML = (
     ->processFlatPaymentMethods
     ->Array.map(item => item->attachPaymentExperience(sdkConfig))
     ->sortPaymentMethodsEnabled(paymentMethodOrder),
-    customer_payment_methods: jsonToCustomerPML(res, paymentMethodOrder, hiddenPaymentMethods),
+    customer_payment_methods: jsonToCustomerPaymentMethods(res, paymentMethodOrder, hiddenPaymentMethods),
     sdk_next_action: dict
     ->getOptionalObj("sdk_next_action")
     ->Option.getOr(Dict.make())

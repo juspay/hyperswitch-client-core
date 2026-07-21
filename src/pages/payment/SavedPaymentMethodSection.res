@@ -4,7 +4,7 @@ open Style
 @react.component
 let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: bool => unit) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (combinedPML, _, _) = React.useContext(
+  let (clientList, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
 
@@ -20,7 +20,7 @@ let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: 
   <UIUtils.RenderIf
     condition={nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection &&
     !nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen}>
-    {switch combinedPML {
+    {switch clientList {
     | Some(combined) =>
       <UIUtils.RenderIf
         condition={combined.customer_payment_methods->Array.length > 0}>
@@ -47,7 +47,7 @@ let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: 
             setIsScreenFocus=setIsActive
             customerPaymentMethods=combined.customer_payment_methods
             setConfirmButtonData
-            merchantName={combinedPML
+            merchantName={clientList
             ->Option.map(data => data.intent_data.merchant_name)
             ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
             animated=true

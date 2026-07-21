@@ -1,6 +1,6 @@
 @react.component
 let make = (
-  ~paymentMethodData: CombinedPMLType.pmEnabled,
+  ~paymentMethodData: ClientListType.paymentMethodEnabled,
   ~isScreenFocus,
   ~processRequest,
   ~checkEligibility: option<string> => unit,

@@ -132,7 +132,7 @@ let make = (
   ~onAllCollapsed: bool => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (combinedPML, _, _) = React.useContext(
+  let (clientList, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let layout = nativeProp.configuration.paymentMethodLayout
@@ -146,8 +146,8 @@ let make = (
 
   React.useEffect2(() => {
     let hasData =
-      combinedPML->Option.isSome ||
-        combinedPML
+      clientList->Option.isSome ||
+        clientList
         ->Option.map(c => c.customer_payment_methods->Array.length > 0)
         ->Option.getOr(false)
 
@@ -165,7 +165,7 @@ let make = (
         ...GlobalConfirmButton.defaultConfirmButtonData,
         loading: false,
         visible: !(expandIndex->Array.length === 0) ||
-        (combinedPML
+        (clientList
         ->Option.map(c => c.customer_payment_methods->Array.length > 0)
         ->Option.getOr(false) &&
           layout.savedMethodCustomization.groupingBehavior.displayInSeparateSection),
@@ -173,7 +173,7 @@ let make = (
       setExpandedSections(_ => expandIndex)
     }
     None
-  }, (combinedPML, hocComponentArr))
+  }, (clientList, hocComponentArr))
 
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
@@ -261,7 +261,7 @@ let make = (
     <UIUtils.RenderIf
       condition={allSections->Array.length > maxVisibleItems &&
       showMore &&
-      combinedPML->Option.isSome}>
+      clientList->Option.isSome}>
       <MoreButton
         handleMoreToggle={() => {
           setShowMore(_ => false)

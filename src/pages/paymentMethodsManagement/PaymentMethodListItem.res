@@ -33,7 +33,7 @@ module AddPaymentMethodButton = {
 
 module PaymentMethodTitle = {
   @react.component
-  let make = (~pmDetails: CombinedPMLType.customerPM) => {
+  let make = (~pmDetails: ClientListType.customerPaymentMethod) => {
     let nickName = switch pmDetails.card {
     | Some(obj) => obj.nick_name
     | _ => None
@@ -71,7 +71,7 @@ module PaymentMethodTitle = {
 }
 
 @react.component
-let make = (~pmDetails: CombinedPMLType.customerPM, ~handleDelete) => {
+let make = (~pmDetails: ClientListType.customerPaymentMethod, ~handleDelete) => {
   let {component} = ThemebasedStyle.useThemeBasedStyle()
   let localeObject = GetLocale.useGetLocalObj()
 

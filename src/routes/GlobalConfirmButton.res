@@ -3,7 +3,7 @@ type confirmButtonData = {
   visible?: bool,
   handlePress: unit => unit,
   payment_method_type: string,
-  payment_experience?: array<CombinedPMLType.paymentExperience>,
+  payment_experience?: array<ClientListType.paymentExperience>,
   customer_payment_experience?: array<PaymentMethodType.payment_experience_type>,
   errorText: option<string>,
 }

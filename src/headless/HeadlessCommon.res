@@ -402,7 +402,7 @@ let confirmGPay = (
   headlessModule,
   reRegisterCallback,
   var,
-  data: CombinedPMLType.customerPM,
+  data: ClientListType.customerPaymentMethod,
   nativeProp,
 ) => {
   let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -453,7 +453,7 @@ let confirmApplePay = (
   headlessModule,
   reRegisterCallback,
   var,
-  data: CombinedPMLType.customerPM,
+  data: ClientListType.customerPaymentMethod,
   nativeProp,
 ) => {
   switch var
@@ -536,7 +536,7 @@ let processRequest = async (
   headlessModule,
   reRegisterCallback,
   nativeProp,
-  data: CombinedPMLType.customerPM,
+  data: ClientListType.customerPaymentMethod,
   response,
   sessions: option<array<SessionsType.sessions>>,
   ~getCvc: JSON.t => JSON.t,
@@ -671,7 +671,7 @@ let getPaymentSession = (
   headlessModule,
   reRegisterCallback,
   nativeProp,
-  spmData: CombinedPMLType.customer_payment_methods,
+  spmData: ClientListType.customerPaymentMethods,
   sessions: option<array<SessionsType.sessions>>,
   ~getCvc: JSON.t => JSON.t,
 ) => {
@@ -684,8 +684,8 @@ let getPaymentSession = (
     }
 
     let lastUsedSpmData = switch spmData->Array.reduce(None, (
-      a: option<CombinedPMLType.customerPM>,
-      b: CombinedPMLType.customerPM,
+      a: option<ClientListType.customerPaymentMethod>,
+      b: ClientListType.customerPaymentMethod,
     ) => {
       let lastUsedAtA = switch a {
       | Some(a) => Some(a.last_used_at)
@@ -759,11 +759,11 @@ let apiHandler = async (
   nativeProp,
   ~getCvc: JSON.t => JSON.t,
 ) => {
-  let customerSavedPMData = await clientAPICall(nativeProp)
+  let customerSavedPMData = await fetchClientList(nativeProp)
   switch customerSavedPMData {
   | Some(obj) =>
     let spmData =
-      obj->CombinedPMLType.jsonToCustomerPML(
+      obj->ClientListType.jsonToCustomerPaymentMethods(
         nativeProp.configuration.paymentMethodOrder,
         nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
       )

@@ -1,7 +1,7 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (combinedPML, _, _) = React.useContext(
+  let (clientList, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
@@ -28,23 +28,23 @@ let make = () => {
 
   React.useEffect1(() => {
     if (
-      combinedPML->Option.isSome &&
-        combinedPML
+      clientList->Option.isSome &&
+        clientList
         ->Option.map(data => data.customer_payment_methods->Array.length === 0)
         ->Option.getOr(true)
     ) {
       setIsSavedPaymentScreen(false)
     }
     None
-  }, [combinedPML])
+  }, [clientList])
 
   let isLoading = React.useMemo2(() => {
     if nativeProp.configuration.allowsDelayedPaymentMethods {
-      !(combinedPML->Option.isSome)
+      !(clientList->Option.isSome)
     } else {
       confirmButtonData.loading
     }
-  }, (combinedPML, confirmButtonData))
+  }, (clientList, confirmButtonData))
 
   <FullScreenSheetWrapper
     isSavedPaymentScreen
@@ -69,7 +69,7 @@ let make = () => {
         <PaymentSheet
           setConfirmButtonData
           isLoading={confirmButtonData.loading &&
-          combinedPML->Option.isNone}
+          clientList->Option.isNone}
           tabArr
           elementArr
           giftCardArr
@@ -79,13 +79,13 @@ let make = () => {
       | (HostedCheckout, false)
       | (WidgetTabSheet, false)
       | (TabSheet, false) =>
-        switch combinedPML->Option.map(data =>
+        switch clientList->Option.map(data =>
           data.customer_payment_methods
         ) {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
             customerPaymentMethods->Array.length > 0 &&
-              combinedPML
+              clientList
               ->Option.map(data => data.intent_data.payment_type)
               ->Option.getOr(NORMAL) !== SETUP_MANDATE
           <>
@@ -93,7 +93,7 @@ let make = () => {
               ? <SavedPaymentSheet
                   customerPaymentMethods
                   setConfirmButtonData
-                  merchantName={combinedPML
+                  merchantName={clientList
                   ->Option.map(data => data.intent_data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                   maxVisibleItems=6
@@ -109,7 +109,7 @@ let make = () => {
             <Space height=5. />
             {showSavedScreen ||
             (nativeProp.configuration.allowsDelayedPaymentMethods &&
-            combinedPML->Option.isSome)
+            clientList->Option.isSome)
               ? <>
                   <Space height=5. />
                   <ClickableTextElement
@@ -129,7 +129,7 @@ let make = () => {
           </>
         | None =>
           nativeProp.configuration.allowsDelayedPaymentMethods &&
-          combinedPML->Option.isSome
+          clientList->Option.isSome
             ? {
                 <PaymentSheet
                   setConfirmButtonData

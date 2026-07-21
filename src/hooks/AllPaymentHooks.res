@@ -61,13 +61,13 @@ let useRetrieveHook = () => {
   }
 }
 
-let useGetClientPaymentMethods = () => {
+let useFetchClientList = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   () => {
     switch WebKit.platform {
-    | #next => Promise.resolve(Next.combinedRes)
+    | #next => Promise.resolve(Next.clientListRes)
     | _ =>
       let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
       | Some(auth) =>
@@ -86,7 +86,7 @@ let useGetClientPaymentMethods = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.COMBINE_PML_CALL,
+        ~eventName=LoggerTypes.CLIENT_LIST_CALL,
         ~apiLogWrapper,
       )
     }
@@ -155,16 +155,16 @@ let useSdkConfigHook = () => {
 
 let usePostSessionTokensHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (combinedPML, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientList, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   (
-    ~paymentMethodData: CombinedPMLType.pmEnabled,
+    ~paymentMethodData: ClientListType.paymentMethodEnabled,
     ~sessionObject: SessionsType.sessions,
     (),
   ) => {
     let payment_type_str =
-      combinedPML
+      clientList
       ->Option.map(a => a.intent_data.payment_type_str)
       ->Option.getOr(None)
 
@@ -195,7 +195,7 @@ let usePostSessionTokensHook = () => {
 
 let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
-  let (combinedPML, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientList, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
   let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()
@@ -214,7 +214,7 @@ let useBrowserHook = () => {
       openUrl,
       Utils.getReturnUrl(
         ~appId=nativeProp.sdkParams.appId,
-        ~appURL=combinedPML->Option.map(combined => combined.intent_data.return_url),
+        ~appURL=clientList->Option.map(combined => combined.intent_data.return_url),
       ),
       intervalId,
       ~useEphemeralWebSession,
@@ -263,7 +263,7 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<array<CombinedPMLType.paymentExperience>>=?,
+    ~paymentExperience: option<array<ClientListType.paymentExperience>>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     ~isCardPayment=false,
     (),
