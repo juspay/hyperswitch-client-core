@@ -10,10 +10,19 @@ type headlessModule = {
   exitHeadless: (int, string) => unit,
 }
 
+@module("react-native") @scope("TurboModuleRegistry")
+external getNativeModule: string => Nullable.t<{..}> = "get"
+
 let makeHeadlessModule = (): headlessModule => {
   let hyperSwitchHeadlessDict =
-    Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
-    ->Option.flatMap(JSON.Decode.object)
+    getNativeModule("HyperHeadless")
+    ->Nullable.toOption
+    ->Option.flatMap(m => (Obj.magic(m): JSON.t)->JSON.Decode.object)
+    ->Option.orElse(
+      Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")->Option.flatMap(
+        JSON.Decode.object,
+      ),
+    )
     ->Option.getOr(Dict.make())
 
   let getFn = (key, default) => {

@@ -1,9 +1,17 @@
 open ReactNative
 
+@module("react-native") @scope("TurboModuleRegistry")
+external getNativeModule: string => Nullable.t<{..}> = "get"
+
+let getHyperModule = () => {
+  getNativeModule("HyperModule")
+  ->Nullable.toOption
+  ->Option.map(m => (Obj.magic(m): JSON.t))
+  ->Option.orElse(Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"))
+}
+
 let setupNativeEventListener = (eventName, handler) => {
-  let nativeEventEmitter = NativeEventEmitter.make(
-    Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
-  )
+  let nativeEventEmitter = NativeEventEmitter.make(getHyperModule())
 
   let eventSubscription = NativeEventEmitter.addListener(nativeEventEmitter, eventName, handler)
 

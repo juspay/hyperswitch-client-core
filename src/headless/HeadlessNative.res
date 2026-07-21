@@ -18,6 +18,9 @@ let dummy = () => {
   React.null
 }
 
+@module("react-native") @scope("TurboModuleRegistry")
+external getNativeModule: string => Nullable.t<{..}> = "get"
+
 let initialise = headless => {
   AppRegistry.registerComponent("dummy", _ => dummy)
   AppRegistry.registerHeadlessTask("dummy", () => {
@@ -27,8 +30,12 @@ let initialise = headless => {
   })
 
   let hyperSwitchHeadlessDict =
-    Dict.get(ReactNative.NativeModules.nativeModules, headless)
-    ->Option.flatMap(JSON.Decode.object)
+    getNativeModule(headless)
+    ->Nullable.toOption
+    ->Option.flatMap(m => (Obj.magic(m): JSON.t)->JSON.Decode.object)
+    ->Option.orElse(
+      Dict.get(ReactNative.NativeModules.nativeModules, headless)->Option.flatMap(JSON.Decode.object),
+    )
     ->Option.getOr(Dict.make())
 
   {

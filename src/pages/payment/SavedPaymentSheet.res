@@ -332,13 +332,16 @@ let make = (
           processWalletData(paymentMethodData, walletData, ~billingAddress?, ~shippingAddress?)
         | Cancelled | Simulated =>
           setLoading(FillingDetails)
+          notifyValidationFailure(~message=Some("Payment was Cancelled"))
           showAlert(~errorType="warning", ~message="Payment was Cancelled")
         | Failed(error_message) =>
           setLoading(FillingDetails)
+          notifyValidationFailure(~message=Some(error_message))
           showAlert(~errorType="error", ~message=error_message)
         }
       | None =>
         setLoading(FillingDetails)
+        notifyValidationFailure(~message=Some("Technical Error"))
         showAlert(~errorType="error", ~message="Technical Error")
       }
     | None =>
@@ -372,12 +375,13 @@ let make = (
         switch status {
         | Success(walletData, billingAddress, shippingAddress) =>
           processWalletData(paymentMethodData, walletData, ~billingAddress?, ~shippingAddress?)
-
         | Cancelled =>
           setLoading(FillingDetails)
+          notifyValidationFailure(~message=Some("Cancelled"))
           showAlert(~errorType="warning", ~message="Cancelled")
         | Simulated => setTimeout(() => {
             setLoading(FillingDetails)
+            notifyValidationFailure(~message=Some("Apple Pay is not supported in Simulated Environment"))
             showAlert(
               ~errorType="warning",
               ~message="Apple Pay is not supported in Simulated Environment",
@@ -385,14 +389,17 @@ let make = (
           }, 2000)->ignore
         | Failed(error_message) =>
           setLoading(FillingDetails)
+          notifyValidationFailure(~message=Some(error_message))
           showAlert(~errorType="error", ~message=error_message)
         }
       | None =>
         setLoading(FillingDetails)
+        notifyValidationFailure(~message=Some("Technical Error"))
         showAlert(~errorType="error", ~message="Technical Error")
       }
     | None =>
       setLoading(FillingDetails)
+      notifyValidationFailure(~message=Some("Technical Error"))
       showAlert(~errorType="error", ~message="Technical Error")
     }
   }
@@ -442,7 +449,7 @@ let make = (
                 setSavedCardCvv(_ => Some(""))
               }
               setLoading(FillingDetails)
-              notifyValidationFailure()
+              notifyValidationFailure(~message=Some("Please enter a valid CVV"))
             }
           : processRequestSaved(token)
       | WALLET =>
@@ -566,7 +573,7 @@ let make = (
       if showDisclaimer && !isSaveCardCheckboxSelected {
         setErrorText(_ => Some("Please accept the terms and conditions to continue."))
       }
-      notifyValidationFailure()
+      notifyValidationFailure(~message=Some("Please accept the terms and conditions to continue."))
     }
   }
 

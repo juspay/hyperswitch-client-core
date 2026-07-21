@@ -3,7 +3,7 @@ open SdkTypes
 let useNotifyValidationFailure = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  () => {
+  (~message = None) => {
     switch nativeProp.sdkState {
     | PaymentSheet
     | ButtonSheet
@@ -15,9 +15,18 @@ let useNotifyValidationFailure = () => {
     | CardWidget
     | ExpressCheckoutWidget
     | PaymentMethodsManagement =>
+    let updatedError = switch message {
+    | Some(msg) =>
+      {
+        ...PaymentConfirmTypes.formValidationError,
+        message: msg,
+      }
+    | None => PaymentConfirmTypes.formValidationError
+    }
       HyperModule.hyperModule.notifyWidgetPaymentResult(
         nativeProp.rootTag,
-        PaymentConfirmTypes.formValidationError->HyperModule.stringifiedResStatus,
+        updatedError
+        ->HyperModule.stringifiedResStatus,
       )
     | _ => ()
     }

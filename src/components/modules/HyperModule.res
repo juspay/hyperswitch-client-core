@@ -26,9 +26,18 @@ let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
   }
 }
 
+@module("react-native") @scope("TurboModuleRegistry")
+external getNativeModule: string => Nullable.t<{..}> = "get"
+
 let hyperModuleDict =
-  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
-  ->Option.flatMap(JSON.Decode.object)
+  getNativeModule("HyperModule")
+  ->Nullable.toOption
+  ->Option.flatMap(m => (Obj.magic(m): JSON.t)->JSON.Decode.object)
+  ->Option.orElse(
+    Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")->Option.flatMap(
+      JSON.Decode.object,
+    ),
+  )
   ->Option.getOr(Dict.make())
 
 let hyperModule = {
