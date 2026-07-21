@@ -143,14 +143,15 @@ let make = (
 
   let (expandedSections, setExpandedSections) = React.useState(_ => [])
   let (showMore, setShowMore) = React.useState(_ => true)
+  
+  let hasData = switch clientList {
+  | Some(data) =>
+    data.payment_methods_enabled->Array.length > 0 ||
+    data.customer_payment_methods->Array.length > 0
+  | None => false
+  }
 
   React.useEffect2(() => {
-    let hasData =
-      clientList->Option.isSome ||
-        clientList
-        ->Option.map(c => c.customer_payment_methods->Array.length > 0)
-        ->Option.getOr(false)
-
     if hasData && expandedSections->Array.length === 0 {
       let expandIndex = switch layout.savedMethodCustomization.defaultCollapsed
         ? None
@@ -259,9 +260,7 @@ let make = (
       spacedAccordionItems=layout.spacedAccordionItems
     />
     <UIUtils.RenderIf
-      condition={allSections->Array.length > maxVisibleItems &&
-      showMore &&
-      clientList->Option.isSome}>
+      condition={allSections->Array.length > maxVisibleItems && showMore && hasData}>
       <MoreButton
         handleMoreToggle={() => {
           setShowMore(_ => false)

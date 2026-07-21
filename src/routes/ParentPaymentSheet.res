@@ -27,12 +27,11 @@ let make = () => {
   UseWidgetActions.useWidgetActions(~confirmButtonData)
 
   React.useEffect1(() => {
-    if (
-      clientList->Option.isSome &&
-        clientList
-        ->Option.map(data => data.customer_payment_methods->Array.length === 0)
-        ->Option.getOr(true)
-    ) {
+    let hasNoSavedMethods = switch clientList {
+    | Some(data) => data.customer_payment_methods->Array.length === 0
+    | None => false
+    }
+    if hasNoSavedMethods {
       setIsSavedPaymentScreen(false)
     }
     None
@@ -107,9 +106,7 @@ let make = () => {
                   giftCardArr
                 />}
             <Space height=5. />
-            {showSavedScreen ||
-            (nativeProp.configuration.allowsDelayedPaymentMethods &&
-            clientList->Option.isSome)
+            {showSavedScreen
               ? <>
                   <Space height=5. />
                   <ClickableTextElement
@@ -127,19 +124,7 @@ let make = () => {
                 </>
               : React.null}
           </>
-        | None =>
-          nativeProp.configuration.allowsDelayedPaymentMethods &&
-          clientList->Option.isSome
-            ? {
-                <PaymentSheet
-                  setConfirmButtonData
-                  isLoading=confirmButtonData.loading
-                  tabArr
-                  elementArr
-                  giftCardArr
-                />
-              }
-            : <InitialLoader />
+        | None => <InitialLoader />
         }
       | _ => React.null
       }
