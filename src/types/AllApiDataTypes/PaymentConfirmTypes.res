@@ -93,6 +93,13 @@ let defaultConfigError = {
   message: "Unable to load the payment configuration. Please retry.",
 }
 
+let defaultNoPaymentMethodsError = {
+  type_: "",
+  status: "failed",
+  code: "no_payment_methods_found",
+  message: "No payment methods found",
+}
+
 let defaultCancelError = {
   type_: "",
   status: "cancelled",
