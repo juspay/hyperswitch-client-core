@@ -43,12 +43,16 @@ let make = () => {
         } else if clientResp == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
-          let paymentMethodEnabled =
-            clientResp->Utils.getDictFromJson->Utils.getArray("payment_methods_enabled")
-          if paymentMethodEnabled->Array.length === 0 {
-            errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
-          } else {
+          // Both lists now arrive in ONE response, so an empty payment_methods_enabled
+          // must not discard the customer's saved methods carried alongside it. Either
+          // list alone is enough to render — same rule as CustomAccordionView's hasData.
+          let dict = clientResp->Utils.getDictFromJson
+          let hasEnabledMethods = dict->Utils.getArray("payment_methods_enabled")->Array.length > 0
+          let hasSavedMethods = dict->Utils.getArray("customer_payment_methods")->Array.length > 0
+          if hasEnabledMethods || hasSavedMethods {
             setClientResponse(_ => Some(clientResp))
+          } else {
+            errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
           }
         }
       }
@@ -107,20 +111,22 @@ let make = () => {
     None
   }, [nativeProp])
 
-  // Parse the /client response + sdk_config into the response-shaped clientData
-  // the UI consumes. Derive only once BOTH are present — sdk_config supplies each
-  // method's payment_experience (and, at the consumer, the collect flags), and a
-  // config failure is terminal (handler above closes the sheet), so this never
-  // deadlocks and never renders config-dependent methods with empty experience.
-  let clientData = React.useMemo3(() => {
+  let paymentMethodOrder = nativeProp.configuration.paymentMethodOrder
+  let hiddenPaymentMethods = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
+  let clientData = React.useMemo4(() => {
     switch (clientResponse, sdkConfigData) {
     | (Some(clientResp), Some(cfg)) =>
-      let order = nativeProp.configuration.paymentMethodOrder
-      let hidden = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
-      Some(ClientResponseType.parseClientResponse(clientResp, cfg, order, hidden))
+      Some(
+        ClientResponseType.parseClientResponse(
+          clientResp,
+          cfg,
+          paymentMethodOrder,
+          hiddenPaymentMethods,
+        ),
+      )
     | _ => None
     }
-  }, (clientResponse, sdkConfigData, nativeProp))
+  }, (clientResponse, sdkConfigData, paymentMethodOrder, hiddenPaymentMethods))
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 

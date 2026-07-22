@@ -76,7 +76,14 @@ let useFetchClientData = () => {
         )
       | None => nativeProp.paymentSessionConfig.clientSecret
       }
-      let uri = `${baseUrl}/payments/${nativeProp.paymentSessionConfig.paymentId}/client?client_secret=${clientSecret}`
+      let paymentId = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+      | Some(auth) =>
+        Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
+          nativeProp.paymentSessionConfig.paymentId,
+        )
+      | None => nativeProp.paymentSessionConfig.paymentId
+      }
+      let uri = `${baseUrl}/payments/${paymentId}/client?client_secret=${clientSecret}`
       APIUtils.fetchApiWrapper(
         ~uri,
         ~method=#GET,

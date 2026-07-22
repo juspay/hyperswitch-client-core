@@ -189,7 +189,13 @@ let getBaseUrl = nativeProp => {
 }
 
 let fetchClientData = nativeProp => {
-  let paymentId = nativeProp.paymentSessionConfig.paymentId
+  let paymentId = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+  | Some(auth) =>
+    Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
+      nativeProp.paymentSessionConfig.paymentId,
+    )
+  | None => nativeProp.paymentSessionConfig.paymentId
+  }
   let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
   | Some(auth) =>
     Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
