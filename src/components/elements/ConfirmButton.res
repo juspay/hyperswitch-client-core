@@ -8,7 +8,7 @@ let make = (
   ~errorText=None,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let allApiData = AllApiDataContextNew.useOptionalData()
   let localeObject = GetLocale.useGetLocalObj()
 
   <>
@@ -20,14 +20,13 @@ let make = (
           paymentMethod
           ?paymentExperience
           ?customerPaymentExperience
-          displayText={switch nativeProp.configuration.primaryButtonLabel {
-          | Some(str) => str
-          | None =>
-            clientData
-            ->Option.map(data => data.intent_data.payment_type)
-            ->Option.getOr(NORMAL) !== NORMAL
+          displayText={switch (nativeProp.configuration.primaryButtonLabel, allApiData) {
+          | (Some(str), _) => str
+          | (None, Some({clientData})) =>
+            clientData.intent_data.payment_type !== NORMAL
               ? "Pay Now"
               : localeObject.payNowButton
+          | (None, None) => localeObject.payNowButton
           }}
         />}
     <HyperSwitchBranding />
