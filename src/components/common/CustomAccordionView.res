@@ -132,9 +132,7 @@ let make = (
   ~onAllCollapsed: bool => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let {clientData} = AllApiDataContextNew.useData()
   let layout = nativeProp.configuration.paymentMethodLayout
 
   let defaultCollapsed = layout.defaultCollapsed
@@ -143,13 +141,10 @@ let make = (
 
   let (expandedSections, setExpandedSections) = React.useState(_ => [])
   let (showMore, setShowMore) = React.useState(_ => true)
-  
-  let hasData = switch clientData {
-  | Some(data) =>
-    data.payment_methods_enabled->Array.length > 0 ||
-    data.customer_payment_methods->Array.length > 0
-  | None => false
-  }
+
+  let hasData =
+    clientData.payment_methods_enabled->Array.length > 0 ||
+    clientData.customer_payment_methods->Array.length > 0
 
   React.useEffect2(() => {
     if hasData && expandedSections->Array.length === 0 {
@@ -166,9 +161,7 @@ let make = (
         ...GlobalConfirmButton.defaultConfirmButtonData,
         loading: false,
         visible: !(expandIndex->Array.length === 0) ||
-        (clientData
-        ->Option.map(c => c.customer_payment_methods->Array.length > 0)
-        ->Option.getOr(false) &&
+        (clientData.customer_payment_methods->Array.length > 0 &&
           layout.savedMethodCustomization.groupingBehavior.displayInSeparateSection),
       })
       setExpandedSections(_ => expandIndex)

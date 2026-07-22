@@ -9,9 +9,7 @@ let make = (
   ~methodType=TAB,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let {clientData} = AllApiDataContextNew.useData()
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
@@ -27,9 +25,9 @@ let make = (
     | None => setEligibilityStatus(_ => Allowed)
     | Some(cardNumber) =>
       let shouldCheck =
-        clientData
-        ->Option.flatMap(d => d.sdk_next_action.next_action)
-        ->Option.mapOr(false, action => action == "eligibility_check")
+        clientData.sdk_next_action.next_action->Option.mapOr(false, action =>
+          action == "eligibility_check"
+        )
 
       if shouldCheck {
         setEligibilityStatus(_ => Pending)
@@ -194,22 +192,14 @@ let make = (
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
-      ~payment_type=clientData
-      ->Option.map(data => data.intent_data.payment_type)
-      ->Option.getOr(NORMAL),
-      ~payment_type_str=?clientData
-      ->Option.map(data => data.intent_data.payment_type_str)
-      ->Option.getOr(None),
-      ~appURL=?{
-        clientData->Option.map(data => data.intent_data.return_url)
-      },
+      ~payment_type=clientData.intent_data.payment_type,
+      ~payment_type_str=?clientData.intent_data.payment_type_str,
+      ~appURL=clientData.intent_data.return_url,
       ~isSaveCardCheckboxVisible={
         paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=clientData
-      ->Option.map(data => data.intent_data.is_guest_customer)
-      ->Option.getOr(true),
+      ~isGuestCustomer=clientData.intent_data.is_guest_customer,
       ~isNicknameSelected,
       ~email?,
       ~screen_height=viewPortContants.screenHeight,

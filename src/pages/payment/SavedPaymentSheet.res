@@ -15,9 +15,7 @@ let make = (
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let displayInSeparateScreen = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen
-  let (clientData, sessionTokenData, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let {clientData, sessionTokenData} = AllApiDataContextNew.useData()
   let {getRequiredFieldsForButton, nickname} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
   )
@@ -101,9 +99,7 @@ let make = (
         ~nativeProp,
         ~payment_token=token.payment_token,
         ~payment_method_type=token.payment_method_type,
-        ~payment_type_str=clientData
-        ->Option.map(data => data.intent_data.payment_type_str)
-        ->Option.getOr(None),
+        ~payment_type_str=clientData.intent_data.payment_type_str,
       )
     } else {
       PaymentUtils.generateSavedCardConfirmBody(
@@ -111,9 +107,7 @@ let make = (
         ~payment_method=token.payment_method_str,
         ~payment_token=token.payment_token,
         ~savedCardCvv,
-        ~payment_type_str=clientData
-        ->Option.map(data => data.intent_data.payment_type_str)
-        ->Option.getOr(None),
+        ~payment_type_str=clientData.intent_data.payment_type_str,
         ~billing=token.billing,
         ~screen_height=viewPortContants.screenHeight,
         ~screen_width=viewPortContants.screenWidth,
@@ -211,22 +205,14 @@ let make = (
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
-      ~payment_type=clientData
-      ->Option.map(data => data.intent_data.payment_type)
-      ->Option.getOr(NORMAL),
-      ~payment_type_str=?clientData
-      ->Option.map(data => data.intent_data.payment_type_str)
-      ->Option.getOr(None),
-      ~appURL=?{
-        clientData->Option.map(data => data.intent_data.return_url)
-      },
+      ~payment_type=clientData.intent_data.payment_type,
+      ~payment_type_str=?clientData.intent_data.payment_type_str,
+      ~appURL=clientData.intent_data.return_url,
       ~isSaveCardCheckboxVisible={
         paymentMethodData.payment_method === CARD &&
           nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=clientData
-      ->Option.map(data => data.intent_data.is_guest_customer)
-      ->Option.getOr(true),
+      ~isGuestCustomer=clientData.intent_data.is_guest_customer,
       ~isNicknameSelected=false,
       ~email?,
       ~screen_height=viewPortContants.screenHeight,
@@ -317,29 +303,23 @@ let make = (
   // }, (country, paymentMethodData))
 
   let confirmGPay = var => {
-    switch clientData {
-    | Some(data) =>
-      let paymentMethodData =
-        data.payment_methods_enabled->Array.find(payment_method_type =>
-          payment_method_type.payment_method_type_wallet === GOOGLE_PAY
-        )
-      switch paymentMethodData {
-      | Some(paymentMethodData) =>
-        let status = handleWalletPayments(GOOGLE_PAY, var)
+    let paymentMethodData =
+      clientData.payment_methods_enabled->Array.find(payment_method_type =>
+        payment_method_type.payment_method_type_wallet === GOOGLE_PAY
+      )
+    switch paymentMethodData {
+    | Some(paymentMethodData) =>
+      let status = handleWalletPayments(GOOGLE_PAY, var)
 
-        switch status {
-        | Success(walletData, billingAddress, shippingAddress) =>
-          processWalletData(paymentMethodData, walletData, ~billingAddress?, ~shippingAddress?)
-        | Cancelled | Simulated =>
-          setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Payment was Cancelled")
-        | Failed(error_message) =>
-          setLoading(FillingDetails)
-          showAlert(~errorType="error", ~message=error_message)
-        }
-      | None =>
+      switch status {
+      | Success(walletData, billingAddress, shippingAddress) =>
+        processWalletData(paymentMethodData, walletData, ~billingAddress?, ~shippingAddress?)
+      | Cancelled | Simulated =>
         setLoading(FillingDetails)
-        showAlert(~errorType="error", ~message="Technical Error")
+        showAlert(~errorType="warning", ~message="Payment was Cancelled")
+      | Failed(error_message) =>
+        setLoading(FillingDetails)
+        showAlert(~errorType="error", ~message=error_message)
       }
     | None =>
       setLoading(FillingDetails)
@@ -348,48 +328,42 @@ let make = (
   }
 
   let confirmApplePay = (var: dict<JSON.t>) => {
-    switch clientData {
-    | Some(data) =>
-      let paymentMethodData =
-        data.payment_methods_enabled->Array.find(payment_method_type =>
-          payment_method_type.payment_method_type_wallet === APPLE_PAY
-        )
+    let paymentMethodData =
+      clientData.payment_methods_enabled->Array.find(payment_method_type =>
+        payment_method_type.payment_method_type_wallet === APPLE_PAY
+      )
 
-      switch paymentMethodData {
-      | Some(paymentMethodData) =>
-        logger(
-          ~logType=DEBUG,
-          ~value=paymentMethodData.payment_method_type,
-          ~category=USER_EVENT,
-          ~paymentMethod=paymentMethodData.payment_method_type,
-          ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
-          ~paymentExperience=paymentMethodData.payment_experience,
-          (),
-        )
+    switch paymentMethodData {
+    | Some(paymentMethodData) =>
+      logger(
+        ~logType=DEBUG,
+        ~value=paymentMethodData.payment_method_type,
+        ~category=USER_EVENT,
+        ~paymentMethod=paymentMethodData.payment_method_type,
+        ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
+        ~paymentExperience=paymentMethodData.payment_experience,
+        (),
+      )
 
-        let status = handleWalletPayments(APPLE_PAY, var)
+      let status = handleWalletPayments(APPLE_PAY, var)
 
-        switch status {
-        | Success(walletData, billingAddress, shippingAddress) =>
-          processWalletData(paymentMethodData, walletData, ~billingAddress?, ~shippingAddress?)
+      switch status {
+      | Success(walletData, billingAddress, shippingAddress) =>
+        processWalletData(paymentMethodData, walletData, ~billingAddress?, ~shippingAddress?)
 
-        | Cancelled =>
-          setLoading(FillingDetails)
-          showAlert(~errorType="warning", ~message="Cancelled")
-        | Simulated => setTimeout(() => {
-            setLoading(FillingDetails)
-            showAlert(
-              ~errorType="warning",
-              ~message="Apple Pay is not supported in Simulated Environment",
-            )
-          }, 2000)->ignore
-        | Failed(error_message) =>
-          setLoading(FillingDetails)
-          showAlert(~errorType="error", ~message=error_message)
-        }
-      | None =>
+      | Cancelled =>
         setLoading(FillingDetails)
-        showAlert(~errorType="error", ~message="Technical Error")
+        showAlert(~errorType="warning", ~message="Cancelled")
+      | Simulated => setTimeout(() => {
+          setLoading(FillingDetails)
+          showAlert(
+            ~errorType="warning",
+            ~message="Apple Pay is not supported in Simulated Environment",
+          )
+        }, 2000)->ignore
+      | Failed(error_message) =>
+        setLoading(FillingDetails)
+        showAlert(~errorType="error", ~message=error_message)
       }
     | None =>
       setLoading(FillingDetails)
@@ -411,10 +385,7 @@ let make = (
 
   // NOTE: To introduce a new component that shows Terms and conditions.
   // Terms list that proceeding with payment using card/ saved card/ wallet would save the payment method details
-  let showDisclaimer =
-    clientData
-    ->Option.map(data => data.intent_data.payment_type)
-    ->Option.getOr(NORMAL) !== NORMAL
+  let showDisclaimer = clientData.intent_data.payment_type !== NORMAL
 
   let onAbort = () => {
     setLoading(FillingDetails)
