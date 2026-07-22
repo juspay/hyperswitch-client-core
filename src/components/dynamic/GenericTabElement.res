@@ -70,6 +70,7 @@ let make = (
     }
 
     let placeholder = FieldLabelResolver.resolvePlaceholder(field, getLocalized)
+    let label = FieldLabelResolver.resolveLabel(field, getLocalized)
 
     switch field.fieldRenderType {
     | Country =>
@@ -156,6 +157,7 @@ let make = (
           state={input.value->Option.getOr("")}
           setState=handleInputChange
           placeholder
+          animateLabel=label
           enableCrossIcon=false
           isValid={meta.error->Option.isNone || !meta.touched || meta.active}
           onFocus={_ => input.onFocus()}
@@ -180,7 +182,11 @@ let make = (
       <View style={s({marginBottom: gap->dp})}>
         <ReactFinalForm.Field
           name=field.confirmRequestWritePath
-          validate=Some(createFieldValidator(getValidationRuleForField(field)))>
+          validate=Some(
+            createFieldValidator(
+              FieldValidationResolver.resolveRule(field, ~fallback=getValidationRuleForField(field)),
+            ),
+          )>
           {fieldProps => renderFieldInput(field, fieldProps)}
         </ReactFinalForm.Field>
       </View>

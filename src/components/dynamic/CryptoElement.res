@@ -43,12 +43,20 @@ let make = (
   | (Some(currencyConfig), Some(networkConfig)) =>
     let {input: currencyInput, meta: currencyMeta} = ReactFinalForm.useField(
       currencyConfig.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.Required(None))},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(currencyConfig, ~fallback=Validation.Required(None)),
+        ),
+      },
     )
 
     let {input: networkInput, meta: networkMeta} = ReactFinalForm.useField(
       networkConfig.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.Required(None))},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(networkConfig, ~fallback=Validation.Required(None)),
+        ),
+      },
     )
 
     React.useEffect1(() => {

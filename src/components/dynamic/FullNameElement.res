@@ -13,11 +13,19 @@ module CombinedNameInput = {
     let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()
     let {input: firstNameInput, meta: firstNameMeta} = ReactFinalForm.useField(
       firstNameConfig.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.FirstName)},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(firstNameConfig, ~fallback=Validation.FirstName),
+        ),
+      },
     )
     let {input: lastNameInput, meta: lastNameMeta} = ReactFinalForm.useField(
       lastNameConfig.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(Validation.LastName)},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(lastNameConfig, ~fallback=Validation.LastName),
+        ),
+      },
     )
     let (inputValue, setInputValue) = React.useState(() => "")
     React.useEffect2(() => {
@@ -89,7 +97,11 @@ module SingleNameInput = {
     }
     let {input, meta} = ReactFinalForm.useField(
       config.confirmRequestWritePath,
-      ~config={validate: createFieldValidator(validationRule)},
+      ~config={
+        validate: createFieldValidator(
+          FieldValidationResolver.resolveRule(config, ~fallback=validationRule),
+        ),
+      },
     )
     <View style={s({marginBottom: gap->dp})}>
       <CustomInput

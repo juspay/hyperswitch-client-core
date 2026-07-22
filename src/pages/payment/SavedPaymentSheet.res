@@ -304,7 +304,7 @@ let make = (
   //         country,
   //       }
 
-  //       let (_requiredFields, missingRequiredFields, _) = getSuperpositionFinalFields(
+  //       let (_requiredFields, _fieldsToRender, _) = getSuperpositionFinalFields(
   //         eligibleConnectors,
   //         configParams,
   //         requiredFieldsFromSource,

@@ -202,13 +202,13 @@ let make = (~children) => {
     | _ => ()
     }
 
-    let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+    let (_requiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       buildIntentData(requiredFieldsFromPML),
     )
 
-    missingRequiredFields->Array.forEach(field => {
+    fieldsToRender->Array.forEach(field => {
       let isCountryDropdown = field.fieldRenderType === Country
       if isCountryDropdown {
         let currentCountry =
@@ -230,7 +230,7 @@ let make = (~children) => {
     })
 
     (
-      missingRequiredFields,
+      fieldsToRender,
       CommonUtils.mergeDict(
         switch formDataRef {
         | Some(ref) => CommonUtils.mergeDict(initialValues, ref.current)
@@ -370,17 +370,17 @@ let make = (~children) => {
       organization_id: ?organization_id,
     }
 
-    let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+    let (_requiredFields, fieldsToRender, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       buildIntentData(requiredFieldsFromSource),
     )
 
-    let isFieldsMissing = missingRequiredFields->Array.length > 0
+    let isFieldsMissing = fieldsToRender->Array.length > 0
 
     if isFieldsMissing {
       setWalletData(
-        ~missingRequiredFields,
+        ~missingRequiredFields=fieldsToRender,
         ~initialValues=switch formData {
         | Some(data) =>
           Utils.pruneUnusedFieldsFromDict(
