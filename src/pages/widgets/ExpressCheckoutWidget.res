@@ -7,9 +7,10 @@ open LoggerTypes
 let make = () => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let customerPaymentMethods = switch AllApiDataContextNew.useOptionalData() {
+  | Some({clientData}) => clientData.customer_payment_methods
+  | None => []
+  }
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (confirm, setConfirm) = React.useState(_ => false)
   let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
@@ -47,29 +48,22 @@ let make = () => {
   // }
 
   let firstPaymentMethod = {
-    let pmList =
-      clientData->Option.map(data => data.customer_payment_methods)
     let platform = ReactNative.Platform.os
+    let first = customerPaymentMethods->Array.get(0)
 
-    pmList
-    ->Option.map(customer_payment_method_types => {
-      let first = customer_payment_method_types->Array.get(0)
+    let shouldUseNext = switch (platform, first) {
+    | (#android, Some(customer_payment_method_type)) =>
+      customer_payment_method_type.payment_method_type_wallet == SdkTypes.APPLE_PAY
+    | (#ios, Some(customer_payment_method_type)) =>
+      customer_payment_method_type.payment_method_type_wallet == SdkTypes.GOOGLE_PAY
+    | _ => false
+    }
 
-      let shouldUseNext = switch (platform, first) {
-      | (#android, Some(customer_payment_method_type)) =>
-        customer_payment_method_type.payment_method_type_wallet == SdkTypes.APPLE_PAY
-      | (#ios, Some(customer_payment_method_type)) =>
-        customer_payment_method_type.payment_method_type_wallet == SdkTypes.GOOGLE_PAY
-      | _ => false
-      }
-
-      if shouldUseNext && customer_payment_method_types->Array.length > 1 {
-        customer_payment_method_types->Array.get(1)
-      } else {
-        first
-      }
-    })
-    ->Option.getOr(None)
+    if shouldUseNext && customerPaymentMethods->Array.length > 1 {
+      customerPaymentMethods->Array.get(1)
+    } else {
+      first
+    }
   }
 
   let cardScheme =

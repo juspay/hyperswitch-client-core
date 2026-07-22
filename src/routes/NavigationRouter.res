@@ -175,6 +175,18 @@ let make = () => {
     }
   }, (clientResponse, sdkConfigData, paymentMethodOrder, hiddenPaymentMethods))
 
+  let allApiData = React.useMemo3(() => {
+    switch (clientData, sdkConfigData) {
+    | (Some(clientData), Some(sdkConfigData)) =>
+      Some({
+        AllApiDataContextNew.clientData,
+        sdkConfigData,
+        sessionTokenData,
+      })
+    | _ => None
+    }
+  }, (clientData, sdkConfigData, sessionTokenData))
+
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
   UpdateIntentHook.useUpdateIntentListener(
@@ -184,7 +196,7 @@ let make = () => {
     ~fetchedCredentialsKey,
   )
 
-  <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
+  <AllApiDataContextNew allApiData>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
     <DynamicFieldsContext>
