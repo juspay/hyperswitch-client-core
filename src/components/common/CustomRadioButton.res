@@ -6,7 +6,7 @@ let make = (~size=18., ~selected, ~color="#006DF9") => {
     style={s({
       height: size->dp,
       width: size->dp,
-      borderRadius: size /. 2.,
+      borderRadius: size,
       borderWidth: 1.,
       borderColor: selected ? color : "lightgray",
       alignItems: #center,
@@ -16,7 +16,7 @@ let make = (~size=18., ~selected, ~color="#006DF9") => {
       style={s({
         height: (size -. 8.)->dp,
         width: (size -. 8.)->dp,
-        borderRadius: size /. 2.,
+        borderRadius: size,
         backgroundColor: selected ? color : "transparent",
       })}
     />
