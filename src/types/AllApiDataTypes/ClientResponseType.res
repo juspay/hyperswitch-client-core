@@ -1,5 +1,6 @@
 open Utils
 
+open SdkTypes
 type eligible_connectors = array<JSON.t>
 
 type cardNetwork = {
@@ -110,14 +111,25 @@ let createKey = (paymentMethodStr: string, paymentMethodType: string) => {
 
 let mergePaymentMethods = (existing: paymentMethodEnabled, new: paymentMethodEnabled): paymentMethodEnabled => {
   ...existing,
-  card_networks: existing.card_networks->Array.concat(new.card_networks),
-  payment_experience: existing.payment_experience->Array.concat(new.payment_experience),
+  card_networks: existing.card_networks->Array.concat(
+    new.card_networks->Array.filter(n =>
+      !(existing.card_networks->Array.some(e => e.card_network === n.card_network))
+    ),
+  ),
+  payment_experience: existing.payment_experience->Array.concat(
+    new.payment_experience->Array.filter(n =>
+      !(
+        existing.payment_experience->Array.some(e =>
+          e.payment_experience_type === n.payment_experience_type
+        )
+      )
+    ),
+  ),
 }
 
 let sortPaymentMethodsEnabled = (plist: array<paymentMethodEnabled>, paymentMethodOrder) => {
+  let priorityArr = paymentMethodOrder->Array.length === 0 ? Types.priorityArr : paymentMethodOrder
   plist->Array.sort((s1, s2) => {
-    let priorityArr =
-      paymentMethodOrder->Array.length === 0 ? Types.priorityArr : paymentMethodOrder
     let intResult =
       priorityArr->Array.findIndex(x => x == s2.payment_method_type) -
         priorityArr->Array.findIndex(x => x == s1.payment_method_type)
@@ -144,26 +156,26 @@ let parseSavedCard = (cardDict: Js.Dict.t<JSON.t>): savedCardType => {
 }
 
 let parsePaymentExperienceArray = (experienceArray: array<JSON.t>) => {
-  experienceArray->Array.map(item => {
-    let experienceStr = item->JSON.stringify->String.replace("\"", "")
-    PaymentMethodType.getExperienceType(experienceStr)
-  })
+  experienceArray->Array.map(item =>
+    item->JSON.Decode.string->Option.getOr("")->PaymentMethodType.getExperienceType
+  )
 }
 
 let sortCustomerPaymentMethods = (plist: customerPaymentMethods, paymentMethodOrder) => {
   let priorityArr = paymentMethodOrder->Array.length === 0 ? Types.priorityArr : paymentMethodOrder
 
+  let lastUsedTime = (pm: customerPaymentMethod) => {
+    let time = Date.fromString(pm.last_used_at)->Js.Date.valueOf
+    time->Float.isNaN ? 0. : time
+  }
+
   plist->Array.sort((s1, s2) => {
     let priority1 = priorityArr->Array.findIndex(x => x == s1.payment_method_type)
     let priority2 = priorityArr->Array.findIndex(x => x == s2.payment_method_type)
-    let normalizedPriority1 = priority1 == -1 ? -1 : priority1
-    let normalizedPriority2 = priority2 == -1 ? -1 : priority2
-    if normalizedPriority1 !== normalizedPriority2 {
-      Int.compare(normalizedPriority2, normalizedPriority1)
+    if priority1 !== priority2 {
+      Int.compare(priority2, priority1)
     } else {
-      let time1 = Date.fromString(s1.last_used_at)->Js.Date.valueOf
-      let time2 = Date.fromString(s2.last_used_at)->Js.Date.valueOf
-      Float.compare(time2, time1)->Float.toInt->Ordering.fromInt
+      Float.compare(lastUsedTime(s2), lastUsedTime(s1))->Float.toInt->Ordering.fromInt
     }
   })
 
@@ -184,11 +196,11 @@ let filterCustomerPaymentMethods = (plist: customerPaymentMethods, hiddenPayment
   ->Array.filter(v => !(hiddenPaymentMethods->Array.includes(v.payment_method_type)))
 }
 
-let parseIntentAddress = (container: Dict.t<JSON.t>): SdkTypes.addressDetails => {
+let parseIntentAddress = (container: Dict.t<JSON.t>): addressDetails => {
   address: container
   ->getOptionalObj("address")
   ->Option.map(a => {
-    SdkTypes.first_name: ?getOptionString(a, "first_name"),
+    first_name: ?getOptionString(a, "first_name"),
     last_name: ?getOptionString(a, "last_name"),
     line1: ?getOptionString(a, "line1"),
     line2: ?getOptionString(a, "line2"),
@@ -201,7 +213,7 @@ let parseIntentAddress = (container: Dict.t<JSON.t>): SdkTypes.addressDetails =>
   phone: container
   ->getOptionalObj("phone")
   ->Option.map(p => {
-    SdkTypes.number: ?getOptionString(p, "number"),
+    number: ?getOptionString(p, "number"),
     country_code: ?getOptionString(p, "country_code"),
   }),
   email: getOptionString(container, "email"),
@@ -307,7 +319,7 @@ let parseCustomerPaymentMethod = (dict: Js.Dict.t<JSON.t>, ~customerId): custome
     last_used_at: dict->getString("last_used_at", ""),
     default_payment_method_set: dict->getBool("default_payment_method_set", false),
     billing: billingData,
-    mandate_id: dict->getString("mandate_id", ""),
+    mandate_id: ?(dict->getOptionString("mandate_id")->getNonEmptyOption),
   }
 }
 
@@ -339,22 +351,32 @@ let parseIntentData = (dict: Dict.t<JSON.t>): intentData => {
   raw_intent_data: dict->JSON.Encode.object,
 }
 
-// Customer saved-cards depend only on the /client response (no sdk_config), so
-// headless can use this directly.
-let jsonToCustomerPaymentMethods = (
-  res: JSON.t,
+let parseCustomerPaymentMethodsFromDict = (
+  dict: Dict.t<JSON.t>,
   paymentMethodOrder: array<string>,
   hiddenPaymentMethods: array<string>,
 ): customerPaymentMethods => {
-  let dict = res->getDictFromJson
   let intentData = dict->getOptionalObj("intent_data")->Option.getOr(Dict.make())
 
   dict
   ->getArray("customer_payment_methods")
-  ->Array.map(item => item->getDictFromJson->parseCustomerPaymentMethod(~customerId=intentData->getString("customer_id", "")))
+  ->Array.map(item =>
+    item
+    ->getDictFromJson
+    ->parseCustomerPaymentMethod(~customerId=intentData->getString("customer_id", ""))
+  )
   ->sortCustomerPaymentMethods(paymentMethodOrder)
   ->filterCustomerPaymentMethods(hiddenPaymentMethods)
 }
+
+// Customer saved-cards depend only on the /client response (no sdk_config), so
+// headless can use this directly.
+let parseCustomerPaymentMethods = (
+  res: JSON.t,
+  paymentMethodOrder: array<string>,
+  hiddenPaymentMethods: array<string>,
+): customerPaymentMethods =>
+  res->getDictFromJson->parseCustomerPaymentMethodsFromDict(paymentMethodOrder, hiddenPaymentMethods)
 
 let parseClientResponse = (
   res: JSON.t,
@@ -371,7 +393,10 @@ let parseClientResponse = (
     ->processFlatPaymentMethods
     ->Array.map(item => item->attachPaymentExperience(sdkConfig))
     ->sortPaymentMethodsEnabled(paymentMethodOrder),
-    customer_payment_methods: jsonToCustomerPaymentMethods(res, paymentMethodOrder, hiddenPaymentMethods),
+    customer_payment_methods: dict->parseCustomerPaymentMethodsFromDict(
+      paymentMethodOrder,
+      hiddenPaymentMethods,
+    ),
     sdk_next_action: dict
     ->getOptionalObj("sdk_next_action")
     ->Option.getOr(Dict.make())
