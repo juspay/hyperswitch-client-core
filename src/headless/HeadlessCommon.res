@@ -763,7 +763,7 @@ let apiHandler = async (
   switch clientResponse {
   | Some(response) =>
     let spmData =
-      response->ClientResponseType.jsonToCustomerPaymentMethods(
+      response->ClientResponseType.parseCustomerPaymentMethods(
         nativeProp.configuration.paymentMethodOrder,
         nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
       )
