@@ -109,6 +109,27 @@ let buildIntentData = (flatByWritePath: Dict.t<string>): JSON.t => {
   byReadPath->SuperpositionHelper.convertFlatDictToNestedObject->JSON.Encode.object
 }
 
+let intentBillingCountry = (intentData: JSON.t) =>
+  CommonUtils.getStringAtPath(intentData->Utils.getDictFromJson, "billing.address.country")
+
+let withCountry = (intentData: JSON.t, country: string): JSON.t => {
+  let root = intentData->Utils.getDictFromJson->Dict.copy
+  let billing =
+    root->Dict.get("billing")->Option.mapOr(Dict.make(), Utils.getDictFromJson)->Dict.copy
+  let address =
+    billing->Dict.get("address")->Option.mapOr(Dict.make(), Utils.getDictFromJson)->Dict.copy
+  address->Dict.set("country", country->JSON.Encode.string)
+  billing->Dict.set("address", address->JSON.Encode.object)
+  root->Dict.set("billing", billing->JSON.Encode.object)
+  root->JSON.Encode.object
+}
+
+let prepareIntentData = (intentData: JSON.t, fallbackCountry: string) =>
+  switch intentData->intentBillingCountry {
+  | Some(country) if country !== "" => (intentData, country)
+  | _ => (intentData->withCountry(fallbackCountry), fallbackCountry)
+  }
+
 @react.component
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
@@ -162,23 +183,15 @@ let make = (~children) => {
         paymentMethodData.payment_method_type,
       )->Array.map(JSON.Encode.string)
 
-    let intentPrefillValues = switch clientData->Option.flatMap(data =>
-      data.intent_data.billing
-    ) {
-    | Some(billingAddress) =>
-      AddressUtils.getFlatAddressDict(
-        ~billingAddress,
-        ~shippingAddress=clientData->Option.flatMap(data => data.intent_data.shipping),
-      )
-    | None => Dict.make()
-    }
+    let rawIntentData =
+      clientData
+      ->Option.map(data => data.intent_data.raw_intent_data)
+      ->Option.getOr(Dict.make()->JSON.Encode.object)
 
-    let defaultCountry = switch intentPrefillValues->Dict.get(
-      "payment_method_data.billing.address.country",
-    ) {
-    | Some("") | None => nativeProp.sdkParams.country
-    | Some(country) => country
-    }
+    let (intentData, defaultCountry) = prepareIntentData(
+      rawIntentData,
+      nativeProp.sdkParams.country,
+    )
 
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
@@ -198,19 +211,10 @@ let make = (~children) => {
       organization_id: ?organization_id,
     }
 
-    switch intentPrefillValues->Dict.get("payment_method_data.billing.address.country") {
-    | None | Some("") =>
-      intentPrefillValues->Dict.set(
-        "payment_method_data.billing.address.country",
-        nativeProp.sdkParams.country,
-      )
-    | _ => ()
-    }
-
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
-      buildIntentData(intentPrefillValues),
+      intentData,
     )
 
     missingRequiredFields->Array.forEach(field => {
@@ -311,52 +315,26 @@ let make = (~children) => {
         paymentMethodData.payment_method_type,
       )->Array.map(JSON.Encode.string)
 
-    let requiredFieldsFromSource = if (
+    let rawIntentData = if (
       SdkConfigParser.getCollectBillingDetailsFromWalletConnector(
         superpositionConfig.account_config->Option.flatMap(ac => ac.profile),
       ) && !useIntentData
     ) {
-      let requiredFieldsFromWallet = switch billingAddress {
-      | Some(billingAddress) => AddressUtils.getFlatAddressDict(~billingAddress, ~shippingAddress)
-      | None => Dict.make()
-      }
-      switch requiredFieldsFromWallet->Dict.get("payment_method_data.billing.address.country") {
-      | Some("") | None =>
-        requiredFieldsFromWallet->Dict.set(
-          "payment_method_data.billing.address.country",
-          country->Option.getOr(nativeProp.sdkParams.country),
-        )
-      | _ => ()
-      }
-      requiredFieldsFromWallet
-    } else {
-      let intentPrefillValues = switch clientData->Option.flatMap(data =>
-        data.intent_data.billing
-      ) {
+      switch billingAddress {
       | Some(billingAddress) =>
-        AddressUtils.getFlatAddressDict(
-          ~billingAddress,
-          ~shippingAddress=clientData->Option.flatMap(data => data.intent_data.shipping),
-        )
-      | None => Dict.make()
+        AddressUtils.getFlatAddressDict(~billingAddress, ~shippingAddress)->buildIntentData
+      | None => Dict.make()->JSON.Encode.object
       }
-      switch intentPrefillValues->Dict.get("payment_method_data.billing.address.country") {
-      | Some("") | None =>
-        intentPrefillValues->Dict.set(
-          "payment_method_data.billing.address.country",
-          country->Option.getOr(nativeProp.sdkParams.country),
-        )
-      | _ => ()
-      }
-      intentPrefillValues
+    } else {
+      clientData
+      ->Option.map(data => data.intent_data.raw_intent_data)
+      ->Option.getOr(Dict.make()->JSON.Encode.object)
     }
 
-    let defaultCountry = switch requiredFieldsFromSource->Dict.get(
-      "payment_method_data.billing.address.country",
-    ) {
-    | Some("") | None => nativeProp.sdkParams.country
-    | Some(country) => country
-    }
+    let (intentData, defaultCountry) = prepareIntentData(
+      rawIntentData,
+      country->Option.getOr(nativeProp.sdkParams.country),
+    )
 
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
@@ -381,7 +359,7 @@ let make = (~children) => {
     let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
-      buildIntentData(requiredFieldsFromSource),
+      intentData,
     )
 
     let isFieldsMissing = missingRequiredFields->Array.length > 0

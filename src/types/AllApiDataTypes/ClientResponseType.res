@@ -84,6 +84,7 @@ type intentData = {
   customer_id: string,
   billing: option<SdkTypes.addressDetails>,
   shipping: option<SdkTypes.addressDetails>,
+  raw_intent_data: JSON.t,
 }
 
 type clientResponse = {
@@ -335,6 +336,7 @@ let parseIntentData = (dict: Dict.t<JSON.t>): intentData => {
   customer_id: dict->getString("customer_id", ""),
   billing: dict->getOptionalObj("billing")->Option.map(parseIntentAddress),
   shipping: dict->getOptionalObj("shipping")->Option.map(parseIntentAddress),
+  raw_intent_data: dict->JSON.Encode.object,
 }
 
 // Customer saved-cards depend only on the /client response (no sdk_config), so
