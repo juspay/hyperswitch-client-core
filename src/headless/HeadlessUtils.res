@@ -189,13 +189,7 @@ let getBaseUrl = nativeProp => {
 }
 
 let fetchClientData = nativeProp => {
-  let paymentId = switch nativeProp.paymentSessionConfig.sdkAuthorization {
-  | Some(auth) =>
-    Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
-      nativeProp.paymentSessionConfig.paymentId,
-    )
-  | None => nativeProp.paymentSessionConfig.paymentId
-  }
+  let paymentId = nativeProp.paymentSessionConfig.paymentId
   let uri = Some(
     switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
     | Some(_) => `${getBaseUrl(nativeProp)}/payments/${paymentId}/client`

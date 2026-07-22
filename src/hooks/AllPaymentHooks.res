@@ -69,13 +69,7 @@ let useFetchClientData = () => {
     switch WebKit.platform {
     | #next => Promise.resolve(Next.clientResponse)
     | _ =>
-      let paymentId = switch nativeProp.paymentSessionConfig.sdkAuthorization {
-      | Some(auth) =>
-        Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
-          nativeProp.paymentSessionConfig.paymentId,
-        )
-      | None => nativeProp.paymentSessionConfig.paymentId
-      }
+      let paymentId = nativeProp.paymentSessionConfig.paymentId
       let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
       | Some(_) => `${baseUrl}/payments/${paymentId}/client`
       | None =>
@@ -133,14 +127,7 @@ let useSdkConfigHook = () => {
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   () => {
-    let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
-    | Some(auth) =>
-      Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
-        nativeProp.paymentSessionConfig.clientSecret,
-      )
-    | None => nativeProp.paymentSessionConfig.clientSecret
-    }
-    let uri = `${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`
+    let uri = `${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
 
     APIUtils.fetchApiWrapper(
       ~uri,

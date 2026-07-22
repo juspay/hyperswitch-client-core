@@ -852,18 +852,19 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   let ps = getObj(d, "paymentSessionConfig", Dict.make())
   let sp = getObj(d, "sdkParams", Dict.make())
 
-  let clientSecret = getString(ps, "clientSecret", "")
   let sdkAuthorization = switch getOptionString(ps, "sdkAuthorization") {
   | Some("") | None => None
   | v => v
   }
-  let paymentId = switch sdkAuthorization {
-  | Some(auth) =>
-    Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
-      clientSecret->String.split("_secret_")->Array.get(0)->Option.getOr(""),
-    )
-  | None => clientSecret->String.split("_secret_")->Array.get(0)->Option.getOr("")
-  }
+  let sdkAuthorizationData = sdkAuthorization->Option.map(Utils.getSdkAuthorizationData)
+  let clientSecret =
+    sdkAuthorizationData
+    ->Option.flatMap(data => data.clientSecret)
+    ->Option.getOr(getString(ps, "clientSecret", ""))
+  let paymentId =
+    sdkAuthorizationData
+    ->Option.flatMap(data => data.paymentId)
+    ->Option.getOr(clientSecret->String.split("_secret_")->Array.get(0)->Option.getOr(""))
 
   {
     rootTag,
