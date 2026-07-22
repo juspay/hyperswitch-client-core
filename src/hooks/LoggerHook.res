@@ -16,9 +16,8 @@ let useCalculateLatency = () => {
       }
     | "RETRIEVE_CALL"
     | "CONFIRM_CALL"
-    | "SESSIONS_CALL"
-    | "PAYMENT_METHODS_CALL"
-    | "CUSTOMER_PAYMENT_METHODS_CALL" => {
+    | "CLIENT_LIST_CALL"
+    | "SESSIONS_CALL" => {
         let logRequestTimestamp = events->Dict.get(eventName ++ "_INIT")
         switch (logRequestTimestamp, isRequest) {
         | (Some(_), true) => 0.
@@ -149,7 +148,7 @@ let useLoggerHook = () => {
       firstEvent,
       paymentMethod: paymentMethod->Option.getOr(""),
       paymentExperience: ?switch paymentExperience {
-      | Some(payment_experience: array<AccountPaymentMethodType.payment_experience>) =>
+      | Some(payment_experience: array<ClientResponseType.paymentExperience>) =>
         payment_experience
         ->Array.get(0)
         ->Option.map(paymentExperience => paymentExperience.payment_experience_type)

@@ -1,12 +1,12 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
-  let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.useAccountPaymentMethodModifier()
+  let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.usePaymentMethodModifier()
 
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -26,28 +26,24 @@ let make = () => {
 
   UseWidgetActions.useWidgetActions(~confirmButtonData)
 
-  React.useEffect2(() => {
-    if (
-      accountPaymentMethodData->Option.isSome && (
-          nativeProp.configuration.allowsDelayedPaymentMethods
-            ? customerPaymentMethodData->Option.isNone
-            : customerPaymentMethodData
-              ->Option.map(data => data.customer_payment_methods->Array.length === 0)
-              ->Option.getOr(true)
-        )
-    ) {
+  React.useEffect1(() => {
+    let hasNoSavedMethods = switch clientData {
+    | Some(data) => data.customer_payment_methods->Array.length === 0
+    | None => false
+    }
+    if hasNoSavedMethods {
       setIsSavedPaymentScreen(false)
     }
     None
-  }, (customerPaymentMethodData, accountPaymentMethodData))
+  }, [clientData])
 
-  let isLoading = React.useMemo3(() => {
+  let isLoading = React.useMemo2(() => {
     if nativeProp.configuration.allowsDelayedPaymentMethods {
-      !(accountPaymentMethodData->Option.isSome || customerPaymentMethodData->Option.isSome)
+      !(clientData->Option.isSome)
     } else {
       confirmButtonData.loading
     }
-  }, (accountPaymentMethodData, customerPaymentMethodData, confirmButtonData))
+  }, (clientData, confirmButtonData))
 
   <FullScreenSheetWrapper
     isSavedPaymentScreen
@@ -72,8 +68,7 @@ let make = () => {
         <PaymentSheet
           setConfirmButtonData
           isLoading={confirmButtonData.loading &&
-          accountPaymentMethodData->Option.isNone &&
-          customerPaymentMethodData->Option.isNone}
+          clientData->Option.isNone}
           tabArr
           elementArr
           giftCardArr
@@ -83,22 +78,22 @@ let make = () => {
       | (HostedCheckout, false)
       | (WidgetTabSheet, false)
       | (TabSheet, false) =>
-        switch customerPaymentMethodData->Option.map(customerPaymentMethods =>
-          customerPaymentMethods.customer_payment_methods
+        switch clientData->Option.map(data =>
+          data.customer_payment_methods
         ) {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
             customerPaymentMethods->Array.length > 0 &&
-              accountPaymentMethodData
-              ->Option.map(data => data.payment_type)
+              clientData
+              ->Option.map(data => data.intent_data.payment_type)
               ->Option.getOr(NORMAL) !== SETUP_MANDATE
           <>
             {isSavedPaymentScreen && showSavedScreen
               ? <SavedPaymentSheet
                   customerPaymentMethods
                   setConfirmButtonData
-                  merchantName={accountPaymentMethodData
-                  ->Option.map(data => data.merchant_name)
+                  merchantName={clientData
+                  ->Option.map(data => data.intent_data.merchant_name)
                   ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
                   maxVisibleItems=6
                   animated=true
@@ -111,9 +106,7 @@ let make = () => {
                   giftCardArr
                 />}
             <Space height=5. />
-            {showSavedScreen ||
-            (nativeProp.configuration.allowsDelayedPaymentMethods &&
-            accountPaymentMethodData->Option.isSome)
+            {showSavedScreen
               ? <>
                   <Space height=5. />
                   <ClickableTextElement
@@ -131,19 +124,7 @@ let make = () => {
                 </>
               : React.null}
           </>
-        | None =>
-          nativeProp.configuration.allowsDelayedPaymentMethods &&
-          accountPaymentMethodData->Option.isSome
-            ? {
-                <PaymentSheet
-                  setConfirmButtonData
-                  isLoading=confirmButtonData.loading
-                  tabArr
-                  elementArr
-                  giftCardArr
-                />
-              }
-            : <InitialLoader />
+        | None => <InitialLoader />
         }
       | _ => React.null
       }

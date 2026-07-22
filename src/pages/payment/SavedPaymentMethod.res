@@ -88,7 +88,7 @@ module CVVComponent = {
 module PMWithNickNameComponent = {
   @react.component
   let make = (
-    ~savedPaymentMethod: CustomerPaymentMethodType.customer_payment_method_type,
+    ~savedPaymentMethod: ClientResponseType.customerPaymentMethod,
     ~isPaymentMethodSelected,
   ) => {
     let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -257,7 +257,7 @@ module MoreButton = {
 module PaymentMethodListView = {
   @react.component
   let make = (
-    ~savedPaymentMethod: CustomerPaymentMethodType.customer_payment_method_type,
+    ~savedPaymentMethod: ClientResponseType.customerPaymentMethod,
     ~isButtomBorder=true,
     ~savedCardCvv,
     ~setSavedCardCvv,
@@ -372,7 +372,7 @@ module PaymentMethodListView = {
 @react.component
 let make = (
   ~customerPaymentMethods,
-  ~selectedToken: option<CustomerPaymentMethodType.customer_payment_method_type>,
+  ~selectedToken: option<ClientResponseType.customerPaymentMethod>,
   ~setSelectedToken,
   ~savedCardCvv,
   ~setSavedCardCvv,

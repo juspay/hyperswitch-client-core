@@ -4,7 +4,7 @@ open PaymentEvents
 
 @react.component
 let make = (
-  ~paymentMethodData: AccountPaymentMethodType.payment_method_type,
+  ~paymentMethodData: ClientResponseType.paymentMethodEnabled,
   ~sessionObject,
   ~processRequest,
 ) => {

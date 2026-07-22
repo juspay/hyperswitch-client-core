@@ -402,7 +402,7 @@ let confirmGPay = (
   headlessModule,
   reRegisterCallback,
   var,
-  data: CustomerPaymentMethodType.customer_payment_method_type,
+  data: ClientResponseType.customerPaymentMethod,
   nativeProp,
 ) => {
   let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -453,7 +453,7 @@ let confirmApplePay = (
   headlessModule,
   reRegisterCallback,
   var,
-  data: CustomerPaymentMethodType.customer_payment_method_type,
+  data: ClientResponseType.customerPaymentMethod,
   nativeProp,
 ) => {
   switch var
@@ -536,7 +536,7 @@ let processRequest = async (
   headlessModule,
   reRegisterCallback,
   nativeProp,
-  data: CustomerPaymentMethodType.customer_payment_method_type,
+  data: ClientResponseType.customerPaymentMethod,
   response,
   sessions: option<array<SessionsType.sessions>>,
   ~getCvc: JSON.t => JSON.t,
@@ -671,7 +671,7 @@ let getPaymentSession = (
   headlessModule,
   reRegisterCallback,
   nativeProp,
-  spmData: CustomerPaymentMethodType.customer_payment_methods,
+  spmData: ClientResponseType.customerPaymentMethods,
   sessions: option<array<SessionsType.sessions>>,
   ~getCvc: JSON.t => JSON.t,
 ) => {
@@ -684,8 +684,8 @@ let getPaymentSession = (
     }
 
     let lastUsedSpmData = switch spmData->Array.reduce(None, (
-      a: option<CustomerPaymentMethodType.customer_payment_method_type>,
-      b: CustomerPaymentMethodType.customer_payment_method_type,
+      a: option<ClientResponseType.customerPaymentMethod>,
+      b: ClientResponseType.customerPaymentMethod,
     ) => {
       let lastUsedAtA = switch a {
       | Some(a) => Some(a.last_used_at)
@@ -759,29 +759,29 @@ let apiHandler = async (
   nativeProp,
   ~getCvc: JSON.t => JSON.t,
 ) => {
-  let customerSavedPMData = await savedPaymentMethodAPICall(nativeProp)
-  switch customerSavedPMData {
-  | Some(obj) =>
+  let clientResponse = await fetchClientData(nativeProp)
+  switch clientResponse {
+  | Some(response) =>
     let spmData =
-      obj->CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
+      response->ClientResponseType.jsonToCustomerPaymentMethods(
         nativeProp.configuration.paymentMethodOrder,
         nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
       )
-    let sessionSpmData = spmData.customer_payment_methods->Array.filter(data => {
+    let sessionSpmData = spmData->Array.filter(data => {
       switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
       | (GOOGLE_PAY, #android) | (APPLE_PAY, #ios) => true
       | _ => false
       }
     })
 
-    let walletSpmData = spmData.customer_payment_methods->Array.filter(data => {
+    let walletSpmData = spmData->Array.filter(data => {
       switch (data.payment_method_type_wallet, ReactNative.Platform.os) {
       | (GOOGLE_PAY, _) | (APPLE_PAY, _) => false
       | _ => true
       }
     })
 
-    let cardSpmData = spmData.customer_payment_methods->Array.filter(data => {
+    let cardSpmData = spmData->Array.filter(data => {
       switch data.payment_method {
       | CARD => true
       | _ => false
@@ -855,7 +855,7 @@ let apiHandler = async (
     }
 
   | None =>
-    customerSavedPMData
+    clientResponse
     ->getErrorFromResponse
     ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
   }

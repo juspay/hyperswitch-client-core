@@ -3,7 +3,7 @@ open Style
 
 module GiftCardListComponent = {
   @react.component
-  let make = React.memo((~giftCardArr: array<AccountPaymentMethodType.payment_method_type>) => {
+  let make = React.memo((~giftCardArr: array<ClientResponseType.paymentMethodEnabled>) => {
     let (selectedGiftCardType, setSelectedGiftCardType) = React.useState(() =>
       giftCardArr
       ->Array.get(0)

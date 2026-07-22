@@ -3,11 +3,7 @@ open SdkTypes
 let updateIntentInitReturned = "UPDATE_INTENT_INIT_RETURNED"
 let updateIntentCompleteReturned = "UPDATE_INTENT_COMPLETE_RETURNED"
 
-let useUpdateIntentListener = (
-  ~setAccountPaymentMethodData,
-  ~setCustomerPaymentMethodData,
-  ~setSessionTokenData,
-) => {
+let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
@@ -94,8 +90,8 @@ let useUpdateIntentListener = (
 
             let hasError = ref(false)
 
-            let handleAccountPaymentMethodsResponse = accountPaymentMethodData => {
-              if ErrorUtils.isError(accountPaymentMethodData) {
+            let handleClientResponse = clientResp => {
+              if ErrorUtils.isError(clientResp) {
                 hasError := true
                 HyperModule.onUpdateIntentEvent(
                   currentNativeProp.rootTag,
@@ -104,16 +100,13 @@ let useUpdateIntentListener = (
                     JSON.Encode.object(
                       Dict.fromArray([
                         ("status", JSON.Encode.string("failed")),
-                        ("code", JSON.Encode.string("account_payment_methods_error")),
-                        (
-                          "message",
-                          JSON.Encode.string(ErrorUtils.getErrorMessage(accountPaymentMethodData)),
-                        ),
+                        ("code", JSON.Encode.string("combine_pml_error")),
+                        ("message", JSON.Encode.string(ErrorUtils.getErrorMessage(clientResp))),
                       ]),
                     ),
                   ),
                 )
-              } else if accountPaymentMethodData == JSON.Encode.null {
+              } else if clientResp == JSON.Encode.null {
                 hasError := true
                 HyperModule.onUpdateIntentEvent(
                   currentNativeProp.rootTag,
@@ -129,24 +122,8 @@ let useUpdateIntentListener = (
                   ),
                 )
               } else {
-                let pmlResponse = AccountPaymentMethodType.jsonToAccountPaymentMethodType(
-                  accountPaymentMethodData,
-                  nativeProp.configuration.paymentMethodOrder,
-                )
-                setAccountPaymentMethodData(_ => Some(pmlResponse))
+                setClientResponse(_ => Some(clientResp))
               }
-            }
-
-            let handleCustomerPaymentMethodsResponse = customerPaymentMethodData => {
-              setCustomerPaymentMethodData(
-                _ => Some(
-                  CustomerPaymentMethodType.jsonToCustomerPaymentMethodType(
-                    customerPaymentMethodData,
-                    nativeProp.configuration.paymentMethodOrder,
-                    nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
-                  ),
-                ),
-              )
             }
 
             let handleSessionTokenResponse = sessionTokenData => {
@@ -171,24 +148,19 @@ let useUpdateIntentListener = (
               (),
             )
 
-            let accountUri = `${baseUrl}/account/payment_methods`
-            let customerUri = `${baseUrl}/customers/payment_methods`
+            let paymentId =
+              Utils.getSdkAuthorizationData(sdkAuth).paymentId->Option.getOr(
+                currentNativeProp.paymentSessionConfig.paymentId,
+              )
 
-            Promise.all3((
-              // Customer payment methods
+            let clientUri = `${baseUrl}/payments/${paymentId}/client`
+
+            Promise.all2((
               APIUtils.fetchApiWrapper(
-                ~uri=customerUri,
+                ~uri=clientUri,
                 ~method=#GET,
                 ~headers,
-                ~eventName=LoggerTypes.CUSTOMER_PAYMENT_METHODS_CALL,
-                ~apiLogWrapper,
-              ),
-              // Account payment methods
-              APIUtils.fetchApiWrapper(
-                ~uri=accountUri,
-                ~method=#GET,
-                ~headers,
-                ~eventName=LoggerTypes.PAYMENT_METHODS_CALL,
+                ~eventName=LoggerTypes.CLIENT_LIST_CALL,
                 ~apiLogWrapper,
               ),
               // Session tokens
@@ -196,7 +168,7 @@ let useUpdateIntentListener = (
                 ~uri=`${baseUrl}/payments/session_tokens`,
                 ~body=PaymentUtils.generateSessionsTokenBody(
                   ~clientSecret=currentNativeProp.paymentSessionConfig.clientSecret,
-                  ~paymentId=currentNativeProp.paymentSessionConfig.paymentId,
+                  ~paymentId,
                   ~sdkAuthorization=sdkAuth,
                   ~wallet=[],
                 ),
@@ -207,9 +179,8 @@ let useUpdateIntentListener = (
               ),
             ))
             ->Promise.then(
-              ((customerPaymentMethodData, accountPaymentMethodData, sessionTokenData)) => {
-                handleCustomerPaymentMethodsResponse(customerPaymentMethodData)
-                handleAccountPaymentMethodsResponse(accountPaymentMethodData)
+              ((clientResp, sessionTokenData)) => {
+                handleClientResponse(clientResp)
                 handleSessionTokenResponse(sessionTokenData)
 
                 setLoading(FillingDetails)
