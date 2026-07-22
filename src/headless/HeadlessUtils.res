@@ -196,14 +196,15 @@ let fetchClientData = nativeProp => {
     )
   | None => nativeProp.paymentSessionConfig.paymentId
   }
-  let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
-  | Some(auth) =>
-    Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
-      nativeProp.paymentSessionConfig.clientSecret,
-    )
-  | None => nativeProp.paymentSessionConfig.clientSecret
-  }
-  let uri = Some(`${getBaseUrl(nativeProp)}/payments/${paymentId}/client?client_secret=${clientSecret}`)
+  let uri = Some(
+    switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+    | Some(_) => `${getBaseUrl(nativeProp)}/payments/${paymentId}/client`
+    | None =>
+      `${getBaseUrl(
+          nativeProp,
+        )}/payments/${paymentId}/client?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
+    },
+  )
 
   switch uri {
   | Some(uri) =>

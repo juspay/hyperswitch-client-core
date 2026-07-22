@@ -69,13 +69,6 @@ let useFetchClientData = () => {
     switch WebKit.platform {
     | #next => Promise.resolve(Next.clientResponse)
     | _ =>
-      let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
-      | Some(auth) =>
-        Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
-          nativeProp.paymentSessionConfig.clientSecret,
-        )
-      | None => nativeProp.paymentSessionConfig.clientSecret
-      }
       let paymentId = switch nativeProp.paymentSessionConfig.sdkAuthorization {
       | Some(auth) =>
         Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
@@ -83,7 +76,11 @@ let useFetchClientData = () => {
         )
       | None => nativeProp.paymentSessionConfig.paymentId
       }
-      let uri = `${baseUrl}/payments/${paymentId}/client?client_secret=${clientSecret}`
+      let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+      | Some(_) => `${baseUrl}/payments/${paymentId}/client`
+      | None =>
+        `${baseUrl}/payments/${paymentId}/client?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
+      }
       APIUtils.fetchApiWrapper(
         ~uri,
         ~method=#GET,

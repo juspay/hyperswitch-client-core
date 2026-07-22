@@ -153,12 +153,7 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
                 currentNativeProp.paymentSessionConfig.paymentId,
               )
 
-            let clientSecret =
-              Utils.getSdkAuthorizationData(sdkAuth).clientSecret->Option.getOr(
-                currentNativeProp.paymentSessionConfig.clientSecret,
-              )
-
-            let clientUri = `${baseUrl}/payments/${paymentId}/client?client_secret=${clientSecret}`
+            let clientUri = `${baseUrl}/payments/${paymentId}/client`
 
             Promise.all2((
               APIUtils.fetchApiWrapper(
