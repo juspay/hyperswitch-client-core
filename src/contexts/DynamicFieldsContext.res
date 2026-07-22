@@ -112,23 +112,40 @@ let buildIntentData = (flatByWritePath: Dict.t<string>): JSON.t => {
 let intentBillingCountry = (intentData: JSON.t) =>
   CommonUtils.getStringAtPath(intentData->Utils.getDictFromJson, "billing.address.country")
 
-let withCountry = (intentData: JSON.t, country: string): JSON.t => {
-  let root = intentData->Utils.getDictFromJson->Dict.copy
-  let billing =
-    root->Dict.get("billing")->Option.mapOr(Dict.make(), Utils.getDictFromJson)->Dict.copy
-  let address =
-    billing->Dict.get("address")->Option.mapOr(Dict.make(), Utils.getDictFromJson)->Dict.copy
-  address->Dict.set("country", country->JSON.Encode.string)
-  billing->Dict.set("address", address->JSON.Encode.object)
-  root->Dict.set("billing", billing->JSON.Encode.object)
-  root->JSON.Encode.object
-}
 
 let prepareIntentData = (intentData: JSON.t, fallbackCountry: string) =>
   switch intentData->intentBillingCountry {
   | Some(country) if country !== "" => (intentData, country)
-  | _ => (intentData->withCountry(fallbackCountry), fallbackCountry)
+  | _ => (intentData, fallbackCountry)
   }
+
+let applyCountryDefaults = (
+  ~missingRequiredFields: array<SuperpositionTypes.fieldConfig>,
+  ~initialValues: Dict.t<JSON.t>,
+  ~fallbackCountry: string,
+) => {
+  let overrides = Dict.make()
+  missingRequiredFields->Array.forEach(field =>
+    if field.fieldRenderType === Country {
+      let currentCountry =
+        CommonUtils.getStringAtPath(
+          initialValues,
+          field.confirmRequestWritePath,
+        )->Option.getOr(fallbackCountry)
+
+      let dropdownOptions = field.dropdownOptions->Option.getOr([])
+      let validatedCountry = dropdownOptions->Array.includes(currentCountry)
+        ? currentCountry
+        : dropdownOptions->Array.get(0)->Option.getOr(SdkTypes.defaultCountry)
+
+      overrides->Dict.set(field.confirmRequestWritePath, validatedCountry)
+    }
+  )
+
+  overrides->Dict.keysToArray->Array.length === 0
+    ? initialValues
+    : CommonUtils.mergeDict(initialValues, overrides->SuperpositionHelper.convertFlatDictToNestedObject)
+}
 
 @react.component
 let make = (~children) => {
@@ -217,26 +234,11 @@ let make = (~children) => {
       intentData,
     )
 
-    missingRequiredFields->Array.forEach(field => {
-      let isCountryDropdown = field.fieldRenderType === Country
-      if isCountryDropdown {
-        let currentCountry =
-          initialValues
-          ->Dict.get(field.confirmRequestWritePath)
-          ->Option.flatMap(JSON.Decode.string)
-          ->Option.getOr(country->Option.getOr(nativeProp.sdkParams.country))
-
-        let validatedCountry =
-          field.dropdownOptions->Option.getOr([])->Array.includes(currentCountry)
-            ? currentCountry
-            : field.dropdownOptions
-              ->Option.getOr([])
-              ->Array.get(0)
-              ->Option.getOr(SdkTypes.defaultCountry)
-
-        initialValues->Dict.set(field.confirmRequestWritePath, JSON.Encode.string(validatedCountry))
-      }
-    })
+    let initialValues = applyCountryDefaults(
+      ~missingRequiredFields,
+      ~initialValues,
+      ~fallbackCountry=country->Option.getOr(nativeProp.sdkParams.country),
+    )
 
     (
       missingRequiredFields,
@@ -360,6 +362,12 @@ let make = (~children) => {
       eligibleConnectors,
       configParams,
       intentData,
+    )
+
+    let initialValues = applyCountryDefaults(
+      ~missingRequiredFields,
+      ~initialValues,
+      ~fallbackCountry=country->Option.getOr(nativeProp.sdkParams.country),
     )
 
     let isFieldsMissing = missingRequiredFields->Array.length > 0
