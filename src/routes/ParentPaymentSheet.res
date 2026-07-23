@@ -1,3 +1,6 @@
+open ReactNative
+open Style
+
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -5,6 +8,8 @@ let make = () => {
     AllApiDataContextNew.allApiDataContext,
   )
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let (viewPortConstants, _) = React.useContext(ViewportContext.viewPortContext)
+  let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
 
   let (tabArr, elementArr, giftCardArr) = AllApiDataModifier.usePaymentMethodModifier()
 
@@ -131,7 +136,13 @@ let make = () => {
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
     <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
-      <GlobalConfirmButton confirmButtonData />
+      <View
+        style={s({
+          paddingTop: (sheetContentPadding /. 2.)->dp,
+          paddingBottom: viewPortConstants.bottomInset->dp,
+        })}>
+        <GlobalConfirmButton confirmButtonData />
+      </View>
     </UIUtils.RenderIf>
   </FullScreenSheetWrapper>
 }
