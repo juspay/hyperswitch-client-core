@@ -6,6 +6,5 @@ type props = {
   allowedPaymentMethods?: string,
 }
 
-let make: React.component<props> = ReactNative.NativeModules.requireNativeComponent(
-  "GooglePayButton",
-)
+@module("../../../specs/GooglePayButtonNativeComponent")
+external make: React.component<props> = "default"

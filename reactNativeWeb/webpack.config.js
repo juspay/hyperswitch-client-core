@@ -146,6 +146,8 @@ module.exports = {
       '@sentry/react-native': '@sentry/react',
       'react-native-hyperswitch-paypal': 'react-native-web',
       'react-native-hyperswitch-kount': 'react-native-web',
+      '@juspay-tech/react-native-hyperswitch-paypal': 'react-native-web',
+      '@juspay-tech/react-native-hyperswitch-scancard': 'react-native-web',
       '@juspay-tech/react-native-hyperswitch-netcetera-3ds': 'react-native-web',
       '@juspay-tech/react-native-hyperswitch-samsung-pay': 'react-native-web',
       'react-native-plaid-link-sdk': 'react-native-web',
@@ -178,6 +180,12 @@ module.exports = {
       chunks: [],
     }),
     new webpack.HotModuleReplacementPlugin(),
+    // Native-only codegen specs must never reach the web bundle; the *.web.ts
+    // facades are the primary guard, this is the kill-switch.
+    new webpack.NormalModuleReplacementPlugin(
+      /src[\\/]specs[\\/]/,
+      path.resolve(__dirname, 'nativeSpecStub.js'),
+    ),
     isDevelopment && new ReactRefreshWebpackPlugin(),
     new webpack.DefinePlugin({
       // See: https://github.com/necolas/react-native-web/issues/349

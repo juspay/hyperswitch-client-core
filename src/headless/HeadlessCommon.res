@@ -11,21 +11,9 @@ type headlessModule = {
 }
 
 let makeHeadlessModule = (): headlessModule => {
-  let hyperSwitchHeadlessDict =
-    Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
-    ->Option.flatMap(JSON.Decode.object)
-    ->Option.getOr(Dict.make())
-
-  let getFn = (key, default) => {
-    switch hyperSwitchHeadlessDict->Dict.get(key) {
-    | Some(fn) => Obj.magic(fn)
-    | None => default
-    }
-  }
-
   {
-    getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
-    exitHeadless: getFn("exitHeadless", (_, _) => ()),
+    getPaymentSession: HyperHeadless.getPaymentSession,
+    exitHeadless: HyperHeadless.exitHeadless,
   }
 }
 

@@ -122,3 +122,5 @@ next-env.d.ts
 
 #mockData
 mockData.js
+
+*.tsbuildinfo

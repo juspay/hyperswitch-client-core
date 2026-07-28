@@ -8,7 +8,7 @@ module AddPaymentMethodButton = {
     let localeObject = GetLocale.useGetLocalObj()
 
     <CustomPressable
-      onPress={_ => HyperModule.hyperModule.onAddPaymentMethod("")}
+      onPress={_ => HyperModule.onAddPaymentMethod("")}
       style={s({
         paddingVertical: 16.->dp,
         paddingHorizontal: 24.->dp,

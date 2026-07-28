@@ -1,79 +1,75 @@
-type hyperModule = {
-  sendMessageToNative: string => unit,
-  launchApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  startApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  presentApplePay: (string, Dict.t<JSON.t> => unit) => unit,
-  launchGPay: (string, Dict.t<JSON.t> => unit) => unit,
-  exitPaymentsheet: (int, string, bool) => unit,
-  exitPaymentMethodManagement: (int, string, bool) => unit,
-  exitWidget: (string, string) => unit,
-  exitCardForm: string => unit,
-  launchWidgetPaymentSheet: (string, Dict.t<JSON.t> => unit) => unit,
-  onAddPaymentMethod: string => unit,
-  exitWidgetPaymentsheet: (int, string, bool) => unit,
-  updateWidgetHeight: int => unit,
-  notifyWidgetPaymentResult: (int, string) => unit,
-  emitPaymentEvent: (int, string, JSON.t) => unit,
-  onUpdateIntentEvent: (int, string, string) => unit,
-  onPaymentConfirmButtonClick: (int, string, bool => unit) => unit,
-  openIframeBridge: (string, int, string => unit) => unit,
+type dictCallback = Dict.t<JSON.t> => unit
+
+// Typed externals into the TurboModule access layer (HyperModuleNative.ts,
+// used on native and web alike). It no-ops when the native module is
+// absent, so these are always safe to call.
+module Native = {
+  @module("./HyperModuleNative")
+  external sendMessageToNative: string => unit = "sendMessageToNative"
+  @module("./HyperModuleNative")
+  external launchApplePay: (string, dictCallback) => unit = "launchApplePay"
+  @module("./HyperModuleNative")
+  external startApplePay: (string, dictCallback) => unit = "startApplePay"
+  @module("./HyperModuleNative")
+  external presentApplePay: (string, dictCallback) => unit = "presentApplePay"
+  @module("./HyperModuleNative")
+  external launchGPay: (string, dictCallback) => unit = "launchGPay"
+  @module("./HyperModuleNative")
+  external exitPaymentsheet: (int, string, bool) => unit = "exitPaymentsheet"
+  @module("./HyperModuleNative")
+  external exitPaymentMethodManagement: (int, string, bool) => unit =
+    "exitPaymentMethodManagement"
+  @module("./HyperModuleNative")
+  external exitWidgetPaymentsheet: (int, string, bool) => unit = "exitWidgetPaymentsheet"
+  @module("./HyperModuleNative")
+  external exitWidget: (string, string) => unit = "exitWidget"
+  @module("./HyperModuleNative")
+  external exitCardForm: string => unit = "exitCardForm"
+  @module("./HyperModuleNative")
+  external onAddPaymentMethod: string => unit = "onAddPaymentMethod"
+  @module("./HyperModuleNative")
+  external updateWidgetHeight: int => unit = "updateWidgetHeight"
+  @module("./HyperModuleNative")
+  external notifyWidgetPaymentResult: (int, string) => unit = "notifyWidgetPaymentResult"
+  @module("./HyperModuleNative")
+  external emitPaymentEvent: (int, string, JSON.t) => unit = "emitPaymentEvent"
+  @module("./HyperModuleNative")
+  external onUpdateIntentEvent: (int, string, string) => unit = "onUpdateIntentEvent"
+  @module("./HyperModuleNative")
+  external openIframeBridge: (string, int, string => unit) => unit = "openIframeBridge"
+
+  // Native -> JS event subscriptions. Each returns an unsubscribe thunk and
+  // no-ops when the native module is absent (web, jest). Bound here rather
+  // than in NativeEventListener.res so that every `@module` path in the
+  // codebase points at a sibling file: ReScript resolves `HyperModule.*` by
+  // module name, so moving either file cannot silently break the binding.
+  @module("./HyperModuleNative")
+  external subscribeConfirm: dictCallback => (unit => unit) = "subscribeConfirm"
+  @module("./HyperModuleNative")
+  external subscribeWidget: dictCallback => (unit => unit) = "subscribeWidget"
+  @module("./HyperModuleNative")
+  external subscribeConfirmEC: dictCallback => (unit => unit) = "subscribeConfirmEC"
+  @module("./HyperModuleNative")
+  external subscribeTriggerWidgetAction: dictCallback => (unit => unit) =
+    "subscribeTriggerWidgetAction"
+  @module("./HyperModuleNative")
+  external subscribeUpdateIntentInit: dictCallback => (unit => unit) = "subscribeUpdateIntentInit"
+  @module("./HyperModuleNative")
+  external subscribeUpdateIntentComplete: dictCallback => (unit => unit) =
+    "subscribeUpdateIntentComplete"
 }
 
-let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default) => {
-  switch dict->Dict.get(key) {
-  | Some(fn) => Obj.magic(fn)
-  | None => default
-  }
-}
-
-let hyperModuleDict =
-  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule")
-  ->Option.flatMap(JSON.Decode.object)
-  ->Option.getOr(Dict.make())
-
-let hyperModule = {
-  sendMessageToNative: getFunctionFromModule(hyperModuleDict, "sendMessageToNative", _ => ()),
-  launchApplePay: getFunctionFromModule(hyperModuleDict, "launchApplePay", (_, _) => ()),
-  startApplePay: getFunctionFromModule(hyperModuleDict, "startApplePay", (_, _) => ()),
-  presentApplePay: getFunctionFromModule(hyperModuleDict, "presentApplePay", (_, _) => ()),
-  launchGPay: getFunctionFromModule(hyperModuleDict, "launchGPay", (_, _) => ()),
-  exitPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitPaymentsheet", (_, _, _) => ()),
-  exitPaymentMethodManagement: getFunctionFromModule(
-    hyperModuleDict,
-    "exitPaymentMethodManagement",
-    (_, _, _) => (),
-  ),
-  exitWidget: getFunctionFromModule(hyperModuleDict, "exitWidget", (_, _) => ()),
-  exitCardForm: getFunctionFromModule(hyperModuleDict, "exitCardForm", _ => ()),
-  launchWidgetPaymentSheet: getFunctionFromModule(hyperModuleDict, "launchWidgetPaymentSheet", (
-    _,
-    _,
-  ) => ()),
-  onAddPaymentMethod: getFunctionFromModule(hyperModuleDict, "onAddPaymentMethod", _ => ()),
-  exitWidgetPaymentsheet: getFunctionFromModule(hyperModuleDict, "exitWidgetPaymentsheet", (
-    _,
-    _,
-    _,
-  ) => ()),
-  updateWidgetHeight: getFunctionFromModule(hyperModuleDict, "updateWidgetHeight", _ => ()),
-  notifyWidgetPaymentResult: getFunctionFromModule(hyperModuleDict, "notifyWidgetPaymentResult", (
-    _,
-    _,
-  ) => ()),
-  emitPaymentEvent: getFunctionFromModule(hyperModuleDict, "emitPaymentEvent", (_, _, _) => ()),
-  onUpdateIntentEvent: getFunctionFromModule(hyperModuleDict, "onUpdateIntentEvent", (_, _, _) =>
-    ()
-  ),
-  onPaymentConfirmButtonClick: getFunctionFromModule(
-    hyperModuleDict,
-    "onPaymentConfirmButtonClick",
-    (_, _, _) => (),
-  ),
-  openIframeBridge: getFunctionFromModule(hyperModuleDict, "openIframeBridge", (_, _, _) => ()),
+module Events = {
+  let subscribeConfirm = Native.subscribeConfirm
+  let subscribeWidget = Native.subscribeWidget
+  let subscribeConfirmEC = Native.subscribeConfirmEC
+  let subscribeTriggerWidgetAction = Native.subscribeTriggerWidgetAction
+  let subscribeUpdateIntentInit = Native.subscribeUpdateIntentInit
+  let subscribeUpdateIntentComplete = Native.subscribeUpdateIntentComplete
 }
 
 let sendMessageToNative = str => {
-  hyperModule.sendMessageToNative(str)
+  Native.sendMessageToNative(str)
 }
 
 let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
@@ -98,18 +94,24 @@ type useExitPaymentsheetReturnType = {
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
 let emitPaymentEvent = (rootTag: int, eventType: string, payload: JSON.t) => {
-  hyperModule.emitPaymentEvent(rootTag, eventType, payload)
+  Native.emitPaymentEvent(rootTag, eventType, payload)
 }
 
 let onUpdateIntentEvent = (rootTag: int, type_: string, result: string) => {
-  hyperModule.onUpdateIntentEvent(rootTag, type_, result)
+  Native.onUpdateIntentEvent(rootTag, type_, result)
+}
+
+let onAddPaymentMethod = (data: string) => {
+  Native.onAddPaymentMethod(data)
+}
+
+let notifyWidgetPaymentResult = (rootTag: int, result: string) => {
+  Native.notifyWidgetPaymentResult(rootTag, result)
 }
 
 let useExitPaymentsheet = () => {
-  // let (ref, _) = React.useContext(ReactNativeWrapperContext.reactNativeWrapperContext)
   let logger = LoggerHook.useLoggerHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
   let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
@@ -126,19 +128,19 @@ let useExitPaymentsheet = () => {
         ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
         : switch nativeProp.sdkState {
           | WidgetPaymentSheet | WidgetButtonSheet =>
-            hyperModule.exitWidgetPaymentsheet(
+            Native.exitWidgetPaymentsheet(
               nativeProp.rootTag,
               apiResStatus->stringifiedResStatus,
               reset,
             )
           | PaymentMethodsManagement =>
-            hyperModule.exitPaymentMethodManagement(
+            Native.exitPaymentMethodManagement(
               nativeProp.rootTag,
               apiResStatus->stringifiedResStatus,
               reset,
             )
           | _ =>
-            hyperModule.exitPaymentsheet(
+            Native.exitPaymentsheet(
               nativeProp.rootTag,
               apiResStatus->stringifiedResStatus,
               reset,
@@ -152,55 +154,45 @@ let useExitPaymentsheet = () => {
 
   let simplyExit = (apiResStatus, rootTag, reset) => {
     ReactNative.Platform.os == #web
-      ? // BrowserHook.href(
-        //     BrowserHook.location,
-        //     `${allApiData.redirect_url->Option.getOr(
-        //         "",
-        //       )}?status=${"failed"}&payment_intent_client_secret=clientSecret&amount=6541`,
-        //   )
-        exitPaymentSheet(apiResStatus->stringifiedResStatus)
+      ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
-      ? hyperModule.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
-      : hyperModule.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
+      ? Native.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
+      : Native.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }
   {exit, simplyExit}
 }
 
 let useExitCard = () => {
   exitMode => {
-    hyperModule.exitCardForm(exitMode->stringifiedResStatus)
+    Native.exitCardForm(exitMode->stringifiedResStatus)
   }
 }
 
 let useExitWidget = () => {
   (exitMode, widgetType: string) => {
-    hyperModule.exitWidget(exitMode->stringifiedResStatus, widgetType)
+    Native.exitWidget(exitMode->stringifiedResStatus, widgetType)
   }
 }
 
 let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
-  hyperModule.startApplePay("", startCallback)
-  hyperModule.presentApplePay("", presentCallback)
-  hyperModule.launchApplePay(requestObj, callback)
+  Native.startApplePay("", startCallback)
+  Native.presentApplePay("", presentCallback)
+  Native.launchApplePay(requestObj, callback)
 }
 
 let launchGPay = (requestObj: string, callback) => {
-  hyperModule.launchGPay(requestObj, callback)
-}
-
-let launchWidgetPaymentSheet = (requestObj: string, callback) => {
-  hyperModule.launchWidgetPaymentSheet(requestObj, callback)
+  Native.launchGPay(requestObj, callback)
 }
 
 let updateWidgetHeight = (height: int) => {
-  hyperModule.updateWidgetHeight(height)
+  Native.updateWidgetHeight(height)
 }
 
 let onPaymentConfirmButtonClick = (_: int, _: JSON.t, callback: bool => unit) => {
   callback(true)
-  // hyperModule.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
+  // Native.onPaymentConfirmButtonClick(rootTag, payload->JSON.stringify, callback)
 }
 
 let openIframeBridge = (url: string, timeoutMs: int, callback: string => unit) => {
-  hyperModule.openIframeBridge(url, timeoutMs, callback)
+  Native.openIframeBridge(url, timeoutMs, callback)
 }

@@ -1,0 +1,414 @@
+diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt
+index e7859ff..33600f1 100644
+--- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt
++++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactPlugin.kt
+@@ -7,6 +7,7 @@
+ 
+ package com.facebook.react
+ 
++import com.android.build.api.variant.AndroidComponentsExtension
+ import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+ import com.android.build.api.variant.LibraryAndroidComponentsExtension
+ import com.android.build.gradle.internal.tasks.factory.dependsOn
+@@ -59,8 +60,11 @@ class ReactPlugin : Plugin<Project> {
+       rootExtension.hermesV1Enabled.set(false)
+     }
+ 
+-    // App Only Configuration
+-    project.pluginManager.withPlugin("com.android.application") {
++    // App Module Configuration. The Hyperswitch SDK ships its React Native
++    // host inside a com.android.library module, so the same configuration is
++    // applied when either plugin is present.
++    val appModuleConfiguration =
++        org.gradle.api.Action<org.gradle.api.plugins.AppliedPlugin> {
+       // We wire the root extension with the values coming from the app (either user populated or
+       // defaults).
+       rootExtension.root.set(extension.root)
+@@ -82,11 +86,16 @@ class ReactPlugin : Plugin<Project> {
+ 
+       configureReactNativeNdk(project, extension)
+       configureBuildConfigFieldsForApp(project, extension)
+-      configureDevServerLocation(project)
++      if (project.findProperty("react.internal.libraryModeAppModule") != "true") {
++        // Library mode: never bake the build machine's dev-server IP/port into
++        // the published AAR's resources; Metro discovery falls back to
++        // localhost + adb reverse for debug builds.
++        configureDevServerLocation(project)
++      }
+       configureBackwardCompatibilityReactMap(project)
+       configureJavaToolChains(project)
+ 
+-      project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java).apply {
++      project.extensions.getByType(AndroidComponentsExtension::class.java).apply {
+         onVariants(selector().all()) { variant ->
+           project.configureReactTasks(variant = variant, config = extension)
+         }
+@@ -96,13 +105,20 @@ class ReactPlugin : Plugin<Project> {
+       configureResources(project, extension)
+       configureBuildTypesForApp(project)
+     }
++    project.pluginManager.withPlugin("com.android.application", appModuleConfiguration)
++    if (project.findProperty("react.internal.libraryModeAppModule") == "true") {
++      // The Hyperswitch SDK ships its React Native host inside a
++      // com.android.library module; apply the full app configuration to it.
++      project.pluginManager.withPlugin("com.android.library", appModuleConfiguration)
++    } else {
++      project.pluginManager.withPlugin("com.android.library") {
++        configureCodegen(project, extension, rootExtension, isLibrary = true)
++      }
++    }
+ 
+     // Library Only Configuration
+     configureBuildConfigFieldsForLibraries(project)
+     configureNamespaceForLibraries(project)
+-    project.pluginManager.withPlugin("com.android.library") {
+-      configureCodegen(project, extension, rootExtension, isLibrary = true)
+-    }
+   }
+ 
+   private fun checkJvmVersion(project: Project) {
+@@ -127,8 +143,8 @@ class ReactPlugin : Plugin<Project> {
+ 
+   /** This function configures Android resources - in this case just the bundle */
+   private fun configureResources(project: Project, reactExtension: ReactExtension) {
+-    project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java).finalizeDsl {
+-        ext ->
++    project.extensions.getByType(AndroidComponentsExtension::class.java).finalizeDsl { extRaw ->
++      val ext = extRaw as com.android.build.api.dsl.CommonExtension<*, *, *, *, *, *>
+       val bundleFileExtension = reactExtension.bundleAssetName.get().substringAfterLast('.', "")
+       if (!reactExtension.enableBundleCompression.get() && bundleFileExtension.isNotBlank()) {
+         ext.androidResources.noCompress.add(bundleFileExtension)
+@@ -231,16 +247,11 @@ class ReactPlugin : Plugin<Project> {
+     // This equivalent to this DSL:
+     //
+     // android { sourceSets { main { java { srcDirs += "$generatedSrcDir/java" } } } }
+-    if (isLibrary) {
+-      project.extensions.getByType(LibraryAndroidComponentsExtension::class.java).finalizeDsl { ext
+-        ->
+-        ext.sourceSets.getByName("main").java.srcDir(generatedSrcDir.get().dir("java").asFile)
+-      }
+-    } else {
+-      project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java).finalizeDsl {
+-          ext ->
+-        ext.sourceSets.getByName("main").java.srcDir(generatedSrcDir.get().dir("java").asFile)
+-      }
++    project.extensions.getByType(AndroidComponentsExtension::class.java).finalizeDsl { extRaw ->
++      val ext = extRaw as com.android.build.api.dsl.CommonExtension<*, *, *, *, *, *>
++      (ext.sourceSets.getByName("main") as com.android.build.api.dsl.AndroidSourceSet)
++          .java
++          .srcDir(generatedSrcDir.get().dir("java").asFile)
+     }
+ 
+     // `preBuild` is one of the base tasks automatically registered by AGP.
+@@ -278,13 +289,24 @@ class ReactPlugin : Plugin<Project> {
+     // We add a task called generateAutolinkingPackageList to do not clash with the existing task
+     // called generatePackageList. This can to be renamed once we unlink the rn <-> cli
+     // dependency.
++    // In library mode (Hyperswitch SDK) the generated
++    // ReactNativeApplicationEntryPoint references the demo application's
++    // BuildConfig package, which does not exist inside the library module.
++    // The SDK bootstraps React Native itself (ReactNativeController), so the
++    // entry point is generated outside the compiled source set.
++    val entryPointOutputDir =
++        if (project.findProperty("react.internal.libraryModeAppModule") == "true") {
++          project.layout.buildDirectory.dir("generated/autolinking-entrypoint/src/main/java")
++        } else {
++          generatedAutolinkingJavaDir
++        }
+     val generateEntryPointTask =
+         project.tasks.register(
+             "generateReactNativeEntryPoint",
+             GenerateEntryPointTask::class.java,
+         ) { task ->
+           task.autolinkInputFile.set(rootGeneratedAutolinkingFile)
+-          task.generatedOutputDirectory.set(generatedAutolinkingJavaDir)
++          task.generatedOutputDirectory.set(entryPointOutputDir)
+         }
+ 
+     // We also need to generate code for C++ Autolinking
+@@ -309,7 +331,7 @@ class ReactPlugin : Plugin<Project> {
+ 
+     // We tell Android Gradle Plugin that inside /build/generated/autolinking/src/main/java there
+     // are sources to be compiled as well.
+-    project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java).apply {
++    project.extensions.getByType(AndroidComponentsExtension::class.java).apply {
+       onVariants(selector().all()) { variant ->
+         variant.sources.java?.addStaticSourceDirectory(
+             generatedAutolinkingJavaDir.get().asFile.absolutePath
+diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
+index 1156bc2..4d09c01 100644
+--- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
++++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
+@@ -49,8 +49,12 @@ abstract class GeneratePackageListTask : DefaultTask() {
+             )
+ 
+     val androidPackages = filterAndroidPackages(model)
+-    val packageClassInstance = composePackageInstance(packageName, androidPackages)
+-    val generatedFileContents = composeFileContent(packageClassInstance)
++    // Hyperswitch: autolinked packages are loaded reflectively at runtime so
++    // optional dependencies (scancard, netcetera, paypal, ...) can be absent
++    // from the consuming app without breaking the AAR.
++    val packageClassInstance = composePackageInstance(packageName, mapOf())
++    val dynamicPackageImports = composeDynamicPackageImports(packageName, androidPackages)
++    val generatedFileContents = composeFileContent(packageClassInstance, dynamicPackageImports)
+ 
+     val outputDir = generatedOutputDirectory.get().asFile
+     outputDir.mkdirs()
+@@ -69,6 +73,24 @@ abstract class GeneratePackageListTask : DefaultTask() {
+     return match?.groupValues?.get(1)
+   }
+ 
++  internal fun composeDynamicPackageImports(
++      packageName: String,
++      packages: Map<String, ModelAutolinkingDependenciesPlatformAndroidJson>,
++  ): String =
++      packages.entries.joinToString(",\n      ") { (name, dep) ->
++        val packageImportPath =
++            requireNotNull(dep.packageImportPath) {
++              "RNGP - Autolinking: Missing `packageImportPath` in `config` for dependency $name. This is required to generate the autolinking package list."
++            }
++        val fqcn =
++            requireNotNull(
++                extractFqcnFromImport(interpolateDynamicValues(packageImportPath, packageName))
++            ) {
++              "RNGP - Autolinking: Could not extract FQCN from `packageImportPath` for dependency $name."
++            }
++        "// $name\n      \"$fqcn\""
++      }
++
+   internal fun composePackageInstance(
+       packageName: String,
+       packages: Map<String, ModelAutolinkingDependenciesPlatformAndroidJson>,
+@@ -116,10 +138,15 @@ abstract class GeneratePackageListTask : DefaultTask() {
+   }
+ 
+   internal fun composeFileContent(packageClassInstance: String): String =
+-      generatedFileContentsTemplate.replace("{{ packageClassInstances }}", packageClassInstance)
++      composeFileContent(packageClassInstance, "")
++
++  internal fun composeFileContent(packageClassInstance: String, dynamicPackageImports: String): String =
++      generatedFileContentsTemplate
++          .replace("{{ packageClassInstances }}", packageClassInstance)
++          .replace("{{ dynamicPackageImports }}", dynamicPackageImports)
+ 
+   companion object {
+-    const val GENERATED_FILENAME = "com/facebook/react/PackageList.java"
++    const val GENERATED_FILENAME = "io/hyperswitch/react/PackageList.java"
+ 
+     /**
+      * Before adding the package replacement mechanism, BuildConfig and R classes were imported
+@@ -148,7 +175,7 @@ abstract class GeneratePackageListTask : DefaultTask() {
+     // language=java
+     val generatedFileContentsTemplate =
+         """
+-        package com.facebook.react;
++        package io.hyperswitch.react;
+ 
+         import android.app.Application;
+         import android.content.Context;
+@@ -160,52 +187,56 @@ abstract class GeneratePackageListTask : DefaultTask() {
+         import java.util.Arrays;
+         import java.util.ArrayList;
+ 
+-        @SuppressWarnings("deprecation")
+         public class PackageList {
+           private Application application;
+-          private ReactNativeHost reactNativeHost;
+           private MainPackageConfig mConfig;
+ 
+-          public PackageList(ReactNativeHost reactNativeHost) {
+-            this(reactNativeHost, null);
+-          }
+-
+           public PackageList(Application application) {
+             this(application, null);
+           }
+ 
+-          public PackageList(ReactNativeHost reactNativeHost, MainPackageConfig config) {
+-            this.reactNativeHost = reactNativeHost;
+-            mConfig = config;
+-          }
+-
+           public PackageList(Application application, MainPackageConfig config) {
+-            this.reactNativeHost = null;
+             this.application = application;
+             mConfig = config;
+           }
+ 
+-          private ReactNativeHost getReactNativeHost() {
+-            return this.reactNativeHost;
+-          }
+-
+           private Resources getResources() {
+             return this.getApplication().getResources();
+           }
+ 
+           private Application getApplication() {
+-            if (this.reactNativeHost == null) return this.application;
+-            return this.reactNativeHost.getApplication();
++            return this.application;
+           }
+ 
+           private Context getApplicationContext() {
+             return this.getApplication().getApplicationContext();
+           }
+ 
++          private ReactPackage getPackage(String packageClassName) {
++            try {
++              Class<?> packageClass = Class.forName(packageClassName);
++              if (ReactPackage.class.isAssignableFrom(packageClass)) {
++                return (ReactPackage) packageClass.getDeclaredConstructor().newInstance();
++              }
++            } catch (Exception ignored) {}
++            return null;
++          }
++
++          private ArrayList<ReactPackage> addDynamicPackages(ArrayList<ReactPackage> packages) {
++            ArrayList<String> packageClassNames = new ArrayList<>(Arrays.<String>asList(
++              {{ dynamicPackageImports }}
++            ));
++            for (String packageClassName : packageClassNames) {
++              ReactPackage reactPackage = getPackage(packageClassName);
++              if (reactPackage != null) packages.add(reactPackage);
++            }
++            return packages;
++          }
++
+           public ArrayList<ReactPackage> getPackages() {
+-            return new ArrayList<>(Arrays.<ReactPackage>asList(
++            return addDynamicPackages(new ArrayList<>(Arrays.<ReactPackage>asList(
+               new MainReactPackage(mConfig){{ packageClassInstances }}
+-            ));
++            )));
+           }
+         }
+         """
+diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/AgpConfiguratorUtils.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/AgpConfiguratorUtils.kt
+index c4a7b35..0eb4bc5 100644
+--- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/AgpConfiguratorUtils.kt
++++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/AgpConfiguratorUtils.kt
+@@ -7,6 +7,7 @@
+ 
+ package com.facebook.react.utils
+ 
++import com.android.build.api.variant.AndroidComponentsExtension
+ import com.android.build.api.variant.ApplicationAndroidComponentsExtension
+ import com.android.build.api.variant.LibraryAndroidComponentsExtension
+ import com.android.build.gradle.LibraryExtension
+@@ -31,34 +32,37 @@ internal object AgpConfiguratorUtils {
+     val action =
+         Action<AppliedPlugin> {
+           project.extensions
+-              .getByType(ApplicationAndroidComponentsExtension::class.java)
+-              .finalizeDsl { ext ->
+-                ext.buildTypes {
+-                  val debug =
+-                      getByName("debug").apply {
+-                        manifestPlaceholders["usesCleartextTraffic"] = "true"
+-                      }
+-                  getByName("release").apply {
+-                    manifestPlaceholders["usesCleartextTraffic"] = "false"
+-                  }
+-                  maybeCreate("debugOptimized").apply {
+-                    manifestPlaceholders["usesCleartextTraffic"] = "true"
+-                    initWith(debug)
+-                    matchingFallbacks += listOf("release")
+-                    externalNativeBuild { cmake { arguments("-DCMAKE_BUILD_TYPE=Release") } }
+-                  }
++              .getByType(AndroidComponentsExtension::class.java)
++              .finalizeDsl { extRaw ->
++                val ext = extRaw as com.android.build.api.dsl.CommonExtension<*, *, *, *, *, *>
++                val buildTypes = ext.buildTypes
++                val debug =
++                    (buildTypes.getByName("debug") as com.android.build.api.dsl.BuildType).apply {
++                      manifestPlaceholders["usesCleartextTraffic"] = "true"
++                    }
++                (buildTypes.getByName("release") as com.android.build.api.dsl.BuildType).apply {
++                  manifestPlaceholders["usesCleartextTraffic"] = "false"
+                 }
++                (buildTypes.maybeCreate("debugOptimized") as com.android.build.api.dsl.BuildType)
++                    .apply {
++                      manifestPlaceholders["usesCleartextTraffic"] = "true"
++                      initWith(debug)
++                      matchingFallbacks += listOf("release")
++                      externalNativeBuild { cmake { arguments("-DCMAKE_BUILD_TYPE=Release") } }
++                    }
+               }
+         }
+     project.pluginManager.withPlugin("com.android.application", action)
++    project.pluginManager.withPlugin("com.android.library", action)
+   }
+ 
+   fun configureBuildConfigFieldsForApp(project: Project, extension: ReactExtension) {
+     val action =
+         Action<AppliedPlugin> {
+           project.extensions
+-              .getByType(ApplicationAndroidComponentsExtension::class.java)
+-              .finalizeDsl { ext ->
++              .getByType(AndroidComponentsExtension::class.java)
++              .finalizeDsl { extRaw ->
++                val ext = extRaw as com.android.build.api.dsl.CommonExtension<*, *, *, *, *, *>
+                 ext.buildFeatures.buildConfig = true
+                 ext.defaultConfig.buildConfigField("boolean", "IS_NEW_ARCHITECTURE_ENABLED", "true")
+                 ext.defaultConfig.buildConfigField(
+@@ -95,8 +99,9 @@ internal object AgpConfiguratorUtils {
+     val action =
+         Action<AppliedPlugin> {
+           project.extensions
+-              .getByType(ApplicationAndroidComponentsExtension::class.java)
+-              .finalizeDsl { ext ->
++              .getByType(AndroidComponentsExtension::class.java)
++              .finalizeDsl { extRaw ->
++                val ext = extRaw as com.android.build.api.dsl.CommonExtension<*, *, *, *, *, *>
+                 ext.buildFeatures.resValues = true
+                 ext.defaultConfig.resValue(
+                     "string",
+diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
+index c5f42cf..ca2c11a 100644
+--- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
++++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/DependencyUtils.kt
+@@ -57,7 +57,7 @@ internal object DependencyUtils {
+       with(eachProject) {
+         if (hasProperty(INTERNAL_REACT_NATIVE_MAVEN_LOCAL_REPO)) {
+           val mavenLocalRepoPath = property(INTERNAL_REACT_NATIVE_MAVEN_LOCAL_REPO) as String
+-          mavenRepoFromURI(File(mavenLocalRepoPath).toURI()) { repo ->
++          if (File(mavenLocalRepoPath).exists()) mavenRepoFromURI(File(mavenLocalRepoPath).toURI()) { repo ->
+             repo.content { it.excludeGroup("org.webkit") }
+           }
+         }
+diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/NdkConfiguratorUtils.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/NdkConfiguratorUtils.kt
+index 119c80d..5b65765 100644
+--- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/NdkConfiguratorUtils.kt
++++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/utils/NdkConfiguratorUtils.kt
+@@ -7,7 +7,7 @@
+ 
+ package com.facebook.react.utils
+ 
+-import com.android.build.api.variant.ApplicationAndroidComponentsExtension
++import com.android.build.api.variant.AndroidComponentsExtension
+ import com.android.build.api.variant.Variant
+ import com.facebook.react.ReactExtension
+ import com.facebook.react.utils.ProjectUtils.getReactNativeArchitectures
+@@ -17,9 +17,10 @@ import org.gradle.api.Project
+ internal object NdkConfiguratorUtils {
+   @Suppress("UnstableApiUsage")
+   fun configureReactNativeNdk(project: Project, extension: ReactExtension) {
+-    project.pluginManager.withPlugin("com.android.application") {
+-      project.extensions.getByType(ApplicationAndroidComponentsExtension::class.java).finalizeDsl {
+-          ext ->
++    val configureAction: (org.gradle.api.plugins.AppliedPlugin) -> Unit = {
++      project.extensions.getByType(AndroidComponentsExtension::class.java).finalizeDsl {
++          extRaw ->
++        val ext = extRaw as com.android.build.api.dsl.CommonExtension<*, *, *, *, *, *>
+         // We enable prefab so users can consume .so/headers from ReactAndroid and hermes-engine
+         // .aar
+         ext.buildFeatures.prefab = true
+@@ -63,6 +64,8 @@ internal object NdkConfiguratorUtils {
+         }
+       }
+     }
++    project.pluginManager.withPlugin("com.android.application", configureAction)
++    project.pluginManager.withPlugin("com.android.library", configureAction)
+   }
+ 
+   /**
