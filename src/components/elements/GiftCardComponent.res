@@ -19,7 +19,7 @@ module GiftCardComponent = {
       icon: payment_method_type.payment_method_type->CommonUtils.getDisplayName,
     })
 
-    let {formDataRef, getRequiredFieldsForTabs, country, _} = React.useContext(
+    let {formDataRef, getRequiredFieldsForTabs, country, isConfigInitialized, _} = React.useContext(
       DynamicFieldsContext.dynamicFieldsContext,
     )
 
@@ -46,7 +46,7 @@ module GiftCardComponent = {
       enabledCardSchemes,
       accessible,
       _,
-    ) = React.useMemo3(_ => {
+    ) = React.useMemo(_ => {
       switch selectedGiftCardType {
       | Some(selectedGiftCardType) =>
         switch giftCardArr->Array.find(
@@ -58,7 +58,7 @@ module GiftCardComponent = {
 
       | None => ([], Dict.make(), false, [], true, "")
       }
-    }, (selectedGiftCardType, getRequiredFieldsForTabs, country))
+    }, (selectedGiftCardType, getRequiredFieldsForTabs, country, isConfigInitialized))
 
     <View
       style={s({position: #absolute, width: 100.->pct, paddingHorizontal: 2.->dp})}
