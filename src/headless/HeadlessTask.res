@@ -267,7 +267,7 @@ let make = (~props) => {
             (),
           )
           headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
-        }, 5000)
+        }, Constants.applePayTimeoutMs)
         let applePayCallback = async var => {
           try {
             confirmApplePay(var, data, nativeProp)

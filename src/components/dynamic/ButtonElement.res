@@ -250,7 +250,7 @@ let make = (
             ~paymentExperience=paymentMethodData.payment_experience,
             (),
           )
-        }, 5000)
+        }, Constants.applePayTimeoutMs)
 
         HyperModule.launchApplePay(
           [

@@ -50,7 +50,7 @@ let usePayment = (
           ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
           (),
         )
-      }, 5000)
+      }, Constants.applePayTimeoutMs)
       HyperModule.launchApplePay(
         [
           ("session_token_data", sessionObject.session_token_data),

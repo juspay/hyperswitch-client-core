@@ -451,7 +451,7 @@ let make = (
                 ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
                 (),
               )
-            }, 5000)
+            }, Constants.applePayTimeoutMs)
 
             WebKit.platform === #ios
               ? HyperModule.launchApplePay(
