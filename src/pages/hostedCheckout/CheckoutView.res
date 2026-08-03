@@ -49,15 +49,15 @@ module Divider = {
 module CheckoutDetails = {
   @react.component
   let make = (
-    ~accountPaymentMethodData: option<AccountPaymentMethodType.accountPaymentMethods>,
+    ~clientData: option<ClientResponseType.clientResponse>,
     ~textSecondary,
   ) => {
     <>
       <Space height={40.} />
-      {switch accountPaymentMethodData {
+      {switch clientData {
       | Some(data) =>
         <LineItem
-          label={`${data.merchant_name->String.toUpperCase} Subscription`}
+          label={`${data.intent_data.merchant_name->String.toUpperCase} Subscription`}
           value="$399.00"
           sublabel="Billed monthly"
           subvalue="$399.00 per seat"
@@ -98,7 +98,7 @@ module CheckoutDetails = {
 
 @react.component
 let make = (~isDesktop) => {
-  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let {textSecondary} = ThemebasedStyle.useThemeBasedStyle()
 
   let (showDetails, setShowDetails) = React.useState(() => false)
@@ -133,7 +133,7 @@ let make = (~isDesktop) => {
           }),
           shadowStyle,
         ])}>
-        {switch accountPaymentMethodData {
+        {switch clientData {
         | Some(data) =>
           <View
             style={s({
@@ -155,7 +155,7 @@ let make = (~isDesktop) => {
                 height={isDesktop ? 24. : 18.}
               />
               <TextWrapper
-                text={data.merchant_name->String.toUpperCase}
+                text={data.intent_data.merchant_name->String.toUpperCase}
                 textType={HeadingBold}
                 overrideStyle={Some(s({fontSize: isDesktop ? 32. : 24., fontWeight: #700}))}
               />
@@ -172,7 +172,7 @@ let make = (~isDesktop) => {
           </View>
         | None => React.null
         }}
-        <CheckoutDetails accountPaymentMethodData textSecondary />
+        <CheckoutDetails clientData textSecondary />
         <Space />
       </View>
     </FloatingBanner>
@@ -183,7 +183,7 @@ let make = (~isDesktop) => {
         paddingHorizontal: 20.->dp,
       })}>
       <Space height={isDesktop ? 40. : 20.} />
-      {switch accountPaymentMethodData {
+      {switch clientData {
       | Some(data) =>
         <View
           style={s({
@@ -205,7 +205,7 @@ let make = (~isDesktop) => {
               height={isDesktop ? 24. : 18.}
             />
             <TextWrapper
-              text={data.merchant_name->String.toUpperCase}
+              text={data.intent_data.merchant_name->String.toUpperCase}
               textType={HeadingBold}
               overrideStyle={Some(s({fontSize: isDesktop ? 32. : 24., fontWeight: #700}))}
             />
@@ -224,10 +224,10 @@ let make = (~isDesktop) => {
       }}
       <View style=?{isDesktop ? None : Some(s({alignItems: #center}))}>
         <Space height={40.} />
-        {switch accountPaymentMethodData {
+        {switch clientData {
         | Some(data) =>
           <TextWrapper
-            text={`Subscribe to ${data.merchant_name} Subscription`}
+            text={`Subscribe to ${data.intent_data.merchant_name} Subscription`}
             textType={Subheading}
             overrideStyle={Some(textSecondary)}
           />
@@ -254,7 +254,7 @@ let make = (~isDesktop) => {
           </View>
         </View>
       </View>
-      {isDesktop ? <CheckoutDetails accountPaymentMethodData textSecondary /> : React.null}
+      {isDesktop ? <CheckoutDetails clientData textSecondary /> : React.null}
     </View>
   </>
 }

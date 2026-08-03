@@ -3,7 +3,6 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   // let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let showErrorOrWarning = ErrorHooks.useShowErrorOrWarning()
-  let savedPaymentMethods = AllPaymentHooks.useGetSavedPMHook()
   let logger = LoggerHook.useLoggerHook()
 
   React.useEffect(() => {
@@ -12,31 +11,6 @@ let make = () => {
     let appId = nativeProp.sdkParams.appId->Option.getOr("") ++ ".hyperswitch://"
 
     logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
-
-    if (
-      nativeProp.configuration.customer
-      ->Option.map(customer => customer.ephemeralKeySecret)
-      ->Option.getOr(None)
-      ->Option.getOr("") != ""
-    ) {
-      savedPaymentMethods()
-      ->Promise.then(_customerSavedPMData => {
-        // let savedPaymentMethods = PMLUtils.handleCustomerPMLResponse(
-        //   ~customerSavedPMData=Some(customerSavedPMData),
-        //   ~sessions=None,
-        //   ~isPaymentMethodManagement=true,
-        //   ~nativeProp,
-        // )
-
-        // setAllApiData({
-        //   ...allApiData,
-        //   savedPaymentMethods,
-        // })
-
-        Promise.resolve()
-      })
-      ->ignore
-    }
     None
   }, [nativeProp])
 

@@ -4,7 +4,7 @@ open Style
 @react.component
 let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: bool => unit) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
 
@@ -20,10 +20,10 @@ let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: 
   <UIUtils.RenderIf
     condition={nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection &&
     !nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateScreen}>
-    {switch customerPaymentMethodData {
-    | Some(customerPaymentMethods) =>
+    {switch clientData {
+    | Some(data) =>
       <UIUtils.RenderIf
-        condition={customerPaymentMethods.customer_payment_methods->Array.length > 0}>
+        condition={data.customer_payment_methods->Array.length > 0}>
         <Space />
         <View
           style={array([
@@ -45,10 +45,10 @@ let make = (~setConfirmButtonData, ~style=empty, ~isActive=false, ~setIsActive: 
           <SavedPaymentSheet
             isScreenFocus=isActive
             setIsScreenFocus=setIsActive
-            customerPaymentMethods=customerPaymentMethods.customer_payment_methods
+            customerPaymentMethods=data.customer_payment_methods
             setConfirmButtonData
-            merchantName={accountPaymentMethodData
-            ->Option.map(data => data.merchant_name)
+            merchantName={clientData
+            ->Option.map(data => data.intent_data.merchant_name)
             ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
             animated=true
           />
