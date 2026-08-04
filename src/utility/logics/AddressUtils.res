@@ -80,7 +80,10 @@ let getApplePayBillingAddress = (dict, str, shipping: option<string>) => {
       getOptionString(postalAddress, "isoCountryCode")->Option.map(country =>
         country->String.toUpperCase
       )
-    let street = getString(postalAddress, "street", "")->String.split("\n")
+    let street =
+      getOptionString(postalAddress, "street")
+      ->Option.mapOr([], street => street->String.split("\n"))
+      ->Array.filter(line => line->String.trim !== "")
     let line1 = Array.at(street, 0)
     let line2 = if Array.length(street) > 1 {
       Array.at(street, 1)

@@ -132,7 +132,7 @@ let make = (
   ~onAllCollapsed: bool => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, customerPaymentMethodData, _, _) = React.useContext(
+  let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
   let layout = nativeProp.configuration.paymentMethodLayout
@@ -143,14 +143,15 @@ let make = (
 
   let (expandedSections, setExpandedSections) = React.useState(_ => [])
   let (showMore, setShowMore) = React.useState(_ => true)
+  
+  let hasData = switch clientData {
+  | Some(data) =>
+    data.payment_methods_enabled->Array.length > 0 ||
+    data.customer_payment_methods->Array.length > 0
+  | None => false
+  }
 
-  React.useEffect3(() => {
-    let hasData =
-      accountPaymentMethodData->Option.isSome ||
-        customerPaymentMethodData
-        ->Option.map(c => c.customer_payment_methods->Array.length > 0)
-        ->Option.getOr(false)
-
+  React.useEffect2(() => {
     if hasData && expandedSections->Array.length === 0 {
       let expandIndex = switch layout.savedMethodCustomization.defaultCollapsed
         ? None
@@ -165,7 +166,7 @@ let make = (
         ...GlobalConfirmButton.defaultConfirmButtonData,
         loading: false,
         visible: !(expandIndex->Array.length === 0) ||
-        (customerPaymentMethodData
+        (clientData
         ->Option.map(c => c.customer_payment_methods->Array.length > 0)
         ->Option.getOr(false) &&
           layout.savedMethodCustomization.groupingBehavior.displayInSeparateSection),
@@ -173,7 +174,7 @@ let make = (
       setExpandedSections(_ => expandIndex)
     }
     None
-  }, (accountPaymentMethodData, customerPaymentMethodData, hocComponentArr))
+  }, (clientData, hocComponentArr))
 
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
@@ -259,9 +260,7 @@ let make = (
       spacedAccordionItems=layout.spacedAccordionItems
     />
     <UIUtils.RenderIf
-      condition={allSections->Array.length > maxVisibleItems &&
-      showMore &&
-      accountPaymentMethodData->Option.isSome}>
+      condition={allSections->Array.length > maxVisibleItems && showMore && hasData}>
       <MoreButton
         handleMoreToggle={() => {
           setShowMore(_ => false)

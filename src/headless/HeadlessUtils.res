@@ -188,6 +188,17 @@ let getBaseUrl = nativeProp => {
   )
 }
 
+// let savedPaymentMethodAPICall = nativeProp => {
+//   let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+//   | Some(_) => Some(`${getBaseUrl(nativeProp)}/customers/payment_methods`)
+//   | None =>
+//     Some(
+//       `${getBaseUrl(
+//           nativeProp,
+//         )}/customers/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`,
+//     )
+//   }
+
 let accountPaymentMethodAPICall = nativeProp => {
   let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => `${getBaseUrl(nativeProp)}/account/payment_methods`
@@ -212,23 +223,54 @@ let accountPaymentMethodAPICall = nativeProp => {
   )
 }
 
-let savedPaymentMethodAPICall = nativeProp => {
+let accountPaymentMethodAPICall = nativeProp => {
   let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(_) => Some(`${getBaseUrl(nativeProp)}/customers/payment_methods`)
+  | Some(_) => `${getBaseUrl(nativeProp)}/account/payment_methods`
   | None =>
-    Some(
+    `${getBaseUrl(nativeProp)}/account/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
+  }
+
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=PAYMENT_METHODS_CALL,
+    ~method=#GET,
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
+    ~processSuccess=json => json,
+    ~processError=error => error,
+    ~processCatch=_ => JSON.Encode.null,
+  )
+}
+
+let fetchClientData = nativeProp => {
+  let paymentId = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+  | Some(auth) =>
+    Utils.getSdkAuthorizationData(auth).paymentId->Option.getOr(
+      nativeProp.paymentSessionConfig.paymentId,
+    )
+  | None => nativeProp.paymentSessionConfig.paymentId
+  }
+  let uri = Some(
+    switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+    | Some(_) => `${getBaseUrl(nativeProp)}/payments/${paymentId}/client`
+    | None =>
       `${getBaseUrl(
           nativeProp,
-        )}/customers/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`,
-    )
-  }
+        )}/payments/${paymentId}/client?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
+    },
+  )
 
   switch uri {
   | Some(uri) =>
     handleApiCall(
       ~uri,
       ~nativeProp,
-      ~eventName=CUSTOMER_PAYMENT_METHODS_CALL,
+      ~eventName=CLIENT_LIST_CALL,
       ~method=#GET,
       ~headers=Utils.getHeader(
         ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
@@ -471,7 +513,7 @@ let getBrowserInfo = (nativeProp: SdkTypes.nativeProp) => {
 
 let generateWalletConfirmBody = (
   ~nativeProp,
-  ~data: CustomerPaymentMethodType.customer_payment_method_type,
+  ~data: ClientResponseType.customerPaymentMethod,
   ~payment_method_data,
   ~payment_type_str=?,
 ) => {

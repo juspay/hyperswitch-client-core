@@ -8,7 +8,7 @@ let make = (
   ~errorText=None,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (accountPaymentMethodData, _, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
   <>
@@ -23,8 +23,8 @@ let make = (
           displayText={switch nativeProp.configuration.primaryButtonLabel {
           | Some(str) => str
           | None =>
-            accountPaymentMethodData
-            ->Option.map(accountPaymentMethods => accountPaymentMethods.payment_type)
+            clientData
+            ->Option.map(data => data.intent_data.payment_type)
             ->Option.getOr(NORMAL) !== NORMAL
               ? "Pay Now"
               : localeObject.payNowButton
