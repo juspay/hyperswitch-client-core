@@ -14,9 +14,7 @@ let make = (
   ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let {
     isNicknameSelected,
     setIsNicknameSelected,
@@ -92,7 +90,6 @@ let make = (
         <NickNameElement nickname setNickname setIsNicknameValid accessible />
       | _ => React.null
       }}
-      <Space height=10. />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf
       condition={!isCardPayment && !isGiftCardPayment && sheetType !== DynamicFieldsSheet}>

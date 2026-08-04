@@ -4,9 +4,7 @@ open Style
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let {sheetType} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let (viewPortConstants, _) = React.useContext(ViewportContext.viewPortContext)
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
@@ -72,8 +70,7 @@ let make = () => {
       | (WidgetButtonSheet, _) =>
         <PaymentSheet
           setConfirmButtonData
-          isLoading={confirmButtonData.loading &&
-          clientData->Option.isNone}
+          isLoading={confirmButtonData.loading && clientData->Option.isNone}
           tabArr
           elementArr
           giftCardArr
@@ -83,9 +80,7 @@ let make = () => {
       | (HostedCheckout, false)
       | (WidgetTabSheet, false)
       | (TabSheet, false) =>
-        switch clientData->Option.map(data =>
-          data.customer_payment_methods
-        ) {
+        switch clientData->Option.map(data => data.customer_payment_methods) {
         | Some(customerPaymentMethods) =>
           let showSavedScreen =
             customerPaymentMethods->Array.length > 0 &&
@@ -138,7 +133,6 @@ let make = () => {
     <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
       <View
         style={s({
-          paddingTop: (sheetContentPadding /. 2.)->dp,
           paddingBottom: viewPortConstants.bottomInset->dp,
         })}>
         <GlobalConfirmButton confirmButtonData />

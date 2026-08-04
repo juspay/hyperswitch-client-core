@@ -139,8 +139,12 @@ let make = (
                 | Completed => localeObject.completeButtonText
                 | _ => textStr
                 }}
-                // textType=CardText
                 textType={ButtonTextBold}
+                overrideStyle={Some(
+                  s({
+                    includeFontPadding: false,
+                  }),
+                )}
               />
               {switch rightIcon {
               | CustomIcon(element) => element
