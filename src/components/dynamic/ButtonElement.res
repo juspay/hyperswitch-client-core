@@ -252,6 +252,7 @@ let make = (
           )
         }, Constants.applePayTimeoutMs)
 
+        let presentationStartTime = Date.now()
         HyperModule.launchApplePay(
           [
             ("session_token_data", sessionObject.session_token_data),
@@ -274,6 +275,17 @@ let make = (
           },
           _ => {
             clearTimeout(timerId)
+            let presentationTimeTaken = Date.now() -. presentationStartTime
+            logger(
+              ~logType=DEBUG,
+              ~value=paymentMethodData.payment_method_type,
+              ~category=USER_EVENT,
+              ~paymentMethod=paymentMethodData.payment_method_type,
+              ~eventName=APPLE_PAY_PRESENT_RESPONSE_FROM_NATIVE,
+              ~paymentExperience=paymentMethodData.payment_experience,
+              ~latency=presentationTimeTaken,
+              (),
+            )
           },
         )
       }

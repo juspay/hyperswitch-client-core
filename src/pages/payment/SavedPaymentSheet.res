@@ -453,6 +453,7 @@ let make = (
               )
             }, Constants.applePayTimeoutMs)
 
+            let presentationStartTime = Date.now()
             WebKit.platform === #ios
               ? HyperModule.launchApplePay(
                   [
@@ -475,6 +476,16 @@ let make = (
                   },
                   _ => {
                     clearTimeout(timerId)
+                    let presentationTimeTaken = Date.now() -. presentationStartTime
+                    logger(
+                      ~logType=DEBUG,
+                      ~value="apple_pay",
+                      ~category=USER_EVENT,
+                      ~paymentMethod="apple_pay",
+                      ~eventName=APPLE_PAY_PRESENT_RESPONSE_FROM_NATIVE,
+                      ~latency=presentationTimeTaken,
+                      (),
+                    )
                   },
                 )
               : launchApplePay(
