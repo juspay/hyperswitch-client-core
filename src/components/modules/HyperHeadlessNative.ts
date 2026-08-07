@@ -1,7 +1,4 @@
 import NativeHyperHeadless from '../../specs/NativeHyperHeadless';
-import type {PaymentExitResult} from '../../specs/NativeHyperHeadless';
-
-export type {PaymentExitResult};
 
 export const getPaymentSession = (
   rootTag: number,
@@ -19,9 +16,6 @@ export const getPaymentSession = (
   );
 };
 
-export const exitHeadless = (
-  rootTag: number,
-  result: PaymentExitResult,
-): void => {
+export const exitHeadless = (rootTag: number, result: string): void => {
   NativeHyperHeadless?.exitHeadless(rootTag, result);
 };

@@ -23,14 +23,9 @@ export type UpdateIntentEvent = {
   sdkAuthorization?: string;
 };
 
-export type PaymentExitResult = {
-  status: string;
-  type?: string;
-  code?: string;
-  message?: string;
-};
-
 export interface Spec extends TurboModule {
+  sendMessageToNative(message: string): void;
+
   launchApplePay(
     requestObj: string,
     callback: (result: CodegenTypes.UnsafeObject) => void,
@@ -49,7 +44,7 @@ export interface Spec extends TurboModule {
   ): void;
   exitPaymentsheet(
     rootTag: CodegenTypes.Int32,
-    result: PaymentExitResult,
+    result: string,
     reset: boolean,
   ): void;
   exitPaymentMethodManagement(
@@ -59,16 +54,16 @@ export interface Spec extends TurboModule {
   ): void;
   exitWidgetPaymentsheet(
     rootTag: CodegenTypes.Int32,
-    result: PaymentExitResult,
+    result: string,
     reset: boolean,
   ): void;
-  exitWidget(result: PaymentExitResult, widgetType: string): void;
+  exitWidget(result: string, widgetType: string): void;
   exitCardForm(result: string): void;
   onAddPaymentMethod(data: string): void;
   updateWidgetHeight(height: CodegenTypes.Int32): void;
   notifyWidgetPaymentResult(
     rootTag: CodegenTypes.Int32,
-    result: PaymentExitResult,
+    result: string,
   ): void;
   emitPaymentEvent(
     rootTag: CodegenTypes.Int32,
@@ -78,7 +73,7 @@ export interface Spec extends TurboModule {
   onUpdateIntentEvent(
     rootTag: CodegenTypes.Int32,
     eventType: string,
-    result: PaymentExitResult,
+    result: string,
   ): void;
   onPaymentConfirmButtonClick(
     rootTag: CodegenTypes.Int32,

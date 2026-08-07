@@ -19,7 +19,10 @@ type fallbackArg = {
 
 type props = {fallback: fallbackArg => React.element, children: React.element}
 
-// Sentry v8
+// Sentry v8+ exposes integrations as factory functions on the module itself.
+// On native (@sentry/react-native) only reactNativeTracingIntegration exists;
+// on web (aliased to @sentry/react) only the browser integrations exist —
+// each is only called on its own platform.
 type module_ = {
   init: sentryInitArg => unit,
   reactNativeTracingIntegration: unit => integration,

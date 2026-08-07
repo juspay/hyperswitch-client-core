@@ -1,16 +1,11 @@
 type dictCallback = Dict.t<JSON.t> => unit
 
-type exitResultPayload = {
-  status: string,
-  @as("type") type_?: string,
-  code?: string,
-  message?: string,
-}
-
 // Typed externals into the TurboModule access layer (HyperModuleNative.ts,
 // used on native and web alike). It no-ops when the native module is
 // absent, so these are always safe to call.
 module Native = {
+  @module("./HyperModuleNative")
+  external sendMessageToNative: string => unit = "sendMessageToNative"
   @module("./HyperModuleNative")
   external launchApplePay: (string, dictCallback) => unit = "launchApplePay"
   @module("./HyperModuleNative")
@@ -20,15 +15,14 @@ module Native = {
   @module("./HyperModuleNative")
   external launchGPay: (string, dictCallback) => unit = "launchGPay"
   @module("./HyperModuleNative")
-  external exitPaymentsheet: (int, exitResultPayload, bool) => unit = "exitPaymentsheet"
+  external exitPaymentsheet: (int, string, bool) => unit = "exitPaymentsheet"
   @module("./HyperModuleNative")
   external exitPaymentMethodManagement: (int, string, bool) => unit =
     "exitPaymentMethodManagement"
   @module("./HyperModuleNative")
-  external exitWidgetPaymentsheet: (int, exitResultPayload, bool) => unit =
-    "exitWidgetPaymentsheet"
+  external exitWidgetPaymentsheet: (int, string, bool) => unit = "exitWidgetPaymentsheet"
   @module("./HyperModuleNative")
-  external exitWidget: (exitResultPayload, string) => unit = "exitWidget"
+  external exitWidget: (string, string) => unit = "exitWidget"
   @module("./HyperModuleNative")
   external exitCardForm: string => unit = "exitCardForm"
   @module("./HyperModuleNative")
@@ -36,12 +30,11 @@ module Native = {
   @module("./HyperModuleNative")
   external updateWidgetHeight: int => unit = "updateWidgetHeight"
   @module("./HyperModuleNative")
-  external notifyWidgetPaymentResult: (int, exitResultPayload) => unit =
-    "notifyWidgetPaymentResult"
+  external notifyWidgetPaymentResult: (int, string) => unit = "notifyWidgetPaymentResult"
   @module("./HyperModuleNative")
   external emitPaymentEvent: (int, string, JSON.t) => unit = "emitPaymentEvent"
   @module("./HyperModuleNative")
-  external onUpdateIntentEvent: (int, string, exitResultPayload) => unit = "onUpdateIntentEvent"
+  external onUpdateIntentEvent: (int, string, string) => unit = "onUpdateIntentEvent"
   @module("./HyperModuleNative")
   external openIframeBridge: (string, int, string => unit) => unit = "openIframeBridge"
 
@@ -75,11 +68,8 @@ module Events = {
   let subscribeUpdateIntentComplete = Native.subscribeUpdateIntentComplete
 }
 
-let resStatusPayload = (apiResStatus: PaymentConfirmTypes.error): exitResultPayload => {
-  status: apiResStatus.status->Option.getOr("failed"),
-  type_: apiResStatus.type_->Option.getOr(""),
-  code: apiResStatus.code->Option.getOr(""),
-  message: apiResStatus.message->Option.getOr("An unknown error has occurred please retry"),
+let sendMessageToNative = str => {
+  Native.sendMessageToNative(str)
 }
 
 let stringifiedResStatus = (apiResStatus: PaymentConfirmTypes.error) => {
@@ -107,7 +97,7 @@ let emitPaymentEvent = (rootTag: int, eventType: string, payload: JSON.t) => {
   Native.emitPaymentEvent(rootTag, eventType, payload)
 }
 
-let onUpdateIntentEvent = (rootTag: int, type_: string, result: exitResultPayload) => {
+let onUpdateIntentEvent = (rootTag: int, type_: string, result: string) => {
   Native.onUpdateIntentEvent(rootTag, type_, result)
 }
 
@@ -115,7 +105,7 @@ let onAddPaymentMethod = (data: string) => {
   Native.onAddPaymentMethod(data)
 }
 
-let notifyWidgetPaymentResult = (rootTag: int, result: exitResultPayload) => {
+let notifyWidgetPaymentResult = (rootTag: int, result: string) => {
   Native.notifyWidgetPaymentResult(rootTag, result)
 }
 
@@ -166,8 +156,8 @@ let useExitPaymentsheet = () => {
     ReactNative.Platform.os == #web
       ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
-      ? Native.exitWidgetPaymentsheet(rootTag, apiResStatus->resStatusPayload, reset)
-      : Native.exitPaymentsheet(rootTag, apiResStatus->resStatusPayload, reset)
+      ? Native.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
+      : Native.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }
   {exit, simplyExit}
 }
@@ -180,7 +170,7 @@ let useExitCard = () => {
 
 let useExitWidget = () => {
   (exitMode, widgetType: string) => {
-    Native.exitWidget(exitMode->resStatusPayload, widgetType)
+    Native.exitWidget(exitMode->stringifiedResStatus, widgetType)
   }
 }
 
