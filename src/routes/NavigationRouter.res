@@ -4,7 +4,7 @@ let isValidConfig = (value: SdkConfigTypes.sdkConfigValue) =>
     dict->Dict.get("default_configs")->Option.isSome || dict->Dict.get("contexts")->Option.isSome
   | None => false
   }
-
+// testing
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
