@@ -70,6 +70,7 @@ open LocaleDataType
 let getLocaleStrings: Js.Json.t => localeStrings = data => {
   switch data->Js.Json.decodeObject {
   | Some(res) => {
+      ...defaultLocale,
       locale: Utils.getString(res, "locale", defaultLocale.locale),
       localeDirection: Utils.getString(res, "localeDirection", defaultLocale.localeDirection),
       cardNumberLabel: Utils.getString(res, "cardNumberLabel", defaultLocale.cardNumberLabel),
