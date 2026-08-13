@@ -595,7 +595,7 @@ let processRequest = async (
           nativeProp.rootTag,
           getDefaultError->HyperModule.stringifiedResStatus,
         )
-      }, 5000)
+      }, 10000)
       let applePayCallback = async var => {
         try {
           confirmApplePay(headlessModule, reRegisterCallback, var, data, nativeProp)

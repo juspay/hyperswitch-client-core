@@ -23,7 +23,7 @@ let make = (
 
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let launchPaypal = PaypalHooks.usePaypalLaunch()
-  let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
+  // let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
   let {getRequiredFieldsForButton, setInitialValueCountry} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
   )
@@ -272,7 +272,7 @@ let make = (
               ~paymentExperience=paymentMethodData.payment_experience,
               (),
             )
-          }, 5000)
+          }, 10000)
 
           HyperModule.launchApplePay(
             [
@@ -314,12 +314,13 @@ let make = (
         }
       }
     }
-    let doAbort = () => {
-      setLoading(FillingDetails)
-    }
+    // let doAbort = () => {
+    //   setLoading(FillingDetails)
+    // }
 
-    let walletTypeStr = paymentMethodData.payment_method_type_wallet->SdkTypes.walletTypeToStrMapper
-    handleWalletConfirmCallback(walletTypeStr, doProceed, doAbort)->ignore
+    // let walletTypeStr = paymentMethodData.payment_method_type_wallet->SdkTypes.walletTypeToStrMapper
+    // handleWalletConfirmCallback(walletTypeStr, doProceed, doAbort)->ignore
+    doProceed()
   }
 
   React.useEffect1(() => {

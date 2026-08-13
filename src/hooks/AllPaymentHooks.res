@@ -13,12 +13,10 @@ let useHandleSuccessFailure = () => {
         exit(apiResStatus, reset)
       }
     | CardWidget => exitCard(apiResStatus)
-    | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet =>
+    | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet | CustomWidget(_) =>
       if closeSDK {
         exit(apiResStatus, reset)
       }
-    | CustomWidget(str) =>
-      exitWidget(apiResStatus, str->SdkTypes.widgetToStrMapper->String.toLowerCase)
     | ExpressCheckoutWidget => exitWidget(apiResStatus, "expressCheckout")
     | _ => ()
     }

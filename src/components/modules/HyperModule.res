@@ -127,7 +127,7 @@ let useExitPaymentsheet = () => {
       ReactNative.Platform.os == #web
         ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
         : switch nativeProp.sdkState {
-          | WidgetPaymentSheet | WidgetButtonSheet =>
+          | WidgetPaymentSheet | WidgetButtonSheet | CustomWidget(_) =>
             Native.exitWidgetPaymentsheet(
               nativeProp.rootTag,
               apiResStatus->stringifiedResStatus,
@@ -153,9 +153,13 @@ let useExitPaymentsheet = () => {
   }
 
   let simplyExit = (apiResStatus, rootTag, reset) => {
+    let isWidgetSheet = switch nativeProp.sdkState {
+    | WidgetPaymentSheet | WidgetButtonSheet | CustomWidget(_) => true
+    | _ => false
+    }
     ReactNative.Platform.os == #web
       ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
-      : nativeProp.sdkState === WidgetPaymentSheet || nativeProp.sdkState === WidgetButtonSheet
+      : isWidgetSheet
       ? Native.exitWidgetPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
       : Native.exitPaymentsheet(rootTag, apiResStatus->stringifiedResStatus, reset)
   }

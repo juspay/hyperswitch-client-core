@@ -15,6 +15,7 @@ let make = (
   ~height=?,
   ~secureTextEntry=false,
   ~keyboardType=#default,
+  ~returnKeyType=#done,
   ~iconLeft: iconType=NoIcon,
   ~iconRight: iconType=NoIcon,
   ~multiline: bool=false,
@@ -191,7 +192,7 @@ let make = (
               </Animated.Text>
             </Animated.View>
           : React.null}
-        <TextInput
+        <TextInput 
           ref=?{reference->Option.map(ref => ref->ReactNative.Ref.value)}
           style={array([
             s({
@@ -212,6 +213,7 @@ let make = (
           testID=name
           secureTextEntry=showPass
           autoCapitalize=#none
+          returnKeyType=returnKeyType
           multiline
           autoCorrect={false}
           clearTextOnFocus

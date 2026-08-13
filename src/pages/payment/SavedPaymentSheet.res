@@ -32,7 +32,7 @@ let make = (
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
-  let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
+  // let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
 
   let (errorText, setErrorText) = React.useState(_ => None)
 
@@ -416,9 +416,9 @@ let make = (
     ->Option.map(data => data.intent_data.payment_type)
     ->Option.getOr(NORMAL) !== NORMAL
 
-  let onAbort = () => {
-    setLoading(FillingDetails)
-  }
+  // let onAbort = () => {
+  //   setLoading(FillingDetails)
+  // }
 
   let handlePress = _ => {
     switch (
@@ -483,7 +483,7 @@ let make = (
                   ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
                   (),
                 )
-              }, 5000)
+              }, 10000)
 
               WebKit.platform === #ios
                 ? HyperModule.launchApplePay(
@@ -520,7 +520,8 @@ let make = (
                   )
             }
 
-            handleWalletConfirmCallback("apple_pay", doLaunchApplePay, onAbort)->ignore
+            // handleWalletConfirmCallback("apple_pay", doLaunchApplePay, onAbort)->ignore
+            doLaunchApplePay()
           }
 
         | GOOGLE_PAY =>
@@ -547,17 +548,21 @@ let make = (
                   ),
                 )
           }
-          handleWalletConfirmCallback("google_pay", doLaunchGPay, onAbort)->ignore
+          // handleWalletConfirmCallback("google_pay", doLaunchGPay, onAbort)->ignore
+          doLaunchGPay()
         | PAYPAL =>
-          handleWalletConfirmCallback("paypal", () => processRequestSaved(token), onAbort)->ignore
+          // handleWalletConfirmCallback("paypal", () => processRequestSaved(token), onAbort)->ignore
+          processRequestSaved(token)
         | SAMSUNG_PAY =>
-          handleWalletConfirmCallback(
-            "samsung_pay",
-            () => processRequestSaved(token),
-            onAbort,
-          )->ignore
+          // handleWalletConfirmCallback(
+          //   "samsung_pay",
+          //   () => processRequestSaved(token),
+          //   onAbort,
+          // )->ignore
+          processRequestSaved(token)
         | _ =>
-          handleWalletConfirmCallback("wallet", () => processRequestSaved(token), onAbort)->ignore
+          // handleWalletConfirmCallback("wallet", () => processRequestSaved(token), onAbort)->ignore
+          processRequestSaved(token)
         }
       | _ => processRequestSaved(token)
       }

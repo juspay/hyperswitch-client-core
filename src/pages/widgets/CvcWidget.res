@@ -9,6 +9,7 @@ let make = () => {
   let (cvcValue, setCvcValue) = React.useState(_ => "")
   let cvcValueRef = React.useRef("")
   let (isFocused, setIsFocused) = React.useState(_ => false)
+  let lastEmittedStatusRef = React.useRef("")
   let emitter = PaymentEvents.usePaymentEventEmitter()
   let localeObject = GetLocale.useGetLocalObj()
   let {component, dangerColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
@@ -29,14 +30,24 @@ let make = () => {
   }
 
   let emitCvcStatusEvent = (~focused: bool, ~blur: bool) => {
-    emitter.emitCvcStatus(
-      ~event={
-        isCvcFocused: Some(focused),
-        isCvcBlur: Some(blur),
-        isCvcEmpty,
-        isCvcComplete,
-      },
-    )
+    let statusKey =
+      [
+        focused ? "1" : "0",
+        blur ? "1" : "0",
+        isCvcEmpty ? "1" : "0",
+        isCvcComplete ? "1" : "0",
+      ]->Array.join("")
+    if lastEmittedStatusRef.current !== statusKey {
+      lastEmittedStatusRef.current = statusKey
+      emitter.emitCvcStatus(
+        ~event={
+          isCvcFocused: Some(focused),
+          isCvcBlur: Some(blur),
+          isCvcEmpty,
+          isCvcComplete,
+        },
+      )
+    }
   }
 
   let headlessModule = HeadlessCommon.makeHeadlessModule()
@@ -79,10 +90,10 @@ let make = () => {
     Some(() => cleanup())
   })
 
-  React.useEffect1(_ => {
+  React.useEffect2(_ => {
     emitCvcStatusEvent(~focused=isFocused, ~blur=!isFocused)
     None
-  }, [cvcValue])
+  }, (cvcValue, isFocused))
 
   <View
     style={s({
@@ -98,6 +109,7 @@ let make = () => {
       placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(
         localeObject.cvcTextLabel,
       )}
+      returnKeyType=#done
       animateLabel={localeObject.cvcTextLabel}
       keyboardType=#"number-pad"
       enableCrossIcon=false
@@ -107,11 +119,9 @@ let make = () => {
       textColor={isCvcValid ? component.color : dangerColor}
       onFocus={() => {
         setIsFocused(_ => true)
-        emitCvcStatusEvent(~focused=true, ~blur=false)
       }}
       onBlur={() => {
         setIsFocused(_ => false)
-        emitCvcStatusEvent(~focused=false, ~blur=true)
       }}
       iconRight=?{nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.cvcIcon ===
         Hidden
