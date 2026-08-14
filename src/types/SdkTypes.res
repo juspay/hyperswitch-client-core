@@ -254,6 +254,7 @@ type configurationType = {
   paymentMethodOrder: array<string>,
   paymentMethodLayout: LayoutTypes.layout,
   splitCardFields: bool,
+  hideCardNicknameField: bool,
 }
 
 type sdkState =
@@ -804,6 +805,7 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     ->Array.toReversed,
     paymentMethodLayout: LayoutTypes.parseLayout(configObj),
     splitCardFields: getBool(configObj, "splitCardFields", false),
+    hideCardNicknameField: getBool(configObj, "hideCardNicknameField", false),
   }
 }
 
