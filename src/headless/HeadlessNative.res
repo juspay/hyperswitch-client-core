@@ -2,8 +2,8 @@ open ReactNative
 
 type headlessModule = {
   initialisePaymentSession: (JSON.t => unit) => unit,
-  getPaymentSession: (int, JSON.t, JSON.t, JSON.t, JSON.t => unit) => unit,
-  exitHeadless: (int, string) => unit,
+  getPaymentSession: (string, JSON.t, JSON.t, JSON.t, JSON.t => unit) => unit,
+  exitHeadless: (string, string) => unit,
 }
 
 let getFunctionFromModule = (dict: Dict.t<'a>, key: string, default: 'b): 'b => {

@@ -361,12 +361,29 @@ type sdkParams = {
 }
 
 type prefetchedApiData = {
-  accountPaymentMethods: option<JSON.t>,
-  customerPaymentMethods: option<JSON.t>,
+  clientResponse: option<JSON.t>,
   sessionTokens: option<JSON.t>,
   sdkConfig: option<JSON.t>,
-  paymentId: option<string>,
+  sdkAuthorization: option<string>,
 }
+
+let prefetchedApiDataFromJson = json =>
+  json->JSON.Decode.object->Option.map(prefetchDict => {
+    clientResponse: Dict.get(prefetchDict, "clientResponse"),
+    sessionTokens: Dict.get(prefetchDict, "sessionTokens"),
+    sdkConfig: Dict.get(prefetchDict, "sdkConfig"),
+    sdkAuthorization: getOptionString(prefetchDict, "sdkAuthorization"),
+  })
+
+let prefetchedApiDataMatchesAuthorization = (
+  prefetch: prefetchedApiData,
+  sdkAuthorization: option<string>,
+) =>
+  switch (prefetch.sdkAuthorization, sdkAuthorization) {
+  | (Some(prefetchedAuthorization), Some(currentAuthorization)) =>
+    currentAuthorization !== "" && prefetchedAuthorization === currentAuthorization
+  | _ => false
+  }
 
 type nativeProp = {
   rootTag: int,
@@ -914,17 +931,8 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       getObj(d, "configuration", Dict.make()),
       getString(d, "type", "")->parseSdkState === PaymentSheet,
     ),
-    prefetchedApiData: switch Dict.get(d, "prefetchedApiData") {
-    | None => None
-    | Some(json) =>
-      let prefetchDict = json->JSON.Decode.object->Option.getOr(Dict.make())
-      Some({
-        accountPaymentMethods: Dict.get(prefetchDict, "accountPaymentMethods"),
-        customerPaymentMethods: Dict.get(prefetchDict, "customerPaymentMethods"),
-        sessionTokens: Dict.get(prefetchDict, "sessionTokens"),
-        sdkConfig: Dict.get(prefetchDict, "sdkConfig"),
-        paymentId: getOptionString(prefetchDict, "paymentId"),
-      })
-    },
+    prefetchedApiData: Dict.get(d, "prefetchedApiData")->Option.flatMap(
+      prefetchedApiDataFromJson,
+    ),
   }
 }

@@ -30,18 +30,13 @@ let make = () => {
     logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
     error()
 
-    let cleanupRef = ref(None)
-
     //KountModule.launchKountIfAvailable(nativeProp.paymentSessionConfig.clientSecret, _x => ())
     // if (nativeProp.paymentSessionConfig.clientSecret != "" || nativeProp.paymentMethodId != "") &&
     //   nativeProp.hyperswitchConfig.publishableKey != ""
     if nativeProp.sdkState !== CvcWidget {
       let handleClientResponse = clientResp => {
         if ErrorUtils.isError(clientResp) {
-          errorOnApiCalls(
-            INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))),
-            (),
-          )
+          errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))), ())
         } else if clientResp == JSON.Encode.null {
           handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
         } else {
@@ -78,139 +73,74 @@ let make = () => {
         }
       }
 
-      sessionToken()
-      ->Promise.then(sessionTokenData => {
+      // The session-token request must settle before the sheet renders. A successful response with
+      // no token list settles as [] and renders without wallets; only an API error or null fails.
+      let handleSessionTokenResponse = sessionTokenData => {
         if sessionTokenData->ErrorUtils.isError {
           if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
             errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
           } else if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_09\"" {
             errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
+          } else {
+            handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultSessionTokenError, ())
           }
         } else if sessionTokenData != JSON.Null {
           switch sessionTokenData->SessionsType.jsonToSessionTokenType {
           | Some(sessions) => setSessionTokenData(_ => Some(sessions))
           | None => setSessionTokenData(_ => Some([]))
           }
-        }
-      
-      }
-
-      switch nativeProp.prefetchedApiData {
-      | None =>
-        // No prefetch triggered: make API calls normally
-        if nativeProp.configuration.allowsDelayedPaymentMethods {
-          customerPaymentMethods()
-          ->Promise.then(data => {
-            handleCustomerPaymentMethodsResponse(data)
-            Promise.resolve()
-          })
-          ->ignore
-
-          accountPaymentMethods()
-          ->Promise.then(data => {
-            handleAccountPaymentMethodsResponse(data)
-            Promise.resolve()
-          })
-          ->ignore
         } else {
-          Promise.all2((customerPaymentMethods(), accountPaymentMethods()))
-          ->Promise.then(((customerData, accountData)) => {
-            handleCustomerPaymentMethodsResponse(customerData)
-            handleAccountPaymentMethodsResponse(accountData)
+          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultSessionTokenError, ())
+        }
+      }
+
+      let useOrFetch = (prefetched, apiCall, handler) =>
+        switch prefetched {
+        | Some(json) if json != JSON.Null && !(json->ErrorUtils.isError) => handler(json)
+        | Some(_) | None =>
+          apiCall()
+          ->Promise.then(response => {
+            handler(response)
             Promise.resolve()
           })
           ->ignore
         }
 
-        sessionToken()
-        ->Promise.then(data => {
-          handleSessionTokenResponse(data)
-          Promise.resolve()
-        })
-        ->ignore
+      let prefetch = nativeProp.prefetchedApiData->Option.filter(prefetch =>
+        SdkTypes.prefetchedApiDataMatchesAuthorization(
+          prefetch,
+          nativeProp.paymentSessionConfig.sdkAuthorization,
+        )
+      )
 
-        sdkConfig()
-        ->Promise.then(configResponse => {
-          handleSdkConfigResponse(configResponse)
-          Promise.resolve()
-        })
-        ->ignore
-
-      fetchClientData()
-      ->Promise.then(clientResp => {
-        handleClientResponse(clientResp)
-        Promise.resolve()
-      })
-      ->ignore
-
-      | Some({paymentId: None}) =>
-        // Prefetch in progress: subscribe to prefetchApiDataReady event, do NOT re-make API calls
-        let unsubscribed = ref(false)
-        let unsubRef = ref(() => ())
-        let timerRef = ref(Nullable.null)
-        let doUnsub = () => {
-          if !unsubscribed.contents {
-            unsubscribed := true
-            unsubRef.contents()
-            Nullable.forEach(timerRef.contents, id => clearTimeout(id))
-          }
-        }
-        let unsub = NativeEventListener.setupNativeEventListener("prefetchApiDataReady", payload => {
-          doUnsub()
-          let dict = payload->Utils.getDictFromJson
-          let incomingPaymentId =
-            Dict.get(dict, "paymentId")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-          if incomingPaymentId === nativeProp.paymentSessionConfig.paymentId {
-            Dict.get(dict, "customerPaymentMethods")->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
-            Dict.get(dict, "accountPaymentMethods")->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
-            Dict.get(dict, "sessionTokens")->Option.map(handleSessionTokenResponse)->Option.getOr()
-            Dict.get(dict, "sdkConfig")->Option.map(handleSdkConfigResponse)->Option.getOr()
-          }
-        })
-        unsubRef := unsub
-        timerRef := Nullable.make(setTimeout(() => {
-          doUnsub()
-          customerPaymentMethods()->Promise.then(data => {
-            handleCustomerPaymentMethodsResponse(data)
-            Promise.resolve()
-          })->ignore
-          accountPaymentMethods()->Promise.then(data => {
-            handleAccountPaymentMethodsResponse(data)
-            Promise.resolve()
-          })->ignore
-          sessionToken()->Promise.then(data => {
-            handleSessionTokenResponse(data)
-            Promise.resolve()
-          })->ignore
-          sdkConfig()->Promise.then(configResponse => {
-            handleSdkConfigResponse(configResponse)
-            Promise.resolve()
-          })->ignore
-        }, 10000))
-        cleanupRef := Some(doUnsub)
-
-      | Some({
-          accountPaymentMethods: prefetchedAPM,
-          customerPaymentMethods: prefetchedCPM,
-          sessionTokens: prefetchedST,
-          sdkConfig: prefetchedSdkConfig,
-          paymentId: Some(_),
-        }) =>
-        prefetchedCPM->Option.map(handleCustomerPaymentMethodsResponse)->Option.getOr()
-        prefetchedAPM->Option.map(handleAccountPaymentMethodsResponse)->Option.getOr()
-        prefetchedST->Option.map(handleSessionTokenResponse)->Option.getOr()
-        prefetchedSdkConfig->Option.map(handleSdkConfigResponse)->Option.getOr()
-      }
+      useOrFetch(
+        prefetch->Option.flatMap(p => p.clientResponse),
+        () => fetchClientData(),
+        handleClientResponse,
+      )
+      useOrFetch(
+        prefetch->Option.flatMap(p => p.sessionTokens),
+        () => sessionToken(),
+        handleSessionTokenResponse,
+      )
+      // updateIntent now refreshes sdk_config too (not just client data/session tokens), so this
+      // must run unconditionally like the other two — otherwise a mounted UI would keep the old
+      // intent's config after an update.
+      useOrFetch(
+        prefetch->Option.flatMap(p => p.sdkConfig),
+        () => sdkConfig(),
+        handleSdkConfigResponse,
+      )
     }
 
-    cleanupRef.contents
+    None
   }, [nativeProp])
 
   let paymentMethodOrder = nativeProp.configuration.paymentMethodOrder
   let hiddenPaymentMethods = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
-  let clientData = React.useMemo4(() => {
-    switch (clientResponse, sdkConfigData) {
-    | (Some(clientResp), Some(cfg)) =>
+  let clientData = React.useMemo5(() => {
+    switch (clientResponse, sdkConfigData, sessionTokenData) {
+    | (Some(clientResp), Some(cfg), Some(_)) =>
       Some(
         ClientResponseType.parseClientResponse(
           clientResp,
@@ -221,11 +151,15 @@ let make = () => {
       )
     | _ => None
     }
-  }, (clientResponse, sdkConfigData, paymentMethodOrder, hiddenPaymentMethods))
+  }, (clientResponse, sdkConfigData, sessionTokenData, paymentMethodOrder, hiddenPaymentMethods))
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
-  UpdateIntentHook.useUpdateIntentListener(~setClientResponse, ~setSessionTokenData)
+  UpdateIntentHook.useUpdateIntentListener(
+    ~setClientResponse,
+    ~setSessionTokenData,
+    ~setSdkConfigData,
+  )
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
     // TODO: Pass DynamicFieldsContext to only required components.

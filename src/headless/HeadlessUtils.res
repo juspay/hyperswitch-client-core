@@ -188,65 +188,6 @@ let getBaseUrl = nativeProp => {
   )
 }
 
-// let savedPaymentMethodAPICall = nativeProp => {
-//   let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
-//   | Some(_) => Some(`${getBaseUrl(nativeProp)}/customers/payment_methods`)
-//   | None =>
-//     Some(
-//       `${getBaseUrl(
-//           nativeProp,
-//         )}/customers/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`,
-//     )
-//   }
-
-let accountPaymentMethodAPICall = nativeProp => {
-  let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(_) => `${getBaseUrl(nativeProp)}/account/payment_methods`
-  | None =>
-    `${getBaseUrl(nativeProp)}/account/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
-  }
-
-  handleApiCall(
-    ~uri,
-    ~nativeProp,
-    ~eventName=PAYMENT_METHODS_CALL,
-    ~method=#GET,
-    ~headers=Utils.getHeader(
-      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~appId=nativeProp.sdkParams.appId,
-      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-      (),
-    ),
-    ~processSuccess=json => json,
-    ~processError=error => error,
-    ~processCatch=_ => JSON.Encode.null,
-  )
-}
-
-let accountPaymentMethodAPICall = nativeProp => {
-  let uri = switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
-  | Some(_) => `${getBaseUrl(nativeProp)}/account/payment_methods`
-  | None =>
-    `${getBaseUrl(nativeProp)}/account/payment_methods?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
-  }
-
-  handleApiCall(
-    ~uri,
-    ~nativeProp,
-    ~eventName=PAYMENT_METHODS_CALL,
-    ~method=#GET,
-    ~headers=Utils.getHeader(
-      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~appId=nativeProp.sdkParams.appId,
-      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-      (),
-    ),
-    ~processSuccess=json => json,
-    ~processError=error => error,
-    ~processCatch=_ => JSON.Encode.null,
-  )
-}
-
 let fetchClientData = nativeProp => {
   let paymentId = switch nativeProp.paymentSessionConfig.sdkAuthorization {
   | Some(auth) =>

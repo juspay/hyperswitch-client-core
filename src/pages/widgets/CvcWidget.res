@@ -50,6 +50,7 @@ let make = () => {
       | ConfirmCvcPayment =>
         if actionData.rootTag === nativeProp.rootTag {
           let isCvcCompleteNow = Validation.checkCardCVC(cvcValueRef.current, cardNetwork)
+          let sdkAuthorization = actionData.sdkAuthorization->Option.getOr("")
           if !isCvcCompleteNow {
             let cvcValidationError: PaymentConfirmTypes.error = {
               type_: "validation_error",
@@ -57,15 +58,17 @@ let make = () => {
               code: "cvc_validation_failed",
               message: "CVC is not complete. Please enter a valid CVC.",
             }
-            headlessModule.exitHeadless(
-              nativeProp.rootTag,
-              cvcValidationError->HyperModule.stringifiedResStatus,
+            HeadlessCommon.exitHeadlessWithResult(
+              headlessModule,
+              nativeProp,
+              cvcValidationError,
+              ~sdkAuthorization,
             )
           } else {
             HeadlessCommon.confirmCardPayment(
               headlessModule,
               nativeProp,
-              ~sdkAuthorization=actionData.sdkAuthorization->Option.getOr(""),
+              ~sdkAuthorization,
               ~paymentToken=actionData.paymentToken->Option.getOr(""),
               ~cvc=cvcValueRef.current->JSON.Encode.string,
               ~billing=?actionData.billing,

@@ -89,6 +89,7 @@ type updateIntentData = {
   eventType: updateIntentEventType,
   rootTag: int,
   sdkAuthorization: option<string>,
+  prefetchedApiData: option<SdkTypes.prefetchedApiData>,
 }
 
 let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<
@@ -96,6 +97,9 @@ let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<
 > => {
   let rootTag = dict->getInt("rootTag", -1)
   let sdkAuthorization = dict->getOptionString("sdkAuthorization")
+  let prefetchedApiData = dict
+  ->Dict.get("prefetchedApiData")
+  ->Option.flatMap(SdkTypes.prefetchedApiDataFromJson)
 
   eventName
   ->updateIntentEventTypeFromString
@@ -103,5 +107,6 @@ let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<
     eventType,
     rootTag,
     sdkAuthorization,
+    prefetchedApiData,
   })
 }

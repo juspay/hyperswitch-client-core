@@ -3,11 +3,36 @@ open SdkTypes
 let updateIntentInitReturned = "UPDATE_INTENT_INIT_RETURNED"
 let updateIntentCompleteReturned = "UPDATE_INTENT_COMPLETE_RETURNED"
 
-let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
+let isUsableClientResponse = response => {
+  if response->ErrorUtils.isError || response == JSON.Encode.null {
+    false
+  } else {
+    let dict = response->Utils.getDictFromJson
+    dict->Utils.getArray("payment_methods_enabled")->Array.length > 0 ||
+      dict->Utils.getArray("customer_payment_methods")->Array.length > 0
+  }
+}
+
+let isUsableSessionTokens = response =>
+  !(response->ErrorUtils.isError) && response != JSON.Encode.null
+
+let isUsableSdkConfig = response => {
+  if response->ErrorUtils.isError || response == JSON.Encode.null {
+    false
+  } else {
+    switch SdkConfigParser.itemToObjMapper(response).raw_configs->Option.flatMap(
+      JSON.Decode.object,
+    ) {
+    | Some(dict) =>
+      dict->Dict.get("default_configs")->Option.isSome || dict->Dict.get("contexts")->Option.isSome
+    | None => false
+    }
+  }
+}
+
+let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData, ~setSdkConfigData) => {
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
-  let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   let nativePropRef = React.useRef(nativeProp)
 
@@ -71,156 +96,12 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
         let currentNativeProp = nativePropRef.current
         if (
           intentData.rootTag === currentNativeProp.rootTag &&
-            switch nativeProp.sdkState {
+            switch currentNativeProp.sdkState {
             | Headless | CvcWidget | NoView => false
             | _ => true
             }
         ) {
-          switch intentData.sdkAuthorization {
-          | Some(sdkAuth) if sdkAuth !== "" =>
-            // Update nativeProp with new sdkAuthorization
-            // This triggers a re-render and the NavigationRouter effect will refetch
-            setNativeProp({
-              ...currentNativeProp,
-              paymentSessionConfig: {
-                ...currentNativeProp.paymentSessionConfig,
-                sdkAuthorization: Some(sdkAuth),
-              },
-            })
-
-            let hasError = ref(false)
-
-            let handleClientResponse = clientResp => {
-              if ErrorUtils.isError(clientResp) {
-                hasError := true
-                HyperModule.onUpdateIntentEvent(
-                  currentNativeProp.rootTag,
-                  updateIntentCompleteReturned,
-                  JSON.stringify(
-                    JSON.Encode.object(
-                      Dict.fromArray([
-                        ("status", JSON.Encode.string("failed")),
-                        ("code", JSON.Encode.string("combine_pml_error")),
-                        ("message", JSON.Encode.string(ErrorUtils.getErrorMessage(clientResp))),
-                      ]),
-                    ),
-                  ),
-                )
-              } else if clientResp == JSON.Encode.null {
-                hasError := true
-                HyperModule.onUpdateIntentEvent(
-                  currentNativeProp.rootTag,
-                  updateIntentCompleteReturned,
-                  JSON.stringify(
-                    JSON.Encode.object(
-                      Dict.fromArray([
-                        ("status", JSON.Encode.string("failed")),
-                        ("code", JSON.Encode.string("no_payment_methods_found")),
-                        ("message", JSON.Encode.string("No payment methods found")),
-                      ]),
-                    ),
-                  ),
-                )
-              } else {
-                setClientResponse(_ => Some(clientResp))
-              }
-            }
-
-            let handleSessionTokenResponse = sessionTokenData => {
-              if !(sessionTokenData->ErrorUtils.isError) && sessionTokenData != JSON.Null {
-                switch sessionTokenData->SessionsType.jsonToSessionTokenType {
-                | Some(sessions) => setSessionTokenData(_ => Some(sessions))
-                | None => setSessionTokenData(_ => Some([]))
-                }
-              }
-            }
-
-            // Use AllPaymentHooks for API calls
-            // These hooks read sdkAuthorization from context, so we need to call them after
-            // the context update takes effect. Since the context update is async (setNativeProp),
-            // we need to call the hooks directly with the new sdkAuth.
-
-            // Build headers and URIs with new sdkAuthorization
-            let headers = Utils.getHeader(
-              ~apiKey=currentNativeProp.hyperswitchConfig.publishableKey,
-              ~appId=currentNativeProp.sdkParams.appId,
-              ~sdkAuthorization=sdkAuth,
-              (),
-            )
-
-            let paymentId =
-              Utils.getSdkAuthorizationData(sdkAuth).paymentId->Option.getOr(
-                currentNativeProp.paymentSessionConfig.paymentId,
-              )
-
-            let clientUri = `${baseUrl}/payments/${paymentId}/client`
-
-            Promise.all2((
-              APIUtils.fetchApiWrapper(
-                ~uri=clientUri,
-                ~method=#GET,
-                ~headers,
-                ~eventName=LoggerTypes.CLIENT_LIST_CALL,
-                ~apiLogWrapper,
-              ),
-              // Session tokens
-              APIUtils.fetchApiWrapper(
-                ~uri=`${baseUrl}/payments/session_tokens`,
-                ~body=PaymentUtils.generateSessionsTokenBody(
-                  ~clientSecret=currentNativeProp.paymentSessionConfig.clientSecret,
-                  ~paymentId,
-                  ~sdkAuthorization=sdkAuth,
-                  ~wallet=[],
-                ),
-                ~method=#POST,
-                ~headers,
-                ~eventName=LoggerTypes.SESSIONS_CALL,
-                ~apiLogWrapper,
-              ),
-            ))
-            ->Promise.then(
-              ((clientResp, sessionTokenData)) => {
-                handleClientResponse(clientResp)
-                handleSessionTokenResponse(sessionTokenData)
-
-                setLoading(FillingDetails)
-
-                // Only send success if there was no error
-                if !hasError.contents {
-                  HyperModule.onUpdateIntentEvent(
-                    currentNativeProp.rootTag,
-                    updateIntentCompleteReturned,
-                    JSON.stringify(
-                      JSON.Encode.object(
-                        Dict.fromArray([("status", JSON.Encode.string("success"))]),
-                      ),
-                    ),
-                  )
-                }
-                Promise.resolve()
-              },
-            )
-            ->Promise.catch(
-              _err => {
-                setLoading(FillingDetails)
-                HyperModule.onUpdateIntentEvent(
-                  currentNativeProp.rootTag,
-                  updateIntentCompleteReturned,
-                  JSON.stringify(
-                    JSON.Encode.object(
-                      Dict.fromArray([
-                        ("status", JSON.Encode.string("failed")),
-                        ("code", JSON.Encode.string("api_call_failed")),
-                        ("message", JSON.Encode.string("API call failed")),
-                      ]),
-                    ),
-                  ),
-                )
-                Promise.resolve()
-              },
-            )
-            ->ignore
-          | _ =>
+          let failUpdate = (~code, ~message) => {
             setLoading(FillingDetails)
             HyperModule.onUpdateIntentEvent(
               currentNativeProp.rootTag,
@@ -229,12 +110,66 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
                 JSON.Encode.object(
                   Dict.fromArray([
                     ("status", JSON.Encode.string("failed")),
-                    ("code", JSON.Encode.string("invalid_sdk_authorization")),
-                    ("message", JSON.Encode.string("Invalid sdkAuthorization")),
+                    ("code", JSON.Encode.string(code)),
+                    ("message", JSON.Encode.string(message)),
                   ]),
                 ),
               ),
             )
+          }
+
+          switch (intentData.sdkAuthorization, intentData.prefetchedApiData) {
+          | (Some(sdkAuth), Some(prefetch)) if sdkAuth !== "" =>
+            let authorizationData = Utils.getSdkAuthorizationData(sdkAuth)
+            let paymentId = authorizationData.paymentId->Option.getOr("")
+            let clientSecret =
+              authorizationData.clientSecret->Option.getOr(
+                currentNativeProp.paymentSessionConfig.clientSecret,
+              )
+            let matchesAuthorization =
+              paymentId !== "" &&
+                SdkTypes.prefetchedApiDataMatchesAuthorization(prefetch, Some(sdkAuth))
+
+            switch (prefetch.clientResponse, prefetch.sessionTokens, prefetch.sdkConfig) {
+            | (Some(clientResponse), Some(sessionTokens), Some(sdkConfig))
+              if matchesAuthorization &&
+              isUsableClientResponse(clientResponse) &&
+              isUsableSessionTokens(sessionTokens) &&
+              isUsableSdkConfig(sdkConfig) =>
+              // Clear the old intent's state in the same React batch as the prop replacement.
+              // NavigationRouter consumes these three intent-scoped values on the next render.
+              setClientResponse(_ => None)
+              setSessionTokenData(_ => None)
+              setSdkConfigData(_ => None)
+              setNativeProp({
+                ...currentNativeProp,
+                paymentSessionConfig: {
+                  clientSecret,
+                  sdkAuthorization: Some(sdkAuth),
+                  paymentId,
+                },
+                prefetchedApiData: Some(prefetch),
+              })
+              setLoading(FillingDetails)
+              HyperModule.onUpdateIntentEvent(
+                currentNativeProp.rootTag,
+                updateIntentCompleteReturned,
+                JSON.stringify(
+                  JSON.Encode.object(Dict.fromArray([("status", JSON.Encode.string("success"))])),
+                ),
+              )
+            | _ =>
+              failUpdate(
+                ~code="prefetch_failed",
+                ~message="Unable to load API data for the updated payment intent.",
+              )
+            }
+          | (Some(_), None) =>
+            failUpdate(
+              ~code="prefetch_failed",
+              ~message="No API data was returned for the updated payment intent.",
+            )
+          | _ => failUpdate(~code="invalid_sdk_authorization", ~message="Invalid sdkAuthorization")
           }
         } else if intentData.rootTag === currentNativeProp.rootTag {
           HyperModule.onUpdateIntentEvent(

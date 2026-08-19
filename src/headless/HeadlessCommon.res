@@ -6,9 +6,9 @@ open SdkTypes
 open HeadlessUtils
 
 type headlessModule = {
-  getPaymentSession: (int, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: (int, string) => unit,
-  storePrefetchedApiData: (int, JSON.t) => unit,
+  getPaymentSession: (string, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
+  exitHeadless: (string, string) => unit,
+  storePrefetchedApiData: JSON.t => unit,
 }
 
 let makeHeadlessModule = (): headlessModule => {
@@ -27,18 +27,57 @@ let makeHeadlessModule = (): headlessModule => {
   {
     getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
     exitHeadless: getFn("exitHeadless", (_, _) => ()),
-    storePrefetchedApiData: getFn("storePrefetchedApiData", (_, _) => ()),
+    storePrefetchedApiData: getFn("storePrefetchedApiData", _ => ()),
   }
 }
 
-let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
+let prefetchFromJsonForAuthorization = (json, sdkAuthorization) =>
+  json
+  ->SdkTypes.prefetchedApiDataFromJson
+  ->Option.filter(prefetch =>
+    SdkTypes.prefetchedApiDataMatchesAuthorization(prefetch, sdkAuthorization)
+  )
+
+let cachePrefetch = (nativeProp, data) =>
+  PrefetchCache.set(
+    ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+    data,
+  )
+
+// Normal saved-method headless launches do not receive prefetched data from native. Reuse the
+// module cache when the runtime is alive; if it was destroyed, the normal API path refetches.
+let resolveHeadlessPrefetch = sdkAuthorization =>
+  PrefetchCache.get(
+    ~sdkAuthorization=sdkAuthorization->Option.getOr(""),
+  )->Option.flatMap(prefetchFromJsonForAuthorization(_, sdkAuthorization))
+
+let exitHeadlessWithResult = (
+  headlessModule,
+  nativeProp,
+  result: PaymentConfirmTypes.error,
+  ~sdkAuthorization: option<string>=?,
+) => {
+  let sdkAuthorization = sdkAuthorization
+  ->Utils.getNonEmptyOption
+  ->Option.getOr(nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""))
+  if result.status->Option.getOr("failed") !== "cancelled" {
+    PrefetchCache.remove(~sdkAuthorization)
+  }
+  headlessModule.exitHeadless(
+    sdkAuthorization,
+    result->HyperModule.stringifiedResStatus,
+  )
+}
+
+let getDefaultPaymentSession = (headlessModule, error, nativeProp) => {
+  let sdkAuthorization = nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")
   headlessModule.getPaymentSession(
-    rootTag,
+    sdkAuthorization,
     error->Utils.getJsonObjectFromRecord,
     error->Utils.getJsonObjectFromRecord,
     []->Utils.getJsonObjectFromRecord,
     _response => {
-      headlessModule.exitHeadless(rootTag, error->HyperModule.stringifiedResStatus)
+      exitHeadlessWithResult(headlessModule, nativeProp, error)
     },
   )
 }
@@ -333,11 +372,11 @@ let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => 
   let {nextAction, status, error} = confirmRes
 
   let responseCallback = (~status) => {
-    headlessModule.exitHeadless(nativeProp.rootTag, status->HyperModule.stringifiedResStatus)
+    exitHeadlessWithResult(headlessModule, nativeProp, status, ~sdkAuthorization?)
   }
 
   let errorCallback = (~errorMessage) => {
-    headlessModule.exitHeadless(nativeProp.rootTag, errorMessage->HyperModule.stringifiedResStatus)
+    exitHeadlessWithResult(headlessModule, nativeProp, errorMessage, ~sdkAuthorization?)
   }
 
   handleApiRes(
@@ -444,10 +483,7 @@ let confirmGPay = (
     ->ignore
   | "Cancel" => reRegisterCallback.contents()
   | err =>
-    headlessModule.exitHeadless(
-      nativeProp.rootTag,
-      {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
-    )
+    exitHeadlessWithResult(headlessModule, nativeProp, {message: err, status: "failed"})
   }
 }
 
@@ -465,15 +501,9 @@ let confirmApplePay = (
   ->Option.getOr("") {
   | "Cancelled" => reRegisterCallback.contents()
   | "Failed" =>
-    headlessModule.exitHeadless(
-      nativeProp.rootTag,
-      {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
-    )
+    exitHeadlessWithResult(headlessModule, nativeProp, {message: "failed", status: "failed"})
   | "Error" =>
-    headlessModule.exitHeadless(
-      nativeProp.rootTag,
-      {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
-    )
+    exitHeadlessWithResult(headlessModule, nativeProp, {message: "failed", status: "failed"})
   | _ =>
     let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
 
@@ -487,10 +517,10 @@ let confirmApplePay = (
         "Simulated Identifier",
       ) == "Simulated Identifier"
     ) {
-      headlessModule.exitHeadless(
-        nativeProp.rootTag,
-        {message: "Simulated Identifier", status: "failed"}->HyperModule.stringifiedResStatus,
-      )
+      exitHeadlessWithResult(headlessModule, nativeProp, {
+        message: "Simulated Identifier",
+        status: "failed",
+      })
     } else {
       let paymentData =
         [
@@ -605,10 +635,7 @@ let processRequest = async (
           ~version=nativeProp.sdkParams.sdkVersion,
           (),
         )
-        headlessModule.exitHeadless(
-          nativeProp.rootTag,
-          getDefaultError->HyperModule.stringifiedResStatus,
-        )
+        exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
       }, 5000)
       let applePayCallback = async var => {
         try {
@@ -660,10 +687,7 @@ let processRequest = async (
     | _ => ()
     }
   | _ =>
-    headlessModule.exitHeadless(
-      nativeProp.rootTag,
-      getDefaultError->HyperModule.stringifiedResStatus,
-    )
+    exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
   }
 }
 
@@ -712,7 +736,7 @@ let getPaymentSession = (
       (
         () => {
           headlessModule.getPaymentSession(
-            nativeProp.rootTag,
+            nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
             defaultSpmData,
             lastUsedSpmData,
             spmData->Utils.getJsonObjectFromRecord,
@@ -731,16 +755,10 @@ let getPaymentSession = (
                     ~getCvc,
                   )->ignore
                 | None =>
-                  headlessModule.exitHeadless(
-                    nativeProp.rootTag,
-                    getDefaultError->HyperModule.stringifiedResStatus,
-                  )
+                  exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
                 }
               | None =>
-                headlessModule.exitHeadless(
-                  nativeProp.rootTag,
-                  getDefaultError->HyperModule.stringifiedResStatus,
-                )
+                exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
               }
             },
           )
@@ -749,40 +767,22 @@ let getPaymentSession = (
 
     reRegisterCallback.contents()
   } else {
-    getDefaultPaymentSession(headlessModule, getDefaultError, ~rootTag=nativeProp.rootTag)
+    getDefaultPaymentSession(headlessModule, getDefaultError, nativeProp)
   }
 }
 
-// Wait for "prefetchApiDataReady" event when prefetch is in progress.
-// Resolves with the event payload dict, or an empty dict on 10s timeout (falls back to API calls).
-let waitForPrefetchData = (paymentId: string): Promise.t<Dict.t<JSON.t>> => {
-  Promise.make((resolve, _) => {
-    let unsubscribed = ref(false)
-    let unsubRef = ref(() => ())
-    let timerRef = ref(Nullable.null)
-    let doUnsub = () => {
-      if !unsubscribed.contents {
-        unsubscribed := true
-        unsubRef.contents()
-        Nullable.forEach(timerRef.contents, id => clearTimeout(id))
-      }
-    }
-    let unsub = NativeEventListener.setupNativeEventListener("prefetchApiDataReady", payload => {
-      let dict = payload->Utils.getDictFromJson
-      let incomingPaymentId =
-        dict->Dict.get("paymentId")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
-      if incomingPaymentId === paymentId {
-        doUnsub()
-        resolve(dict)
-      }
-    })
-    unsubRef := unsub
-    timerRef := Nullable.make(setTimeout(() => {
-          doUnsub()
-          resolve(Dict.make())
-        }, 10000))
-  })
-}
+// Prefetched data is only usable when it was fetched with the session's current authorization.
+// After updateIntent this keeps the previous authorization's payload out of the new payment.
+let usablePrefetch = (nativeProp: SdkTypes.nativeProp) =>
+  nativeProp.prefetchedApiData->Option.filter(prefetch =>
+    SdkTypes.prefetchedApiDataMatchesAuthorization(
+      prefetch,
+      nativeProp.paymentSessionConfig.sdkAuthorization,
+    )
+  )
+
+let usablePrefetchedJson = prefetched =>
+  prefetched->Option.filter(json => json != JSON.Null && !(json->ErrorUtils.isError))
 
 // Main orchestrator: fetch saved payment methods, session tokens, set up payment session.
 // ~getCvc: function that returns the CVC value given the native callback response.
@@ -792,21 +792,13 @@ let apiHandler = async (
   nativeProp,
   ~getCvc: JSON.t => JSON.t,
 ) => {
-    let prefetch = nativeProp.prefetchedApiData
-  let (resolvedCustomerPM, resolvedSessionTokens) = switch prefetch {
-  | Some({paymentId: None}) =>
-    let eventDict = await waitForPrefetchData(nativeProp.paymentSessionConfig.paymentId)
-    (Dict.get(eventDict, "customerPaymentMethods"), Dict.get(eventDict, "sessionTokens"))
-  | _ => (
-      prefetch->Option.flatMap(d => d.customerPaymentMethods),
-      prefetch->Option.flatMap(d => d.sessionTokens),
-    )
-  }
-  let customerSavedPMData = switch resolvedCustomerPM {
+  let prefetch = usablePrefetch(nativeProp)
+  let resolvedSessionTokens = prefetch->Option.flatMap(d => d.sessionTokens)->usablePrefetchedJson
+
+  let clientResponse = switch prefetch->Option.flatMap(d => d.clientResponse)->usablePrefetchedJson {
   | Some(json) => Some(json)
-  | None => await savedPaymentMethodAPICall(nativeProp)
+  | None => await fetchClientData(nativeProp)
   }
-  let clientResponse = await fetchClientData(nativeProp)
   switch clientResponse {
   | Some(response) =>
     let spmData =
@@ -845,14 +837,14 @@ let apiHandler = async (
         if session->ErrorUtils.getErrorCode == "\"IR_16\"" {
           ErrorUtils.errorWarning.usedCL
           ->errorOnApiCalls
-          ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+          ->(getDefaultPaymentSession(headlessModule, _, nativeProp))
         } else if session->ErrorUtils.getErrorCode == "\"IR_09\"" {
           ErrorUtils.errorWarning.invalidCL
           ->errorOnApiCalls
-          ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+          ->(getDefaultPaymentSession(headlessModule, _, nativeProp))
         } else {
           // Unknown session API error — surface it rather than silently dead-ending
-          getDefaultPaymentSession(headlessModule, getDefaultError, ~rootTag=nativeProp.rootTag)
+          getDefaultPaymentSession(headlessModule, getDefaultError, nativeProp)
         }
       } else if session != JSON.Encode.null {
         switch session->Utils.getDictFromJson->SessionsType.itemToObjMapper {
@@ -907,38 +899,33 @@ let apiHandler = async (
   | None =>
     clientResponse
     ->getErrorFromResponse
-    ->(getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag))
+    ->(getDefaultPaymentSession(headlessModule, _, nativeProp))
   }
 }
 
-let prefetchApiHandler = async (headlessModule, nativeProp) => {
-  let (accountPM, customerPM, sessionTok, sdkCfg) = await Promise.all4((
-    accountPaymentMethodAPICall(nativeProp),
-    savedPaymentMethodAPICall(nativeProp),
+// Runs for both the initial prefetch and updateIntent — a new intent needs the same three calls
+// (client data, session tokens, sdk_config) re-run and re-cached under its own authorization, so
+// the old intent's data never leaks forward.
+let fetchAndCachePrefetchData = async (headlessModule, nativeProp) => {
+  let (clientResp, sessionTok, sdkCfg) = await Promise.all3((
+    fetchClientData(nativeProp),
     sessionAPICall(nativeProp),
     sdkConfigAPICall(nativeProp),
   ))
   let data =
     [
-      ("accountPaymentMethods", accountPM),
-      ("customerPaymentMethods", customerPM->Option.getOr(JSON.Encode.null)),
+      ("clientResponse", clientResp->Option.getOr(JSON.Encode.null)),
       ("sessionTokens", sessionTok),
       ("sdkConfig", sdkCfg),
       (
         "sdkAuthorization",
         nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string,
       ),
-      ("paymentId", nativeProp.paymentSessionConfig.paymentId->JSON.Encode.string),
     ]
     ->Dict.fromArray
     ->JSON.Encode.object
-  headlessModule.storePrefetchedApiData(nativeProp.rootTag, data)
-  headlessModule.exitHeadless(
-    nativeProp.rootTag,
-    (
-      {status: "prefetch_complete", message: "", code: "", type_: ""}: PaymentConfirmTypes.error
-    )->HyperModule.stringifiedResStatus,
-  )
+  let resolvedData = cachePrefetch(nativeProp, data)
+  headlessModule.storePrefetchedApiData(resolvedData)
 }
 
 // Validate nativeProp and run the headless flow.
@@ -963,14 +950,18 @@ let runHeadlessFlow = (
     isPublishableKeyValid &&
     (isClientSecretValid || nativeProp.paymentSessionConfig.sdkAuthorization != None)
   ) {
-    apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
+    apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
   } else if !isPublishableKeyValid {
     errorOnApiCalls(INVALID_PK(Error, Static("")))->(
-      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+      getDefaultPaymentSession(headlessModule, _, nativeProp)
     )
+    Promise.resolve()
   } else if !isClientSecretValid {
     errorOnApiCalls(INVALID_CL(Error, Static("")))->(
-      getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)
+      getDefaultPaymentSession(headlessModule, _, nativeProp)
     )
+    Promise.resolve()
+  } else {
+    Promise.resolve()
   }
 }

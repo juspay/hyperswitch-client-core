@@ -1,19 +1,21 @@
 // HeadlessTask.res
-// Headless JS task that runs in a separate JS context (when CvcWidget is NOT active).
+// Headless entry point rendered as a temporary task/root on the existing React Native runtime.
 // Delegates all logic to HeadlessCommon, providing a response-based CVC getter.
 
 open SdkTypes
 
-@react.component
-let make = (~props) => {
+// Android awaits this promise to finish its HeadlessJsTask. iOS invokes the component below and
+// releases its temporary root when native receives storePrefetchedApiData.
+let run = (~props) => {
   let headlessModule = HeadlessCommon.makeHeadlessModule()
   let reRegisterCallback = ref(() => ())
   let nativeProp = nativeJsonToRecord(props, 0)
 
   let headlessType = props->Utils.getDictFromJson->Utils.getString("headlessType", "")
-
   switch headlessType {
-  | "prefetch" => HeadlessCommon.prefetchApiHandler(headlessModule, nativeProp)->ignore
+  | "prefetch"
+  | "updateIntent" =>
+    HeadlessCommon.fetchAndCachePrefetchData(headlessModule, nativeProp)
   | _ =>
     // In HeadlessTask, CVC comes from the native callback response (response["cvc"])
     let getCvc = (response: JSON.t) => {
@@ -22,8 +24,20 @@ let make = (~props) => {
       | None => JSON.Encode.null
       }
     }
-    HeadlessCommon.runHeadlessFlow(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
+    let prefetchedApiData = HeadlessCommon.resolveHeadlessPrefetch(
+      nativeProp.paymentSessionConfig.sdkAuthorization,
+    )
+    HeadlessCommon.runHeadlessFlow(
+      headlessModule,
+      reRegisterCallback,
+      {...nativeProp, prefetchedApiData},
+      ~getCvc,
+    )
   }
+}
 
+@react.component
+let make = (~props) => {
+  run(~props)->ignore
   React.null
 }
