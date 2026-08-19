@@ -11,6 +11,7 @@ let make = (
     country,
     isNicknameValid,
     setInitialValueCountry,
+    isConfigInitialized,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
@@ -36,21 +37,29 @@ let make = (
     enabledCardSchemes,
     accessible,
     defaultCountry,
-  ) = React.useMemo4(_ => {
+  ) = React.useMemo(_ => {
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
-  }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
+  }, (
+    paymentMethodData.payment_method_type,
+    getRequiredFieldsForTabs,
+    country,
+    isScreenFocus,
+    isConfigInitialized,
+  ))
 
   let handlePress = _ => {
-    if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        None,
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
-    } else {
-      switch formMethods {
-      | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
-      | None => ()
+    if isConfigInitialized {
+      if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+        processRequest(
+          CommonUtils.mergeDict(initialValues, formData),
+          None,
+          formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+        )
+      } else {
+        switch formMethods {
+        | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+        | None => ()
+        }
       }
     }
   }
@@ -63,7 +72,7 @@ let make = (
   React.useEffect(() => {
     if isScreenFocus {
       let confirmButton = {
-        GlobalConfirmButton.loading: false,
+        GlobalConfirmButton.loading: !isConfigInitialized,
         handlePress,
         payment_method_type: paymentMethodData.payment_method_type,
         payment_experience: paymentMethodData.payment_experience,
@@ -81,6 +90,7 @@ let make = (
     formData,
     formMethods,
     isNicknameValid,
+    isConfigInitialized,
   ))
 
   <DynamicFields

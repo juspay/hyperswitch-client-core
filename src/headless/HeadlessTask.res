@@ -267,7 +267,7 @@ let make = (~props) => {
             (),
           )
           headlessModule.exitHeadless(getDefaultError->HyperModule.stringifiedResStatus)
-        }, 5000)
+        }, Constants.applePayTimeoutMs)
         let applePayCallback = async var => {
           try {
             confirmApplePay(var, data, nativeProp)
@@ -275,6 +275,7 @@ let make = (~props) => {
           | _ => confirmApplePay(var, data, nativeProp)
           }
         }
+        let presentationStartTime = Date.now()
         HyperModule.launchApplePay(
           [
             ("session_token_data", session.session_token_data),
@@ -309,6 +310,26 @@ let make = (~props) => {
           },
           _ => {
             clearTimeout(timerId)
+            let presentationTimeTaken = Date.now() -. presentationStartTime
+            logWrapper(
+              ~logType=DEBUG,
+              ~eventName=APPLE_PAY_PRESENT_RESPONSE_FROM_NATIVE,
+              ~url="",
+              ~customLogUrl=nativeProp.customLogUrl,
+              ~env=nativeProp.env,
+              ~category=API,
+              ~statusCode="",
+              ~apiLogType=None,
+              ~data=JSON.Encode.null,
+              ~publishableKey=nativeProp.publishableKey,
+              ~paymentId="",
+              ~paymentMethod=None,
+              ~paymentExperience=None,
+              ~timestamp=0.,
+              ~latency=presentationTimeTaken,
+              ~version=nativeProp.hyperParams.sdkVersion,
+              (),
+            )
           },
         )
       | _ => ()

@@ -46,6 +46,7 @@ type dynamicFieldsData = {
   setNickname: option<string> => unit,
   isNicknameValid: bool,
   setIsNicknameValid: bool => unit,
+  isConfigInitialized: bool,
 }
 
 let dynamicFieldsContext = React.createContext({
@@ -83,6 +84,7 @@ let dynamicFieldsContext = React.createContext({
   setNickname: _ => (),
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
+  isConfigInitialized: false,
 })
 
 module Provider = {
@@ -93,7 +95,10 @@ let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (accountPaymentMethodData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
-  let getSuperpositionFinalFields = ConfigurationService.useConfigurationService()
+  let (
+    getSuperpositionFinalFields,
+    isConfigInitialized,
+  ) = ConfigurationService.useConfigurationService()
 
   let (sheetType, setSheetType) = React.useState(_ => ButtonSheet)
   let setSheetType = React.useCallback1(val => {
@@ -401,6 +406,7 @@ let make = (~children) => {
       setNickname,
       isNicknameValid,
       setIsNicknameValid,
+      isConfigInitialized,
     }>
     children
   </Provider>
