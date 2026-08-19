@@ -36,9 +36,7 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
           HyperModule.onUpdateIntentEvent(
             currentNativeProp.rootTag,
             updateIntentInitReturned,
-            JSON.stringify(
-              JSON.Encode.object(Dict.fromArray([("status", JSON.Encode.string("success"))])),
-            ),
+            {status: "success"},
           )
         }
       } else {
@@ -47,20 +45,11 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
           HyperModule.onUpdateIntentEvent(
             currentNativeProp.rootTag,
             updateIntentInitReturned,
-            JSON.stringify(
-              JSON.Encode.object(
-                Dict.fromArray([
-                  ("status", JSON.Encode.string("success")),
-                  ("code", JSON.Encode.string("not_required")),
-                  (
-                    "message",
-                    JSON.Encode.string(
-                      "ignoring as the sdkState is not valid for update intent init event",
-                    ),
-                  ),
-                ]),
-              ),
-            ),
+            {
+              status: "success",
+              code: "not_required",
+              message: "ignoring as the sdkState is not valid for update intent init event",
+            },
           )
         }
       }
@@ -96,30 +85,22 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
                 HyperModule.onUpdateIntentEvent(
                   currentNativeProp.rootTag,
                   updateIntentCompleteReturned,
-                  JSON.stringify(
-                    JSON.Encode.object(
-                      Dict.fromArray([
-                        ("status", JSON.Encode.string("failed")),
-                        ("code", JSON.Encode.string("combine_pml_error")),
-                        ("message", JSON.Encode.string(ErrorUtils.getErrorMessage(clientResp))),
-                      ]),
-                    ),
-                  ),
+                  {
+                    status: "failed",
+                    code: "combine_pml_error",
+                    message: ErrorUtils.getErrorMessage(clientResp),
+                  },
                 )
               } else if clientResp == JSON.Encode.null {
                 hasError := true
                 HyperModule.onUpdateIntentEvent(
                   currentNativeProp.rootTag,
                   updateIntentCompleteReturned,
-                  JSON.stringify(
-                    JSON.Encode.object(
-                      Dict.fromArray([
-                        ("status", JSON.Encode.string("failed")),
-                        ("code", JSON.Encode.string("no_payment_methods_found")),
-                        ("message", JSON.Encode.string("No payment methods found")),
-                      ]),
-                    ),
-                  ),
+                  {
+                    status: "failed",
+                    code: "no_payment_methods_found",
+                    message: "No payment methods found",
+                  },
                 )
               } else {
                 setClientResponse(_ => Some(clientResp))
@@ -190,11 +171,7 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
                   HyperModule.onUpdateIntentEvent(
                     currentNativeProp.rootTag,
                     updateIntentCompleteReturned,
-                    JSON.stringify(
-                      JSON.Encode.object(
-                        Dict.fromArray([("status", JSON.Encode.string("success"))]),
-                      ),
-                    ),
+                    {status: "success"},
                   )
                 }
                 Promise.resolve()
@@ -206,15 +183,7 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
                 HyperModule.onUpdateIntentEvent(
                   currentNativeProp.rootTag,
                   updateIntentCompleteReturned,
-                  JSON.stringify(
-                    JSON.Encode.object(
-                      Dict.fromArray([
-                        ("status", JSON.Encode.string("failed")),
-                        ("code", JSON.Encode.string("api_call_failed")),
-                        ("message", JSON.Encode.string("API call failed")),
-                      ]),
-                    ),
-                  ),
+                  {status: "failed", code: "api_call_failed", message: "API call failed"},
                 )
                 Promise.resolve()
               },
@@ -225,35 +194,22 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
             HyperModule.onUpdateIntentEvent(
               currentNativeProp.rootTag,
               updateIntentCompleteReturned,
-              JSON.stringify(
-                JSON.Encode.object(
-                  Dict.fromArray([
-                    ("status", JSON.Encode.string("failed")),
-                    ("code", JSON.Encode.string("invalid_sdk_authorization")),
-                    ("message", JSON.Encode.string("Invalid sdkAuthorization")),
-                  ]),
-                ),
-              ),
+              {
+                status: "failed",
+                code: "invalid_sdk_authorization",
+                message: "Invalid sdkAuthorization",
+              },
             )
           }
         } else if intentData.rootTag === currentNativeProp.rootTag {
           HyperModule.onUpdateIntentEvent(
             intentData.rootTag,
             updateIntentCompleteReturned,
-            JSON.stringify(
-              JSON.Encode.object(
-                Dict.fromArray([
-                  ("status", JSON.Encode.string("success")),
-                  ("code", JSON.Encode.string("not_required")),
-                  (
-                    "message",
-                    JSON.Encode.string(
-                      "ignoring as the sdkState is not valid for update intent complete event",
-                    ),
-                  ),
-                ]),
-              ),
-            ),
+            {
+              status: "success",
+              code: "not_required",
+              message: "ignoring as the sdkState is not valid for update intent complete event",
+            },
           )
         }
       },

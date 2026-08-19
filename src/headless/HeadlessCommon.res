@@ -7,25 +7,13 @@ open HeadlessUtils
 
 type headlessModule = {
   getPaymentSession: (int, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: (int, string) => unit,
+  exitHeadless: (int, HyperModule.exitResultPayload) => unit,
 }
 
 let makeHeadlessModule = (): headlessModule => {
-  let hyperSwitchHeadlessDict =
-    Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
-    ->Option.flatMap(JSON.Decode.object)
-    ->Option.getOr(Dict.make())
-
-  let getFn = (key, default) => {
-    switch hyperSwitchHeadlessDict->Dict.get(key) {
-    | Some(fn) => Obj.magic(fn)
-    | None => default
-    }
-  }
-
   {
-    getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
-    exitHeadless: getFn("exitHeadless", (_, _) => ()),
+    getPaymentSession: HyperHeadless.getPaymentSession,
+    exitHeadless: HyperHeadless.exitHeadless,
   }
 }
 
@@ -36,7 +24,7 @@ let getDefaultPaymentSession = (headlessModule, error, ~rootTag) => {
     error->Utils.getJsonObjectFromRecord,
     []->Utils.getJsonObjectFromRecord,
     _response => {
-      headlessModule.exitHeadless(rootTag, error->HyperModule.stringifiedResStatus)
+      headlessModule.exitHeadless(rootTag, error->HyperModule.resStatusPayload)
     },
   )
 }
@@ -331,11 +319,11 @@ let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => 
   let {nextAction, status, error} = confirmRes
 
   let responseCallback = (~status) => {
-    headlessModule.exitHeadless(nativeProp.rootTag, status->HyperModule.stringifiedResStatus)
+    headlessModule.exitHeadless(nativeProp.rootTag, status->HyperModule.resStatusPayload)
   }
 
   let errorCallback = (~errorMessage) => {
-    headlessModule.exitHeadless(nativeProp.rootTag, errorMessage->HyperModule.stringifiedResStatus)
+    headlessModule.exitHeadless(nativeProp.rootTag, errorMessage->HyperModule.resStatusPayload)
   }
 
   handleApiRes(
@@ -444,7 +432,7 @@ let confirmGPay = (
   | err =>
     headlessModule.exitHeadless(
       nativeProp.rootTag,
-      {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
+      {message: err, status: "failed"}->HyperModule.resStatusPayload,
     )
   }
 }
@@ -465,12 +453,12 @@ let confirmApplePay = (
   | "Failed" =>
     headlessModule.exitHeadless(
       nativeProp.rootTag,
-      {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
+      {message: "failed", status: "failed"}->HyperModule.resStatusPayload,
     )
   | "Error" =>
     headlessModule.exitHeadless(
       nativeProp.rootTag,
-      {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
+      {message: "failed", status: "failed"}->HyperModule.resStatusPayload,
     )
   | _ =>
     let payment_data = var->Dict.get("payment_data")->Option.getOr(JSON.Encode.null)
@@ -487,7 +475,7 @@ let confirmApplePay = (
     ) {
       headlessModule.exitHeadless(
         nativeProp.rootTag,
-        {message: "Simulated Identifier", status: "failed"}->HyperModule.stringifiedResStatus,
+        {message: "Simulated Identifier", status: "failed"}->HyperModule.resStatusPayload,
       )
     } else {
       let paymentData =
@@ -605,7 +593,7 @@ let processRequest = async (
         )
         headlessModule.exitHeadless(
           nativeProp.rootTag,
-          getDefaultError->HyperModule.stringifiedResStatus,
+          getDefaultError->HyperModule.resStatusPayload,
         )
       }, 5000)
       let applePayCallback = async var => {
@@ -660,7 +648,7 @@ let processRequest = async (
   | _ =>
     headlessModule.exitHeadless(
       nativeProp.rootTag,
-      getDefaultError->HyperModule.stringifiedResStatus,
+      getDefaultError->HyperModule.resStatusPayload,
     )
   }
 }
@@ -731,13 +719,13 @@ let getPaymentSession = (
                 | None =>
                   headlessModule.exitHeadless(
                     nativeProp.rootTag,
-                    getDefaultError->HyperModule.stringifiedResStatus,
+                    getDefaultError->HyperModule.resStatusPayload,
                   )
                 }
               | None =>
                 headlessModule.exitHeadless(
                   nativeProp.rootTag,
-                  getDefaultError->HyperModule.stringifiedResStatus,
+                  getDefaultError->HyperModule.resStatusPayload,
                 )
               }
             },
