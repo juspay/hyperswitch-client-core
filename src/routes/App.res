@@ -35,10 +35,21 @@ module App = {
 
 @react.component
 let make = (~props, ~rootTag) => {
+  // ---------------- POC ONLY (PocSharedState) — DELETE AFTER DEMO ----------------
+  let nativeProp = SdkTypes.nativeJsonToRecord(props, rootTag)
+  React.useEffect0(() => {
+    PocSharedState.registerMount(
+      ~rootTag,
+      ~sdkAuth=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+    )
+    None
+  })
+  // -------------------------------------------------------------------------------
   <ErrorBoundary rootTag level=FallBackScreen.Top>
     <ContextWrapper props rootTag>
       <PortalHost>
         <App />
+        <PocSharedStateView rootTag />
       </PortalHost>
     </ContextWrapper>
   </ErrorBoundary>

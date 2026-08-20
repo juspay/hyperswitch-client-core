@@ -18,6 +18,17 @@ let make = (~props) => {
     }
   }
 
+  // ---------------- POC ONLY — DELETE AFTER DEMO ----------------
+  // If headless truly ran in a separate JS context, this VM-identity + the
+  // module-level store would differ from / be invisible to the widget roots.
+  Console.log2(
+    "[SHAREDPoC]",
+    `HEADLESS VM CHECK vmUid=${PocSharedState.vmUid} store="${PocSharedState.readAll(
+        ~rootTag=-1,
+      )}"`,
+  )
+  // --------------------------------------------------------------
+
   HeadlessCommon.runHeadlessFlow(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
 
   React.null
