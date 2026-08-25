@@ -6,4 +6,5 @@ type props = {
   style?: ReactNative.Style.t,
 }
 
-let make: React.component<props> = ReactNative.NativeModules.requireNativeComponent("PaypalButton")
+@module("@juspay-tech/react-native-hyperswitch-paypal")
+external make: React.component<props> = "PaypalButton"

@@ -1,5 +1,4 @@
 type integration = unit
-type instrumentation = unit
 
 type sentryInitArg = {
   dsn: string,
@@ -10,17 +9,7 @@ type sentryInitArg = {
   tracePropagationTargets?: array<string>,
   replaysSessionSampleRate?: float,
   replaysOnErrorSampleRate?: float,
-  deactivateStacktraceMerging?: bool,
 }
-
-type newBrowserTracingArg = {routingInstrumentation: instrumentation}
-@new @scope("sentryReactNative")
-external newBrowserTracing: newBrowserTracingArg => integration = "BrowserTracing"
-
-@new @scope("sentryReactNative")
-external newSentryReplay: unit => integration = "Replay"
-@new @scope("sentryReactNative")
-external reactNativeTracingIntegration: unit => integration = "reactNativeTracingIntegration"
 
 type fallbackArg = {
   error: Exn.t,
@@ -30,12 +19,12 @@ type fallbackArg = {
 
 type props = {fallback: fallbackArg => React.element, children: React.element}
 
+// Sentry v8
 type module_ = {
   init: sentryInitArg => unit,
-  \"BrowserTracing": newBrowserTracingArg => integration,
-  reactRouterV6Instrumentation: ((unit => option<unit => unit>) => unit) => instrumentation,
   reactNativeTracingIntegration: unit => integration,
-  \"Replay": unit => integration,
+  browserTracingIntegration: unit => integration,
+  replayIntegration: unit => integration,
   \"ErrorBoundary": option<React.component<props>>,
   wrap: React.element => React.element,
   flush: unit => Promise.t<unit>,
@@ -52,10 +41,9 @@ let sentryReactNative = switch try {
 | Some(mod) => mod
 | None => {
     init: _ => (),
-    \"BrowserTracing": _ => (),
-    reactRouterV6Instrumentation: _ => (),
-    reactNativeTracingIntegration: _ => (),
-    \"Replay": () => (),
+    reactNativeTracingIntegration: () => (),
+    browserTracingIntegration: () => (),
+    replayIntegration: () => (),
     \"ErrorBoundary": None,
     wrap: component => component,
     flush: () => Promise.resolve(),
@@ -88,14 +76,10 @@ let initiateSentry = (~dsn: option<string>, ~environment: string) => {
     let integrations =
       ReactNative.Platform.os === #web
         ? [
-            newBrowserTracing({
-              routingInstrumentation: sentryReactNative.reactRouterV6Instrumentation(
-                ReactModule.useEffect,
-              ),
-            }),
-            newSentryReplay(),
+            sentryReactNative.browserTracingIntegration(),
+            sentryReactNative.replayIntegration(),
           ]
-        : [reactNativeTracingIntegration()]
+        : [sentryReactNative.reactNativeTracingIntegration()]
     switch dsn {
     | Some(dsn) =>
       sentryReactNative.init({

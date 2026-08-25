@@ -59,7 +59,7 @@ let make = () => {
             }
             headlessModule.exitHeadless(
               nativeProp.rootTag,
-              cvcValidationError->HyperModule.stringifiedResStatus,
+              cvcValidationError->HyperModule.resStatusPayload,
             )
           } else {
             HeadlessCommon.confirmCardPayment(
