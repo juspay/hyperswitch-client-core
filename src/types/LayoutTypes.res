@@ -30,6 +30,7 @@ type layout = {
   cvcIcon: visibility,
   cardBrandIcon: cardBrandVisibility,
   showCheckedIconForSelection: bool,
+  separatorText: option<string>,
   savedMethodCustomization: savedMethodCustomization,
 }
 
@@ -44,6 +45,7 @@ let defaultLayout: layout = {
   cvcIcon: Shown,
   cardBrandIcon: Standard,
   showCheckedIconForSelection: false,
+  separatorText: None,
   savedMethodCustomization: {
     hideCardExpiry: false,
     hideCVCError: false,
@@ -98,6 +100,7 @@ let parseLayout = (configObj: Dict.t<JSON.t>) => {
         | _ => Animated
         },
         showCheckedIconForSelection: getBool(obj, "showCheckedIconForSelection", false),
+        separatorText: getOptionString(obj, "separatorText"),
         savedMethodCustomization: {
           hideCardExpiry: getBool(savedMethodCustomizationDict, "hideCardExpiry", false),
           hideCVCError: getBool(savedMethodCustomizationDict, "hideCVCError", false),

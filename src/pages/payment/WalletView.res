@@ -25,6 +25,7 @@ module WalletDisclaimer = {
 @react.component
 let make = (~isLoading=true, ~elementArr, ~showDisclaimer=false, ~hideDivider=false) => {
   let localeObject = GetLocale.useGetLocalObj()
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   <>
     {switch elementArr->Array.length {
     | 0 => React.null
@@ -37,7 +38,12 @@ let make = (~isLoading=true, ~elementArr, ~showDisclaimer=false, ~hideDivider=fa
         </UIUtils.RenderIf>
         <UIUtils.RenderIf condition={!hideDivider}>
           <Space height=15. />
-          <TextWithLine text=localeObject.orPayUsing isLoading />
+          <TextWithLine
+            text={nativeProp.configuration.paymentMethodLayout.separatorText->Option.getOr(
+              localeObject.orPayUsing,
+            )}
+            isLoading
+          />
           <Space height=5. />
         </UIUtils.RenderIf>
       </>
