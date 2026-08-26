@@ -65,6 +65,6 @@ let make = (
     accessibilityElementsHidden={!isFocused}
     importantForAccessibility={isFocused ? #auto : #"no-hide-descendants"}
     style={array([s({flexGrow: 1.}), style])}>
-    {children({loading: false})}
+    {children({loading: isLoading})}
   </View>
 }

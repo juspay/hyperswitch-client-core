@@ -40,6 +40,8 @@ let setupWidgetEventListener = (~onWidgetEvent: widgetResponse => unit) => {
   })
 }
 
+// Deprecated: express checkout is no longer a supported surface. Kept only so
+// the existing ExpressCheckoutWidget page still compiles.
 let setupExpressCheckoutListener = (
   ~onExpressCheckoutConfirm: PaymentConfirmTypes.responseFromJava => unit,
 ) => {
