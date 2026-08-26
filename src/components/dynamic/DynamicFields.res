@@ -76,22 +76,24 @@ let make = (
         </ReactNative.View>
       | _ => React.null
       }}
-      {switch (
-        clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
-        isNicknameSelected,
-        nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-        clientData
-        ->Option.map(data => data.intent_data.payment_type)
-        ->Option.getOr(NORMAL),
-      ) {
-      | (false, _, true, NEW_MANDATE | NORMAL) =>
-        isNicknameSelected
-          ? <NickNameElement nickname setNickname setIsNicknameValid accessible />
-          : React.null
-      | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
-        <NickNameElement nickname setNickname setIsNicknameValid accessible />
-      | _ => React.null
-      }}
+      <UIUtils.RenderIf condition={!nativeProp.configuration.hideCardNicknameField}>
+        {switch (
+          clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
+          isNicknameSelected,
+          nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
+          clientData
+          ->Option.map(data => data.intent_data.payment_type)
+          ->Option.getOr(NORMAL),
+        ) {
+        | (false, _, true, NEW_MANDATE | NORMAL) =>
+          isNicknameSelected
+            ? <NickNameElement nickname setNickname setIsNicknameValid accessible />
+            : React.null
+        | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
+          <NickNameElement nickname setNickname setIsNicknameValid accessible />
+        | _ => React.null
+        }}
+      </UIUtils.RenderIf>
       <Space height=10. />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf
