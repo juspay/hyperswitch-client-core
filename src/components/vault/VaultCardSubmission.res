@@ -25,12 +25,18 @@ let use = (~paymentMethodData: ClientResponseType.paymentMethodEnabled): t => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   let formRef: React.ref<Nullable.t<VaultCardForm.vaultFormHandle>> = React.useRef(Nullable.null)
+  let latestNicknameRef = React.useRef((nickname, isNicknameSelected))
+  latestNicknameRef.current = (nickname, isNicknameSelected)
 
   let activation = React.useMemo2(
     () => VaultActivation.resolve(~sdkConfigData, ~vaultSession),
     (sdkConfigData, vaultSession),
   )
-  let cardFlow = paymentMethodData.payment_method === CARD ? Some({activation, formRef}) : None
+  let isCardMethod = paymentMethodData.payment_method === CARD
+  let cardFlow = React.useMemo2(
+    () => isCardMethod ? Some({activation, formRef}) : None,
+    (isCardMethod, activation),
+  )
 
   let finish = (~apiResStatus: PaymentConfirmTypes.error, ~closeSDK) => {
     if !closeSDK {
@@ -49,6 +55,7 @@ let use = (~paymentMethodData: ClientResponseType.paymentMethodEnabled): t => {
       let isGuestCustomer =
         clientData->Option.map(d => d.intent_data.is_guest_customer)->Option.getOr(true)
       let cardholderNameMode = VaultConfirmInput.cardholderNameModeOf(configuredFields)
+      let (nickname, isNicknameSelected) = latestNicknameRef.current
       let customerAcceptance = PaymentUtils.shouldSendCustomerAcceptance(
         ~nativeProp,
         ~payment_type=paymentType,

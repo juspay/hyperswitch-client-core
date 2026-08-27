@@ -9,7 +9,6 @@ let make = (~setConfirmButtonData) => {
 
   let {
     walletData,
-    nickname,
     isNicknameSelected,
     getRequiredFieldsForButton,
     country,
@@ -112,24 +111,7 @@ let make = (~setConfirmButtonData) => {
     }
 
     let paymentMethodDataDict = switch payment_method {
-    | CARD =>
-      switch nickname {
-      | Some(name) =>
-        [
-          (
-            "payment_method_data",
-            [
-              (
-                payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
-              ),
-            ]
-            ->Dict.fromArray
-            ->Js.Json.object_,
-          ),
-        ]->Dict.fromArray
-      | None => Dict.make()
-      }
+    | CARD => Dict.make()
     | pm =>
       [
         (
