@@ -2,6 +2,21 @@ open ReactNative
 open Style
 open PaymentEvents
 
+module Scene = {
+  @react.component
+  let make = (
+    ~hoc: AllApiDataModifier.hoc,
+    ~isScreenFocus,
+    ~setConfirmButtonData: GlobalConfirmButton.confirmButtonData => unit,
+  ) => {
+    hoc.componentHoc(~isScreenFocus, ~setConfirmButtonData)
+  }
+}
+
+module MemoizedScene = {
+  let make = React.memo(Scene.make)
+}
+
 @react.component
 let make = (
   ~hocComponentArr: array<AllApiDataModifier.hoc>=[],
@@ -38,40 +53,39 @@ let make = (
 
   let isGridArrangement = layout.paymentMethodsArrangementForTabs === ArrangementGrid
 
-  let (renderScene, descriptorDict) = React.useMemo3(() => {
-    let map = Map.make()
+  let routes = React.useMemo1(() =>
+    hocComponentArr->Array.mapWithIndex((hoc, index) => {
+      let route: TabViewType.route = {
+        key: index->Int.toString,
+        title: hoc.name,
+      }
+      route
+    })
+  , [hocComponentArr])
+
+  let descriptorDict = React.useMemo4(() => {
     let descriptorDict: Dict.t<TabViewType.tabDescriptor> = Dict.make()
 
     hocComponentArr->Array.forEachWithIndex((hoc, index) => {
-      map->Map.set(
-        index->Int.toString,
-        _ => {
-          hoc.componentHoc(~isScreenFocus=indexInFocus === index, ~setConfirmButtonData)
-        },
-      )
-
       descriptorDict->Dict.set(
         index->Int.toString,
         {
-          icon: _ =>
+          icon: (props: TabViewType.iconProps) =>
             isLoading
               ? <CustomLoader height="18" width="18" />
               : <Icon
                   name=hoc.name
                   width=18.
                   height=18.
-                  fill={indexInFocus === index ? component.selected.color : iconColor}
+                  fill={props.focused ? component.selected.color : iconColor}
                 />,
-          label: _ =>
+          label: (props: TabViewType.labelProps) =>
             isLoading
               ? <CustomLoader height="18" width="40" />
               : <TextWrapper
                   text=hoc.name
-                  textType={switch indexInFocus === index {
-                  | true => CardTextBold
-                  | _ => CardText
-                  }}
-                  overrideStyle={indexInFocus === index
+                  textType={props.focused ? CardTextBold : CardText}
+                  overrideStyle={props.focused
                     ? Some(s({color: component.selected.color}))
                     : None}
                 />,
@@ -79,19 +93,31 @@ let make = (
       )
     })
 
-    (SceneMap.sceneMap(map), descriptorDict)
-  }, (hocComponentArr, indexInFocus, isLoading))
+    descriptorDict
+  }, (hocComponentArr, isLoading, iconColor, component.selected.color))
+
+  let renderScene = React.useCallback3((
+    ~route: TabViewType.route,
+    ~jumpTo as _,
+    ~position as _,
+  ) => {
+    switch route.key
+    ->Int.fromString
+    ->Option.flatMap(index => hocComponentArr->Array.get(index)->Option.map(hoc => (hoc, index))) {
+    | Some((hoc, index)) =>
+      <MemoizedScene
+        key=route.key hoc isScreenFocus={indexInFocus === index} setConfirmButtonData
+      />
+    | None => React.null
+    }
+  }, (hocComponentArr, indexInFocus, setConfirmButtonData))
+
+  let commonOptions = React.useMemo1((): TabViewType.tabDescriptor => {
+    sceneStyle: s({marginHorizontal: sheetContentPadding->dp}),
+  }, [sheetContentPadding])
 
   <UIUtils.RenderIf condition={hocComponentArr->Array.length > 0}>
     {
-      let routes = hocComponentArr->Array.mapWithIndex((hoc, index) => {
-        let route: TabViewType.route = {
-          key: index->Int.toString,
-          title: hoc.name,
-        }
-        route
-      })
-
       let isScrollBarOnlyCards =
         hocComponentArr->Array.length == 1 &&
           switch hocComponentArr->Array.get(0) {
@@ -105,6 +131,8 @@ let make = (
           routes,
         }
         onIndexChange=setIndexInFocus
+        lazyBool=true
+        lazyPreloadDistance=1
         renderTabBar={(~position, ~jumpTo, ~navigationState, ~options) =>
           isScrollBarOnlyCards
             ? <Space height=24. />
@@ -124,9 +152,7 @@ let make = (
           marginHorizontal: -.sheetContentPadding->dp,
         })}
         options=descriptorDict
-        commonOptions={{
-          sceneStyle: s({marginHorizontal: sheetContentPadding->dp}),
-        }}
+        commonOptions
       />
     }
   </UIUtils.RenderIf>
