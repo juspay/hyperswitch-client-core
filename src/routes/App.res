@@ -4,13 +4,7 @@ module ContextWrapper = {
     let nativeProp = SdkTypes.nativeJsonToRecord(props, rootTag)
     <NativePropContext nativeProp>
       <LoggerContext>
-        <ViewportContext
-          topInset={nativeProp.sdkParams.insets
-          ->Option.map(insets => insets.top)
-          ->Option.getOr(None)}
-          bottomInset={nativeProp.sdkParams.insets
-          ->Option.map(insets => insets.bottom)
-          ->Option.getOr(None)}>
+        <SafeAreaContext>
           <ThemeContext appearance=nativeProp.configuration.appearance>
             <LocaleStringDataContext locale=nativeProp.configuration.locale>
               <CountryStateDataContext>
@@ -20,7 +14,7 @@ module ContextWrapper = {
               </CountryStateDataContext>
             </LocaleStringDataContext>
           </ThemeContext>
-        </ViewportContext>
+        </SafeAreaContext>
       </LoggerContext>
     </NativePropContext>
   }

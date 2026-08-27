@@ -47,6 +47,7 @@
     "final-form": "^5.0.0",
     "react-final-form": "^7.0.0",
     "react-native-inappbrowser-reborn": "^3.7.0",
+    "react-native-safe-area-context": "^5.6.0",
     "react-native-svg": "^15.15.5"
   },
   "codegenConfig": {

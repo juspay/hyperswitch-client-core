@@ -10716,6 +10716,7 @@ __metadata:
     react-native-bundle-visualizer: ^3.1.3
     react-native-dotenv: ^3.4.11
     react-native-inappbrowser-reborn: ^3.7.0
+    react-native-safe-area-context: ^5.6.0
     react-native-svg: ^15.15.5
     react-native-web: ^0.20.0
     react-test-renderer: 19.2.3
@@ -15440,6 +15441,16 @@ __metadata:
   peerDependencies:
     react-native: ">=0.56"
   checksum: 7de00a0d49cc916477cad9fcc425bc21610abb4d8f72a41d96eee032266c8edd277aa2463e03daadbb9182bfb033a34a0749a5b7a5d22ff96d4b1961ae1d6046
+  languageName: node
+  linkType: hard
+
+"react-native-safe-area-context@npm:^5.6.0":
+  version: 5.9.1
+  resolution: "react-native-safe-area-context@npm:5.9.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: ef708ab0b4480750552aa1947910bdfa26fd8e2864146342317e7713c00960c5da1d8dab72307f1e9da7dec3f7aff5c97d2eda349a1120dd3d14aa935331ae66
   languageName: node
   linkType: hard
 

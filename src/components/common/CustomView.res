@@ -70,13 +70,13 @@ module WidgetWrapper = {
   @react.component
   let make = (~width=100.->pct, ~children=React.null, ~renderScrollView=true) => {
     let {bgColor, sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
-    let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+    let insets = SafeAreaContext.useSafeAreaInsets()
 
     let contentStyle = s({
       minHeight: 250.->dp,
       paddingHorizontal: sheetContentPadding->dp,
       paddingTop: sheetContentPadding->dp,
-      paddingBottom: viewPortContants.bottomInset->dp,
+      paddingBottom: (insets.bottom +. SafeAreaContext.bottomGap)->dp,
     })
     let containerStyle = array([s({flexGrow: 1., width}), bgColor])
 
@@ -105,7 +105,8 @@ module Wrapper = {
     ~isSavedPaymentScreen,
   ) => {
     let {bgColor, sheetContentPadding, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
-    let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+    let insets = SafeAreaContext.useSafeAreaInsets()
+    let bottomInset = insets.bottom +. SafeAreaContext.bottomGap
 
     let style = React.useMemo0(() => {
       let style = [s({flexGrow: 1., width}), bgColor]
@@ -115,11 +116,14 @@ module Wrapper = {
       array(style)
     })
 
+    // The sticky footer carries the bottom inset for branding image
+    let contentBottomInset = stickyFooter->Option.isSome ? 0. : bottomInset
+
     let contentStyle = s({
       minHeight: 250.->dp,
       paddingHorizontal: sheetContentPadding->dp,
       paddingTop: sheetContentPadding->dp,
-      // paddingBottom: viewPortContants.bottomInset->dp,
+      paddingBottom: contentBottomInset->dp,
     })
 
     let getStickyFooter = style =>
@@ -141,7 +145,7 @@ module Wrapper = {
             s({
               paddingHorizontal: sheetContentPadding->dp,
               paddingTop: (sheetContentPadding /. 2.)->dp,
-              paddingBottom: viewPortContants.bottomInset->dp,
+              paddingBottom: bottomInset->dp,
             }),
           )}
         </View>
@@ -151,7 +155,7 @@ module Wrapper = {
           {getStickyFooter(
             s({
               paddingTop: (sheetContentPadding /. 2.)->dp,
-              paddingBottom: viewPortContants.bottomInset->dp,
+              paddingBottom: bottomInset->dp,
             }),
           )}
         </View>
