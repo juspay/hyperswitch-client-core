@@ -9,75 +9,100 @@ let make = (
   ~methodType=TAB,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(
+  let (clientData, _, sdkConfigData) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
+  let vaultSession = React.useContext(VaultSessionContext.vaultSessionContext)
   let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let {nickname, isNicknameSelected, setEligibilityStatus} = React.useContext(
+  let {nickname, isNicknameSelected} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
   )
 
-  let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
+  let dispatchNextAction = AllPaymentHooks.useNextActionDispatcher()
 
-  let checkEligibility = (cardNumberOpt: option<string>) => {
-    switch cardNumberOpt {
-    | None => setEligibilityStatus(_ => Allowed)
-    | Some(cardNumber) =>
-      let shouldCheck =
-        clientData
-        ->Option.flatMap(d => d.sdk_next_action.next_action)
-        ->Option.mapOr(false, action => action == "eligibility_check")
+  let eligibilityRequired =
+    clientData
+    ->Option.flatMap(d => d.sdk_next_action.next_action)
+    ->Option.mapOr(false, action => action == "eligibility_check")
 
-      if shouldCheck {
-        setEligibilityStatus(_ => Pending)
-        let pmData =
-          [
-            (
-              paymentMethodData.payment_method_str,
-              [("card_number", cardNumber->JSON.Encode.string)]
-              ->Dict.fromArray
-              ->JSON.Encode.object,
-            ),
-          ]
-          ->Dict.fromArray
-          ->JSON.Encode.object
-        callEligibilityCheck(
-          ~paymentMethodType=paymentMethodData.payment_method_str,
-          ~paymentMethodData=pmData,
-        )
-        ->Promise.then(json => {
-          let nextActionJson =
-            json
-            ->Utils.getDictFromJson
-            ->Utils.getOptionalObj("sdk_next_action")
-            ->Option.flatMap(d => d->Dict.get("next_action"))
-          let isDenied = switch nextActionJson {
-          | Some(json) =>
-            switch JSON.Decode.string(json) {
-            | Some("deny") => true
-            | Some(_) => false
-            | None => json->Utils.getDictFromJson->Dict.get("deny")->Option.isSome
-            }
-          | None => false
-          }
-          setEligibilityStatus(_ => isDenied ? Denied : Allowed)
-          Promise.resolve()
-        })
-        ->Promise.catch(_ => {
-          setEligibilityStatus(_ => Allowed)
-          Promise.resolve()
-        })
-        ->ignore
+  let vaultFormRef: React.ref<Nullable.t<VaultCardForm.vaultFormHandle>> = React.useRef(
+    Nullable.null,
+  )
+
+  let vaultActivation = React.useMemo2(
+    () =>
+      VaultActivation.resolve(
+        ~vaultingAction=SdkConfigTypes.getVaultingAction(sdkConfigData),
+        ~vaultSession,
+      ),
+    (sdkConfigData, vaultSession),
+  )
+
+  let isCardMethod = paymentMethodData.payment_method === CARD
+
+  let vaultCardFlow = React.useMemo3(
+    () => isCardMethod ? Some((vaultActivation, vaultFormRef)) : None,
+    (isCardMethod, vaultActivation, vaultFormRef),
+  )
+
+  let nonCardPaymentMethodData = (
+    ~walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
+    ~tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
+    ~getExperienceSuffix,
+  ): option<(
+    RescriptCore.Dict.t<RescriptCore.JSON.t>,
+    RescriptCore.Dict.t<RescriptCore.JSON.t>,
+    string,
+  )> =>
+    switch paymentMethodData.payment_method {
+    | CARD => None
+    | REWARD =>
+      Some((
+        [
+          ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
+        ]->Dict.fromArray,
+        Dict.make(),
+        paymentMethodData.payment_method_str,
+      ))
+    | pm =>
+      let suffix = if pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL {
+        paymentMethodData.payment_experience->getExperienceSuffix
+      } else if paymentMethodData.payment_method_type === "cashapp" {
+        "_qr"
       } else {
-        setEligibilityStatus(_ => Allowed)
+        ""
       }
-    }
-  }
 
-  let processRequest = (
+      Some((
+        [
+          (
+            "payment_method_data",
+            [
+              (
+                paymentMethodData.payment_method_str,
+                [
+                  (
+                    paymentMethodData.payment_method_type ++ suffix,
+                    walletDict->Option.getOr(Dict.make())->Js.Json.object_,
+                  ),
+                ]
+                ->Dict.fromArray
+                ->Js.Json.object_,
+              ),
+            ]
+            ->Dict.fromArray
+            ->Js.Json.object_,
+          ),
+        ]->Dict.fromArray,
+        tabDict,
+        paymentMethodData.payment_method_str,
+      ))
+    }
+
+  let classicProcessRequest = (
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
@@ -123,68 +148,10 @@ let make = (
       paymentMethodDataDict,
       tabDict,
       paymentMethodStr,
-    ) = switch paymentMethodData.payment_method {
-    | CARD =>
-      switch nickname {
-      | Some(name) => (
-          [
-            (
-              "payment_method_data",
-              [
-                (
-                  paymentMethodData.payment_method_str,
-                  [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
-                ),
-              ]
-              ->Dict.fromArray
-              ->Js.Json.object_,
-            ),
-          ]->Dict.fromArray,
-          tabDict,
-          paymentMethodData.payment_method_str,
-        )
-      | None => (Dict.make(), tabDict, paymentMethodData.payment_method_str)
-      }
-    | REWARD => (
-        [
-          ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
-        ]->Dict.fromArray,
-        Dict.make(),
-        paymentMethodData.payment_method_str,
-      )
-    | pm =>
-      let suffix = if pm === PAY_LATER || paymentMethodData.payment_method_type_wallet === PAYPAL {
-        paymentMethodData.payment_experience->getExperienceSuffix
-      } else if paymentMethodData.payment_method_type === "cashapp" {
-        "_qr"
-      } else {
-        ""
-      }
-
-      (
-        [
-          (
-            "payment_method_data",
-            [
-              (
-                paymentMethodData.payment_method_str,
-                [
-                  (
-                    paymentMethodData.payment_method_type ++ suffix,
-                    walletDict->Option.getOr(Dict.make())->Js.Json.object_,
-                  ),
-                ]
-                ->Dict.fromArray
-                ->Js.Json.object_,
-              ),
-            ]
-            ->Dict.fromArray
-            ->Js.Json.object_,
-          ),
-        ]->Dict.fromArray,
-        tabDict,
-        paymentMethodData.payment_method_str,
-      )
+    ) = switch nonCardPaymentMethodData(~walletDict, ~tabDict, ~getExperienceSuffix) {
+    | None =>
+      (Dict.make(), Dict.make(), paymentMethodData.payment_method_str)
+    | Some(triple) => triple
     }
 
     let body = PaymentUtils.generateCardConfirmBody(
@@ -230,15 +197,153 @@ let make = (
     )->ignore
   }
 
+  let cardholderNameFrom = (tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>) =>
+    tabDict
+    ->Dict.get("payment_method_data")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(pmd => pmd->Dict.get("card"))
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(card => card->Dict.get("card_holder_name"))
+    ->Option.flatMap(JSON.Decode.string)
+    ->Option.flatMap(name => name->String.trim->String.length > 0 ? Some(name) : None)
+
+  let libraryProcessRequest = (
+    ~cardSource: VaultCardForm.paymentCardSource,
+    ~cardholderName: option<string>,
+    email,
+  ) => {
+    setLoading(ProcessingPayments)
+
+    let finish = (~apiResStatus: PaymentConfirmTypes.error, ~closeSDK) => {
+      if !closeSDK {
+        setLoading(FillingDetails)
+      }
+      handleSuccessFailure(~apiResStatus, ~closeSDK, ())
+    }
+
+    switch vaultFormRef.current->Nullable.toOption {
+    | None =>
+      setLoading(FillingDetails)
+    | Some(handle) =>
+      handle.confirmPayment({
+        cardSource,
+        cardholderName: ?cardholderName,
+        paymentId: nativeProp.paymentSessionConfig.paymentId,
+        sdkAuthorization: nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+        paymentMethodType: paymentMethodData.payment_method_type === "debit" ? #debit : #credit,
+        eligibilityRequired,
+        appId: ?nativeProp.sdkParams.appId,
+        paymentMethodData: {
+          nickName: ?nickname,
+        },
+        browserInfo: {
+          userAgent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
+          acceptHeader: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+          language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
+          colorDepth: 32,
+          screenHeight: viewPortContants.screenHeight->Int.fromFloat,
+          screenWidth: viewPortContants.screenWidth->Int.fromFloat,
+          timeZone: Date.make()->Date.getTimezoneOffset,
+          javaEnabled: true,
+          javaScriptEnabled: true,
+          deviceModel: ?nativeProp.sdkParams.device_model,
+          osType: ?nativeProp.sdkParams.os_type,
+          osVersion: ?nativeProp.sdkParams.os_version,
+        },
+        returnUrl: ?Utils.getReturnUrl(
+          ~appId=nativeProp.sdkParams.appId,
+          ~appURL=clientData->Option.map(data => data.intent_data.return_url),
+        ),
+        paymentType: ?switch clientData->Option.map(data => data.intent_data.payment_type) {
+        | Some(NEW_MANDATE) => Some(#new_mandate)
+        | Some(SETUP_MANDATE) => Some(#setup_mandate)
+        | _ => None
+        },
+        email: ?email,
+      })
+      ->Promise.then(result => {
+        switch VaultResultMapper.classify(result) {
+        | Succeeded =>
+          setLoading(PaymentSuccess)
+          setTimeout(() => {
+            handleSuccessFailure(
+              ~apiResStatus={type_: "", status: "succeeded", code: "", message: ""},
+              (),
+            )
+          }, 300)->ignore
+        | Processing =>
+          handleSuccessFailure(
+            ~apiResStatus={type_: "", status: "processing", code: "", message: ""},
+            (),
+          )
+        | RequiresCustomerAction(nextAction) =>
+          if VaultResultMapper.isSupportedNextAction(nextAction) {
+            dispatchNextAction(
+              ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+              ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
+              ~errorCallback=(~errorMessage, ~closeSDK, ()) =>
+                finish(~apiResStatus=errorMessage, ~closeSDK),
+              ~paymentMethod=paymentMethodData.payment_method_type,
+              ~paymentExperience=paymentMethodData.payment_experience,
+              ~responseCallback=(~paymentStatus, ~status) =>
+                switch paymentStatus {
+                | LoadingContext.PaymentSuccess =>
+                  setLoading(PaymentSuccess)
+                  setTimeout(() => handleSuccessFailure(~apiResStatus=status, ()), 300)->ignore
+                | _ => handleSuccessFailure(~apiResStatus=status, ())
+                },
+              ~isCardPayment=true,
+              (),
+            )(
+              ~status="requires_customer_action",
+              ~reUri=nextAction.redirectUrl->Option.getOr(""),
+              ~error=VaultResultMapper.genericFailure,
+              ~nextAction=VaultResultMapper.toClientNextAction(nextAction),
+            )
+          } else {
+            finish(~apiResStatus=VaultResultMapper.unsupportedNextAction, ~closeSDK=true)
+          }
+        | Failed(error) => finish(~apiResStatus=error, ~closeSDK=VaultResultMapper.closesSheet(result))
+        }
+        Promise.resolve()
+      })
+      ->Promise.catch(_ => {
+        finish(~apiResStatus=VaultResultMapper.genericFailure, ~closeSDK=true)
+        Promise.resolve()
+      })
+      ->ignore
+    }
+  }
+
+  let processRequest = (
+    tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
+    walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
+    email: option<string>,
+  ) =>
+    switch vaultCardFlow {
+    | Some(activation, _) =>
+      switch VaultActivation.route(activation) {
+      | ConfirmWith(cardSource) =>
+        libraryProcessRequest(~cardSource, ~cardholderName=cardholderNameFrom(tabDict), email)
+      | Blocked({code, message}) =>
+        handleSuccessFailure(
+          ~apiResStatus={type_: "", status: "failed", code, message},
+          ~closeSDK=true,
+          (),
+        )
+      }
+    | None => classicProcessRequest(tabDict, walletDict, email)
+    }
+
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
-    {switch methodType {
-    | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
-    | TAB =>
-      <TabElement
-        paymentMethodData processRequest checkEligibility isScreenFocus setConfirmButtonData
-      />
-    | _ => React.null
-    }}
+    <VaultCardFlowContext.Provider value=vaultCardFlow>
+      {switch methodType {
+      | ELEMENT => <ButtonElement paymentMethodData processRequest sessionObject />
+      | TAB =>
+        <TabElement paymentMethodData processRequest isScreenFocus setConfirmButtonData />
+      | _ => React.null
+      }}
+    </VaultCardFlowContext.Provider>
     {switch nativeProp.configuration.paymentMethodsConfig->Array.find(paymentMethodConfig => {
       paymentMethodConfig.paymentMethod == paymentMethodData.payment_method_str
     }) {

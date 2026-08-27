@@ -129,6 +129,7 @@ module.exports = {
     },
   },
   resolve: {
+    symlinks: false,
     extensions: [
       '.web.tsx',
       '.web.ts',
@@ -140,7 +141,10 @@ module.exports = {
       '.js',
     ],
     alias: {
-      'react-native$': 'react-native-web',
+      react: path.resolve(appDirectory, '../node_modules/react'),
+      'react-dom': path.resolve(appDirectory, '../node_modules/react-dom'),
+      'react-native-web': path.resolve(appDirectory, '../node_modules/react-native-web'),
+      'react-native$': path.resolve(appDirectory, '../node_modules/react-native-web'),
       'react-native-linear-gradient': 'react-native-web-linear-gradient',
       'react-native-klarna-inapp-sdk/index': 'react-native-web',
       '@sentry/react-native': '@sentry/react',

@@ -11,7 +11,6 @@ let make = (
   ~enabledCardSchemes=[],
   ~accessible: bool,
   ~isFocused: bool=false,
-  ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (clientData, _, _) = React.useContext(
@@ -48,7 +47,6 @@ let make = (
         enabledCardSchemes
         accessible
         isFocused
-        checkEligibility
       />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={isCardPayment && !isGiftCardPayment && fields->Array.length > 0}>

@@ -107,3 +107,29 @@ let itemToObjMapper = dict => {
 let jsonToSessionTokenType = sessionTokenData => {
   sessionTokenData->Utils.getDictFromJson->itemToObjMapper
 }
+
+type vaultSession = {
+  vaultType: string,
+  session: JSON.t,
+}
+
+let narrowVaultSession = (sessionTokensResponse: JSON.t): option<vaultSession> =>
+  sessionTokensResponse
+  ->JSON.Decode.object
+  ->Option.flatMap(root => root->Dict.get("vault_details"))
+  ->Option.flatMap(vaultDetails =>
+    vaultDetails
+    ->JSON.Decode.object
+    ->Option.map(details => {
+      vaultType: details
+      ->Dict.get("vault_type")
+      ->Option.flatMap(JSON.Decode.string)
+      ->Option.getOr("")
+      ->String.trim
+      ->String.toLowerCase,
+      session: [("vault_details", vaultDetails)]->Dict.fromArray->JSON.Encode.object,
+    })
+  )
+
+let isSupportedVault = (vaultSession: option<vaultSession>) =>
+  vaultSession->Option.mapOr(false, v => v.vaultType === "hyperswitch")

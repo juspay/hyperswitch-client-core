@@ -16,6 +16,7 @@ let make = () => {
   let (clientResponse, setClientResponse) = React.useState(_ => None)
   let (sessionTokenData, setSessionTokenData) = React.useState(_ => None)
   let (sdkConfigData, setSdkConfigData) = React.useState(_ => None)
+  let (vaultSession, setVaultSession) = React.useState(_ => None)
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
@@ -85,6 +86,7 @@ let make = () => {
             errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
           }
         } else if sessionTokenData != JSON.Null {
+          setVaultSession(_ => sessionTokenData->SessionsType.narrowVaultSession)
           switch sessionTokenData->SessionsType.jsonToSessionTokenType {
           | Some(sessions) => setSessionTokenData(_ => Some(sessions))
           | None => setSessionTokenData(_ => Some([]))
@@ -130,9 +132,14 @@ let make = () => {
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
-  UpdateIntentHook.useUpdateIntentListener(~setClientResponse, ~setSessionTokenData)
+  UpdateIntentHook.useUpdateIntentListener(
+    ~setClientResponse,
+    ~setSessionTokenData,
+    ~setVaultSession,
+  )
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
+    <VaultSessionContext vaultSession>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
     <DynamicFieldsContext>
@@ -153,6 +160,7 @@ let make = () => {
       | NoView
       | PaymentMethodsManagement => React.null
       }}
-    </DynamicFieldsContext>
+      </DynamicFieldsContext>
+    </VaultSessionContext>
   </AllApiDataContextNew>
 }

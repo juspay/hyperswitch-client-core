@@ -3,7 +3,7 @@ open SdkTypes
 let updateIntentInitReturned = "UPDATE_INTENT_INIT_RETURNED"
 let updateIntentCompleteReturned = "UPDATE_INTENT_COMPLETE_RETURNED"
 
-let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
+let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData, ~setVaultSession) => {
   let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
@@ -109,6 +109,7 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData) => {
 
             let handleSessionTokenResponse = sessionTokenData => {
               if !(sessionTokenData->ErrorUtils.isError) && sessionTokenData != JSON.Null {
+                setVaultSession(_ => sessionTokenData->SessionsType.narrowVaultSession)
                 switch sessionTokenData->SessionsType.jsonToSessionTokenType {
                 | Some(sessions) => setSessionTokenData(_ => Some(sessions))
                 | None => setSessionTokenData(_ => Some([]))

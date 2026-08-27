@@ -13,9 +13,19 @@ let make = (
   ~accessible=?,
   ~onSubmit=?,
   ~isFocused: bool=false,
-  ~checkEligibility: option<string> => unit=_ => (),
 ) => {
   let groups = React.useMemo1(() => FieldGrouper.groupFields(fields), [fields])
+
+  let cardholderNameMode: VaultCardForm.cardholderNameMode = React.useMemo1(
+    () =>
+      fields->Array.some((f: SuperpositionTypes.fieldConfig) =>
+        f.fieldRenderType === SuperpositionTypes.CardHolderName ||
+          f.confirmRequestWritePath->String.endsWith("card_holder_name")
+      )
+        ? #"external"
+        : #omit,
+    [fields],
+  )
 
   let localeObject = GetLocale.useGetLocalObj()
 
@@ -57,7 +67,7 @@ let make = (
             isCardPayment
             enabledCardSchemes
             ?accessible
-            checkEligibility
+            cardholderNameMode
           />
         )
         ->React.array}

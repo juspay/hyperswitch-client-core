@@ -15,13 +15,23 @@ let make = (
   ~isCardPayment,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
-  ~checkEligibility: option<string> => unit=_ => (),
+  ~cardholderNameMode: VaultCardForm.cardholderNameMode=#omit,
 ) => {
+  let vaultCardFlow = React.useContext(VaultCardFlowContext.vaultCardFlowContext)
   switch element {
   | CARD(fields) if fields->Array.length > 0 =>
-    <CardElement
-      fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
-    />
+    switch vaultCardFlow {
+    | Some(VaultActivation.VaultCardFlow({session}), formRef) =>
+      <VaultCardElement
+        session={Some(session)} formRef enabledCardSchemes ?accessible cardholderNameMode
+      />
+    | Some(VaultActivation.DirectCardFlow, formRef) =>
+      <VaultCardElement
+        session=None formRef enabledCardSchemes ?accessible cardholderNameMode
+      />
+    | Some(VaultActivation.VaultUnavailable({message}), _) => <VaultUnavailableNotice message />
+    | None => React.null
+    }
   | CRYPTO(fields) if fields->Array.length > 0 =>
     <CryptoElement fields createFieldValidator formatValue ?accessible />
   | EMAIL(fields) if fields->Array.length > 0 =>

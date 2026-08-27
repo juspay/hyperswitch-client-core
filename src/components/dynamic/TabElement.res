@@ -3,7 +3,6 @@ let make = (
   ~paymentMethodData: ClientResponseType.paymentMethodEnabled,
   ~isScreenFocus,
   ~processRequest,
-  ~checkEligibility: option<string> => unit,
   ~setConfirmButtonData,
 ) => {
   let {
@@ -116,6 +115,5 @@ let make = (
     enabledCardSchemes
     accessible
     isFocused=isScreenFocus
-    checkEligibility
   />
 }

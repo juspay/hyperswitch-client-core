@@ -248,7 +248,7 @@ let useBrowserHook = () => {
   }
 }
 
-let useRedirectHook = () => {
+let useNextActionDispatcher = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let browserRedirectionHandler = useBrowserHook()
@@ -259,10 +259,8 @@ let useRedirectHook = () => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
-  let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
 
   (
-    ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
@@ -272,15 +270,6 @@ let useRedirectHook = () => {
     ~isCardPayment=false,
     (),
   ) => {
-    let uriPram = nativeProp.paymentSessionConfig.paymentId
-    let uri = `${baseUrl}/payments/${uriPram}/confirm`
-    let headers = Utils.getHeader(
-      ~apiKey=publishableKey,
-      ~appId=nativeProp.sdkParams.appId,
-      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-      (),
-    )
-
     let handleInvokeThreeDSFlow = (~nextAction) => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
       handleNativeThreeDS(
@@ -463,7 +452,7 @@ let useRedirectHook = () => {
       })
     }
 
-    let handleApiRes = (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
+    (~status, ~reUri, ~error: error, ~nextAction: option<nextAction>=?) => {
       switch nextAction->PaymentUtils.getActionType {
       | "three_ds_invoke" => handleInvokeThreeDSFlow(~nextAction)
       | "third_party_sdk_session_token" => handleThirdPartySDKSessionFlow(~nextAction)
@@ -472,6 +461,45 @@ let useRedirectHook = () => {
       | _ => handleDefaultPaymentFlows(~status, ~reUri, ~error)
       }
     }
+  }
+}
+
+let useRedirectHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
+  let dispatchNextAction = useNextActionDispatcher()
+
+  (
+    ~body: string,
+    ~publishableKey: string,
+    ~clientSecret: string,
+    ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
+    ~paymentMethod,
+    ~paymentExperience: option<array<ClientResponseType.paymentExperience>>=?,
+    ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
+    ~isCardPayment=false,
+    (),
+  ) => {
+    let uriPram = nativeProp.paymentSessionConfig.paymentId
+    let uri = `${baseUrl}/payments/${uriPram}/confirm`
+    let headers = Utils.getHeader(
+      ~apiKey=publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    )
+
+    let handleApiRes = dispatchNextAction(
+      ~publishableKey,
+      ~clientSecret,
+      ~errorCallback,
+      ~paymentMethod,
+      ~paymentExperience?,
+      ~responseCallback,
+      ~isCardPayment,
+      (),
+    )
 
     redirectionHandler(~body, ~errorCallback, ~handleApiRes, ~headers, ~uri)->ignore
   }
@@ -509,37 +537,6 @@ let useDeleteSavedPaymentMethod = () => {
         ~apiLogWrapper,
       )
     | None => JSON.Null->Promise.resolve
-    }
-  }
-}
-
-let useEligibilityCheckHook = () => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let baseUrl = GlobalHooks.useGetBaseUrl()()
-  (~paymentMethodType: string, ~paymentMethodData: JSON.t) => {
-    switch WebKit.platform {
-    | #next => Promise.resolve(`{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn)
-    | _ =>
-      let uri = `${baseUrl}/payments/${nativeProp.paymentSessionConfig.paymentId}/eligibility`
-      let body =
-        [
-          ("payment_method_type", paymentMethodType->JSON.Encode.string),
-          ("payment_method_data", paymentMethodData),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-        ->JSON.stringify
-      APIUtils.fetchApi(
-        ~uri,
-        ~bodyStr=body,
-        ~method_=#POST,
-        ~headers=Utils.getHeader(
-          ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
-          ~appId=nativeProp.sdkParams.appId,
-          ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-          (),
-        ),
-      )->Promise.then(response => response->Fetch.Response.json)
     }
   }
 }
