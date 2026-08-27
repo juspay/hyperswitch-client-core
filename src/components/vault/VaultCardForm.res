@@ -72,6 +72,7 @@ type paymentConfirmInput = {
   eligibilityRequired?: bool,
   appId?: string,
   endpoint?: vaultEndpointConfig,
+  vaultEndpoint?: vaultEndpointConfig,
 }
 
 type eligibilityConfig = {
@@ -227,6 +228,7 @@ type props = {
   accessible?: bool,
   enabledCardSchemes?: array<string>,
   eligibility?: eligibilityConfig,
+  vaultEndpoint?: vaultEndpointConfig,
   cardholderName?: cardholderNameMode,
 }
 

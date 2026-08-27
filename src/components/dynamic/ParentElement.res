@@ -15,22 +15,24 @@ let make = (
   ~isCardPayment,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
+  /* REQUIRED. Every renderer of a CARD group must say which flow it is in; there is no silent default. */
+  ~vaultCardFlow: option<VaultCardSubmission.cardFlow>,
   ~cardholderNameMode: VaultCardForm.cardholderNameMode=#omit,
 ) => {
-  let vaultCardFlow = React.useContext(VaultCardFlowContext.vaultCardFlowContext)
   switch element {
   | CARD(fields) if fields->Array.length > 0 =>
     switch vaultCardFlow {
-    | Some(VaultActivation.VaultCardFlow({session}), formRef) =>
+    | Some({activation: VaultActivation.VaultCardFlow({session}), formRef}) =>
       <VaultCardElement
         session={Some(session)} formRef enabledCardSchemes ?accessible cardholderNameMode
       />
-    | Some(VaultActivation.DirectCardFlow, formRef) =>
-      <VaultCardElement
-        session=None formRef enabledCardSchemes ?accessible cardholderNameMode
-      />
-    | Some(VaultActivation.VaultUnavailable({message}), _) => <VaultUnavailableNotice message />
-    | None => React.null
+    | Some({activation: VaultActivation.DirectCardFlow, formRef}) =>
+      <VaultCardElement session=None formRef enabledCardSchemes ?accessible cardholderNameMode />
+    | Some({activation: VaultActivation.VaultUnavailable({message})}) =>
+      <VaultUnavailableNotice message />
+    | Some({activation: VaultActivation.ConfigurationPending}) => React.null
+    /* A CARD group with no card flow is a wiring error — make it visible, never blank. */
+    | None => <VaultUnavailableNotice message=VaultActivation.missingConfigurationError["message"] />
     }
   | CRYPTO(fields) if fields->Array.length > 0 =>
     <CryptoElement fields createFieldValidator formatValue ?accessible />

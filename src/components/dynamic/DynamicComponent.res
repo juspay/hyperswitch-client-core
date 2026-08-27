@@ -17,6 +17,7 @@ let make = (~setConfirmButtonData) => {
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let {
+    requiredFields,
     missingRequiredFields,
     initialValues,
     walletDict,
@@ -27,6 +28,12 @@ let make = (~setConfirmButtonData) => {
     shippingAddress,
     useIntentData,
   } = walletData
+  let cardSubmission = VaultCardSubmission.use(~paymentMethodData)
+  let cardholderNameMode = React.useMemo1(
+    () => VaultConfirmInput.cardholderNameModeOf(requiredFields),
+    [requiredFields],
+  )
+
   let payment_method = paymentMethodData.payment_method
   let payment_method_str = paymentMethodData.payment_method_str
   let payment_method_type = paymentMethodData.payment_method_type
@@ -192,11 +199,12 @@ let make = (~setConfirmButtonData) => {
 
   let handlePress = _ => {
     if isFormValid || missingRequiredFields->Array.length === 0 {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        Some(walletDict),
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
+      let tabDict = CommonUtils.mergeDict(initialValues, formData)
+      let email = formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string)
+      switch cardSubmission.cardFlow {
+      | Some(_) => cardSubmission.submit(~tabDict, ~configuredFields=requiredFields, ~email)
+      | None => processRequest(tabDict, Some(walletDict), email)
+      }
     } else {
       switch formMethods {
       | Some(methods) => methods.submit()
@@ -213,7 +221,7 @@ let make = (~setConfirmButtonData) => {
     ~isPristine,
   )
 
-  React.useEffect3(() => {
+  React.useEffect4(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -224,7 +232,7 @@ let make = (~setConfirmButtonData) => {
     setConfirmButtonData(confirmButton)
 
     None
-  }, (walletData, isFormValid, formData))
+  }, (walletData, isFormValid, formData, cardSubmission.cardFlow))
 
   <ReactNative.View
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>
@@ -239,6 +247,8 @@ let make = (~setConfirmButtonData) => {
       isCardPayment
       enabledCardSchemes
       accessible=true
+      vaultCardFlow=cardSubmission.cardFlow
+      cardholderNameMode
     />
   </ReactNative.View>
 }

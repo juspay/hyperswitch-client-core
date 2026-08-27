@@ -110,6 +110,8 @@ let jsonToSessionTokenType = sessionTokenData => {
 
 type vaultSession = {
   vaultType: string,
+  /* Non-empty only when `vault_details.vault_data.sdk_authorization` is present. */
+  sdkAuthorization: string,
   session: JSON.t,
 }
 
@@ -127,9 +129,18 @@ let narrowVaultSession = (sessionTokensResponse: JSON.t): option<vaultSession> =
       ->Option.getOr("")
       ->String.trim
       ->String.toLowerCase,
+      sdkAuthorization: details
+      ->Dict.get("vault_data")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.flatMap(data => data->Dict.get("sdk_authorization"))
+      ->Option.flatMap(JSON.Decode.string)
+      ->Option.getOr("")
+      ->String.trim,
       session: [("vault_details", vaultDetails)]->Dict.fromArray->JSON.Encode.object,
     })
   )
 
 let isSupportedVault = (vaultSession: option<vaultSession>) =>
-  vaultSession->Option.mapOr(false, v => v.vaultType === "hyperswitch")
+  vaultSession->Option.mapOr(false, v =>
+    v.vaultType === "hyperswitch" && v.sdkAuthorization->String.length > 0
+  )

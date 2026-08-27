@@ -13,10 +13,8 @@ let make = (
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
-  let eligibilityRequired =
-    clientData
-    ->Option.flatMap(d => d.sdk_next_action.next_action)
-    ->Option.mapOr(false, action => action == "eligibility_check")
+  let eligibilityRequired = VaultActivation.eligibilityRequired(clientData)
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
   let {
     component,
     dangerColor,
@@ -119,6 +117,7 @@ let make = (
           paymentId: nativeProp.paymentSessionConfig.paymentId,
           sdkAuthorization: nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           appId: ?nativeProp.sdkParams.appId,
+          endpoint: {baseUrl: baseUrl},
         })
       : None
 

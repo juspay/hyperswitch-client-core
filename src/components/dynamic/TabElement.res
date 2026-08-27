@@ -11,7 +11,6 @@ let make = (
     country,
     isNicknameValid,
     setInitialValueCountry,
-    eligibilityStatus,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
@@ -37,7 +36,10 @@ let make = (
 
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
+  let cardSubmission = VaultCardSubmission.use(~paymentMethodData)
+
   let (
+    configuredFields,
     requiredFields,
     initialValues,
     isCardPayment,
@@ -48,17 +50,19 @@ let make = (
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
+  let cardholderNameMode = React.useMemo1(
+    () => VaultConfirmInput.cardholderNameModeOf(configuredFields),
+    [configuredFields],
+  )
+
   let handlePress = _ => {
-    // Only gate on eligibility for card payments; non-card methods skip the check
-    let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
-    if isEligibilityBlocked {
-      ()
-    } else if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        None,
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
+    if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+      let tabDict = CommonUtils.mergeDict(initialValues, formData)
+      let email = formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string)
+      switch cardSubmission.cardFlow {
+      | Some(_) => cardSubmission.submit(~tabDict, ~configuredFields, ~email)
+      | None => processRequest(tabDict, None, email)
+      }
     } else {
       switch formMethods {
       | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
@@ -96,7 +100,7 @@ let make = (
     paymentMethodData.payment_method_type,
     isScreenFocus,
     setConfirmButtonData,
-    eligibilityStatus,
+    cardSubmission.cardFlow,
     requiredFields,
     isFormValid,
     formData,
@@ -115,5 +119,7 @@ let make = (
     enabledCardSchemes
     accessible
     isFocused=isScreenFocus
+    vaultCardFlow=cardSubmission.cardFlow
+    cardholderNameMode
   />
 }

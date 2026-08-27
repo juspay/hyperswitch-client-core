@@ -11,6 +11,8 @@ let make = (
   ~enabledCardSchemes=[],
   ~accessible: bool,
   ~isFocused: bool=false,
+  ~vaultCardFlow: option<VaultCardSubmission.cardFlow>,
+  ~cardholderNameMode: VaultCardForm.cardholderNameMode=#omit,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (clientData, _, _) = React.useContext(
@@ -47,6 +49,8 @@ let make = (
         enabledCardSchemes
         accessible
         isFocused
+        vaultCardFlow
+        cardholderNameMode
       />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={isCardPayment && !isGiftCardPayment && fields->Array.length > 0}>
