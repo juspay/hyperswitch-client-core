@@ -204,3 +204,15 @@ let getCardNetworks = cardNetworks => {
   | None => []
   }
 }
+
+let isValidSdkConfig = (value: SdkConfigTypes.sdkConfigValue) =>
+  switch value.raw_configs->Option.flatMap(JSON.Decode.object) {
+  | Some(dict) =>
+    dict->Dict.get("default_configs")->Option.isSome || dict->Dict.get("contexts")->Option.isSome
+  | None => false
+  }
+
+let getSessionCredentialsKey = (nativeProp: SdkTypes.nativeProp) =>
+  `${nativeProp.hyperswitchConfig.publishableKey}|${nativeProp.paymentSessionConfig.paymentId}|${nativeProp.paymentSessionConfig.clientSecret}|${nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(
+      "",
+    )}`
