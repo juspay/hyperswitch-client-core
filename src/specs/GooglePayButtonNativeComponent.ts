@@ -1,11 +1,12 @@
-import type {CodegenTypes, HostComponent, ViewProps} from 'react-native';
-import {codegenNativeComponent} from 'react-native';
+import type { HostComponent, ViewProps} from 'react-native';
+import { Float } from 'react-native/Libraries/Types/CodegenTypes';
+import codegenNativeComponent from 'react-native/Libraries/Utilities/codegenNativeComponent';
 
 export interface NativeProps extends ViewProps {
   allowedPaymentMethods?: string;
   buttonType?: string;
   buttonStyle?: string;
-  borderRadius?: CodegenTypes.Float;
+  borderRadius?: Float;
 }
 
 export default codegenNativeComponent<NativeProps>('GooglePayButton', {

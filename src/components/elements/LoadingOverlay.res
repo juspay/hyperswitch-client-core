@@ -28,7 +28,7 @@ let make = () => {
         | CardWidget | CustomWidget(_) =>
           <View style={s({flex: 1., alignItems: #center, justifyContent: #center})}>
             // <HyperLoaderAnimation shapeSize=20. />
-            <CustomLoader />
+            <CustomLoader height="100%" />
           </View>
 
         | ExpressCheckoutWidget =>

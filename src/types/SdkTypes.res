@@ -277,6 +277,8 @@ let widgetToStrMapper = str => {
   switch str {
   | GOOGLE_PAY => "GOOGLE_PAY"
   | PAYPAL => "PAYPAL"
+  | APPLE_PAY => "APPLE_PAY"
+  | SAMSUNG_PAY => "SAMSUNG_PAY"
   | _ => ""
   }
 }
@@ -819,6 +821,7 @@ let parseSdkState = str =>
   | "widgetButtonSheet" => WidgetButtonSheet
   | "hostedCheckout" => HostedCheckout
   | "google_pay" => CustomWidget(GOOGLE_PAY)
+  | "apple_pay" => CustomWidget(APPLE_PAY)
   | "paypal" => CustomWidget(PAYPAL)
   | "card" => CardWidget
   | "paymentMethodsManagement" => PaymentMethodsManagement

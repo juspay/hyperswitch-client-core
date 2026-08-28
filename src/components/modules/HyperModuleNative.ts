@@ -1,6 +1,5 @@
 /**
- * JS access point to the HyperModule TurboModule (bridgeless; calls go over
- * JSI via the codegen spec in src/specs/NativeHyperModule.ts).
+ * JS access point to the HyperModule TurboModule.
  *
  * ReScript binds to this file (never to src/specs/* directly). Every export
  * degrades to a no-op when the native module is absent (e.g. jest, or a host
@@ -9,9 +8,7 @@
  *
  * This file is used on web too: webpack replaces src/specs/* with
  * reactNativeWeb/nativeSpecStub.js, so NativeHyperModule is null there and the
- * optional chaining below turns every call into a no-op. That replacement is
- * required, not defensive — react-native-web does not export
- * TurboModuleRegistry, so a spec reaching the web bundle throws at module load.
+ * optional chaining below turns every call into a no-op.
  */
 import NativeHyperModule from '../../specs/NativeHyperModule';
 import type {
@@ -128,13 +125,14 @@ export const openIframeBridge = (
 };
 
 /**
- * Attaches a listener to one of the spec's typed event emitters.
+ * Subscribes to a TurboModule EventEmitter field (RN ≥ 0.80, new arch).
+ * The native HyperModule is a proper TurboModule whose spec declares each
+ * event as `readonly confirm: EventEmitter<T>`. The TurboModule object
+ * exposes a callable subscribe function for each field via JSI.
  *
- * Delivery is fire-and-forget, matching the pre-TurboModule behaviour on both
- * platforms: an event emitted while nothing is listening is dropped, not
- * buffered. Every event carries the rootTag of the surface it is addressed to
- * and handlers filter on it, so replaying a buffered event later could deliver
- * it to a different mount — buffering would be less correct here, not more.
+ * Event delivery is fire-and-forget: an event emitted while nothing is
+ * listening is dropped. Every event carries the rootTag of the surface it
+ * addresses and handlers filter on it.
  */
 const subscribe = <T>(
   attach: ((handler: (payload: T) => void) => {remove: () => void}) | undefined,
