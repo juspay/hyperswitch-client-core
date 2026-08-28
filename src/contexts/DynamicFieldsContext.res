@@ -44,6 +44,8 @@ type dynamicFieldsData = {
   walletData: walletDataRecord,
   isNicknameSelected: bool,
   setIsNicknameSelected: bool => unit,
+  isSaveDetailsSelected: bool,
+  setIsSaveDetailsSelected: bool => unit,
   nickname: option<string>,
   setNickname: option<string> => unit,
   isNicknameValid: bool,
@@ -74,6 +76,7 @@ let dynamicFieldsContext = React.createContext({
       payment_method_type_wallet: NONE,
       card_networks: [],
       payment_experience: [],
+      customer_acceptance_support: None,
     },
     billingAddress: None,
     shippingAddress: None,
@@ -81,6 +84,8 @@ let dynamicFieldsContext = React.createContext({
   },
   isNicknameSelected: false,
   setIsNicknameSelected: _ => (),
+  isSaveDetailsSelected: false,
+  setIsSaveDetailsSelected: _ => (),
   nickname: None,
   setNickname: _ => (),
   isNicknameValid: false,
@@ -269,6 +274,7 @@ let make = (~children) => {
       payment_method_type_wallet: NONE,
       card_networks: [],
       payment_experience: [],
+      customer_acceptance_support: None,
     },
     billingAddress: None,
     shippingAddress: None,
@@ -403,6 +409,13 @@ let make = (~children) => {
     setIsNicknameSelected(_ => val)
   }, [setIsNicknameSelected])
 
+  // "Save payment details" checkbox state for non-card PMs (shared across forms,
+  // like isNicknameSelected for card). Reset by DynamicFields on focus change.
+  let (isSaveDetailsSelected, setIsSaveDetailsSelected) = React.useState(_ => false)
+  let setIsSaveDetailsSelected = React.useCallback1(val => {
+    setIsSaveDetailsSelected(_ => val)
+  }, [setIsSaveDetailsSelected])
+
   let (nickname, setNickname) = React.useState(_ => None)
   let setNickname = React.useCallback1(val => {
     setNickname(_ => val)
@@ -436,6 +449,8 @@ let make = (~children) => {
       walletData,
       isNicknameSelected,
       setIsNicknameSelected,
+      isSaveDetailsSelected,
+      setIsSaveDetailsSelected,
       nickname,
       setNickname,
       isNicknameValid,

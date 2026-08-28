@@ -117,6 +117,11 @@ let make = (
         ~billing=token.billing,
         ~screen_height=viewPortContants.screenHeight,
         ~screen_width=viewPortContants.screenWidth,
+        // Saved card bodies stay as-is; saved non-card tokens (e.g. bank_redirect)
+        // also carry payment_method_type, matching the web SDK.
+        ~payment_method_type=?{
+          token.payment_method === CARD ? None : Some(token.payment_method_type)
+        },
       )
     }
 
