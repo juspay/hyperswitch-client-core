@@ -103,6 +103,26 @@ module PMWithNickNameComponent = {
     }
     let isDefaultPm = savedPaymentMethod.default_payment_method_set
 
+    let pmTypeIcon = savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+
+    let (iconName, iconFallback) = switch (
+      savedPaymentMethod.card,
+      savedPaymentMethod.bank_redirect,
+    ) {
+    | (Some(card), _) => (
+        switch card.card_network {
+        | "" => card.scheme === "" ? pmTypeIcon : card.scheme
+        | card_network => card_network
+        },
+        None,
+      )
+    | (None, Some(bankRedirect)) if bankRedirect.bank_name != "" => (
+        bankRedirect.bank_name,
+        Some("bank"),
+      )
+    | (None, _) => (pmTypeIcon, None)
+    }
+
     <View style={s({display: #flex, flexDirection: #column})}>
       {switch (nickName, logoConfig->Option.isNone) {
       | (Some(val), true) =>
@@ -133,17 +153,8 @@ module PMWithNickNameComponent = {
               position: #relative,
             })}>
             <Icon
-              name={switch savedPaymentMethod.card {
-              | Some(card) =>
-                switch card.card_network {
-                | "" =>
-                  card.scheme === ""
-                    ? savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-                    : card.scheme
-                | card_network => card_network
-                }
-              | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-              }}
+              name=iconName
+              fallbackIcon=?iconFallback
               height=18.
               width=18.
               fill={isPaymentMethodSelected ? primaryColor : iconColor}
@@ -173,17 +184,8 @@ module PMWithNickNameComponent = {
           </View>
         | None =>
           <Icon
-            name={switch savedPaymentMethod.card {
-            | Some(card) =>
-              switch card.card_network {
-              | "" =>
-                card.scheme === ""
-                  ? savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-                  : card.scheme
-              | card_network => card_network
-              }
-            | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-            }}
+            name=iconName
+            fallbackIcon=?iconFallback
             height=26.
             width=26.
             fill={isPaymentMethodSelected ? primaryColor : iconColor}
