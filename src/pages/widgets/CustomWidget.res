@@ -64,6 +64,7 @@ let make = (~walletType: SdkTypes.payment_method_type_wallet) => {
       payment_method_type_wallet: walletType,
       card_networks: [],
       payment_experience: [],
+      customer_acceptance_support: None,
     })
 
   // Announce the rendered wallet widget through the subscribed-events channel
