@@ -14,6 +14,28 @@ let showUseExisitingSavedCardsBtn = (
   displaySavedPaymentMethods
 }
 
+// "Save payment details" checkbox for NON-card PMs (card keeps its own nickname
+// checkbox in DynamicFields). Shown only when the backend marks the PM type as
+// saveable, the global checkbox config is on, acceptance is not auto-sent, the
+// customer is not a guest, and the intent is a plain (non-mandate) payment —
+// mandate flows already send customer_acceptance regardless of any checkbox.
+// Used by both DynamicFields (render) and PaymentMethod.processRequest (body)
+// so the UI and the confirm payload can never disagree.
+let shouldShowSaveDetailsCheckbox = (
+  ~nativeProp: SdkTypes.nativeProp,
+  ~isCardPayment: bool,
+  ~customerAcceptanceSupport: option<PaymentMethodType.customerAcceptanceSupport>,
+  ~isGuestCustomer: bool,
+  ~paymentType: PaymentMethodType.mandateType,
+) =>
+  switch (isCardPayment, customerAcceptanceSupport, paymentType) {
+  | (false, Some(Supported) | Some(PartiallySupported), NORMAL) =>
+    nativeProp.configuration.displaySavedPaymentMethodsCheckbox &&
+    !nativeProp.configuration.alwaysSendCustomerAcceptance &&
+    !isGuestCustomer
+  | _ => false
+  }
+
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_method_str: string,
@@ -25,6 +47,7 @@ let generateCardConfirmBody = (
   ~isNicknameSelected=false,
   ~payment_token=?,
   ~isSaveCardCheckboxVisible=?,
+  ~isSaveDetailsSelected=false,
   ~isGuestCustomer,
   ~email=?,
   ~screen_height=?,
@@ -49,7 +72,7 @@ let generateCardConfirmBody = (
       (nativeProp.configuration.alwaysSendCustomerAcceptance ||
       isNicknameSelected && isMandate ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-      payment_type === NORMAL && isNicknameSelected ||
+      payment_type === NORMAL && (isNicknameSelected || isSaveDetailsSelected) ||
       payment_type === SETUP_MANDATE) &&
       !isGuestCustomer
         ? Some({
@@ -104,12 +127,14 @@ let generateSavedCardConfirmBody = (
   ~screen_height=?,
   ~screen_width=?,
   ~billing=?,
+  ~payment_method_type=?,
 ): PaymentConfirmTypes.redirectType => {
   client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => None
   | None => Some(nativeProp.paymentSessionConfig.clientSecret)
   },
   payment_method,
+  ?payment_method_type,
   payment_token,
   card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
   return_url: ?Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),

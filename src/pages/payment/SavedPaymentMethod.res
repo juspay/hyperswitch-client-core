@@ -209,16 +209,43 @@ module PMWithNickNameComponent = {
               : React.null
           | _ => React.null
           }}
-          <TextWrapper
-            text={switch savedPaymentMethod.card {
-            | Some(card) => "●●●● "->String.concat(card.last4_digits)
-            | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-            }}
-            textType={switch savedPaymentMethod.card {
-            | Some(_) => CardText
-            | None => CardTextBold
-            }}
-          />
+          {switch (savedPaymentMethod.card, savedPaymentMethod.bank_redirect) {
+          | (Some(card), _) =>
+            <TextWrapper
+              text={"●●●● "->String.concat(card.last4_digits)} textType={CardText}
+            />
+          | (None, Some(bankRedirect)) =>
+            // Bank name as the title; the account row only when there is something to show.
+            let hasMask = bankRedirect.mask != ""
+            let hasHolderName = bankRedirect.account_holder_name != ""
+            <>
+              <TextWrapper
+                text={bankRedirect.bank_name != ""
+                  ? bankRedirect.bank_name
+                  : savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName}
+                textType={CardTextBold}
+              />
+              <UIUtils.RenderIf condition={hasMask || hasHolderName}>
+                <View style={s({flexDirection: #row, alignItems: #center, gap: 8.->dp})}>
+                  <UIUtils.RenderIf condition={hasMask}>
+                    <TextWrapper
+                      text={"●●●● "->String.concat(bankRedirect.mask)} textType={CardText}
+                    />
+                  </UIUtils.RenderIf>
+                  <UIUtils.RenderIf condition={hasHolderName}>
+                    <TextWrapper
+                      text={bankRedirect.account_holder_name} textType={ModalTextLight}
+                    />
+                  </UIUtils.RenderIf>
+                </View>
+              </UIUtils.RenderIf>
+            </>
+          | (None, None) =>
+            <TextWrapper
+              text={savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName}
+              textType={CardTextBold}
+            />
+          }}
         </View>
       </View>
     </View>
