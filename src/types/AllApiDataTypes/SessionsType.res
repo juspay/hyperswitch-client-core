@@ -107,3 +107,40 @@ let itemToObjMapper = dict => {
 let jsonToSessionTokenType = sessionTokenData => {
   sessionTokenData->Utils.getDictFromJson->itemToObjMapper
 }
+
+type vaultSession = {
+  vaultType: string,
+  /* Non-empty only when `vault_details.vault_data.sdk_authorization` is present. */
+  sdkAuthorization: string,
+  session: JSON.t,
+}
+
+let narrowVaultSession = (sessionTokensResponse: JSON.t): option<vaultSession> =>
+  sessionTokensResponse
+  ->JSON.Decode.object
+  ->Option.flatMap(root => root->Dict.get("vault_details"))
+  ->Option.flatMap(vaultDetails =>
+    vaultDetails
+    ->JSON.Decode.object
+    ->Option.map(details => {
+      vaultType: details
+      ->Dict.get("vault_type")
+      ->Option.flatMap(JSON.Decode.string)
+      ->Option.getOr("")
+      ->String.trim
+      ->String.toLowerCase,
+      sdkAuthorization: details
+      ->Dict.get("vault_data")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.flatMap(data => data->Dict.get("sdk_authorization"))
+      ->Option.flatMap(JSON.Decode.string)
+      ->Option.getOr("")
+      ->String.trim,
+      session: [("vault_details", vaultDetails)]->Dict.fromArray->JSON.Encode.object,
+    })
+  )
+
+let isSupportedVault = (vaultSession: option<vaultSession>) =>
+  vaultSession->Option.mapOr(false, v =>
+    v.vaultType === "hyperswitch" && v.sdkAuthorization->String.length > 0
+  )

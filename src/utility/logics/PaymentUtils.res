@@ -14,6 +14,30 @@ let showUseExisitingSavedCardsBtn = (
   displaySavedPaymentMethods
 }
 
+let shouldSendCustomerAcceptance = (
+  ~nativeProp: SdkTypes.nativeProp,
+  ~payment_type: PaymentMethodType.mandateType,
+  ~isNicknameSelected: bool,
+  ~isSaveCardCheckboxVisible: option<bool>,
+  ~isGuestCustomer: bool,
+  ~hasPaymentToken: bool,
+) => {
+  let isMandate = payment_type !== NORMAL
+  !hasPaymentToken &&
+  (nativeProp.configuration.alwaysSendCustomerAcceptance ||
+  isNicknameSelected && isMandate ||
+  isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
+  payment_type === NORMAL && isNicknameSelected ||
+  payment_type === SETUP_MANDATE) &&
+  !isGuestCustomer
+}
+
+let buildCustomerAcceptance = (~nativeProp: SdkTypes.nativeProp): PaymentConfirmTypes.customer_acceptance => {
+  acceptance_type: "online",
+  accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+  online: {user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent)},
+}
+
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_method_str: string,
@@ -31,7 +55,6 @@ let generateCardConfirmBody = (
   ~screen_width=?,
   (),
 ): PaymentConfirmTypes.redirectType => {
-  let isMandate = payment_type !== NORMAL
   {
     client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
     | Some(_) => None
@@ -45,22 +68,15 @@ let generateCardConfirmBody = (
     ?email,
     payment_type: ?payment_type_str,
     customer_acceptance: ?(
-      payment_token->Option.isNone &&
-      (nativeProp.configuration.alwaysSendCustomerAcceptance ||
-      isNicknameSelected && isMandate ||
-      isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-      payment_type === NORMAL && isNicknameSelected ||
-      payment_type === SETUP_MANDATE) &&
-      !isGuestCustomer
-        ? Some({
-            {
-              acceptance_type: "online",
-              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-              online: {
-                user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
-              },
-            }
-          })
+      shouldSendCustomerAcceptance(
+        ~nativeProp,
+        ~payment_type,
+        ~isNicknameSelected,
+        ~isSaveCardCheckboxVisible,
+        ~isGuestCustomer,
+        ~hasPaymentToken=payment_token->Option.isSome,
+      )
+        ? Some(buildCustomerAcceptance(~nativeProp))
         : None
     ),
     browser_info: {

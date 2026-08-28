@@ -36,12 +36,14 @@
     "test:ios": "npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all",
     "prepare": "husky",
     "postinstall": "patch-package",
-    "lint:secrets": "gitleaks detect --source . --no-banner --verbose"
+    "lint:secrets": "gitleaks detect --source . --no-banner --verbose",
+    "verify:no-card-ownership": "node scripts/verify-no-card-ownership.mjs"
   },
   "dependencies": {
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
     "@juspay-tech/react-native-hyperswitch-paypal": "^1.0.2",
     "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.3",
+    "@juspay-tech/react-native-hyperswitch-vault": "portal:../react-native-hyperswitch-vault",
     "@sentry/react-native": "^8.18.0",
     "base-64": "^1.0.0",
     "final-form": "^5.0.0",

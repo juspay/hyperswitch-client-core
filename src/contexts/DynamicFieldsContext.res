@@ -1,4 +1,6 @@
 type walletDataRecord = {
+  /* Every field superposition configured for this method (intent-satisfied ones included). */
+  requiredFields: array<SuperpositionTypes.fieldConfig>,
   missingRequiredFields: array<SuperpositionTypes.fieldConfig>,
   initialValues: Dict.t<JSON.t>,
   walletDict: Dict.t<JSON.t>,
@@ -12,8 +14,6 @@ type walletDataRecord = {
 
 type sheetType = ButtonSheet | DynamicFieldsSheet
 
-type eligibilityStatus = Denied | Allowed | Pending
-
 type dynamicFieldsData = {
   formDataRef: option<React.ref<RescriptCore.Dict.t<JSON.t>>>,
   sheetType: sheetType,
@@ -23,6 +23,7 @@ type dynamicFieldsData = {
     Dict.t<JSON.t>,
     bool,
   ) => (
+    array<SuperpositionTypes.fieldConfig>,
     array<SuperpositionTypes.fieldConfig>,
     RescriptCore.Dict.t<Core__JSON.t>,
     bool,
@@ -48,20 +49,19 @@ type dynamicFieldsData = {
   setNickname: option<string> => unit,
   isNicknameValid: bool,
   setIsNicknameValid: bool => unit,
-  eligibilityStatus: eligibilityStatus,
-  setEligibilityStatus: (eligibilityStatus => eligibilityStatus) => unit,
 }
 
 let dynamicFieldsContext = React.createContext({
   formDataRef: None,
   sheetType: ButtonSheet,
   setSheetType: _ => (),
-  getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false, ""),
+  getRequiredFieldsForTabs: (_, _, _) => ([], [], Dict.make(), false, [], false, ""),
   getRequiredFieldsForButton: (_, _, _, _, _, _) => (true, Dict.make(), ""),
   country: SdkTypes.defaultCountry,
   setCountry: _ => (),
   setInitialValueCountry: _ => (),
   walletData: {
+    requiredFields: [],
     missingRequiredFields: [],
     initialValues: Dict.make(),
     walletDict: Dict.make(),
@@ -85,8 +85,6 @@ let dynamicFieldsContext = React.createContext({
   setNickname: _ => (),
   isNicknameValid: false,
   setIsNicknameValid: _ => (),
-  eligibilityStatus: Allowed,
-  setEligibilityStatus: _ => (),
 })
 
 module Provider = {
@@ -228,7 +226,7 @@ let make = (~children) => {
       organization_id: ?organization_id,
     }
 
-    let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+    let (requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       intentData,
@@ -241,6 +239,7 @@ let make = (~children) => {
     )
 
     (
+      requiredFields,
       missingRequiredFields,
       CommonUtils.mergeDict(
         switch formDataRef {
@@ -257,6 +256,7 @@ let make = (~children) => {
   }
 
   let (walletData, setWalletData) = React.useState(_ => {
+    requiredFields: [],
     missingRequiredFields: [],
     initialValues: Dict.make(),
     walletDict: Dict.make(),
@@ -277,6 +277,7 @@ let make = (~children) => {
 
   let setWalletData = React.useCallback1(
     (
+      ~requiredFields,
       ~missingRequiredFields,
       ~initialValues,
       ~walletDict,
@@ -288,6 +289,7 @@ let make = (~children) => {
       ~useIntentData,
     ) => {
       setWalletData(_ => {
+        requiredFields,
         missingRequiredFields,
         initialValues,
         walletDict,
@@ -358,7 +360,7 @@ let make = (~children) => {
       organization_id: ?organization_id,
     }
 
-    let (_requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
+    let (requiredFields, missingRequiredFields, initialValues) = getSuperpositionFinalFields(
       eligibleConnectors,
       configParams,
       intentData,
@@ -374,13 +376,14 @@ let make = (~children) => {
 
     if isFieldsMissing {
       setWalletData(
+        ~requiredFields,
         ~missingRequiredFields,
         ~initialValues=switch formData {
         | Some(data) =>
           Utils.pruneUnusedFieldsFromDict(
             data,
             "",
-            _requiredFields->Array.map(field => field.confirmRequestWritePath),
+            requiredFields->Array.map(field => field.confirmRequestWritePath),
           )
         | None => initialValues
         },
@@ -413,8 +416,6 @@ let make = (~children) => {
     setIsNicknameValid(_ => val)
   }, [setIsNicknameValid])
 
-  let (eligibilityStatus, setEligibilityStatus) = React.useState(_ => Allowed)
-
   React.useEffect(() => {
     if isNicknameSelected == false {
       setNickname(None)
@@ -440,8 +441,6 @@ let make = (~children) => {
       setNickname,
       isNicknameValid,
       setIsNicknameValid,
-      eligibilityStatus,
-      setEligibilityStatus,
     }>
     children
   </Provider>

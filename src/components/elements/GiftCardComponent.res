@@ -37,6 +37,7 @@ module GiftCardListComponent = {
     }, [setFormMethods])
 
     let (
+      _,
       requiredFields,
       initialValues,
       _,
@@ -50,10 +51,10 @@ module GiftCardListComponent = {
           payment_method_type => payment_method_type.payment_method_type === selectedGiftCardType,
         ) {
         | Some(data) => getRequiredFieldsForTabs(data, formData, true)
-        | None => ([], Dict.make(), false, [], true, "")
+        | None => ([], [], Dict.make(), false, [], true, "")
         }
 
-      | None => ([], Dict.make(), false, [], true, "")
+      | None => ([], [], Dict.make(), false, [], true, "")
       }
     }, (selectedGiftCardType, getRequiredFieldsForTabs, country))
 
@@ -78,6 +79,7 @@ module GiftCardListComponent = {
         isGiftCardPayment=true
         enabledCardSchemes
         accessible
+        vaultCardFlow=None
       />
     </View>
   })

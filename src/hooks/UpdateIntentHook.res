@@ -6,6 +6,7 @@ let updateIntentCompleteReturned = "UPDATE_INTENT_COMPLETE_RETURNED"
 let useUpdateIntentListener = (
   ~setClientResponse,
   ~setSessionTokenData,
+  ~setVaultSession,
   ~setSdkConfigData,
   ~fetchedCredentialsKey: React.ref<option<string>>,
 ) => {
@@ -197,6 +198,7 @@ let useUpdateIntentListener = (
                   setClientResponse(_ => Some(clientResp))
                   setSdkConfigData(_ => Some(parsedConfig))
                   setSessionTokenData(_ => newSessions)
+                  setVaultSession(_ => sessionTokenResp->SessionsType.narrowVaultSession)
 
                   HyperModule.onUpdateIntentEvent(
                     currentNativeProp.rootTag,
