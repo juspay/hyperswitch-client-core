@@ -42,7 +42,7 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
             1000.->Animated.Value.Timing.fromRawValue
           },
           isInteraction: true,
-          useNativeDriver: false,
+          useNativeDriver: true,
           delay: 0.,
           duration: 300.,
           easing: Easing.linear,
@@ -63,17 +63,23 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
     <GlobalBanner />
     <Animated.View
       style={s({
-        transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
         flexGrow: {sheetFlex->Animated.StyleProp.float},
         maxHeight: 100.->pct,
         minWidth: 302.->dp,
       })}>
-      <CustomView onDismiss=onModalClose>
-        <CustomView.Wrapper
-          onModalClose isLoading renderScrollView isSavedPaymentScreen ?stickyFooter>
-          {children}
-        </CustomView.Wrapper>
-      </CustomView>
+      <Animated.View
+        style={s({
+          transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
+          flexGrow: 1.,
+          maxHeight: 100.->pct,
+        })}>
+        <CustomView onDismiss=onModalClose>
+          <CustomView.Wrapper
+            onModalClose isLoading renderScrollView isSavedPaymentScreen ?stickyFooter>
+            {children}
+          </CustomView.Wrapper>
+        </CustomView>
+      </Animated.View>
     </Animated.View>
     <LoadingOverlay />
   </View>
