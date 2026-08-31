@@ -45,7 +45,14 @@ let make = (
   let containerRef = React.useRef(Nullable.null)
   let (layout, onLayout) = MeasureLayoutHook.useMeasureLayout(containerRef)
 
+  let useNativeAnimations = Platform.os !== #web
+
   let panX = AnimatedValue.useAnimatedValue(0.)
+
+  React.useEffect1(() => {
+    let listenerId = panX->Animated.Value.addListener(_ => ())
+    Some(() => panX->Animated.Value.removeListener(listenerId))
+  }, [panX])
 
   let listeners = React.useRef(Set.make())
 
@@ -74,7 +81,7 @@ let make = (
               damping,
               mass,
               overshootClamping,
-              useNativeDriver: false,
+              useNativeDriver: useNativeAnimations,
             },
           ),
         ],
@@ -281,36 +288,47 @@ let make = (
     }
   }, (layout.width, panX))
 
-  let (tabHeights, setTabHeights) = React.useState(() => [])
+  let heightValue = AnimatedValue.useAnimatedValue(0.)
+  let (heightReady, setHeightReady) = React.useState(() => false)
+  let heightReadyRef = React.useRef(false)
+  let (heightsVersion, setHeightsVersion) = React.useState(() => 0)
   let measuredTabHeights = React.useRef([])
 
-  let animatedHeight = React.useMemo2(() => {
-    if tabHeights->Array.length > 1 {
-      let inputRange = routes->Array.mapWithIndex((_, i) => i->Int.toFloat)
-      let outputRange =
-        routes->Array.mapWithIndex((_, i) => tabHeights->Array.get(i)->Option.getOr(100.))
-      position->Animated.Interpolation.interpolate({
-        inputRange,
-        outputRange: outputRange->Animated.Interpolation.fromFloatArray,
-        extrapolate: #clamp,
-        easing: Easing.inOut(Easing.ease),
-      })
-    } else {
-      100.->Animated.Value.create->Animated.Value.add(0.->Animated.Value.create)
+  React.useEffect2(() => {
+    switch measuredTabHeights.current->Array.get(index) {
+    | Some(newHeight) =>
+      if heightReadyRef.current {
+        Animated.timing(
+          heightValue,
+          {
+            toValue: newHeight->Animated.Value.Timing.fromRawValue,
+            duration: 250.,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: false,
+          },
+        )->Animated.start
+      } else {
+        heightReadyRef.current = true
+        heightValue->Animated.Value.setValue(newHeight)
+        setHeightReady(_ => true)
+      }
+    | None => ()
     }
-  }, (position, tabHeights))
+    None
+  }, (index, heightsVersion))
 
   children(~position, ~subscribe, ~jumpTo, ~render=children => {
     <View ref={containerRef->ReactNative.Ref.value} onLayout style={s({overflow: #hidden})}>
+      <Animated.View
+        style={heightReady && routes->Array.length > 1
+          ? s({overflow: #hidden, height: heightValue->Animated.StyleProp.size})
+          : s({overflow: #hidden})}>
       <Animated.View
         style={array([
           s({
             flexDirection: #row,
             alignItems: #stretch,
             transform: [Style.translateX(~translateX=translateX->Animated.StyleProp.size)],
-            height: ?(
-              tabHeights->Array.length > 1 ? Some(animatedHeight->Animated.StyleProp.size) : None
-            ),
             width: ?(
               layout.width != 0.
                 ? Some((routes->Array.length->Int.toFloat *. layout.width)->dp)
@@ -360,13 +378,7 @@ let make = (
                       let newHeight = event.nativeEvent.layout.height
                       if newHeight > 10. && Math.abs(newHeight -. prevHeight) > 10. {
                         measuredTabHeights.current->Array.set(i, newHeight)
-                        if (
-                          routes->Array.everyWithIndex(
-                            (_, i) => measuredTabHeights.current->Array.get(i)->Option.isSome,
-                          )
-                        ) {
-                          setTabHeights(_ => [...measuredTabHeights.current])
-                        }
+                        setHeightsVersion(v => v + 1)
                       }
                     }
                   }}>
@@ -378,6 +390,7 @@ let make = (
           }
         })
         ->React.array}
+      </Animated.View>
       </Animated.View>
     </View>
   })

@@ -4,7 +4,7 @@ open Style
 @react.component
 let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~stickyFooter=?) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+  let insets = SafeAreaContext.useSafeAreaInsets()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let onModalClose = React.useCallback0(() => {
     setLoading(PaymentCancelled)
@@ -58,7 +58,9 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
       alignContent: #"flex-end",
       backgroundColor: paymentSheetOverlay,
       justifyContent: #"flex-end",
-      paddingTop: viewPortContants.topInset->dp,
+      paddingTop: (insets.top +. SafeAreaContext.topGap)->dp,
+      paddingLeft: insets.left->dp,
+      paddingRight: insets.right->dp,
     })}>
     <GlobalBanner />
     <Animated.View

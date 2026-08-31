@@ -100,6 +100,13 @@ let defaultSessionTokenError = {
   message: "Unable to initialize wallet payment methods. Please retry.",
 }
 
+let defaultNoPaymentMethodsError = {
+  type_: "",
+  status: "failed",
+  code: "no_payment_methods_found",
+  message: "No payment methods found",
+}
+
 let defaultCancelError = {
   type_: "",
   status: "cancelled",

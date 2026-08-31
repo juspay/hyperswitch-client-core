@@ -1,7 +1,7 @@
 {
-  "extends": "@react-native/typescript-config/tsconfig.json",
+  "extends": "@react-native/typescript-config",
   "compilerOptions": {
-    "target": "es5",
+    "target": "es6",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -14,10 +14,11 @@
     "isolatedModules": true,
     "incremental": true,
     "jsx": "preserve",
+    "types": ["jest", "node"],
     "paths": {
       "@/*": ["./*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "detox-tests"]
 }

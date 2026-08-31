@@ -1,29 +1,18 @@
-open ReactNative
-
 let setupNativeEventListener = (eventName, handler) => {
-  let nativeEventEmitter = NativeEventEmitter.make(
-    Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
-  )
-
-  let eventSubscription = NativeEventEmitter.addListener(nativeEventEmitter, eventName, handler)
-
-  () => {
-    eventSubscription->EventSubscription.remove
+  switch eventName {
+  | "confirm" => HyperModule.Events.subscribeConfirm(handler)
+  | "widget" => HyperModule.Events.subscribeWidget(handler)
+  | "confirmEC" => HyperModule.Events.subscribeConfirmEC(handler)
+  | "triggerWidgetAction" => HyperModule.Events.subscribeTriggerWidgetAction(handler)
+  | "updateIntentInit" => HyperModule.Events.subscribeUpdateIntentInit(handler)
+  | "updateIntentComplete" => HyperModule.Events.subscribeUpdateIntentComplete(handler)
+  | _ => () => ()
   }
-}
-
-let sendReadyMessage = paymentMethodType => {
-  HyperModule.sendMessageToNative(
-    `{"isReady": "true", "paymentMethodType": "${paymentMethodType}"}`,
-  )
 }
 
 let setupPaymentConfirmListener = (
   ~onConfirm: (string, string) => unit, // clientSecret, publishableKey
-  ~paymentMethodType: string="card",
 ) => {
-  sendReadyMessage(paymentMethodType)
-
   setupNativeEventListener("confirm", var => {
     let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
     onConfirm(responseFromJava.clientSecret, responseFromJava.publishableKey)
@@ -36,13 +25,7 @@ type widgetResponse = {
   confirm: bool,
   paymentMethodType: string,
 }
-let setupWidgetEventListener = (
-  ~onWidgetEvent: widgetResponse => unit,
-  ~walletType: SdkTypes.payment_method_type_wallet,
-) => {
-  let formattedType = walletType->SdkTypes.widgetToStrMapper->String.toLowerCase
-  sendReadyMessage(formattedType)
-
+let setupWidgetEventListener = (~onWidgetEvent: widgetResponse => unit) => {
   setupNativeEventListener("widget", var => {
     let responseFromJava = {
       let mapped = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -57,10 +40,11 @@ let setupWidgetEventListener = (
   })
 }
 
+// Deprecated: express checkout is no longer a supported surface. Kept only so
+// the existing ExpressCheckoutWidget page still compiles.
 let setupExpressCheckoutListener = (
   ~onExpressCheckoutConfirm: PaymentConfirmTypes.responseFromJava => unit,
 ) => {
-  sendReadyMessage("expressCheckout")
   setupNativeEventListener("confirmEC", var => {
     let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
     onExpressCheckoutConfirm(responseFromJava)
@@ -68,13 +52,9 @@ let setupExpressCheckoutListener = (
 }
 
 let setupWidgetActionListener = (~onWidgetAction: NativeModulesType.widgetActionData => unit) => {
-  setupNativeEventListener("triggerWidgetAction", var => {
-    switch var->JSON.Decode.object {
-    | Some(dict) =>
-      switch dict->NativeModulesType.widgetActionDataMapper {
-      | Some(actionData) => onWidgetAction(actionData)
-      | None => ()
-      }
+  setupNativeEventListener("triggerWidgetAction", dict => {
+    switch dict->NativeModulesType.widgetActionDataMapper {
+    | Some(actionData) => onWidgetAction(actionData)
     | None => ()
     }
   })
@@ -83,13 +63,9 @@ let setupWidgetActionListener = (~onWidgetAction: NativeModulesType.widgetAction
 let setupUpdateIntentInitListener = (
   ~onUpdateIntentInit: NativeModulesType.updateIntentData => unit,
 ) => {
-  setupNativeEventListener("updateIntentInit", var => {
-    switch var->JSON.Decode.object {
-    | Some(dict) =>
-      switch NativeModulesType.updateIntentDataMapper("updateIntentInit", dict) {
-      | Some(intentData) => onUpdateIntentInit(intentData)
-      | None => ()
-      }
+  setupNativeEventListener("updateIntentInit", dict => {
+    switch NativeModulesType.updateIntentDataMapper("updateIntentInit", dict) {
+    | Some(intentData) => onUpdateIntentInit(intentData)
     | None => ()
     }
   })
@@ -98,13 +74,9 @@ let setupUpdateIntentInitListener = (
 let setupUpdateIntentCompleteListener = (
   ~onUpdateIntentComplete: NativeModulesType.updateIntentData => unit,
 ) => {
-  setupNativeEventListener("updateIntentComplete", var => {
-    switch var->JSON.Decode.object {
-    | Some(dict) =>
-      switch NativeModulesType.updateIntentDataMapper("updateIntentComplete", dict) {
-      | Some(intentData) => onUpdateIntentComplete(intentData)
-      | None => ()
-      }
+  setupNativeEventListener("updateIntentComplete", dict => {
+    switch NativeModulesType.updateIntentDataMapper("updateIntentComplete", dict) {
+    | Some(intentData) => onUpdateIntentComplete(intentData)
     | None => ()
     }
   })

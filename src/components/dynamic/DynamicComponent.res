@@ -4,7 +4,6 @@ let make = (~setConfirmButtonData) => {
   let (clientData, _, _) = React.useContext(
     AllApiDataContextNew.allApiDataContext,
   )
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let {
@@ -172,8 +171,8 @@ let make = (~setConfirmButtonData) => {
       ->Option.getOr(true),
       ~isNicknameSelected,
       ~email?,
-      ~screen_height=viewPortContants.screenHeight,
-      ~screen_width=viewPortContants.screenWidth,
+      ~screen_height=ReactNative.Dimensions.get(#screen).height,
+      ~screen_width=ReactNative.Dimensions.get(#screen).width,
       (),
     )
 

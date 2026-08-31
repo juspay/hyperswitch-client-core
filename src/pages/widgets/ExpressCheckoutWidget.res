@@ -277,6 +277,10 @@ let make = () => {
         paymentSessionConfig: {
           ...nativeProp.paymentSessionConfig,
           clientSecret: responseFromJava.clientSecret,
+          paymentId: responseFromJava.clientSecret
+          ->String.split("_secret_")
+          ->Array.get(0)
+          ->Option.getOr(""),
         },
         configuration: {
           ...nativeProp.configuration,

@@ -7,26 +7,14 @@ open HeadlessUtils
 
 type headlessModule = {
   getPaymentSession: (string, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: (string, string) => unit,
+  exitHeadless: (string, HyperModule.exitResultPayload) => unit,
   completePrefetch: JSON.t => unit,
 }
 
 let makeHeadlessModule = (): headlessModule => {
-  let hyperSwitchHeadlessDict =
-    Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
-    ->Option.flatMap(JSON.Decode.object)
-    ->Option.getOr(Dict.make())
-
-  let getFn = (key, default) => {
-    switch hyperSwitchHeadlessDict->Dict.get(key) {
-    | Some(fn) => Obj.magic(fn)
-    | None => default
-    }
-  }
-
   {
-    getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
-    exitHeadless: getFn("exitHeadless", (_, _) => ()),
+    getPaymentSession: HyperHeadless.getPaymentSession,
+    exitHeadless: HyperHeadless.exitHeadless,
     completePrefetch: getFn("completePrefetch", _ => ()),
   }
 }
@@ -370,10 +358,12 @@ let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => 
   let {nextAction, status, error} = confirmRes
 
   let responseCallback = (~status) => {
+    // headlessModule.exitHeadless(nativeProp.rootTag, status->HyperModule.stringifiedResStatus)
     exitHeadlessWithResult(headlessModule, nativeProp, status, ~sdkAuthorization?)
   }
 
   let errorCallback = (~errorMessage) => {
+    // headlessModule.exitHeadless(nativeProp.rootTag, errorMessage->HyperModule.stringifiedResStatus)
     exitHeadlessWithResult(headlessModule, nativeProp, errorMessage, ~sdkAuthorization?)
   }
 
@@ -480,7 +470,12 @@ let confirmGPay = (
     ->(confirmCall(headlessModule, _, nativeProp, None))
     ->ignore
   | "Cancel" => reRegisterCallback.contents()
-  | err => exitHeadlessWithResult(headlessModule, nativeProp, {message: err, status: "failed"})
+  | err =>
+    headlessModule.exitHeadless(
+      nativeProp.rootTag,
+      {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
+    )
+  // exitHeadlessWithResult(headlessModule, nativeProp, {message: err, status: "failed"})
   }
 }
 
@@ -805,7 +800,7 @@ let apiHandler = async (
   switch clientResponse {
   | Some(response) =>
     let spmData =
-      response->ClientResponseType.jsonToCustomerPaymentMethods(
+      response->ClientResponseType.parseCustomerPaymentMethods(
         nativeProp.configuration.paymentMethodOrder,
         nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods,
       )
