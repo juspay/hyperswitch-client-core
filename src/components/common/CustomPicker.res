@@ -33,10 +33,7 @@ let make = (
   let pickerRef = React.useRef(Nullable.null)
   let searchInputRef = React.useRef(Nullable.null)
   let {bgColor, component, iconColor, borderWidth} = ThemebasedStyle.useThemeBasedStyle()
-  let (nativeProps, _) = React.useContext(NativePropContext.nativePropContext)
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
-  let {bgTransparentColor} = ThemebasedStyle.useThemeBasedStyle()
-  let transparentBG = nativeProps.sdkState == PaymentSheet ? bgTransparentColor : empty
+  let insets = SafeAreaContext.useSafeAreaInsets()
 
   React.useEffect1(() => {
     setSearchInput(_ => None)
@@ -85,13 +82,10 @@ let make = (
         }, 300)->ignore
       }}>
       <View
-        style={array([
-          s({
-            flex: 1.,
-            paddingTop: viewPortContants.topInset->dp,
-          }),
-          transparentBG,
-        ])}>
+        style={s({
+          flex: 1.,
+          paddingTop: (insets.top +. SafeAreaContext.topGap)->dp,
+        })}>
         <View
           style={array([
             s({
@@ -154,7 +148,7 @@ let make = (
                   width: 100.->pct,
                   paddingHorizontal: 10.->dp,
                   paddingTop: 10.->dp,
-                  paddingBottom: viewPortContants.bottomInset->dp,
+                  paddingBottom: (insets.bottom +. SafeAreaContext.bottomGap)->dp,
                 })}
                 showsHorizontalScrollIndicator=false
                 keyExtractor={(_, i) => i->Int.toString}
