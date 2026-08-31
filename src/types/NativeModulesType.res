@@ -84,12 +84,12 @@ let updateIntentEventTypeFromString = (str: string): option<updateIntentEventTyp
   | _ => None
   }
 
-// Update intent data structure received from native
+// Update intent data structure received from native. Carries references only — the fresh
+// intent payload lives in PrefetchCache (this VM), never in the event itself.
 type updateIntentData = {
   eventType: updateIntentEventType,
   rootTag: int,
   sdkAuthorization: option<string>,
-  prefetchedApiData: option<SdkTypes.prefetchedApiData>,
 }
 
 let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<
@@ -97,16 +97,8 @@ let updateIntentDataMapper = (eventName: string, dict: Dict.t<JSON.t>): option<
 > => {
   let rootTag = dict->getInt("rootTag", -1)
   let sdkAuthorization = dict->getOptionString("sdkAuthorization")
-  let prefetchedApiData = dict
-  ->Dict.get("prefetchedApiData")
-  ->Option.flatMap(SdkTypes.prefetchedApiDataFromJson)
 
   eventName
   ->updateIntentEventTypeFromString
-  ->Option.map(eventType => {
-    eventType,
-    rootTag,
-    sdkAuthorization,
-    prefetchedApiData,
-  })
+  ->Option.map(eventType => {eventType, rootTag, sdkAuthorization})
 }

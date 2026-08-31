@@ -118,7 +118,11 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData, ~setSdk
             )
           }
 
-          switch (intentData.sdkAuthorization, intentData.prefetchedApiData) {
+          let resolvedPrefetch =
+            intentData.sdkAuthorization->Option.flatMap(
+              sdkAuth => HeadlessCommon.resolveHeadlessPrefetch(Some(sdkAuth)),
+            )
+          switch (intentData.sdkAuthorization, resolvedPrefetch) {
           | (Some(sdkAuth), Some(prefetch)) if sdkAuth !== "" =>
             let authorizationData = Utils.getSdkAuthorizationData(sdkAuth)
             let paymentId = authorizationData.paymentId->Option.getOr("")
@@ -141,6 +145,8 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData, ~setSdk
               setClientResponse(_ => None)
               setSessionTokenData(_ => None)
               setSdkConfigData(_ => None)
+              // Commit carries credentials only: the next NavigationRouter run resolves
+              // the same validated entry from PrefetchCache via the new authorization.
               setNativeProp({
                 ...currentNativeProp,
                 paymentSessionConfig: {
@@ -148,7 +154,6 @@ let useUpdateIntentListener = (~setClientResponse, ~setSessionTokenData, ~setSdk
                   sdkAuthorization: Some(sdkAuth),
                   paymentId,
                 },
-                prefetchedApiData: Some(prefetch),
               })
               setLoading(FillingDetails)
               HyperModule.onUpdateIntentEvent(

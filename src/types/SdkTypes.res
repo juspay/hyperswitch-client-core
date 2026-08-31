@@ -368,7 +368,9 @@ type prefetchedApiData = {
 }
 
 let prefetchedApiDataFromJson = json =>
-  json->JSON.Decode.object->Option.map(prefetchDict => {
+  json
+  ->JSON.Decode.object
+  ->Option.map(prefetchDict => {
     clientResponse: Dict.get(prefetchDict, "clientResponse"),
     sessionTokens: Dict.get(prefetchDict, "sessionTokens"),
     sdkConfig: Dict.get(prefetchDict, "sdkConfig"),
@@ -392,7 +394,6 @@ type nativeProp = {
   paymentSessionConfig: paymentSessionConfig,
   sdkParams: sdkParams,
   configuration: configurationType,
-  prefetchedApiData: option<prefetchedApiData>,
 }
 
 let defaultAppearance: appearance = {
@@ -930,9 +931,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     configuration: parseConfigurationDict(
       getObj(d, "configuration", Dict.make()),
       getString(d, "type", "")->parseSdkState === PaymentSheet,
-    ),
-    prefetchedApiData: Dict.get(d, "prefetchedApiData")->Option.flatMap(
-      prefetchedApiDataFromJson,
     ),
   }
 }

@@ -106,11 +106,8 @@ let make = () => {
           ->ignore
         }
 
-      let prefetch = nativeProp.prefetchedApiData->Option.filter(prefetch =>
-        SdkTypes.prefetchedApiDataMatchesAuthorization(
-          prefetch,
-          nativeProp.paymentSessionConfig.sdkAuthorization,
-        )
+      let prefetch = HeadlessCommon.resolveHeadlessPrefetch(
+        nativeProp.paymentSessionConfig.sdkAuthorization,
       )
 
       useOrFetch(

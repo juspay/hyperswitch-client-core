@@ -5,7 +5,7 @@
 open SdkTypes
 
 // Android awaits this promise to finish its HeadlessJsTask. iOS invokes the component below and
-// releases its temporary root when native receives storePrefetchedApiData.
+// releases its temporary root when native receives completePrefetch.
 let run = (~props) => {
   let headlessModule = HeadlessCommon.makeHeadlessModule()
   let reRegisterCallback = ref(() => ())
@@ -30,7 +30,8 @@ let run = (~props) => {
     HeadlessCommon.runHeadlessFlow(
       headlessModule,
       reRegisterCallback,
-      {...nativeProp, prefetchedApiData},
+      nativeProp,
+      ~prefetchedApiData,
       ~getCvc,
     )
   }
