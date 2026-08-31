@@ -38,11 +38,13 @@ module Native = {
   @module("./HyperModuleNative")
   external openIframeBridge: (string, int, string => unit) => unit = "openIframeBridge"
 
-  // Native -> JS event subscriptions. Each returns an unsubscribe thunk and
-  // no-ops when the native module is absent (web, jest). Bound here rather
-  // than in NativeEventListener.res so that every `@module` path in the
-  // codebase points at a sibling file: ReScript resolves `HyperModule.*` by
-  // module name, so moving either file cannot silently break the binding.
+  // Native -> JS event subscriptions (codegen typed EventEmitters on the
+  // HyperModule TurboModule — the only transport). Each returns an
+  // unsubscribe thunk and no-ops when the native module is absent (web,
+  // jest). Bound here rather than in NativeEventListener.res so that every
+  // `@module` path in the codebase points at a sibling file: ReScript
+  // resolves `HyperModule.*` by module name, so moving either file cannot
+  // silently break the binding.
   @module("./HyperModuleNative")
   external subscribeConfirm: dictCallback => (unit => unit) = "subscribeConfirm"
   @module("./HyperModuleNative")

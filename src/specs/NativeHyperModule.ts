@@ -24,6 +24,12 @@ export type UpdateIntentEvent = {
 };
 
 export interface Spec extends TurboModule {
+  // --- EventEmitter plumbing required by the native RCTEventEmitter path ---
+  // (must stay in sync with the native HyperModule spec; NativeEventEmitter
+  //  subscriptions and the codegen EventEmitter wiring call these on iOS).
+  addListener(eventName: string): void;
+  removeListeners(count: number): void;
+
   sendMessageToNative(message: string): void;
 
   launchApplePay(
@@ -59,6 +65,10 @@ export interface Spec extends TurboModule {
   ): void;
   exitWidget(result: string, widgetType: string): void;
   exitCardForm(result: string): void;
+  launchWidgetPaymentSheet(
+    requestObj: string,
+    callback: (result: CodegenTypes.UnsafeObject) => void,
+  ): void;
   onAddPaymentMethod(data: string): void;
   updateWidgetHeight(height: CodegenTypes.Int32): void;
   notifyWidgetPaymentResult(

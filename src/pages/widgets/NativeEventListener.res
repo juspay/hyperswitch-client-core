@@ -1,4 +1,8 @@
 let setupNativeEventListener = (eventName, handler) => {
+  // Single transport: the codegen typed EventEmitters on the HyperModule
+  // TurboModule (new-arch native). No RCTDeviceEventEmitter channel and no
+  // fallback subscription — the native side delivers all bundle events
+  // through these emitters.
   switch eventName {
   | "confirm" => HyperModule.Events.subscribeConfirm(handler)
   | "widget" => HyperModule.Events.subscribeWidget(handler)
