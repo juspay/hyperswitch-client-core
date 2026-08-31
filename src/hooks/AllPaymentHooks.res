@@ -146,7 +146,7 @@ let useSdkConfigHook = () => {
 
 let usePostSessionTokensHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let {clientData} = AllApiDataContextNew.useData()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let apiLogWrapper = LoggerHook.useApiLogWrapper()
   (
@@ -154,10 +154,7 @@ let usePostSessionTokensHook = () => {
     ~sessionObject: SessionsType.sessions,
     (),
   ) => {
-    let payment_type_str =
-      clientData
-      ->Option.map(a => a.intent_data.payment_type_str)
-      ->Option.getOr(None)
+    let payment_type_str = clientData.intent_data.payment_type_str
 
     let body =
       PaymentUtils.generatePostSessionTokensBody(
@@ -186,7 +183,7 @@ let usePostSessionTokensHook = () => {
 
 let useBrowserHook = () => {
   let retrievePayment = useRetrieveHook()
-  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let allApiData = AllApiDataContextNew.useOptionalData()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let intervalId = React.useRef(Nullable.null)
   let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()
@@ -205,7 +202,7 @@ let useBrowserHook = () => {
       openUrl,
       Utils.getReturnUrl(
         ~appId=nativeProp.sdkParams.appId,
-        ~appURL=clientData->Option.map(data => data.intent_data.return_url),
+        ~appURL=allApiData->Option.map(data => data.clientData.intent_data.return_url),
       ),
       intervalId,
       ~useEphemeralWebSession,

@@ -16,13 +16,10 @@ type walletProp = {
 
 let usePaymentMethodModifier = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, sessionTokenData, sdkConfigData) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
-  let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
+  let {clientData, sessionTokenData} = AllApiDataContextNew.useData()
   let samsungPayStatus = SamsungPay.useSamsungPayValidityHook()
 
-  React.useMemo3(() => {
+  React.useMemo2(() => {
     let groupingBehavior = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior
 
     // Show a merged "Saved" tab only when displaySavedPaymentMethods=true AND displayInSeparateScreen=false AND groupByPaymentMethods=false
@@ -33,71 +30,37 @@ let usePaymentMethodModifier = () => {
       !groupingBehavior.displayInSeparateSection
 
     let (initialTabArr, initialElementArr) = if showMergedSavedTab {
-      switch clientData {
-      | None =>
-        switch nativeProp.sdkState {
-        | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet => (
-            [
-              {
-                name: "Saved",
-                paymentMethodType: "saved_payment_method",
-                componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) =>
-                  <InitialLoader />,
-              },
-            ],
-            [],
-          )
-        | _ => ([], [])
-        }
-      | Some(customerPaymentMethods) =>
-        switch nativeProp.sdkState {
-        | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet =>
-          let customerPaymentMethods = customerPaymentMethods.customer_payment_methods
-          // ->Array.filter(
-          //   customer_payment_method_type =>
-          //     customer_payment_method_type.payment_method !== WALLET,
-          // )
-          (
-            customerPaymentMethods->Array.length > 0
-              ? [
-                  {
-                    name: "Saved",
-                    paymentMethodType: "saved_payment_method",
-                    componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
-                      <SavedPaymentSheet
-                        isScreenFocus
-                        customerPaymentMethods
-                        setConfirmButtonData
-                        merchantName={clientData
-                        ->Option.map(data => data.intent_data.merchant_name)
-                        ->Option.getOr(nativeProp.configuration.merchantDisplayName)}
-                        animated=true
-                        style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
-                      />,
-                  },
-                ]
-              : [],
-            [],
-          )
-        | ButtonSheet | WidgetButtonSheet => // elementArr->Array.push(
-          //   <PaymentMethod
-          //     key={paymentMethodData.payment_method_type}
-          //     paymentMethodData
-          //     sessionObject
-          //     methodType=ELEMENT
-          //   />,
-          // )
-          ([], [])
-        | _ => ([], [])
-        }
+      switch nativeProp.sdkState {
+      | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet =>
+        let customerPaymentMethods = clientData.customer_payment_methods
+        (
+          customerPaymentMethods->Array.length > 0
+            ? [
+                {
+                  name: "Saved",
+                  paymentMethodType: "saved_payment_method",
+                  componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
+                    <SavedPaymentSheet
+                      isScreenFocus
+                      customerPaymentMethods
+                      setConfirmButtonData
+                      merchantName=clientData.intent_data.merchant_name
+                      animated=true
+                      style={ReactNative.Style.s({marginBottom: 10.->ReactNative.Style.dp})}
+                    />,
+                },
+              ]
+            : [],
+          [],
+        )
+      | ButtonSheet | WidgetButtonSheet => ([], [])
+      | _ => ([], [])
       }
     } else {
       ([], [])
     }
 
-    switch clientData {
-    | Some(clientData) =>
-      clientData.payment_methods_enabled->Array.reduce(
+    clientData.payment_methods_enabled->Array.reduce(
         (initialTabArr, initialElementArr, []),
         (
           (tabArr, elementArr, giftCardArr): (
@@ -222,55 +185,11 @@ let usePaymentMethodModifier = () => {
           (tabArr, elementArr, giftCardArr)
         },
       )
-    | None =>
-      let loadingTabElement = {
-        name: "loading",
-        paymentMethodType: "loading",
-        componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) => <>
-          <Space height=10. />
-          <CustomLoader />
-          <Space height=10. />
-          <CustomLoader />
-          <Space height=20. />
-        </>,
-      }
-
-      switch nativeProp.sdkState {
-      | PaymentSheet | WidgetPaymentSheet => (
-          [loadingTabElement, loadingTabElement, loadingTabElement, loadingTabElement],
-          [<CustomLoader key="1" />, <Space key="2" />],
-          [],
-        )
-      | TabSheet | WidgetTabSheet => (
-          [loadingTabElement, loadingTabElement, loadingTabElement, loadingTabElement],
-          [],
-          [],
-        )
-      | ButtonSheet | WidgetButtonSheet => (
-          [],
-          [
-            <CustomLoader key="1" />,
-            <Space key="2" />,
-            <CustomLoader key="3" />,
-            <Space key="4" />,
-            <CustomLoader key="5" />,
-            <Space key="6" />,
-            <CustomLoader key="7" />,
-            <Space key="8" />,
-            <CustomLoader key="9" />,
-          ],
-          [],
-        )
-      | _ => ([], [], [])
-      }
-    }
-  }, (clientData, sessionTokenData, superpositionConfig.payment_methods))
+  }, (clientData, sessionTokenData))
 }
 
 let useAddWebPaymentButton = () => {
-  let (clientData, sessionTokenData, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let {clientData, sessionTokenData} = AllApiDataContextNew.useData()
   let (addApplePay, addGooglePay) =
     ReactNative.Platform.os === #web
       ? WebButtonHook.usePayButton()
@@ -278,9 +197,7 @@ let useAddWebPaymentButton = () => {
 
   React.useMemo2(() => {
     if ReactNative.Platform.os === #web {
-      switch clientData {
-      | Some(clientData) =>
-        clientData.payment_methods_enabled->Array.forEach(paymentMethodData => {
+      clientData.payment_methods_enabled->Array.forEach(paymentMethodData => {
           let sessionObject = switch sessionTokenData {
           | Some(sessionData) =>
             sessionData
@@ -328,8 +245,6 @@ let useAddWebPaymentButton = () => {
           | _ => ()
           }
         })
-      | None => ()
-      }
     }
   }, (clientData, sessionTokenData))
 }

@@ -98,7 +98,8 @@ module CheckoutDetails = {
 
 @react.component
 let make = (~isDesktop) => {
-  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
+  let clientData =
+    AllApiDataContextNew.useOptionalData()->Option.map(allApiData => allApiData.clientData)
   let {textSecondary} = ThemebasedStyle.useThemeBasedStyle()
 
   let (showDetails, setShowDetails) = React.useState(() => false)

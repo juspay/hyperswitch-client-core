@@ -151,10 +151,19 @@ let applyCountryDefaults = (
 let make = (~children) => {
   let formDataRef = Some(React.useRef(Dict.make()))
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, sdkConfigData) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
-  let superpositionConfig = sdkConfigData->Option.getOr(SdkConfigTypes.defaultSdkConfigValue)
+  let allApiData = AllApiDataContextNew.useOptionalData()
+  let superpositionConfig = switch allApiData {
+  | Some({sdkConfigData}) => sdkConfigData
+  | None => SdkConfigTypes.defaultSdkConfigValue
+  }
+  let requireClientData = () =>
+    switch allApiData {
+    | Some({clientData}) => clientData
+    | None =>
+      Exn.raiseError(
+        "DynamicFieldsContext: field builders were called before API data arrived — call them only from components below a loading gate.",
+      )
+    }
   let profile = superpositionConfig.account_config->Option.flatMap(ac => ac.profile)
   let collectBillingDetailsFromWalletConnector = SdkConfigParser.getCollectBillingDetailsFromWalletConnector(
     profile,
@@ -193,6 +202,7 @@ let make = (~children) => {
     formData,
     isScreenFocus,
   ) => {
+    let clientData = requireClientData()
     let eligibleConnectors =
       SdkConfigParser.getEligibleConnectorsFromPaymentMethods(
         superpositionConfig.payment_methods,
@@ -200,22 +210,15 @@ let make = (~children) => {
         paymentMethodData.payment_method_type,
       )->Array.map(JSON.Encode.string)
 
-    let rawIntentData =
-      clientData
-      ->Option.map(data => data.intent_data.raw_intent_data)
-      ->Option.getOr(Dict.make()->JSON.Encode.object)
-
     let (intentData, defaultCountry) = prepareIntentData(
-      rawIntentData,
+      clientData.intent_data.raw_intent_data,
       nativeProp.sdkParams.country,
     )
 
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
       payment_method_type: paymentMethodData.payment_method_type,
-      mandate_type: clientData
-      ->Option.map(data => data.intent_data.payment_type === NORMAL ? "non_mandate" : "mandate")
-      ->Option.getOr("non_mandate"),
+      mandate_type: clientData.intent_data.payment_type === NORMAL ? "non_mandate" : "mandate",
       always_collect_billing_details_from_wallet_connector: collectBillingDetailsFromWalletConnector,
       always_collect_shipping_details_from_wallet_connector: collectShippingDetailsFromWalletConnector,
       country: switch country {
@@ -310,6 +313,7 @@ let make = (~children) => {
     useIntentData,
     formData,
   ) => {
+    let clientData = requireClientData()
     let eligibleConnectors =
       SdkConfigParser.getEligibleConnectorsFromPaymentMethods(
         superpositionConfig.payment_methods,
@@ -328,9 +332,7 @@ let make = (~children) => {
       | None => Dict.make()->JSON.Encode.object
       }
     } else {
-      clientData
-      ->Option.map(data => data.intent_data.raw_intent_data)
-      ->Option.getOr(Dict.make()->JSON.Encode.object)
+      clientData.intent_data.raw_intent_data
     }
 
     let (intentData, defaultCountry) = prepareIntentData(
@@ -341,11 +343,7 @@ let make = (~children) => {
     let configParams: SuperpositionTypes.superpositionBaseContext = {
       payment_method: paymentMethodData.payment_method_str,
       payment_method_type: paymentMethodData.payment_method_type,
-      mandate_type: clientData
-      ->Option.map(data => data.intent_data.payment_type)
-      ->Option.getOr(NORMAL) === NORMAL
-        ? "non_mandate"
-        : "mandate",
+      mandate_type: clientData.intent_data.payment_type === NORMAL ? "non_mandate" : "mandate",
       always_collect_billing_details_from_wallet_connector: collectBillingDetailsFromWalletConnector,
       always_collect_shipping_details_from_wallet_connector: collectShippingDetailsFromWalletConnector,
       country: switch country {
