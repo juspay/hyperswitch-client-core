@@ -25,6 +25,7 @@
     "@rescript/react",
     "rescript-react-native",
     "@rescript/core",
-    "@glennsl/rescript-fetch"
+    "@glennsl/rescript-fetch",
+    "react-native-hyperswitch-vault"
   ]
 }

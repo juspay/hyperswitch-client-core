@@ -58,9 +58,19 @@ const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
 const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
 const PROFILE_ID = process.env.PROFILE_ID;
 const HYPERSWITCH_BASE_URL =
-  process.env.HYPERSWITCH_SANDBOX_URL ||
-  process.env.HYPERSWITCH_INTEG_URL ||
-  'https://sandbox.hyperswitch.io';
+  // process.env.HYPERSWITCH_SANDBOX_URL ||
+  // process.env.HYPERSWITCH_INTEG_URL ||
+  // 'https://app.hyperswitch.io'
+  "https://integ.hyperswitch.io"
+  ;
+/*
+ * API host for the payment-method-session (vault) calls. Kept separate from
+ * HYPERSWITCH_BASE_URL because the legacy env files point that one at the
+ * dashboard host (app.hyperswitch.io), which is not the API host.
+ */
+const HYPERSWITCH_API_BASE_URL =
+  // process.env.HYPERSWITCH_API_BASE_URL || 
+  "https://integ.hyperswitch.io" || 'https://app.hyperswitch.io';
 const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
 
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
@@ -186,6 +196,223 @@ app.post('/create-payment-intent', async (req, res) => {
 
     res.status(error.response?.status || 500).json({
       error: 'Failed to create payment intent',
+      details: error.response?.data || error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+/*
+ * Vault: the vault SDK_authorization is NOT the payments one
+ * (POST /payments). It is minted by a payment-method-session and returned in
+ * its create response, so the vault demos call this instead of hardcoding
+ * "sdk_auth_demo".
+ *
+ * Upstream: POST /v1/payment-method-sessions
+ *   auth: Authorization: api-key=<SECRET_KEY> (this route rejects the plain
+ *         `api-key` header used by /payments) + required X-Profile-Id
+ *   body: storage_type is required; customer_id/billing/keep_alive optional
+ */
+const createPaymentMethodSession = async (overrides = {}) => {
+  const definedOverrides = Object.fromEntries(
+    Object.entries(overrides).filter(([, value]) => value !== undefined),
+  );
+  const sessionData = {
+    storage_type: 'persistent',
+    keep_alive: true,
+    ...definedOverrides,
+  };
+
+  if (!sessionData.customer_id && process.env.HYPERSWITCH_CUSTOMER_ID) {
+    sessionData.customer_id = process.env.HYPERSWITCH_CUSTOMER_ID;
+  }
+
+  logger.debug('Creating payment method session with data', sessionData);
+
+  const response = await fetch(
+    `${HYPERSWITCH_API_BASE_URL}/api/v1/payment-method-sessions`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `api-key=${HYPERSWITCH_SECRET_KEY}`,
+        'X-Profile-Id': PROFILE_ID,
+      },
+      body: JSON.stringify(sessionData),
+    },
+  );
+  const data = await response.json();
+
+  if (!response.ok) {
+    const error = new Error(`HTTP ${response.status}`);
+    error.response = {status: response.status, data};
+    throw error;
+  }
+
+  if (!data.sdk_authorization) {
+    throw new Error(
+      'payment-method-session returned no sdk_authorization; is vaulting enabled on this profile?',
+    );
+  }
+
+  return data;
+};
+
+const paymentMethodSessionResponse = (req, res, session) => {
+  res.json({
+    publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
+    sdkAuthorization: session.sdk_authorization,
+    clientSecret: session.client_secret,
+    paymentMethodSessionId: session.id,
+    profileId: PROFILE_ID,
+    expiresAt: session.expires_at,
+    storageType: session.storage_type,
+  });
+};
+
+/*
+ * Vault session — the exact contract of react-native-hyperswitch-vault's
+ * example-server/merchant-server.mjs (`GET /vault-session`).
+ *
+ * Two upstream calls:
+ *   1. POST /payments                 api-key: <SECRET_KEY>          (confirm: false — no money moves)
+ *   2. POST /payments/session_tokens  Authorization: <intent sdk_authorization>  (NOT the secret key)
+ *
+ * Step 2's response IS the `session_tokens`-shaped payload the vault SDK
+ * (<HyperswitchVaultForm session={...} />, and the native demos unwrapping
+ * `vault_details.vault_data.sdk_authorization`) expects, so it is handed to
+ * the caller VERBATIM. The merchant-only secret key never leaves this server.
+ *
+ * The response carries the short-lived vault credential, so it is served with
+ * Cache-Control: no-store, and upstream error bodies are never forwarded.
+ */
+app.get('/vault-session', async (req, res) => {
+  /*
+   * API host, not the dashboard host: calls go to {HYPERSWITCH_API_BASE_URL}/api.
+   * (HYPERSWITCH_BASE_URL points at the dashboard app — its unknown routes
+   * answer 200-HTML, so it must never prefix an API call.)
+   */
+  const api = `${HYPERSWITCH_API_BASE_URL}/api`;
+  try {
+    const intentResponse = await fetch(`${api}/payments`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'api-key': HYPERSWITCH_SECRET_KEY,
+      },
+      body: JSON.stringify({
+        amount: 1000,
+        currency: 'USD',
+        capture_method: 'automatic',
+        confirm: false,
+        authentication_type: 'no_three_ds',
+        ...(process.env.HYPERSWITCH_CUSTOMER_ID
+          ? {customer_id: process.env.HYPERSWITCH_CUSTOMER_ID}
+          : {}),
+        ...(PROFILE_ID ? {profile_id: PROFILE_ID} : {}),
+      }),
+    });
+
+    if (!intentResponse.ok) {
+      throw new Error(`payments failed with HTTP ${intentResponse.status}`);
+    }
+    const intent = await intentResponse.json();
+
+    const sessionResponse = await fetch(
+      `${api}/payments/session_tokens`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: intent.sdk_authorization,
+        },
+        body: JSON.stringify({
+          payment_id: intent.payment_id,
+          wallets: [],
+        }),
+      },
+    );
+
+    if (!sessionResponse.ok) {
+      throw new Error(`session_tokens failed with HTTP ${sessionResponse.status}`);
+    }
+
+    const session = await sessionResponse.json();
+    if (!session?.vault_details?.vault_data?.sdk_authorization) {
+      throw new Error(
+        'session_tokens returned no vault_details; is vaulting enabled on this profile?',
+      );
+    }
+
+    logger.debug('Vault session served');
+
+    res.set({'Cache-Control': 'no-store', Pragma: 'no-cache'}).json(session);
+  } catch (error) {
+    logger.error('Error creating vault session', error.message);
+
+    /* Generic body — never forward the upstream response to the app. */
+    res.set({'Cache-Control': 'no-store', Pragma: 'no-cache'}).status(502).json({
+      error: 'could not create a payment-method session',
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.get('/create-payment-method-session', async (req, res) => {
+  try {
+    if (!PROFILE_ID) {
+      return res.status(500).json({
+        error: 'Failed to create payment method session',
+        details: 'PROFILE_ID is not configured',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const session = await createPaymentMethodSession({
+      customer_id: req.query.customer_id,
+      storage_type: req.query.storage_type,
+    });
+
+    logger.debug('Payment method session created', {id: session.id});
+
+    paymentMethodSessionResponse(req, res, session);
+  } catch (error) {
+    logger.error(
+      'Error creating payment method session',
+      error.response?.data || error.message,
+    );
+
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to create payment method session',
+      details: error.response?.data || error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.post('/create-payment-method-session', async (req, res) => {
+  try {
+    if (!PROFILE_ID) {
+      return res.status(500).json({
+        error: 'Failed to create payment method session',
+        details: 'PROFILE_ID is not configured',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const session = await createPaymentMethodSession(req.body);
+
+    logger.debug('Payment method session created', {id: session.id});
+
+    paymentMethodSessionResponse(req, res, session);
+  } catch (error) {
+    logger.error(
+      'Error creating payment method session',
+      error.response?.data || error.message,
+    );
+
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to create payment method session',
       details: error.response?.data || error.message,
       timestamp: new Date().toISOString(),
     });
@@ -319,6 +546,12 @@ app
     logger.info(`📋 Health check: http://localhost:${PORT}/health`);
     logger.info(
       `💳 Create payment: POST http://localhost:${PORT}/create-payment-intent`,
+    );
+    logger.info(
+      `🔐 Create payment-method session (vault): POST http://localhost:${PORT}/create-payment-method-session`,
+    );
+    logger.info(
+      `🗝️  Vault session (merchant-server contract): GET http://localhost:${PORT}/vault-session`,
     );
     logger.info(`🌐 Environment: ${HYPERSWITCH_BASE_URL}`);
     logger.info(

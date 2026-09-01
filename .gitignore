@@ -124,3 +124,7 @@ next-env.d.ts
 mockData.js
 
 *.tsbuildinfo
+# Vendored vault package symlink (managed by scripts/link-vault-vendor.cjs)
+# Local symlink to vendored vault package (restored by install.sh / post-checkout).
+# Yarn/npm/Metro treat it as a real native node_modules entry.
+node_modules/@juspay-tech/react-native-hyperswitch-vault

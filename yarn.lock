@@ -2993,6 +2993,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@juspay-tech/react-native-hyperswitch-vault@file:./../react-native-hyperswitch-vault::locator=hyperswitch%40workspace%3A.":
+  version: 0.1.0
+  resolution: "@juspay-tech/react-native-hyperswitch-vault@file:./../react-native-hyperswitch-vault#./../react-native-hyperswitch-vault::hash=fbd30c&locator=hyperswitch%40workspace%3A."
+  peerDependencies:
+    react: ">=19.0.0 <20.0.0"
+    react-native: ">=0.79.0 <0.88.0"
+  checksum: 89990a182a1dafdb366807094029f3ba9a9a96fa7123354961bf43e86e35c6a6f9060354c516438df904658e5febf9d192e41410673edd021d0965c748dd9842
+  languageName: node
+  linkType: hard
+
 "@leichtgewicht/ip-codec@npm:^2.0.1":
   version: 2.0.5
   resolution: "@leichtgewicht/ip-codec@npm:2.0.5"
@@ -10664,6 +10674,7 @@ __metadata:
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.2
     "@juspay-tech/react-native-hyperswitch-paypal": ^1.0.2
     "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.3
+    "@juspay-tech/react-native-hyperswitch-vault": "file:./../react-native-hyperswitch-vault"
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
     "@react-native-community/cli": 20.1.0
     "@react-native-community/cli-platform-android": 20.1.0
