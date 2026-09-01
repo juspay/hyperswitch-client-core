@@ -12,7 +12,7 @@ let make = (
   ~dismissTimeout: int=10000,
   ~children=?,
 ) => {
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+  let insets = SafeAreaContext.useSafeAreaInsets()
   let (slideAnim, _) = React.useState(_ => Animated.Value.create(-300.))
   let {toastColorConfig} = ThemebasedStyle.useThemeBasedStyle()
 
@@ -71,9 +71,7 @@ let make = (
           flex: 1.,
           width: 100.->pct,
           top: 0.->dp,
-          paddingTop: (
-            WebKit.platform === #web ? 0. : viewPortContants.topInset -. ViewportContext.minTopInset
-          )->dp,
+          paddingTop: (WebKit.platform === #web ? 0. : insets.top)->dp,
           zIndex: 9999,
         }),
         children->Option.isNone
