@@ -1,20 +1,28 @@
-// HeadlessCommon.res
-// Shared headless logic used by HeadlessTask.res (all get + non-CVC confirms)
-// and CvcWidget.res (card confirms with CVC via confirmCardPayment).
-
 open SdkTypes
 open HeadlessUtils
 
 type headlessModule = {
   getPaymentSession: (string, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: (string, HyperModule.exitResultPayload) => unit,
+  exitHeadless: (string, int, HyperModule.exitResultPayload) => unit,
   completePrefetch: JSON.t => unit,
 }
 
 let makeHeadlessModule = (): headlessModule => {
+  let hyperSwitchHeadlessDict =
+    Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.getOr(Dict.make())
+
+  let getFn = (key, default) => {
+    switch hyperSwitchHeadlessDict->Dict.get(key) {
+    | Some(fn) => Obj.magic(fn)
+    | None => default
+    }
+  }
+
   {
-    getPaymentSession: HyperHeadless.getPaymentSession,
-    exitHeadless: HyperHeadless.exitHeadless,
+    getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
+    exitHeadless: getFn("exitHeadless", (_, _, _) => ()),
     completePrefetch: getFn("completePrefetch", _ => ()),
   }
 }
@@ -32,8 +40,8 @@ let cachePrefetch = (nativeProp, data) =>
     data,
   )
 
-// Normal saved-method headless launches do not receive prefetched data from native. Reuse the
-// module cache when the runtime is alive; if it was destroyed, the normal API path refetches.
+/* Normal saved-method headless launches do not receive prefetched data from native. Reuse the
+   module cache when the runtime is alive; if it was destroyed, the normal API path refetches. */
 let resolveHeadlessPrefetch = sdkAuthorization =>
   PrefetchCache.get(~sdkAuthorization=sdkAuthorization->Option.getOr(""))->Option.flatMap(
     prefetchFromJsonForAuthorization(_, sdkAuthorization),
@@ -52,7 +60,11 @@ let exitHeadlessWithResult = (
   if result.status->Option.getOr("failed") !== "cancelled" {
     PrefetchCache.remove(~sdkAuthorization)
   }
-  headlessModule.exitHeadless(sdkAuthorization, result->HyperModule.stringifiedResStatus)
+  headlessModule.exitHeadless(
+    sdkAuthorization,
+    nativeProp.rootTag,
+    result->HyperModule.resStatusPayload,
+  )
 }
 
 let getDefaultPaymentSession = (headlessModule, error, nativeProp) => {
@@ -358,12 +370,10 @@ let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => 
   let {nextAction, status, error} = confirmRes
 
   let responseCallback = (~status) => {
-    // headlessModule.exitHeadless(nativeProp.rootTag, status->HyperModule.stringifiedResStatus)
     exitHeadlessWithResult(headlessModule, nativeProp, status, ~sdkAuthorization?)
   }
 
   let errorCallback = (~errorMessage) => {
-    // headlessModule.exitHeadless(nativeProp.rootTag, errorMessage->HyperModule.stringifiedResStatus)
     exitHeadlessWithResult(headlessModule, nativeProp, errorMessage, ~sdkAuthorization?)
   }
 
@@ -378,8 +388,6 @@ let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => 
   )
 }
 
-// Standalone card confirm: builds the confirm body and calls the API.
-// Used by both HeadlessTask (via processRequest) and CvcWidget (via confirmPayment event).
 let confirmCardPayment = (
   headlessModule,
   nativeProp,
@@ -470,12 +478,7 @@ let confirmGPay = (
     ->(confirmCall(headlessModule, _, nativeProp, None))
     ->ignore
   | "Cancel" => reRegisterCallback.contents()
-  | err =>
-    headlessModule.exitHeadless(
-      nativeProp.rootTag,
-      {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
-    )
-  // exitHeadlessWithResult(headlessModule, nativeProp, {message: err, status: "failed"})
+  | err => exitHeadlessWithResult(headlessModule, nativeProp, {message: err, status: "failed"})
   }
 }
 
@@ -556,10 +559,6 @@ let confirmApplePay = (
   }
 }
 
-// Process a confirm request for a given payment method.
-// Called by HeadlessJsTask when the native confirm callback fires.
-// ~getCvc: function that returns the CVC value given the native callback response.
-//   - HeadlessTask passes: response => response["cvc"]  (CVC from native callback, null when no CvcWidget)
 let processRequest = async (
   headlessModule,
   reRegisterCallback,
@@ -686,8 +685,6 @@ let processRequest = async (
   }
 }
 
-// Set up the payment session: compute default/lastUsed, register callback with native.
-// ~getCvc: function that returns the CVC value given the native callback response.
 let getPaymentSession = (
   headlessModule,
   reRegisterCallback,
@@ -767,8 +764,8 @@ let getPaymentSession = (
 let usablePrefetchedJson = prefetched =>
   prefetched->Option.filter(json => json != JSON.Null && !(json->ErrorUtils.isError))
 
-// Prefetched data is only usable when it was fetched with the session's current authorization.
-// After updateIntent this keeps the previous authorization's payload out of the new payment.
+/* Prefetched data is only usable when it was fetched with the session's current authorization.
+   After updateIntent this keeps the previous authorization's payload out of the new payment. */
 let usablePrefetch = (prefetchedApiData, nativeProp: SdkTypes.nativeProp) =>
   prefetchedApiData->Option.filter(prefetch =>
     SdkTypes.prefetchedApiDataMatchesAuthorization(
@@ -777,10 +774,6 @@ let usablePrefetch = (prefetchedApiData, nativeProp: SdkTypes.nativeProp) =>
     )
   )
 
-// Main orchestrator: fetch saved payment methods, session tokens, set up payment session.
-// ~getCvc: function that returns the CVC value given the native callback response.
-// ~prefetchedApiData: the (already key-validated) prefetch snapshot for this authorization,
-// resolved from PrefetchCache by the caller; never carried across the bridge.
 let apiHandler = async (
   headlessModule,
   reRegisterCallback,
@@ -901,9 +894,9 @@ let apiHandler = async (
   }
 }
 
-// Runs for both the initial prefetch and updateIntent — a new intent needs the same three calls
-// (client data, session tokens, sdk_config) re-run and re-cached under its own authorization, so
-// the old intent's data never leaks forward.
+/* Runs for both the initial prefetch and updateIntent — a new intent needs the same three calls
+   (client data, session tokens, sdk_config) re-run and re-cached under its own authorization, so
+   the old intent's data never leaks forward. */
 let fetchAndCachePrefetchData = async (headlessModule, nativeProp) => {
   let (clientResp, sessionTok, sdkCfg) = await Promise.all3((
     fetchClientData(nativeProp),
@@ -935,8 +928,6 @@ let fetchAndCachePrefetchData = async (headlessModule, nativeProp) => {
   )
 }
 
-// Validate nativeProp and run the headless flow.
-// ~getCvc: function that returns the CVC value given the native callback response.
 let runHeadlessFlow = (
   headlessModule,
   reRegisterCallback,
