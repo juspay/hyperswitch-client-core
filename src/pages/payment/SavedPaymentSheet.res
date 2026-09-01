@@ -116,6 +116,9 @@ let make = (
         ~billing=token.billing,
         ~screen_height=ReactNative.Dimensions.get(#screen).height,
         ~screen_width=ReactNative.Dimensions.get(#screen).width,
+        ~payment_method_type=?{
+          token.payment_method === CARD ? None : Some(token.payment_method_type)
+        },
       )
     }
 

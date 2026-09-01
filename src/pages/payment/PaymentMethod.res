@@ -15,9 +15,12 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let {nickname, isNicknameSelected, setEligibilityStatus} = React.useContext(
-    DynamicFieldsContext.dynamicFieldsContext,
-  )
+  let {
+    nickname,
+    isNicknameSelected,
+    isSaveDetailsSelected,
+    setEligibilityStatus,
+  } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let callEligibilityCheck = AllPaymentHooks.useEligibilityCheckHook()
 
@@ -186,6 +189,19 @@ let make = (
       )
     }
 
+    let isCardPayment = paymentMethodData.payment_method === CARD
+    let isGuestCustomer =
+      clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true)
+    let paymentType =
+      clientData->Option.map(data => data.intent_data.payment_type)->Option.getOr(NORMAL)
+    let showSaveDetailsCheckbox = PaymentUtils.shouldShowSaveDetailsCheckbox(
+      ~nativeProp,
+      ~isCardPayment,
+      ~customerAcceptanceSupport=paymentMethodData.customer_acceptance_support,
+      ~isGuestCustomer,
+      ~paymentType,
+    )
+
     let body = PaymentUtils.generateCardConfirmBody(
       ~nativeProp,
       ~payment_method_str=paymentMethodStr,
@@ -193,9 +209,7 @@ let make = (
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
-      ~payment_type=clientData
-      ->Option.map(data => data.intent_data.payment_type)
-      ->Option.getOr(NORMAL),
+      ~payment_type=paymentType,
       ~payment_type_str=?clientData
       ->Option.map(data => data.intent_data.payment_type_str)
       ->Option.getOr(None),
@@ -203,13 +217,16 @@ let make = (
         clientData->Option.map(data => data.intent_data.return_url)
       },
       ~isSaveCardCheckboxVisible={
-        paymentMethodData.payment_method === CARD &&
-          nativeProp.configuration.displaySavedPaymentMethodsCheckbox
+        isCardPayment && nativeProp.configuration.displaySavedPaymentMethodsCheckbox
       },
-      ~isGuestCustomer=clientData
-      ->Option.map(data => data.intent_data.is_guest_customer)
-      ->Option.getOr(true),
-      ~isNicknameSelected,
+      ~isGuestCustomer,
+      // The nickname checkbox is card-only; never let its state leak into non-card bodies.
+      ~isNicknameSelected={isCardPayment && isNicknameSelected},
+      // Only a focused TAB form renders the checkbox; ELEMENT buttons (e.g. PayPal) are
+      // always visible and must not pick up the shared flag set on another form.
+      ~isSaveDetailsSelected={
+        methodType === TAB && showSaveDetailsCheckbox && isSaveDetailsSelected
+      },
       ~email?,
       ~screen_height=ReactNative.Dimensions.get(#screen).height,
       ~screen_width=ReactNative.Dimensions.get(#screen).width,

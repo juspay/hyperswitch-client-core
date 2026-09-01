@@ -103,6 +103,26 @@ module PMWithNickNameComponent = {
     }
     let isDefaultPm = savedPaymentMethod.default_payment_method_set
 
+    let pmTypeIcon = savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
+
+    let (iconName, iconFallback) = switch (
+      savedPaymentMethod.card,
+      savedPaymentMethod.bank_redirect,
+    ) {
+    | (Some(card), _) => (
+        switch card.card_network {
+        | "" => card.scheme === "" ? pmTypeIcon : card.scheme
+        | card_network => card_network
+        },
+        None,
+      )
+    | (None, Some(bankRedirect)) if bankRedirect.bank_name != "" => (
+        bankRedirect.bank_name,
+        Some("bank"),
+      )
+    | (None, _) => (pmTypeIcon, None)
+    }
+
     <View style={s({display: #flex, flexDirection: #column})}>
       {switch (nickName, logoConfig->Option.isNone) {
       | (Some(val), true) =>
@@ -133,17 +153,8 @@ module PMWithNickNameComponent = {
               position: #relative,
             })}>
             <Icon
-              name={switch savedPaymentMethod.card {
-              | Some(card) =>
-                switch card.card_network {
-                | "" =>
-                  card.scheme === ""
-                    ? savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-                    : card.scheme
-                | card_network => card_network
-                }
-              | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-              }}
+              name=iconName
+              fallbackIcon=?iconFallback
               height=18.
               width=18.
               fill={isPaymentMethodSelected ? primaryColor : iconColor}
@@ -173,17 +184,8 @@ module PMWithNickNameComponent = {
           </View>
         | None =>
           <Icon
-            name={switch savedPaymentMethod.card {
-            | Some(card) =>
-              switch card.card_network {
-              | "" =>
-                card.scheme === ""
-                  ? savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-                  : card.scheme
-              | card_network => card_network
-              }
-            | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-            }}
+            name=iconName
+            fallbackIcon=?iconFallback
             height=26.
             width=26.
             fill={isPaymentMethodSelected ? primaryColor : iconColor}
@@ -209,16 +211,43 @@ module PMWithNickNameComponent = {
               : React.null
           | _ => React.null
           }}
-          <TextWrapper
-            text={switch savedPaymentMethod.card {
-            | Some(card) => "●●●● "->String.concat(card.last4_digits)
-            | None => savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName
-            }}
-            textType={switch savedPaymentMethod.card {
-            | Some(_) => CardText
-            | None => CardTextBold
-            }}
-          />
+          {switch (savedPaymentMethod.card, savedPaymentMethod.bank_redirect) {
+          | (Some(card), _) =>
+            <TextWrapper
+              text={"●●●● "->String.concat(card.last4_digits)} textType={CardText}
+            />
+          | (None, Some(bankRedirect)) =>
+            // Bank name as the title; the account row only when there is something to show.
+            let hasMask = bankRedirect.mask != ""
+            let hasHolderName = bankRedirect.account_holder_name != ""
+            <>
+              <TextWrapper
+                text={bankRedirect.bank_name != ""
+                  ? bankRedirect.bank_name
+                  : savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName}
+                textType={CardTextBold}
+              />
+              <UIUtils.RenderIf condition={hasMask || hasHolderName}>
+                <View style={s({flexDirection: #row, alignItems: #center, gap: 8.->dp})}>
+                  <UIUtils.RenderIf condition={hasMask}>
+                    <TextWrapper
+                      text={"●●●● "->String.concat(bankRedirect.mask)} textType={CardText}
+                    />
+                  </UIUtils.RenderIf>
+                  <UIUtils.RenderIf condition={hasHolderName}>
+                    <TextWrapper
+                      text={bankRedirect.account_holder_name} textType={ModalTextLight}
+                    />
+                  </UIUtils.RenderIf>
+                </View>
+              </UIUtils.RenderIf>
+            </>
+          | (None, None) =>
+            <TextWrapper
+              text={savedPaymentMethod.payment_method_type->CommonUtils.getDisplayName}
+              textType={CardTextBold}
+            />
+          }}
         </View>
       </View>
     </View>

@@ -110,12 +110,15 @@ module Icon = {
         : {uri: localName, local: true}
     }, [iconName])
 
+    let handleError = () => {
+      let fallback = fallbackIcon->Option.getOr("error")->getIconName
+      setIconName(prev => prev === fallback ? "error" : fallback)
+    }
+
     <View style={array([s({height: height->dp, width: width->dp}), style])}>
       {uri.local
         ? <ReactNativeSvg.SvgCss
-            onError={() => {
-              setIconName(_ => fallbackIcon->Option.getOr("error"))
-            }}
+            onError={handleError}
             xml=uri.uri
             width
             height
@@ -123,9 +126,7 @@ module Icon = {
             color=?stroke
           />
         : <ReactNativeSvg.SvgUri
-            onError={() => {
-              setIconName(_ => fallbackIcon->Option.getOr("error"))
-            }}
+            onError={handleError}
             uri=uri.uri
             width
             height
