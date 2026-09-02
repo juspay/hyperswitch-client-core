@@ -1,13 +1,21 @@
 import { AppRegistry } from 'react-native';
 import { app as VaultFieldApp } from './src/vault/HsVaultEntry.bs.js';
+import * as HyperVaultStore from './src/vault/HyperVaultStore.bs.js';
 
 /*
- * Gate flag the vault widgets key on: NativeHyperswitchVault (inside
- * react-native-hyperswitch-vault) reads `globalThis.__useHyperswitchNativeFeaturesFlag__`
- * and resolves the HyperVaultModule TurboModule itself for emission and for
- * its raw-value store. There is no client-core registry to inject anymore.
+ * THE Native Vault feature flag — single source of truth. The vault widgets
+ * (react-native-hyperswitch-vault's HyperNativeVault) read it before doing
+ * any native work; a plain RN merchant bundle never sets it.
  */
 globalThis.__useHyperswitchNativeFeaturesFlag__ = true;
+
+/*
+ * THE global Vault registry — the ONLY store for raw field values and their
+ * redacted wire states. The widget package's HyperNativeVault accesses this
+ * exact object through its declared interface on globalThis (null-guarded);
+ * nothing creates a second store/context/provider anywhere.
+ */
+globalThis.HyperVaultStore = HyperVaultStore;
 
 /*
  * AppRegistry hands the root component the flat initialProperties plus

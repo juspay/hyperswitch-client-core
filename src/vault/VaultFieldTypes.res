@@ -47,14 +47,17 @@ type fieldType =
   | Info
   | Unknown(string)
 
+/* BOTH native sides send the field-type wire names the surfaces also key
+ * their states by (FieldType.rawValue on Android, defaultFieldName on iOS) —
+ * one naming scheme, no legacy aliases. */
 let fieldTypeFromString = (raw: string): fieldType =>
   switch raw {
-  | "cardNumberInput" => CardNumber
-  | "expDateInput" => Expiry
-  | "cvcInput" => CVC
-  | "cardHolderInput" => CardHolder
-  | "ssnInput" => Ssn
-  | "infoInput" => Info
+  | "card_number" => CardNumber
+  | "exp_date" => Expiry
+  | "cvc" => CVC
+  | "card_holder" => CardHolder
+  | "ssn" => Ssn
+  | "info" => Info
   | other => Unknown(other)
   }
 
@@ -100,7 +103,7 @@ let decodeInitialProps = (jsonFromNative: JSON.t, rootTag: int): surfaceProps =>
   let config = getObj(d, "config", Dict.make())
   let configuration = getObj(config, "configuration", Dict.make())
   /* Both native sides nest the library-owned session creds under
-   * config.sessionConfig (set by HyperswitchCollect.bindView /
+   * config.sessionConfig (set by HyperswitchVault.bindView /
    * configuration.collector), NOT flat on config. */
   let sessionConfig = getObj(config, "sessionConfig", Dict.make())
 

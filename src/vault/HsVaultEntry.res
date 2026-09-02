@@ -8,7 +8,8 @@
  * decodes that, routes by `type` to the matching field widget from
  * react-native-hyperswitch-vault, and hands the surface's rootTag down as a
  * prop. Emission + raw-value storage live in the widgets' own package
- * (NativeHyperswitchVault) — this entry ONLY claims the tokenise broadcast.
+ * (HyperNativeVault.useNativeFeatures → globalThis.HyperVaultStore) — this
+ * entry ONLY claims the tokenise broadcast.
  */
 
 open VaultFieldTypes
@@ -87,13 +88,11 @@ external jsonToFieldStyles: JSON.t => CardFieldStyles.fieldStyles = "%identity"
 external jsonToExpiryStyles: JSON.t => CardFieldStyles.expiryStyles = "%identity"
 
 /*
- * Registry emission is NOT here: the widgets themselves mirror their public
- * state into VaultRegistry (NativeHyperswitchVault.useNativeFieldSync), keyed
- * by the rootTag this entry hands down through the widget context. The old
- * `%identity` casts from VaultPublicState to VaultRegistry.fieldSnapshot are
- * GONE — they were unsound (no `isEmpty`/`isFocused` members on the public
- * records), which dropped those keys off the wire and left the native
- * decoders on their defaults.
+ * Registry emission is NOT here: each widget's HyperNativeVault.useNativeFeatures
+ * hook mirrors its own redacted wire state (validation flags + ≤6-digit bin)
+ * into globalThis.HyperVaultStore and pushes it over the TurboModule, keyed by
+ * the rootTag this entry hands down as a prop. Raw values stay in JS; only the
+ * redacted wire states cross the bridge.
  */
 @react.component
 let make = (~props, ~rootTag) => {
@@ -124,8 +123,9 @@ let make = (~props, ~rootTag) => {
 
     /*
      * The CVC surface claims the hsVaultTokenise broadcast. Gate + collect
-     * read the vault package's OWN registry (NativeHyperswitchVault): widgets
-     * push their redacted state and store the raw values there themselves.
+     * read HyperVaultStore — client-core's single global registry. The
+     * widgets keep its raw values current; the tokenise flow re-reads THEM,
+     * never component state.
      */
     React.useEffect0(() => {
       switch fieldType {
@@ -133,8 +133,8 @@ let make = (~props, ~rootTag) => {
         VaultTokenise.subscribe(
           ~fallbackAuthorization=config.sdkAuthorization,
           ~fallbackEnvironment=config.environment,
-          ~isCollectable=NativeHyperswitchVault.collectableState,
-          ~collectCard=NativeHyperswitchVault.collectCard,
+          ~isCollectable=HyperVaultStore.collectableState,
+          ~collectCard=HyperVaultStore.collectCard,
         )->Some
       | _ => None
       }
@@ -225,7 +225,7 @@ let make = (~props, ~rootTag) => {
     | Ssn
     | Info
     | VaultFieldTypes.Unknown(_) =>
-      /* Native sends ssnInput / infoInput for non-card fields; those don't
+      /* Native sends ssn / info for non-card fields; those don't
        * map onto a Vault widget — render nothing for this surface. */
       React.null
     }

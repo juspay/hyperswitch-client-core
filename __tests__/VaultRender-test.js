@@ -35,11 +35,11 @@ const renderVault = initialProps =>
     React.createElement(VaultFieldApp, {props: initialProps, rootTag: 42}),
   );
 
-test('cardNumberInput surface mounts a real TextInput (was rendering null before the fix)', async () => {
+test('card_number surface mounts a real TextInput (was rendering null before the fix)', async () => {
   let tree;
   await act(async () => {
     tree = renderVault({
-      type: 'cardNumberInput',
+      type: 'card_number',
       config: {
         fieldName: 'card_number',
         isRequired: true,
@@ -53,10 +53,10 @@ test('cardNumberInput surface mounts a real TextInput (was rendering null before
 });
 
 test.each([
-  ['cardNumberInput', 'card_number'],
-  ['expDateInput', 'exp_date'],
-  ['cvcInput', 'cvc'],
-  ['cardHolderInput', 'card_holder'],
+  ['card_number', 'card_number'],
+  ['exp_date', 'exp_date'],
+  ['cvc', 'cvc'],
+  ['card_holder', 'card_holder'],
 ])('%s surface mounts a real TextInput', async type => {
   let tree;
   await act(async () => {

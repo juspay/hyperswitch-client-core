@@ -1,19 +1,23 @@
 /*
- * hsVaultTokenise request → verify → collect → confirm → answer.
+ * onVaultTokenise request → verify → collect → confirm → answer.
  *
- * What happens when native calls HyperswitchCollect.tokenise(completion):
+ * What happens when native calls HyperswitchVault.tokenise(completion):
  *
- *   1. The native SDK broadcasts DeviceEventEmitter "hsVaultTokenise" with
- *      { sdkAuthorization?, environment? }. The REQUEST channel is a
- *      broadcast (not a direct typed TurboModule callback) because exactly
- *      ONE mounted surface claims each request; fan-out across surfaces is
- *      the failure mode the claim is protecting against, and a typed
- *      native→JS callback would add codegen + callback-lifetime machinery
- *      for no behavioural gain here. The ANSWER channel is the typed
- *      TurboModule — HyperVaultModule.returnTokenizedValue.
+ *   1. The native SDK broadcasts the TYPED codegen event `onVaultTokenise`
+ *      (HyperVaultModule's EventEmitter — the vault twin of the main SDK's
+ *      `HyperModule.triggerWidgetAction` / confirmCVC channel) with a
+ *      `VaultTokeniseRequest` payload ({ sdkAuthorization?, environment? }).
+ *      The contract is shared three ways: the TS spec
+ *      (src/specs/NativeHyperVaultModule.ts), Kotlin
+ *      (VaultTokeniseRequest.kt), Swift (VaultTokeniseRequest.swift) and this
+ *      decoder. The REQUEST channel is a broadcast (not a direct TurboModule
+ *      callback) because exactly ONE mounted surface claims each request;
+ *      fan-out across surfaces is the failure mode the claim is protecting
+ *      against. The ANSWER channel is the typed TurboModule method —
+ *      HyperVaultModule.returnTokenizedValue.
  *
  *   2. The CVC surface claims it. Credentials come from the broadcast body
- *      first (authoritative for THAT HyperswitchCollect instance), falling
+ *      first (authoritative for THAT HyperswitchVault instance), falling
  *      back to the claiming surface's own config — both trace to the same
  *      collector in practice.
  *
@@ -50,23 +54,22 @@
  * the interface stays free of both graphs.
  */
 
-@module("react-native")
-external deviceEventEmitter: {"addListener": (string, JSON.t => unit) => {"remove": unit => unit}} =
-  "DeviceEventEmitter"
-
 /*
- * The typed answer channel. INLINED here, deliberately: a top-level
- * HyperVaultNative module existed but collided with the widget package's
- * same-named module in one compilation namespace — the vault package's OWN
- * HyperVaultNative handles state emission; this is the answer side only.
+ * The typed channels, bound through the TS shim (HyperVaultNative.ts wraps
+ * TurboModuleRegistry.get with null-guards — the vault widgets run inside
+ * hosts whose only guarantee is "the vault pod MIGHT be linked").
+ *
+ *   ANSWER:  returnTokenizedValue(JSON wire)  — TurboModule method.
+ *   REQUEST: subscribeVaultTokenise(handler)  — codegen typed EventEmitter
+ *            on the same module; returns an unsubscribe thunk.
  */
-@module("../specs/NativeHyperVaultModule")
-external hyperVaultNative: {"returnTokenizedValue": string => unit} = "default"
+@module("./HyperVaultNative")
+external answerTokenised: string => unit = "returnTokenizedValue"
 
-let returnTokenizedValue = (resultJson: string): unit =>
-  hyperVaultNative["returnTokenizedValue"](resultJson)
+@module("./HyperVaultNative")
+external subscribeVaultTokenise: (JSON.t => unit) => (unit => unit) = "subscribeVaultTokenise"
 
-let tokeniseEventName = "hsVaultTokenise"
+let returnTokenizedValue = (resultJson: string): unit => answerTokenised(resultJson)
 
 /* Redacted gate answer — must line up with the widget package's registry. */
 type collectableState = [#ready | #notReady | #invalidData]
@@ -97,6 +100,19 @@ let bodyValue = (body: JSON.t, key: string): option<string> =>
   ->Option.flatMap(d => d->Dict.get(key))
   ->Option.flatMap(JSON.Decode.string)
 
+/* VaultTokeniseRequest — the typed broadcast payload. Both members are
+ * optional: absent means "the claiming surface falls back to its own config".
+ * (ReScript record, matches spec/VaultTokeniseRequest member-for-member.) */
+type tokeniseRequest = {
+  sdkAuthorization: option<string>,
+  environment: option<string>,
+}
+
+let decodeTokeniseRequest = (payload: JSON.t): tokeniseRequest => {
+  sdkAuthorization: bodyValue(payload, "sdkAuthorization"),
+  environment: bodyValue(payload, "environment"),
+}
+
 let envFromString = (raw: option<string>): VaultConfirm.vaultEnvironment =>
   switch raw {
   | Some("production") => #production
@@ -106,16 +122,16 @@ let envFromString = (raw: option<string>): VaultConfirm.vaultEnvironment =>
 
 /* Broadcast body first, claiming surface's own config as the fallback. */
 let resolveCredentials = (
-  ~body: JSON.t,
+  ~request: tokeniseRequest,
   ~fallbackAuthorization: option<string>,
   ~fallbackEnvironment: option<string>,
 ): (string, VaultConfirm.vaultEnvironment) => {
-  let sdkAuthorization = switch nonBlank(bodyValue(body, "sdkAuthorization")) {
+  let sdkAuthorization = switch nonBlank(request.sdkAuthorization) {
   | Some(v) => Some(v)
   | None => nonBlank(fallbackAuthorization)
   }
   let environment = envFromString(
-    switch nonBlank(bodyValue(body, "environment")) {
+    switch nonBlank(request.environment) {
     | Some(v) => Some(v)
     | None => fallbackEnvironment
     },
@@ -179,7 +195,7 @@ let subscribe = (
 ): (unit => unit) => {
   let listener = (body: JSON.t) => {
     let (sdkAuthorization, environment) = resolveCredentials(
-      ~body,
+      ~request=decodeTokeniseRequest(body),
       ~fallbackAuthorization,
       ~fallbackEnvironment,
     )
@@ -200,6 +216,5 @@ let subscribe = (
     )
     ->ignore
   }
-  let sub = deviceEventEmitter["addListener"](tokeniseEventName, listener)
-  () => sub["remove"]()
+  subscribeVaultTokenise(listener)
 }

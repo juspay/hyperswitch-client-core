@@ -4,7 +4,7 @@
  * HyperswitchTextField.initialProperties) parses into a renderable field.
  *
  * Wire format (both platforms):
- *   { type: 'cardNumberInput' | 'expDateInput' | 'cvcInput' | 'cardHolderInput',
+ *   { type: 'card_number' | 'exp_date' | 'cvc' | 'card_holder' | 'ssn' | 'info',
  *     config: { fieldName?, isRequired,
  *               sessionConfig?: { sdkAuthorization, environment },
  *               configuration?: { appearance?, options? } } }
@@ -12,7 +12,7 @@
 import {decodeInitialProps} from '../src/vault/VaultFieldTypes.bs.js';
 
 const flatNativePayload = {
-  type: 'cardNumberInput',
+  type: 'card_number',
   config: {
     fieldName: 'card_number',
     isRequired: true,
@@ -47,7 +47,7 @@ test('parses the flat native payload (as the vault surface sends it)', () => {
 
 test('payload without sessionConfig still parses (fields render, session absent)', () => {
   const decoded = decodeInitialProps(
-    {type: 'cvcInput', config: {isRequired: true}},
+    {type: 'cvc', config: {isRequired: true}},
     7,
   );
 
