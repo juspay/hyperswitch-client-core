@@ -146,6 +146,9 @@ let useUpdateIntentListener = (
             }
 
             if hasUsablePrefetch {
+              /* Invalidate any older in-flight network update: without advancing the id it
+                 could still land after this commit and overwrite the newer intent. */
+              updateRequestIdRef.current = updateRequestIdRef.current + 1
               /* Clear the old intent's state in the same React batch as the prop replacement.
                  NavigationRouter consumes these three intent-scoped values on the next render. */
               setClientResponse(_ => None)

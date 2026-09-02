@@ -38,6 +38,9 @@ let run = (~props) => {
 
 @react.component
 let make = (~props) => {
-  run(~props)->ignore
+  React.useEffect0(() => {
+    run(~props)->ignore
+    None
+  })
   React.null
 }

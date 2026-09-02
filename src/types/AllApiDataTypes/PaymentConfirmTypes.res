@@ -93,13 +93,6 @@ let defaultConfigError = {
   message: "Unable to load the payment configuration. Please retry.",
 }
 
-let defaultSessionTokenError = {
-  type_: "session_token_error",
-  status: "failed",
-  code: "session_tokens_failed",
-  message: "Unable to initialize wallet payment methods. Please retry.",
-}
-
 let defaultNoPaymentMethodsError = {
   type_: "",
   status: "failed",

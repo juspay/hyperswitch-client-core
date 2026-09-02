@@ -18,6 +18,10 @@ export type WidgetActionEvent = {
   billing?: string;
 };
 
+export type ClearPrefetchCacheEvent = {
+  sdkAuthorization: string;
+};
+
 export type UpdateIntentEvent = {
   rootTag?: CodegenTypes.Int32;
   sdkAuthorization?: string;
@@ -97,6 +101,7 @@ export interface Spec extends TurboModule {
   readonly triggerWidgetAction: CodegenTypes.EventEmitter<WidgetActionEvent>;
   readonly updateIntentInit: CodegenTypes.EventEmitter<UpdateIntentEvent>;
   readonly updateIntentComplete: CodegenTypes.EventEmitter<UpdateIntentEvent>;
+  readonly clearPrefetchCache: CodegenTypes.EventEmitter<ClearPrefetchCacheEvent>;
 }
 
 export default TurboModuleRegistry.get<Spec>('HyperModule');
