@@ -1,4 +1,4 @@
-import { AppRegistry } from 'react-native';
+import { AppRegistry, Platform } from 'react-native';
 import NewApp, { HeadlessApp } from './src/routes/Update';
 import { name as appName, headless } from './app.json';
 

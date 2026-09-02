@@ -22,7 +22,6 @@ let make = (
     DynamicFieldsContext.dynamicFieldsContext,
   )
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
 
   let showAlert = AlertHook.useAlerts()
   let logger = LoggerHook.useLoggerHook()
@@ -115,8 +114,11 @@ let make = (
         ->Option.map(data => data.intent_data.payment_type_str)
         ->Option.getOr(None),
         ~billing=token.billing,
-        ~screen_height=viewPortContants.screenHeight,
-        ~screen_width=viewPortContants.screenWidth,
+        ~screen_height=ReactNative.Dimensions.get(#screen).height,
+        ~screen_width=ReactNative.Dimensions.get(#screen).width,
+        ~payment_method_type=?{
+          token.payment_method === CARD ? None : Some(token.payment_method_type)
+        },
       )
     }
 
@@ -229,8 +231,8 @@ let make = (
       ->Option.getOr(true),
       ~isNicknameSelected=false,
       ~email?,
-      ~screen_height=viewPortContants.screenHeight,
-      ~screen_width=viewPortContants.screenWidth,
+      ~screen_height=ReactNative.Dimensions.get(#screen).height,
+      ~screen_width=ReactNative.Dimensions.get(#screen).width,
       (),
     )
 

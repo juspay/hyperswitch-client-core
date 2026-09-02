@@ -16,6 +16,19 @@ type payment_experience_type = INVOKE_SDK_CLIENT | REDIRECT_TO_URL | NONE
 
 type mandateType = NORMAL | NEW_MANDATE | SETUP_MANDATE
 
+// Backend hint (`customer_acceptance_support` on each payment_methods_enabled entry)
+// on whether a newly entered payment method of this type can be saved for the
+// customer. Absent / unknown value => None (treated like Unsupported: no checkbox).
+type customerAcceptanceSupport = Supported | PartiallySupported | Unsupported
+
+let getCustomerAcceptanceSupport = str =>
+  switch str {
+  | "supported" => Some(Supported)
+  | "partially_supported" => Some(PartiallySupported)
+  | "unsupported" => Some(Unsupported)
+  | _ => None
+  }
+
 let getPaymentMethod = str =>
   switch str {
   | "wallet" => WALLET

@@ -1,10 +1,3 @@
-let isValidConfig = (value: SdkConfigTypes.sdkConfigValue) =>
-  switch value.raw_configs->Option.flatMap(JSON.Decode.object) {
-  | Some(dict) =>
-    dict->Dict.get("default_configs")->Option.isSome || dict->Dict.get("contexts")->Option.isSome
-  | None => false
-  }
-
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -23,25 +16,71 @@ let make = () => {
   let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
   let logger = LoggerHook.useLoggerHook()
 
+  let isDismissableSheet = switch nativeProp.sdkState {
+  | PaymentSheet
+  | TabSheet
+  | ButtonSheet
+  | HostedCheckout
+  | WidgetPaymentSheet
+  | WidgetTabSheet
+  | WidgetButtonSheet => true
+  | _ => false
+  }
+
   React.useEffect1(() => {
     let launchTime = nativeProp.sdkParams.launchTime->Option.getOr(Date.now())
     let latency = Date.now() -. launchTime
     let appId = nativeProp.sdkParams.appId->Option.getOr("") ++ ".hyperswitch://"
     logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
     error()
+    None
+  }, [nativeProp])
 
+  let sessionCredentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
+  let fetchedCredentialsKey = React.useRef(None)
+
+  React.useEffect1(() => {
     //KountModule.launchKountIfAvailable(nativeProp.paymentSessionConfig.clientSecret, _x => ())
-    // if (nativeProp.paymentSessionConfig.clientSecret != "" || nativeProp.paymentMethodId != "") &&
-    //   nativeProp.hyperswitchConfig.publishableKey != ""
-    if nativeProp.sdkState !== CvcWidget {
+    let alreadyFetched = switch fetchedCredentialsKey.current {
+    | Some(key) => key === sessionCredentialsKey
+    | None => false
+    }
+    if nativeProp.sdkState !== CvcWidget && !alreadyFetched {
+      fetchedCredentialsKey.current = Some(sessionCredentialsKey)
+      let requestKey = sessionCredentialsKey
+
+      let isRequestCurrent = () =>
+        switch fetchedCredentialsKey.current {
+        | Some(key) => key === requestKey
+        | None => false
+        }
+
+      let terminalErrorFired = ref(false)
+      let exitSheetOnce = (~apiResStatus) =>
+        if !terminalErrorFired.contents {
+          terminalErrorFired := true
+          handleSuccessFailure(~apiResStatus, ())
+        }
+
       let handleClientResponse = clientResp => {
         if ErrorUtils.isError(clientResp) {
-          errorOnApiCalls(
-            INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))),
-            (),
-          )
+          if isDismissableSheet {
+            exitSheetOnce(
+              ~apiResStatus={
+                type_: "",
+                status: "failed",
+                code: "client_api_error",
+                message: ErrorUtils.getErrorMessage(clientResp),
+              },
+            )
+          } else {
+            errorOnApiCalls(
+              INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))),
+              (),
+            )
+          }
         } else if clientResp == JSON.Encode.null {
-          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfirmError, ())
+          exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfirmError)
         } else {
           // Both lists now arrive in ONE response, so an empty payment_methods_enabled
           // must not discard the customer's saved methods carried alongside it. Either
@@ -51,6 +90,8 @@ let make = () => {
           let hasSavedMethods = dict->Utils.getArray("customer_payment_methods")->Array.length > 0
           if hasEnabledMethods || hasSavedMethods {
             setClientResponse(_ => Some(clientResp))
+          } else if isDismissableSheet {
+            exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultNoPaymentMethodsError)
           } else {
             errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
           }
@@ -63,31 +104,33 @@ let make = () => {
           // config failure means the sheet cannot render/confirm correctly.
           // Treat it as terminal (like the null/invalid cases below) instead of a
           // non-blocking alert — otherwise the config-gated memo strands the UI.
-          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
+          exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
         } else if configResponse == JSON.Encode.null {
-          handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
+          exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
         } else {
           let parsed = SdkConfigParser.itemToObjMapper(configResponse)
-          if isValidConfig(parsed) {
+          if PaymentUtils.isValidSdkConfig(parsed) {
             setSdkConfigData(_ => Some(parsed))
           } else {
-            handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultConfigError, ())
+            exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
           }
         }
       }
 
       sessionToken()
       ->Promise.then(sessionTokenData => {
-        if sessionTokenData->ErrorUtils.isError {
-          if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
-            errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
-          } else if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_09\"" {
-            errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
-          }
-        } else if sessionTokenData != JSON.Null {
-          switch sessionTokenData->SessionsType.jsonToSessionTokenType {
-          | Some(sessions) => setSessionTokenData(_ => Some(sessions))
-          | None => setSessionTokenData(_ => Some([]))
+        if isRequestCurrent() {
+          if sessionTokenData->ErrorUtils.isError {
+            if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
+              errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
+            } else if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_09\"" {
+              errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
+            }
+          } else if sessionTokenData != JSON.Null {
+            switch sessionTokenData->SessionsType.jsonToSessionTokenType {
+            | Some(sessions) => setSessionTokenData(_ => Some(sessions))
+            | None => setSessionTokenData(_ => Some([]))
+            }
           }
         }
         Promise.resolve()
@@ -96,20 +139,24 @@ let make = () => {
 
       sdkConfig()
       ->Promise.then(configResponse => {
-        handleSdkConfigResponse(configResponse)
+        if isRequestCurrent() {
+          handleSdkConfigResponse(configResponse)
+        }
         Promise.resolve()
       })
       ->ignore
 
       fetchClientData()
       ->Promise.then(clientResp => {
-        handleClientResponse(clientResp)
+        if isRequestCurrent() {
+          handleClientResponse(clientResp)
+        }
         Promise.resolve()
       })
       ->ignore
     }
     None
-  }, [nativeProp])
+  }, [sessionCredentialsKey])
 
   let paymentMethodOrder = nativeProp.configuration.paymentMethodOrder
   let hiddenPaymentMethods = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
@@ -130,7 +177,12 @@ let make = () => {
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
-  UpdateIntentHook.useUpdateIntentListener(~setClientResponse, ~setSessionTokenData)
+  UpdateIntentHook.useUpdateIntentListener(
+    ~setClientResponse,
+    ~setSessionTokenData,
+    ~setSdkConfigData,
+    ~fetchedCredentialsKey,
+  )
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
     // TODO: Pass DynamicFieldsContext to only required components.

@@ -7,4 +7,5 @@ type props = {
   style?: Style.t,
 }
 
-let make: React.component<props> = NativeModules.requireNativeComponent("ApplePayView")
+@module("../../../specs/ApplePayViewNativeComponent")
+external make: React.component<props> = "default"

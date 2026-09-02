@@ -4,7 +4,7 @@ open Style
 @react.component
 let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~stickyFooter=?) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+  let insets = SafeAreaContext.useSafeAreaInsets()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let onModalClose = React.useCallback0(() => {
     setLoading(PaymentCancelled)
@@ -42,7 +42,7 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
             1000.->Animated.Value.Timing.fromRawValue
           },
           isInteraction: true,
-          useNativeDriver: false,
+          useNativeDriver: true,
           delay: 0.,
           duration: 300.,
           easing: Easing.linear,
@@ -58,22 +58,30 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
       alignContent: #"flex-end",
       backgroundColor: paymentSheetOverlay,
       justifyContent: #"flex-end",
-      paddingTop: viewPortContants.topInset->dp,
+      paddingTop: (insets.top +. SafeAreaContext.topGap)->dp,
+      paddingLeft: insets.left->dp,
+      paddingRight: insets.right->dp,
     })}>
     <GlobalBanner />
     <Animated.View
       style={s({
-        transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
         flexGrow: {sheetFlex->Animated.StyleProp.float},
         maxHeight: 100.->pct,
         minWidth: 302.->dp,
       })}>
-      <CustomView onDismiss=onModalClose>
-        <CustomView.Wrapper
-          onModalClose isLoading renderScrollView isSavedPaymentScreen ?stickyFooter>
-          {children}
-        </CustomView.Wrapper>
-      </CustomView>
+      <Animated.View
+        style={s({
+          transform: [translateY(~translateY=heightPosition->Animated.StyleProp.size)],
+          flexGrow: 1.,
+          maxHeight: 100.->pct,
+        })}>
+        <CustomView onDismiss=onModalClose>
+          <CustomView.Wrapper
+            onModalClose isLoading renderScrollView isSavedPaymentScreen ?stickyFooter>
+            {children}
+          </CustomView.Wrapper>
+        </CustomView>
+      </Animated.View>
     </Animated.View>
     <LoadingOverlay />
   </View>

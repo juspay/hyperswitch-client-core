@@ -10,7 +10,7 @@ let make = (~children, ~handlePress) => {
     sheetContentPadding,
     paymentSheetOverlay,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let (viewPortContants, _) = React.useContext(ViewportContext.viewPortContext)
+  let insets = SafeAreaContext.useSafeAreaInsets()
 
   let sheetFlex = AnimatedValue.useAnimatedValue(0.)
   let heightPosition = AnimatedValue.useAnimatedValue(0.)
@@ -52,7 +52,7 @@ let make = (~children, ~handlePress) => {
         alignContent: #center,
         backgroundColor: paymentSheetOverlay,
         justifyContent: #center,
-        paddingTop: viewPortContants.topInset->dp,
+        paddingTop: (insets.top +. SafeAreaContext.topGap)->dp,
       })}>
       <Animated.View
         style={s({
@@ -85,7 +85,7 @@ let make = (~children, ~handlePress) => {
                 minHeight: 250.->dp,
                 paddingHorizontal: sheetContentPadding->dp,
                 paddingTop: sheetContentPadding->dp,
-                paddingBottom: viewPortContants.bottomInset->dp,
+                paddingBottom: (insets.bottom +. SafeAreaContext.bottomGap)->dp,
               })}
               keyboardShouldPersistTaps={#handled}
               showsVerticalScrollIndicator=false

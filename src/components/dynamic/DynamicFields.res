@@ -12,6 +12,7 @@ let make = (
   ~accessible: bool,
   ~isFocused: bool=false,
   ~checkEligibility: option<string> => unit=_ => (),
+  ~customerAcceptanceSupport: option<PaymentMethodType.customerAcceptanceSupport>=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
@@ -22,10 +23,51 @@ let make = (
     setNickname,
     setIsNicknameValid,
     sheetType,
+    isSaveDetailsSelected,
+    setIsSaveDetailsSelected,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let localeObject = GetLocale.useGetLocalObj()
 
   let {logoConfig} = ThemebasedStyle.useThemeBasedStyle()
+
+  let isGuestCustomer =
+    clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true)
+  let paymentType =
+    clientData->Option.map(data => data.intent_data.payment_type)->Option.getOr(NORMAL)
+  let showSaveDetailsCheckbox = PaymentUtils.shouldShowSaveDetailsCheckbox(
+    ~nativeProp,
+    ~isCardPayment,
+    ~customerAcceptanceSupport,
+    ~isGuestCustomer,
+    ~paymentType,
+  )
+
+  // The checkbox state is shared across all PM forms; every tab/section is mounted at
+  // once, so clear it whenever this form gains or loses focus (i.e. on PM switch).
+  React.useEffect1(() => {
+    setIsSaveDetailsSelected(false)
+    None
+  }, [isFocused])
+
+  let saveDetailsCheckbox =
+    <UIUtils.RenderIf condition={showSaveDetailsCheckbox}>
+      <ReactNative.View style={ReactNative.Style.s({paddingHorizontal: 2.->ReactNative.Style.dp})}>
+        <ClickableTextElement
+          disabled={false}
+          initialIconName="checkboxClicked"
+          updateIconName=Some("checkboxNotClicked")
+          text={switch customerAcceptanceSupport {
+          | Some(PaymentMethodType.PartiallySupported) =>
+            localeObject.savePaymentDetailsWhereverPossible
+          | _ => localeObject.savePaymentDetails
+          }}
+          isSelected=isSaveDetailsSelected
+          setIsSelected=setIsSaveDetailsSelected
+          textType={ModalText}
+        />
+      </ReactNative.View>
+      <Space height=10. />
+    </UIUtils.RenderIf>
 
   <>
     <UIUtils.RenderIf
@@ -74,23 +116,26 @@ let make = (
         </ReactNative.View>
       | _ => React.null
       }}
-      {switch (
-        clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
-        isNicknameSelected,
-        nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
-        clientData
-        ->Option.map(data => data.intent_data.payment_type)
-        ->Option.getOr(NORMAL),
-      ) {
-      | (false, _, true, NEW_MANDATE | NORMAL) =>
-        isNicknameSelected
-          ? <NickNameElement nickname setNickname setIsNicknameValid accessible />
-          : React.null
-      | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
-        <NickNameElement nickname setNickname setIsNicknameValid accessible />
-      | _ => React.null
-      }}
+      <UIUtils.RenderIf condition={!nativeProp.configuration.hideCardNicknameField}>
+        {switch (
+          clientData->Option.map(data => data.intent_data.is_guest_customer)->Option.getOr(true),
+          isNicknameSelected,
+          nativeProp.configuration.displaySavedPaymentMethodsCheckbox,
+          clientData
+          ->Option.map(data => data.intent_data.payment_type)
+          ->Option.getOr(NORMAL),
+        ) {
+        | (false, _, true, NEW_MANDATE | NORMAL) =>
+          isNicknameSelected
+            ? <NickNameElement nickname setNickname setIsNicknameValid accessible />
+            : React.null
+        | (false, _, false, NEW_MANDATE) | (false, _, _, SETUP_MANDATE) =>
+          <NickNameElement nickname setNickname setIsNicknameValid accessible />
+        | _ => React.null
+        }}
+      </UIUtils.RenderIf>
     </UIUtils.RenderIf>
+    <UIUtils.RenderIf condition={fields->Array.length > 0}> saveDetailsCheckbox </UIUtils.RenderIf>
     <UIUtils.RenderIf
       condition={!isCardPayment && !isGiftCardPayment && sheetType !== DynamicFieldsSheet}>
       <UIUtils.RenderIf
@@ -101,6 +146,9 @@ let make = (
       <UIUtils.RenderIf condition={nativeProp.configuration.redirectionInfo === Shown}>
         <RedirectionText />
         <Space height=10. />
+      </UIUtils.RenderIf>
+      <UIUtils.RenderIf condition={fields->Array.length == 0}>
+        saveDetailsCheckbox
       </UIUtils.RenderIf>
     </UIUtils.RenderIf>
     <UIUtils.RenderIf
