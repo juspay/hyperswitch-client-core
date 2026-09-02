@@ -8,7 +8,9 @@
    entry for its key; consumers only read at mount/update boundaries, so this is safe.
 
    Entries also expire: a cancelled initPaymentSession can leave behind an authorization that
-   is never reused, so entries older than ttlMinutes are swept on every write (set/remove).
+   is never reused, so entries older than ttlMinutes are swept on every write (set/remove),
+   and a read of an expired entry evicts it and reports a miss — consumers re-fetch rather
+   than serve server-expired session data after a long idle window.
    Timestamps live in a parallel map so entry payloads stay untouched. */
 
 let maxEntries = 5
@@ -64,21 +66,30 @@ let set = (~sdkAuthorization: string, data: JSON.t): JSON.t => {
 }
 
 let get = (~sdkAuthorization: string): option<JSON.t> =>
-  key(sdkAuthorization)->Option.flatMap(cacheKey => cache->Dict.get(cacheKey))
+  switch key(sdkAuthorization) {
+  | Some(cacheKey) =>
+    if Date.now() -. cacheKey->timestamp > ttlMillis {
+      drop(cacheKey)
+      None
+    } else {
+      cache->Dict.get(cacheKey)
+    }
+  | None => None
+  }
 
 let remove = (~sdkAuthorization: string) => {
   expireStaleEntries()
   key(sdkAuthorization)->Option.forEach(drop)
 }
 
-let cleanupEmitter = ReactNative.NativeEventEmitter.make(
-  Dict.get(ReactNative.NativeModules.nativeModules, "HyperModule"),
-)
-let cleanupSubscription = ReactNative.NativeEventEmitter.addListener(
-  cleanupEmitter,
-  "clearPrefetchCache",
-  payload =>
-    remove(
-      ~sdkAuthorization=payload->Utils.getDictFromJson->Utils.getString("sdkAuthorization", ""),
-    ),
+/* Bridgeless-safe: native emits this event through the codegen channel
+   (HyperTurboModule emitClearPrefetchCache), so the subscription must go through
+   the generated attach — the legacy NativeEventEmitter never arms it. */
+let cleanupSubscription = HyperModule.Events.subscribeClearPrefetchCache(payload =>
+  remove(
+    ~sdkAuthorization=payload
+    ->Dict.get("sdkAuthorization")
+    ->Option.flatMap(JSON.Decode.string)
+    ->Option.getOr(""),
+  )
 )
