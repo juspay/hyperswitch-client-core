@@ -6,9 +6,9 @@
  *                                    configuration?: { appearance?, options? } } }
  * (see BaseVaultFieldView.kt / HyperswitchTextField.swift). This entry
  * decodes that, routes by `type` to the matching field widget from
- * react-native-hyperswitch-vault, and registers the surface's state with
- * VaultRegistry so cross-surface aggregation and the hsVaultTokenise broadcast
- * can find it.
+ * react-native-hyperswitch-vault, and hands the surface's rootTag down as a
+ * prop. Emission + raw-value storage live in the widgets' own package
+ * (NativeHyperswitchVault) — this entry ONLY claims the tokenise broadcast.
  */
 
 open VaultFieldTypes
@@ -87,29 +87,20 @@ external jsonToFieldStyles: JSON.t => CardFieldStyles.fieldStyles = "%identity"
 external jsonToExpiryStyles: JSON.t => CardFieldStyles.expiryStyles = "%identity"
 
 /*
- * Public state snapshot a widget emits through onStateChange — matches
- * VaultPublicState.cardNumberState / expiryState / cvcState / cardholderNameState.
- * All four variants share {status, valid, isEmpty, isFocused, error?}; brand
- * comes on the card-number one only. Identity cast to the registry shape is
- * safe because the intersection is structural.
+ * Registry emission is NOT here: the widgets themselves mirror their public
+ * state into VaultRegistry (NativeHyperswitchVault.useNativeFieldSync), keyed
+ * by the rootTag this entry hands down through the widget context. The old
+ * `%identity` casts from VaultPublicState to VaultRegistry.fieldSnapshot are
+ * GONE — they were unsound (no `isEmpty`/`isFocused` members on the public
+ * records), which dropped those keys off the wire and left the native
+ * decoders on their defaults.
  */
-external cardNumberStateToSnapshot: VaultPublicState.cardNumberState => VaultRegistry.fieldSnapshot =
-  "%identity"
-external expiryStateToSnapshot: VaultPublicState.expiryState => VaultRegistry.fieldSnapshot =
-  "%identity"
-external cvcStateToSnapshot: VaultPublicState.cvcState => VaultRegistry.fieldSnapshot = "%identity"
-external cardholderNameStateToSnapshot: VaultPublicState.cardholderNameState =>
-  VaultRegistry.fieldSnapshot = "%identity"
-
 @react.component
 let make = (~props, ~rootTag) => {
   let {fieldType, config, rootTag} = VaultFieldTypes.decodeInitialProps(props, rootTag)
   {
     let environment = environmentFromString(config.environment)
     let appearance = config.configuration.appearance->Option.map(jsonToAppearance)
-
-    let pushToRegistry = (~fieldType: fieldType, snapshot: VaultRegistry.fieldSnapshot): unit =>
-      VaultRegistry.pushFieldState(~rootTag, ~fieldType, ~state=snapshot)
 
     /* Per the surface model, the host (one per provider) is what runs
      * tokenize/confirmPayment. We host it here directly — same hook the
@@ -131,57 +122,23 @@ let make = (~props, ~rootTag) => {
       ~unstyled=CardFieldOptions.defaultUnstyled,
     )
 
-    /* The CVC surface claims the hsVaultTokenise broadcast. */
+    /*
+     * The CVC surface claims the hsVaultTokenise broadcast. Gate + collect
+     * read the vault package's OWN registry (NativeHyperswitchVault): widgets
+     * push their redacted state and store the raw values there themselves.
+     */
     React.useEffect0(() => {
       switch fieldType {
       | CVC =>
         VaultTokenise.subscribe(
           ~fallbackAuthorization=config.sdkAuthorization,
           ~fallbackEnvironment=config.environment,
-          ~isCollectable=VaultRegistry.collectableState,
-          ~collectCard=VaultRegistry.collectCard,
+          ~isCollectable=NativeHyperswitchVault.collectableState,
+          ~collectCard=NativeHyperswitchVault.collectCard,
         )->Some
       | _ => None
       }
     })
-
-    /*
-     * Raw-value collector for the cross-surface tokenise. Registered as a
-     * thunk over the widget controller's latest ref: the raw card value is
-     * only materialized while VaultTokenise.runTokenise assembles the vault
-     * confirm body, and never crosses the native bridge.
-     */
-    React.useEffect0(() => {
-      let collect: option<VaultRegistry.rawCollector> = switch fieldType {
-      | CardNumber =>
-        Some(() => host.contextValue.controller.cardDetails().cardNumber->JSON.Encode.string)
-      | Expiry =>
-        Some(
-          () => {
-            let card = host.contextValue.controller.cardDetails()
-            let d = Dict.make()
-            d->Dict.set("month", card.expiryMonth->JSON.Encode.string)
-            d->Dict.set("year", card.expiryYear->JSON.Encode.string)
-            JSON.Encode.object(d)
-          },
-        )
-      | CVC => Some(() => host.contextValue.controller.cardDetails().cvc->JSON.Encode.string)
-      | CardHolder =>
-        Some(() => host.contextValue.controller.cardholderName()->JSON.Encode.string)
-      | Ssn
-      | Info
-      | VaultFieldTypes.Unknown(_) => None
-      }
-      switch collect {
-      | Some(collect) =>
-        VaultRegistry.registerCollector(~fieldType, ~collect)
-        Some(() => VaultRegistry.dropCollector(~fieldType))
-      | None => None
-      }
-    })
-
-    /* Drop this surface's entries from the registry on unmount. */
-    React.useEffect0(() => Some(() => VaultRegistry.dropSurface(~rootTag, ~fieldType)))
 
     /* Pull the merchant-customisable props straight out of
      * configuration.options (the strings the native side set under
@@ -212,8 +169,6 @@ let make = (~props, ~rootTag) => {
      * named-arg wrappers in Fields.res. */
     let child: React.element = switch fieldType {
     | CardNumber =>
-      let onStateChange = (state: VaultPublicState.cardNumberState) =>
-        pushToRegistry(~fieldType=CardNumber, cardNumberStateToSnapshot(state))
       <Fields.CardNumber
         placeholder=?placeholder
         label=?label
@@ -225,11 +180,9 @@ let make = (~props, ~rootTag) => {
         brandIconMode=?brandIconMode
         unstyled=?unstyled
         styles=?fieldStyles
-        onStateChange
+        rootTag
       />
     | Expiry =>
-      let onStateChange = (state: VaultPublicState.expiryState) =>
-        pushToRegistry(~fieldType=Expiry, expiryStateToSnapshot(state))
       <Fields.Expiry
         placeholder=?placeholder
         label=?label
@@ -240,11 +193,9 @@ let make = (~props, ~rootTag) => {
         testID=?testID
         unstyled=?unstyled
         styles=?expiryStyles
-        onStateChange
+        rootTag
       />
     | CVC =>
-      let onStateChange = (state: VaultPublicState.cvcState) =>
-        pushToRegistry(~fieldType=CVC, cvcStateToSnapshot(state))
       <Fields.CVC
         placeholder=?placeholder
         label=?label
@@ -256,11 +207,9 @@ let make = (~props, ~rootTag) => {
         cvcIcon=?cvcIcon
         unstyled=?unstyled
         styles=?fieldStyles
-        onStateChange
+        rootTag
       />
     | CardHolder =>
-      let onStateChange = (state: VaultPublicState.cardholderNameState) =>
-        pushToRegistry(~fieldType=CardHolder, cardholderNameStateToSnapshot(state))
       <Fields.CardholderName
         placeholder=?placeholder
         label=?label
@@ -271,7 +220,7 @@ let make = (~props, ~rootTag) => {
         testID=?testID
         unstyled=?unstyled
         styles=?fieldStyles
-        onStateChange
+        rootTag
       />
     | Ssn
     | Info

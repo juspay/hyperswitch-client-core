@@ -31,13 +31,15 @@ module CardNumber = {
     ~brandIconMode: option<CardFieldOptions.brandIconMode>=?,
     ~unstyled: option<bool>=?,
     ~styles: option<CardFieldStyles.fieldStyles>=?,
-    ~onStateChange: option<VaultPublicState.cardNumberState => unit>=?,
+    ~rootTag: int,
   ) =>
     React.createElement(
       CardNumberWidget.make,
       {
         "children": None,
         "styles": styles,
+        "rootTag": Some(rootTag),
+        "onStateChange": None,
         "placeholder": placeholder,
         "label": label,
         "labelBehavior": labelBehavior,
@@ -46,7 +48,6 @@ module CardNumber = {
         "accessibilityHint": accessibilityHint,
         "testID": testID,
         "brandIconMode": brandIconMode,
-        "onStateChange": onStateChange,
         "unstyled": unstyled,
       },
     )
@@ -64,13 +65,15 @@ module Expiry = {
     ~testID: option<string>=?,
     ~unstyled: option<bool>=?,
     ~styles: option<CardFieldStyles.expiryStyles>=?,
-    ~onStateChange: option<VaultPublicState.expiryState => unit>=?,
+    ~rootTag: int,
   ) =>
     React.createElement(
       CardExpiryWidget.make,
       {
         "children": None,
         "styles": styles,
+        "rootTag": Some(rootTag),
+        "onStateChange": None,
         "placeholder": placeholder,
         "label": label,
         "labelBehavior": labelBehavior,
@@ -78,7 +81,6 @@ module Expiry = {
         "accessibilityLabel": accessibilityLabel,
         "accessibilityHint": accessibilityHint,
         "testID": testID,
-        "onStateChange": onStateChange,
         "unstyled": unstyled,
       },
     )
@@ -97,13 +99,15 @@ module CVC = {
     ~unstyled: option<bool>=?,
     ~cvcIcon: option<CardFieldOptions.cvcIconDisplay>=?,
     ~styles: option<CardFieldStyles.fieldStyles>=?,
-    ~onStateChange: option<VaultPublicState.cvcState => unit>=?,
+    ~rootTag: int,
   ) =>
     React.createElement(
       CardCVCWidget.make,
       {
         "children": None,
         "styles": styles,
+        "rootTag": Some(rootTag),
+        "onStateChange": None,
         "placeholder": placeholder,
         "label": label,
         "labelBehavior": labelBehavior,
@@ -111,7 +115,6 @@ module CVC = {
         "accessibilityLabel": accessibilityLabel,
         "accessibilityHint": accessibilityHint,
         "testID": testID,
-        "onStateChange": onStateChange,
         "cvcIcon": cvcIcon,
         "unstyled": unstyled,
       },
@@ -130,13 +133,15 @@ module CardholderName = {
     ~testID: option<string>=?,
     ~unstyled: option<bool>=?,
     ~styles: option<CardFieldStyles.fieldStyles>=?,
-    ~onStateChange: option<VaultPublicState.cardholderNameState => unit>=?,
+    ~rootTag: int,
   ) =>
     React.createElement(
       CardholderNameWidget.make,
       {
         "children": None,
         "styles": styles,
+        "rootTag": Some(rootTag),
+        "onStateChange": None,
         "placeholder": placeholder,
         "label": label,
         "labelBehavior": labelBehavior,
@@ -144,7 +149,6 @@ module CardholderName = {
         "accessibilityLabel": accessibilityLabel,
         "accessibilityHint": accessibilityHint,
         "testID": testID,
-        "onStateChange": onStateChange,
         "unstyled": unstyled,
       },
     )

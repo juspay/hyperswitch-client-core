@@ -1,0 +1,25 @@
+diff --git a/node_modules/@juspay-tech/react-native-hyperswitch-scancard/android/src/main/java/com/reactnativehyperswitchscancard/HyperswitchScancardModule.kt b/node_modules/@juspay-tech/react-native-hyperswitch-scancard/android/src/main/java/com/reactnativehyperswitchscancard/HyperswitchScancardModule.kt
+index e6d6e78..6daf8d4 100644
+--- a/node_modules/@juspay-tech/react-native-hyperswitch-scancard/android/src/main/java/com/reactnativehyperswitchscancard/HyperswitchScancardModule.kt
++++ b/node_modules/@juspay-tech/react-native-hyperswitch-scancard/android/src/main/java/com/reactnativehyperswitchscancard/HyperswitchScancardModule.kt
+@@ -18,7 +18,7 @@ class HyperswitchScancardModule(reactContext: ReactApplicationContext) :
+ 
+   @ReactMethod
+   fun launchScanCard(scanCardRequest: String, callBack: Callback) {
+-    (currentActivity as? FragmentActivity)?.let {
++    (reactApplicationContext.currentActivity as? FragmentActivity)?.let {
+       ScanCardManager.launch(it, object : ScanCardCallback {
+         override fun onScanResult(result: Map<String, Any?>) {
+           val data = (result["data"] as? Map<*, *>)?.let { map ->
+diff --git a/node_modules/@juspay-tech/react-native-hyperswitch-scancard/react-native-hyperswitch-scancard.podspec b/node_modules/@juspay-tech/react-native-hyperswitch-scancard/react-native-hyperswitch-scancard.podspec
+index 3541cb8..3724aca 100644
+--- a/node_modules/@juspay-tech/react-native-hyperswitch-scancard/react-native-hyperswitch-scancard.podspec
++++ b/node_modules/@juspay-tech/react-native-hyperswitch-scancard/react-native-hyperswitch-scancard.podspec
+@@ -31,7 +31,6 @@ Pod::Spec.new do |s|
+     }
+ 
+     s.dependency "React-Codegen"
+-    s.dependency "RCT-Folly"
+     s.dependency "RCTRequired"
+     s.dependency "RCTTypeSafety"
+     s.dependency "ReactCommon/turbomodule/core"

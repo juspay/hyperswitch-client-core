@@ -17,14 +17,15 @@
  *      back to the claiming surface's own config — both trace to the same
  *      collector in practice.
  *
- *   3. VERIFY: the gate thunk (VaultRegistry.isCollectableForTokenise) runs
+ *   3. VERIFY: the gate thunk (the widget registry's collectableState) runs
  *      the vault package's own rule — card number, expiry and CVC each
  *      mounted, valid, non-empty — from the redacted snapshots. No network
  *      call happens when it fails.
  *
- *   4. COLLECT: the collect thunk (VaultRegistry.collectCard) assembles the
- *      raw card from the per-surface collectors. Values materialize inside
- *      the shared JS runtime only — never across the native bridge.
+ *   4. COLLECT: the collect thunk (the widget registry's collectCard)
+ *      assembles the raw card from the registry's raw-value store. Values
+ *      live inside the shared JS runtime only — never across the native
+ *      bridge.
  *
  *   5. CALL: the vault package's own transport —
  *      VaultConfirm.confirmPaymentMethodSession, the exact function its
@@ -34,27 +35,40 @@
  *      and maps through the package's own VaultResult taxonomy.
  *
  *   6. ANSWER: the vaultTokenizeResult JSON goes through
- *      HyperVaultNative.returnTokenizedValue; both platforms'
+ *      returnTokenizedValue; both platforms'
  *      TokeniseDispatcher resolve the merchant completion from it. The
  *      dispatcher's 30s timeout is the safety net for "no surface mounted
  *      to answer at all".
  *
- * NOTE — dependency direction. This module may NOT import VaultRegistry /
- * VaultFieldTypes / Utils: those units and the vault-package units (VaultResult
- * & co.) compile shared-code/sdk-utils under different package identities,
- * and naming both graphs from one module fails with "inconsistent
- * assumptions over interface CountryStateDataHookTypes". Gate/collect
- * therefore arrive as THUNKS; config arrives as primitive values. The
- * type aliases below are local so the interface stays free of both graphs.
+ * NOTE — dependency direction. This module may NOT import the widget
+ * registry module / VaultFieldTypes / Utils: those units and the
+ * vault-package units (VaultResult & co.) compile shared-code/sdk-utils
+ * under different package identities, and naming both graphs from one module
+ * fails with "inconsistent assumptions over interface
+ * CountryStateDataHookTypes". Gate/collect therefore arrive as THUNKS;
+ * config arrives as primitive values. The type aliases below are local so
+ * the interface stays free of both graphs.
  */
 
 @module("react-native")
 external deviceEventEmitter: {"addListener": (string, JSON.t => unit) => {"remove": unit => unit}} =
   "DeviceEventEmitter"
 
+/*
+ * The typed answer channel. INLINED here, deliberately: a top-level
+ * HyperVaultNative module existed but collided with the widget package's
+ * same-named module in one compilation namespace — the vault package's OWN
+ * HyperVaultNative handles state emission; this is the answer side only.
+ */
+@module("../specs/NativeHyperVaultModule")
+external hyperVaultNative: {"returnTokenizedValue": string => unit} = "default"
+
+let returnTokenizedValue = (resultJson: string): unit =>
+  hyperVaultNative["returnTokenizedValue"](resultJson)
+
 let tokeniseEventName = "hsVaultTokenise"
 
-/* Redacted gate answer — must line up with VaultRegistry. */
+/* Redacted gate answer — must line up with the widget package's registry. */
 type collectableState = [#ready | #notReady | #invalidData]
 
 /* (pan, (month, year), cvc, holder?) — ready for VaultConfirm.cardDetails. */
@@ -171,11 +185,11 @@ let subscribe = (
     )
     runTokenise(~sdkAuthorization, ~environment, ~isCollectable, ~collectCard)
     ->Promise.thenResolve(
-      result => HyperVaultNative.returnTokenizedValue(encodeTokenizeResult(result)),
+      result => returnTokenizedValue(encodeTokenizeResult(result)),
     )
     ->Promise.catch(
       _err => {
-        HyperVaultNative.returnTokenizedValue(
+        returnTokenizedValue(
           VaultResult.tokenizeFailedWith(
             #unknown_outcome,
             "Tokenize threw unexpectedly.",
