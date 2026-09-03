@@ -145,38 +145,41 @@ let useUpdateIntentListener = (
               )
             }
 
-            // A validated prefetch entry completes the update with no network call.
-            let prefetchedCommitData = switch HeadlessCommon.resolveHeadlessPrefetch(Some(sdkAuth)) {
+            /* Piece-wise prefetch reuse: each cache piece is kept when individually usable, so a
+               partial entry (e.g. one faulted piece) only costs a refetch of that piece instead
+               of the whole trio (same contract as NavigationRouter.useOrFetch at mount). */
+            let prefetch = switch HeadlessCommon.resolveHeadlessPrefetch(Some(sdkAuth)) {
             | Some(prefetchData)
                 if paymentId !== "" &&
                 SdkTypes.prefetchedApiDataMatchesAuthorization(prefetchData, Some(sdkAuth)) =>
-              switch (
-                prefetchData.clientResponse,
-                prefetchData.sessionTokens,
-                prefetchData.sdkConfig,
-              ) {
-              | (Some(clientResponse), Some(sessionTokens), Some(sdkConfig))
-                  if isUsableClientResponse(clientResponse) &&
-                  isUsableSessionTokens(sessionTokens) &&
-                  isUsableSdkConfig(sdkConfig) =>
-                let newSessions = switch sessionTokens->SessionsType.jsonToSessionTokenType {
-                | Some(sessions) => Some(sessions)
-                | None => Some([])
-                }
-                Some((clientResponse, SdkConfigParser.itemToObjMapper(sdkConfig), newSessions))
-              | _ => None
-              }
+              Some(prefetchData)
             | _ => None
             }
+            let usablePiece = (pick, isUsable) =>
+              switch prefetch->Option.flatMap(pick) {
+              | Some(json) if isUsable(json) => Some(json)
+              | _ => None
+              }
+            let cachedClient = usablePiece(p => p.clientResponse, isUsableClientResponse)
+            let cachedSessions = usablePiece(p => p.sessionTokens, isUsableSessionTokens)
+            let cachedConfig = usablePiece(p => p.sdkConfig, isUsableSdkConfig)
 
             /* Invalidate any older in-flight network update: without advancing the id it
                could still land after this commit and overwrite the newer intent. */
             updateRequestIdRef.current = updateRequestIdRef.current + 1
 
-            switch prefetchedCommitData {
-            | Some((clientResponse, parsedConfig, newSessions)) =>
-              commitUpdateIntent(clientResponse, parsedConfig, newSessions)
-            | None =>
+            switch (cachedClient, cachedSessions, cachedConfig) {
+            | (Some(clientResponse), Some(sessionTokens), Some(sdkConfig)) =>
+              let newSessions = switch sessionTokens->SessionsType.jsonToSessionTokenType {
+              | Some(sessions) => Some(sessions)
+              | None => Some([])
+              }
+              commitUpdateIntent(
+                clientResponse,
+                SdkConfigParser.itemToObjMapper(sdkConfig),
+                newSessions,
+              )
+            | _ =>
               let requestId = updateRequestIdRef.current
 
               let headers = Utils.getHeader(
@@ -187,33 +190,45 @@ let useUpdateIntentListener = (
               )
 
               Promise.all3((
-                APIUtils.fetchApiWrapper(
-                  ~uri=`${baseUrl}/payments/${paymentId}/client`,
-                  ~method=#GET,
-                  ~headers,
-                  ~eventName=LoggerTypes.CLIENT_LIST_CALL,
-                  ~apiLogWrapper,
-                ),
-                APIUtils.fetchApiWrapper(
-                  ~uri=`${baseUrl}/payments/session_tokens`,
-                  ~body=PaymentUtils.generateSessionsTokenBody(
-                    ~clientSecret,
-                    ~paymentId,
-                    ~sdkAuthorization=sdkAuth,
-                    ~wallet=[],
-                  ),
-                  ~method=#POST,
-                  ~headers,
-                  ~eventName=LoggerTypes.SESSIONS_CALL,
-                  ~apiLogWrapper,
-                ),
-                APIUtils.fetchApiWrapper(
-                  ~uri=`${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`,
-                  ~method=#GET,
-                  ~headers,
-                  ~eventName=LoggerTypes.CONFIG_CALL,
-                  ~apiLogWrapper,
-                ),
+                switch cachedClient {
+                | Some(json) => Promise.resolve(json)
+                | None =>
+                  APIUtils.fetchApiWrapper(
+                    ~uri=`${baseUrl}/payments/${paymentId}/client`,
+                    ~method=#GET,
+                    ~headers,
+                    ~eventName=LoggerTypes.CLIENT_LIST_CALL,
+                    ~apiLogWrapper,
+                  )
+                },
+                switch cachedSessions {
+                | Some(json) => Promise.resolve(json)
+                | None =>
+                  APIUtils.fetchApiWrapper(
+                    ~uri=`${baseUrl}/payments/session_tokens`,
+                    ~body=PaymentUtils.generateSessionsTokenBody(
+                      ~clientSecret,
+                      ~paymentId,
+                      ~sdkAuthorization=sdkAuth,
+                      ~wallet=[],
+                    ),
+                    ~method=#POST,
+                    ~headers,
+                    ~eventName=LoggerTypes.SESSIONS_CALL,
+                    ~apiLogWrapper,
+                  )
+                },
+                switch cachedConfig {
+                | Some(json) => Promise.resolve(json)
+                | None =>
+                  APIUtils.fetchApiWrapper(
+                    ~uri=`${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`,
+                    ~method=#GET,
+                    ~headers,
+                    ~eventName=LoggerTypes.CONFIG_CALL,
+                    ~apiLogWrapper,
+                  )
+                },
               ))
               ->Promise.then(
                 ((clientResp, sessionTokenResp, configResp)) => {
