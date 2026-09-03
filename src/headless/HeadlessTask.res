@@ -17,7 +17,6 @@ let headlessModeFromString = mode =>
    releases its temporary root when native receives completePrefetch. */
 let run = (~props) => {
   let headlessModule = HeadlessCommon.makeHeadlessModule()
-  let reRegisterCallback = ref(() => ())
   let nativeProp = nativeJsonToRecord(props, 0)
   let headlessType = props->Utils.getDictFromJson->Utils.getString("headlessType", "")
 
@@ -38,7 +37,6 @@ let run = (~props) => {
     )
     HeadlessCommon.runHeadlessFlow(
       headlessModule,
-      reRegisterCallback,
       nativeProp,
       ~prefetchedApiData,
       ~getCvc,

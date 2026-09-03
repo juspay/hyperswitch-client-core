@@ -126,45 +126,57 @@ let useUpdateIntentListener = (
                 {status: "failed", code, message},
               )
 
-            // A validated prefetch entry completes the update with no network call.
-            let hasUsablePrefetch = switch HeadlessCommon.resolveHeadlessPrefetch(Some(sdkAuth)) {
-            | Some(prefetchData) =>
-              switch (
-                prefetchData.clientResponse,
-                prefetchData.sessionTokens,
-                prefetchData.sdkConfig,
-              ) {
-              | (Some(clientResponse), Some(sessionTokens), Some(sdkConfig)) =>
-                paymentId !== "" &&
-                SdkTypes.prefetchedApiDataMatchesAuthorization(prefetchData, Some(sdkAuth)) &&
-                isUsableClientResponse(clientResponse) &&
-                isUsableSessionTokens(sessionTokens) &&
-                isUsableSdkConfig(sdkConfig)
-              | _ => false
-              }
-            | None => false
-            }
-
-            if hasUsablePrefetch {
-              /* Invalidate any older in-flight network update: without advancing the id it
-                 could still land after this commit and overwrite the newer intent. */
-              updateRequestIdRef.current = updateRequestIdRef.current + 1
-              /* Clear the old intent's state in the same React batch as the prop replacement.
-                 NavigationRouter consumes these three intent-scoped values on the next render. */
-              setClientResponse(_ => None)
-              setSessionTokenData(_ => None)
-              setSdkConfigData(_ => None)
-              /* Commit carries credentials only: the next NavigationRouter run resolves
-                 the same validated entry from PrefetchCache via the new authorization. */
+            /* Single commit for both paths: advance the credentials key so NavigationRouter
+               treats the states as authoritative, swap the prop and the three intent-scoped
+               states, clear the overlay, then tell native. */
+            let commitUpdateIntent = (clientResp, parsedConfig, newSessions) => {
+              fetchedCredentialsKey.current = Some(
+                PaymentUtils.getSessionCredentialsKey(updatedNativeProp),
+              )
               setNativeProp(updatedNativeProp)
+              setClientResponse(_ => Some(clientResp))
+              setSdkConfigData(_ => Some(parsedConfig))
+              setSessionTokenData(_ => newSessions)
               setLoading(FillingDetails)
               HyperModule.onUpdateIntentEvent(
                 currentNativeProp.rootTag,
                 updateIntentCompleteReturned,
                 {status: "success"},
               )
-            } else {
-              updateRequestIdRef.current = updateRequestIdRef.current + 1
+            }
+
+            // A validated prefetch entry completes the update with no network call.
+            let prefetchedCommitData = switch HeadlessCommon.resolveHeadlessPrefetch(Some(sdkAuth)) {
+            | Some(prefetchData)
+                if paymentId !== "" &&
+                SdkTypes.prefetchedApiDataMatchesAuthorization(prefetchData, Some(sdkAuth)) =>
+              switch (
+                prefetchData.clientResponse,
+                prefetchData.sessionTokens,
+                prefetchData.sdkConfig,
+              ) {
+              | (Some(clientResponse), Some(sessionTokens), Some(sdkConfig))
+                  if isUsableClientResponse(clientResponse) &&
+                  isUsableSessionTokens(sessionTokens) &&
+                  isUsableSdkConfig(sdkConfig) =>
+                let newSessions = switch sessionTokens->SessionsType.jsonToSessionTokenType {
+                | Some(sessions) => Some(sessions)
+                | None => Some([])
+                }
+                Some((clientResponse, SdkConfigParser.itemToObjMapper(sdkConfig), newSessions))
+              | _ => None
+              }
+            | _ => None
+            }
+
+            /* Invalidate any older in-flight network update: without advancing the id it
+               could still land after this commit and overwrite the newer intent. */
+            updateRequestIdRef.current = updateRequestIdRef.current + 1
+
+            switch prefetchedCommitData {
+            | Some((clientResponse, parsedConfig, newSessions)) =>
+              commitUpdateIntent(clientResponse, parsedConfig, newSessions)
+            | None =>
               let requestId = updateRequestIdRef.current
 
               let headers = Utils.getHeader(
@@ -255,19 +267,7 @@ let useUpdateIntentListener = (
                         None
                       }
 
-                      fetchedCredentialsKey.current = Some(
-                        PaymentUtils.getSessionCredentialsKey(updatedNativeProp),
-                      )
-                      setNativeProp(updatedNativeProp)
-                      setClientResponse(_ => Some(clientResp))
-                      setSdkConfigData(_ => Some(parsedConfig))
-                      setSessionTokenData(_ => newSessions)
-
-                      HyperModule.onUpdateIntentEvent(
-                        currentNativeProp.rootTag,
-                        updateIntentCompleteReturned,
-                        {status: "success"},
-                      )
+                      commitUpdateIntent(clientResp, parsedConfig, newSessions)
                     }
 
                     setLoading(FillingDetails)

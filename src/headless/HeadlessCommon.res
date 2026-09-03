@@ -7,24 +7,29 @@ type headlessModule = {
   completePrefetch: JSON.t => unit,
 }
 
+/* Typed binding over the codegen spec (HyperHeadlessNative.ts), the same way the sibling
+   HyperModule binds HyperModuleNative.ts. Some JS targets (web) have no HyperHeadless at
+   all; the TS layer tolerates that. Native flows only ever run on platforms with the module. */
+@module("./HyperHeadlessNative")
+external getPaymentSessionNative: (
+  string,
+  JSON.t,
+  JSON.t,
+  array<JSON.t>,
+  JSON.t => unit,
+) => unit =
+  "getPaymentSession"
+
+@module("./HyperHeadlessNative")
+external exitHeadlessNative: (string, HyperModule.exitResultPayload) => unit = "exitHeadless"
+
+@module("./HyperHeadlessNative")
+external completePrefetchNative: JSON.t => unit = "completePrefetch"
+
 let makeHeadlessModule = (): headlessModule => {
-  let hyperSwitchHeadlessDict =
-    Dict.get(ReactNative.NativeModules.nativeModules, "HyperHeadless")
-    ->Option.flatMap(JSON.Decode.object)
-    ->Option.getOr(Dict.make())
-
-  let getFn = (key, default) => {
-    switch hyperSwitchHeadlessDict->Dict.get(key) {
-    | Some(fn) => Obj.magic(fn)
-    | None => default
-    }
-  }
-
-  {
-    getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
-    exitHeadless: getFn("exitHeadless", (_, _) => ()),
-    completePrefetch: getFn("completePrefetch", _ => ()),
-  }
+  getPaymentSession: getPaymentSessionNative,
+  exitHeadless: exitHeadlessNative,
+  completePrefetch: completePrefetchNative,
 }
 
 let prefetchFromJsonForAuthorization = (json, sdkAuthorization) =>
@@ -432,7 +437,6 @@ let confirmCardPayment = (
 
 let confirmGPay = (
   headlessModule,
-  reRegisterCallback,
   var,
   data: ClientResponseType.customerPaymentMethod,
   nativeProp,
@@ -472,14 +476,14 @@ let confirmGPay = (
     generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
     ->(confirmCall(headlessModule, _, nativeProp, None))
     ->ignore
-  | "Cancel" => reRegisterCallback.contents()
+  | "Cancel" =>
+    exitHeadlessWithResult(headlessModule, nativeProp, {message: "cancelled", status: "cancelled"})
   | err => exitHeadlessWithResult(headlessModule, nativeProp, {message: err, status: "failed"})
   }
 }
 
 let confirmApplePay = (
   headlessModule,
-  reRegisterCallback,
   var,
   data: ClientResponseType.customerPaymentMethod,
   nativeProp,
@@ -489,7 +493,8 @@ let confirmApplePay = (
   ->Option.getOr(JSON.Encode.null)
   ->JSON.Decode.string
   ->Option.getOr("") {
-  | "Cancelled" => reRegisterCallback.contents()
+  | "Cancelled" =>
+    exitHeadlessWithResult(headlessModule, nativeProp, {message: "cancelled", status: "cancelled"})
   | "Failed" =>
     exitHeadlessWithResult(headlessModule, nativeProp, {message: "failed", status: "failed"})
   | "Error" =>
@@ -556,7 +561,6 @@ let confirmApplePay = (
 
 let processRequest = async (
   headlessModule,
-  reRegisterCallback,
   nativeProp,
   data: ClientResponseType.customerPaymentMethod,
   response,
@@ -585,9 +589,9 @@ let processRequest = async (
     | GOOGLE_PAY => {
         let gPayCallback = async var => {
           try {
-            confirmGPay(headlessModule, reRegisterCallback, var, data, nativeProp)
+            confirmGPay(headlessModule, var, data, nativeProp)
           } catch {
-          | _ => confirmGPay(headlessModule, reRegisterCallback, var, data, nativeProp)
+          | _ => confirmGPay(headlessModule, var, data, nativeProp)
           }
         }
         HyperModule.launchGPay(
@@ -629,9 +633,9 @@ let processRequest = async (
       }, 5000)
       let applePayCallback = async var => {
         try {
-          confirmApplePay(headlessModule, reRegisterCallback, var, data, nativeProp)
+          confirmApplePay(headlessModule, var, data, nativeProp)
         } catch {
-        | _ => confirmApplePay(headlessModule, reRegisterCallback, var, data, nativeProp)
+        | _ => confirmApplePay(headlessModule, var, data, nativeProp)
         }
       }
       HyperModule.launchApplePay(
@@ -682,7 +686,6 @@ let processRequest = async (
 
 let getPaymentSession = (
   headlessModule,
-  reRegisterCallback,
   nativeProp,
   spmData: ClientResponseType.customerPaymentMethods,
   sessions: option<array<SessionsType.sessions>>,
@@ -719,38 +722,30 @@ let getPaymentSession = (
     | Some(x) => x->Utils.getJsonObjectFromRecord
     }
 
-    reRegisterCallback :=
-      (
-        () => {
-          headlessModule.getPaymentSession(
-            nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-            defaultSpmData,
-            lastUsedSpmData,
-            spmData->Utils.getJsonObjectFromRecord,
-            response => {
-              switch response->Utils.getDictFromJson->Utils.getOptionString("paymentToken") {
-              | Some(token) =>
-                switch spmData->Array.find(x => x.payment_token == token) {
-                | Some(data) =>
-                  processRequest(
-                    headlessModule,
-                    reRegisterCallback,
-                    nativeProp,
-                    data,
-                    response,
-                    sessions,
-                    ~getCvc,
-                  )->ignore
-                | None => exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
-                }
-              | None => exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
-              }
-            },
-          )
+    headlessModule.getPaymentSession(
+      nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      defaultSpmData,
+      lastUsedSpmData,
+      spmData->Utils.getJsonObjectFromRecord,
+      response => {
+        switch response->Utils.getDictFromJson->Utils.getOptionString("paymentToken") {
+        | Some(token) =>
+          switch spmData->Array.find(x => x.payment_token == token) {
+          | Some(data) =>
+            processRequest(
+              headlessModule,
+              nativeProp,
+              data,
+              response,
+              sessions,
+              ~getCvc,
+            )->ignore
+          | None => exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
+          }
+        | None => exitHeadlessWithResult(headlessModule, nativeProp, getDefaultError)
         }
-      )
-
-    reRegisterCallback.contents()
+      },
+    )
   } else {
     getDefaultPaymentSession(headlessModule, getDefaultError, nativeProp)
   }
@@ -771,7 +766,6 @@ let usablePrefetch = (prefetchedApiData, nativeProp: SdkTypes.nativeProp) =>
 
 let apiHandler = async (
   headlessModule,
-  reRegisterCallback,
   nativeProp,
   ~getCvc: JSON.t => JSON.t,
   ~prefetchedApiData,
@@ -845,7 +839,6 @@ let apiHandler = async (
 
           getPaymentSession(
             headlessModule,
-            reRegisterCallback,
             nativeProp,
             filteredSpmData,
             Some(sessions),
@@ -854,7 +847,6 @@ let apiHandler = async (
         | None =>
           getPaymentSession(
             headlessModule,
-            reRegisterCallback,
             nativeProp,
             cardSpmData,
             None,
@@ -864,7 +856,6 @@ let apiHandler = async (
       } else {
         getPaymentSession(
           headlessModule,
-          reRegisterCallback,
           nativeProp,
           walletSpmData->Array.concat(cardSpmData),
           None,
@@ -874,7 +865,6 @@ let apiHandler = async (
     } else {
       getPaymentSession(
         headlessModule,
-        reRegisterCallback,
         nativeProp,
         walletSpmData->Array.concat(cardSpmData),
         None,
@@ -921,7 +911,6 @@ let fetchAndCachePrefetchData = async (headlessModule, nativeProp) => {
 
 let runHeadlessFlow = (
   headlessModule,
-  reRegisterCallback,
   nativeProp: SdkTypes.nativeProp,
   ~getCvc: JSON.t => JSON.t,
   ~prefetchedApiData,
@@ -940,7 +929,7 @@ let runHeadlessFlow = (
     isPublishableKeyValid &&
     (isClientSecretValid || nativeProp.paymentSessionConfig.sdkAuthorization != None)
   ) {
-    apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc, ~prefetchedApiData)
+    apiHandler(headlessModule, nativeProp, ~getCvc, ~prefetchedApiData)
   } else if !isPublishableKeyValid {
     errorOnApiCalls(INVALID_PK(Error, Static("")))->(
       getDefaultPaymentSession(headlessModule, _, nativeProp)
