@@ -260,11 +260,6 @@ let sessionAPICall = nativeProp => {
 }
 
 let sdkConfigAPICall = (nativeProp: SdkTypes.nativeProp) => {
-  let platform = switch WebKit.platform {
-  | #ios | #iosWebView => "ios"
-  | #android | #androidWebView => "android"
-  | #web | #next => "web"
-  }
   let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
   | Some(auth) =>
     Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
@@ -272,7 +267,9 @@ let sdkConfigAPICall = (nativeProp: SdkTypes.nativeProp) => {
     )
   | None => nativeProp.paymentSessionConfig.clientSecret
   }
-  let uri = `${getBaseUrl(nativeProp)}/v1/sdk/configs/${platform}/sdk_config.json?client_secret=${clientSecret}`
+  /* Same mapping the sheet and updateIntent use, so prefetch and live paths request the
+     same resource. */
+  let uri = `${getBaseUrl(nativeProp)}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`
 
   handleApiCall(
     ~uri,

@@ -156,11 +156,6 @@ let useUpdateIntentListener = (
               setSdkConfigData(_ => None)
               /* Commit carries credentials only: the next NavigationRouter run resolves
                  the same validated entry from PrefetchCache via the new authorization. */
-              switch currentNativeProp.paymentSessionConfig.sdkAuthorization {
-              | Some(oldAuth) if oldAuth != "" && oldAuth != sdkAuth =>
-                PrefetchCache.remove(~sdkAuthorization=oldAuth)
-              | _ => ()
-              }
               setNativeProp(updatedNativeProp)
               setLoading(FillingDetails)
               HyperModule.onUpdateIntentEvent(
@@ -263,11 +258,6 @@ let useUpdateIntentListener = (
                       fetchedCredentialsKey.current = Some(
                         PaymentUtils.getSessionCredentialsKey(updatedNativeProp),
                       )
-                      switch currentNativeProp.paymentSessionConfig.sdkAuthorization {
-                      | Some(oldAuth) if oldAuth != "" && oldAuth != sdkAuth =>
-                        PrefetchCache.remove(~sdkAuthorization=oldAuth)
-                      | _ => ()
-                      }
                       setNativeProp(updatedNativeProp)
                       setClientResponse(_ => Some(clientResp))
                       setSdkConfigData(_ => Some(parsedConfig))

@@ -3,7 +3,7 @@ open HeadlessUtils
 
 type headlessModule = {
   getPaymentSession: (string, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: (string, int, HyperModule.exitResultPayload) => unit,
+  exitHeadless: (string, HyperModule.exitResultPayload) => unit,
   completePrefetch: JSON.t => unit,
 }
 
@@ -22,7 +22,7 @@ let makeHeadlessModule = (): headlessModule => {
 
   {
     getPaymentSession: getFn("getPaymentSession", (_, _, _, _, _) => ()),
-    exitHeadless: getFn("exitHeadless", (_, _, _) => ()),
+    exitHeadless: getFn("exitHeadless", (_, _) => ()),
     completePrefetch: getFn("completePrefetch", _ => ()),
   }
 }
@@ -47,6 +47,8 @@ let resolveHeadlessPrefetch = sdkAuthorization =>
     prefetchFromJsonForAuthorization(_, sdkAuthorization),
   )
 
+/* Native owns cache invalidation: its terminal-result hooks emit clearPrefetchCache for
+   every non-cancelled result, headless or sheet. JS only reports the result. */
 let exitHeadlessWithResult = (
   headlessModule,
   nativeProp,
@@ -57,14 +59,7 @@ let exitHeadlessWithResult = (
     sdkAuthorization
     ->Utils.getNonEmptyOption
     ->Option.getOr(nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""))
-  if result.status->Option.getOr("failed") !== "cancelled" {
-    PrefetchCache.remove(~sdkAuthorization)
-  }
-  headlessModule.exitHeadless(
-    sdkAuthorization,
-    nativeProp.rootTag,
-    result->HyperModule.resStatusPayload,
-  )
+  headlessModule.exitHeadless(sdkAuthorization, result->HyperModule.resStatusPayload)
 }
 
 let getDefaultPaymentSession = (headlessModule, error, nativeProp) => {
@@ -894,38 +889,34 @@ let apiHandler = async (
   }
 }
 
-/* Runs for both the initial prefetch and updateIntent — a new intent needs the same three calls
-   (client data, session tokens, sdk_config) re-run and re-cached under its own authorization, so
-   the old intent's data never leaks forward. */
+/* Runs for both the initial prefetch and updateIntent. A new intent needs the same three
+   calls re-run and re-cached under its own authorization, so the old intent's data never
+   leaks forward. Native only waits for completePrefetch: a failed fetch or cache write must
+   cost a cache miss, never the native timeout. */
 let fetchAndCachePrefetchData = async (headlessModule, nativeProp) => {
-  let (clientResp, sessionTok, sdkCfg) = await Promise.all3((
-    fetchClientData(nativeProp),
-    sessionAPICall(nativeProp),
-    sdkConfigAPICall(nativeProp),
-  ))
-  let data =
-    [
-      ("clientResponse", clientResp->Option.getOr(JSON.Encode.null)),
-      ("sessionTokens", sessionTok),
-      ("sdkConfig", sdkCfg),
-      (
-        "sdkAuthorization",
-        nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string,
-      ),
-    ]
-    ->Dict.fromArray
-    ->JSON.Encode.object
-  cachePrefetch(nativeProp, data)->ignore
-  headlessModule.completePrefetch(
-    [
-      (
-        "sdkAuthorization",
-        nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string,
-      ),
-    ]
-    ->Dict.fromArray
-    ->JSON.Encode.object,
-  )
+  let sdkAuthorization =
+    nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")->JSON.Encode.string
+  let completion = [("sdkAuthorization", sdkAuthorization)]->Dict.fromArray->JSON.Encode.object
+  try {
+    let (clientResp, sessionTok, sdkCfg) = await Promise.all3((
+      fetchClientData(nativeProp),
+      sessionAPICall(nativeProp),
+      sdkConfigAPICall(nativeProp),
+    ))
+    let data =
+      [
+        ("clientResponse", clientResp->Option.getOr(JSON.Encode.null)),
+        ("sessionTokens", sessionTok),
+        ("sdkConfig", sdkCfg),
+        ("sdkAuthorization", sdkAuthorization),
+      ]
+      ->Dict.fromArray
+      ->JSON.Encode.object
+    cachePrefetch(nativeProp, data)->ignore
+  } catch {
+  | _ => Console.warn("[Hyperswitch] prefetch failed; payment flows will fetch on demand")
+  }
+  headlessModule.completePrefetch(completion)
 }
 
 let runHeadlessFlow = (

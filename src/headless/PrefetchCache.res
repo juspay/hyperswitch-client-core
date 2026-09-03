@@ -40,12 +40,17 @@ let expireStaleEntries = () => {
   )
 }
 
+/* Hermes has no Array.prototype.toSorted; a reduce finds the oldest key without it. */
 let removeOldestIfFull = () =>
   if cache->Dict.keysToArray->Array.length >= maxEntries {
     cache
     ->Dict.keysToArray
-    ->Array.toSorted((a, b) => a->timestamp -. b->timestamp)
-    ->Array.get(0)
+    ->Array.reduce(None, (oldest, k) =>
+      switch oldest {
+      | Some(o) if o->timestamp <= k->timestamp => oldest
+      | _ => Some(k)
+      }
+    )
     ->Option.forEach(drop)
   }
 

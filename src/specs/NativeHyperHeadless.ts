@@ -11,10 +11,10 @@ export type PaymentExitResult = {
   message?: string;
 };
 
-/* Wire contract: headless requests are keyed by sdkAuthorization (the native
+/* Wire contract: headless methods are keyed by sdkAuthorization only (the native
    request/confirmation registries and the JS PrefetchCache are all auth-keyed).
-   rootTag rides along on exitHeadless for iOS's CVC-widget view lookup; Android
-   ignores it. The result is a typed PaymentExitResult object (as in Main's spec). */
+   View-bound events carry rootTag; headless methods never do. The result is a
+   typed PaymentExitResult object (as in Main's spec). */
 export interface Spec extends TurboModule {
   getPaymentSession(
     sdkAuthorization: string,
@@ -23,11 +23,7 @@ export interface Spec extends TurboModule {
     savedPaymentMethods: Array<CodegenTypes.UnsafeObject>,
     callback: (result: CodegenTypes.UnsafeObject) => void,
   ): void;
-  exitHeadless(
-    sdkAuthorization: string,
-    rootTag: CodegenTypes.Int32,
-    result: PaymentExitResult,
-  ): void;
+  exitHeadless(sdkAuthorization: string, result: PaymentExitResult): void;
   /* Completion signal for one payment's prefetch; the payload lives only in the
      shared JS PrefetchCache. Carries {sdkAuthorization}. */
   completePrefetch(data: CodegenTypes.UnsafeObject): void;
