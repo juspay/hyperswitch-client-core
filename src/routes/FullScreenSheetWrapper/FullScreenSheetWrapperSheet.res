@@ -21,6 +21,7 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
 
   let sheetFlex = AnimatedValue.useAnimatedValue(0.)
   React.useEffect0(() => {
+    EntranceGate.arm()
     Animated.timing(
       sheetFlex,
       {
@@ -28,7 +29,7 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
         isInteraction: true,
         useNativeDriver: false,
       },
-    )->Animated.start
+    )->Animated.start(~endCallback=_ => EntranceGate.settle())
     None
   })
 
