@@ -18,10 +18,6 @@ export type WidgetActionEvent = {
   billing?: string;
 };
 
-export type ClearPrefetchCacheEvent = {
-  sdkAuthorization: string;
-};
-
 export type UpdateIntentEvent = {
   rootTag?: CodegenTypes.Int32;
   sdkAuthorization?: string;
@@ -101,10 +97,6 @@ export interface Spec extends TurboModule {
   readonly triggerWidgetAction: CodegenTypes.EventEmitter<WidgetActionEvent>;
   readonly updateIntentInit: CodegenTypes.EventEmitter<UpdateIntentEvent>;
   readonly updateIntentComplete: CodegenTypes.EventEmitter<UpdateIntentEvent>;
-  readonly clearPrefetchCache: CodegenTypes.EventEmitter<ClearPrefetchCacheEvent>;
-  /* Drives the long-running headless task after its first startTask: the payload is the same
-     props map the task launched with (native rebuilds it per request from LaunchOptions). */
-  readonly headlessRequest: CodegenTypes.EventEmitter<CodegenTypes.UnsafeObject>;
 }
 
 export default TurboModuleRegistry.get<Spec>('HyperModule');

@@ -25,9 +25,3 @@ export const exitHeadless = (
 ): void => {
   NativeHyperHeadless?.exitHeadless(rootTag, result);
 };
-
-/* Completion signal for one payment's prefetch; the payload lives only in the
-   shared JS PrefetchCache. Carries {sdkAuthorization} as data, not as a key. */
-export const completePrefetch = (rootTag: number, data: Object): void => {
-  NativeHyperHeadless?.completePrefetch(rootTag, data);
-};

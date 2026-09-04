@@ -64,11 +64,6 @@ module Native = {
   @module("./HyperModuleNative")
   external subscribeUpdateIntentComplete: dictCallback => (unit => unit) =
     "subscribeUpdateIntentComplete"
-  @module("./HyperModuleNative")
-  external subscribeClearPrefetchCache: dictCallback => (unit => unit) =
-    "subscribeClearPrefetchCache"
-  @module("./HyperModuleNative")
-  external subscribeHeadlessRequest: dictCallback => (unit => unit) = "subscribeHeadlessRequest"
 }
 
 module Events = {
@@ -78,8 +73,6 @@ module Events = {
   let subscribeTriggerWidgetAction = Native.subscribeTriggerWidgetAction
   let subscribeUpdateIntentInit = Native.subscribeUpdateIntentInit
   let subscribeUpdateIntentComplete = Native.subscribeUpdateIntentComplete
-  let subscribeClearPrefetchCache = Native.subscribeClearPrefetchCache
-  let subscribeHeadlessRequest = Native.subscribeHeadlessRequest
 }
 
 let resStatusPayload = (apiResStatus: PaymentConfirmTypes.error): exitResultPayload => {
@@ -132,41 +125,36 @@ let useExitPaymentsheet = () => {
   let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
-    Sentry.flushAndCloseSentry()
-    ->Promise.then(() => {
-      logger(
-        ~logType=INFO,
-        ~value=nativeProp.sdkParams.appId->Option.getOr(""),
-        ~category=USER_EVENT,
-        ~eventName=SDK_CLOSED,
-        (),
-      )
-      ReactNative.Platform.os == #web
-        ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
-        : switch nativeProp.sdkState {
-          | WidgetPaymentSheet | WidgetButtonSheet =>
-            Native.exitWidgetPaymentsheet(
-              nativeProp.rootTag,
-              apiResStatus->resStatusPayload,
-              reset,
-            )
-          | PaymentMethodsManagement =>
-            Native.exitPaymentMethodManagement(
-              nativeProp.rootTag,
-              apiResStatus->stringifiedResStatus,
-              reset,
-            )
-          | _ =>
-            Native.exitPaymentsheet(
-              nativeProp.rootTag,
-              apiResStatus->resStatusPayload,
-              reset,
-            )
-          }
-
-      Promise.resolve()
-    })
-    ->ignore
+    Sentry.flushSentry()
+    logger(
+      ~logType=INFO,
+      ~value=nativeProp.sdkParams.appId->Option.getOr(""),
+      ~category=USER_EVENT,
+      ~eventName=SDK_CLOSED,
+      (),
+    )
+    ReactNative.Platform.os == #web
+      ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
+      : switch nativeProp.sdkState {
+        | WidgetPaymentSheet | WidgetButtonSheet =>
+          Native.exitWidgetPaymentsheet(
+            nativeProp.rootTag,
+            apiResStatus->resStatusPayload,
+            reset,
+          )
+        | PaymentMethodsManagement =>
+          Native.exitPaymentMethodManagement(
+            nativeProp.rootTag,
+            apiResStatus->stringifiedResStatus,
+            reset,
+          )
+        | _ =>
+          Native.exitPaymentsheet(
+            nativeProp.rootTag,
+            apiResStatus->resStatusPayload,
+            reset,
+          )
+        }
   }
 
   let simplyExit = (apiResStatus, rootTag, reset) => {
