@@ -82,9 +82,9 @@ let make = () => {
         } else if clientResp == JSON.Encode.null {
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfirmError)
         } else {
-          /* Both lists now arrive in ONE response, so an empty payment_methods_enabled
-             must not discard the customer's saved methods carried alongside it. Either
-             list alone is enough to render — same rule as CustomAccordionView's hasData. */
+          // Both lists now arrive in ONE response, so an empty payment_methods_enabled
+          // must not discard the customer's saved methods carried alongside it. Either
+          // list alone is enough to render — same rule as CustomAccordionView's hasData.
           let dict = clientResp->Utils.getDictFromJson
           let hasEnabledMethods = dict->Utils.getArray("payment_methods_enabled")->Array.length > 0
           let hasSavedMethods = dict->Utils.getArray("customer_payment_methods")->Array.length > 0
@@ -100,10 +100,10 @@ let make = () => {
 
       let handleSdkConfigResponse = configResponse => {
         if ErrorUtils.isError(configResponse) {
-          /* sdk_config now supplies payment_experience + required fields, so a
-             config failure means the sheet cannot render/confirm correctly.
-             Treat it as terminal (like the null/invalid cases below) instead of a
-             non-blocking alert — otherwise the config-gated memo strands the UI. */
+          // sdk_config now supplies payment_experience + required fields, so a
+          // config failure means the sheet cannot render/confirm correctly.
+          // Treat it as terminal (like the null/invalid cases below) instead of a
+          // non-blocking alert — otherwise the config-gated memo strands the UI.
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
         } else if configResponse == JSON.Encode.null {
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
