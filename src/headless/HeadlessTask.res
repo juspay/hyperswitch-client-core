@@ -3,14 +3,13 @@
 
 open SdkTypes
 
-type headlessMode = Prefetch | UpdateIntent | SavedPaymentMethods | Shutdown
+type headlessMode = Prefetch | UpdateIntent | SavedPaymentMethods
 
 let headlessModeFromString = mode =>
   switch mode {
   | "prefetch" => Some(Prefetch)
   | "updateIntent" => Some(UpdateIntent)
   | "savedPM" => Some(SavedPaymentMethods)
-  | "shutdown" => Some(Shutdown)
   | _ => None
   }
 
@@ -39,8 +38,7 @@ let handleRequest = (headlessModule, props) => {
       ~prefetchedApiData,
       ~getCvc,
     )
-  | None
-  | Some(Shutdown) =>
+  | None =>
     /* Fail loudly. Falling through to the saved-method flow would register a native
        callback and wait forever; native times out its own request instead. */
     Console.error(`[Hyperswitch] unknown headlessType "${headlessType}"`)
@@ -48,42 +46,30 @@ let handleRequest = (headlessModule, props) => {
   }
 }
 
-/* One subscription per JS runtime, not per task: a cold-start fallback task must not install a
-   second subscriber and handle every event twice. The resolver ref belongs to whichever task is
-   currently live, so a shutdown event always ends the right one. */
+/* One subscription per JS runtime, installed by whichever task runs first and kept for the
+   runtime's life: a cold-start fallback task must not install a second subscriber and handle
+   every event twice. Native never asks JS to tear it down — there is no shutdown event, the
+   task ends natively on re-init, and one subscriber per runtime holds by construction. */
 let subscription: ref<option<unit => unit>> = ref(None)
-let resolveTask: ref<option<unit => unit>> = ref(None)
 
-/* Android awaits this promise to finish its HeadlessJsTask: after the first startTask the task
-   stays alive and every later request arrives through the headlessRequest event, until native
-   shuts it down on the next session's init. iOS invokes the component below and releases its
-   temporary root when native receives completePrefetch — iOS never emits headlessRequest, so
-   the subscription is inert there. */
+/* This promise intentionally never resolves. Android awaits nothing: after the first
+   startTask the task stays alive and every later request arrives through the headlessRequest
+   event, until native finishTask ends it on the next session's init — an unresolved task
+   promise is inert (AppRegistry only forwards settlement to notifyTaskFinished). iOS invokes
+   the component below and releases its temporary root when native receives completePrefetch —
+   iOS never emits headlessRequest, so the subscription is inert there. */
 let run = (~props) =>
-  Promise.make((resolve, _) => {
+  Promise.make((_, _) => {
     let headlessModule = HeadlessCommon.makeHeadlessModule()
-    resolveTask := Some(() => resolve())
 
     /* Installed before the first request is handled: an updateIntent emitted right after
        completePrefetch must not fall on the floor. */
     if subscription.contents->Option.isNone {
       subscription :=
         Some(
-          HyperModule.Events.subscribeHeadlessRequest(payload => {
-            let headlessType =
-              payload
-              ->Dict.get("headlessType")
-              ->Option.flatMap(JSON.Decode.string)
-              ->Option.getOr("")
-            switch headlessModeFromString(headlessType) {
-            | Some(Shutdown) =>
-              subscription.contents->Option.forEach(unsubscribe => unsubscribe())
-              subscription := None
-              resolveTask.contents->Option.forEach(finish => finish())
-              resolveTask := None
-            | _ => handleRequest(headlessModule, payload->JSON.Encode.object)->ignore
-            }
-          }),
+          HyperModule.Events.subscribeHeadlessRequest(payload =>
+            handleRequest(headlessModule, payload->JSON.Encode.object)->ignore
+          ),
         )
     }
 
