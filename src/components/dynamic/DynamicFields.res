@@ -15,9 +15,7 @@ let make = (
   ~customerAcceptanceSupport: option<PaymentMethodType.customerAcceptanceSupport>=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (clientData, _, _) = React.useContext(
-    AllApiDataContextNew.allApiDataContext,
-  )
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let {
     isNicknameSelected,
     setIsNicknameSelected,
@@ -136,7 +134,6 @@ let make = (
         | _ => React.null
         }}
       </UIUtils.RenderIf>
-      <Space height=10. />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={fields->Array.length > 0}> saveDetailsCheckbox </UIUtils.RenderIf>
     <UIUtils.RenderIf
