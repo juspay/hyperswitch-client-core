@@ -13,6 +13,7 @@ let make = (
     isNicknameValid,
     setInitialValueCountry,
     eligibilityStatus,
+    isSaveDetailsSelected,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
@@ -81,6 +82,8 @@ let make = (
     ~isPristine,
   )
 
+  // handlePress closes over processRequest, which reads isSaveDetailsSelected; it must be
+  // a dep here or the confirm button keeps a stale closure and never sends customer_acceptance.
   React.useEffect(() => {
     if isScreenFocus {
       let confirmButton = {
@@ -103,6 +106,7 @@ let make = (
     formData,
     formMethods,
     isNicknameValid,
+    isSaveDetailsSelected,
   ))
 
   <DynamicFields
@@ -117,5 +121,6 @@ let make = (
     accessible
     isFocused=isScreenFocus
     checkEligibility
+    customerAcceptanceSupport=?paymentMethodData.customer_acceptance_support
   />
 }

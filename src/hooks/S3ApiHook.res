@@ -145,6 +145,16 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         defaultLocale.useExisitingSavedCards,
       ),
       saveCardDetails: Utils.getString(res, "saveCardDetails", defaultLocale.saveCardDetails),
+      savePaymentDetails: Utils.getString(
+        res,
+        "savePaymentDetails",
+        defaultLocale.savePaymentDetails,
+      ),
+      savePaymentDetailsWhereverPossible: Utils.getString(
+        res,
+        "savePaymentDetailsWhereverPossible",
+        defaultLocale.savePaymentDetailsWhereverPossible,
+      ),
       addBankAccount: Utils.getString(res, "addBankAccount", defaultLocale.addBankAccount),
       payNowButton: Utils.getString(res, "payNowButton", defaultLocale.payNowButton),
       cardNumberEmptyText: Utils.getString(

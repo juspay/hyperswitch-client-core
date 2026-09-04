@@ -209,7 +209,7 @@ let defaultProps = {
     confirm: false,
     'user-agent': navigator.userAgent,
     launchTime: Date.now(),
-    appId: 'com.example.myapp',
+    // appId: 'com.example.myapp',
     country: 'US',
     device_model: 'iPhone',
     os_type: 'iOS',

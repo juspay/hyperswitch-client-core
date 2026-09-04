@@ -21,6 +21,7 @@ type paymentMethodEnabled = {
   payment_method_type_wallet: SdkTypes.payment_method_type_wallet,
   card_networks: array<cardNetwork>,
   payment_experience: array<paymentExperience>,
+  customer_acceptance_support: option<PaymentMethodType.customerAcceptanceSupport>,
 }
 
 type savedCardType = {
@@ -40,6 +41,15 @@ type savedCardType = {
   saved_to_locker: bool,
 }
 
+// Saved open-banking / bank-redirect method details (`payment_method_data.bank_redirect`).
+// The backend often omits `mask` / `account_holder_name`; keep plain strings and let
+// the UI skip empty ones.
+type savedBankRedirectType = {
+  bank_name: string,
+  account_holder_name: string,
+  mask: string,
+}
+
 type customerPaymentMethod = {
   payment_token: string,
   payment_method_id: string,
@@ -57,6 +67,7 @@ type customerPaymentMethod = {
   metadata: option<string>,
   created: string,
   bank: option<string>,
+  bank_redirect: option<savedBankRedirectType>,
   surcharge_details: option<string>,
   requires_cvv: bool,
   last_used_at: string,
@@ -125,6 +136,9 @@ let mergePaymentMethods = (existing: paymentMethodEnabled, new: paymentMethodEna
       )
     ),
   ),
+  customer_acceptance_support: existing.customer_acceptance_support->Option.orElse(
+    new.customer_acceptance_support,
+  ),
 }
 
 let sortPaymentMethodsEnabled = (plist: array<paymentMethodEnabled>, paymentMethodOrder) => {
@@ -153,6 +167,12 @@ let parseSavedCard = (cardDict: Js.Dict.t<JSON.t>): savedCardType => {
   card_issuer: cardDict->getString("card_issuer", ""),
   card_type: cardDict->getString("card_type", ""),
   saved_to_locker: cardDict->getBool("saved_to_locker", false),
+}
+
+let parseSavedBankRedirect = (bankRedirectDict: Js.Dict.t<JSON.t>): savedBankRedirectType => {
+  bank_name: bankRedirectDict->getString("bank_name", ""),
+  account_holder_name: bankRedirectDict->getString("account_holder_name", ""),
+  mask: bankRedirectDict->getString("mask", ""),
 }
 
 let parsePaymentExperienceArray = (experienceArray: array<JSON.t>) => {
@@ -242,6 +262,9 @@ let parsePaymentMethodEnabled = (itemDict: Js.Dict.t<JSON.t>): paymentMethodEnab
     payment_method_type_wallet: PaymentMethodType.getWalletType(paymentMethodTypeStr),
     card_networks: cardNetworks,
     payment_experience: [],
+    customer_acceptance_support: itemDict
+    ->getString("customer_acceptance_support", "")
+    ->PaymentMethodType.getCustomerAcceptanceSupport,
   }
 }
 
@@ -289,6 +312,12 @@ let parseCustomerPaymentMethod = (dict: Js.Dict.t<JSON.t>, ~customerId): custome
   }
   let cardData = cardJson->Option.flatMap(JSON.Decode.object)->Option.map(parseSavedCard)
 
+  let bankRedirectData =
+    dict
+    ->getOptionalObj("payment_method_data")
+    ->Option.flatMap(pmd => pmd->getOptionalObj("bank_redirect"))
+    ->Option.map(parseSavedBankRedirect)
+
   let paymentExperienceArray = dict->getArray("payment_experience")->parsePaymentExperienceArray
 
   let billingData =
@@ -314,6 +343,7 @@ let parseCustomerPaymentMethod = (dict: Js.Dict.t<JSON.t>, ~customerId): custome
     metadata: dict->getOptionString("metadata"),
     created: dict->getString("created", ""),
     bank: dict->getOptionString("bank"),
+    bank_redirect: bankRedirectData,
     surcharge_details: dict->getOptionString("surcharge_details"),
     requires_cvv: dict->getBool("requires_cvv", false),
     last_used_at: dict->getString("last_used_at", ""),
