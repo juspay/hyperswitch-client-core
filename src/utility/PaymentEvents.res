@@ -17,20 +17,20 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   let subscribedEvents = nativeProp.configuration.subscribedEvents
 
   let emitCardInfo = (~info: cardInfo) => {
-    if shouldEmitEvent(~eventType=PaymentMethodInfoCard, ~subscribedEvents) {
+    if shouldEmitEvent(~eventType=CardDetailsChange, ~subscribedEvents) {
       emitToNative(
         ~rootTag=nativeProp.rootTag,
-        ~eventType=PaymentEventTypes.eventToString(PaymentMethodInfoCard),
+        ~eventType=PaymentEventTypes.eventToString(CardDetailsChange),
         ~payload=cardInfoToJson(info),
       )
     }
   }
 
   let emitPaymentMethodStatus = (~event: paymentMethodStatusEvent) => {
-    if shouldEmitEvent(~eventType=PaymentMethodStatus, ~subscribedEvents) {
+    if shouldEmitEvent(~eventType=PaymentMethodChange, ~subscribedEvents) {
       emitToNative(
         ~rootTag=nativeProp.rootTag,
-        ~eventType=PaymentEventTypes.eventToString(PaymentMethodStatus),
+        ~eventType=PaymentEventTypes.eventToString(PaymentMethodChange),
         ~payload=paymentMethodStatusEventToJson(
           ~paymentMethod=event.paymentMethod,
           ~paymentMethodType=event.paymentMethodType,
@@ -42,10 +42,10 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   }
 
   let emitFormStatus = (~event: formStatusEvent) => {
-    if shouldEmitEvent(~eventType=FormStatus, ~subscribedEvents) {
+    if shouldEmitEvent(~eventType=FormStatusChange, ~subscribedEvents) {
       emitToNative(
         ~rootTag=nativeProp.rootTag,
-        ~eventType=PaymentEventTypes.eventToString(FormStatus),
+        ~eventType=PaymentEventTypes.eventToString(FormStatusChange),
         ~payload=formStatusEventToJson(
           ~status=event.status->PaymentEventTypes.formStatusValueFromString,
         ),
@@ -54,10 +54,10 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   }
 
   let emitPaymentMethodInfoAddress = (~info: paymentMethodInfoAddress) => {
-    if shouldEmitEvent(~eventType=PaymentMethodInfoBillingAddress, ~subscribedEvents) {
+    if shouldEmitEvent(~eventType=BillingDetailsChange, ~subscribedEvents) {
       emitToNative(
         ~rootTag=nativeProp.rootTag,
-        ~eventType=PaymentEventTypes.eventToString(PaymentMethodInfoBillingAddress),
+        ~eventType=PaymentEventTypes.eventToString(BillingDetailsChange),
         ~payload=paymentMethodInfoAddressToJson(
           ~country=info.country,
           ~state=info.state,
@@ -68,10 +68,10 @@ let usePaymentEventEmitter = (): emitterFunctions => {
   }
 
   let emitCvcStatus = (~event: cvcStatusEvent) => {
-    if shouldEmitEvent(~eventType=CvcStatus, ~subscribedEvents) {
+    if shouldEmitEvent(~eventType=CvcStatusChange, ~subscribedEvents) {
       emitToNative(
         ~rootTag=nativeProp.rootTag,
-        ~eventType=PaymentEventTypes.eventToString(CvcStatus),
+        ~eventType=PaymentEventTypes.eventToString(CvcStatusChange),
         ~payload=cvcStatusEventToJson(event),
       )
     }
