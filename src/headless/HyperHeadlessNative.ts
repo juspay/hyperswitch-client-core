@@ -8,14 +8,14 @@ export type {PaymentExitResult};
    platform bundles without the module (web) from throwing at import time;
    any spec drift between here and the native module is a type error. */
 export const getPaymentSession = (
-  sdkAuthorization: string,
+  rootTag: number,
   paymentIntentData: Object,
   defaultPaymentMethod: Object,
   savedPaymentMethods: Array<Object>,
   callback: (result: Object) => void,
 ): void => {
   NativeHyperHeadless?.getPaymentSession(
-    sdkAuthorization,
+    rootTag,
     paymentIntentData,
     defaultPaymentMethod,
     savedPaymentMethods,
@@ -24,12 +24,12 @@ export const getPaymentSession = (
 };
 
 export const exitHeadless = (
-  sdkAuthorization: string,
+  rootTag: number,
   result: PaymentExitResult,
 ): void => {
-  NativeHyperHeadless?.exitHeadless(sdkAuthorization, result);
+  NativeHyperHeadless?.exitHeadless(rootTag, result);
 };
 
-export const completePrefetch = (data: Object): void => {
-  NativeHyperHeadless?.completePrefetch(data);
+export const completePrefetch = (rootTag: number, data: Object): void => {
+  NativeHyperHeadless?.completePrefetch(rootTag, data);
 };

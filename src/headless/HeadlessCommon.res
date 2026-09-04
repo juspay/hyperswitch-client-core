@@ -2,9 +2,9 @@ open SdkTypes
 open HeadlessUtils
 
 type headlessModule = {
-  getPaymentSession: (string, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
-  exitHeadless: (string, HyperModule.exitResultPayload) => unit,
-  completePrefetch: JSON.t => unit,
+  getPaymentSession: (int, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit,
+  exitHeadless: (int, HyperModule.exitResultPayload) => unit,
+  completePrefetch: (int, JSON.t) => unit,
 }
 
 /* Typed binding over the codegen spec (HyperHeadlessNative.ts), the same way the sibling
@@ -12,7 +12,7 @@ type headlessModule = {
    all; the TS layer tolerates that. Native flows only ever run on platforms with the module. */
 @module("./HyperHeadlessNative")
 external getPaymentSessionNative: (
-  string,
+  int,
   JSON.t,
   JSON.t,
   array<JSON.t>,
@@ -21,10 +21,10 @@ external getPaymentSessionNative: (
   "getPaymentSession"
 
 @module("./HyperHeadlessNative")
-external exitHeadlessNative: (string, HyperModule.exitResultPayload) => unit = "exitHeadless"
+external exitHeadlessNative: (int, HyperModule.exitResultPayload) => unit = "exitHeadless"
 
 @module("./HyperHeadlessNative")
-external completePrefetchNative: JSON.t => unit = "completePrefetch"
+external completePrefetchNative: (int, JSON.t) => unit = "completePrefetch"
 
 let makeHeadlessModule = (): headlessModule => {
   getPaymentSession: getPaymentSessionNative,
@@ -53,24 +53,19 @@ let resolveHeadlessPrefetch = sdkAuthorization =>
   )
 
 /* Native owns cache invalidation: its terminal-result hooks emit clearPrefetchCache for
-   every non-cancelled result, headless or sheet. JS only reports the result. */
+   every non-cancelled result, headless or sheet. JS only reports the result. The reply is
+   routed by the sending root's tag; sdkAuthorization is never a routing key. */
 let exitHeadlessWithResult = (
   headlessModule,
   nativeProp,
   result: PaymentConfirmTypes.error,
-  ~sdkAuthorization: option<string>=?,
 ) => {
-  let sdkAuthorization =
-    sdkAuthorization
-    ->Utils.getNonEmptyOption
-    ->Option.getOr(nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""))
-  headlessModule.exitHeadless(sdkAuthorization, result->HyperModule.resStatusPayload)
+  headlessModule.exitHeadless(nativeProp.rootTag, result->HyperModule.resStatusPayload)
 }
 
 let getDefaultPaymentSession = (headlessModule, error, nativeProp) => {
-  let sdkAuthorization = nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("")
   headlessModule.getPaymentSession(
-    sdkAuthorization,
+    nativeProp.rootTag,
     error->Utils.getJsonObjectFromRecord,
     error->Utils.getJsonObjectFromRecord,
     []->Utils.getJsonObjectFromRecord,
@@ -370,11 +365,11 @@ let confirmCall = async (headlessModule, body, nativeProp, sdkAuthorization) => 
   let {nextAction, status, error} = confirmRes
 
   let responseCallback = (~status) => {
-    exitHeadlessWithResult(headlessModule, nativeProp, status, ~sdkAuthorization?)
+    exitHeadlessWithResult(headlessModule, nativeProp, status)
   }
 
   let errorCallback = (~errorMessage) => {
-    exitHeadlessWithResult(headlessModule, nativeProp, errorMessage, ~sdkAuthorization?)
+    exitHeadlessWithResult(headlessModule, nativeProp, errorMessage)
   }
 
   handleApiRes(
@@ -723,7 +718,7 @@ let getPaymentSession = (
     }
 
     headlessModule.getPaymentSession(
-      nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      nativeProp.rootTag,
       defaultSpmData,
       lastUsedSpmData,
       spmData->Utils.getJsonObjectFromRecord,
@@ -906,7 +901,7 @@ let fetchAndCachePrefetchData = async (headlessModule, nativeProp) => {
   } catch {
   | _ => Console.warn("[Hyperswitch] prefetch failed; payment flows will fetch on demand")
   }
-  headlessModule.completePrefetch(completion)
+  headlessModule.completePrefetch(nativeProp.rootTag, completion)
 }
 
 let runHeadlessFlow = (

@@ -62,7 +62,6 @@ let make = () => {
               headlessModule,
               nativeProp,
               cvcValidationError,
-              ~sdkAuthorization,
             )
           } else {
             HeadlessCommon.confirmCardPayment(
