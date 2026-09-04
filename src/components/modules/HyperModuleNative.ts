@@ -156,3 +156,7 @@ export const subscribeUpdateIntentComplete = (
 export const subscribeClearPrefetchCache = (
   handler: (payload: ClearPrefetchCacheEvent) => void,
 ): (() => void) => subscribe(NativeHyperModule?.clearPrefetchCache, handler);
+
+export const subscribeHeadlessRequest = (
+  handler: (payload: Object) => void,
+): (() => void) => subscribe(NativeHyperModule?.headlessRequest, handler);
