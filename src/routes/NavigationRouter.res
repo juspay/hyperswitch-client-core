@@ -134,42 +134,34 @@ let make = () => {
         }
       }
 
-      let useOrFetch = (prefetched, apiCall, handler) =>
+      /* Each usable cached piece resolves in place; the rest fetch in parallel and all three
+         handlers apply together, at the slowest piece — the same join the headless task and
+         UpdateIntentHook use. updateIntent refreshes sdk_config too (not just client data /
+         session tokens), so the third piece runs unconditionally like the other two. */
+      let usableOrFetch = (prefetched, apiCall) =>
         switch prefetched {
-        | Some(json) if json != JSON.Null && !(json->ErrorUtils.isError) => handler(json)
-        | Some(_) | None =>
-          apiCall()
-          ->Promise.then(response => {
-            if isRequestCurrent() {
-              handler(response)
-            }
-            Promise.resolve()
-          })
-          ->ignore
+        | Some(json) if json != JSON.Null && !(json->ErrorUtils.isError) => Promise.resolve(json)
+        | Some(_) | None => apiCall()
         }
 
       let prefetch = HeadlessCommon.resolveHeadlessPrefetch(
         nativeProp.paymentSessionConfig.sdkAuthorization,
       )
 
-      useOrFetch(
-        prefetch->Option.flatMap(p => p.clientResponse),
-        () => fetchClientData(),
-        handleClientResponse,
-      )
-      useOrFetch(
-        prefetch->Option.flatMap(p => p.sessionTokens),
-        () => sessionToken(),
-        handleSessionTokenResponse,
-      )
-      /* updateIntent now refreshes sdk_config too (not just client data/session tokens), so this
-         must run unconditionally like the other two — otherwise a mounted UI would keep the old
-         intent's config after an update. */
-      useOrFetch(
-        prefetch->Option.flatMap(p => p.sdkConfig),
-        () => sdkConfig(),
-        handleSdkConfigResponse,
-      )
+      Promise.all3((
+        usableOrFetch(prefetch->Option.flatMap(p => p.clientResponse), () => fetchClientData()),
+        usableOrFetch(prefetch->Option.flatMap(p => p.sessionTokens), () => sessionToken()),
+        usableOrFetch(prefetch->Option.flatMap(p => p.sdkConfig), () => sdkConfig()),
+      ))
+      ->Promise.then(((clientResp, sessionTokenData, configResp)) => {
+        if isRequestCurrent() {
+          handleClientResponse(clientResp)
+          handleSessionTokenResponse(sessionTokenData)
+          handleSdkConfigResponse(configResp)
+        }
+        Promise.resolve()
+      })
+      ->ignore
     }
     None
   }, [sessionCredentialsKey])
