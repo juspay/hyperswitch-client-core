@@ -259,6 +259,35 @@ let sessionAPICall = nativeProp => {
   )
 }
 
+let sdkConfigAPICall = (nativeProp: SdkTypes.nativeProp) => {
+  let clientSecret = switch nativeProp.paymentSessionConfig.sdkAuthorization {
+  | Some(auth) =>
+    Utils.getSdkAuthorizationData(auth).clientSecret->Option.getOr(
+      nativeProp.paymentSessionConfig.clientSecret,
+    )
+  | None => nativeProp.paymentSessionConfig.clientSecret
+  }
+  /* Same mapping the sheet and updateIntent use, so prefetch and live paths request the
+     same resource. */
+  let uri = `${getBaseUrl(nativeProp)}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`
+
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=LoggerTypes.CONFIG_CALL,
+    ~method=#GET,
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
+    ~processSuccess=json => json,
+    ~processError=error => error,
+    ~processCatch=_ => JSON.Encode.null,
+  )
+}
+
 let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) => {
   let paymentId =
     sdkAuthorization

@@ -361,6 +361,33 @@ type sdkParams = {
   insets: option<insets>,
 }
 
+type prefetchedApiData = {
+  clientResponse: option<JSON.t>,
+  sessionTokens: option<JSON.t>,
+  sdkConfig: option<JSON.t>,
+  sdkAuthorization: option<string>,
+}
+
+let prefetchedApiDataFromJson = json =>
+  json
+  ->JSON.Decode.object
+  ->Option.map(prefetchDict => {
+    clientResponse: Dict.get(prefetchDict, "clientResponse"),
+    sessionTokens: Dict.get(prefetchDict, "sessionTokens"),
+    sdkConfig: Dict.get(prefetchDict, "sdkConfig"),
+    sdkAuthorization: getOptionString(prefetchDict, "sdkAuthorization"),
+  })
+
+let prefetchedApiDataMatchesAuthorization = (
+  prefetch: prefetchedApiData,
+  sdkAuthorization: option<string>,
+) =>
+  switch (prefetch.sdkAuthorization, sdkAuthorization) {
+  | (Some(prefetchedAuthorization), Some(currentAuthorization)) =>
+    currentAuthorization !== "" && prefetchedAuthorization === currentAuthorization
+  | _ => false
+  }
+
 type nativeProp = {
   rootTag: int,
   sdkState: sdkState,

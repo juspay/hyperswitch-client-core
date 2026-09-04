@@ -64,6 +64,11 @@ module Native = {
   @module("./HyperModuleNative")
   external subscribeUpdateIntentComplete: dictCallback => (unit => unit) =
     "subscribeUpdateIntentComplete"
+  @module("./HyperModuleNative")
+  external subscribeClearPrefetchCache: dictCallback => (unit => unit) =
+    "subscribeClearPrefetchCache"
+  @module("./HyperModuleNative")
+  external subscribeHeadlessRequest: dictCallback => (unit => unit) = "subscribeHeadlessRequest"
 }
 
 module Events = {
@@ -73,6 +78,8 @@ module Events = {
   let subscribeTriggerWidgetAction = Native.subscribeTriggerWidgetAction
   let subscribeUpdateIntentInit = Native.subscribeUpdateIntentInit
   let subscribeUpdateIntentComplete = Native.subscribeUpdateIntentComplete
+  let subscribeClearPrefetchCache = Native.subscribeClearPrefetchCache
+  let subscribeHeadlessRequest = Native.subscribeHeadlessRequest
 }
 
 let resStatusPayload = (apiResStatus: PaymentConfirmTypes.error): exitResultPayload => {

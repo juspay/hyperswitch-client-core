@@ -3,6 +3,24 @@ open SdkTypes
 let updateIntentInitReturned = "UPDATE_INTENT_INIT_RETURNED"
 let updateIntentCompleteReturned = "UPDATE_INTENT_COMPLETE_RETURNED"
 
+let isUsableClientResponse = response => {
+  if response->ErrorUtils.isError || response == JSON.Encode.null {
+    false
+  } else {
+    let dict = response->Utils.getDictFromJson
+    dict->Utils.getArray("payment_methods_enabled")->Array.length > 0 ||
+      dict->Utils.getArray("customer_payment_methods")->Array.length > 0
+  }
+}
+
+let isUsableSessionTokens = response =>
+  !(response->ErrorUtils.isError) && response != JSON.Encode.null
+
+let isUsableSdkConfig = response =>
+  !(response->ErrorUtils.isError) &&
+  response != JSON.Encode.null &&
+  response->SdkConfigParser.itemToObjMapper->PaymentUtils.isValidSdkConfig
+
 let useUpdateIntentListener = (
   ~setClientResponse,
   ~setSessionTokenData,
@@ -67,7 +85,7 @@ let useUpdateIntentListener = (
         let currentNativeProp = nativePropRef.current
         if (
           intentData.rootTag === currentNativeProp.rootTag &&
-            switch nativeProp.sdkState {
+            switch currentNativeProp.sdkState {
             | Headless | CvcWidget | NoView => false
             | _ => true
             }
@@ -108,35 +126,66 @@ let useUpdateIntentListener = (
                 {status: "failed", code, message},
               )
 
+            /* Piece-wise prefetch reuse: each cache piece is kept when individually usable, so a
+               partial entry (e.g. one faulted piece) only costs a refetch of that piece instead
+               of the whole trio (same contract as NavigationRouter.useOrFetch at mount). */
+            let prefetch = switch HeadlessCommon.resolveHeadlessPrefetch(Some(sdkAuth)) {
+            | Some(prefetchData)
+                if paymentId !== "" &&
+                SdkTypes.prefetchedApiDataMatchesAuthorization(prefetchData, Some(sdkAuth)) =>
+              Some(prefetchData)
+            | _ => None
+            }
+            let usablePiece = (pick, isUsable) =>
+              switch prefetch->Option.flatMap(pick) {
+              | Some(json) if isUsable(json) => Some(json)
+              | _ => None
+            }
+            let cachedClient = usablePiece(p => p.clientResponse, isUsableClientResponse)
+            let cachedSessions = usablePiece(p => p.sessionTokens, isUsableSessionTokens)
+            let cachedConfig = usablePiece(p => p.sdkConfig, isUsableSdkConfig)
+
             Promise.all3((
-              APIUtils.fetchApiWrapper(
-                ~uri=`${baseUrl}/payments/${paymentId}/client`,
-                ~method=#GET,
-                ~headers,
-                ~eventName=LoggerTypes.CLIENT_LIST_CALL,
-                ~apiLogWrapper,
-              ),
+              switch cachedClient {
+              | Some(json) => Promise.resolve(json)
+              | None =>
+                APIUtils.fetchApiWrapper(
+                  ~uri=`${baseUrl}/payments/${paymentId}/client`,
+                  ~method=#GET,
+                  ~headers,
+                  ~eventName=LoggerTypes.CLIENT_LIST_CALL,
+                  ~apiLogWrapper,
+                )
+              },
               // Session tokens
-              APIUtils.fetchApiWrapper(
-                ~uri=`${baseUrl}/payments/session_tokens`,
-                ~body=PaymentUtils.generateSessionsTokenBody(
-                  ~clientSecret,
-                  ~paymentId,
-                  ~sdkAuthorization=sdkAuth,
-                  ~wallet=[],
-                ),
-                ~method=#POST,
-                ~headers,
-                ~eventName=LoggerTypes.SESSIONS_CALL,
-                ~apiLogWrapper,
-              ),
-              APIUtils.fetchApiWrapper(
-                ~uri=`${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`,
-                ~method=#GET,
-                ~headers,
-                ~eventName=LoggerTypes.CONFIG_CALL,
-                ~apiLogWrapper,
-              ),
+              switch cachedSessions {
+              | Some(json) => Promise.resolve(json)
+              | None =>
+                APIUtils.fetchApiWrapper(
+                  ~uri=`${baseUrl}/payments/session_tokens`,
+                  ~body=PaymentUtils.generateSessionsTokenBody(
+                    ~clientSecret,
+                    ~paymentId,
+                    ~sdkAuthorization=sdkAuth,
+                    ~wallet=[],
+                  ),
+                  ~method=#POST,
+                  ~headers,
+                  ~eventName=LoggerTypes.SESSIONS_CALL,
+                  ~apiLogWrapper,
+                )
+              },
+              switch cachedConfig {
+              | Some(json) => Promise.resolve(json)
+              | None =>
+                APIUtils.fetchApiWrapper(
+                  ~uri=`${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`,
+                  ~method=#GET,
+                  ~headers,
+                  ~eventName=LoggerTypes.CONFIG_CALL,
+                  ~apiLogWrapper,
+                )
+              },
             ))
             ->Promise.then(
               ((clientResp, sessionTokenResp, configResp)) => {

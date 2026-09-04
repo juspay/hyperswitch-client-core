@@ -117,39 +117,47 @@ let make = () => {
         }
       }
 
-      sessionToken()
-      ->Promise.then(sessionTokenData => {
-        if isRequestCurrent() {
-          if sessionTokenData->ErrorUtils.isError {
-            if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
-              errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
-            } else if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_09\"" {
-              errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
-            }
-          } else if sessionTokenData != JSON.Null {
-            switch sessionTokenData->SessionsType.jsonToSessionTokenType {
-            | Some(sessions) => setSessionTokenData(_ => Some(sessions))
-            | None => setSessionTokenData(_ => Some([]))
-            }
+      /* Session tokens settle independently of the sheet gate: API errors surface, a
+         successful response with no token list settles as [] and renders without wallets. */
+      let handleSessionTokenResponse = sessionTokenData => {
+        if sessionTokenData->ErrorUtils.isError {
+          if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
+            errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
+          } else if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_09\"" {
+            errorOnApiCalls(ErrorUtils.errorWarning.invalidCL, ())
+          }
+        } else if sessionTokenData != JSON.Null {
+          switch sessionTokenData->SessionsType.jsonToSessionTokenType {
+          | Some(sessions) => setSessionTokenData(_ => Some(sessions))
+          | None => setSessionTokenData(_ => Some([]))
           }
         }
-        Promise.resolve()
-      })
-      ->ignore
+      }
 
-      sdkConfig()
-      ->Promise.then(configResponse => {
-        if isRequestCurrent() {
-          handleSdkConfigResponse(configResponse)
+      /* Each usable cached piece resolves in place; the rest fetch in parallel and all three
+         handlers apply together, at the slowest piece — the same join the headless task and
+         UpdateIntentHook use. updateIntent refreshes sdk_config too (not just client data /
+         session tokens), so the third piece runs unconditionally like the other two. */
+      let usableOrFetch = (prefetched, apiCall) =>
+        switch prefetched {
+        | Some(json) if json != JSON.Null && !(json->ErrorUtils.isError) => Promise.resolve(json)
+        | Some(_) | None => apiCall()
         }
-        Promise.resolve()
-      })
-      ->ignore
 
-      fetchClientData()
-      ->Promise.then(clientResp => {
+      let prefetch = HeadlessCommon.resolveHeadlessPrefetch(
+        nativeProp.paymentSessionConfig.sdkAuthorization,
+      )
+
+      Promise.all3((
+        usableOrFetch(prefetch->Option.flatMap(p => p.clientResponse), () => fetchClientData()),
+        usableOrFetch(prefetch->Option.flatMap(p => p.sessionTokens), () => sessionToken()),
+        usableOrFetch(prefetch->Option.flatMap(p => p.sdkConfig), () => sdkConfig()),
+      ))
+      ->Promise.then(((clientResp, sessionTokenData, configResp)) => {
         if isRequestCurrent() {
           handleClientResponse(clientResp)
+          handleSessionTokenResponse(sessionTokenData)
+          handleSdkConfigResponse(configResp)
         }
         Promise.resolve()
       })

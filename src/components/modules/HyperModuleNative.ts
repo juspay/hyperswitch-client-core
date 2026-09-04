@@ -3,6 +3,7 @@ import type {
   PaymentResultEvent,
   WidgetActionEvent,
   UpdateIntentEvent,
+  ClearPrefetchCacheEvent,
   PaymentExitResult,
 } from '../../specs/NativeHyperModule';
 
@@ -151,3 +152,11 @@ export const subscribeUpdateIntentInit = (
 export const subscribeUpdateIntentComplete = (
   handler: (payload: UpdateIntentEvent) => void,
 ): (() => void) => subscribe(NativeHyperModule?.updateIntentComplete, handler);
+
+export const subscribeClearPrefetchCache = (
+  handler: (payload: ClearPrefetchCacheEvent) => void,
+): (() => void) => subscribe(NativeHyperModule?.clearPrefetchCache, handler);
+
+export const subscribeHeadlessRequest = (
+  handler: (payload: Object) => void,
+): (() => void) => subscribe(NativeHyperModule?.headlessRequest, handler);
