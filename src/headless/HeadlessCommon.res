@@ -7,29 +7,12 @@ type headlessModule = {
   completePrefetch: (int, JSON.t) => unit,
 }
 
-/* Typed binding over the codegen spec (HyperHeadlessNative.ts), the same way the sibling
-   HyperModule binds HyperModuleNative.ts. Some JS targets (web) have no HyperHeadless at
-   all; the TS layer tolerates that. Native flows only ever run on platforms with the module. */
-@module("./HyperHeadlessNative")
-external getPaymentSessionNative: (
-  int,
-  JSON.t,
-  JSON.t,
-  array<JSON.t>,
-  JSON.t => unit,
-) => unit =
-  "getPaymentSession"
-
-@module("./HyperHeadlessNative")
-external exitHeadlessNative: (int, HyperModule.exitResultPayload) => unit = "exitHeadless"
-
-@module("./HyperHeadlessNative")
-external completePrefetchNative: (int, JSON.t) => unit = "completePrefetch"
-
 let makeHeadlessModule = (): headlessModule => {
-  getPaymentSession: getPaymentSessionNative,
-  exitHeadless: exitHeadlessNative,
-  completePrefetch: completePrefetchNative,
+  {
+    getPaymentSession: HyperHeadless.getPaymentSession,
+    exitHeadless: HyperHeadless.exitHeadless,
+    completePrefetch: HyperHeadless.completePrefetch,
+  }
 }
 
 let prefetchFromJsonForAuthorization = (json, sdkAuthorization) =>

@@ -1,12 +1,8 @@
-import NativeHyperHeadless from '../specs/NativeHyperHeadless';
-import type {PaymentExitResult} from '../specs/NativeHyperHeadless';
+import NativeHyperHeadless from '../../specs/NativeHyperHeadless';
+import type {PaymentExitResult} from '../../specs/NativeHyperHeadless';
 
 export type {PaymentExitResult};
 
-/* Thin typed access layer over the HyperHeadless TurboModule, mirroring
-   HyperModuleNative.ts for the sibling HyperModule. Optional chaining keeps
-   platform bundles without the module (web) from throwing at import time;
-   any spec drift between here and the native module is a type error. */
 export const getPaymentSession = (
   rootTag: number,
   paymentIntentData: Object,
@@ -30,6 +26,8 @@ export const exitHeadless = (
   NativeHyperHeadless?.exitHeadless(rootTag, result);
 };
 
+/* Completion signal for one payment's prefetch; the payload lives only in the
+   shared JS PrefetchCache. Carries {sdkAuthorization} as data, not as a key. */
 export const completePrefetch = (rootTag: number, data: Object): void => {
   NativeHyperHeadless?.completePrefetch(rootTag, data);
 };
