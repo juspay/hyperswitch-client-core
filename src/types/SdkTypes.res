@@ -270,6 +270,7 @@ type sdkState =
   | ExpressCheckoutWidget
   | CvcWidget
   | PaymentMethodsManagement
+  | WidgetPaymentMethodsManagement
   | Headless
   | NoView
 
@@ -305,6 +306,7 @@ let sdkStateToStrMapper = sdkState => {
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
   | CvcWidget => "CVC_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
+  | WidgetPaymentMethodsManagement => "WIDGET_PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
   }
@@ -337,6 +339,7 @@ type paymentSessionConfig = {
   clientSecret: string,
   sdkAuthorization: option<string>,
   paymentId: string,
+  pmSessionId: option<string>,
 }
 
 type insets = {
@@ -822,6 +825,7 @@ let parseSdkState = str =>
   | "paypal" => CustomWidget(PAYPAL)
   | "card" => CardWidget
   | "paymentMethodsManagement" => PaymentMethodsManagement
+  | "widgetPaymentMethodsManagement" => WidgetPaymentMethodsManagement
   | "expressCheckout" => ExpressCheckoutWidget
   | "cvcWidget" => CvcWidget
   | "headless" => Headless
@@ -881,6 +885,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       clientSecret,
       sdkAuthorization,
       paymentId,
+      pmSessionId: sdkAuthorizationData->Option.flatMap(data => data.pmSessionId),
     },
     sdkParams: {
       sessionId: getString(sp, "sessionId", ""),

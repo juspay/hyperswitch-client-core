@@ -211,7 +211,8 @@ let make = () => {
       | CvcWidget => <CvcWidget />
       | Headless
       | NoView
-      | PaymentMethodsManagement => React.null
+      | PaymentMethodsManagement
+      | WidgetPaymentMethodsManagement => React.null
       }}
     </DynamicFieldsContext>
   </AllApiDataContextNew>

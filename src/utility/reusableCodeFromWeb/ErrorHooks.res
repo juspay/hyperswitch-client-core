@@ -65,7 +65,8 @@ let useErrorWarningValidationOnLoad = () => {
       | ExpressCheckoutWidget
       | CvcWidget
       | NoView
-      | PaymentMethodsManagement => ()
+      | PaymentMethodsManagement
+      | WidgetPaymentMethodsManagement => ()
       }
     }
   }

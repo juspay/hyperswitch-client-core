@@ -26,3 +26,10 @@ CTP_CUSTOMER_EMAIL=
 
 # Netcetera SDK configuration
 NETCETERA_SDK_API_KEY=""
+
+# Payment Method Session — mock server's server-to-server account
+PM_SESSION_BASE_URL=
+PM_SESSION_PUBLISHABLE_KEY=
+PM_SESSION_SECRET_KEY=
+PM_SESSION_PROFILE_ID=
+PM_SESSION_CUSTOMER_ID=

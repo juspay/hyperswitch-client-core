@@ -84,6 +84,9 @@ module Runner = {
                   paymentId: authData.paymentId->Option.getOr(
                     current.paymentSessionConfig.paymentId,
                   ),
+                  pmSessionId: authData.pmSessionId->Option.isSome
+                    ? authData.pmSessionId
+                    : current.paymentSessionConfig.pmSessionId,
                 },
               }
 
