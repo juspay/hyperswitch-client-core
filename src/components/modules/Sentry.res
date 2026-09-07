@@ -96,8 +96,7 @@ let initiateSentry = (~dsn: option<string>, ~environment: string) => {
   }
 }
 
-let flushAndCloseSentry = () => {
-  sentryReactNative.flush()->Promise.then(() => {
-    sentryReactNative.close()
-  })
-}
+// Fire and forget. Telemetry must never delay dismissal, and the client is
+// never closed here: it lives as long as the host, which outlives any one sheet.
+let flushSentry = () =>
+  sentryReactNative.flush()->Promise.catch(_ => Promise.resolve())->ignore

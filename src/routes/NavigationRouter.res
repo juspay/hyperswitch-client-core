@@ -2,9 +2,7 @@
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
-  let sessionToken = AllPaymentHooks.useSessionTokenHook()
-  let sdkConfig = AllPaymentHooks.useSdkConfigHook()
-  let fetchClientData = AllPaymentHooks.useFetchClientData()
+  let sessionFetchers = SessionDataHook.useSessionFetchers()
 
   let (clientResponse, setClientResponse) = React.useState(_ => None)
   let (sessionTokenData, setSessionTokenData) = React.useState(_ => None)
@@ -117,9 +115,9 @@ let make = () => {
         }
       }
 
-      /* Session tokens settle independently of the sheet gate: API errors surface, a
-         successful response with no token list settles as [] and renders without wallets. */
-      let handleSessionTokenResponse = sessionTokenData => {
+      let entry = SessionStore.getOrStart(~key=requestKey, ~fetchers=sessionFetchers)
+
+      let handleSessionTokenResponse = sessionTokenData =>
         if sessionTokenData->ErrorUtils.isError {
           if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
             errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
@@ -132,33 +130,40 @@ let make = () => {
           | None => setSessionTokenData(_ => Some([]))
           }
         }
+
+      // Prefetched entries may already be resolved at mount; applying them then
+      // would parse and re-render during the sheet's entrance animation. The
+      // fallback only matters if an animation never reports its end.
+      let applyWhenCurrent = (work: unit => unit) => {
+        let applied = ref(false)
+        let run = () =>
+          if !applied.contents {
+            applied := true
+            if isRequestCurrent() {
+              work()
+            }
+          }
+        EntranceGate.whenSettled(run)
+        setTimeout(run, 700)->ignore
       }
 
-      /* Each usable cached piece resolves in place; the rest fetch in parallel and all three
-         handlers apply together, at the slowest piece — the same join the headless task and
-         UpdateIntentHook use. updateIntent refreshes sdk_config too (not just client data /
-         session tokens), so the third piece runs unconditionally like the other two. */
-      let usableOrFetch = (prefetched, apiCall) =>
-        switch prefetched {
-        | Some(json) if json != JSON.Null && !(json->ErrorUtils.isError) => Promise.resolve(json)
-        | Some(_) | None => apiCall()
-        }
+      entry.sessions
+      ->Promise.then(sessionTokenData => {
+        applyWhenCurrent(() => handleSessionTokenResponse(sessionTokenData))
+        Promise.resolve()
+      })
+      ->ignore
 
-      let prefetch = HeadlessCommon.resolveHeadlessPrefetch(
-        nativeProp.paymentSessionConfig.sdkAuthorization,
-      )
+      entry.sdkConfig
+      ->Promise.then(configResponse => {
+        applyWhenCurrent(() => handleSdkConfigResponse(configResponse))
+        Promise.resolve()
+      })
+      ->ignore
 
-      Promise.all3((
-        usableOrFetch(prefetch->Option.flatMap(p => p.clientResponse), () => fetchClientData()),
-        usableOrFetch(prefetch->Option.flatMap(p => p.sessionTokens), () => sessionToken()),
-        usableOrFetch(prefetch->Option.flatMap(p => p.sdkConfig), () => sdkConfig()),
-      ))
-      ->Promise.then(((clientResp, sessionTokenData, configResp)) => {
-        if isRequestCurrent() {
-          handleClientResponse(clientResp)
-          handleSessionTokenResponse(sessionTokenData)
-          handleSdkConfigResponse(configResp)
-        }
+      entry.client
+      ->Promise.then(clientResp => {
+        applyWhenCurrent(() => handleClientResponse(clientResp))
         Promise.resolve()
       })
       ->ignore
@@ -185,12 +190,7 @@ let make = () => {
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
-  UpdateIntentHook.useUpdateIntentListener(
-    ~setClientResponse,
-    ~setSessionTokenData,
-    ~setSdkConfigData,
-    ~fetchedCredentialsKey,
-  )
+  UpdateIntentHook.useUpdateIntentListener()
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
     // TODO: Pass DynamicFieldsContext to only required components.

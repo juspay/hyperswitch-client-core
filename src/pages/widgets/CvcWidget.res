@@ -41,6 +41,23 @@ let make = () => {
 
   let headlessModule = HeadlessCommon.makeHeadlessModule()
 
+  let withAuthorizationConfig = (nativeProp: SdkTypes.nativeProp, sdkAuthorization) =>
+    if nativeProp.hyperswitchConfig.publishableKey !== "" || sdkAuthorization === "" {
+      nativeProp
+    } else {
+      let authData = Utils.getSdkAuthorizationData(sdkAuthorization)
+      let publishableKey = authData.publishableKey->Option.getOr("")
+      {
+        ...nativeProp,
+        hyperswitchConfig: {
+          ...nativeProp.hyperswitchConfig,
+          publishableKey,
+          profileId: authData.profileId,
+          environment: GlobalVars.checkEnv(publishableKey),
+        },
+      }
+    }
+
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
     let cleanup = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
@@ -50,7 +67,6 @@ let make = () => {
       | ConfirmCvcPayment =>
         if actionData.rootTag === nativeProp.rootTag {
           let isCvcCompleteNow = Validation.checkCardCVC(cvcValueRef.current, cardNetwork)
-          let sdkAuthorization = actionData.sdkAuthorization->Option.getOr("")
           if !isCvcCompleteNow {
             let cvcValidationError: PaymentConfirmTypes.error = {
               type_: "validation_error",
@@ -58,15 +74,15 @@ let make = () => {
               code: "cvc_validation_failed",
               message: "CVC is not complete. Please enter a valid CVC.",
             }
-            HeadlessCommon.exitHeadlessWithResult(
-              headlessModule,
-              nativeProp,
-              cvcValidationError,
+            headlessModule.exitHeadless(
+              nativeProp.rootTag,
+              cvcValidationError->HyperModule.resStatusPayload,
             )
           } else {
+            let sdkAuthorization = actionData.sdkAuthorization->Option.getOr("")
             HeadlessCommon.confirmCardPayment(
               headlessModule,
-              nativeProp,
+              nativeProp->withAuthorizationConfig(sdkAuthorization),
               ~sdkAuthorization,
               ~paymentToken=actionData.paymentToken->Option.getOr(""),
               ~cvc=cvcValueRef.current->JSON.Encode.string,
