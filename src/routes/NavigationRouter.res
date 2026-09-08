@@ -7,6 +7,9 @@ let make = () => {
   let (clientResponse, setClientResponse) = React.useState(_ => None)
   let (sessionTokenData, setSessionTokenData) = React.useState(_ => None)
   let (sdkConfigData, setSdkConfigData) = React.useState(_ => None)
+  let (sessionAnswered, setSessionAnswered) = React.useState(_ => false)
+  let (vaultDetails, setVaultDetails) = React.useState(_ => None)
+  let (vaultingAction, setVaultingAction) = React.useState(_ => None)
 
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
@@ -46,6 +49,9 @@ let make = () => {
     if nativeProp.sdkState !== CvcWidget && !alreadyFetched {
       fetchedCredentialsKey.current = Some(sessionCredentialsKey)
       let requestKey = sessionCredentialsKey
+      setSessionAnswered(_ => false)
+      setVaultDetails(_ => None)
+      setVaultingAction(_ => None)
 
       let isRequestCurrent = () =>
         switch fetchedCredentialsKey.current {
@@ -108,6 +114,7 @@ let make = () => {
         } else {
           let parsed = SdkConfigParser.itemToObjMapper(configResponse)
           if PaymentUtils.isValidSdkConfig(parsed) {
+            setVaultingAction(_ => Some(PaymentUtils.readVaultingAction(configResponse)))
             setSdkConfigData(_ => Some(parsed))
           } else {
             exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
@@ -117,7 +124,9 @@ let make = () => {
 
       let entry = SessionStore.getOrStart(~key=requestKey, ~fetchers=sessionFetchers)
 
-      let handleSessionTokenResponse = sessionTokenData =>
+      let handleSessionTokenResponse = sessionTokenData => {
+        setSessionAnswered(_ => true)
+        setVaultDetails(_ => VaultDetailsType.parseVaultDetails(sessionTokenData))
         if sessionTokenData->ErrorUtils.isError {
           if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
             errorOnApiCalls(ErrorUtils.errorWarning.usedCL, ())
@@ -130,6 +139,7 @@ let make = () => {
           | None => setSessionTokenData(_ => Some([]))
           }
         }
+      }
 
       // Prefetched entries may already be resolved at mount; applying them then
       // would parse and re-render during the sheet's entrance animation. The
@@ -188,11 +198,30 @@ let make = () => {
     }
   }, (clientResponse, sdkConfigData, paymentMethodOrder, hiddenPaymentMethods))
 
+  let cardStrategy = React.useMemo3(() => {
+    let strategy: CardStrategyContext.strategy = switch vaultingAction {
+    | None => Pending
+    | Some(PaymentUtils.SkipVaulting) => DirectCard
+    | Some(PaymentUtils.UnreadableVaulting) => Refused(UnreadableVaultingAction)
+    | Some(PaymentUtils.TokenizeVaulting) =>
+      if !sessionAnswered {
+        Pending
+      } else {
+        switch vaultDetails {
+        | Some(details) => VaultCard(details)
+        | None => Refused(VaultUnavailable)
+        }
+      }
+    }
+    strategy
+  }, (vaultingAction, sessionAnswered, vaultDetails))
+
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
   UpdateIntentHook.useUpdateIntentListener()
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
+   <CardStrategyContext strategy=cardStrategy>
     // TODO: Pass DynamicFieldsContext to only required components.
     // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
     <DynamicFieldsContext>
@@ -214,5 +243,6 @@ let make = () => {
       | PaymentMethodsManagement => React.null
       }}
     </DynamicFieldsContext>
+   </CardStrategyContext>
   </AllApiDataContextNew>
 }
