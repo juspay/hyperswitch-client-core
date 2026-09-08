@@ -85,6 +85,41 @@ module CVVComponent = {
     </View>
   }
 }
+module SavedCardCvcInput = {
+  @react.component
+  let make = (
+    ~savedPaymentMethod: ClientResponseType.customerPaymentMethod,
+    ~savedCardCvv,
+    ~setSavedCardCvv,
+    ~hideCardExpiry,
+    ~hideCVCError,
+    ~hideCvcIcon,
+    ~placeholderCVC,
+  ) => {
+    let {strategy} = React.useContext(CardStrategyContext.cardStrategyContext)
+    switch strategy {
+    | DirectCard =>
+      <CVVComponent
+        savedCardCvv
+        setSavedCardCvv
+        cardScheme={savedPaymentMethod.card
+        ->Option.map(card => card.card_network)
+        ->Option.getOr("")}
+        hideCardExpiry
+        hideCVCError
+        hideCvcIcon
+        placeholderCVC
+      />
+    | VaultCard(vaultDetails) =>
+      <VaultCvcElement
+        savedPaymentMethod vaultDetails hideCardExpiry hideCVCError hideCvcIcon placeholderCVC
+      />
+    | Pending => React.null
+    | Refused(_) => <ErrorText text=PaymentConfirmTypes.defaultConfigError.message />
+    }
+  }
+}
+
 module PMWithNickNameComponent = {
   @react.component
   let make = (
@@ -348,12 +383,10 @@ module PaymentMethodListView = {
           isPaymentMethodSelected &&
           savedPaymentMethod.payment_method === CARD &&
           savedPaymentMethod.requires_cvv
-            ? <CVVComponent
+            ? <SavedCardCvcInput
+                savedPaymentMethod
                 savedCardCvv
                 setSavedCardCvv
-                cardScheme={savedPaymentMethod.card
-                ->Option.map(card => card.card_network)
-                ->Option.getOr("")}
                 hideCardExpiry
                 hideCVCError=nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hideCVCError
                 hideCvcIcon={nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.cvcIcon ===
@@ -381,12 +414,10 @@ module PaymentMethodListView = {
       savedPaymentMethod.payment_method === CARD &&
       savedPaymentMethod.requires_cvv &&
       !hideCardExpiry
-        ? <CVVComponent
+        ? <SavedCardCvcInput
+            savedPaymentMethod
             savedCardCvv
             setSavedCardCvv
-            cardScheme={savedPaymentMethod.card
-            ->Option.map(card => card.card_network)
-            ->Option.getOr("")}
             hideCardExpiry
             hideCVCError=nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hideCVCError
             hideCvcIcon={nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.cvcIcon ===

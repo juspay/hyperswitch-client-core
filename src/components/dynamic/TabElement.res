@@ -15,6 +15,12 @@ let make = (
     eligibilityStatus,
     isSaveDetailsSelected,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {strategy, getFormState, setShowErrors} = React.useContext(
+    CardStrategyContext.cardStrategyContext,
+  )
+  let submitVaultCard = VaultCardSubmitHook.useVaultCardSubmit()
+
+  let vaultFormId = "tab-" ++ paymentMethodData.payment_method_type
 
   let (formData, setFormData) = React.useState(_ => Dict.make())
   let setFormData = React.useCallback1(data => {
@@ -50,23 +56,52 @@ let make = (
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
+  let isVaultCard = switch (paymentMethodData.payment_method, strategy) {
+  | (CARD, CardStrategyContext.VaultCard(_)) => true
+  | _ => false
+  }
+
   let handlePress = _ => {
     // Only gate on eligibility for card payments; non-card methods skip the check
     let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
     if isEligibilityBlocked {
       ()
-    } else if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        None,
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
     } else {
-      switch formMethods {
-      | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
-      | None => ()
+      switch (paymentMethodData.payment_method, strategy) {
+      | (CARD, CardStrategyContext.Pending)
+      | (CARD, CardStrategyContext.Refused(_)) => ()
+      | (CARD, CardStrategyContext.VaultCard(_)) =>
+        if isNicknameValid && isFormValid {
+          submitVaultCard(~formId=vaultFormId, ~shape=WholeCard, ~onTokenized=vaultPmd =>
+            processRequest(
+              CommonUtils.mergeDict(CommonUtils.mergeDict(initialValues, formData), vaultPmd),
+              None,
+              formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+            )
+          )
+        } else {
+          switch formMethods {
+          | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+          | None => ()
+          }
+          setShowErrors(vaultFormId, true)
+          notifyValidationFailure()
+        }
+      | _ =>
+        if isNicknameValid && (isFormValid || requiredFields->Array.length === 0) {
+          processRequest(
+            CommonUtils.mergeDict(initialValues, formData),
+            None,
+            formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+          )
+        } else {
+          switch formMethods {
+          | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+          | None => ()
+          }
+          notifyValidationFailure()
+        }
       }
-      notifyValidationFailure()
     }
   }
 
@@ -75,10 +110,13 @@ let make = (
     None
   }, [defaultCountry])
 
+  let effectiveFormValid =
+    isVaultCard ? getFormState(vaultFormId).isValid && isNicknameValid && isFormValid : isFormValid
+
   FormStatusEmitter.useFormStatusEmitter(
     ~isFocused=isScreenFocus,
     ~hasRequiredFields=requiredFields->Array.length > 0,
-    ~isFormValid,
+    ~isFormValid=effectiveFormValid,
     ~isPristine,
   )
 
@@ -102,11 +140,12 @@ let make = (
     setConfirmButtonData,
     eligibilityStatus,
     requiredFields,
-    isFormValid,
+    effectiveFormValid,
     formData,
     formMethods,
     isNicknameValid,
     isSaveDetailsSelected,
+    strategy,
   ))
 
   <DynamicFields
@@ -122,5 +161,6 @@ let make = (
     isFocused=isScreenFocus
     checkEligibility
     customerAcceptanceSupport=?paymentMethodData.customer_acceptance_support
+    vaultFormId
   />
 }

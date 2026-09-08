@@ -126,27 +126,15 @@ let make = (
       tabDict,
       paymentMethodStr,
     ) = switch paymentMethodData.payment_method {
-    | CARD =>
-      switch nickname {
-      | Some(name) => (
-          [
-            (
-              "payment_method_data",
-              [
-                (
-                  paymentMethodData.payment_method_str,
-                  [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
-                ),
-              ]
-              ->Dict.fromArray
-              ->Js.Json.object_,
-            ),
-          ]->Dict.fromArray,
-          tabDict,
-          paymentMethodData.payment_method_str,
-        )
-      | None => (Dict.make(), tabDict, paymentMethodData.payment_method_str)
-      }
+    | CARD => (
+        PaymentUtils.nicknamePaymentMethodData(
+          ~tabDict,
+          ~paymentMethodStr=paymentMethodData.payment_method_str,
+          ~nickname,
+        ),
+        tabDict,
+        paymentMethodData.payment_method_str,
+      )
     | REWARD => (
         [
           ("payment_method_data", paymentMethodData.payment_method_str->Js.Json.string),
@@ -206,6 +194,8 @@ let make = (
       ~nativeProp,
       ~payment_method_str=paymentMethodStr,
       ~payment_method_type=paymentMethodData.payment_method_type,
+      ~payment_token=?tabDict->Dict.get("payment_token")->Option.flatMap(JSON.Decode.string),
+      ~isVaultedNewCard=PaymentUtils.isVaultedNewCard(tabDict),
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
