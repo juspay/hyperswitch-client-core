@@ -142,7 +142,7 @@ let useExitPaymentsheet = () => {
             apiResStatus->resStatusPayload,
             reset,
           )
-        | PaymentMethodsManagement =>
+        | PaymentMethodsManagement | WidgetPaymentMethodsManagement =>
           Native.exitPaymentMethodManagement(
             nativeProp.rootTag,
             apiResStatus->stringifiedResStatus,

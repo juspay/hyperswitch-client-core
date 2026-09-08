@@ -1,9 +1,17 @@
+// Demo mode: open http://localhost:8083 (payments, default) or
+// http://localhost:8083/?mode=pmm (payment methods management).
+const DEMO_MODE =
+  new URLSearchParams(window.location.search).get('mode') || 'payment';
+
 let defaultProps = {
-  type: 'payment',
+  type: DEMO_MODE === 'pmm' ? 'paymentMethodsManagement' : 'payment',
   hyperswitchConfig: {
     publishableKey: '',
     profileId: '',
     environment: 'sandbox',
+    ...(DEMO_MODE === 'pmm'
+      ? {customEndpoints: {commonEndpoint: 'https://app.hyperswitch.io'}}
+      : {}),
   },
   paymentSessionConfig: {
     sdkAuthorization: '',
@@ -29,7 +37,7 @@ let defaultProps = {
       // type: 'accordion',
       radios: false,
       maxAccordionItems: 3,
-      paymentMethodsArrangementForTabs: "auto",
+      paymentMethodsArrangementForTabs: 'auto',
       spacedAccordionItems: true,
       defaultCollapsed: true,
       // cvcIcon: 'hidden',
@@ -46,7 +54,7 @@ let defaultProps = {
           // displayInSeparateSection: true,
           groupByPaymentMethods: false,
         },
-        hiddenPaymentMethods: ["apple_pay", "google_pay", "paypal"],
+        hiddenPaymentMethods: ['apple_pay', 'google_pay', 'paypal'],
       },
     },
     appearance: {
@@ -153,11 +161,11 @@ let defaultProps = {
     walletButtonsConfiguration: {
       googlePay: {
         buttonType: 'plain',
-        buttonStyle: { light: 'dark', dark: 'light' },
+        buttonStyle: {light: 'dark', dark: 'light'},
       },
       applePay: {
         buttonType: 'plain',
-        buttonStyle: { light: 'black', dark: 'white' },
+        buttonStyle: {light: 'black', dark: 'white'},
       },
     },
     // placeholder: {
@@ -173,7 +181,7 @@ let defaultProps = {
     // paymentMethodOrder: ["apple_pay", "google_pay", "paypal", "samsung_pay", "credit", "klarna",],
     billingDetails: {
       email: 'john@example.com',
-      phone: { code: '+91', number: '9999999999' },
+      phone: {code: '+91', number: '9999999999'},
       address: {
         first_name: 'John',
         last_name: 'Doe',
@@ -186,7 +194,7 @@ let defaultProps = {
       },
     },
     shippingDetails: {
-      phone: { code: '+91', number: '9999999999' },
+      phone: {code: '+91', number: '9999999999'},
       address: {
         first_name: 'John',
         last_name: 'Doe',
@@ -224,10 +232,26 @@ const TRUSTED_ORIGINS = [
   'https://your-production-url.com',
 ]; // Add trusted origins
 
+const PAYMENT_METHOD_SESSION_BODY = {
+  storage_type: 'persistent',
+  keep_alive: true,
+  billing: {
+    address: {first_name: 'hellow', last_name: 'world'},
+    email: 'example@example.com',
+  },
+};
+
 const initReactNativeWeb = async () => {
   const createProps = async () => {
     try {
-      let response = await fetch('http://localhost:5252/create-payment-intent');
+      let response =
+        DEMO_MODE === 'pmm'
+          ? await fetch('http://localhost:5252/create-payment-method-session', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(PAYMENT_METHOD_SESSION_BODY),
+            })
+          : await fetch('http://localhost:5252/create-payment-intent');
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
@@ -240,14 +264,19 @@ const initReactNativeWeb = async () => {
       const iframe = document.querySelector('iframe');
       if (iframe && iframe.contentWindow) {
         iframe.contentWindow.postMessage(
-          JSON.stringify({ initialProps: { props: defaultProps } }),
+          JSON.stringify({initialProps: {props: defaultProps}}),
           TRUSTED_ORIGINS[0],
         );
       } else {
         console.error('Iframe not found or inaccessible.');
       }
     } catch (error) {
-      console.error('Error fetching payment intent:', error);
+      console.error(
+        DEMO_MODE === 'pmm'
+          ? 'Error fetching payment method session:'
+          : 'Error fetching payment intent:',
+        error,
+      );
     }
   };
 
@@ -274,8 +303,9 @@ const initReactNativeWeb = async () => {
 
         const statusElement = document.getElementById('status');
         if (statusElement) {
-          statusElement.textContent = `Status: ${data.status} ${data.message ? 'Message: ' + data.message : ''
-            }`.toUpperCase();
+          statusElement.textContent = `Status: ${data.status} ${
+            data.message ? 'Message: ' + data.message : ''
+          }`.toUpperCase();
         } else {
           console.error('Status element not found.');
         }

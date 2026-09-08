@@ -10,7 +10,7 @@ let make = () => {
       ? <StatusBar translucent=true backgroundColor="transparent" />
       : React.null}
     {switch nativeProp.sdkState {
-    | PaymentMethodsManagement => <PMMangementNavigatorRouter />
+    | PaymentMethodsManagement | WidgetPaymentMethodsManagement => <PMMangementNavigatorRouter />
     | _ => <NavigationRouter />
     }}
   </View>

@@ -14,7 +14,8 @@ let useNotifyValidationFailure = () => {
     | HostedCheckout
     | CardWidget
     | ExpressCheckoutWidget
-    | PaymentMethodsManagement =>
+    | PaymentMethodsManagement
+    | WidgetPaymentMethodsManagement =>
       HyperModule.notifyWidgetPaymentResult(
         nativeProp.rootTag,
         PaymentConfirmTypes.formValidationError->HyperModule.resStatusPayload,

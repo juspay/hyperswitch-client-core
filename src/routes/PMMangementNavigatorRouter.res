@@ -1,7 +1,6 @@
 @react.component
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  // let (allApiData, setAllApiData) = React.useContext(AllApiDataContext.allApiDataContext)
   let showErrorOrWarning = ErrorHooks.useShowErrorOrWarning()
   let logger = LoggerHook.useLoggerHook()
 
@@ -14,19 +13,21 @@ let make = () => {
     None
   }, [nativeProp])
 
-  switch nativeProp.configuration.customer
-  ->Option.map(customer => customer.ephemeralKeySecret)
-  ->Option.getOr(None) {
-  | Some(ephemeralKey) =>
-    ephemeralKey != ""
-      ? <PaymentMethodsManagement />
-      : {
-          showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
-          React.null
-        }
-
-  | None =>
-    showErrorOrWarning(ErrorUtils.errorWarning.invalidEphemeralKey, ())
+  let showSessionError = () => {
+    showErrorOrWarning(
+      ErrorUtils.REQUIRED_PARAMETER(
+        ErrorUtils.Error,
+        ErrorUtils.Static(
+          "INTEGRATION ERROR: Payment method session not available. Create a payment method session and pass the sdkAuthorization.",
+        ),
+      ),
+      (),
+    )
     React.null
+  }
+
+  switch nativeProp.paymentSessionConfig.pmSessionId {
+  | Some(pmSessionId) => pmSessionId != "" ? <PaymentMethodsManagement /> : showSessionError()
+  | None => showSessionError()
   }
 }
