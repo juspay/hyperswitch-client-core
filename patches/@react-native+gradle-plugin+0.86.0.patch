@@ -135,6 +135,56 @@ index e7859ff..33600f1 100644
        onVariants(selector().all()) { variant ->
          variant.sources.java?.addStaticSourceDirectory(
              generatedAutolinkingJavaDir.get().asFile.absolutePath
+diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactRootProjectPlugin.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactRootProjectPlugin.kt
+index 18f0995..4ff18fc 100644
+--- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactRootProjectPlugin.kt
++++ b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/ReactRootProjectPlugin.kt
+@@ -22,11 +22,14 @@ class ReactRootProjectPlugin : Plugin<Project> {
+   override fun apply(project: Project) {
+     checkLegacyArchProperty(project)
+     project.subprojects { subproject ->
+-      // As the :app project (i.e. ReactPlugin) configures both namespaces and JVM toolchains
+-      // for libraries, its evaluation must happen before the libraries' evaluation.
+-      // Eventually the configuration of namespace/JVM toolchain can be moved inside this plugin.
+-      if (subproject.path != ":app") {
+-        subproject.evaluationDependsOn(":app")
++      // As the module applying ReactPlugin configures both namespaces and JVM
++      // toolchains for libraries, its evaluation must happen before the
++      // libraries' evaluation. Eventually the configuration of
++      // namespace/JVM toolchain can be moved inside this plugin.
++      // Hyperswitch: ReactPlugin (com.facebook.react) lives in
++      // hyperswitch-sdk-android-react-native, not :app.
++      if (subproject.path != ":hyperswitch-sdk-android-react-native") {
++        subproject.evaluationDependsOn(":hyperswitch-sdk-android-react-native")
+       }
+       // We set the New Architecture properties to true for all subprojects. So that
+       // libraries don't need to be modified and can keep on using the isNewArchEnabled()
+@@ -40,11 +43,12 @@ class ReactRootProjectPlugin : Plugin<Project> {
+       subproject.extraProperties.set(PropertyUtils.NEW_ARCH_ENABLED, "true")
+       subproject.extraProperties.set(PropertyUtils.SCOPED_NEW_ARCH_ENABLED, "true")
+     }
+-    // We need to make sure that `:app:preBuild` task depends on all other subprojects' preBuild
+-    // tasks. This is necessary in order to have all the codegen generated code before the CMake
+-    // configuration build kicks in.
++    // We need to make sure that the ReactPlugin module's `preBuild` task depends on all other
++    // subprojects' preBuild tasks. This is necessary in order to have all the codegen generated
++    // code before the CMake configuration build kicks in.
+     project.gradle.projectsEvaluated {
+-      val appProject = project.rootProject.subprojects.find { it.name == "app" }
++      val appProject =
++          project.rootProject.subprojects.find { it.name == "hyperswitch-sdk-android-react-native" }
+       val appPreBuild = appProject?.tasks?.findByName("preBuild")
+       if (appPreBuild != null) {
+         // Find all other subprojects' preBuild tasks
+@@ -52,7 +56,7 @@ class ReactRootProjectPlugin : Plugin<Project> {
+             project.rootProject.subprojects
+                 .filter { it != appProject }
+                 .mapNotNull { it.tasks.findByName("preBuild") }
+-        // Make :app:preBuild depend on all others
++        // Make hyperswitch-sdk-android-react-native:preBuild depend on all others
+         appPreBuild.dependsOn(otherPreBuildTasks)
+       }
+     }
 diff --git a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt b/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
 index 1156bc2..4d09c01 100644
 --- a/node_modules/@react-native/gradle-plugin/react-native-gradle-plugin/src/main/kotlin/com/facebook/react/tasks/GeneratePackageListTask.kt
