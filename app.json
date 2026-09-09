@@ -1,5 +1,6 @@
 {
   "name": "hyperSwitch",
   "displayName": "hyperswitch",
-  "headless": "HyperHeadless"
+  "headless": "HyperHeadless",
+  "hyperswitchPaymentMethods": "HyperswitchPaymentMethods"
 }
