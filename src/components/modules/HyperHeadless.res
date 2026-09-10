@@ -10,8 +10,11 @@ module Native = {
   external getPaymentSession: (int, JSON.t, JSON.t, array<JSON.t>, JSON.t => unit) => unit =
     "getPaymentSession"
   @module("./HyperHeadlessNative")
+  external getWalletSession: (int, array<JSON.t>, JSON.t => unit) => unit = "getWalletSession"
+  @module("./HyperHeadlessNative")
   external exitHeadless: (int, string) => unit = "exitHeadless"
 }
 
 let getPaymentSession = Native.getPaymentSession
+let getWalletSession = Native.getWalletSession
 let exitHeadless = Native.exitHeadless

@@ -202,6 +202,7 @@ let make = () => {
       | ExpressCheckoutWidget => <ExpressCheckoutWidget />
       | CvcWidget => <CvcWidget />
       | Headless
+      | WalletWidget
       | NoView
       | PaymentMethodsManagement => React.null
       }}

@@ -9,6 +9,11 @@ export interface Spec extends TurboModule {
     savedPaymentMethods: Array<CodegenTypes.UnsafeObject>,
     callback: (result: CodegenTypes.UnsafeObject) => void,
   ): void;
+  getWalletSession(
+    rootTag: CodegenTypes.Int32,
+    wallets: Array<CodegenTypes.UnsafeObject>,
+    callback: (result: CodegenTypes.UnsafeObject) => void,
+  ): void;
   exitHeadless(rootTag: CodegenTypes.Int32, result: string): void;
 }
 

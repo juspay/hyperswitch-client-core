@@ -221,6 +221,28 @@ let fetchClientData = nativeProp => {
   }
 }
 
+let sdkConfigAPICall = nativeProp => {
+  let uri = `${getBaseUrl(
+      nativeProp,
+    )}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
+
+  handleApiCall(
+    ~uri,
+    ~nativeProp,
+    ~eventName=CONFIG_CALL,
+    ~method=#GET,
+    ~headers=Utils.getHeader(
+      ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    ),
+    ~processSuccess=json => Some(json),
+    ~processError=error => Some(error),
+    ~processCatch=_ => Some(JSON.Encode.null),
+  )
+}
+
 let sessionAPICall = nativeProp => {
   let paymentId = nativeProp.paymentSessionConfig.paymentId
 

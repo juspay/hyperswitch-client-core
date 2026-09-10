@@ -54,7 +54,8 @@ let useErrorWarningValidationOnLoad = () => {
       | TabSheet
       | WidgetTabSheet
       | HostedCheckout
-      | Headless =>
+      | Headless
+      | WalletWidget =>
         showErrorOrWarning(
           ErrorUtils.errorWarning.reguirParameter,
           ~dynamicStr="Either sdkAuthorization or both clientSecret and publishableKey must be provided",

@@ -271,6 +271,7 @@ type sdkState =
   | CvcWidget
   | PaymentMethodsManagement
   | Headless
+  | WalletWidget
   | NoView
 
 let widgetToStrMapper = str => {
@@ -308,6 +309,7 @@ let sdkStateToStrMapper = sdkState => {
   | CvcWidget => "CVC_WIDGET"
   | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
+  | WalletWidget => "WALLET_WIDGET"
   | NoView => "NO_VIEW"
   }
 }
@@ -828,6 +830,7 @@ let parseSdkState = str =>
   | "expressCheckout" => ExpressCheckoutWidget
   | "cvcWidget" => CvcWidget
   | "headless" => Headless
+  | "walletWidget" => WalletWidget
   | _ => NoView
   }
 
