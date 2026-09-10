@@ -29,7 +29,8 @@ let useUpdateIntentListener = (
     | WidgetTabSheet
     | WidgetButtonSheet
     | PaymentSheet
-    | PaymentMethodsManagement => true
+    | PaymentMethodsManagement
+    | CustomWidget(_) => true
     | _ => false
     }
 
