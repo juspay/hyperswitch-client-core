@@ -18,7 +18,16 @@ let make = (~props) => {
     }
   }
 
-  HeadlessCommon.runHeadlessFlow(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
+  switch nativeProp.sdkState {
+  | WalletWidget =>
+    WalletWidgetCommon.runWalletFlow(
+      headlessModule,
+      WalletWidgetCommon.makeWalletModule(),
+      reRegisterCallback,
+      nativeProp,
+    )->ignore
+  | _ => HeadlessCommon.runHeadlessFlow(headlessModule, reRegisterCallback, nativeProp, ~getCvc)
+  }
 
   React.null
 }
