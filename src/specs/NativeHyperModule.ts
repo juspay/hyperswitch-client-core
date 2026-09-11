@@ -10,19 +10,6 @@ export type PaymentResultEvent = {
   confirm?: boolean;
 };
 
-export type WidgetActionEvent = {
-  actionType?: string;
-  rootTag?: CodegenTypes.Int32;
-  sdkAuthorization?: string;
-  paymentToken?: string;
-  billing?: string;
-};
-
-export type UpdateIntentEvent = {
-  rootTag?: CodegenTypes.Int32;
-  sdkAuthorization?: string;
-};
-
 export type PaymentExitResult = {
   status: string;
   type?: string;
@@ -94,9 +81,6 @@ export interface Spec extends TurboModule {
   readonly confirm: CodegenTypes.EventEmitter<PaymentResultEvent>;
   readonly widget: CodegenTypes.EventEmitter<PaymentResultEvent>;
   readonly confirmEC: CodegenTypes.EventEmitter<PaymentResultEvent>;
-  readonly triggerWidgetAction: CodegenTypes.EventEmitter<WidgetActionEvent>;
-  readonly updateIntentInit: CodegenTypes.EventEmitter<UpdateIntentEvent>;
-  readonly updateIntentComplete: CodegenTypes.EventEmitter<UpdateIntentEvent>;
 }
 
 export default TurboModuleRegistry.get<Spec>('HyperModule');

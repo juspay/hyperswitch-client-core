@@ -15,10 +15,17 @@ const NewApp = props => {
   );
 };
 
+// Sentry is per JS realm, not per surface: initialise it once, however many
+// roots this realm renders.
+let sentryInitialised = false;
+
 const SentryApp = React.memo(props => {
   const dsn = process.env.SENTRY_DSN
   if (dsn) {
-    initiateSentry(dsn, process.env.SENTRY_ENV);
+    if (!sentryInitialised) {
+      sentryInitialised = true;
+      initiateSentry(dsn, process.env.SENTRY_ENV);
+    }
     return typeof sentryReactNative.wrap === 'function'
       ? sentryReactNative.wrap(NewApp)(props)
       : NewApp(props);
