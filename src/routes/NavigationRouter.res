@@ -1,6 +1,6 @@
 @react.component
 let make = () => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (nativeProp, setNativeProp) = React.useContext(NativePropContext.nativePropContext)
 
   let sessionFetchers = SessionDataHook.useSessionFetchers()
 
@@ -35,7 +35,7 @@ let make = () => {
     logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
     error()
     None
-  }, [nativeProp])
+  }, [nativeProp.sdkParams.launchTime])
 
   let sessionCredentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
   let fetchedCredentialsKey = React.useRef(None)
@@ -114,6 +114,21 @@ let make = () => {
         } else {
           let parsed = SdkConfigParser.itemToObjMapper(configResponse)
           if PaymentUtils.isValidSdkConfig(parsed) {
+            let (profile_id, processor_merchant_id, organization_id) =
+              SdkConfigParser.getProfileContext(parsed.context_used)
+            let sdkPropsContext: SuperpositionTypes.sdkPropsContext = {
+              platform: WebKit.platformGroup,
+              ?profile_id,
+              ?processor_merchant_id,
+              ?organization_id,
+            }
+            let finalConfiguration = SdkPropsResolver.resolveMobileConfiguration(
+              ~rawConfigs=parsed.raw_configs,
+              ~context=sdkPropsContext,
+              ~merchantConfigurationJson=nativeProp.rawConfigurationJson,
+              ~displayPayButton=nativeProp.sdkState === PaymentSheet,
+            )
+            setNativeProp({...nativeProp, configuration: finalConfiguration})
             setVaultingAction(_ => Some(PaymentUtils.readVaultingAction(configResponse)))
             setSdkConfigData(_ => Some(parsed))
           } else {

@@ -71,6 +71,7 @@ let make = (
     )
     let info: PaymentEvents.cardInfo = {
       bin: p.bin->Nullable.toOption,
+      extendedBin: None,
       last4: p.last4->Nullable.toOption,
       brand: p.brand->Nullable.toOption,
       expiryMonth: p.expiryMonth->Nullable.toOption,
