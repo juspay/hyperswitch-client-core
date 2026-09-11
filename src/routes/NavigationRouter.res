@@ -3,6 +3,7 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   let sessionFetchers = SessionDataHook.useSessionFetchers()
+  let entranceGate = React.useContext(EntranceGate.context)
 
   let (clientResponse, setClientResponse) = React.useState(_ => None)
   let (sessionTokenData, setSessionTokenData) = React.useState(_ => None)
@@ -38,24 +39,30 @@ let make = () => {
   }, [nativeProp])
 
   let sessionCredentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
-  let fetchedCredentialsKey = React.useRef(None)
+  // Changes when the session's intent switched, even under the same credentials.
+  let intentRevision = UpdateIntentHook.useUpdateIntentListener()
+  // One fetch per (credentials, intent) pair. The store is keyed by credentials alone;
+  // the prefetch surface has already replaced the entry under this key by the time the
+  // revision changes, so a re-run picks up the warm data.
+  let requestId = `${sessionCredentialsKey}#${intentRevision->Int.toString}`
+  let fetchedRequestId = React.useRef(None)
 
   React.useEffect1(() => {
     //KountModule.launchKountIfAvailable(nativeProp.paymentSessionConfig.clientSecret, _x => ())
-    let alreadyFetched = switch fetchedCredentialsKey.current {
-    | Some(key) => key === sessionCredentialsKey
+    let alreadyFetched = switch fetchedRequestId.current {
+    | Some(id) => id === requestId
     | None => false
     }
     if nativeProp.sdkState !== CvcWidget && !alreadyFetched {
-      fetchedCredentialsKey.current = Some(sessionCredentialsKey)
+      fetchedRequestId.current = Some(requestId)
       let requestKey = sessionCredentialsKey
       setSessionAnswered(_ => false)
       setVaultDetails(_ => None)
       setVaultingAction(_ => None)
 
       let isRequestCurrent = () =>
-        switch fetchedCredentialsKey.current {
-        | Some(key) => key === requestKey
+        switch fetchedRequestId.current {
+        | Some(id) => id === requestId
         | None => false
         }
 
@@ -78,10 +85,7 @@ let make = () => {
               },
             )
           } else {
-            errorOnApiCalls(
-              INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))),
-              (),
-            )
+            errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))), ())
           }
         } else if clientResp == JSON.Encode.null {
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfirmError)
@@ -123,6 +127,7 @@ let make = () => {
       }
 
       let entry = SessionStore.getOrStart(~key=requestKey, ~fetchers=sessionFetchers)
+      SessionStore.retain(~key=requestKey)
 
       let handleSessionTokenResponse = sessionTokenData => {
         setSessionAnswered(_ => true)
@@ -153,7 +158,7 @@ let make = () => {
               work()
             }
           }
-        EntranceGate.whenSettled(run)
+        entranceGate->EntranceGate.whenSettled(run)
         setTimeout(run, 700)->ignore
       }
 
@@ -177,9 +182,11 @@ let make = () => {
         Promise.resolve()
       })
       ->ignore
+      Some(() => SessionStore.release(~key=requestKey))
+    } else {
+      None
     }
-    None
-  }, [sessionCredentialsKey])
+  }, [requestId])
 
   let paymentMethodOrder = nativeProp.configuration.paymentMethodOrder
   let hiddenPaymentMethods = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
@@ -217,8 +224,6 @@ let make = () => {
   }, (vaultingAction, sessionAnswered, vaultDetails))
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
-
-  UpdateIntentHook.useUpdateIntentListener()
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
    <CardStrategyContext strategy=cardStrategy>

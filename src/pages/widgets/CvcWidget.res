@@ -60,42 +60,39 @@ let make = () => {
 
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
-    let cleanup = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
-      actionData: NativeModulesType.widgetActionData,
-    ) => {
-      switch actionData.actionType {
-      | ConfirmCvcPayment =>
-        if actionData.rootTag === nativeProp.rootTag {
-          let isCvcCompleteNow = Validation.checkCardCVC(cvcValueRef.current, cardNetwork)
-          if !isCvcCompleteNow {
-            let cvcValidationError: PaymentConfirmTypes.error = {
-              type_: "validation_error",
-              status: "failed",
-              code: "cvc_validation_failed",
-              message: "CVC is not complete. Please enter a valid CVC.",
-            }
-            headlessModule.exitHeadless(
-              nativeProp.rootTag,
-              cvcValidationError->HyperModule.resStatusPayload,
-            )
-          } else {
-            let sdkAuthorization = actionData.sdkAuthorization->Option.getOr("")
-            HeadlessCommon.confirmCardPayment(
-              headlessModule,
-              nativeProp->withAuthorizationConfig(sdkAuthorization),
-              ~sdkAuthorization,
-              ~paymentToken=actionData.paymentToken->Option.getOr(""),
-              ~cvc=cvcValueRef.current->JSON.Encode.string,
-              ~billing=?actionData.billing,
-            )
-          }
-        }
-      | _ => ()
-      }
-    })
-
-    Some(() => cleanup())
+    None
   })
+
+  // Native confirms through this widget's props: each call bumps `attempt`, and React
+  // delivers it here whether the widget was already mounted or mounts afterwards. The
+  // widget has no session of its own; the credentials to confirm with arrive with it.
+  let confirmAttempt = nativeProp.cvcConfirm->Option.map(c => c.attempt)->Option.getOr(-1)
+  React.useEffect1(() => {
+    switch nativeProp.cvcConfirm {
+    | Some({sdkAuthorization, paymentToken, billing}) =>
+      let isCvcCompleteNow = Validation.checkCardCVC(cvcValueRef.current, cardNetwork)
+      if !isCvcCompleteNow {
+        let cvcValidationError: PaymentConfirmTypes.error = {
+          type_: "validation_error",
+          status: "failed",
+          code: "cvc_validation_failed",
+          message: "CVC is not complete. Please enter a valid CVC.",
+        }
+        headlessModule.exitHeadless(nativeProp.rootTag, cvcValidationError->HyperModule.resStatusPayload)
+      } else {
+        HeadlessCommon.confirmCardPayment(
+          headlessModule,
+          nativeProp->withAuthorizationConfig(sdkAuthorization),
+          ~sdkAuthorization,
+          ~paymentToken,
+          ~cvc=cvcValueRef.current->JSON.Encode.string,
+          ~billing=?billing,
+        )
+      }
+    | None => ()
+    }
+    None
+  }, [confirmAttempt])
 
   React.useEffect1(_ => {
     emitCvcStatusEvent(~focused=isFocused, ~blur=!isFocused)

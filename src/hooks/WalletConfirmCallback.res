@@ -3,23 +3,24 @@
 // native to invoke the callback with a boolean.
 // true  => proceed with wallet launch
 // false => abort (reset loading state)
-// A pendingRef prevents second taps while waiting.
+// A pending ref prevents second taps while waiting. It lives in the hook, so
+// one surface's pending tap never blocks another surface in the same realm.
 
 open SdkTypes
 
-let pendingRef = ref(false)
 let useWalletConfirmCallback = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let pendingRef = React.useRef(false)
   (paymentMethodType: string, onProceed: unit => unit, onAbort: unit => unit) => {
-    if !pendingRef.contents {
-      pendingRef.contents = true
+    if !pendingRef.current {
+      pendingRef.current = true
       let payload =
         [("paymentMethodType", paymentMethodType->JSON.Encode.string)]
         ->Dict.fromArray
         ->JSON.Encode.object
 
       HyperModule.onPaymentConfirmButtonClick(nativeProp.rootTag, payload, shouldProceed => {
-        pendingRef.contents = false
+        pendingRef.current = false
         if shouldProceed {
           onProceed()
         } else {
