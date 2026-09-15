@@ -1,5 +1,10 @@
 let defaultSetter = (_: Dict.t<float>) => ()
-let loggingContext = React.createContext((Dict.make(), defaultSetter))
+
+let loggingContext = React.createContext((
+  Dict.make(),
+  defaultSetter,
+  ({current: Nullable.null}: React.ref<Nullable.t<timeoutId>>),
+))
 
 module Provider = {
   let make = React.Context.provider(loggingContext)
@@ -10,5 +15,15 @@ let make = (~children) => {
   let setState = React.useCallback1(val => {
     setState(_ => val)
   }, [setState])
-  <Provider value=(state, setState)> children </Provider>
+  let inactivityTimer: React.ref<Nullable.t<timeoutId>> = React.useRef(Nullable.null)
+  React.useEffect0(() => {
+    Some(
+      () => {
+        Nullable.forEach(inactivityTimer.current, id => clearTimeout(id))
+        inactivityTimer.current = Nullable.null
+      },
+    )
+  })
+  let value = React.useMemo2(() => (state, setState, inactivityTimer), (state, setState))
+  <Provider value> children </Provider>
 }

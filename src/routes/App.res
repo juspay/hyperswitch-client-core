@@ -9,7 +9,9 @@ module ContextWrapper = {
             <LocaleStringDataContext locale=nativeProp.configuration.locale>
               <CountryStateDataContext>
                 <LoadingContext>
-                  <BannerContext> children </BannerContext>
+                  <EntranceGate>
+                    <BannerContext> children </BannerContext>
+                  </EntranceGate>
                 </LoadingContext>
               </CountryStateDataContext>
             </LocaleStringDataContext>

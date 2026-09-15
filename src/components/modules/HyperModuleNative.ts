@@ -1,15 +1,11 @@
 import NativeHyperModule from '../../specs/NativeHyperModule';
 import type {
   PaymentResultEvent,
-  WidgetActionEvent,
-  UpdateIntentEvent,
   PaymentExitResult,
 } from '../../specs/NativeHyperModule';
 
 export type {
   PaymentResultEvent,
-  WidgetActionEvent,
-  UpdateIntentEvent,
   PaymentExitResult,
 };
 
@@ -139,15 +135,3 @@ export const subscribeWidget = (
 export const subscribeConfirmEC = (
   handler: (payload: PaymentResultEvent) => void,
 ): (() => void) => subscribe(NativeHyperModule?.confirmEC, handler);
-
-export const subscribeTriggerWidgetAction = (
-  handler: (payload: WidgetActionEvent) => void,
-): (() => void) => subscribe(NativeHyperModule?.triggerWidgetAction, handler);
-
-export const subscribeUpdateIntentInit = (
-  handler: (payload: UpdateIntentEvent) => void,
-): (() => void) => subscribe(NativeHyperModule?.updateIntentInit, handler);
-
-export const subscribeUpdateIntentComplete = (
-  handler: (payload: UpdateIntentEvent) => void,
-): (() => void) => subscribe(NativeHyperModule?.updateIntentComplete, handler);

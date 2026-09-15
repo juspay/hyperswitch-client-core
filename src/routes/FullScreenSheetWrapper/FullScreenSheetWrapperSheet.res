@@ -19,9 +19,10 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
   })
   let {paymentSheetOverlay} = ThemebasedStyle.useThemeBasedStyle()
 
+  let entranceGate = React.useContext(EntranceGate.context)
   let sheetFlex = AnimatedValue.useAnimatedValue(0.)
   React.useEffect0(() => {
-    EntranceGate.arm()
+    entranceGate->EntranceGate.arm
     Animated.timing(
       sheetFlex,
       {
@@ -29,7 +30,7 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
         isInteraction: true,
         useNativeDriver: false,
       },
-    )->Animated.start(~endCallback=_ => EntranceGate.settle())
+    )->Animated.start(~endCallback=_ => entranceGate->EntranceGate.settle)
     None
   })
 
