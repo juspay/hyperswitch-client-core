@@ -1,5 +1,9 @@
 open LoggerTypes
 
+/* React Native gives Android's OkHttp client no transport timeouts 
+   at all (iOS's NSURLSession defaults to 60 s)*/ 
+let requestTimeoutMs = 60_000
+
 let fetchApi = (
   ~uri,
   ~bodyStr: string="",
@@ -21,6 +25,8 @@ let fetchApi = (
   open Promise
 
   body->then(body => {
+    let controller = Fetch.AbortController.make()
+    let deadline = setTimeout(() => controller->Fetch.AbortController.abort, requestTimeoutMs)
     Fetch.fetch(
       uri,
       (
@@ -29,15 +35,17 @@ let fetchApi = (
           ?body,
           headers: Fetch.Headers.fromObject(headers->Utils.getJsonObjectFromRecord),
           ?mode,
+          signal: controller->Fetch.AbortController.signal,
         }: Fetch.Request.init
       ),
     )
     ->catch(err => {
+      clearTimeout(deadline)
       exception Error(string)
       Promise.reject(Error(err->Utils.getError(`API call failed: ${uri}`)->JSON.stringify))
     })
     ->then(resp => {
-      //let status = resp->Fetch.Response.status
+      clearTimeout(deadline)
       Promise.resolve(resp)
     })
   })

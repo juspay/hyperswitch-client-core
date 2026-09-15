@@ -642,10 +642,7 @@ let processRequest = async (
     | _ => ()
     }
   | _ =>
-    headlessModule.exitHeadless(
-      nativeProp.rootTag,
-      getDefaultError->HyperModule.resStatusPayload,
-    )
+    headlessModule.exitHeadless(nativeProp.rootTag, getDefaultError->HyperModule.resStatusPayload)
   }
 }
 
@@ -742,8 +739,12 @@ let apiHandler = async (
   reRegisterCallback,
   nativeProp,
   ~getCvc: JSON.t => JSON.t,
+  ~prefetched: option<SessionStore.entry>=?,
 ) => {
-  let clientResponse = await fetchClientData(nativeProp)
+  let clientResponse = switch prefetched {
+  | Some(entry) => await entry.client->Promise.thenResolve(json => Some(json))
+  | None => await fetchClientData(nativeProp)
+  }
   switch clientResponse {
   | Some(response) =>
     let spmData =
@@ -773,7 +774,10 @@ let apiHandler = async (
     })
 
     if sessionSpmData->Array.length > 0 {
-      let session = await sessionAPICall(nativeProp)
+      let session = switch prefetched {
+      | Some(entry) => await entry.sessions
+      | None => await sessionAPICall(nativeProp)
+      }
 
       if session->ErrorUtils.isError {
         if session->ErrorUtils.getErrorCode == "\"IR_16\"" {
@@ -845,12 +849,12 @@ let apiHandler = async (
   }
 }
 
-
 let runHeadlessFlow = (
   headlessModule,
   reRegisterCallback,
   nativeProp: SdkTypes.nativeProp,
   ~getCvc: JSON.t => JSON.t,
+  ~prefetched: option<SessionStore.entry>=?,
 ) => {
   let isPublishableKeyValid = GlobalVars.isValidPK(
     nativeProp.hyperswitchConfig.environment,
@@ -866,7 +870,7 @@ let runHeadlessFlow = (
     isPublishableKeyValid &&
     (isClientSecretValid || nativeProp.paymentSessionConfig.sdkAuthorization != None)
   ) {
-    apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc)->ignore
+    apiHandler(headlessModule, reRegisterCallback, nativeProp, ~getCvc, ~prefetched?)->ignore
   } else if !isPublishableKeyValid {
     errorOnApiCalls(INVALID_PK(Error, Static("")))->(
       getDefaultPaymentSession(headlessModule, _, ~rootTag=nativeProp.rootTag)

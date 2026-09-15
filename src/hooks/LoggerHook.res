@@ -2,7 +2,7 @@ open LoggerTypes
 open LoggerUtils
 
 let useCalculateLatency = () => {
-  let (events, _setEvents) = React.useContext(LoggerContext.loggingContext)
+  let (events, _setEvents, _) = React.useContext(LoggerContext.loggingContext)
   eventName => {
     let currentTimestamp = Date.now()
     let isRequest = eventName->String.includes("_INIT")
@@ -70,8 +70,8 @@ let inactiveScreenApiCall = (
   updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)
   setEvents(updatedEvents)
 }
-let timeOut = ref(Nullable.null)
 let snooze = (
+  ~timer: React.ref<Nullable.t<timeoutId>>,
   ~paymentId,
   ~publishableKey,
   ~appId,
@@ -82,7 +82,7 @@ let snooze = (
   ~nativeProp,
   ~uri,
 ) => {
-  timeOut :=
+  timer.current =
     Nullable.make(
       setTimeout(
         () =>
@@ -101,10 +101,11 @@ let snooze = (
       ),
     )
 }
-let cancel = () => Nullable.forEach(timeOut.contents, intervalId => clearTimeout(intervalId))
+let cancel = (timer: React.ref<Nullable.t<timeoutId>>) =>
+  Nullable.forEach(timer.current, intervalId => clearTimeout(intervalId))
 let useLoggerHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let (events, setEvents) = React.useContext(LoggerContext.loggingContext)
+  let (events, setEvents, timer) = React.useContext(LoggerContext.loggingContext)
   let calculateLatency = useCalculateLatency()
   let getLoggingEndpointHook = GlobalHooks.useGetLoggingUrl()
   (
@@ -119,7 +120,7 @@ let useLoggerHook = () => {
     ~latency=?,
     (),
   ) => {
-    cancel()
+    cancel(timer)
     let updatedEvents = events
     let firstEvent = updatedEvents->Dict.get(eventName->eventToStrMapper)->Option.isNone
     let timestamp = Date.now()
@@ -170,6 +171,7 @@ let useLoggerHook = () => {
     updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)
     setEvents(updatedEvents)
     snooze(
+      ~timer,
       ~paymentId=nativeProp.paymentSessionConfig.paymentId,
       ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
       ~appId=nativeProp.sdkParams.appId,
