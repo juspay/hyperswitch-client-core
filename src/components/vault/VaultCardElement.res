@@ -69,8 +69,14 @@ let make = (
       p.expiryMonth->Nullable.toOption->Option.isSome &&
         p.expiryYear->Nullable.toOption->Option.isSome
     )
+    let bin = p.bin->Nullable.toOption
+    let extendedBin =
+      bin->Option.flatMap(b =>
+        b->String.length >= 8 ? Some(b->String.substring(~start=0, ~end=8)) : None
+      )
     let info: PaymentEvents.cardInfo = {
-      bin: p.bin->Nullable.toOption,
+      bin,
+      extendedBin,
       last4: p.last4->Nullable.toOption,
       brand: p.brand->Nullable.toOption,
       expiryMonth: p.expiryMonth->Nullable.toOption,
