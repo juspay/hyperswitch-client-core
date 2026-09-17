@@ -17,12 +17,21 @@ module SavedPaymentMethods = {
 
       UpdateIntentHook.useUpdateIntentListener()->ignore
 
-      React.useEffect1(() => {
+      let knownMethods: React.ref<ClientResponseType.customerPaymentMethods> = React.useRef([])
 
+      React.useEffect1(() => {
         let entry = SessionStore.getOrStart(~key, ~fetchers)
         SessionStore.retain(~key)
 
-        let headlessModule = HeadlessCommon.makeHeadlessModule()
+        let superseded = ref(false)
+        let native = HeadlessCommon.makeHeadlessModule()
+        let headlessModule = {
+          ...native,
+          getPaymentSession: (rootTag, defaultMethod, lastUsedMethod, allMethods, callback) =>
+            if !superseded.contents {
+              native.getPaymentSession(rootTag, defaultMethod, lastUsedMethod, allMethods, callback)
+            },
+        }
         let reRegisterCallback = ref(() => ())
 
         let getCvc = (response: JSON.t) =>
@@ -37,8 +46,14 @@ module SavedPaymentMethods = {
           nativeProp,
           ~getCvc,
           ~prefetched=entry,
+          ~knownMethods,
         )
-        Some(() => SessionStore.release(~key))
+        Some(
+          () => {
+            superseded := true
+            SessionStore.release(~key)
+          },
+        )
       }, [key])
 
       React.null

@@ -19,21 +19,32 @@ let useUpdateIntentListener = () => {
     | _ => true
     }
 
-    // Only a surface that belongs to a session follows that session's intent.
+    let handle = (event: SessionStore.sessionEvent) =>
+      switch event {
+      | IntentUpdating => setLoading(ProcessingPaymentsWithOverlay)
+      | IntentUpdateEnded => setLoading(FillingDetails)
+      | IntentSwitched(paymentSessionConfig) =>
+        setNativeProp({...nativePropRef.current, paymentSessionConfig})
+        setRevision(revision => revision + 1)
+        setLoading(FillingDetails)
+      }
+
     switch nativeProp.sdkParams.sessionTag {
     | Some(sessionTag) if followsIntent =>
-      Some(
-        SessionStore.subscribe(~sessionTag, event =>
-          switch event {
-          | IntentUpdating => setLoading(ProcessingPaymentsWithOverlay)
-          | IntentUpdateEnded => setLoading(FillingDetails)
-          | IntentSwitched(paymentSessionConfig) =>
-            setNativeProp({...nativePropRef.current, paymentSessionConfig})
-            setRevision(revision => revision + 1)
-            setLoading(FillingDetails)
-          }
-        ),
-      )
+      let unsubscribe = SessionStore.subscribe(~sessionTag, handle)
+      let state = SessionStore.stateOf(~sessionTag)
+      let currentKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
+      switch state.switched {
+      | Some(config)
+        if PaymentUtils.getSessionCredentialsKey({...nativeProp, paymentSessionConfig: config}) !==
+          currentKey =>
+        handle(IntentSwitched(config))
+      | _ => ()
+      }
+      if state.updating {
+        handle(IntentUpdating)
+      }
+      Some(unsubscribe)
     | _ => None
     }
   })
