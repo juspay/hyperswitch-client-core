@@ -41,6 +41,7 @@ let make = (~setConfirmButtonData) => {
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let notifyNotReady = UseWidgetActions.useNotifyNotReady()
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
@@ -188,7 +189,8 @@ let make = (~setConfirmButtonData) => {
   let handlePress = _ => {
     switch (payment_method, strategy) {
     | (CARD, CardStrategyContext.Pending)
-    | (CARD, CardStrategyContext.Refused(_)) => ()
+    | (CARD, CardStrategyContext.Refused(_)) =>
+      notifyNotReady()
     | (CARD, CardStrategyContext.VaultCard(_)) =>
       if isFormValid {
         submitVaultCard(~formId=vaultFormId, ~shape=WholeCard, ~onTokenized=vaultPmd =>
@@ -233,9 +235,11 @@ let make = (~setConfirmButtonData) => {
     ~isPristine,
   )
 
-  React.useEffect4(() => {
+  let credentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
+  React.useEffect5(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
+      credentialsKey,
       handlePress,
       payment_method_type,
       payment_experience,
@@ -244,7 +248,7 @@ let make = (~setConfirmButtonData) => {
     setConfirmButtonData(confirmButton)
 
     None
-  }, (walletData, effectiveFormValid, formData, strategy))
+  }, (walletData, effectiveFormValid, formData, strategy, credentialsKey))
 
   <ReactNative.View
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>

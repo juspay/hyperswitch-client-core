@@ -16,6 +16,11 @@ let useHandleSuccessFailure = () => {
     | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet =>
       if closeSDK {
         exit(apiResStatus, reset)
+      } else {
+        HyperModule.notifyWidgetPaymentResult(
+          nativeProp.rootTag,
+          {...apiResStatus, status: "failed"}->HyperModule.resStatusPayload,
+        )
       }
     | CustomWidget(str) =>
       exitWidget(apiResStatus, str->SdkTypes.widgetToStrMapper->String.toLowerCase)

@@ -119,6 +119,32 @@ let formValidationError = {
   code: "form_validation_failed",
   message: "Payment form has validation errors. Please correct them and try again.",
 }
+
+// A widget confirm that found nothing to confirm with: the form has not loaded, no payment
+// method is selected, or the selected one is not ready. Answered, never dropped.
+let widgetNotReadyError = {
+  type_: "widget_not_ready",
+  status: "failed",
+  code: "widget_not_ready",
+  message: "The widget has no payment method ready to confirm.",
+}
+
+// A wallet sheet the customer dismissed while a widget or headless confirm waited on it. A
+// result that does not end the widget, so the caller can confirm again.
+let walletCancelledError = {
+  type_: "wallet_cancelled",
+  status: "cancelled",
+  code: "wallet_cancelled",
+  message: "The wallet sheet was cancelled.",
+}
+
+// A wallet sheet that failed, or could not be shown, while a confirm waited on it.
+let walletFailedError = message => {
+  type_: "wallet_error",
+  status: "failed",
+  code: "wallet_failed",
+  message,
+}
 let getACH_bank_transfer = (data: option<bank_transfer_steps_and_charges_details>) => {
   switch data {
   | Some(data) => data.ach_credit_transfer

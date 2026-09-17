@@ -41,23 +41,6 @@ let make = () => {
 
   let headlessModule = HeadlessCommon.makeHeadlessModule()
 
-  let withAuthorizationConfig = (nativeProp: SdkTypes.nativeProp, sdkAuthorization) =>
-    if nativeProp.hyperswitchConfig.publishableKey !== "" || sdkAuthorization === "" {
-      nativeProp
-    } else {
-      let authData = Utils.getSdkAuthorizationData(sdkAuthorization)
-      let publishableKey = authData.publishableKey->Option.getOr("")
-      {
-        ...nativeProp,
-        hyperswitchConfig: {
-          ...nativeProp.hyperswitchConfig,
-          publishableKey,
-          profileId: authData.profileId,
-          environment: GlobalVars.checkEnv(publishableKey),
-        },
-      }
-    }
-
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
     None
@@ -78,7 +61,7 @@ let make = () => {
       } else {
         HeadlessCommon.confirmCardPayment(
           headlessModule,
-          nativeProp->withAuthorizationConfig(sdkAuthorization),
+          nativeProp->PaymentUtils.withSdkAuthorization(sdkAuthorization),
           ~sdkAuthorization,
           ~paymentToken,
           ~cvc=cvcValueRef.current->JSON.Encode.string,

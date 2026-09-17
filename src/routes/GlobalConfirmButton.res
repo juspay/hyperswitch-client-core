@@ -1,6 +1,7 @@
 type confirmButtonData = {
   loading: bool,
   visible?: bool,
+  credentialsKey?: string,
   handlePress: unit => unit,
   payment_method_type: string,
   payment_experience?: array<ClientResponseType.paymentExperience>,

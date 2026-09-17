@@ -74,6 +74,7 @@ module Runner = {
       () => {
         generation.current = generation.current + 1
         endUpdate()
+        SessionStore.forget(~sessionTag)
       },
     ))
 
