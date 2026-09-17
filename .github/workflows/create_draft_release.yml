@@ -71,6 +71,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # TEMP: build from v1.9.0-patch branch for patch release. Revert after release.
+          ref: v1.9.0-patch
           fetch-depth: 0
           token: ${{ secrets.AUTORELEASE_PAT || github.token }}
           submodules: recursive
