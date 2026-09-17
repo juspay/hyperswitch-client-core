@@ -10,9 +10,9 @@ let setupNativeEventListener = (eventName, handler) => {
   }
 }
 
-let setupPaymentConfirmListener = (
-  ~onConfirm: (string, string) => unit, // clientSecret, publishableKey
-) => {
+let setupPaymentConfirmListener = (~onConfirm: (string, string) => unit) => {
+  // clientSecret, publishableKey
+
   setupNativeEventListener("confirm", var => {
     let responseFromJava = var->PaymentConfirmTypes.itemToObjMapperJava
     onConfirm(responseFromJava.clientSecret, responseFromJava.publishableKey)

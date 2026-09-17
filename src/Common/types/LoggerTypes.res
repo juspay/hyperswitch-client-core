@@ -57,6 +57,7 @@ type eventName =
   | POST_SESSION_TOKENS_CALL_INIT
   | POST_SESSION_TOKENS_CALL
   | CARD_SCHEME_SELECTION
+  | VAULT_TOKENIZE
 
 type logFile = {
   timestamp: string,

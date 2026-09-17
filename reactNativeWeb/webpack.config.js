@@ -153,6 +153,9 @@ module.exports = {
       'react-native-plaid-link-sdk': 'react-native-web',
       '@react-native-clipboard/clipboard':
         'react-native-web/dist/exports/Clipboard',
+      '@basis-theory/react-native-elements': false,
+      '@evervault/react-native': false,
+      'skyflow-react-native': false,
     },
   },
   optimization: {

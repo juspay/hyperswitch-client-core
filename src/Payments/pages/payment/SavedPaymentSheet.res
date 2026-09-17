@@ -21,6 +21,10 @@ let make = (
   let {getRequiredFieldsForButton, nickname} = React.useContext(
     DynamicFieldsContext.dynamicFieldsContext,
   )
+  let {strategy, getFormState, setShowErrors} = React.useContext(
+    CardStrategyContext.cardStrategyContext,
+  )
+  let submitVaultCard = VaultCardSubmitHook.useVaultCardSubmit()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let showAlert = AlertHook.useAlerts()
@@ -50,6 +54,15 @@ let make = (
     setSelectedToken(_ => token)
   }, [setSelectedToken])
 
+  let vaultCvcFormId = selectedToken->Option.mapOr("", VaultCvcElement.formIdFor)
+  let isVaultCvc = switch (selectedToken, strategy) {
+  | (Some(token), CardStrategyContext.VaultCard(_)) =>
+    token.payment_method === CARD && token.requires_cvv
+  | _ => false
+  }
+  let vaultCvcValid = isVaultCvc && getFormState(vaultCvcFormId).isValid
+  let hasCvcInput = isVaultCvc ? vaultCvcValid : savedCardCvv->Option.isSome
+
   React.useEffect1(() => {
     // if !isScreenFocus {
     setSelectedToken(customerPaymentMethods->Array.get(0))
@@ -73,7 +86,10 @@ let make = (
   } = ThemebasedStyle.useThemeBasedStyle()
   let getShadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
 
-  let processRequestSaved = (token: ClientResponseType.customerPaymentMethod) => {
+  let processRequestSaved = (
+    token: ClientResponseType.customerPaymentMethod,
+    ~vaultPaymentMethodData: option<JSON.t>=?,
+  ) => {
     setLoading(ProcessingPayments)
 
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
@@ -119,6 +135,7 @@ let make = (
         ~payment_method_type=?{
           token.payment_method === CARD ? None : Some(token.payment_method_type)
         },
+        ~vaultPaymentMethodData?,
       )
     }
 
@@ -425,28 +442,45 @@ let make = (
   let handlePress = _ => {
     switch (
       selectedToken,
-      !showDisclaimer ||
-      (showDisclaimer && (isSaveCardCheckboxSelected || savedCardCvv->Option.isNone)),
+      !showDisclaimer || (showDisclaimer && (isSaveCardCheckboxSelected || !hasCvcInput)),
     ) {
     | (Some(token), true) =>
       switch token.payment_method {
       | CARD =>
-        token.requires_cvv &&
-        (savedCardCvv->Option.isNone ||
-          !Validation.cvcNumberInRange(
-            savedCardCvv->Option.getOr(""),
-            token.card
-            ->Option.map(card => card.card_network)
-            ->Option.getOr(""),
-          ))
-          ? {
-              if savedCardCvv->Option.isNone {
-                setSavedCardCvv(_ => Some(""))
+        switch strategy {
+        | CardStrategyContext.VaultCard(_) if token.requires_cvv =>
+          if !vaultCvcValid {
+            setShowErrors(vaultCvcFormId, true)
+            setLoading(FillingDetails)
+            notifyValidationFailure()
+          } else {
+            submitVaultCard(~formId=vaultCvcFormId, ~shape=SavedCardCvc, ~onTokenized=vaultPmd =>
+              processRequestSaved(
+                token,
+                ~vaultPaymentMethodData=?vaultPmd->Dict.get("payment_method_data"),
+              )
+            )
+          }
+        | CardStrategyContext.Pending | CardStrategyContext.Refused(_) if token.requires_cvv =>
+          setLoading(FillingDetails)
+        | _ =>
+          token.requires_cvv &&
+          (savedCardCvv->Option.isNone ||
+            !Validation.cvcNumberInRange(
+              savedCardCvv->Option.getOr(""),
+              token.card
+              ->Option.map(card => card.card_network)
+              ->Option.getOr(""),
+            ))
+            ? {
+                if savedCardCvv->Option.isNone {
+                  setSavedCardCvv(_ => Some(""))
+                }
+                setLoading(FillingDetails)
+                notifyValidationFailure()
               }
-              setLoading(FillingDetails)
-              notifyValidationFailure()
-            }
-          : processRequestSaved(token)
+            : processRequestSaved(token)
+        }
       | WALLET =>
         switch token.payment_method_type_wallet {
         | APPLE_PAY =>
@@ -586,12 +620,14 @@ let make = (
     None
   }, [selectedToken])
 
-  React.useEffect2(() => {
+  React.useEffect4(() => {
     switch selectedToken {
     | Some(token) =>
       let isFormComplete = switch token.payment_method {
       | CARD =>
-        if token.requires_cvv {
+        if isVaultCvc {
+          vaultCvcValid
+        } else if token.requires_cvv {
           switch savedCardCvv {
           | Some(cvv) =>
             cvv->String.length > 0 &&
@@ -632,7 +668,7 @@ let make = (
     | None => ()
     }
     None
-  }, (selectedToken, savedCardCvv))
+  }, (selectedToken, savedCardCvv, isVaultCvc, vaultCvcValid))
 
   React.useEffect(() => {
     if isScreenFocus {
@@ -660,6 +696,8 @@ let make = (
     errorText,
     isSaveCardCheckboxSelected,
     isScreenFocus,
+    strategy,
+    vaultCvcValid,
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>
@@ -700,7 +738,7 @@ let make = (
         ?maxVisibleItems
       />
     </View>
-    {showDisclaimer && savedCardCvv->Option.isSome
+    {showDisclaimer && hasCvcInput
       ? <View style={s({paddingHorizontal: 2.->dp})}>
           // <Space />
           <ClickableTextElement

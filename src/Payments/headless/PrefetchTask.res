@@ -18,6 +18,11 @@ module Runner = {
     let fetchers = SessionDataHook.useSessionFetchers()
 
     let prefetchTag = nativeProp.rootTag
+    let sessionTag = nativeProp.sdkParams.sessionTag->Option.getOr(prefetchTag)
+    let publish = event =>
+      try SessionStore.publish(~sessionTag, event) catch {
+      | _ => ()
+      }
     let reply = (type_, payload) => HyperModule.onUpdateIntentEvent(prefetchTag, type_, payload)
 
     let awaitingUpdateReply = React.useRef(false)
@@ -37,7 +42,7 @@ module Runner = {
         ->Promise.thenResolve(((clientResp, _sessionsResp, configResp)) => {
           let failed = json => json == JSON.Encode.null || json->ErrorUtils.isError
           if failed(clientResp) || failed(configResp) {
-            SessionStore.publish(IntentUpdateEnded)
+            publish(IntentUpdateEnded)
             reply(
               UpdateIntentHook.updateIntentCompleteReturned,
               {
@@ -47,7 +52,7 @@ module Runner = {
               },
             )
           } else {
-            SessionStore.publish(IntentSwitched(nativeProp.paymentSessionConfig))
+            publish(IntentSwitched(nativeProp.paymentSessionConfig))
             reply(UpdateIntentHook.updateIntentCompleteReturned, {status: "success"})
           }
         })
@@ -63,7 +68,7 @@ module Runner = {
       ) => {
         // Fire-and-forget from native: overlay only, no reply.
         if intentData.rootTag === prefetchTag {
-          SessionStore.publish(IntentUpdating)
+          publish(IntentUpdating)
         }
       })
 
@@ -94,7 +99,7 @@ module Runner = {
               let updatedKey = PaymentUtils.getSessionCredentialsKey(updated)
 
               if updatedKey === currentKey {
-                SessionStore.publish(IntentUpdateEnded)
+                publish(IntentUpdateEnded)
                 reply(UpdateIntentHook.updateIntentCompleteReturned, {status: "success"})
               } else {
                 SessionStore.invalidate(~key=currentKey)
@@ -103,7 +108,7 @@ module Runner = {
               }
 
             | None =>
-              SessionStore.publish(IntentUpdateEnded)
+              publish(IntentUpdateEnded)
               reply(
                 UpdateIntentHook.updateIntentCompleteReturned,
                 {
@@ -130,7 +135,7 @@ module Runner = {
 }
 
 @react.component
-let make = (~props) => {
+let make = (~props, ~rootTag as _) => {
   let nativeProp = SdkTypes.nativeJsonToRecord(props, prefetchTagOf(props))
 
   <NativePropContext nativeProp>

@@ -362,6 +362,18 @@ type sdkParams = {
   os_version: option<string>,
   deviceBrand: option<string>,
   insets: option<insets>,
+  sessionTag: option<int>,
+}
+
+type updateIntentPhase = UpdateIntentInit | UpdateIntentComplete | UpdateIntentCancelled
+type updateIntentProp = {attempt: int, phase: updateIntentPhase}
+
+type widgetConfirmProp = {attempt: int}
+type cvcConfirmProp = {
+  attempt: int,
+  sdkAuthorization: string,
+  paymentToken: string,
+  billing: option<JSON.t>,
 }
 
 type nativeProp = {
@@ -371,6 +383,9 @@ type nativeProp = {
   paymentSessionConfig: paymentSessionConfig,
   sdkParams: sdkParams,
   configuration: configurationType,
+  updateIntent: option<updateIntentProp>,
+  widgetConfirm: option<widgetConfirmProp>,
+  cvcConfirm: option<cvcConfirmProp>,
 }
 
 let defaultAppearance: appearance = {
@@ -902,6 +917,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       os_type: getOptionString(sp, "os_type"),
       os_version: getOptionString(sp, "os_version"),
       deviceBrand: getOptionString(sp, "deviceBrand"),
+      sessionTag: getOptionInt(sp, "sessionTag"),
       insets: Some({
         bottom: getOptionFloat(sp, "bottomInset"),
         top: getOptionFloat(sp, "topInset"),
@@ -912,6 +928,49 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     configuration: parseConfigurationDict(
       getObj(d, "configuration", Dict.make()),
       getString(d, "type", "")->parseSdkState === PaymentSheet,
+    ),
+    updateIntent: d
+    ->Dict.get("updateIntent")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(u => {
+      let phase = switch getOptionString(u, "phase") {
+      | Some("init") => Some(UpdateIntentInit)
+      | Some("complete") => Some(UpdateIntentComplete)
+      | Some("cancel") => Some(UpdateIntentCancelled)
+      | _ => None
+      }
+      switch (getOptionInt(u, "attempt"), phase) {
+      | (Some(attempt), Some(phase)) => Some({attempt, phase})
+      | _ => None
+      }
+    }),
+    widgetConfirm: d
+    ->Dict.get("widgetConfirm")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(c => getOptionInt(c, "attempt"))
+    ->Option.map((attempt): widgetConfirmProp => {attempt: attempt}),
+    cvcConfirm: d
+    ->Dict.get("cvcConfirm")
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(c =>
+      switch (getOptionInt(c, "attempt"), getOptionString(c, "paymentToken")) {
+      | (Some(attempt), Some(paymentToken)) =>
+        Some(
+          (
+            {
+              attempt,
+              sdkAuthorization: getString(c, "sdkAuthorization", ""),
+              paymentToken,
+              billing: getOptionString(c, "billing")->Option.flatMap(str =>
+                try Some(str->JSON.parseExn) catch {
+                | _ => None
+                }
+              ),
+            }: cvcConfirmProp
+          ),
+        )
+      | _ => None
+      }
     ),
   }
 }

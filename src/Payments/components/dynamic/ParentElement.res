@@ -16,12 +16,22 @@ let make = (
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
   ~checkEligibility: option<string> => unit=_ => (),
+  ~vaultFormId: string="",
 ) => {
+  let {strategy} = React.useContext(CardStrategyContext.cardStrategyContext)
+
   switch element {
   | CARD(fields) if fields->Array.length > 0 =>
-    <CardElement
-      fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
-    />
+    switch strategy {
+    | DirectCard =>
+      <CardElement
+        fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
+      />
+    | VaultCard(vaultDetails) =>
+      <VaultCardElement fields vaultDetails formId=vaultFormId enabledCardSchemes ?accessible />
+    | Pending => React.null
+    | Refused(_) => <ErrorText text=PaymentConfirmTypes.defaultConfigError.message />
+    }
   | CRYPTO(fields) if fields->Array.length > 0 =>
     <CryptoElement fields createFieldValidator formatValue ?accessible />
   | EMAIL(fields) if fields->Array.length > 0 =>

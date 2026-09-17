@@ -13,6 +13,7 @@ let make = (
   ~isFocused: bool=false,
   ~checkEligibility: option<string> => unit=_ => (),
   ~customerAcceptanceSupport: option<PaymentMethodType.customerAcceptanceSupport>=?,
+  ~vaultFormId: string="",
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (clientData, _, _) = React.useContext(
@@ -91,6 +92,7 @@ let make = (
         accessible
         isFocused
         checkEligibility
+        vaultFormId
       />
     </UIUtils.RenderIf>
     <UIUtils.RenderIf condition={isCardPayment && !isGiftCardPayment && fields->Array.length > 0}>

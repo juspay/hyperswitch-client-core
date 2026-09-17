@@ -14,6 +14,7 @@ let make = (
   ~onSubmit=?,
   ~isFocused: bool=false,
   ~checkEligibility: option<string> => unit=_ => (),
+  ~vaultFormId: string="",
 ) => {
   let groups = React.useMemo1(() => FieldGrouper.groupFields(fields), [fields])
 
@@ -58,6 +59,7 @@ let make = (
             enabledCardSchemes
             ?accessible
             checkEligibility
+            vaultFormId
           />
         )
         ->React.array}

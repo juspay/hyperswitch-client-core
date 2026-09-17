@@ -22,11 +22,9 @@ module Native = {
   @module("./HyperModuleNative")
   external exitPaymentsheet: (int, exitResultPayload, bool) => unit = "exitPaymentsheet"
   @module("./HyperModuleNative")
-  external exitPaymentMethodManagement: (int, string, bool) => unit =
-    "exitPaymentMethodManagement"
+  external exitPaymentMethodManagement: (int, string, bool) => unit = "exitPaymentMethodManagement"
   @module("./HyperModuleNative")
-  external exitWidgetPaymentsheet: (int, exitResultPayload, bool) => unit =
-    "exitWidgetPaymentsheet"
+  external exitWidgetPaymentsheet: (int, exitResultPayload, bool) => unit = "exitWidgetPaymentsheet"
   @module("./HyperModuleNative")
   external exitWidget: (exitResultPayload, string) => unit = "exitWidget"
   @module("./HyperModuleNative")
@@ -36,8 +34,7 @@ module Native = {
   @module("./HyperModuleNative")
   external updateWidgetHeight: int => unit = "updateWidgetHeight"
   @module("./HyperModuleNative")
-  external notifyWidgetPaymentResult: (int, exitResultPayload) => unit =
-    "notifyWidgetPaymentResult"
+  external notifyWidgetPaymentResult: (int, exitResultPayload) => unit = "notifyWidgetPaymentResult"
   @module("./HyperModuleNative")
   external emitPaymentEvent: (int, string, JSON.t) => unit = "emitPaymentEvent"
   @module("./HyperModuleNative")
@@ -51,18 +48,18 @@ module Native = {
   // codebase points at a sibling file: ReScript resolves `HyperModule.*` by
   // module name, so moving either file cannot silently break the binding.
   @module("./HyperModuleNative")
-  external subscribeConfirm: dictCallback => (unit => unit) = "subscribeConfirm"
+  external subscribeConfirm: dictCallback => unit => unit = "subscribeConfirm"
   @module("./HyperModuleNative")
-  external subscribeWidget: dictCallback => (unit => unit) = "subscribeWidget"
+  external subscribeWidget: dictCallback => unit => unit = "subscribeWidget"
   @module("./HyperModuleNative")
-  external subscribeConfirmEC: dictCallback => (unit => unit) = "subscribeConfirmEC"
+  external subscribeConfirmEC: dictCallback => unit => unit = "subscribeConfirmEC"
   @module("./HyperModuleNative")
-  external subscribeTriggerWidgetAction: dictCallback => (unit => unit) =
+  external subscribeTriggerWidgetAction: dictCallback => unit => unit =
     "subscribeTriggerWidgetAction"
   @module("./HyperModuleNative")
-  external subscribeUpdateIntentInit: dictCallback => (unit => unit) = "subscribeUpdateIntentInit"
+  external subscribeUpdateIntentInit: dictCallback => unit => unit = "subscribeUpdateIntentInit"
   @module("./HyperModuleNative")
-  external subscribeUpdateIntentComplete: dictCallback => (unit => unit) =
+  external subscribeUpdateIntentComplete: dictCallback => unit => unit =
     "subscribeUpdateIntentComplete"
 }
 

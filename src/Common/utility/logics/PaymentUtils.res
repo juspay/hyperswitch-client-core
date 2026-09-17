@@ -36,6 +36,68 @@ let shouldShowSaveDetailsCheckbox = (
   | _ => false
   }
 
+type vaultingAction = SkipVaulting | TokenizeVaulting | UnreadableVaulting
+
+let readVaultingAction = (sdkConfigResponse: JSON.t): vaultingAction =>
+  sdkConfigResponse
+  ->JSON.Decode.object
+  ->Option.flatMap(root => root->Dict.get("account_config"))
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.flatMap(accountConfig => accountConfig->Dict.get("profile"))
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.flatMap(profile => profile->Dict.get("vaulting_action"))
+  ->Option.flatMap(JSON.Decode.string)
+  ->Option.mapOr(UnreadableVaulting, raw =>
+    switch raw->String.trim->String.toLowerCase {
+    | "skip" => SkipVaulting
+    | "tokenize" => TokenizeVaulting
+    | _ => UnreadableVaulting
+    }
+  )
+
+let hasExternalVaultCard = (tabDict: Dict.t<JSON.t>) =>
+  tabDict
+  ->Dict.get("payment_method_data")
+  ->Option.flatMap(JSON.Decode.object)
+  ->Option.flatMap(pmd => pmd->Dict.get("vault_card"))
+  ->Option.isSome
+
+let hasVaultPaymentToken = (tabDict: Dict.t<JSON.t>) =>
+  tabDict
+  ->Dict.get("payment_token")
+  ->Option.flatMap(JSON.Decode.string)
+  ->Utils.getNonEmptyOption
+  ->Option.isSome
+
+let isVaultedNewCard = (tabDict: Dict.t<JSON.t>) =>
+  hasVaultPaymentToken(tabDict) || hasExternalVaultCard(tabDict)
+
+let nicknamePaymentMethodData = (
+  ~tabDict: Dict.t<JSON.t>,
+  ~paymentMethodStr: string,
+  ~nickname: option<string>,
+): Dict.t<JSON.t> => {
+  let key = if hasExternalVaultCard(tabDict) {
+    Some("vault_card")
+  } else if hasVaultPaymentToken(tabDict) {
+    None
+  } else {
+    Some(paymentMethodStr)
+  }
+  switch (nickname, key) {
+  | (Some(name), Some(key)) =>
+    [
+      (
+        "payment_method_data",
+        [(key, [("nick_name", name->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object)]
+        ->Dict.fromArray
+        ->JSON.Encode.object,
+      ),
+    ]->Dict.fromArray
+  | _ => Dict.make()
+  }
+}
+
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_method_str: string,
@@ -52,6 +114,7 @@ let generateCardConfirmBody = (
   ~email=?,
   ~screen_height=?,
   ~screen_width=?,
+  ~isVaultedNewCard=false,
   (),
 ): PaymentConfirmTypes.redirectType => {
   let isMandate = payment_type !== NORMAL
@@ -68,7 +131,7 @@ let generateCardConfirmBody = (
     ?email,
     payment_type: ?payment_type_str,
     customer_acceptance: ?(
-      payment_token->Option.isNone &&
+      (payment_token->Option.isNone || isVaultedNewCard) &&
       (nativeProp.configuration.alwaysSendCustomerAcceptance ||
       isNicknameSelected && isMandate ||
       isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
@@ -128,6 +191,7 @@ let generateSavedCardConfirmBody = (
   ~screen_width=?,
   ~billing=?,
   ~payment_method_type=?,
+  ~vaultPaymentMethodData: option<JSON.t>=?,
 ): PaymentConfirmTypes.redirectType => {
   client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
   | Some(_) => None
@@ -136,13 +200,21 @@ let generateSavedCardConfirmBody = (
   payment_method,
   ?payment_method_type,
   payment_token,
-  card_cvc: ?(savedCardCvv->Option.isSome ? Some(savedCardCvv->Option.getOr("")) : None),
-  return_url: ?Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),
-  payment_method_data: ?billing->Option.map(address =>
-    [("billing", address->Utils.getJsonObjectFromRecord)]
-    ->Dict.fromArray
-    ->JSON.Encode.object
+  card_cvc: ?(
+    vaultPaymentMethodData->Option.isNone && savedCardCvv->Option.isSome
+      ? Some(savedCardCvv->Option.getOr(""))
+      : None
   ),
+  return_url: ?Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),
+  payment_method_data: ?{
+    let billingDict =
+      billing->Option.mapOr(Dict.make(), address =>
+        [("billing", address->Utils.getJsonObjectFromRecord)]->Dict.fromArray
+      )
+    let vaultDict = vaultPaymentMethodData->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+    let merged = CommonUtils.mergeDict(billingDict, vaultDict)
+    merged->Dict.toArray->Array.length > 0 ? Some(merged->JSON.Encode.object) : None
+  },
   payment_type: ?payment_type_str,
   browser_info: {
     user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),

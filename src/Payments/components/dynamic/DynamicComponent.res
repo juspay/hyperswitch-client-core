@@ -14,6 +14,10 @@ let make = (~setConfirmButtonData) => {
     country,
     setInitialValueCountry,
   } = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {strategy, getFormState, setShowErrors} = React.useContext(
+    CardStrategyContext.cardStrategyContext,
+  )
+  let submitVaultCard = VaultCardSubmitHook.useVaultCardSubmit()
 
   let {
     missingRequiredFields,
@@ -28,6 +32,7 @@ let make = (~setConfirmButtonData) => {
   } = walletData
   let payment_method = paymentMethodData.payment_method
   let payment_method_str = paymentMethodData.payment_method_str
+  let vaultFormId = "sheet-" ++ paymentMethodData.payment_method_type
   let payment_method_type = paymentMethodData.payment_method_type
   let payment_method_type_wallet = paymentMethodData.payment_method_type_wallet
   let payment_experience = paymentMethodData.payment_experience
@@ -105,23 +110,7 @@ let make = (~setConfirmButtonData) => {
 
     let paymentMethodDataDict = switch payment_method {
     | CARD =>
-      switch nickname {
-      | Some(name) =>
-        [
-          (
-            "payment_method_data",
-            [
-              (
-                payment_method_str,
-                [("nick_name", name->Js.Json.string)]->Dict.fromArray->Js.Json.object_,
-              ),
-            ]
-            ->Dict.fromArray
-            ->Js.Json.object_,
-          ),
-        ]->Dict.fromArray
-      | None => Dict.make()
-      }
+      PaymentUtils.nicknamePaymentMethodData(~tabDict, ~paymentMethodStr=payment_method_str, ~nickname)
     | pm =>
       [
         (
@@ -151,6 +140,8 @@ let make = (~setConfirmButtonData) => {
       ~nativeProp,
       ~payment_method_str,
       ~payment_method_type,
+      ~payment_token=?tabDict->Dict.get("payment_token")->Option.flatMap(JSON.Decode.string),
+      ~isVaultedNewCard=PaymentUtils.isVaultedNewCard(tabDict),
       ~payment_method_data=?CommonUtils.mergeDict(paymentMethodDataDict, tabDict)->Dict.get(
         "payment_method_data",
       ),
@@ -189,30 +180,60 @@ let make = (~setConfirmButtonData) => {
     )->ignore
   }
 
+  let isVaultCard = switch (payment_method, strategy) {
+  | (CARD, CardStrategyContext.VaultCard(_)) => true
+  | _ => false
+  }
+
   let handlePress = _ => {
-    if isFormValid || missingRequiredFields->Array.length === 0 {
-      processRequest(
-        CommonUtils.mergeDict(initialValues, formData),
-        Some(walletDict),
-        formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
-      )
-    } else {
-      switch formMethods {
-      | Some(methods) => methods.submit()
-      | None => ()
+    switch (payment_method, strategy) {
+    | (CARD, CardStrategyContext.Pending)
+    | (CARD, CardStrategyContext.Refused(_)) => ()
+    | (CARD, CardStrategyContext.VaultCard(_)) =>
+      if isFormValid {
+        submitVaultCard(~formId=vaultFormId, ~shape=WholeCard, ~onTokenized=vaultPmd =>
+          processRequest(
+            CommonUtils.mergeDict(CommonUtils.mergeDict(initialValues, formData), vaultPmd),
+            Some(walletDict),
+            formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+          )
+        )
+      } else {
+        switch formMethods {
+        | Some(methods) => methods.submit()
+        | None => ()
+        }
+        setShowErrors(vaultFormId, true)
+        notifyValidationFailure()
       }
-      notifyValidationFailure()
+    | _ =>
+      if isFormValid || missingRequiredFields->Array.length === 0 {
+        processRequest(
+          CommonUtils.mergeDict(initialValues, formData),
+          Some(walletDict),
+          formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+        )
+      } else {
+        switch formMethods {
+        | Some(methods) => methods.submit()
+        | None => ()
+        }
+        notifyValidationFailure()
+      }
     }
   }
+
+  let effectiveFormValid =
+    isVaultCard ? getFormState(vaultFormId).isValid && isFormValid : isFormValid
 
   FormStatusEmitter.useFormStatusEmitter(
     ~isFocused=true,
     ~hasRequiredFields=missingRequiredFields->Array.length > 0,
-    ~isFormValid,
+    ~isFormValid=effectiveFormValid,
     ~isPristine,
   )
 
-  React.useEffect3(() => {
+  React.useEffect4(() => {
     let confirmButton = {
       GlobalConfirmButton.loading: false,
       handlePress,
@@ -223,7 +244,7 @@ let make = (~setConfirmButtonData) => {
     setConfirmButtonData(confirmButton)
 
     None
-  }, (walletData, isFormValid, formData))
+  }, (walletData, effectiveFormValid, formData, strategy))
 
   <ReactNative.View
     style={ReactNative.Style.s({paddingVertical: sheetContentPadding->ReactNative.Style.dp})}>
@@ -238,6 +259,7 @@ let make = (~setConfirmButtonData) => {
       isCardPayment
       enabledCardSchemes
       accessible=true
+      vaultFormId
     />
   </ReactNative.View>
 }
