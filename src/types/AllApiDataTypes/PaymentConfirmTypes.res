@@ -263,3 +263,9 @@ let itemToObjMapperJava = dict => {
     confirm: getBool(dict, "confirm", false),
   }
 }
+
+// What the confirm pipeline sees today when the transport yields no body
+// (fetch rejected, aborted, non-JSON): `APIUtils.handleApiCall` resolves null,
+// and decoding that empty dict produces exactly this error. Derived from the
+// decoder so the two can never drift.
+let confirmTransportFailureError = itemToObjMapper(Dict.make()).error

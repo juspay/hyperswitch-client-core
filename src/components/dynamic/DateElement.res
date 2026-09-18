@@ -137,7 +137,6 @@ module DatePicker = {
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
-  ~formatValue as _,
   ~accessible=?,
 ) => {
   let {gap} = ThemebasedStyle.useThemeBasedStyle()

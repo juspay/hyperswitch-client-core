@@ -40,7 +40,6 @@ module SinglePhoneInput = {
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
-  ~formatValue as _,
   ~accessible=?,
 ) => {
   let (countryStateData, _) = React.useContext(CountryStateDataContext.countryStateDataContext)

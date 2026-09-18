@@ -39,6 +39,9 @@ let make = (~setConfirmButtonData) => {
 
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
+  let confirmResponseHandler = AllPaymentHooks.useConfirmResponseHandler()
+  let submitLibraryCard = VaultCardSubmitHook.useLibraryCardConfirm()
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
 
@@ -82,31 +85,33 @@ let make = (~setConfirmButtonData) => {
     setFormMethods(_ => formSubmit)
   }, [setFormMethods])
 
+  // Confirm-outcome callbacks, hoisted out of processRequest so every confirm
+  // entry point on this sheet ends in the same two functions.
+  let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
+    if !closeSDK {
+      setLoading(FillingDetails)
+    }
+    handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
+  }
+
+  let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
+    switch paymentStatus {
+    | PaymentSuccess => {
+        setLoading(PaymentSuccess)
+        setTimeout(() => {
+          handleSuccessFailure(~apiResStatus=status, ())
+        }, 300)->ignore
+      }
+    | _ => handleSuccessFailure(~apiResStatus=status, ())
+    }
+  }
+
   let processRequest = (
     tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
     walletDict: option<RescriptCore.Dict.t<RescriptCore.JSON.t>>,
     email: option<string>,
   ) => {
     setLoading(ProcessingPayments)
-
-    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
-      if !closeSDK {
-        setLoading(FillingDetails)
-      }
-      handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
-    }
-
-    let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
-      switch paymentStatus {
-      | PaymentSuccess => {
-          setLoading(PaymentSuccess)
-          setTimeout(() => {
-            handleSuccessFailure(~apiResStatus=status, ())
-          }, 300)->ignore
-        }
-      | _ => handleSuccessFailure(~apiResStatus=status, ())
-      }
-    }
 
     let paymentMethodDataDict = switch payment_method {
     | CARD =>
@@ -180,16 +185,94 @@ let make = (~setConfirmButtonData) => {
     )->ignore
   }
 
-  let isVaultCard = switch (payment_method, strategy) {
+  // Direct card (CardSubmitPath.LibraryConfirm) on the button sheet: same
+  // non-card context as processRequest builds here, same callbacks, same
+  // post-confirm pipeline; the library owns the card and the confirm.
+  let confirmLibraryCard = (
+    ~formId: string,
+    ~tabDict: RescriptCore.Dict.t<RescriptCore.JSON.t>,
+    ~email: option<string>,
+    ~cardholderName: option<string>,
+  ) => {
+    let context = PaymentUtils.buildCardConfirmContext(
+      ~nativeProp,
+      ~payment_type=clientData
+      ->Option.map(data => data.intent_data.payment_type)
+      ->Option.getOr(NORMAL),
+      ~payment_type_str=?clientData
+      ->Option.map(data => data.intent_data.payment_type_str)
+      ->Option.getOr(None),
+      ~appURL=?{
+        clientData->Option.map(data => data.intent_data.return_url)
+      },
+      ~isSaveCardCheckboxVisible={
+        payment_method === CARD && nativeProp.configuration.displaySavedPaymentMethodsCheckbox
+      },
+      ~isGuestCustomer=clientData
+      ->Option.map(data => data.intent_data.is_guest_customer)
+      ->Option.getOr(true),
+      ~isNicknameSelected,
+      ~email?,
+      ~screen_height=ReactNative.Dimensions.get(#screen).height,
+      ~screen_width=ReactNative.Dimensions.get(#screen).width,
+      ~isVaultedNewCard=false,
+      (),
+    )
+    let input = PaymentUtils.generateLibraryCardConfirmInput(
+      ~nativeProp,
+      ~baseUrl,
+      ~payment_method_type,
+      ~paymentMethodData=tabDict->Dict.get("payment_method_data"),
+      ~nickName=?nickname,
+      ~cardholderName?,
+      ~eligibilityRequired=LibraryCardMode.eligibilityRequired(clientData),
+      ~context,
+    )
+    let handleResponse = confirmResponseHandler(
+      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+      ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
+      ~errorCallback,
+      ~responseCallback,
+      ~paymentMethod=payment_method_type,
+      ~paymentExperience=payment_experience,
+      ~isCardPayment={payment_method === CARD},
+      (),
+    )
+    submitLibraryCard(~formId, ~input, ~onBackendResponse=handleResponse, ~errorCallback)
+  }
+
+  // Every new card is a library-owned form now (direct or tokenized), so its
+  // own validity is part of the Pay button state.
+  let isLibraryCard = switch (payment_method, strategy) {
+  | (CARD, CardStrategyContext.DirectCard)
   | (CARD, CardStrategyContext.VaultCard(_)) => true
   | _ => false
   }
 
   let handlePress = _ => {
-    switch (payment_method, strategy) {
-    | (CARD, CardStrategyContext.Pending)
-    | (CARD, CardStrategyContext.Refused(_)) => ()
-    | (CARD, CardStrategyContext.VaultCard(_)) =>
+    switch (payment_method, CardSubmitPath.forStrategy(strategy)) {
+    | (CARD, CardSubmitPath.Blocked) => ()
+    | (CARD, CardSubmitPath.LibraryConfirm) =>
+      if isFormValid {
+        let tabDict = CommonUtils.mergeDict(initialValues, formData)
+        confirmLibraryCard(
+          ~formId=vaultFormId,
+          ~tabDict,
+          ~email=formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+          ~cardholderName=LibraryCardMode.externalCardholderName(
+            ~fields=missingRequiredFields,
+            ~tabDict,
+          ),
+        )
+      } else {
+        switch formMethods {
+        | Some(methods) => methods.submit()
+        | None => ()
+        }
+        setShowErrors(vaultFormId, true)
+        notifyValidationFailure()
+      }
+    | (CARD, CardSubmitPath.TokenizeThenClientCoreConfirm) =>
       if isFormValid {
         submitVaultCard(~formId=vaultFormId, ~shape=WholeCard, ~onTokenized=vaultPmd =>
           processRequest(
@@ -224,7 +307,7 @@ let make = (~setConfirmButtonData) => {
   }
 
   let effectiveFormValid =
-    isVaultCard ? getFormState(vaultFormId).isValid && isFormValid : isFormValid
+    isLibraryCard ? getFormState(vaultFormId).isValid && isFormValid : isFormValid
 
   FormStatusEmitter.useFormStatusEmitter(
     ~isFocused=true,

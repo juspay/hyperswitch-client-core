@@ -6,18 +6,41 @@ let untouched = {active: false, blurred: false}
 
 type problem = Empty | Invalid
 
+// The library's eligibility verdict, mapped onto the sheet's existing status so
+// the tab's press gate and the inline message keep working without any PAN in
+// client-core. unknown/allowed are "Allowed": only a verdict can block.
+let eligibilityStatusOf = (verdict: string): DynamicFieldsContext.eligibilityStatus =>
+  switch verdict {
+  | "pending" => Pending
+  | "denied" => Denied
+  | _ => Allowed
+  }
+
+// One component for both new-card modes. Only the CardForm configuration and
+// the source of the network / eligibility signals differ; the fields, layout,
+// icons, focus handling and test IDs are shared.
 @react.component
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
-  ~vaultDetails: VaultDetailsType.vaultDetails,
+  ~mode: LibraryCardMode.t,
   ~formId: string,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
 ) => {
   let {getFormState, setFormValid} = React.useContext(CardStrategyContext.cardStrategyContext)
-  let {eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
+  let {eligibilityStatus, setEligibilityStatus} = React.useContext(
+    DynamicFieldsContext.dynamicFieldsContext,
+  )
   let emitter = PaymentEvents.usePaymentEventEmitter()
   let {showErrors} = getFormState(formId)
+  let isDirect = switch mode {
+  | LibraryCardMode.Direct(_) => true
+  | LibraryCardMode.Tokenized(_) => false
+  }
+  let directEligibilityConfigured = switch mode {
+  | LibraryCardMode.Direct(config) => config.eligibility->Option.isSome
+  | LibraryCardMode.Tokenized(_) => false
+  }
 
   let numberRef = React.useRef(Nullable.null)
   let expiryRef = React.useRef(Nullable.null)
@@ -27,6 +50,7 @@ let make = (
   let (formFields, setFormFields) = React.useState(() => Dict.make())
   let (focusStates, setFocusStates) = React.useState(() => Dict.make())
   let (expiryFullyTyped, setExpiryFullyTyped) = React.useState(() => false)
+  let (libraryNetworkError, setLibraryNetworkError) = React.useState(() => None)
 
   let {
     component,
@@ -52,16 +76,29 @@ let make = (
     )
     ->Option.isSome
 
+  // Exactly one of these is passed to the library: a tokenized form gets the
+  // vault session, a direct form gets its explicit configuration.
   let vaultDetailsProp = React.useMemo2(
     () =>
-      VaultDetailsType.toCardFormProp(
-        vaultDetails,
-        ~environment=nativeProp.hyperswitchConfig.environment,
-      ),
-    (vaultDetails, nativeProp.hyperswitchConfig.environment),
+      switch mode {
+      | LibraryCardMode.Tokenized(vaultDetails) =>
+        Some(
+          VaultDetailsType.toCardFormProp(
+            vaultDetails,
+            ~environment=nativeProp.hyperswitchConfig.environment,
+          ),
+        )
+      | LibraryCardMode.Direct(_) => None
+      },
+    (mode, nativeProp.hyperswitchConfig.environment),
   )
+  let directCardProp = switch mode {
+  | LibraryCardMode.Direct(config) => Some(config)
+  | LibraryCardMode.Tokenized(_) => None
+  }
 
   let onFormChange = (event: VaultBindings.cardFormChange) => {
+    // `valid` already folds the library's unsupported-network state.
     setFormValid(formId, event.complete && event.valid)
     setFormFields(_ => event.fields)
     let p = event.payload
@@ -69,10 +106,23 @@ let make = (
       p.expiryMonth->Nullable.toOption->Option.isSome &&
         p.expiryYear->Nullable.toOption->Option.isSome
     )
+    if isDirect {
+      setLibraryNetworkError(_ => p.networkError->Utils.getNonEmptyOption)
+      if directEligibilityConfigured {
+        p.eligibility->Option.forEach(verdict => {
+          let next = eligibilityStatusOf(verdict)
+          setEligibilityStatus(current => current === next ? current : next)
+        })
+      }
+    }
     let bin = p.bin->Nullable.toOption
     let extendedBin =
-      bin->Option.flatMap(b =>
-        b->String.length >= 8 ? Some(b->String.substring(~start=0, ~end=8)) : None
+      p.extendedBin
+      ->Nullable.toOption
+      ->Option.orElse(
+        bin->Option.flatMap(b =>
+          b->String.length >= 8 ? Some(b->String.substring(~start=0, ~end=8)) : None
+        ),
       )
     let info: PaymentEvents.cardInfo = {
       bin,
@@ -156,15 +206,19 @@ let make = (
   }
   let detectedBrand =
     formFields->Dict.get("cardNumber")->Option.flatMap(change => change.brand)->Option.getOr("")
-  let networkMessage =
-    showErrors &&
-    detectedBrand !== "" &&
-    enabledCardSchemes->Array.length > 0 &&
-    enabledCardSchemes
-    ->Array.find(scheme => scheme->String.toLowerCase === detectedBrand->String.toLowerCase)
-    ->Option.isNone
-      ? Some(localeObject.unsupportedCardErrorText)
-      : None
+  // Direct: the library validates the network itself (and already made the form
+  // invalid); its message is shown on the existing surface once the number
+  // field was left or a submit was attempted. Tokenized: unchanged local check.
+  let networkMessage = isDirect
+    ? isTouched("cardNumber") ? libraryNetworkError->Option.map(_ => localeObject.unsupportedCardErrorText) : None
+    : showErrors &&
+      detectedBrand !== "" &&
+      enabledCardSchemes->Array.length > 0 &&
+      enabledCardSchemes
+      ->Array.find(scheme => scheme->String.toLowerCase === detectedBrand->String.toLowerCase)
+      ->Option.isNone
+        ? Some(localeObject.unsupportedCardErrorText)
+        : None
   let eligibilityMessage = switch eligibilityStatus {
   | DynamicFieldsContext.Denied => Some(localeObject.cardNotEligibleText)
   | _ => None
@@ -210,7 +264,6 @@ let make = (
     ])
 
   let emptyOf = kind => formFields->Dict.get(kind)->Option.mapOr(true, field => field.empty)
-  let completeOf = kind => formFields->Dict.get(kind)->Option.mapOr(false, field => field.complete)
   let advanceFocus = (event: VaultBindings.fieldChange) => {
     let wasComplete = completedRef.current->Dict.get(event.elementType)->Option.getOr(false)
     completedRef.current->Dict.set(event.elementType, event.complete)
@@ -225,47 +278,46 @@ let make = (
 
   let errorLine = messages => <ErrorText text={firstSome(messages)} />
 
-  let isVgs = switch vaultDetails.config {
-  | VaultDetailsType.VgsVault(_) => true
-  | VaultDetailsType.HyperswitchVault(_) => false
+  let isVgs = switch mode {
+  | LibraryCardMode.Tokenized({config: VaultDetailsType.VgsVault(_)}) => true
+  | LibraryCardMode.Tokenized({config: VaultDetailsType.HyperswitchVault(_)})
+  | LibraryCardMode.Direct(_) => false
   }
   let brandIconFromProvider =
     isVgs && nativeProp.configuration.paymentMethodLayout.cardBrandIcon !== Hidden
   let cvcIconFromProvider =
     isVgs && nativeProp.configuration.paymentMethodLayout.cvcIcon === Shown
 
-  let cardBrandIcon = isVgs
+  // The library field owns every accessory (brand icon / co-badge chooser /
+  // scan button on the number field, CVC icon on the CVC field), in the mode the
+  // checkout's layout settings ask for; client-core only draws the box, the
+  // floating label and the error line. VGS keeps its own provider icons.
+  let cardBrandIcon: option<VaultBindings.cardBrandIconMode> = isVgs
     ? None
     : Some(
-        <CardSchemeComponent
-          eligibleCardSchemes=[]
-          showCardSchemeDropDown=false
-          cardBrand=detectedBrand
-          setCardBrand={_ => ()}
-          cardBrandIcon=nativeProp.configuration.paymentMethodLayout.cardBrandIcon
-        />,
+        switch nativeProp.configuration.paymentMethodLayout.cardBrandIcon {
+        | Hidden => #hidden
+        | Animated => #animated
+        | Standard => #standard
+        | HideGeneric => #hideGeneric
+        },
       )
-  let cvcIcon =
-    !isVgs && nativeProp.configuration.paymentMethodLayout.cvcIcon === Shown
-      ? Some(
-          <View
-            style={s({
-              height: 46.->dp,
-              display: #flex,
-              flexDirection: #row,
-              justifyContent: #center,
-              alignItems: #center,
-            })}>
-            <Icon
-              name="cvv" height=32. width=32. fill={completeOf("cardCvc") ? primaryColor : "#858F97"}
-            />
-          </View>,
-        )
-      : None
+  let cvcIcon: option<VaultBindings.cvcIconMode> = isVgs
+    ? None
+    : Some(
+        switch nativeProp.configuration.paymentMethodLayout.cvcIcon {
+        | Shown => #default
+        | Hidden => #hidden
+        },
+      )
 
   <View ?accessible>
     <VaultBindings.CardForm
-      id=formId vaultDetails=vaultDetailsProp onChange=onFormChange onError=onFormError>
+      id=formId
+      vaultDetails=?vaultDetailsProp
+      directCard=?directCardProp
+      onChange=onFormChange
+      onError=onFormError>
       <View style={s({marginBottom: gap->dp})}>
         <View style={s({width: 100.->pct, borderRadius})}>
           <View
@@ -289,7 +341,7 @@ let make = (
                   active={isActive("cardNumber")}
                   empty={emptyOf("cardNumber")}
                   valid={looksValid("cardNumber")}
-                  iconRight=?cardBrandIcon
+                  ?cardBrandIcon
                   useProviderIcon=brandIconFromProvider
                   onChange=advanceFocus
                 testID=TestUtils.cardNumberInputTestId
@@ -363,7 +415,7 @@ let make = (
                   active={isActive("cardCvc")}
                   empty={emptyOf("cardCvc")}
                   valid={looksValid("cardCvc")}
-                  iconRight=?cvcIcon
+                  ?cvcIcon
                   useProviderIcon=cvcIconFromProvider
                   onChange=advanceFocus
                         testID=TestUtils.cvcInputTestId

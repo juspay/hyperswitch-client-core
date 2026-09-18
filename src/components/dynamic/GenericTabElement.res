@@ -40,7 +40,6 @@ let getValidationRuleForField = (field: SuperpositionTypes.fieldConfig) =>
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
-  ~formatValue as _,
   ~accessible=?,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)

@@ -152,18 +152,9 @@ let make = (
               empty={cvcState->Option.mapOr(true, field => field.empty)}
               valid=isCvcValid
               useProviderIcon
-              iconRight=?{hideCvcIcon || useProviderIcon
-                ? None
-                : Some(
-                    <Icon
-                      name={cvcState->Option.mapOr(false, field => field.complete)
-                        ? "cvvfilled"
-                        : "cvvempty"}
-                      height=35.
-                      width=35.
-                      fill="black"
-                    />,
-                  )}
+              // The library field owns the CVC icon (it tints it once the CVC is
+              // complete); the saved-card config only decides whether it shows.
+              cvcIcon=?{useProviderIcon ? None : Some(hideCvcIcon ? #hidden : #default)}
               options=savedCard
               placeholder={hideCardExpiry
                 ? placeholderCVC->Option.getOr(localeObject.cvcTextLabel)

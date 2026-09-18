@@ -235,7 +235,12 @@ let useBrowserHook = () => {
   }
 }
 
-let useRedirectHook = () => {
+// Runs client-core's post-confirm pipeline over an already-received
+// /payments/{id}/confirm body: itemToObjMapper -> handleApiRes -> 3DS / DDC /
+// Plaid / redirect / status handling. Both the client-core transport
+// (`useRedirectHook`) and the library-owned Hyperswitch-vault confirmation feed
+// it, so every confirm response is processed by one implementation.
+let useConfirmResponseHandler = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let browserRedirectionHandler = useBrowserHook()
@@ -246,10 +251,8 @@ let useRedirectHook = () => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
-  let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
 
   (
-    ~body: string,
     ~publishableKey: string,
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
@@ -259,15 +262,6 @@ let useRedirectHook = () => {
     ~isCardPayment=false,
     (),
   ) => {
-    let uriPram = nativeProp.paymentSessionConfig.paymentId
-    let uri = `${baseUrl}/payments/${uriPram}/confirm`
-    let headers = Utils.getHeader(
-      ~apiKey=publishableKey,
-      ~appId=nativeProp.sdkParams.appId,
-      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-      (),
-    )
-
     let handleInvokeThreeDSFlow = (~nextAction) => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
       handleNativeThreeDS(
@@ -460,7 +454,55 @@ let useRedirectHook = () => {
       }
     }
 
-    redirectionHandler(~body, ~errorCallback, ~handleApiRes, ~headers, ~uri)->ignore
+    (response: JSON.t) => {
+      try {
+        let confirmResponse = response->Utils.getDictFromJson
+        let {nextAction, status, error} = itemToObjMapper(confirmResponse)
+        handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
+      } catch {
+      | _ => errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
+      }
+    }
+  }
+}
+
+let useRedirectHook = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let baseUrl = GlobalHooks.useGetBaseUrl()()
+  let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
+  let makeResponseHandler = useConfirmResponseHandler()
+
+  (
+    ~body: string,
+    ~publishableKey: string,
+    ~clientSecret: string,
+    ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
+    ~paymentMethod,
+    ~paymentExperience: option<array<ClientResponseType.paymentExperience>>=?,
+    ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
+    ~isCardPayment=false,
+    (),
+  ) => {
+    let uriPram = nativeProp.paymentSessionConfig.paymentId
+    let uri = `${baseUrl}/payments/${uriPram}/confirm`
+    let headers = Utils.getHeader(
+      ~apiKey=publishableKey,
+      ~appId=nativeProp.sdkParams.appId,
+      ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+      (),
+    )
+    let handleResponse = makeResponseHandler(
+      ~publishableKey,
+      ~clientSecret,
+      ~errorCallback,
+      ~paymentMethod,
+      ~paymentExperience?,
+      ~responseCallback,
+      ~isCardPayment,
+      (),
+    )
+
+    redirectionHandler(~body, ~errorCallback, ~handleResponse, ~headers, ~uri)->ignore
   }
 }
 
@@ -496,37 +538,6 @@ let useDeleteSavedPaymentMethod = () => {
         ~apiLogWrapper,
       )
     | None => JSON.Null->Promise.resolve
-    }
-  }
-}
-
-let useEligibilityCheckHook = () => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let baseUrl = GlobalHooks.useGetBaseUrl()()
-  (~paymentMethodType: string, ~paymentMethodData: JSON.t) => {
-    switch WebKit.platform {
-    | #next => Promise.resolve(`{"sdk_next_action":{"next_action":"confirm"}}`->JSON.parseExn)
-    | _ =>
-      let uri = `${baseUrl}/payments/${nativeProp.paymentSessionConfig.paymentId}/eligibility`
-      let body =
-        [
-          ("payment_method_type", paymentMethodType->JSON.Encode.string),
-          ("payment_method_data", paymentMethodData),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-        ->JSON.stringify
-      APIUtils.fetchApi(
-        ~uri,
-        ~bodyStr=body,
-        ~method_=#POST,
-        ~headers=Utils.getHeader(
-          ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
-          ~appId=nativeProp.sdkParams.appId,
-          ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-          (),
-        ),
-      )->Promise.then(response => response->Fetch.Response.json)
     }
   }
 }

@@ -7,43 +7,57 @@ type elementType =
   | DATE(array<SuperpositionTypes.fieldConfig>)
   | GENERIC(array<SuperpositionTypes.fieldConfig>)
 
+// New cards always render the library-owned form (VaultCardElement); the
+// strategy only decides its mode. Direct cards keep their PAN/expiry/CVC
+// inside the library and confirm from there; tokenized cards mint a token or
+// aliases that client-core confirms with.
 @react.component
 let make = (
   ~element: elementType,
   ~createFieldValidator,
-  ~formatValue,
   ~isCardPayment,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
-  ~checkEligibility: option<string> => unit=_ => (),
+  ~hasCardholderNameField: bool=false,
   ~vaultFormId: string="",
 ) => {
   let {strategy} = React.useContext(CardStrategyContext.cardStrategyContext)
+  let directConfig = LibraryCardMode.useDirectConfig(~enabledCardSchemes, ~hasCardholderNameField)
 
   switch element {
   | CARD(fields) if fields->Array.length > 0 =>
     switch strategy {
     | DirectCard =>
-      <CardElement
-        fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
+      <VaultCardElement
+        fields
+        mode={LibraryCardMode.Direct(directConfig)}
+        formId=vaultFormId
+        enabledCardSchemes
+        ?accessible
       />
     | VaultCard(vaultDetails) =>
-      <VaultCardElement fields vaultDetails formId=vaultFormId enabledCardSchemes ?accessible />
+      <VaultCardElement
+        fields
+        mode={LibraryCardMode.Tokenized(vaultDetails)}
+        formId=vaultFormId
+        enabledCardSchemes
+        ?accessible
+      />
     | Pending => React.null
     | Refused(_) => <ErrorText text=PaymentConfirmTypes.defaultConfigError.message />
     }
   | CRYPTO(fields) if fields->Array.length > 0 =>
-    <CryptoElement fields createFieldValidator formatValue ?accessible />
+    <CryptoElement fields createFieldValidator ?accessible />
   | EMAIL(fields) if fields->Array.length > 0 =>
-    <MergedElement fields createFieldValidator formatValue ?accessible />
+    <MergedElement fields createFieldValidator ?accessible />
   | FULLNAME(fields) if fields->Array.length > 0 =>
-    <FullNameElement fields createFieldValidator formatValue isCardPayment ?accessible />
+    <FullNameElement fields createFieldValidator isCardPayment ?accessible />
   | PHONE(fields) if fields->Array.length > 0 =>
-    <PhoneElement fields createFieldValidator formatValue ?accessible />
+    <PhoneElement fields createFieldValidator ?accessible />
   | DATE(fields) if fields->Array.length > 0 =>
-    <DateElement fields createFieldValidator formatValue ?accessible />
+    <DateElement fields createFieldValidator ?accessible />
   | GENERIC(fields) if fields->Array.length > 0 =>
-    <GenericTabElement fields createFieldValidator formatValue ?accessible />
+    <GenericTabElement fields createFieldValidator ?accessible />
   | _ => React.null
   }
 }

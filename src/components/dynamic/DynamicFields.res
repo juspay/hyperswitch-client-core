@@ -11,7 +11,6 @@ let make = (
   ~enabledCardSchemes=[],
   ~accessible: bool,
   ~isFocused: bool=false,
-  ~checkEligibility: option<string> => unit=_ => (),
   ~customerAcceptanceSupport: option<PaymentMethodType.customerAcceptanceSupport>=?,
   ~vaultFormId: string="",
 ) => {
@@ -91,7 +90,6 @@ let make = (
         enabledCardSchemes
         accessible
         isFocused
-        checkEligibility
         vaultFormId
       />
     </UIUtils.RenderIf>

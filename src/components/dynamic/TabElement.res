@@ -3,7 +3,7 @@ let make = (
   ~paymentMethodData: ClientResponseType.paymentMethodEnabled,
   ~isScreenFocus,
   ~processRequest,
-  ~checkEligibility: option<string> => unit,
+  ~confirmLibraryCard,
   ~setConfirmButtonData,
 ) => {
   let {
@@ -56,7 +56,10 @@ let make = (
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
 
-  let isVaultCard = switch (paymentMethodData.payment_method, strategy) {
+  // Every new card is a library-owned form now (direct or tokenized), so its
+  // own validity is part of the Pay button state.
+  let isLibraryCard = switch (paymentMethodData.payment_method, strategy) {
+  | (CARD, CardStrategyContext.DirectCard)
   | (CARD, CardStrategyContext.VaultCard(_)) => true
   | _ => false
   }
@@ -67,10 +70,26 @@ let make = (
     if isEligibilityBlocked {
       ()
     } else {
-      switch (paymentMethodData.payment_method, strategy) {
-      | (CARD, CardStrategyContext.Pending)
-      | (CARD, CardStrategyContext.Refused(_)) => ()
-      | (CARD, CardStrategyContext.VaultCard(_)) =>
+      switch (paymentMethodData.payment_method, CardSubmitPath.forStrategy(strategy)) {
+      | (CARD, CardSubmitPath.Blocked) => ()
+      | (CARD, CardSubmitPath.LibraryConfirm) =>
+        if isNicknameValid && isFormValid {
+          let tabDict = CommonUtils.mergeDict(initialValues, formData)
+          confirmLibraryCard(
+            ~formId=vaultFormId,
+            ~tabDict,
+            ~email=formData->Dict.get("email")->Option.mapOr(None, JSON.Decode.string),
+            ~cardholderName=LibraryCardMode.externalCardholderName(~fields=requiredFields, ~tabDict),
+          )
+        } else {
+          switch formMethods {
+          | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
+          | None => ()
+          }
+          setShowErrors(vaultFormId, true)
+          notifyValidationFailure()
+        }
+      | (CARD, CardSubmitPath.TokenizeThenClientCoreConfirm) =>
         if isNicknameValid && isFormValid {
           submitVaultCard(~formId=vaultFormId, ~shape=WholeCard, ~onTokenized=vaultPmd =>
             processRequest(
@@ -111,7 +130,7 @@ let make = (
   }, [defaultCountry])
 
   let effectiveFormValid =
-    isVaultCard ? getFormState(vaultFormId).isValid && isNicknameValid && isFormValid : isFormValid
+    isLibraryCard ? getFormState(vaultFormId).isValid && isNicknameValid && isFormValid : isFormValid
 
   FormStatusEmitter.useFormStatusEmitter(
     ~isFocused=isScreenFocus,
@@ -159,7 +178,6 @@ let make = (
     enabledCardSchemes
     accessible
     isFocused=isScreenFocus
-    checkEligibility
     customerAcceptanceSupport=?paymentMethodData.customer_acceptance_support
     vaultFormId
   />
