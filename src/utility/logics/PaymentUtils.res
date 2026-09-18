@@ -98,6 +98,93 @@ let nicknamePaymentMethodData = (
   }
 }
 
+// The payment-confirm credential, resolved once for both the client-core
+// transport (headers + client_secret rule) and the library-owned confirm.
+//   SdkAuthorizationHeader -> `Authorization` header, no client_secret in the body
+//   PublishableKeyHeader   -> `api-key` header, client_secret in the body
+type confirmAuthorization =
+  | SdkAuthorizationHeader(string)
+  | PublishableKeyHeader({publishableKey: string, clientSecret: string})
+
+let resolveConfirmAuthorization = (nativeProp: SdkTypes.nativeProp): confirmAuthorization =>
+  switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
+  | Some(authorization) => SdkAuthorizationHeader(authorization)
+  | None =>
+    PublishableKeyHeader({
+      publishableKey: nativeProp.hyperswitchConfig.publishableKey,
+      clientSecret: nativeProp.paymentSessionConfig.clientSecret,
+    })
+  }
+
+// Every non-card value client-core contributes to a card confirm, computed by
+// the policies client-core owns. `generateCardConfirmBody` (client-core
+// transport) and `generateLibraryCardConfirmInput` (library transport)
+// are both built from this one record, so the rules cannot diverge.
+type cardConfirmContext = {
+  authorization: confirmAuthorization,
+  returnUrl: option<string>,
+  email: option<string>,
+  paymentTypeStr: option<string>,
+  customerAcceptance: option<PaymentConfirmTypes.customer_acceptance>,
+  browserInfo: PaymentConfirmTypes.online,
+}
+
+let buildCardConfirmContext = (
+  ~nativeProp: SdkTypes.nativeProp,
+  ~payment_type: PaymentMethodType.mandateType,
+  ~payment_type_str=?,
+  ~appURL: option<string>=?,
+  ~isNicknameSelected=false,
+  ~hasPaymentToken=false,
+  ~isSaveCardCheckboxVisible=?,
+  ~isSaveDetailsSelected=false,
+  ~isGuestCustomer,
+  ~email=?,
+  ~screen_height=?,
+  ~screen_width=?,
+  ~isVaultedNewCard=false,
+  (),
+): cardConfirmContext => {
+  let isMandate = payment_type !== NORMAL
+  {
+    authorization: resolveConfirmAuthorization(nativeProp),
+    returnUrl: Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL),
+    email,
+    paymentTypeStr: payment_type_str,
+    customerAcceptance: (!hasPaymentToken || isVaultedNewCard) &&
+      (nativeProp.configuration.alwaysSendCustomerAcceptance ||
+      isNicknameSelected && isMandate ||
+      isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
+      payment_type === NORMAL && (isNicknameSelected || isSaveDetailsSelected) ||
+      payment_type === SETUP_MANDATE) &&
+      !isGuestCustomer
+        ? Some({
+            {
+              acceptance_type: "online",
+              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+              online: {
+                user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
+              },
+            }
+          })
+        : None,
+    browserInfo: {
+      user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
+      accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
+      language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
+      color_depth: 32,
+      screen_height: ?screen_height->Option.map(Int.fromFloat),
+      screen_width: ?screen_width->Option.map(Int.fromFloat),
+      time_zone: Date.make()->Date.getTimezoneOffset,
+      java_enabled: true,
+      java_script_enabled: true,
+      device_model: ?nativeProp.sdkParams.device_model,
+      os_type: ?nativeProp.sdkParams.os_type,
+      os_version: ?nativeProp.sdkParams.os_version,
+    },
+  }
+}
+
 let generateCardConfirmBody = (
   ~nativeProp: SdkTypes.nativeProp,
   ~payment_method_str: string,
@@ -117,52 +204,158 @@ let generateCardConfirmBody = (
   ~isVaultedNewCard=false,
   (),
 ): PaymentConfirmTypes.redirectType => {
-  let isMandate = payment_type !== NORMAL
+  let context = buildCardConfirmContext(
+    ~nativeProp,
+    ~payment_type,
+    ~payment_type_str?,
+    ~appURL?,
+    ~isNicknameSelected,
+    ~hasPaymentToken=payment_token->Option.isSome,
+    ~isSaveCardCheckboxVisible?,
+    ~isSaveDetailsSelected,
+    ~isGuestCustomer,
+    ~email?,
+    ~screen_height?,
+    ~screen_width?,
+    ~isVaultedNewCard,
+    (),
+  )
   {
-    client_secret: ?switch nativeProp.paymentSessionConfig.sdkAuthorization->Utils.getNonEmptyOption {
-    | Some(_) => None
-    | None => Some(nativeProp.paymentSessionConfig.clientSecret)
+    client_secret: ?switch context.authorization {
+    | SdkAuthorizationHeader(_) => None
+    | PublishableKeyHeader({clientSecret}) => Some(clientSecret)
     },
-    return_url: ?Utils.getReturnUrl(~appId=nativeProp.sdkParams.appId, ~appURL),
+    return_url: ?context.returnUrl,
     payment_method: payment_method_str,
     payment_method_type,
     ?payment_method_data,
     ?payment_token,
-    ?email,
-    payment_type: ?payment_type_str,
-    customer_acceptance: ?(
-      (payment_token->Option.isNone || isVaultedNewCard) &&
-      (nativeProp.configuration.alwaysSendCustomerAcceptance ||
-      isNicknameSelected && isMandate ||
-      isMandate && !isNicknameSelected && !(isSaveCardCheckboxVisible->Option.getOr(false)) ||
-      payment_type === NORMAL && (isNicknameSelected || isSaveDetailsSelected) ||
-      payment_type === SETUP_MANDATE) &&
-      !isGuestCustomer
-        ? Some({
-            {
-              acceptance_type: "online",
-              accepted_at: Date.now()->Date.fromTime->Date.toISOString,
-              online: {
-                user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
-              },
-            }
-          })
-        : None
-    ),
-    browser_info: {
-      user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
-      accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
-      language: LocaleDataType.localeTypeToString(nativeProp.configuration.locale),
-      color_depth: 32,
-      screen_height: ?screen_height->Option.map(Int.fromFloat),
-      screen_width: ?screen_width->Option.map(Int.fromFloat),
-      time_zone: Date.make()->Date.getTimezoneOffset,
-      java_enabled: true,
-      java_script_enabled: true,
-      device_model: ?nativeProp.sdkParams.device_model,
-      os_type: ?nativeProp.sdkParams.os_type,
-      os_version: ?nativeProp.sdkParams.os_version,
+    email: ?context.email,
+    payment_type: ?context.paymentTypeStr,
+    customer_acceptance: ?context.customerAcceptance,
+    browser_info: context.browserInfo,
+  }
+}
+
+// ---- Library-owned card confirmation (direct cards) --------------------------
+//
+// Maps the client-core confirm context onto the payment-methods input for a
+// direct card (CardSubmitPath.LibraryConfirm). The library owns the card, so
+// from the form's `payment_method_data` only `billing` survives; the nickname
+// and the host-collected cardholder name are passed as their own values and
+// land as nick_name / card_holder_name, never as one another. Tokenized cards
+// never use this builder: client-core confirms them itself.
+
+let stringField = (dict: Dict.t<JSON.t>, key) =>
+  dict->Dict.get(key)->Option.flatMap(JSON.Decode.string)
+
+let vaultBillingAddress = (json: JSON.t): option<VaultBindings.cardPaymentBillingAddress> =>
+  json
+  ->JSON.Decode.object
+  ->Option.map(d => {
+    VaultBindings.firstName: ?d->stringField("first_name"),
+    lastName: ?d->stringField("last_name"),
+    line1: ?d->stringField("line1"),
+    line2: ?d->stringField("line2"),
+    line3: ?d->stringField("line3"),
+    city: ?d->stringField("city"),
+    state: ?d->stringField("state"),
+    country: ?d->stringField("country"),
+    zip: ?d->stringField("zip"),
+  })
+
+let vaultBillingPhone = (json: JSON.t): option<VaultBindings.cardPaymentPhone> =>
+  json
+  ->JSON.Decode.object
+  ->Option.map(d => {
+    VaultBindings.number: ?d->stringField("number"),
+    countryCode: ?d->stringField("country_code"),
+  })
+
+let vaultBilling = (json: JSON.t): option<VaultBindings.cardPaymentBilling> =>
+  json
+  ->JSON.Decode.object
+  ->Option.map(d => {
+    VaultBindings.address: ?d->Dict.get("address")->Option.flatMap(vaultBillingAddress),
+    email: ?d->stringField("email"),
+    phone: ?d->Dict.get("phone")->Option.flatMap(vaultBillingPhone),
+  })
+
+let vaultPaymentMethodData = (
+  paymentMethodData: option<JSON.t>,
+  ~nickName: option<string>=?,
+  ~cardholderName: option<string>=?,
+): option<VaultBindings.cardPaymentMethodData> => {
+  let billing =
+    paymentMethodData
+    ->Option.flatMap(JSON.Decode.object)
+    ->Option.flatMap(d => d->Dict.get("billing"))
+    ->Option.flatMap(vaultBilling)
+  let nickName = nickName->Option.map(String.trim)->Utils.getNonEmptyOption
+  let cardholderName = cardholderName->Option.map(String.trim)->Utils.getNonEmptyOption
+  switch (billing, nickName, cardholderName) {
+  | (None, None, None) => None
+  | _ => Some({VaultBindings.billing: ?billing, nickName: ?nickName, cardholderName: ?cardholderName})
+  }
+}
+
+let vaultPaymentType = (raw: option<string>): option<VaultBindings.cardPaymentType> =>
+  switch raw {
+  | Some("normal") => Some(#normal)
+  | Some("new_mandate") => Some(#new_mandate)
+  | Some("setup_mandate") => Some(#setup_mandate)
+  | Some("recurring_mandate") => Some(#recurring_mandate)
+  | _ => None
+  }
+
+let vaultPaymentMethodType = (raw: string): VaultBindings.cardPaymentMethodType =>
+  raw === "debit" ? #debit : #credit
+
+let generateLibraryCardConfirmInput = (
+  ~nativeProp: SdkTypes.nativeProp,
+  ~baseUrl: string,
+  ~payment_method_type: string,
+  ~paymentMethodData: option<JSON.t>,
+  ~nickName: option<string>=?,
+  ~cardholderName: option<string>=?,
+  ~eligibilityRequired: bool=false,
+  ~context: cardConfirmContext,
+): VaultBindings.cardPaymentConfirmInput => {
+  let info = context.browserInfo
+  {
+    paymentId: nativeProp.paymentSessionConfig.paymentId,
+    auth: switch context.authorization {
+    | SdkAuthorizationHeader(authorization) => SdkAuthorization({authorization: authorization})
+    | PublishableKeyHeader({publishableKey, clientSecret}) =>
+      PublishableKey({publishableKey, clientSecret})
     },
+    endpoint: {baseUrl: baseUrl},
+    appId: ?nativeProp.sdkParams.appId,
+    paymentMethodType: vaultPaymentMethodType(payment_method_type),
+    paymentMethodData: ?vaultPaymentMethodData(paymentMethodData, ~nickName?, ~cardholderName?),
+    customerAcceptance: ?context.customerAcceptance->Option.map(acceptance => {
+      VaultBindings.acceptanceType: acceptance.acceptance_type === "offline" ? #offline : #online,
+      acceptedAt: acceptance.accepted_at,
+      online: {userAgent: ?acceptance.online.user_agent},
+    }),
+    browserInfo: {
+      userAgent: ?info.user_agent,
+      acceptHeader: ?info.accept_header,
+      language: ?info.language,
+      colorDepth: ?info.color_depth,
+      screenHeight: ?info.screen_height,
+      screenWidth: ?info.screen_width,
+      timeZone: ?info.time_zone,
+      javaEnabled: ?info.java_enabled,
+      javaScriptEnabled: ?info.java_script_enabled,
+      deviceModel: ?info.device_model,
+      osType: ?info.os_type,
+      osVersion: ?info.os_version,
+    },
+    returnUrl: ?context.returnUrl,
+    paymentType: ?vaultPaymentType(context.paymentTypeStr),
+    email: ?context.email,
+    eligibilityRequired: ?(eligibilityRequired ? Some(true) : None),
   }
 }
 

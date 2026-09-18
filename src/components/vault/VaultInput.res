@@ -10,7 +10,8 @@ let make = (
   ~active: bool,
   ~empty: bool,
   ~valid: bool,
-  ~iconRight: option<React.element>=?,
+  ~cardBrandIcon: option<VaultBindings.cardBrandIconMode>=?,
+  ~cvcIcon: option<VaultBindings.cvcIconMode>=?,
   ~useProviderIcon: bool=false,
   ~reference: VaultBindings.fieldRef,
   ~onFocus,
@@ -103,7 +104,16 @@ let make = (
       {switch elementType {
       | "cardNumber" =>
         <VaultBindings.CardNumberField
-          ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange ?onReady
+          ref=reference
+          unstyled
+          ?cardBrandIcon
+          styles
+          placeholder=""
+          testID
+          onFocus
+          onBlur
+          ?onChange
+          ?onReady
         />
       | "cardExpiry" =>
         <VaultBindings.CardExpiryField
@@ -113,6 +123,7 @@ let make = (
         <VaultBindings.CardCVCField
           ref=reference
           unstyled
+          ?cvcIcon
           styles
           placeholder=""
           testID
@@ -124,9 +135,5 @@ let make = (
         />
       }}
     </View>
-    {switch useProviderIcon ? None : iconRight {
-    | Some(icon) => <View pointerEvents=#none> icon </View>
-    | None => React.null
-    }}
   </>
 }

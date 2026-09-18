@@ -117,7 +117,6 @@ module SingleNameInput = {
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
-  ~formatValue as _,
   ~isCardPayment,
   ~accessible=?,
 ) => {

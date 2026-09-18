@@ -77,12 +77,7 @@ module RedirectionHooks = {
     async (
       ~body,
       ~errorCallback,
-      ~handleApiRes: (
-        ~status: string,
-        ~reUri: string,
-        ~error: PaymentConfirmTypes.error,
-        ~nextAction: PaymentConfirmTypes.nextAction=?,
-      ) => unit,
+      ~handleResponse: JSON.t => unit,
       ~headers,
       ~uri,
     ) => {
@@ -95,9 +90,7 @@ module RedirectionHooks = {
           ~uri,
           ~apiLogWrapper,
         )
-        let confirmResponse = jsonResponse->Utils.getDictFromJson
-        let {nextAction, status, error} = itemToObjMapper(confirmResponse)
-        handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
+        handleResponse(jsonResponse)
       } catch {
       | _ => errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
       }

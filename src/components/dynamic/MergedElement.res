@@ -5,7 +5,6 @@ open Style
 let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
-  ~formatValue as _,
   ~accessible=?,
 ) => {
   let {component, dangerColor, gap} = ThemebasedStyle.useThemeBasedStyle()

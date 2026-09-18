@@ -13,18 +13,21 @@ let make = (
   ~accessible=?,
   ~onSubmit=?,
   ~isFocused: bool=false,
-  ~checkEligibility: option<string> => unit=_ => (),
   ~vaultFormId: string="",
 ) => {
   let groups = React.useMemo1(() => FieldGrouper.groupFields(fields), [fields])
+  // Whether client-core renders its own cardholder-name field for this method;
+  // a direct library card form then takes the name from it (external mode).
+  let hasCardholderNameField = React.useMemo1(
+    () => LibraryCardMode.hasCardholderNameField(fields),
+    [fields],
+  )
 
   let localeObject = GetLocale.useGetLocalObj()
 
   let createFieldValidator = (validationRule: Validation.validationRule) => {
     Validation.createFieldValidator([validationRule], ~enabledCardSchemes, ~localeObject)
   }
-
-  let formatValue = Validation.formatValue
 
   let formValidator = React.useMemo(() => {
     _ => Dict.make()
@@ -54,11 +57,10 @@ let make = (
             key={FieldGrouper.keyOf(element)}
             element
             createFieldValidator
-            formatValue
             isCardPayment
             enabledCardSchemes
             ?accessible
-            checkEligibility
+            hasCardholderNameField
             vaultFormId
           />
         )
