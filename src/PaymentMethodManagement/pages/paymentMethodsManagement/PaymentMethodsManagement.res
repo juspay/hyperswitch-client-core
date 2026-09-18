@@ -114,7 +114,7 @@ let make = () => {
             type_: "payment_method_session",
             status: dict->Utils.getString("status", "succeeded"),
             code: "",
-            message: dict->Utils.getString("status", "Card updated successfully"),
+            message: dict->Utils.getString("message", "Card updated successfully"),
           },
           (),
         )
@@ -127,20 +127,24 @@ let make = () => {
   let addConfirmRef: React.ref<option<unit => unit>> = React.useRef(None)
 
   let confirmActionRef: React.ref<unit => unit> = React.useRef(() => ())
-  confirmActionRef.current = _ =>
-    if isAddScreen {
-      addConfirmRef.current->Option.map(save => save())->Option.getOr()
-    } else if showCvcCta {
-      switch validateCvc() {
-      | None => handleCvcConfirm()
-      | Some(error) => {
-          setCvcError(_ => Some(error))
-          notifyValidationFailure()
+
+  React.useEffect0(() => {
+    confirmActionRef.current = _ =>
+      if isAddScreen {
+        addConfirmRef.current->Option.map(save => save())->Option.getOr()
+      } else if showCvcCta {
+        switch validateCvc() {
+        | None => handleCvcConfirm()
+        | Some(error) => {
+            setCvcError(_ => Some(error))
+            notifyValidationFailure()
+          }
         }
+      } else {
+        notifyValidationFailure()
       }
-    } else {
-      notifyValidationFailure()
-    }
+    None
+  })
 
   React.useEffect0(() => {
     if isWidget {
@@ -204,6 +208,14 @@ let make = () => {
     setManageToken(_ => "")
     setCvcError(_ => None)
   }
+
+  // Web parity: any change of the selected saved method clears the entered
+  // CVC and its error (web clears on paymentToken change in CommonCardProps).
+  React.useEffect1(() => {
+    setCvcNumber(_ => "")
+    setCvcError(_ => None)
+    None
+  }, [selectedToken])
 
   let onCvcBlur = _ => {
     if cvcNumber != "" && !isCvcValid {
@@ -302,7 +314,7 @@ let make = () => {
         paddingHorizontal: 24.->dp,
         alignItems: #center,
       })}>
-      <TextWrapper text={"No saved payment methods available."} textType={ModalTextLight} />
+      <TextWrapper text=localeObject.somethingWentWrongText textType={ModalTextLight} />
     </View>
   | Loaded =>
     <>

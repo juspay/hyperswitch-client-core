@@ -1,4 +1,5 @@
 import NativeHyperModule from '../../../specs/NativeHyperModule';
+import NativeHyperPMMModule from '../../../specs/NativeHyperPMMModule';
 import type {
   PaymentResultEvent,
   WidgetActionEvent,
@@ -56,7 +57,11 @@ export const exitPaymentMethodManagement = (
   result: string,
   reset: boolean,
 ): void => {
-  NativeHyperModule?.exitPaymentMethodManagement(rootTag, result, reset);
+  // PMM-only entry point: reached exclusively with a
+  // PaymentMethodsManagement sdkState (HandleSuccessFailureHook), so it
+  // targets the PMM realm's own module name. In the standalone PMM SDK the
+  // payments `HyperModule` class does not even exist.
+  NativeHyperPMMModule?.exitPaymentMethodManagement(rootTag, result, reset);
 };
 
 export const exitWidgetPaymentsheet = (
@@ -90,7 +95,10 @@ export const notifyWidgetPaymentResult = (
   rootTag: number,
   result: PaymentExitResult,
 ): void => {
+  // Called by widget-validation flows of BOTH realms: dual-dispatch; each
+  // realm's impl resolves its own widgets by rootTag and no-ops otherwise.
   NativeHyperModule?.notifyWidgetPaymentResult(rootTag, result);
+  NativeHyperPMMModule?.notifyWidgetPaymentResult(rootTag, result);
 };
 
 export const emitPaymentEvent = (
@@ -98,7 +106,10 @@ export const emitPaymentEvent = (
   eventType: string,
   payload: Object,
 ): void => {
+  // Emitted by screens of BOTH realms: dual-dispatch; the module that owns
+  // the rootTag's surface forwards the event, the other no-ops.
   NativeHyperModule?.emitPaymentEvent(rootTag, eventType, payload);
+  NativeHyperPMMModule?.emitPaymentEvent(rootTag, eventType, payload);
 };
 
 export const onUpdateIntentEvent = (
@@ -142,7 +153,17 @@ export const subscribeConfirmEC = (
 
 export const subscribeTriggerWidgetAction = (
   handler: (payload: WidgetActionEvent) => void,
-): (() => void) => subscribe(NativeHyperModule?.triggerWidgetAction, handler);
+): (() => void) => {
+  // Both realms can deliver CTA confirms: merchants embedding the PMM widget
+  // receive them from `HyperPMMModule`, payments widgets from `HyperModule`.
+  // Handlers already filter by actionData.rootTag, so cross-realm events are
+  // ignored; either module may be absent (standalone integrations).
+  const unsubs = [
+    subscribe(NativeHyperModule?.triggerWidgetAction, handler),
+    subscribe(NativeHyperPMMModule?.triggerWidgetAction, handler),
+  ];
+  return () => unsubs.forEach(unsub => unsub());
+};
 
 export const subscribeUpdateIntentInit = (
   handler: (payload: UpdateIntentEvent) => void,

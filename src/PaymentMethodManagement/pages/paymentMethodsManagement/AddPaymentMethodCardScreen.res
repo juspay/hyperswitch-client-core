@@ -120,7 +120,7 @@ let make = (
               type_: "payment_method_session",
               status: dict->Utils.getString("status", "succeeded"),
               code: "",
-              message: dict->Utils.getString("status", "Card saved successfully"),
+              message: dict->Utils.getString("message", "Card saved successfully"),
             },
             (),
           )
@@ -159,7 +159,7 @@ let make = (
                 setCardNumberError(_ => None)
                 setCardNumber(_ => val->Validation.formatCardNumber(cardType))
               }}
-              placeholder="Card number"
+              placeholder=localeObject.cardNumberLabel
               keyboardType=#"number-pad"
               enableCrossIcon=false
               maxLength={Some(Validation.maxCardLength(cardBrand) + 3)}
@@ -183,7 +183,7 @@ let make = (
                     setExpiryError(_ => None)
                     setExpiryDate(_ => val->Validation.formatCardExpiryNumber)
                   }}
-                  placeholder="MM / YY"
+                  placeholder=localeObject.expiryPlaceholder
                   keyboardType=#"number-pad"
                   enableCrossIcon=false
                   maxLength={Some(8)}
@@ -201,7 +201,7 @@ let make = (
                     setCvcError(_ => None)
                     setCvv(_ => val->Validation.formatCVCNumber(cardBrand))
                   }}
-                  placeholder="CVV"
+                  placeholder=localeObject.cvcTextLabel
                   keyboardType=#"number-pad"
                   secureTextEntry=true
                   enableCrossIcon=false
@@ -217,14 +217,14 @@ let make = (
             <CustomInput
               state=cardHolderName
               setState={val => setCardHolderName(_ => val)}
-              placeholder="Card holder name (optional)"
+              placeholder=localeObject.cardHolderNamePlaceholder
               enableCrossIcon=false
             />
             <Space height=10. />
             <CustomInput
               state=nickName
               setState={val => setNickName(_ => val)}
-              placeholder="Nickname (optional)"
+              placeholder=localeObject.nicknamePlaceholder
               enableCrossIcon=false
             />
           </View>
@@ -236,7 +236,7 @@ let make = (
             backgroundColor: component.background,
             alignItems: #center,
           })}>
-          <TextWrapper text={"No payment methods available."} textType={ModalTextLight} />
+          <TextWrapper text=localeObject.noPaymentMethodsAvailableText textType={ModalTextLight} />
         </View>}
   </ScrollView>
 }

@@ -103,9 +103,13 @@ let make = (
   let isCardExpired = switch pmDetails.card {
   | Some(card) =>
     card.expiry_year != "" &&
-    card.expiry_month != "" &&
-    Date.fromString(`${card.expiry_year}-${card.expiry_month}`)->Js.Date.valueOf <
-      Date.make()->Js.Date.valueOf
+    card.expiry_month != "" && {
+      let expiryDate = Date.fromString(`${card.expiry_year}-${card.expiry_month}`)
+      // A saved card stays usable through its whole expiry month, so compare
+      // against the start of the following month (same as payments saved cards).
+      expiryDate->Date.setMonth(expiryDate->Date.getMonth + 1)
+      expiryDate->Date.getTime < Date.make()->Date.getTime
+    }
   | None => false
   }
 

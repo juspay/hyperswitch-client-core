@@ -72,7 +72,7 @@ let useUpdateSavedPaymentMethod = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.ADD_PAYMENT_METHOD_CALL,
+        ~eventName=LoggerTypes.UPDATE_PAYMENT_METHOD_CALL,
         ~body,
         ~apiLogWrapper,
       )
