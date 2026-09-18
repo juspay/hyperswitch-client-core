@@ -1,4 +1,4 @@
-export {make as default} from './src/routes/App.bs.js';
+export {make as default} from './src/Payments/routes/App.bs.js';
 
 // import {ActivityIndicator, View} from 'react-native';
 

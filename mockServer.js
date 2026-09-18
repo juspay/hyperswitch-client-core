@@ -63,6 +63,14 @@ const HYPERSWITCH_BASE_URL =
   'https://sandbox.hyperswitch.io';
 const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
 
+// PMM (payment method session) credentials — separate sandbox account
+const PM_SESSION_BASE_URL =
+  process.env.PM_SESSION_BASE_URL || 'https://app.hyperswitch.io/api';
+const PM_SESSION_PUBLISHABLE_KEY = process.env.PM_SESSION_PUBLISHABLE_KEY;
+const PM_SESSION_SECRET_KEY = process.env.PM_SESSION_SECRET_KEY;
+const PM_SESSION_PROFILE_ID = process.env.PM_SESSION_PROFILE_ID;
+const PM_SESSION_CUSTOMER_ID = process.env.PM_SESSION_CUSTOMER_ID;
+
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('Missing required environment variables');
   logger.warn('HYPERSWITCH_PUBLISHABLE_KEY: ' + !!HYPERSWITCH_PUBLISHABLE_KEY);
@@ -175,6 +183,7 @@ app.post('/create-payment-intent', async (req, res) => {
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
       sdkAuthorization: response.data.sdk_authorization,
+      clientSecret: response.data.client_secret,
       paymentId: response.data.payment_id,
       profileId: PROFILE_ID,
     });
@@ -188,6 +197,50 @@ app.post('/create-payment-intent', async (req, res) => {
       error: 'Failed to create payment intent',
       details: error.response?.data || error.message,
       timestamp: new Date().toISOString(),
+    });
+  }
+});
+
+app.post('/create-payment-method-session', async (req, res) => {
+  try {
+    const response = await fetch(
+      `${PM_SESSION_BASE_URL}/v1/payment-method-sessions`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'api-key': PM_SESSION_SECRET_KEY,
+          authorization: `api-key=${PM_SESSION_SECRET_KEY}`,
+          'x-profile-id': PM_SESSION_PROFILE_ID,
+        },
+        body: JSON.stringify({
+          customer_id: PM_SESSION_CUSTOMER_ID,
+          ...req.body,
+        }),
+      },
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      logger.error('Error creating payment method session', data);
+      return res
+        .status(response.status)
+        .send({error: data.error || 'Failed to create payment method session'});
+    }
+
+    res.send({
+      publishableKey: PM_SESSION_PUBLISHABLE_KEY,
+      profileId: PM_SESSION_PROFILE_ID,
+      sdkAuthorization: data.sdk_authorization,
+      pmSessionId: data.id,
+    });
+  } catch (err) {
+    logger.error('Error creating payment method session', err.message);
+    return res.status(400).send({
+      error: {
+        message: err.message,
+      },
     });
   }
 });
@@ -264,9 +317,9 @@ app.get('/netcetera-sdk-api-key', (_, res) => {
   }
 });
 
-app.post("/update-payment", async (req, res) => {
+app.post('/update-payment', async (req, res) => {
   try {
-    const { paymentId, ...updateFields } = req.body;
+    const {paymentId, ...updateFields} = req.body;
 
     logger.debug('Updating payment intent with data', updateFields);
 
