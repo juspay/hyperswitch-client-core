@@ -70,7 +70,7 @@ type tokenizeResult = {
 }
 
 module CardForm = {
-  @module("@juspay-tech/react-native-hyperswitch-payment-methods") @react.component
+  @module("../../payment-methods") @react.component
   external make: (
     ~id: string=?,
     ~vaultDetails: JSON.t=?,
@@ -82,7 +82,7 @@ module CardForm = {
 }
 
 module CardNumberField = {
-  @module("@juspay-tech/react-native-hyperswitch-payment-methods") @react.component
+  @module("../../payment-methods") @react.component
   external make: (
     ~ref: fieldRef=?,
     ~unstyled: bool=?,
@@ -97,7 +97,7 @@ module CardNumberField = {
 }
 
 module CardExpiryField = {
-  @module("@juspay-tech/react-native-hyperswitch-payment-methods") @react.component
+  @module("../../payment-methods") @react.component
   external make: (
     ~ref: fieldRef=?,
     ~unstyled: bool=?,
@@ -112,7 +112,7 @@ module CardExpiryField = {
 }
 
 module CardCVCField = {
-  @module("@juspay-tech/react-native-hyperswitch-payment-methods") @react.component
+  @module("../../payment-methods") @react.component
   external make: (
     ~ref: fieldRef=?,
     ~unstyled: bool=?,
@@ -129,7 +129,7 @@ module CardCVCField = {
 
 type hyperswitchPaymentMethods
 
-@module("@juspay-tech/react-native-hyperswitch-payment-methods")
+@module("../../payment-methods")
 external hyperswitchPaymentMethods: hyperswitchPaymentMethods = "HyperswitchPaymentMethods"
 
 @send

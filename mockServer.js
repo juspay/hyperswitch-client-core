@@ -192,6 +192,53 @@ app.post('/create-payment-intent', async (req, res) => {
   }
 });
 
+app.post('/create-payment-method-session', async (req, res) => {
+  try {
+    const profileId = process.env.PROFILE_ID;
+    if (!profileId) {
+      return res.status(400).json({
+        error: 'PROFILE_ID is required to create a payment-method session',
+      });
+    }
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `api-key=${HYPERSWITCH_SECRET_KEY}`,
+      'X-Profile-Id': profileId,
+    };
+
+    const body = {
+      customer_id: req.body?.customer_id,
+      storage_type: 'persistent',
+      ...req.body,
+    };
+
+    logger.debug('Creating payment-method session', body);
+
+    const response = await makeHyperswitchRequest(
+      '/v1/payment-method-sessions',
+      {method: 'POST', headers, body: JSON.stringify(body)},
+    );
+
+    logger.debug('Payment-method session created', {id: response.data.id});
+
+    res.json({
+      publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
+      sdkAuthorization: response.data.sdk_authorization,
+    });
+  } catch (error) {
+    logger.error(
+      'Error creating payment-method session',
+      error.response?.data || error.message,
+    );
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to create payment-method session',
+      details: error.response?.data || error.message,
+      timestamp: new Date().toISOString(),
+    });
+  }
+});
+
 app.post('/create-authentication', async (req, res) => {
   try {
     const authenticationData = {

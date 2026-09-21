@@ -30,6 +30,7 @@
     "clean:pod:cache": "pod cache clean --all",
     "lint": "eslint .",
     "test": "jest",
+    "typecheck:payment-methods": "tsc --noEmit -p src/payment-methods/tsconfig.json",
     "build:android:detox": "npx detox build --configuration  android.emu.debug",
     "build:ios:detox": "npx detox build --configuration ios.sim.debug",
     "test:android": "npx detox test --configuration android.emu.debug  --loglevel trace --record-logs all",
@@ -40,7 +41,6 @@
   },
   "dependencies": {
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
-    "@juspay-tech/react-native-hyperswitch-payment-methods": "1.0.4",
     "@juspay-tech/react-native-hyperswitch-paypal": "^1.0.2",
     "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.3",
     "@juspay-tech/react-native-hyperswitch-vault": "1.0.1",
@@ -96,6 +96,7 @@
     "@semantic-release/release-notes-generator": "^14.0.3",
     "@svgr/webpack": "^6.5.1",
     "@swc/core": "^1.7.23",
+    "@testing-library/react-native": "^13.2.0",
     "@tsconfig/react-native": "^3.0.0",
     "@types/jest": "^29.5.13",
     "@types/pako": "^2",

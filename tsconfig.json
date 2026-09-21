@@ -20,5 +20,5 @@
     }
   },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules", "detox-tests"]
+  "exclude": ["node_modules", "detox-tests", "src/payment-methods"]
 }
