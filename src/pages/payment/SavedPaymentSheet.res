@@ -35,6 +35,8 @@ let make = (
   let handleWalletPayments = ButtonHook.useProcessPayButtonResult()
   let {launchApplePay, launchGPay} = WebKit.useWebKit()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let notifyNotReady = UseWidgetActions.useNotifyNotReady()
+  let notifyWidgetResult = UseWidgetActions.useNotifyWidgetResult()
   let handleWalletConfirmCallback = WalletConfirmCallback.useWalletConfirmCallback()
 
   let (errorText, setErrorText) = React.useState(_ => None)
@@ -352,17 +354,21 @@ let make = (
         | Cancelled | Simulated =>
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Payment was Cancelled")
+          notifyWidgetResult(PaymentConfirmTypes.walletCancelledError)
         | Failed(error_message) =>
           setLoading(FillingDetails)
           showAlert(~errorType="error", ~message=error_message)
+          notifyWidgetResult(PaymentConfirmTypes.walletFailedError(error_message))
         }
       | None =>
         setLoading(FillingDetails)
         showAlert(~errorType="error", ~message="Technical Error")
+        notifyWidgetResult(PaymentConfirmTypes.walletFailedError("Technical Error"))
       }
     | None =>
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message="Technical Error")
+      notifyWidgetResult(PaymentConfirmTypes.walletFailedError("Technical Error"))
     }
   }
 
@@ -395,24 +401,33 @@ let make = (
         | Cancelled =>
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Cancelled")
+          notifyWidgetResult(PaymentConfirmTypes.walletCancelledError)
         | Simulated => setTimeout(() => {
             setLoading(FillingDetails)
             showAlert(
               ~errorType="warning",
               ~message="Apple Pay is not supported in Simulated Environment",
             )
+            notifyWidgetResult(
+              PaymentConfirmTypes.walletFailedError(
+                "Apple Pay is not supported in Simulated Environment",
+              ),
+            )
           }, 2000)->ignore
         | Failed(error_message) =>
           setLoading(FillingDetails)
           showAlert(~errorType="error", ~message=error_message)
+          notifyWidgetResult(PaymentConfirmTypes.walletFailedError(error_message))
         }
       | None =>
         setLoading(FillingDetails)
         showAlert(~errorType="error", ~message="Technical Error")
+        notifyWidgetResult(PaymentConfirmTypes.walletFailedError("Technical Error"))
       }
     | None =>
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message="Technical Error")
+      notifyWidgetResult(PaymentConfirmTypes.walletFailedError("Technical Error"))
     }
   }
 
@@ -435,8 +450,10 @@ let make = (
     ->Option.map(data => data.intent_data.payment_type)
     ->Option.getOr(NORMAL) !== NORMAL
 
+  // The merchant declined to proceed: the confirm that asked is answered as cancelled.
   let onAbort = () => {
     setLoading(FillingDetails)
+    notifyWidgetResult(PaymentConfirmTypes.walletCancelledError)
   }
 
   let handlePress = _ => {
@@ -463,6 +480,7 @@ let make = (
           }
         | CardStrategyContext.Pending | CardStrategyContext.Refused(_) if token.requires_cvv =>
           setLoading(FillingDetails)
+          notifyNotReady()
         | _ =>
           token.requires_cvv &&
           (savedCardCvv->Option.isNone ||
@@ -497,6 +515,7 @@ let make = (
           ) {
             setLoading(FillingDetails)
             showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+            notifyNotReady()
           } else {
             logger(
               ~logType=DEBUG,
@@ -511,6 +530,9 @@ let make = (
               let timerId = setTimeout(() => {
                 setLoading(FillingDetails)
                 showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
+                notifyWidgetResult(
+                  PaymentConfirmTypes.walletFailedError("Apple Pay Error, Please try again"),
+                )
                 logger(
                   ~logType=DEBUG,
                   ~value="apple_pay",
@@ -670,10 +692,14 @@ let make = (
     None
   }, (selectedToken, savedCardCvv, isVaultCvc, vaultCvcValid))
 
+  // The credentials key is a dep so the stored closure is rebuilt after updateIntent moves
+  // the session to a new intent; otherwise it would confirm the old one.
+  let credentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
   React.useEffect(() => {
     if isScreenFocus {
       let confirmButton = {
         GlobalConfirmButton.loading: false,
+        credentialsKey,
         handlePress,
         payment_method_type: selectedToken
         ->Option.map(token => token.payment_method_type)
@@ -698,6 +724,7 @@ let make = (
     isScreenFocus,
     strategy,
     vaultCvcValid,
+    credentialsKey,
   ))
 
   <ErrorBoundary level={FallBackScreen.Screen} rootTag=nativeProp.rootTag>

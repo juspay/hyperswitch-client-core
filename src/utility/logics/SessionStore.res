@@ -68,6 +68,8 @@ let refresh = (~key, ~fetchers) => {
   getOrStart(~key, ~fetchers)
 }
 
+let peek = (~key) => table->Dict.get(key)
+
 type sessionEvent =
   | IntentUpdating
   | IntentUpdateEnded
@@ -76,6 +78,16 @@ type sessionEvent =
 type listener = {sessionTag: int, handle: sessionEvent => unit}
 
 let listeners: array<listener> = []
+
+type sessionState = {switched: option<SdkTypes.paymentSessionConfig>, updating: bool}
+
+let states: Dict.t<sessionState> = Dict.make()
+
+let idle = {switched: None, updating: false}
+
+let stateOf = (~sessionTag: int) => states->Dict.get(sessionTag->Int.toString)->Option.getOr(idle)
+
+let forget = (~sessionTag: int) => states->Dict.delete(sessionTag->Int.toString)
 
 let subscribe = (~sessionTag: int, handle: sessionEvent => unit) => {
   let listener = {sessionTag, handle}
@@ -88,7 +100,16 @@ let subscribe = (~sessionTag: int, handle: sessionEvent => unit) => {
   }
 }
 
-let publish = (~sessionTag: int, event: sessionEvent) =>
+let publish = (~sessionTag: int, event: sessionEvent) => {
+  let current = stateOf(~sessionTag)
+  states->Dict.set(
+    sessionTag->Int.toString,
+    switch event {
+    | IntentUpdating => {...current, updating: true}
+    | IntentUpdateEnded => {...current, updating: false}
+    | IntentSwitched(config) => {switched: Some(config), updating: false}
+    },
+  )
   listeners
   ->Array.copy
   ->Array.forEach(listener =>
@@ -96,3 +117,4 @@ let publish = (~sessionTag: int, event: sessionEvent) =>
       listener.handle(event)
     }
   )
+}

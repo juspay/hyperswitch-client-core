@@ -211,7 +211,8 @@ let generateSavedCardConfirmBody = (
       billing->Option.mapOr(Dict.make(), address =>
         [("billing", address->Utils.getJsonObjectFromRecord)]->Dict.fromArray
       )
-    let vaultDict = vaultPaymentMethodData->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
+    let vaultDict =
+      vaultPaymentMethodData->Option.flatMap(JSON.Decode.object)->Option.getOr(Dict.make())
     let merged = CommonUtils.mergeDict(billingDict, vaultDict)
     merged->Dict.toArray->Array.length > 0 ? Some(merged->JSON.Encode.object) : None
   },
@@ -313,3 +314,39 @@ let getSessionCredentialsKey = (nativeProp: SdkTypes.nativeProp) =>
   `${nativeProp.hyperswitchConfig.publishableKey}|${nativeProp.paymentSessionConfig.paymentId}|${nativeProp.paymentSessionConfig.clientSecret}|${nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(
       "",
     )}`
+
+let withSdkAuthorization = (
+  nativeProp: SdkTypes.nativeProp,
+  sdkAuthorization: string,
+): SdkTypes.nativeProp =>
+  if (
+    sdkAuthorization === "" ||
+      nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("") === sdkAuthorization
+  ) {
+    nativeProp
+  } else {
+    let data = Utils.getSdkAuthorizationData(sdkAuthorization)
+    // Never the previous intent's secret or id next to the new authorization.
+    let clientSecret = data.clientSecret->Option.getOr("")
+    let paymentId = switch data.paymentId {
+    | Some(paymentId) => paymentId
+    | None => clientSecret->String.split("_secret_")->Array.get(0)->Option.getOr("")
+    }
+    let publishableKey = switch nativeProp.hyperswitchConfig.publishableKey {
+    | "" => data.publishableKey->Option.getOr("")
+    | publishableKey => publishableKey
+    }
+    {
+      ...nativeProp,
+      hyperswitchConfig: {
+        ...nativeProp.hyperswitchConfig,
+        publishableKey,
+        profileId: switch data.profileId {
+        | Some(_) as profileId => profileId
+        | None => nativeProp.hyperswitchConfig.profileId
+        },
+        environment: GlobalVars.checkEnv(publishableKey),
+      },
+      paymentSessionConfig: {clientSecret, sdkAuthorization: Some(sdkAuthorization), paymentId},
+    }
+  }

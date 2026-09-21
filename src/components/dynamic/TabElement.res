@@ -44,6 +44,7 @@ let make = (
   }, [setFormMethods])
 
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let notifyNotReady = UseWidgetActions.useNotifyNotReady()
 
   let (
     requiredFields,
@@ -65,11 +66,12 @@ let make = (
     // Only gate on eligibility for card payments; non-card methods skip the check
     let isEligibilityBlocked = isCardPayment && eligibilityStatus !== DynamicFieldsContext.Allowed
     if isEligibilityBlocked {
-      ()
+      notifyNotReady()
     } else {
       switch (paymentMethodData.payment_method, strategy) {
       | (CARD, CardStrategyContext.Pending)
-      | (CARD, CardStrategyContext.Refused(_)) => ()
+      | (CARD, CardStrategyContext.Refused(_)) =>
+        notifyNotReady()
       | (CARD, CardStrategyContext.VaultCard(_)) =>
         if isNicknameValid && isFormValid {
           submitVaultCard(~formId=vaultFormId, ~shape=WholeCard, ~onTokenized=vaultPmd =>
@@ -122,10 +124,13 @@ let make = (
 
   // handlePress closes over processRequest, which reads isSaveDetailsSelected; it must be
   // a dep here or the confirm button keeps a stale closure and never sends customer_acceptance.
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let credentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
   React.useEffect(() => {
     if isScreenFocus {
       let confirmButton = {
         GlobalConfirmButton.loading: false,
+        credentialsKey,
         handlePress,
         payment_method_type: paymentMethodData.payment_method_type,
         payment_experience: paymentMethodData.payment_experience,
@@ -146,6 +151,7 @@ let make = (
     isNicknameValid,
     isSaveDetailsSelected,
     strategy,
+    credentialsKey,
   ))
 
   <DynamicFields

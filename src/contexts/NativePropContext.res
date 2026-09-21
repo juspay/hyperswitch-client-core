@@ -11,8 +11,13 @@ module Provider = {
 @react.component
 let make = (~nativeProp: SdkTypes.nativeProp, ~children) => {
   let (state, setState) = React.useState(_ => nativeProp)
+  let mounted = React.useRef(false)
   React.useEffect1(() => {
-    setState(_ => nativeProp)
+    if mounted.current {
+      setState(_ => nativeProp)
+    } else {
+      mounted.current = true
+    }
     None
   }, [nativeProp])
   let setState = React.useCallback1(val => {
