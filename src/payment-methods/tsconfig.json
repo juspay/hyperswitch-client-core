@@ -1,0 +1,21 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "customConditions": ["react-native-strict-api"],
+    "forceConsistentCasingInFileNames": true,
+    "incremental": false,
+    "jsx": "react-jsx",
+    "lib": ["ESNext"],
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "target": "ESNext",
+    "verbatimModuleSyntax": true
+  },
+  "include": ["./**/*.ts", "./**/*.tsx"],
+  "exclude": []
+}
