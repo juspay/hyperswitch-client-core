@@ -2972,9 +2972,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@juspay-tech/react-native-hyperswitch-payment-methods@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@juspay-tech/react-native-hyperswitch-payment-methods@npm:1.0.0"
+"@juspay-tech/react-native-hyperswitch-payment-methods@npm:1.0.4":
+  version: 1.0.4
+  resolution: "@juspay-tech/react-native-hyperswitch-payment-methods@npm:1.0.4"
   peerDependencies:
     "@basis-theory/react-native-elements": "*"
     "@evervault/react-native": "*"
@@ -2994,7 +2994,7 @@ __metadata:
       optional: true
     skyflow-react-native:
       optional: true
-  checksum: 2f4ef7e1f2aafffb586b73657116305d0dbf48f5d525a13b88d2f29c7952d5c59eca8e26063ba8dec205718272d645a2091ad0a7402dd5f8713ff992028ad851
+  checksum: 2d3071364fa16f69a0399d6fa8ca8f31e36f8064e0e4b3521082027aa5a95cacdb8262721e46d22f6229348bf134d12fb440f4533e8cba625d0248594274d4bf
   languageName: node
   linkType: hard
 
@@ -3019,14 +3019,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@juspay-tech/react-native-hyperswitch-vault@npm:1.0.0":
-  version: 1.0.0
-  resolution: "@juspay-tech/react-native-hyperswitch-vault@npm:1.0.0"
+"@juspay-tech/react-native-hyperswitch-vault@npm:1.0.1":
+  version: 1.0.1
+  resolution: "@juspay-tech/react-native-hyperswitch-vault@npm:1.0.1"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-svg: "*"
-  checksum: ad45cc1bb7021ed9519d286aeb4f29591a9c0f73b3b0744a0eaeeddbd1f83a28bcde4bdad678de12edba6e9e2749764b6e2162cbc5de99a648fffa065efae50f
+  checksum: e71e2a35b4b1393a9e19cca5f518a715696ea5bde91189b424badbfa2a307c43d7d2835d14c4aa9d9353fa21b317c7e985d50026cc9e7cb62e12d184490e304f
   languageName: node
   linkType: hard
 
@@ -10709,10 +10709,10 @@ __metadata:
     "@commitlint/config-conventional": ^17.0.3
     "@glennsl/rescript-fetch": 0.2.3
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.2
-    "@juspay-tech/react-native-hyperswitch-payment-methods": 1.0.0
+    "@juspay-tech/react-native-hyperswitch-payment-methods": 1.0.4
     "@juspay-tech/react-native-hyperswitch-paypal": ^1.0.2
     "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.3
-    "@juspay-tech/react-native-hyperswitch-vault": 1.0.0
+    "@juspay-tech/react-native-hyperswitch-vault": 1.0.1
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
     "@react-native-community/cli": 20.1.0
     "@react-native-community/cli-platform-android": 20.1.0
