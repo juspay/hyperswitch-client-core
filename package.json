@@ -37,7 +37,11 @@
     "test:ios": "npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all",
     "prepare": "husky",
     "postinstall": "patch-package",
-    "lint:secrets": "gitleaks detect --source . --no-banner --verbose"
+    "lint:secrets": "gitleaks detect --source . --no-banner --verbose",
+    "bundle:ios:pmm": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.payment-method-management.js --bundle-output ios/hyperswitchSDK/PaymentMethodManagement/Resources/hyperswitch-payment-method-management.bundle",
+    "bundle:android:pmm": "react-native bundle --reset-cache --platform android --dev false --entry-file index.payment-method-management.js --bundle-output android/app/src/main/assets/hyperswitch-payment-method-management.bundle",
+    "bundle:ios:payment-methods": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.payment-methods.js --bundle-output ios/hyperswitchSDK/PaymentMethods/Resources/hyperswitch-payment-methods.bundle",
+    "bundle:android:payment-methods": "react-native bundle --reset-cache --platform android --dev false --entry-file index.payment-methods.js --bundle-output android/app/src/main/assets/hyperswitch-payment-methods.bundle"
   },
   "dependencies": {
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",

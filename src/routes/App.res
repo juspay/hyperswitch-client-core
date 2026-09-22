@@ -1,27 +1,3 @@
-module ContextWrapper = {
-  @react.component
-  let make = (~props, ~rootTag, ~children) => {
-    let nativeProp = SdkTypes.nativeJsonToRecord(props, rootTag)
-    <NativePropContext nativeProp>
-      <LoggerContext>
-        <SafeAreaContext>
-          <ThemeContext appearance=nativeProp.configuration.appearance>
-            <LocaleStringDataContext locale=nativeProp.configuration.locale>
-              <CountryStateDataContext>
-                <LoadingContext>
-                  <EntranceGate>
-                    <BannerContext> children </BannerContext>
-                  </EntranceGate>
-                </LoadingContext>
-              </CountryStateDataContext>
-            </LocaleStringDataContext>
-          </ThemeContext>
-        </SafeAreaContext>
-      </LoggerContext>
-    </NativePropContext>
-  }
-}
-
 module App = {
   @react.component
   let make = () => {

@@ -64,7 +64,7 @@ let inactiveScreenApiCall = (
     userAgent: nativeProp.sdkParams.userAgent->Option.getOr("userAgent"),
     eventName,
     firstEvent,
-    source: nativeProp.sdkState->SdkTypes.sdkStateToStrMapper,
+    source: nativeProp->SdkTypes.nativePropLogSource,
   }
   sendLogs(logFile, uri, nativeProp.hyperswitchConfig.publishableKey, nativeProp.sdkParams.appId)
   updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)
@@ -165,7 +165,7 @@ let useLoggerHook = () => {
         }
       },
       latency,
-      source: nativeProp.sdkState->SdkTypes.sdkStateToStrMapper,
+    source: nativeProp->SdkTypes.nativePropLogSource,
     }
     sendLogs(logFile, uri, nativeProp.hyperswitchConfig.publishableKey, nativeProp.sdkParams.appId)
     updatedEvents->Dict.set(eventName->eventToStrMapper, timestamp)

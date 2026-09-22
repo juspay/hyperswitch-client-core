@@ -1,0 +1,435 @@
+open ReactNative
+open Style
+
+type screenState = Loading | Loaded | ErrorState
+
+/*
+ * Payment Methods Management renders in two shapes:
+ *
+ *   - Bottom sheet (SdkTypes.PaymentMethodsManagement) — SDK-owned surface:
+ *     dimmed dismissible backdrop + rounded sheet chrome + header with close,
+ *     and an SDK-owned "Save card" CTA pinned at the bottom (we control it).
+ *
+ *   - Embedded widget (SdkTypes.WidgetPaymentMethodsManagement) — lives inside
+ *     the merchant's own layout, wherever and however tall they place it.
+ *     The SDK imposes NO chrome: no confirm CTA (the merchant's own button,
+ *     anywhere in their layout, triggers the save via `confirmTokenization()`,
+ *     landing here as a CONFIRM_PAYMENT_ACTION widget event) and no pinned
+ *     bars — the list and the add-entry simply flow as scrollable content.
+ */
+
+module PmmSheetHeader = {
+  @react.component
+  let make = (~onClose: unit => unit) => {
+    let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+    let {iconColor} = ThemebasedStyle.useThemeBasedStyle()
+    <View
+      style={s({
+        flexDirection: #row,
+        alignItems: #center,
+        justifyContent: #"space-between",
+        padding: 16.->dp,
+      })}>
+      <TextWrapper text={"Saved payment methods"} textType={HeadingBold} />
+      <View style={s({flexDirection: #row, alignItems: #center})}>
+        {// Same Test Mode badge as the payment sheet's ModalHeader.
+        nativeProp.hyperswitchConfig.environment !== GlobalVars.PROD
+          ? <View
+              style={s({
+                backgroundColor: "#ffdd93",
+                marginEnd: 10.->dp,
+                padding: 5.->dp,
+                borderRadius: 5.,
+              })}>
+              <TextWrapper
+                textType={ModalTextBold} text="Test Mode" overrideStyle=Some(s({color: "black"}))
+              />
+            </View>
+          : React.null}
+        <CustomPressable onPress={_ => onClose()}>
+          <Icon name="close" width=16. height=16. fill=iconColor />
+        </CustomPressable>
+      </View>
+    </View>
+  }
+}
+
+@react.component
+let make = () => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let {bgColor, borderWidth, borderRadius, component, paymentSheetOverlay} = ThemebasedStyle.useThemeBasedStyle()
+  let insets = SafeAreaContext.useSafeAreaInsets()
+  let fetchPaymentMethodSessionList = PaymentMethodSessionHooks.useFetchPaymentMethodSessionList()
+  let updateSavedPaymentMethod = PaymentMethodSessionHooks.useUpdateSavedPaymentMethod()
+  let localeObject = GetLocale.useGetLocalObj()
+  let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
+  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+
+  let isWidget = switch nativeProp.pmmState {
+  | Some(SdkTypes.WidgetPaymentMethodsManagement) => true
+  | _ => false
+  }
+
+  let (screenState, setScreenState) = React.useState(_ => Loading)
+  let (paymentMethodsEnabled, setPaymentMethodsEnabled) = React.useState((_): array<
+    PaymentMethodSessionTypes.paymentMethodEnabled,
+  > => [])
+  let (savedMethods, setSavedMethods) = React.useState((_): array<
+    PaymentMethodSessionTypes.customerPaymentMethod,
+  > => [])
+  let (isAddScreen, setIsAddScreen) = React.useState(_ => false)
+
+  let (selectedToken, setSelectedToken) = React.useState(_ => "")
+  let (manageToken, setManageToken) = React.useState(_ => "")
+
+  let (cvcNumber, setCvcNumber) = React.useState(_ => "")
+  let (cvcError, setCvcError) = React.useState((_): option<string> => None)
+  let (isCvcSubmitting, setIsCvcSubmitting) = React.useState(_ => false)
+
+  let (isAddSaving, setIsAddSaving) = React.useState(_ => false)
+
+  let selectedSavedMethod = savedMethods->Array.find(pm => pm.payment_method_token == selectedToken)
+  let selectedCardBrand =
+    selectedSavedMethod
+    ->Option.flatMap(pm => pm.card)
+    ->Option.map(card => card.card_network)
+    ->Option.getOr("")
+
+  let showCvcCta =
+    manageToken == "" && selectedSavedMethod->Option.map(pm => pm.requires_cvv)->Option.getOr(false)
+  let isCvcValid = Validation.checkCardCVC(cvcNumber, selectedCardBrand)
+  let cardEntrySupported =
+    paymentMethodsEnabled->Array.some(item => item.payment_method_type == "card")
+
+  let validateCvc = (): option<string> =>
+    cvcNumber == ""
+      ? Some(localeObject.cvcNumberEmptyText)
+      : isCvcValid
+      ? None
+      : Some(localeObject.inCompleteCVCErrorText)
+
+  let handleCvcConfirm = _ => {
+    setIsCvcSubmitting(_ => true)
+    let cardDetails =
+      [("card_cvc", cvcNumber->JSON.Encode.string)]->Dict.fromArray->JSON.Encode.object
+    updateSavedPaymentMethod(~paymentMethodToken=selectedToken, ~cardDetails)
+    ->Promise.then(res => {
+      setIsCvcSubmitting(_ => false)
+      if res->ErrorUtils.isError || res == JSON.Encode.null {
+        handleSuccessFailure(
+          ~apiResStatus={
+            type_: "payment_method_session",
+            status: "failed",
+            code: "",
+            message: ErrorUtils.getErrorMessage(res),
+          },
+          (),
+        )
+      } else {
+        let dict = res->Utils.getDictFromJson
+        handleSuccessFailure(
+          ~apiResStatus={
+            type_: "payment_method_session",
+            status: dict->Utils.getString("status", "succeeded"),
+            code: "",
+            message: dict->Utils.getString("message", "Card updated successfully"),
+          },
+          (),
+        )
+      }
+      Promise.resolve()
+    })
+    ->ignore
+  }
+
+  let addConfirmRef: React.ref<option<unit => unit>> = React.useRef(None)
+
+  let confirmActionRef: React.ref<unit => unit> = React.useRef(() => ())
+
+  // Refreshed every render: the merchant's tokenize call resolves against the
+  // screen and data in view NOW (a mount-time snapshot would always report the
+  // initial state — never the add-card screen). A plain assignment, since the
+  // ref is only read from the async widget-action listener.
+  confirmActionRef.current = _ =>
+    if isAddScreen {
+      addConfirmRef.current->Option.map(save => save())->Option.getOr()
+    } else if showCvcCta {
+      switch validateCvc() {
+      | None => handleCvcConfirm()
+      | Some(error) => {
+          setCvcError(_ => Some(error))
+          notifyValidationFailure()
+        }
+      }
+    } else {
+      notifyValidationFailure()
+    }
+
+  React.useEffect0(() => {
+    if isWidget {
+      let unsubscribe = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
+        actionData: NativeModulesType.widgetActionData,
+      ) => {
+        switch actionData.actionType {
+        | ConfirmPayment =>
+          if actionData.rootTag == nativeProp.rootTag {
+            confirmActionRef.current()
+          }
+        | ConfirmCvcPayment => ()
+        }
+      })
+      Some(unsubscribe)
+    } else {
+      None
+    }
+  })
+
+  let loadSavedMethods = () => {
+    fetchPaymentMethodSessionList()
+    ->Promise.then(res => {
+      if res->ErrorUtils.isError || res == JSON.Encode.null {
+        setScreenState(_ => ErrorState)
+      } else {
+        let data = res->PaymentMethodSessionTypes.itemToObjMapper
+        setPaymentMethodsEnabled(_ => data.payment_methods_enabled)
+        setSavedMethods(_ => data.customer_payment_methods)
+        setSelectedToken(_ =>
+          data.customer_payment_methods
+          ->Array.get(0)
+          ->Option.map(pm => pm.payment_method_token)
+          ->Option.getOr("")
+        )
+        setScreenState(_ => Loaded)
+      }
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      setScreenState(_ => ErrorState)
+      Promise.resolve()
+    })
+    ->ignore
+  }
+
+  React.useEffect0(() => {
+    loadSavedMethods()
+    None
+  })
+
+  React.useEffect2(() => {
+    if screenState == Loaded && savedMethods->Array.length == 0 {
+      setIsAddScreen(_ => true)
+    }
+    None
+  }, (screenState, savedMethods))
+
+  let handleSelectItem = (paymentMethodToken: string) => {
+    setSelectedToken(_ => paymentMethodToken)
+    setManageToken(_ => "")
+    setCvcError(_ => None)
+  }
+
+  // Web parity: any change of the selected saved method clears the entered
+  // CVC and its error (web clears on paymentToken change in CommonCardProps).
+  React.useEffect1(() => {
+    setCvcNumber(_ => "")
+    setCvcError(_ => None)
+    None
+  }, [selectedToken])
+
+  let onCvcBlur = _ => {
+    if cvcNumber != "" && !isCvcValid {
+      setCvcError(_ => Some(localeObject.inCompleteCVCErrorText))
+    }
+  }
+
+  let handleManageItem = (paymentMethodToken: string) => {
+    setSelectedToken(_ => paymentMethodToken)
+    setManageToken(_ => paymentMethodToken)
+  }
+
+  let removeFromList = (paymentMethodToken: string) => {
+    let remaining = savedMethods->Array.filter(pm => pm.payment_method_token != paymentMethodToken)
+    if selectedToken == paymentMethodToken {
+      setSelectedToken(_ =>
+        remaining->Array.get(0)->Option.map(pm => pm.payment_method_token)->Option.getOr("")
+      )
+    }
+    if manageToken == paymentMethodToken {
+      setManageToken(_ => "")
+    }
+    setSavedMethods(_ => remaining)
+  }
+
+  let updateInList = (paymentMethodToken: string, cardHolderName: string, nickName: string) => {
+    setSavedMethods(prev =>
+      prev->Array.map(pm =>
+        pm.payment_method_token == paymentMethodToken
+          ? {
+              ...pm,
+              card: pm.card->Option.map(
+                card => {
+                  ...card,
+                  card_holder_name: cardHolderName == "" ? None : Some(cardHolderName),
+                  nick_name: nickName == "" ? None : Some(nickName),
+                },
+              ),
+            }
+          : pm
+      )
+    )
+    if manageToken == paymentMethodToken {
+      setManageToken(_ => "")
+    }
+  }
+
+  let saveCta =
+    <View
+      style={s({
+        paddingHorizontal: 24.->dp,
+        paddingVertical: 16.->dp,
+        backgroundColor: component.background,
+      })}>
+      <CustomButton
+        text={"Save card"}
+        loadingText="Saving"
+        buttonState={isAddSaving || isCvcSubmitting ? LoadingButton : Normal}
+        onPress={_ =>
+          if isAddScreen {
+            addConfirmRef.current->Option.map(save => save())->Option.getOr()
+          } else {
+            switch validateCvc() {
+            | None => handleCvcConfirm()
+
+            | Some(error) => setCvcError(_ => Some(error))
+            }
+          }}
+      />
+    </View>
+
+  let onModalClose = _ =>
+    handleSuccessFailure(
+      ~apiResStatus=PaymentConfirmTypes.defaultCancelError,
+      ~closeSDK=true,
+      ~reset=false,
+      (),
+    )
+
+  let body = switch screenState {
+  | Loading =>
+    <View
+      style={s({
+        width: 100.->pct,
+        minHeight: 120.->dp,
+        justifyContent: #center,
+        alignItems: #center,
+      })}>
+      <TextWrapper text={"Loading ..."} textType={CardText} />
+    </View>
+  | ErrorState =>
+    <View
+      style={s({
+        width: 100.->pct,
+        paddingVertical: 24.->dp,
+        paddingHorizontal: 24.->dp,
+        alignItems: #center,
+      })}>
+      <TextWrapper text=localeObject.somethingWentWrongText textType={ModalTextLight} />
+    </View>
+  | Loaded =>
+    <>
+      {isAddScreen
+        ? <AddPaymentMethodCardScreen
+            paymentMethodsEnabled
+            showBackButton={savedMethods->Array.length > 0}
+            onBack={_ => setIsAddScreen(_ => false)}
+            addConfirmRef
+            setIsSaving=setIsAddSaving
+            fillHeight=isWidget
+          />
+        : <ScrollView
+            keyboardShouldPersistTaps=#handled
+            style={s(isWidget ? {flexGrow: 1.} : {flexShrink: 1.})}>
+            {// Payments parity (SavedPaymentSheet): the saved list is one
+            // rounded, bordered card; rows draw separators only between each
+            // other, and the add-PM entry sits below the card as a link row.
+            <View
+              style={array([
+                s({
+                  borderRadius,
+                  borderWidth,
+                  borderColor: component.borderColor,
+                  marginHorizontal: 24.->dp,
+                  marginTop: 8.->dp,
+                  overflow: #hidden,
+                }),
+                bgColor,
+              ])}>
+              {savedMethods
+              ->Array.mapWithIndex((item, index) => {
+                <PaymentMethodListItem
+                  key={item.payment_method_token}
+                  pmDetails=item
+                  isActive={item.payment_method_token == selectedToken}
+                  isManageModeActive={item.payment_method_token == manageToken}
+                  onSelect=handleSelectItem
+                  onManage=handleManageItem
+                  onUpdated=updateInList
+                  onDeleted=removeFromList
+                  cvcNumber
+                  setCvcNumber
+                  cvcError
+                  setCvcError
+                  onCvcBlur
+                  isLast={index == savedMethods->Array.length - 1}
+                />
+              })
+              ->React.array}
+            </View>}
+            {cardEntrySupported
+              ? <PaymentMethodListItem.AddPaymentMethodButton
+                  onPress={_ => setIsAddScreen(_ => true)}
+                />
+              : React.null}
+            <Space height=4. />
+          </ScrollView>}
+      {isWidget
+        ? React.null
+        : (isAddScreen && cardEntrySupported) || (!isAddScreen && showCvcCta)
+        ? saveCta
+        : React.null}
+    </>
+  }
+
+  isWidget
+  // Widget: merchant layout hosts the content; NO SDK confirm CTA.
+    ? <View
+        style={s({
+          backgroundColor: component.background,
+          height: 100.->pct,
+          flexDirection: #column,
+        })}>
+        {body}
+      </View>
+      // Bottom sheet: dimmed backdrop + rounded chrome + SDK-owned CTA.
+    : <View
+        style={s({
+          flex: 1.,
+          alignContent: #"flex-end",
+          backgroundColor: paymentSheetOverlay,
+          justifyContent: #"flex-end",
+          paddingTop: (insets.top +. SafeAreaContext.topGap)->dp,
+        })}>
+        <CustomView onDismiss=onModalClose>
+          <View
+            style={s({
+              flexShrink: 1.,
+              width: 100.->pct,
+              maxHeight: 100.->pct,
+              backgroundColor: component.background,
+            })}>
+            <PmmSheetHeader onClose={_ => onModalClose()} />
+            {body}
+          </View>
+        </CustomView>
+      </View>
+}

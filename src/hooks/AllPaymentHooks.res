@@ -8,7 +8,10 @@ let useHandleSuccessFailure = () => {
   let exitWidget = HyperModule.useExitWidget()
   (~apiResStatus: error, ~closeSDK=true, ~reset=true, ()) => {
     switch nativeProp.sdkState {
-    | PaymentSheet | TabSheet | ButtonSheet | HostedCheckout | PaymentMethodsManagement =>
+    | PaymentSheet
+    | TabSheet
+    | ButtonSheet
+    | HostedCheckout =>
       if closeSDK {
         exit(apiResStatus, reset)
       }
@@ -25,7 +28,15 @@ let useHandleSuccessFailure = () => {
     | CustomWidget(str) =>
       exitWidget(apiResStatus, str->SdkTypes.widgetToStrMapper->String.toLowerCase)
     | ExpressCheckoutWidget => exitWidget(apiResStatus, "expressCheckout")
-    | _ => ()
+    | _ =>
+      // PMM states live on `pmmState` (their `sdkState` parses to NoView).
+      switch nativeProp.pmmState {
+      | Some(_) =>
+        if closeSDK {
+          exit(apiResStatus, reset)
+        }
+      | None => ()
+      }
     }
   }
 }
@@ -466,42 +477,6 @@ let useRedirectHook = () => {
     }
 
     redirectionHandler(~body, ~errorCallback, ~handleApiRes, ~headers, ~uri)->ignore
-  }
-}
-
-let useDeleteSavedPaymentMethod = () => {
-  let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-
-  (~paymentMethodId: string) => {
-    let uri = `${baseUrl}/payment_methods/${paymentMethodId}`
-    apiLogWrapper(
-      ~logType=INFO,
-      ~eventName=DELETE_PAYMENT_METHODS_CALL_INIT,
-      ~url=uri,
-      ~statusCode="",
-      ~apiLogType=Request,
-      ~data=JSON.Encode.null,
-      (),
-    )
-
-    switch nativeProp.configuration.customer->Option.map(customer => customer.ephemeralKeySecret) {
-    | Some(ephemeralKeySecret) =>
-      APIUtils.fetchApiWrapper(
-        ~uri,
-        ~method=#DELETE,
-        ~headers=Utils.getHeader(
-          ~apiKey=ephemeralKeySecret->Option.getOr(""),
-          ~appId=nativeProp.sdkParams.appId,
-          ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-          (),
-        ),
-        ~eventName=LoggerTypes.DELETE_PAYMENT_METHODS_CALL,
-        ~apiLogWrapper,
-      )
-    | None => JSON.Null->Promise.resolve
-    }
   }
 }
 

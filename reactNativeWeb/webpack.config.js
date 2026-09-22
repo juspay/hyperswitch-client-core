@@ -111,10 +111,13 @@ const excludeConfiguration = {
 module.exports = {
   entry: {
     app: path.join(__dirname, 'index.web.js'),
+    // The hyperPMM web host: mounts PMMRoot under the PMM app name
+    // (`hyperPMM` in app.json); reachable at /pmm(.html) in dev.
+    pmm: path.join(__dirname, 'index.pmm-web.js'),
   },
   output: {
     path: path.resolve(appDirectory, 'dist'),
-    filename: 'index.bundle.js',
+    filename: '[name].bundle.js',
     publicPath: `${repoPublicPath}/`,
   },
   devtool: 'source-map',
@@ -124,6 +127,7 @@ module.exports = {
     historyApiFallback: {
       rewrites: [
         {from: /^\/redirect/, to: '/redirect.html'},
+        {from: /^\/pmm(\.html)?$/, to: '/pmm.html'},
         {from: /./, to: '/index.html'},
       ],
     },
@@ -176,6 +180,11 @@ module.exports = {
       template: path.join(__dirname, 'index.html'),
       filename: 'index.html',
       chunks: ['app'],
+    }),
+    new HtmlWebpackPlugin({
+      template: path.join(__dirname, 'index.html'),
+      filename: 'pmm.html',
+      chunks: ['pmm'],
     }),
     new HtmlWebpackPlugin({
       template: path.join(__dirname, 'redirect.html'),

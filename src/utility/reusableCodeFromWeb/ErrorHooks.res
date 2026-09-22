@@ -3,7 +3,6 @@ let useShowErrorOrWarning = () => {
   (inputKey: ErrorUtils.errorKey, ~dynamicStr="", ()) => {
     let (type_, str) = switch inputKey {
     | INVALID_PK(var) => var
-    | INVALID_EK(var) => var
     | DEPRECATED_LOADSTRIPE(var) => var
     | REQUIRED_PARAMETER(var) => var
     | UNKNOWN_KEY(var) => var
@@ -64,8 +63,7 @@ let useErrorWarningValidationOnLoad = () => {
       | CustomWidget(_)
       | ExpressCheckoutWidget
       | CvcWidget
-      | NoView
-      | PaymentMethodsManagement => ()
+      | NoView => ()
       }
     }
   }
