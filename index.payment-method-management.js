@@ -1,0 +1,8 @@
+import { AppRegistry } from 'react-native';
+import { pmm as pmmAppName } from './app.json';
+
+// Separate moduleName, separate root component: runApplication("hyperPMM", ...)
+// mounts the PMM navigator directly, no sdkState routing in the way.
+import PMMRoot from './src/payment-method-management/PMMEntry';
+
+AppRegistry.registerComponent(pmmAppName, () => PMMRoot);

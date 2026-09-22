@@ -63,6 +63,7 @@ const HYPERSWITCH_BASE_URL =
   'https://sandbox.hyperswitch.io';
 const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
 
+// PMM (payment method session) uses the same env keys/account as payments.
 if (!HYPERSWITCH_SECRET_KEY || !HYPERSWITCH_PUBLISHABLE_KEY) {
   logger.warn('Missing required environment variables');
   logger.warn('HYPERSWITCH_PUBLISHABLE_KEY: ' + !!HYPERSWITCH_PUBLISHABLE_KEY);
@@ -108,11 +109,15 @@ app.get('/health', (req, res) => {
 
 app.get('/create-payment-intent', async (req, res) => {
   try {
+    // Account-specific IDs come from .env when set; they override mockData.
     const paymentData = {
       ...mockData.paymentIntentBody,
       amount: 100,
-      currency: 'USD',
     };
+
+    if (process.env.HYPERSWITCH_CUSTOMER_ID) {
+      paymentData.customer_id = process.env.HYPERSWITCH_CUSTOMER_ID;
+    }
 
     if (process.env.PROFILE_ID) {
       paymentData.profile_id = process.env.PROFILE_ID;
@@ -132,7 +137,6 @@ app.get('/create-payment-intent', async (req, res) => {
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
       sdkAuthorization: response.data.sdk_authorization,
-      clientSecret: response.data.client_secret,
       paymentId: response.data.payment_id,
       profileId: PROFILE_ID,
     });
@@ -152,10 +156,15 @@ app.get('/create-payment-intent', async (req, res) => {
 
 app.post('/create-payment-intent', async (req, res) => {
   try {
+    // Account-specific IDs come from .env when set; they override mockData.
     const paymentData = {
       ...mockData.paymentIntentBody,
       ...req.body,
     };
+
+    if (process.env.HYPERSWITCH_CUSTOMER_ID) {
+      paymentData.customer_id = process.env.HYPERSWITCH_CUSTOMER_ID;
+    }
 
     if (process.env.PROFILE_ID) {
       paymentData.profile_id = process.env.PROFILE_ID;
@@ -207,9 +216,16 @@ app.post('/create-payment-method-session', async (req, res) => {
       'X-Profile-Id': profileId,
     };
 
+    // Same session body for every platform's demo (iOS/Android/web);
+    // individual callers may override via req.body.
     const body = {
-      customer_id: req.body?.customer_id,
+      customer_id: process.env.HYPERSWITCH_CUSTOMER_ID,
       storage_type: 'persistent',
+      keep_alive: true,
+      billing: {
+        address: {first_name: 'hellow', last_name: 'world'},
+        email: 'example@example.com',
+      },
       ...req.body,
     };
 
@@ -224,7 +240,9 @@ app.post('/create-payment-method-session', async (req, res) => {
 
     res.json({
       publishableKey: HYPERSWITCH_PUBLISHABLE_KEY,
+      profileId,
       sdkAuthorization: response.data.sdk_authorization,
+      pmSessionId: response.data.id,
     });
   } catch (error) {
     logger.error(
@@ -311,9 +329,9 @@ app.get('/netcetera-sdk-api-key', (_, res) => {
   }
 });
 
-app.post("/update-payment", async (req, res) => {
+app.post('/update-payment', async (req, res) => {
   try {
-    const { paymentId, ...updateFields } = req.body;
+    const {paymentId, ...updateFields} = req.body;
 
     logger.debug('Updating payment intent with data', updateFields);
 

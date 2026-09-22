@@ -9,9 +9,6 @@ let make = () => {
     {WebKit.platform === #android && nativeProp.sdkState === PaymentSheet
       ? <StatusBar translucent=true backgroundColor="transparent" />
       : React.null}
-    {switch nativeProp.sdkState {
-    | PaymentMethodsManagement => <PMMangementNavigatorRouter />
-    | _ => <NavigationRouter />
-    }}
+    <NavigationRouter />
   </View>
 }

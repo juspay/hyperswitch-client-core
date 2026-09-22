@@ -4,17 +4,15 @@ let useNotifyWidgetResult = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   (error: PaymentConfirmTypes.error) => {
-    switch nativeProp.sdkState {
-    | PaymentSheet
-    | ButtonSheet
-    | TabSheet
-    | WidgetPaymentSheet
-    | WidgetButtonSheet
-    | WidgetTabSheet
-    | HostedCheckout
-    | CardWidget
-    | ExpressCheckoutWidget
-    | PaymentMethodsManagement =>
+    switch (nativeProp.sdkState, nativeProp.pmmState) {
+    | (
+        PaymentSheet | ButtonSheet | TabSheet | WidgetPaymentSheet | WidgetButtonSheet | WidgetTabSheet |
+        HostedCheckout |
+        CardWidget |
+        ExpressCheckoutWidget,
+        _,
+      )
+    | (_, Some(_)) =>
       HyperModule.notifyWidgetPaymentResult(nativeProp.rootTag, error->HyperModule.resStatusPayload)
     | _ => ()
     }

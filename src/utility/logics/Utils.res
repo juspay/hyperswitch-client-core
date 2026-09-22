@@ -406,6 +406,7 @@ type sdkAuthorizationData = {
   clientSecret: option<string>,
   customerId: option<string>,
   profileId: option<string>,
+  pmSessionId: option<string>,
 }
 
 let getSdkAuthorizationData = (sdkAuthorization: string) => {
@@ -431,6 +432,7 @@ let getSdkAuthorizationData = (sdkAuthorization: string) => {
     clientSecret: getValueFromArrayOfKeys(~keyName="client_secret"),
     customerId: getValueFromArrayOfKeys(~keyName="customer_id"),
     profileId: getValueFromArrayOfKeys(~keyName="profile_id"),
+    pmSessionId: getValueFromArrayOfKeys(~keyName="payment_method_session_id"),
   }
 }
 

@@ -222,6 +222,21 @@ let getLocaleStrings: Js.Json.t => localeStrings = data => {
         "addPaymentMethodLabel",
         defaultLocale.addPaymentMethodLabel,
       ),
+      somethingWentWrongText: Utils.getString(
+        res,
+        "somethingWentWrongText",
+        defaultLocale.somethingWentWrongText,
+      ),
+      cardHolderNamePlaceholder: Utils.getString(
+        res,
+        "cardHolderNamePlaceholder",
+        defaultLocale.cardHolderNamePlaceholder,
+      ),
+      noPaymentMethodsAvailableText: Utils.getString(
+        res,
+        "noPaymentMethodsAvailableText",
+        defaultLocale.noPaymentMethodsAvailableText,
+      ),
       walletDisclaimer: Utils.getString(res, "walletDisclaimer", defaultLocale.walletDisclaimer),
       deletePaymentMethod: Utils.getString(
         res,

@@ -241,8 +241,7 @@ let make = () => {
       | ExpressCheckoutWidget => <ExpressCheckoutWidget />
       | CvcWidget => <CvcWidget />
       | Headless
-      | NoView
-      | PaymentMethodsManagement => React.null
+      | NoView => React.null
       }}
     </DynamicFieldsContext>
    </CardStrategyContext>

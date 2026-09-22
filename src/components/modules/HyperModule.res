@@ -53,12 +53,16 @@ module Native = {
   external subscribeWidget: dictCallback => unit => unit = "subscribeWidget"
   @module("./HyperModuleNative")
   external subscribeConfirmEC: dictCallback => unit => unit = "subscribeConfirmEC"
+  @module("./HyperModuleNative")
+  external subscribeTriggerWidgetAction: dictCallback => unit => unit =
+    "subscribeTriggerWidgetAction"
 }
 
 module Events = {
   let subscribeConfirm = Native.subscribeConfirm
   let subscribeWidget = Native.subscribeWidget
   let subscribeConfirmEC = Native.subscribeConfirmEC
+  let subscribeTriggerWidgetAction = Native.subscribeTriggerWidgetAction
 }
 
 let resStatusPayload = (apiResStatus: PaymentConfirmTypes.error): exitResultPayload => {
@@ -123,14 +127,26 @@ let useExitPaymentsheet = () => {
       ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : switch nativeProp.sdkState {
         | WidgetPaymentSheet | WidgetButtonSheet =>
-          Native.exitWidgetPaymentsheet(nativeProp.rootTag, apiResStatus->resStatusPayload, reset)
-        | PaymentMethodsManagement =>
-          Native.exitPaymentMethodManagement(
+          Native.exitWidgetPaymentsheet(
             nativeProp.rootTag,
-            apiResStatus->stringifiedResStatus,
+            apiResStatus->resStatusPayload,
             reset,
           )
-        | _ => Native.exitPaymentsheet(nativeProp.rootTag, apiResStatus->resStatusPayload, reset)
+        | _ =>
+          switch nativeProp.pmmState {
+          | Some(_) =>
+            Native.exitPaymentMethodManagement(
+              nativeProp.rootTag,
+              apiResStatus->stringifiedResStatus,
+              reset,
+            )
+          | None =>
+            Native.exitPaymentsheet(
+              nativeProp.rootTag,
+              apiResStatus->resStatusPayload,
+              reset,
+            )
+          }
         }
   }
 

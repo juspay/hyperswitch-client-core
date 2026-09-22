@@ -14,6 +14,8 @@ let useUpdateIntentListener = () => {
   }, [nativeProp])
 
   React.useEffect0(() => {
+    // PMM sessions are vault-only (no PaymentIntent), so update-intent never
+    // applies; their props carry `pmmState` and `sdkState` parses to NoView.
     let followsIntent = switch nativeProp.sdkState {
     | CvcWidget | NoView => false
     | _ => true

@@ -168,7 +168,6 @@ type addressDetails = {
 
 type customerConfiguration = {
   id: option<string>,
-  ephemeralKeySecret: option<string>,
 }
 
 type placeholder = {
@@ -269,9 +268,16 @@ type sdkState =
   | CustomWidget(payment_method_type_wallet)
   | ExpressCheckoutWidget
   | CvcWidget
-  | PaymentMethodsManagement
   | Headless
   | NoView
+
+// PMM surfaces run under their own React root (`hyperPMM` host mounting
+// PMMRoot) and never enter the payments router, so their states live in a
+// separate enum on `nativeProp.pmmState`; for PMM props `sdkState` parses to
+// NoView. Constructor names intentionally match the legacy sdkState variants.
+type pmmState =
+  | PaymentMethodsManagement
+  | WidgetPaymentMethodsManagement
 
 let widgetToStrMapper = str => {
   switch str {
@@ -304,9 +310,15 @@ let sdkStateToStrMapper = sdkState => {
   | CustomWidget(str) => str->widgetToStrMapper
   | ExpressCheckoutWidget => "EXPRESS_CHECKOUT_WIDGET"
   | CvcWidget => "CVC_WIDGET"
-  | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
   | Headless => "HEADLESS"
   | NoView => "NO_VIEW"
+  }
+}
+
+let pmmStateToStrMapper = pmmState => {
+  switch pmmState {
+  | PaymentMethodsManagement => "PAYMENT_METHODS_MANAGEMENT"
+  | WidgetPaymentMethodsManagement => "WIDGET_PAYMENT_METHODS_MANAGEMENT"
   }
 }
 
@@ -337,6 +349,7 @@ type paymentSessionConfig = {
   clientSecret: string,
   sdkAuthorization: option<string>,
   paymentId: string,
+  pmSessionId: option<string>,
 }
 
 type insets = {
@@ -376,6 +389,7 @@ type cvcConfirmProp = {
 type nativeProp = {
   rootTag: int,
   sdkState: sdkState,
+  pmmState: option<pmmState>,
   hyperswitchConfig: hyperswitchConfig,
   paymentSessionConfig: paymentSessionConfig,
   sdkParams: sdkParams,
@@ -680,7 +694,6 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     ->Option.flatMap(JSON.Decode.object)
     ->Option.map(d => {
       id: getOptionString(d, "id"),
-      ephemeralKeySecret: getOptionString(d, "ephemeralKeySecret"),
     }),
     placeholder: {
       cardNumber: getOptionString(placeholderDict, "cardNumber"),
@@ -836,11 +849,17 @@ let parseSdkState = str =>
   | "google_pay" => CustomWidget(GOOGLE_PAY)
   | "paypal" => CustomWidget(PAYPAL)
   | "card" => CardWidget
-  | "paymentMethodsManagement" => PaymentMethodsManagement
   | "expressCheckout" => ExpressCheckoutWidget
   | "cvcWidget" => CvcWidget
   | "headless" => Headless
   | _ => NoView
+  }
+
+let parsePmmState = str =>
+  switch str {
+  | "paymentMethodsManagement" => Some(PaymentMethodsManagement)
+  | "widgetPaymentMethodsManagement" => Some(WidgetPaymentMethodsManagement)
+  | _ => None
   }
 
 let parseEndpointsConfig = (d: Dict.t<JSON.t>): option<customEndpointsConfig> => {
@@ -861,6 +880,14 @@ let parseEndpointsConfig = (d: Dict.t<JSON.t>): option<customEndpointsConfig> =>
   | _ => None
   }
 }
+
+// Log `source` for any surface: PMM surfaces get it from `pmmState`, everyone
+// else from `sdkState` (PMM props parse `sdkState` to NoView by design).
+let nativePropLogSource = (nativeProp: nativeProp) =>
+  switch nativeProp.pmmState {
+  | Some(pmmState) => pmmState->pmmStateToStrMapper
+  | None => nativeProp.sdkState->sdkStateToStrMapper
+  }
 
 let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   let d = jsonFromNative->JSON.Decode.object->Option.getOr(Dict.make())
@@ -886,6 +913,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   {
     rootTag,
     sdkState: getString(d, "type", "")->parseSdkState,
+    pmmState: getString(d, "type", "")->parsePmmState,
     hyperswitchConfig: {
       publishableKey: getString(hc, "publishableKey", ""),
       profileId: getOptionString(hc, "profileId"),
@@ -896,6 +924,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       clientSecret,
       sdkAuthorization,
       paymentId,
+      pmSessionId: sdkAuthorizationData->Option.flatMap(data => data.pmSessionId),
     },
     sdkParams: {
       sessionId: getString(sp, "sessionId", ""),

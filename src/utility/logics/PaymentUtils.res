@@ -347,6 +347,13 @@ let withSdkAuthorization = (
         },
         environment: GlobalVars.checkEnv(publishableKey),
       },
-      paymentSessionConfig: {clientSecret, sdkAuthorization: Some(sdkAuthorization), paymentId},
+      paymentSessionConfig: {
+        clientSecret,
+        sdkAuthorization: Some(sdkAuthorization),
+        paymentId,
+        pmSessionId: data.pmSessionId->Option.isSome
+          ? data.pmSessionId
+          : nativeProp.paymentSessionConfig.pmSessionId,
+      },
     }
   }
