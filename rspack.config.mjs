@@ -160,6 +160,17 @@ export default Repack.defineRspackConfig((env) => {
         ...Repack.getAssetTransformRules(),
       ],
     },
+    // @sentry/react-native require()s packages this SDK does not use (Expo,
+    // React Navigation) inside try/catch. Unresolved, the bundler throws at the
+    // require site and Sentry catches it; Metro stayed silent about them.
+    // Do not stub them instead: a stub module goes through Re.Pack's guarded
+    // require, which reports a throw from a lazy require() as fatal.
+    ignoreWarnings: [
+      {
+        module: /[\\/]node_modules[\\/]@sentry[\\/]react-native[\\/]/,
+        message: /Can't resolve '(expo-updates|expo-router[^']*|@react-navigation\/native)'/,
+      },
+    ],
     optimization: {
       // Stable, human readable chunk ids: the native side and the OTA config refer
       // to chunk files by name.
