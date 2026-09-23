@@ -3299,6 +3299,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "@juspay-tech/react-native-hyperswitch-netcetera-3ds@npm:0.2.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: d22a9415704ca265e3b18d935be02737da2614e2290e63f70cd8e9f5cb8776aa7ac38425ac1fa76b805adf48999c2d60eee06d7d4581bbba46f95a3e76465236
+  languageName: node
+  linkType: hard
+
+"@juspay-tech/react-native-hyperswitch-paypal@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "@juspay-tech/react-native-hyperswitch-paypal@npm:1.0.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: b7475e7bf5bf63030b025198897174d8ef06fc27fa9c6bd29e645001036d7b4b911a5d8c48e3eb6bcfc2c5a31cb8f8cd4f0658d8b04864291ffb8c882f47bfd4
+  languageName: node
+  linkType: hard
+
+"@juspay-tech/react-native-hyperswitch-scancard@npm:^0.2.3":
+  version: 0.2.3
+  resolution: "@juspay-tech/react-native-hyperswitch-scancard@npm:0.2.3"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-webview: "*"
+  checksum: d8833cdabbf564bc219f2c06a34cf16d2d23ce21e6be541f6feac8b2f38ce5253dfa2c1279c7016cc781759e50c307d9ad136b5ba1a60c43986d71b32658da74
+  languageName: node
+  linkType: hard
+
 "@juspay-tech/react-native-hyperswitch-vault@npm:1.0.1":
   version: 1.0.1
   resolution: "@juspay-tech/react-native-hyperswitch-vault@npm:1.0.1"
@@ -11535,6 +11566,9 @@ __metadata:
     "@commitlint/cli": ^17.0.3
     "@commitlint/config-conventional": ^17.0.3
     "@glennsl/rescript-fetch": 0.2.3
+    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": ^0.2.2
+    "@juspay-tech/react-native-hyperswitch-paypal": ^1.0.2
+    "@juspay-tech/react-native-hyperswitch-scancard": ^0.2.3
     "@juspay-tech/react-native-hyperswitch-vault": 1.0.1
     "@pmmmwh/react-refresh-webpack-plugin": ^0.5.15
     "@react-native-community/cli": 20.1.0
