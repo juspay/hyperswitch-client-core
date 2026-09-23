@@ -36,6 +36,8 @@ let make = (
   let (isCvcFocus, setIsCvcFocus) = React.useState(_ => false)
   let (hasBlurred, setHasBlurred) = React.useState(_ => false)
   let (mountError, setMountError) = React.useState(() => None)
+  let (unavailable, setUnavailable) = React.useState(() => false)
+  let logger = LoggerHook.useLoggerHook()
 
   let vaultDetailsProp = React.useMemo2(
     () =>
@@ -81,7 +83,13 @@ let make = (
       ->Option.flatMap(JSON.Decode.string)
       ->Utils.getNonEmptyOption
       ->Option.getOr(VaultTokenNormalizer.fallbackMessage)
-    setMountError(_ => Some(msg))
+    if VaultBindings.isProviderUnavailable(error) {
+      // Not the shopper's to read: the field turns into a ghost mark.
+      logger(~logType=ERROR, ~value=msg, ~category=USER_ERROR, ~eventName=VAULT_TOKENIZE, ())
+      setUnavailable(_ => true)
+    } else {
+      setMountError(_ => Some(msg))
+    }
   }
 
   React.useEffect0(() => {
@@ -90,7 +98,7 @@ let make = (
 
   let touched = hasBlurred || showErrors
   let isCvcValid =
-    isCvcFocus || !touched
+    unavailable || isCvcFocus || !touched
       ? true
       : switch cvcState {
         | Some(change) => !change.empty && change.valid
@@ -147,6 +155,7 @@ let make = (
               elementType="cardCvc"
               height={inputHeight *. 0.9}
               reference=cvcRef
+              unavailable
               label=localeObject.cvcTextLabel
               active=isCvcFocus
               empty={cvcState->Option.mapOr(true, field => field.empty)}
@@ -178,7 +187,9 @@ let make = (
         </View>
       </VaultBindings.CardForm>
     </View>
-    {errorMsgText->Option.isSome && !hideCVCError ? <ErrorText text=errorMsgText /> : React.null}
+    {errorMsgText->Option.isSome && !hideCVCError && !unavailable
+      ? <ErrorText text=errorMsgText />
+      : React.null}
     <ErrorText text={mountError} />
   </View>
 }

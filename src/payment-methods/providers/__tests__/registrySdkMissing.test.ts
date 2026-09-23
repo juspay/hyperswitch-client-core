@@ -12,6 +12,7 @@ jest.mock(
 
 import {
   isAdapterNotLoadedError,
+  isProviderUnavailableError,
   loadAdapter,
   resolveAdapter,
 } from '../registry';
@@ -36,6 +37,16 @@ describe('registry — optional provider SDK not installed', () => {
     expect(thrown).toBeDefined();
     expect(thrown?.message).toMatch(/@vgs\/collect-react-native/);
     expect(thrown?.message).toMatch(/not installed/i);
+  });
+
+  it('tags the failure so a shopper-facing UI can show a ghost instead of the message', async () => {
+    const thrown = await loadAdapter('vgs').then(
+      () => undefined,
+      (error: unknown) => error
+    );
+    expect(isProviderUnavailableError(thrown)).toBe(true);
+    expect(isProviderUnavailableError(new Error('network down'))).toBe(false);
+    expect(isProviderUnavailableError(undefined)).toBe(false);
   });
 
   it('tries the chunk again on the next call instead of caching the failure', async () => {

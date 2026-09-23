@@ -46,7 +46,9 @@ let dictToPaypalCallbackStatus = (result: paypalCallbackResult) => {
 }
 
 let launchPayPal = (requestObj: string, callback: paypalCallbackStatus => unit) => {
-  let unavailable = () => callback(Failed("PayPal module not available"))
+  // Shown to the shopper: the same words as a PayPal payment the SDK cannot route,
+  // never that a package is missing from the build.
+  let unavailable = () => callback(Failed("Payment Method Unavailable"))
   if isAvailable {
     importPaypal()
     ->Promise.then(mod => {

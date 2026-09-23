@@ -127,6 +127,11 @@ module CardCVCField = {
   ) => React.element = "CardCVCField"
 }
 
+// A CardForm onError for a provider whose SDK is not in this build: its fields
+// are shown as ghost marks, and the message (for developers) is only logged.
+@module("../../payment-methods")
+external isProviderUnavailable: JSON.t => bool = "isProviderUnavailableError"
+
 type hyperswitchPaymentMethods
 
 @module("../../payment-methods")
