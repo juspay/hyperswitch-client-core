@@ -59,6 +59,22 @@ if (unknown.length) {
   process.exit(1);
 }
 
+// Every dependency must be installed. One that is not would be built as a stub
+// with no chunk (rspack.config.mjs), and the install step below would then delete
+// the SDK's copy of that chunk: after a pull that adds a package, run yarn install.
+const { dependencies = {} } = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+const notInstalled = Object.keys(dependencies).filter(
+  (name) => !fs.existsSync(path.join(root, 'node_modules', name, 'package.json'))
+);
+if (notInstalled.length) {
+  console.error(
+    `package.json lists dependencies that are not installed:\n` +
+      notInstalled.map((name) => `  ${name}`).join('\n') +
+      `\nRun \`yarn install\`, then bundle again. Nothing was changed in ${path.relative(root, out)}.`
+  );
+  process.exit(1);
+}
+
 // Where Re.Pack writes the compilation (output.path in its defaults).
 const built = path.join(root, 'build', 'generated', platform);
 const maps = path.join(root, 'build', 'sourcemaps', platform);
@@ -87,6 +103,7 @@ if (missing.length) throw new Error(`the build produced no ${missing.join(', ')}
 // Replace the previous build: every Hyperswitch chunk file (including the
 // per-entry ones older builds made), and the entries being installed.
 fs.mkdirSync(out, { recursive: true });
+const previousChunks = fs.readdirSync(out).filter(isChunk);
 for (const file of fs.readdirSync(out)) {
   const oldChunk = file.startsWith('hyperswitch') && file.endsWith(CHUNK_SUFFIX);
   if (oldChunk || entries.some((e) => file === `${e}.bundle`)) fs.rmSync(path.join(out, file));
@@ -157,3 +174,7 @@ if (images) {
   console.log(`  + ${images} images in ${path.relative(root, where)}`);
 }
 console.log(`  source maps: ${path.relative(root, maps)}`);
+const removed = previousChunks.filter((file) => !installed.includes(file));
+if (removed.length) {
+  console.warn(`  removed (this build has no such chunk): ${removed.join(', ')}`);
+}

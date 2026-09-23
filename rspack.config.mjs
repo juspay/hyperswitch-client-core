@@ -7,6 +7,7 @@ import rspack from '@rspack/core';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const require = createRequire(import.meta.url);
+const DEPENDENCIES = require('./package.json').dependencies ?? {};
 
 /**
  * Re.Pack (Rspack) configuration for the Hyperswitch SDK bundles.
@@ -180,6 +181,13 @@ export default Repack.defineRspackConfig((env) => {
     : CHUNK_PREFIX;
 
   const missingPackages = OPTIONAL_PACKAGES.filter((pkg) => !isResolvable(pkg));
+  const declaredButMissing = missingPackages.filter((pkg) => pkg in DEPENDENCIES);
+  if (declaredButMissing.length) {
+    console.warn(
+      `[hyperswitch] package.json lists ${declaredButMissing.join(', ')} but ` +
+        'node_modules does not have it: building without it (no chunk). Run `yarn install`.'
+    );
+  }
   const missingPackageStub = path.join(__dirname, 'src/chunks/missingOptionalModule.js');
 
   return {
