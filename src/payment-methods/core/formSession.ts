@@ -1,16 +1,22 @@
 import { createDeferred } from './deferred';
 import type { ProviderAdapter } from './ProviderAdapter';
 import { errorResult, messageOf } from './results';
-import type { FormStatus, TokenizeResult } from './types';
+import type { FormStatus, TokenizeResult, VaultType } from './types';
 
 const DEFAULT_READY_TIMEOUT_MS = 10_000;
 
 export interface CreateFormSessionOptions {
   readyTimeoutMs?: number;
+  /* For a session created before its adapter's SDK chunk has loaded: the vault
+     it is for. Without it a null adapter means no vault configuration at all. */
+  vaultType?: VaultType;
 }
 
 export interface FormSession {
   readonly status: FormStatus;
+
+  /* The adapter whose chunk has just landed; nothing tokenizes without one. */
+  attachAdapter(adapter: ProviderAdapter): void;
 
   attachCollector(collector: unknown): void;
 
@@ -19,12 +25,14 @@ export interface FormSession {
 }
 
 export function createFormSession(
-  adapter: ProviderAdapter | null,
+  initialAdapter: ProviderAdapter | null,
   options: CreateFormSessionOptions = {}
 ): FormSession {
   const readyTimeoutMs = options.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS;
   const ready = createDeferred<void>();
-  const vaultType = adapter?.vaultType;
+  const vaultType = initialAdapter?.vaultType ?? options.vaultType;
+
+  let adapter = initialAdapter;
 
   let collector: unknown | undefined;
   let failure: { error: unknown } | undefined;
@@ -44,7 +52,7 @@ export function createFormSession(
   }
 
   async function run(providerData?: unknown): Promise<TokenizeResult> {
-    if (!adapter) {
+    if (!vaultType) {
       return errorResult(
         undefined,
         'unsupported_configuration',
@@ -65,7 +73,7 @@ export function createFormSession(
       );
     }
 
-    if (collector === undefined) {
+    if (collector === undefined || !adapter) {
       return errorResult(
         vaultType,
         'sdk_not_ready',
@@ -87,6 +95,10 @@ export function createFormSession(
   return {
     get status() {
       return status;
+    },
+
+    attachAdapter(next: ProviderAdapter) {
+      adapter = next;
     },
 
     attachCollector(next: unknown) {

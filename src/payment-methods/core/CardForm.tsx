@@ -15,7 +15,11 @@ import type { FormContextValue } from './FormContext';
 import { createFormSession } from './formSession';
 import type { CreateFormSessionOptions } from './formSession';
 import { registerForm } from './formRegistry';
-import { resolveAdapter } from '../providers/registry';
+import {
+  isAdapterNotLoadedError,
+  loadAdapter,
+  resolveAdapter,
+} from '../providers/registry';
 import { SessionContext } from '../session/SessionContext';
 import type { ProviderAdapter } from './ProviderAdapter';
 import { errorResult, tokenizedCardOf } from './results';
@@ -55,6 +59,72 @@ function unavailableAdapter(vaultType: VaultType): ProviderAdapter {
         `No provider is available for vault type "${vaultType}".`
       ),
   };
+}
+
+interface ResolvedAdapter {
+  adapter: ProviderAdapter | null;
+  resolveError: unknown;
+}
+
+type SyncResolution =
+  | { pending: false; result: ResolvedAdapter }
+  /* The adapter's SDK is a chunk of its own that is not loaded yet. */
+  | { pending: true };
+
+type LoadOutcome =
+  | { vaultType: VaultType; adapter: ProviderAdapter }
+  | { vaultType: VaultType; error: unknown };
+
+/* The adapter for a vault type: at once when it is injected or already loaded,
+   otherwise once its chunk lands. Meanwhile the adapter is null, and the form
+   stays initializing. A provider that cannot be resolved at all stands in as
+   an adapter that refuses to tokenize, with the reason in resolveError. */
+function useAdapter(vaultType: VaultType | undefined): ResolvedAdapter {
+  const sync = useMemo<SyncResolution>(() => {
+    if (!vaultType) {
+      return { pending: false, result: { adapter: null, resolveError: undefined } };
+    }
+    try {
+      return {
+        pending: false,
+        result: { adapter: resolveAdapter(vaultType), resolveError: undefined },
+      };
+    } catch (error) {
+      if (isAdapterNotLoadedError(error)) return { pending: true };
+      return {
+        pending: false,
+        result: { adapter: unavailableAdapter(vaultType), resolveError: error },
+      };
+    }
+  }, [vaultType]);
+
+  const [loaded, setLoaded] = useState<LoadOutcome | undefined>(undefined);
+
+  useEffect(() => {
+    if (!sync.pending || !vaultType) return undefined;
+    let alive = true;
+    loadAdapter(vaultType).then(
+      (adapter) => {
+        if (alive) setLoaded({ vaultType, adapter });
+      },
+      (error: unknown) => {
+        if (alive) setLoaded({ vaultType, error });
+      }
+    );
+    return () => {
+      alive = false;
+    };
+  }, [sync, vaultType]);
+
+  return useMemo<ResolvedAdapter>(() => {
+    if (!sync.pending) return sync.result;
+    if (!loaded || loaded.vaultType !== vaultType) {
+      return { adapter: null, resolveError: undefined };
+    }
+    return 'adapter' in loaded
+      ? { adapter: loaded.adapter, resolveError: undefined }
+      : { adapter: unavailableAdapter(loaded.vaultType), resolveError: loaded.error };
+  }, [sync, loaded, vaultType]);
 }
 
 export interface CardFormProps {
@@ -141,22 +211,7 @@ export const CardForm = forwardRef<CardFormHandle, CardFormProps>(
     const details = vaultDetails ?? session?.vaultDetails;
     const vaultType = details?.vaultType;
 
-    const { adapter, resolveError } = useMemo(() => {
-      if (!vaultType) {
-        return { adapter: null, resolveError: undefined as unknown };
-      }
-      try {
-        return {
-          adapter: resolveAdapter(vaultType),
-          resolveError: undefined as unknown,
-        };
-      } catch (error) {
-        return {
-          adapter: unavailableAdapter(vaultType),
-          resolveError: error as unknown,
-        };
-      }
-    }, [vaultType]);
+    const { adapter, resolveError } = useAdapter(vaultType);
 
     const validated = useMemo<ValidatedData>(() => {
       if (resolveError !== undefined) return { ok: false, error: resolveError };
@@ -172,14 +227,20 @@ export const CardForm = forwardRef<CardFormHandle, CardFormProps>(
     }, [adapter, details, resolveError]);
 
     const sessionOptions = useMemo<CreateFormSessionOptions>(
-      () => (readyTimeoutMs !== undefined ? { readyTimeoutMs } : {}),
-      [readyTimeoutMs]
+      () => ({
+        ...(readyTimeoutMs !== undefined ? { readyTimeoutMs } : {}),
+        ...(vaultType ? { vaultType } : {}),
+      }),
+      [readyTimeoutMs, vaultType]
     );
 
+    /* Keyed on the vault, not the adapter: a tokenize() that is waiting while
+       the adapter's chunk loads must be answered by this same session. */
     const formSession = useMemo(
-      () => createFormSession(adapter, sessionOptions),
-      [adapter, sessionOptions]
+      () => createFormSession(null, sessionOptions),
+      [sessionOptions]
     );
+    if (adapter) formSession.attachAdapter(adapter);
 
     const [collector, setCollector] = useState<unknown>(undefined);
     const [status, setStatus] = useState<FormStatus>('initializing');

@@ -20,16 +20,16 @@ type module_ = {
   isAvailable: bool,
 }
 
-@val external require: string => module_ = "require"
+// The package is bundled as its own chunk (paypal.chunk.bundle) and loaded on
+// first use. The literal specifier lets the bundler resolve and split it.
+external importPaypal: string => promise<module_> = "import"
 
-let (launchPayPalMod, isAvailable) = switch try {
-  require("@juspay-tech/react-native-hyperswitch-paypal")->Some
-} catch {
-| _ => None
-} {
-| Some(mod) => (mod.launchPayPal, mod.isAvailable)
-| None => ((_, _) => (), false)
-}
+// Decided from the native module, so a host without PayPal never loads the chunk.
+let isAvailable =
+  ReactNative.NativeModules.nativeModules
+  ->Dict.get("HyperswitchPaypal")
+  ->Option.flatMap(Nullable.toOption)
+  ->Option.isSome
 
 let dictToPaypalCallbackStatus = (result: paypalCallbackResult) => {
   switch result.status {
@@ -40,9 +40,23 @@ let dictToPaypalCallbackStatus = (result: paypalCallbackResult) => {
 }
 
 let launchPayPal = (requestObj: string, callback: paypalCallbackStatus => unit) => {
-  try {
-    launchPayPalMod(requestObj, data => callback(data->dictToPaypalCallbackStatus))
-  } catch {
-  | _ => callback(Failed("PayPal module not available"))
+  let unavailable = () => callback(Failed("PayPal module not available"))
+  if isAvailable {
+    importPaypal("@juspay-tech/react-native-hyperswitch-paypal")
+    ->Promise.then(mod => {
+      try {
+        mod.launchPayPal(requestObj, data => callback(data->dictToPaypalCallbackStatus))
+      } catch {
+      | _ => unavailable()
+      }
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      unavailable()
+      Promise.resolve()
+    })
+    ->ignore
+  } else {
+    unavailable()
   }
 }
