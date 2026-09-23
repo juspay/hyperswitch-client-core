@@ -10,13 +10,27 @@ const registered = new Map<VaultType, ProviderAdapter>();
 const loaderCache = new Map<VaultType, ProviderAdapter>();
 const inflight = new Map<VaultType, Promise<ProviderAdapter>>();
 
+/* The code of the error a provider fails with when its SDK is not in this
+   build. The message is for the integrating developer; a shopper-facing UI shows
+   the provider's fields as ghost marks instead (isProviderUnavailableError). */
+export const PROVIDER_UNAVAILABLE = 'provider_unavailable';
+
 function missingSdk(pkg: string, cause?: unknown): Error {
   const error = new Error(
     `This vault_type needs the "${pkg}" package, which is not installed. ` +
       `Install it in your app (e.g. \`npm install ${pkg}\`) and rebuild.`
   );
+  (error as { code?: string }).code = PROVIDER_UNAVAILABLE;
   if (cause !== undefined) (error as { cause?: unknown }).cause = cause;
   return error;
+}
+
+export function isProviderUnavailableError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: unknown }).code === PROVIDER_UNAVAILABLE
+  );
 }
 
 /* resolveAdapter() was asked for an adapter whose SDK sits in a chunk of its

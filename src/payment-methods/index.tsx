@@ -1,5 +1,8 @@
 export { HyperswitchPaymentMethods } from './HyperswitchPaymentMethods';
-export { registerAdapter } from './providers/registry';
+export {
+  registerAdapter,
+  isProviderUnavailableError,
+} from './providers/registry';
 
 export { Hyperswitch, init } from './session/init';
 export type {

@@ -7,7 +7,9 @@ type scanCardReturnType = {
   status: string,
   data: scanCardData,
 }
-type scanCardReturnStatus = Succeeded(scanCardData) | Failed | Cancelled | None
+// Unavailable: the package is not in this build (or failed to load), which is not
+// the shopper's to hear about.
+type scanCardReturnStatus = Succeeded(scanCardData) | Failed | Cancelled | Unavailable | None
 type module_ = {launchScanCard: (scanCardReturnType => unit) => unit, isAvailable: bool}
 
 // The package is bundled as its own chunk (hyperswitch.scancard.chunk.bundle) and
@@ -53,11 +55,11 @@ let launchScanCard = (callback: scanCardReturnStatus => unit) => {
       Promise.resolve()
     })
     ->Promise.catch(_ => {
-      callback(Failed)
+      callback(Unavailable)
       Promise.resolve()
     })
     ->ignore
   } else {
-    callback(Failed)
+    callback(Unavailable)
   }
 }

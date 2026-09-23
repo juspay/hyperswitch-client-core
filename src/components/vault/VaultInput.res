@@ -19,6 +19,8 @@ let make = (
   ~onReady=?,
   ~options: option<VaultBindings.fieldOptions>=?,
   ~testID: string="",
+  // The provider's SDK is not in this build: a ghost mark takes the field's place.
+  ~unavailable: bool=false,
 ) => {
   let {
     component,
@@ -63,70 +65,76 @@ let make = (
         }),
   }
   let unstyled = !useProviderIcon
-  <>
-    <View style={s({flex: 1., height: 100.->pct, justifyContent: #"flex-end"})}>
-      <Animated.View
-        pointerEvents=#none
-        style={s({
-          position: #absolute,
-          top: 0.->dp,
-          height: animatedValue
-          ->Animated.Interpolation.interpolate({
-            inputRange: [0., 1.],
-            outputRange: [
-              "100%",
-              `${((height +. 10.) /. 1.4)->Float.toString}%`,
-            ]->Animated.Interpolation.fromStringArray,
-          })
-          ->Animated.StyleProp.size,
-          justifyContent: #center,
-        })}>
-        <Animated.Text
-          numberOfLines=1
-          style={s({
-            fontFamily,
-            fontWeight: lifted ? #500 : #normal,
-            color: placeholderColor,
-            fontSize: animatedValue
-            ->Animated.Interpolation.interpolate({
-              inputRange: [0., 1.],
-              outputRange: [
-                (16. +. placeholderTextSizeAdjust) *. fontScale,
-                11. +. placeholderTextSizeAdjust,
-              ]->Animated.Interpolation.fromFloatArray,
-            })
-            ->Animated.StyleProp.float,
-          })}>
-          {React.string(lifted ? label : placeholder)}
-        </Animated.Text>
-      </Animated.View>
-      {switch elementType {
-      | "cardNumber" =>
-        <VaultBindings.CardNumberField
-          ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange ?onReady
+  unavailable
+    ? <View style={s({flex: 1., height: 100.->pct, justifyContent: #center})}>
+        <GhostMark
+          height={height *. 0.3} width={60.->pct} radius=4. testID={testID ++ "-unavailable"}
         />
-      | "cardExpiry" =>
-        <VaultBindings.CardExpiryField
-          ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange ?onReady
-        />
-      | _ =>
-        <VaultBindings.CardCVCField
-          ref=reference
-          unstyled
-          styles
-          placeholder=""
-          testID
-          onFocus
-          onBlur
-          ?onChange
-          ?onReady
-          ?options
-        />
-      }}
-    </View>
-    {switch useProviderIcon ? None : iconRight {
-    | Some(icon) => <View pointerEvents=#none> icon </View>
-    | None => React.null
-    }}
-  </>
+      </View>
+    : <>
+        <View style={s({flex: 1., height: 100.->pct, justifyContent: #"flex-end"})}>
+          <Animated.View
+            pointerEvents=#none
+            style={s({
+              position: #absolute,
+              top: 0.->dp,
+              height: animatedValue
+              ->Animated.Interpolation.interpolate({
+                inputRange: [0., 1.],
+                outputRange: [
+                  "100%",
+                  `${((height +. 10.) /. 1.4)->Float.toString}%`,
+                ]->Animated.Interpolation.fromStringArray,
+              })
+              ->Animated.StyleProp.size,
+              justifyContent: #center,
+            })}>
+            <Animated.Text
+              numberOfLines=1
+              style={s({
+                fontFamily,
+                fontWeight: lifted ? #500 : #normal,
+                color: placeholderColor,
+                fontSize: animatedValue
+                ->Animated.Interpolation.interpolate({
+                  inputRange: [0., 1.],
+                  outputRange: [
+                    (16. +. placeholderTextSizeAdjust) *. fontScale,
+                    11. +. placeholderTextSizeAdjust,
+                  ]->Animated.Interpolation.fromFloatArray,
+                })
+                ->Animated.StyleProp.float,
+              })}>
+              {React.string(lifted ? label : placeholder)}
+            </Animated.Text>
+          </Animated.View>
+          {switch elementType {
+          | "cardNumber" =>
+            <VaultBindings.CardNumberField
+              ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange ?onReady
+            />
+          | "cardExpiry" =>
+            <VaultBindings.CardExpiryField
+              ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange ?onReady
+            />
+          | _ =>
+            <VaultBindings.CardCVCField
+              ref=reference
+              unstyled
+              styles
+              placeholder=""
+              testID
+              onFocus
+              onBlur
+              ?onChange
+              ?onReady
+              ?options
+            />
+          }}
+        </View>
+        {switch useProviderIcon ? None : iconRight {
+        | Some(icon) => <View pointerEvents=#none> icon </View>
+        | None => React.null
+        }}
+      </>
 }
