@@ -1,0 +1,13 @@
+diff --git a/node_modules/@juspay-tech/react-native-hyperswitch-netcetera-3ds/android/src/main/java/com/reactnativehyperswitchnetcetera3ds/HyperswitchNetcetera3dsModule.kt b/node_modules/@juspay-tech/react-native-hyperswitch-netcetera-3ds/android/src/main/java/com/reactnativehyperswitchnetcetera3ds/HyperswitchNetcetera3dsModule.kt
+index 191b990..82de472 100644
+--- a/node_modules/@juspay-tech/react-native-hyperswitch-netcetera-3ds/android/src/main/java/com/reactnativehyperswitchnetcetera3ds/HyperswitchNetcetera3dsModule.kt
++++ b/node_modules/@juspay-tech/react-native-hyperswitch-netcetera-3ds/android/src/main/java/com/reactnativehyperswitchnetcetera3ds/HyperswitchNetcetera3dsModule.kt
+@@ -14,7 +14,7 @@ class HyperswitchNetcetera3dsModule(reactContext: ReactApplicationContext) :
+   val hsNetceteraUtils = HsNetceteraUtils()
+   val applicationContext = reactApplicationContext.applicationContext as Application
+   private fun getActivity(): Activity? {
+-    return currentActivity ?: reactApplicationContext.currentActivity
++    return reactApplicationContext.currentActivity
+   }
+   override fun getName(): String {
+     return "HyperswitchNetcetera3ds"
