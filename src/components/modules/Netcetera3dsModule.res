@@ -15,10 +15,15 @@ type module_ = {
   isAvailable: bool,
 }
 
-// The package is bundled as its own chunk (netcetera-3ds.chunk.bundle) and
-// loaded when the 3DS flow first needs it. The literal specifier lets the
-// bundler resolve and split it.
-external importNetcetera: string => promise<module_> = "import"
+// The package is bundled as its own chunk (hyperswitch.netcetera-3ds.chunk.bundle) and
+// loaded when the 3DS flow first needs it, through a wrapper that makes a missing or failing package
+// "not available" instead of an error (src/chunks/OptionalPackage.res).
+external importWrapper: string => promise<OptionalPackage.wrapper> = "import"
+
+let importNetcetera = (): promise<module_> =>
+  importWrapper("../../chunks/NetceteraPackage.bs.js")->OptionalPackage.unwrap(
+    "@juspay-tech/react-native-hyperswitch-netcetera-3ds",
+  )
 
 // Decided from the native module, so a host without Netcetera never loads the chunk.
 let isAvailable =
@@ -45,7 +50,7 @@ let emptyAReqParams: aReqParams = {
 // the chunk cannot be loaded or the call throws.
 let withModule = (onUnavailable: statusType => unit, call: module_ => unit) => {
   if isAvailable {
-    importNetcetera("@juspay-tech/react-native-hyperswitch-netcetera-3ds")
+    importNetcetera()
     ->Promise.then(mod => {
       try {
         call(mod)

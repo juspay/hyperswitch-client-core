@@ -1,9 +1,9 @@
 /* Provider SDKs that the bundler emits as chunks of their own (vault and vgs;
    see rspack.config.mjs). The bundler loads each chunk once and caches it.
-   The specifiers must stay literal so the bundler can resolve and split them.
 
-   A package that is not part of the build is replaced by a module that exports
-   nothing, so each loader checks for an export it needs and rejects without it. */
+   Each is reached through a wrapper in ./optionalSdk that loads the package
+   inside try/catch, so a package that is missing, or throws while loading,
+   rejects here with "not part of this build" and the provider is unavailable. */
 
 const PKG_VAULT = '@juspay-tech/react-native-hyperswitch-vault';
 const PKG_VGS = '@vgs/collect-react-native';
@@ -19,9 +19,7 @@ export function requireExport(pkg: string, name: string) {
 }
 
 export const loadVault = (): Promise<unknown> =>
-  import('@juspay-tech/react-native-hyperswitch-vault').then(
-    requireExport(PKG_VAULT, 'CardForm')
-  );
+  import('./optionalSdk/vault').then(({ loaded }) => requireExport(PKG_VAULT, 'CardForm')(loaded));
 
 export const loadVgs = (): Promise<unknown> =>
-  import('@vgs/collect-react-native').then(requireExport(PKG_VGS, 'VGSCollect'));
+  import('./optionalSdk/vgs').then(({ loaded }) => requireExport(PKG_VGS, 'VGSCollect')(loaded));

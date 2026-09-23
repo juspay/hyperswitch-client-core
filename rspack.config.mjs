@@ -53,15 +53,13 @@ const OPTIONAL_CHUNKS = {
 
 /**
  * Optional packages. Metro tolerates a missing optional dependency; Rspack does
- * not, so each one that is not installed is replaced by a stub:
- *
- *  - loaded with `import()` (the chunks above): a stub that exports nothing. A
- *    module that throws while a dynamic import evaluates it is reported as a
- *    fatal error, so the loaders check for the export they need instead.
- *  - loaded with `require()` inside try/catch: a stub that throws, which is how
- *    a missing package behaved under Metro.
+ * not, so each one that is not installed is replaced by a module that throws, as
+ * a missing package did under Metro. The SDK require()s every one of them inside
+ * try/catch and carries on without it: the ones in chunks of their own through
+ * the wrappers in src/chunks (OptionalPackage.res) and
+ * src/payment-methods/providers/optionalSdk, the rest where they are used.
  */
-const OPTIONAL_IMPORTED_PACKAGES = [
+const OPTIONAL_PACKAGES = [
   '@sentry/react-native',
   '@juspay-tech/react-native-hyperswitch-paypal',
   '@juspay-tech/react-native-hyperswitch-netcetera-3ds',
@@ -70,9 +68,6 @@ const OPTIONAL_IMPORTED_PACKAGES = [
   // Subpath entry that older vault releases do not have.
   '@juspay-tech/react-native-hyperswitch-vault/detached',
   '@vgs/collect-react-native',
-];
-
-const OPTIONAL_REQUIRED_PACKAGES = [
   '@juspay-tech/react-native-hyperswitch-samsung-pay',
   '@evervault/react-native',
   '@basis-theory/react-native-elements',
@@ -82,6 +77,28 @@ const OPTIONAL_REQUIRED_PACKAGES = [
   'react-native-hyperswitch-kount',
   'react-native-klarna-inapp-sdk',
 ];
+
+/**
+ * Re.Pack starts its ScriptManager before the entry with this module, which throws
+ * when Re.Pack's native module is not in the app; the entry would never start.
+ * src/chunks/SafeScriptManager.res does the same, but lets the SDK start without
+ * the chunks it loads on demand.
+ */
+/**
+ * A package the entries use from the start: it goes in the shared `vendors` chunk.
+ * The polyfills, and the SWC helpers they use, stay in each entry: Re.Pack runs
+ * them before the entry's startup, which is what waits for the shared chunks.
+ */
+function isStartupPackage(module, chunkGraph) {
+  return (
+    /[\\/]node_modules[\\/](?!@react-native[\\/]js-polyfills[\\/]|@swc[\\/]helpers[\\/])/.test(
+      module.resource ?? ''
+    ) && chunkGraph.getModuleChunks(module).some((chunk) => chunk.canBeInitial())
+  );
+}
+
+const REPACK_INITIALIZE_SCRIPT_MANAGER =
+  /[\\/]@callstack[\\/]repack[\\/]dist[\\/]modules[\\/]InitializeScriptManager\.js$/;
 
 function isResolvable(request) {
   try {
@@ -162,12 +179,8 @@ export default Repack.defineRspackConfig((env) => {
       : (ENTRIES.find((e) => entry === `./${e.file}.js`) ?? ENTRIES[0]).bundle
     : CHUNK_PREFIX;
 
-  const stubs = [
-    [OPTIONAL_IMPORTED_PACKAGES, path.join(__dirname, 'src/chunks/missingOptionalModule.async.js')],
-    [OPTIONAL_REQUIRED_PACKAGES, path.join(__dirname, 'src/chunks/missingOptionalModule.js')],
-  ].flatMap(([packages, stub]) =>
-    packages.filter((pkg) => !isResolvable(pkg)).map((pkg) => [pkg, stub])
-  );
+  const missingPackages = OPTIONAL_PACKAGES.filter((pkg) => !isResolvable(pkg));
+  const missingPackageStub = path.join(__dirname, 'src/chunks/missingOptionalModule.js');
 
   return {
     mode,
@@ -192,6 +205,10 @@ export default Repack.defineRspackConfig((env) => {
       // keep it stable across releases.
       chunkLoadingGlobal: 'hyperswitchChunks',
       uniqueName: 'hyperswitch',
+      // A module that throws while loading keeps throwing, as under Metro. Without
+      // this, the bundler caches its half-made exports and the next require()
+      // returns them: a missing optional package would look installed.
+      strictModuleExceptionHandling: true,
     },
     resolve: {
       ...Repack.getResolveOptions(platform),
@@ -261,10 +278,7 @@ export default Repack.defineRspackConfig((env) => {
           vendors: isProduction
             ? {
                 name: 'vendors',
-                test: (module, { chunkGraph }) =>
-                  /[\\/]node_modules[\\/](?!@react-native[\\/]js-polyfills[\\/]|@swc[\\/]helpers[\\/])/.test(
-                    module.resource ?? ''
-                  ) && chunkGraph.getModuleChunks(module).some((chunk) => chunk.canBeInitial()),
+                test: (module, { chunkGraph }) => isStartupPackage(module, chunkGraph),
                 chunks: 'all',
                 enforce: true,
                 priority: 90,
@@ -276,12 +290,15 @@ export default Repack.defineRspackConfig((env) => {
               { name, test, chunks: 'async', enforce: true, priority: 50 },
             ])
           ),
-          // Whatever the optional packages share that is not already in the
-          // entry (Babel/SWC helpers, the stub for a missing package). Named, so
-          // no chunk file gets a generated name.
+          // Everything else loaded only on demand: code the optional packages
+          // share (helpers), their wrappers (src/chunks, optionalSdk), and the
+          // stub for a missing package. Named, so no chunk file gets a generated
+          // name.
           optionalShared: {
             name: 'optional-shared',
-            test: /[\\/](node_modules|src[\\/]chunks)[\\/]/,
+            test: (module, { chunkGraph }) =>
+              /[\\/](node_modules|src)[\\/]/.test(module.resource ?? '') &&
+              !isStartupPackage(module, chunkGraph),
             chunks: 'async',
             enforce: true,
             priority: 10,
@@ -315,14 +332,18 @@ export default Repack.defineRspackConfig((env) => {
         banner:
           'var self = typeof self !== "undefined" ? self : (typeof globalThis !== "undefined" ? globalThis : this);',
       }),
-      // Missing optional packages (see OPTIONAL_*_PACKAGES).
-      ...stubs.map(
-        ([pkg, stub]) =>
+      // Missing optional packages (see OPTIONAL_PACKAGES).
+      ...missingPackages.map(
+        (pkg) =>
           new rspack.NormalModuleReplacementPlugin(
             // Exact request only: `pkg` must not also catch `pkg/subpath`.
             new RegExp(`^${escapeRegExp(pkg)}$`),
-            stub
+            missingPackageStub
           )
+      ),
+      new rspack.NormalModuleReplacementPlugin(
+        REPACK_INITIALIZE_SCRIPT_MANAGER,
+        path.join(__dirname, 'src/chunks/SafeScriptManager.bs.js')
       ),
     ],
   };

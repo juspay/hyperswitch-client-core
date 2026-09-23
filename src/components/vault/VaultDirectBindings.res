@@ -98,10 +98,14 @@ type cardNumberOptions = {
 // Suspense boundary of its own so a field loading never hides the form.
 type vaultModule
 
-external importVault: string => promise<vaultModule> = "import"
+external importWrapper: string => promise<OptionalPackage.wrapper> = "import"
 
-// The literal specifier lets the bundler resolve and split the package.
-let loadVault = () => importVault("@juspay-tech/react-native-hyperswitch-vault")
+// Through a wrapper that makes a missing or failing package a rejected load, which
+// the form's error boundary reports, instead of a fatal error (OptionalPackage.res).
+let loadVault = (): promise<vaultModule> =>
+  importWrapper("../../chunks/VaultPackage.bs.js")->OptionalPackage.unwrap(
+    "@juspay-tech/react-native-hyperswitch-vault",
+  )
 
 let fromVault = (pick: vaultModule => React.component<'props>): React.component<'props> => {
   let component = React.lazy_(() => loadVault()->Promise.thenResolve(pick))
