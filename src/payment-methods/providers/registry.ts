@@ -2,38 +2,86 @@ import type { ProviderAdapter } from '../core/ProviderAdapter';
 import type { VaultType } from '../core/types';
 
 type AdapterLoader = () => ProviderAdapter;
+type ChunkAdapterLoader = () => Promise<ProviderAdapter>;
 
 declare const require: (moduleId: string) => unknown;
 
 const registered = new Map<VaultType, ProviderAdapter>();
 const loaderCache = new Map<VaultType, ProviderAdapter>();
+const inflight = new Map<VaultType, Promise<ProviderAdapter>>();
 
-function missingSdk(pkg: string): Error {
-  return new Error(
+/* The code of the error a provider fails with when its SDK is not in this
+   build. The message is for the integrating developer; a shopper-facing UI shows
+   the provider's fields as ghost marks instead (isProviderUnavailableError). */
+export const PROVIDER_UNAVAILABLE = 'provider_unavailable';
+
+function missingSdk(pkg: string, cause?: unknown): Error {
+  const error = new Error(
     `This vault_type needs the "${pkg}" package, which is not installed. ` +
       `Install it in your app (e.g. \`npm install ${pkg}\`) and rebuild.`
   );
+  (error as { code?: string }).code = PROVIDER_UNAVAILABLE;
+  if (cause !== undefined) (error as { cause?: unknown }).cause = cause;
+  return error;
 }
 
-const loaders: Partial<Record<VaultType, AdapterLoader>> = {
+export function isProviderUnavailableError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: unknown }).code === PROVIDER_UNAVAILABLE
+  );
+}
+
+/* resolveAdapter() was asked for an adapter whose SDK sits in a chunk of its
+   own that nobody has loaded yet. */
+export class AdapterNotLoadedError extends Error {
+  readonly vaultType: VaultType;
+
+  constructor(vaultType: VaultType) {
+    super(
+      `The "${vaultType}" provider SDK is loaded on demand and is not loaded yet. ` +
+        `Await loadAdapter("${vaultType}") before resolving it.`
+    );
+    this.name = 'AdapterNotLoadedError';
+    this.vaultType = vaultType;
+  }
+}
+
+export function isAdapterNotLoadedError(
+  error: unknown
+): error is AdapterNotLoadedError {
+  return (
+    error instanceof AdapterNotLoadedError ||
+    (error instanceof Error && error.name === 'AdapterNotLoadedError')
+  );
+}
+
+/* Providers whose SDK is a chunk of its own (providers/sdkChunks.ts):
+   the adapter module is small and bundled; its SDK arrives with the chunk. */
+const chunkLoaders: Partial<Record<VaultType, ChunkAdapterLoader>> = {
   hyperswitch: () => {
-    const m = require('./hyperswitch/adapter') as {
-      hyperswitchVaultAdapter: ProviderAdapter;
-      hyperswitchVaultSdkAvailable: boolean;
-    };
-    if (!m.hyperswitchVaultSdkAvailable) {
-      throw missingSdk('@juspay-tech/react-native-hyperswitch-vault');
-    }
-    return m.hyperswitchVaultAdapter;
+    const m = require('./hyperswitch/adapter') as typeof import('./hyperswitch/adapter');
+    return m.loadHyperswitchVaultSdk().then(
+      () => m.hyperswitchVaultAdapter,
+      (error: unknown) => {
+        throw missingSdk('@juspay-tech/react-native-hyperswitch-vault', error);
+      }
+    );
   },
   vgs: () => {
-    const m = require('./vgs/adapter') as {
-      vgsAdapter: ProviderAdapter;
-      vgsSdkAvailable: boolean;
-    };
-    if (!m.vgsSdkAvailable) throw missingSdk('@vgs/collect-react-native');
-    return m.vgsAdapter;
+    const m = require('./vgs/adapter') as typeof import('./vgs/adapter');
+    return m.loadVgsSdk().then(
+      () => m.vgsAdapter,
+      (error: unknown) => {
+        throw missingSdk('@vgs/collect-react-native', error);
+      }
+    );
   },
+};
+
+/* Providers whose SDK is part of the main bundle when installed. */
+const loaders: Partial<Record<VaultType, AdapterLoader>> = {
   skyflow: () => {
     const m = require('./skyflow/adapter') as {
       skyflowAdapter: ProviderAdapter;
@@ -62,6 +110,14 @@ const loaders: Partial<Record<VaultType, AdapterLoader>> = {
   },
 };
 
+function unknownVaultType(vaultType: VaultType): Error {
+  return new Error(
+    `No provider adapter registered for vault_type "${vaultType}". ` +
+      'Install the matching provider SDK (and make sure this version supports it), ' +
+      'or register a custom adapter with registerAdapter().'
+  );
+}
+
 export function registerAdapter(adapter: ProviderAdapter): () => void {
   registered.set(adapter.vaultType, adapter);
   return () => {
@@ -71,6 +127,9 @@ export function registerAdapter(adapter: ProviderAdapter): () => void {
   };
 }
 
+/* Synchronous: an injected adapter, one already loaded, or one whose SDK is in
+   the main bundle. Throws AdapterNotLoadedError for a chunked provider that
+   loadAdapter() has not brought in yet. */
 export function resolveAdapter(vaultType: VaultType): ProviderAdapter {
   const injected = registered.get(vaultType);
   if (injected) return injected;
@@ -85,9 +144,46 @@ export function resolveAdapter(vaultType: VaultType): ProviderAdapter {
     return adapter;
   }
 
-  throw new Error(
-    `No provider adapter registered for vault_type "${vaultType}". ` +
-      'Install the matching provider SDK (and make sure this version supports it), ' +
-      'or register a custom adapter with registerAdapter().'
+  if (chunkLoaders[vaultType]) throw new AdapterNotLoadedError(vaultType);
+
+  throw unknownVaultType(vaultType);
+}
+
+/* Loads the adapter and, for a chunked provider, its SDK chunk; the result is
+   cached so resolveAdapter() answers synchronously from then on. An injected
+   adapter wins, as it does for resolveAdapter(). Rejects with the same errors
+   resolveAdapter() throws (a missing SDK, an unknown vault type). */
+export function loadAdapter(vaultType: VaultType): Promise<ProviderAdapter> {
+  const injected = registered.get(vaultType);
+  if (injected) return Promise.resolve(injected);
+
+  const cached = loaderCache.get(vaultType);
+  if (cached) return Promise.resolve(cached);
+
+  const pending = inflight.get(vaultType);
+  if (pending) return pending;
+
+  const chunkLoader = chunkLoaders[vaultType];
+  if (!chunkLoader) {
+    try {
+      return Promise.resolve(resolveAdapter(vaultType));
+    } catch (error) {
+      return Promise.reject(error);
+    }
+  }
+
+  const loading = chunkLoader().then(
+    (adapter) => {
+      inflight.delete(vaultType);
+      loaderCache.set(vaultType, adapter);
+      return registered.get(vaultType) ?? adapter;
+    },
+    (error: unknown) => {
+      // Let a later call try again (e.g. once the chunk is reachable).
+      inflight.delete(vaultType);
+      throw error;
+    }
   );
+  inflight.set(vaultType, loading);
+  return loading;
 }

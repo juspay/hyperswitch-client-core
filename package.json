@@ -3,7 +3,7 @@
   "version": "1.12.2",
   "private": true,
   "scripts": {
-    "start": "react-native start --reset-cache --client-logs",
+    "start": "react-native start --reset-cache",
     "server": "node mockServer.js",
     "re:start": "rescript build -w",
     "re:format": "rescript format -all",
@@ -13,9 +13,9 @@
     "ios": "react-native run-ios",
     "run:ios": "bundle && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
-    "bundle:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
-    "bundle:rn:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output ../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch/android/src/main/assets/hyperswitch.bundle",
-    "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
+    "bundle:android": "node scripts/bundle.mjs --platform android --out android/app/src/main/assets --assets-dest android/app/src/main/res",
+    "bundle:rn:android": "node scripts/bundle.mjs --platform android --out ../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch/android/src/main/assets --entries hyperswitch",
+    "bundle:ios": "node scripts/bundle.mjs --platform ios --out ios/hyperswitchSDK/Core/Resources --entries hyperswitch,hyperswitch-payment-methods",
     "build:web": "rm -rf reactNativeWeb/dist/ && webpack --mode=production --config reactNativeWeb/webpack.config.js",
     "build:lib": "android/build-lib.sh",
     "clean": "rm -rf node_modules && rm -rf package-lock.json && rm -rf yarn.lock && yarn run clean:gradle && yarn run clean:pod",
@@ -38,12 +38,10 @@
     "prepare": "husky",
     "postinstall": "patch-package",
     "lint:secrets": "gitleaks detect --source . --no-banner --verbose",
-    "bundle:ios:pmm": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.payment-method-management.js --bundle-output ios/hyperswitchSDK/PaymentMethodManagement/Resources/hyperswitch-payment-method-management.bundle",
-    "bundle:android:pmm": "react-native bundle --reset-cache --platform android --dev false --entry-file index.payment-method-management.js --bundle-output android/app/src/main/assets/hyperswitch-payment-method-management.bundle",
-    "bundle:ios:payment-methods": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.payment-methods.js --bundle-output ios/hyperswitchSDK/PaymentMethods/Resources/hyperswitch-payment-methods.bundle",
-    "bundle:android:payment-methods": "react-native bundle --reset-cache --platform android --dev false --entry-file index.payment-methods.js --bundle-output android/app/src/main/assets/hyperswitch-payment-methods.bundle"
+    "bundle:all": "yarn bundle:android && yarn bundle:ios"
   },
   "dependencies": {
+    "@callstack/repack": "5.3.0",
     "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
     "@juspay-tech/react-native-hyperswitch-paypal": "^1.0.2",
     "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.3",
@@ -93,6 +91,7 @@
     "@react-native/typescript-config": "0.86.0",
     "@rescript/core": "^1.6.1",
     "@rescript/react": "^0.13.1",
+    "@rspack/core": "^2.2.7",
     "@semantic-release/changelog": "^6.0.3",
     "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^10.0.1",
@@ -100,6 +99,7 @@
     "@semantic-release/release-notes-generator": "^14.0.3",
     "@svgr/webpack": "^6.5.1",
     "@swc/core": "^1.7.23",
+    "@swc/helpers": "^0.5.23",
     "@testing-library/react-native": "^13.2.0",
     "@tsconfig/react-native": "^3.0.0",
     "@types/jest": "^29.5.13",
@@ -165,7 +165,7 @@
       "<rootDir>/detox-tests/"
     ],
     "transformIgnorePatterns": [
-      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|rescript|@rescript|rescript-react-native|@glennsl|react-native-svg|react-native-inappbrowser-reborn|@juspay-tech|use-latest-callback)/)"
+      "node_modules/(?!((jest-)?react-native|@react-native(-community)?|rescript|@rescript|rescript-react-native|@glennsl|react-native-svg|react-native-inappbrowser-reborn|@juspay-tech|@callstack|use-latest-callback)/)"
     ],
     "setupFiles": [
       "@react-native/jest-preset/jest/setup.js",

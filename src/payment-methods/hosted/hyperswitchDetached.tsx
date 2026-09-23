@@ -6,12 +6,24 @@ import type {
   ProviderAdapter,
 } from '../core/ProviderAdapter';
 import type { CardDetails } from '../core/types';
-import { hyperswitchVaultAdapter } from '../providers/hyperswitch/adapter';
+import {
+  hyperswitchVaultAdapter,
+  loadHyperswitchVaultSdk,
+} from '../providers/hyperswitch/adapter';
 import { toVaultAppearance } from '../providers/hyperswitch/appearance';
 import type { HyperswitchVaultData } from '../providers/hyperswitch/types';
 import { registerAdapter } from '../providers/registry';
+import { requireExport } from '../providers/sdkChunks';
 
-declare const require: (moduleId: string) => unknown;
+/* The vault package's `./detached` entry, in the vault chunk. Kept here, where
+   only the hosted (payment methods) entry reaches it: releases of the vault
+   without the entry fail to resolve it, which the web build treats as an error. */
+const loadVaultDetached = (): Promise<unknown> =>
+  import('../providers/optionalSdk/vaultDetached').then(({ loaded }) =>
+    requireExport('@juspay-tech/react-native-hyperswitch-vault/detached', 'createDetachedCardForm')(
+      loaded
+    )
+  );
 
 /* The vault's handle for a form whose fields are not its children. It carries
    no card data and no store; see createDetachedCardForm in the vault package. */
@@ -26,20 +38,36 @@ interface DetachedVaultSdk {
 }
 
 let detachedSdk: DetachedVaultSdk | null = null;
-try {
-  const loaded = require(
-    '@juspay-tech/react-native-hyperswitch-vault/detached'
-  ) as Partial<DetachedVaultSdk> | null;
-  detachedSdk =
-    typeof loaded?.createDetachedCardForm === 'function'
-      ? (loaded as DetachedVaultSdk)
-      : null;
-} catch {
-  detachedSdk = null;
+let loading: Promise<DetachedVaultSdk | null> | undefined;
+
+/* The vault chunk, with its ./detached entry. Resolves null when the vault is
+   not part of this build or predates that entry; a later call tries again. */
+function loadDetachedSdk(): Promise<DetachedVaultSdk | null> {
+  if (detachedSdk) return Promise.resolve(detachedSdk);
+  if (loading) return loading;
+  loading = Promise.all([loadHyperswitchVaultSdk(), loadVaultDetached()]).then(
+    ([, entry]) => {
+      loading = undefined;
+      const loaded = entry as Partial<DetachedVaultSdk> | null;
+      detachedSdk =
+        typeof loaded?.createDetachedCardForm === 'function'
+          ? (loaded as DetachedVaultSdk)
+          : null;
+      return detachedSdk;
+    },
+    () => {
+      loading = undefined;
+      return null;
+    }
+  );
+  return loading;
 }
 
-/* False with a vault release that predates its ./detached entry. */
-export const hyperswitchDetachedAvailable = detachedSdk != null;
+/* Known only once the vault chunk has been looked at: false with a vault
+   release that predates its ./detached entry, or with no vault at all. */
+export function hyperswitchDetachedAvailable(): Promise<boolean> {
+  return loadDetachedSdk().then((sdk) => sdk != null);
+}
 
 const BaseField = hyperswitchVaultAdapter.Field;
 
@@ -98,8 +126,21 @@ export const hyperswitchDetachedAdapter: ProviderAdapter = {
   },
 };
 
-export function registerHostedAdapters(): () => void {
-  return hyperswitchDetachedAvailable
-    ? registerAdapter(hyperswitchDetachedAdapter)
-    : () => {};
+let registration: Promise<unknown> | undefined;
+
+/* Loads the vault chunk and registers the detached adapter once it is in.
+   Resolves with how to unregister it (a no-op when there is nothing to register). */
+export function registerHostedAdapters(): Promise<() => void> {
+  const pending = loadDetachedSdk().then((sdk) =>
+    sdk ? registerAdapter(hyperswitchDetachedAdapter) : () => {}
+  );
+  registration = pending;
+  return pending;
+}
+
+/* Settles once a registration that was started has finished, at once when
+   none was. A form opened in between waits for it, so it does not fall back
+   to the in-tree Hyperswitch adapter that cannot host detached fields. */
+export function hostedAdaptersReady(): Promise<void> {
+  return registration ? registration.then(() => undefined) : Promise.resolve();
 }

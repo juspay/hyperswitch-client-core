@@ -56,7 +56,7 @@ export function FormSurface({
   /* Some vaults only work while something of theirs is mounted (the Hyperswitch
      vault's tokenizer is one). Only the screen that owns the form mounts it, so
      a refused duplicate cannot start a second one. */
-  const DetachedHost = core?.adapter.DetachedHost;
+  const DetachedHost = core?.adapter?.DetachedHost;
   if (!DetachedHost || collector === undefined) return null;
   return <DetachedHost collector={collector} />;
 }
