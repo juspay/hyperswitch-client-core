@@ -19,9 +19,10 @@ import { requireExport } from '../providers/sdkChunks';
    only the hosted (payment methods) entry reaches it: releases of the vault
    without the entry fail to resolve it, which the web build treats as an error. */
 const loadVaultDetached = (): Promise<unknown> =>
-  // @ts-ignore: the subpath is missing from older vault releases.
-  import('@juspay-tech/react-native-hyperswitch-vault/detached').then(
-    requireExport('@juspay-tech/react-native-hyperswitch-vault/detached', 'createDetachedCardForm')
+  import('../providers/optionalSdk/vaultDetached').then(({ loaded }) =>
+    requireExport('@juspay-tech/react-native-hyperswitch-vault/detached', 'createDetachedCardForm')(
+      loaded
+    )
   );
 
 /* The vault's handle for a form whose fields are not its children. It carries

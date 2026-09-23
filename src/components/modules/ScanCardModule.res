@@ -10,9 +10,15 @@ type scanCardReturnType = {
 type scanCardReturnStatus = Succeeded(scanCardData) | Failed | Cancelled | None
 type module_ = {launchScanCard: (scanCardReturnType => unit) => unit, isAvailable: bool}
 
-// The package is bundled as its own chunk (scancard.chunk.bundle) and loaded on
-// the first scan. The literal specifier lets the bundler resolve and split it.
-external importScanCard: string => promise<module_> = "import"
+// The package is bundled as its own chunk (hyperswitch.scancard.chunk.bundle) and
+// loaded on the first scan, through a wrapper that makes a missing or failing package
+// "not available" instead of an error (src/chunks/OptionalPackage.res).
+external importWrapper: string => promise<OptionalPackage.wrapper> = "import"
+
+let importScanCard = (): promise<module_> =>
+  importWrapper("../../chunks/ScanCardPackage.bs.js")->OptionalPackage.unwrap(
+    "@juspay-tech/react-native-hyperswitch-scancard",
+  )
 
 // Decided from the native module, so a host without scan card never loads the chunk.
 let isAvailable =
@@ -37,7 +43,7 @@ let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
 
 let launchScanCard = (callback: scanCardReturnStatus => unit) => {
   if isAvailable {
-    importScanCard("@juspay-tech/react-native-hyperswitch-scancard")
+    importScanCard()
     ->Promise.then(mod => {
       try {
         mod.launchScanCard(data => callback(data->dictToScanCardReturnType))

@@ -20,9 +20,15 @@ type module_ = {
   isAvailable: bool,
 }
 
-// The package is bundled as its own chunk (paypal.chunk.bundle) and loaded on
-// first use. The literal specifier lets the bundler resolve and split it.
-external importPaypal: string => promise<module_> = "import"
+// The package is bundled as its own chunk (hyperswitch.paypal.chunk.bundle) and
+// loaded on first use, through a wrapper that makes a missing or failing package
+// "not available" instead of an error (src/chunks/OptionalPackage.res).
+external importWrapper: string => promise<OptionalPackage.wrapper> = "import"
+
+let importPaypal = (): promise<module_> =>
+  importWrapper("../../chunks/PaypalPackage.bs.js")->OptionalPackage.unwrap(
+    "@juspay-tech/react-native-hyperswitch-paypal",
+  )
 
 // Decided from the native module, so a host without PayPal never loads the chunk.
 let isAvailable =
@@ -42,7 +48,7 @@ let dictToPaypalCallbackStatus = (result: paypalCallbackResult) => {
 let launchPayPal = (requestObj: string, callback: paypalCallbackStatus => unit) => {
   let unavailable = () => callback(Failed("PayPal module not available"))
   if isAvailable {
-    importPaypal("@juspay-tech/react-native-hyperswitch-paypal")
+    importPaypal()
     ->Promise.then(mod => {
       try {
         mod.launchPayPal(requestObj, data => callback(data->dictToPaypalCallbackStatus))

@@ -44,8 +44,9 @@ type resolverOptions = {key: string, priority: int}
 
 type scriptManager
 
+// Null when Re.Pack's native module is missing (see SafeScriptManager.res).
 @module("@callstack/repack/client") @scope("ScriptManager")
-external scriptManager: scriptManager = "shared"
+external sharedScriptManager: Nullable.t<scriptManager> = "shared"
 
 @send
 external addResolver: (
@@ -125,5 +126,9 @@ let resolve = (scriptId: string, _caller: option<string>) => {
 }
 
 let () = if repackRuntime->Nullable.toOption->Option.isSome {
-  scriptManager->addResolver(resolve, {key: "hyperswitch-chunks", priority: 10})
+  switch sharedScriptManager->Nullable.toOption {
+  | Some(scriptManager) =>
+    scriptManager->addResolver(resolve, {key: "hyperswitch-chunks", priority: 10})
+  | None => ()
+  }
 }
