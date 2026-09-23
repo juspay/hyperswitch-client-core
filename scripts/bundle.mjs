@@ -1,21 +1,22 @@
 #!/usr/bin/env node
 /**
- * Builds one entry bundle with Re.Pack and installs it, with its chunk files and
- * images, into the native SDK.
+ * Builds the SDK's JavaScript for one platform and installs it into the native SDK.
  *
- *   node scripts/bundle.mjs --platform android|ios --entry index.js \
- *     --name hyperswitch --out <dir> [--assets-dest <dir>] [--hermes]
+ *   node scripts/bundle.mjs --platform android|ios --out <dir>
+ *     [--entries hyperswitch,hyperswitch-payment-methods,...] [--assets-dest <dir>] [--hermes]
  *
- * Output, in <out>:
- *   <name>.bundle                    the entry the native host loads
- *   <name>.<chunk>.chunk.bundle      every chunk (react-native, sentry, paypal, ...)
- * Images go to --assets-dest (Android `res/`), or to <out>/assets/ on iOS.
- * Source maps go to build/sourcemaps/<platform>/, never into the SDK.
- * Chunk files of a previous build of the same entry are removed from <out>.
+ * Every entry is built in one compilation (rspack.config.mjs, shared build), so the
+ * code the entries have in common is one set of chunk files that all of them load:
  *
- * --hermes compiles every chunk to Hermes bytecode (release). The entry is left
- * as JavaScript unless it is also listed; the Android gradle plugin and the iOS
- * build phase compile entries themselves.
+ *   <entry>.bundle                       one per React host (--entries, default: all)
+ *   hyperswitch.<chunk>.chunk.bundle     every chunk, shared by the entries
+ *
+ * Images go to --assets-dest (Android `res/`), or to <out>/assets/ on iOS. Source
+ * maps go to build/sourcemaps/<platform>/, never into the SDK. Chunk files of a
+ * previous build are removed from <out>, so a chunk that is gone stays gone.
+ *
+ * --hermes compiles every chunk to Hermes bytecode (release). Entries are left as
+ * JavaScript; the Android gradle plugin and the iOS build phase compile those.
  */
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -23,6 +24,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const ALL_ENTRIES = [
+  'hyperswitch',
+  'hyperswitch-payment-methods',
+  'hyperswitch-payment-method-management',
+];
+const CHUNK_PREFIX = 'hyperswitch.';
+const CHUNK_SUFFIX = '.chunk.bundle';
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
@@ -32,106 +41,119 @@ function arg(name, fallback) {
 }
 
 const platform = arg('platform');
-const entry = arg('entry', 'index.js');
-const name = arg('name', 'hyperswitch');
-const out = arg('out') && path.resolve(root, arg('out'));
-const assetsDest = arg('assets-dest') && path.resolve(root, arg('assets-dest'));
+const out = typeof arg('out') === 'string' ? path.resolve(root, arg('out')) : undefined;
+const assetsDest =
+  typeof arg('assets-dest') === 'string' ? path.resolve(root, arg('assets-dest')) : undefined;
+const entries = typeof arg('entries') === 'string' ? arg('entries').split(',') : ALL_ENTRIES;
 const hermes = arg('hermes', false) === true;
+
 if (!['android', 'ios'].includes(platform) || !out) {
-  console.error('usage: bundle.mjs --platform android|ios --entry <file> --name <name> --out <dir> [--assets-dest <dir>] [--hermes]');
+  console.error(
+    'usage: bundle.mjs --platform android|ios --out <dir> [--entries a,b] [--assets-dest <dir>] [--hermes]'
+  );
+  process.exit(1);
+}
+const unknown = entries.filter((e) => !ALL_ENTRIES.includes(e));
+if (unknown.length) {
+  console.error(`unknown entries: ${unknown.join(', ')} (known: ${ALL_ENTRIES.join(', ')})`);
   process.exit(1);
 }
 
-const stage = path.join(root, 'build', 'bundles', platform, name);
+// Where Re.Pack writes the compilation (output.path in its defaults).
+const built = path.join(root, 'build', 'generated', platform);
 const maps = path.join(root, 'build', 'sourcemaps', platform);
-fs.rmSync(stage, { recursive: true, force: true });
-fs.mkdirSync(stage, { recursive: true });
-fs.mkdirSync(maps, { recursive: true });
 
-const cli = path.join(root, 'node_modules', 'react-native', 'cli.js');
 execFileSync(
   process.execPath,
   [
-    cli, 'bundle',
-    '--platform', platform,
-    '--dev', 'false',
+    path.join(root, 'node_modules', 'react-native', 'cli.js'),
+    'bundle',
+    '--platform',
+    platform,
+    '--dev',
+    'false',
     '--reset-cache',
-    '--entry-file', entry,
-    '--bundle-output', path.join(stage, `${name}.bundle`),
-    '--sourcemap-output', path.join(stage, `${name}.bundle.map`),
-    '--assets-dest', path.join(stage, 'assets'),
   ],
-  { cwd: root, stdio: 'inherit' }
+  { cwd: root, stdio: 'inherit', env: { ...process.env, HYPERSWITCH_SHARED_BUILD: '1' } }
 );
 
-const isChunk = (file) => file.startsWith(`${name}.`) && file.endsWith('.chunk.bundle');
+const isChunk = (file) => file.startsWith(CHUNK_PREFIX) && file.endsWith(CHUNK_SUFFIX);
+const isEntry = (file) => ALL_ENTRIES.some((e) => file === `${e}.bundle`);
 
-// Remove chunk files a previous build of this entry left behind.
+const produced = fs.readdirSync(built).filter((f) => fs.statSync(path.join(built, f)).isFile());
+const missing = entries.filter((e) => !produced.includes(`${e}.bundle`));
+if (missing.length) throw new Error(`the build produced no ${missing.join(', ')}`);
+
+// Replace the previous build: every Hyperswitch chunk file (including the
+// per-entry ones older builds made), and the entries being installed.
 fs.mkdirSync(out, { recursive: true });
 for (const file of fs.readdirSync(out)) {
-  if (isChunk(file)) fs.rmSync(path.join(out, file));
-}
-
-// iOS puts chunk files (and their maps) in --assets-dest; Android next to the bundle.
-const produced = new Map();
-for (const dir of [stage, path.join(stage, 'assets')]) {
-  if (!fs.existsSync(dir)) continue;
-  for (const file of fs.readdirSync(dir)) {
-    const full = path.join(dir, file);
-    if (fs.statSync(full).isFile()) produced.set(file, full);
-  }
+  const oldChunk = file.startsWith('hyperswitch') && file.endsWith(CHUNK_SUFFIX);
+  if (oldChunk || entries.some((e) => file === `${e}.bundle`)) fs.rmSync(path.join(out, file));
 }
 
 const hermesc = (() => {
-  const os = process.platform === 'darwin' ? 'osx-bin' : process.platform === 'win32' ? 'win64-bin' : 'linux64-bin';
-  const candidates = [
+  const os =
+    process.platform === 'darwin' ? 'osx-bin' : process.platform === 'win32' ? 'win64-bin' : 'linux64-bin';
+  return [
     path.join(root, 'node_modules', 'hermes-compiler', 'hermesc', os, 'hermesc'),
     path.join(root, 'node_modules', 'react-native', 'sdks', 'hermesc', os, 'hermesc'),
-  ];
-  return candidates.find((c) => fs.existsSync(c));
+  ].find((candidate) => fs.existsSync(candidate));
 })();
 
+fs.rmSync(maps, { recursive: true, force: true });
+fs.mkdirSync(maps, { recursive: true });
+
 const installed = [];
-for (const [file, full] of produced) {
+for (const file of produced) {
+  const from = path.join(built, file);
   if (file.endsWith('.map')) {
-    fs.copyFileSync(full, path.join(maps, file));
+    fs.copyFileSync(from, path.join(maps, file));
     continue;
   }
-  if (file !== `${name}.bundle` && !isChunk(file)) continue;
-  const target = path.join(out, file);
+  const install = isChunk(file) || (isEntry(file) && entries.some((e) => file === `${e}.bundle`));
+  if (!install) continue;
+  const to = path.join(out, file);
   if (hermes && isChunk(file)) {
     if (!hermesc) throw new Error('hermesc not found; install react-native with Hermes or drop --hermes');
-    execFileSync(hermesc, ['-emit-binary', '-O', '-out', target, full], { stdio: 'inherit' });
+    execFileSync(hermesc, ['-emit-binary', '-O', '-out', to, from], { stdio: 'inherit' });
   } else {
-    fs.copyFileSync(full, target);
+    fs.copyFileSync(from, to);
   }
   installed.push(file);
 }
 
-// Images. Android: drawable-*/ folders, into res/ (--assets-dest). iOS: an
-// assets/ tree that React Native resolves next to the bundle, into <out>.
-const imageSource = path.join(stage, 'assets');
-const imageTarget = platform === 'ios' ? out : assetsDest;
+// Images. Android: drawable-*/ folders, into res/ (--assets-dest). iOS: an assets/
+// tree that React Native resolves next to the bundle, into <out>.
 let images = 0;
-if (imageTarget && fs.existsSync(imageSource)) {
-  const copy = (from, to) => {
-    for (const entryName of fs.readdirSync(from)) {
-      const src = path.join(from, entryName);
-      if (fs.statSync(src).isDirectory()) {
-        copy(src, path.join(to, entryName));
-      } else if (!entryName.endsWith('.map') && !entryName.endsWith('.bundle')) {
-        fs.mkdirSync(to, { recursive: true });
-        fs.copyFileSync(src, path.join(to, entryName));
-        images += 1;
-      }
+const copyTree = (from, to) => {
+  for (const name of fs.readdirSync(from)) {
+    const src = path.join(from, name);
+    if (fs.statSync(src).isDirectory()) {
+      copyTree(src, path.join(to, name));
+    } else {
+      fs.mkdirSync(to, { recursive: true });
+      fs.copyFileSync(src, path.join(to, name));
+      images += 1;
     }
-  };
-  copy(imageSource, imageTarget);
+  }
+};
+const imageDirs = fs
+  .readdirSync(built)
+  .filter((f) => fs.statSync(path.join(built, f)).isDirectory());
+for (const dir of imageDirs) {
+  if (platform === 'ios' && dir === 'assets') copyTree(path.join(built, dir), path.join(out, 'assets'));
+  if (platform === 'android' && dir.startsWith('drawable-') && assetsDest) {
+    copyTree(path.join(built, dir), path.join(assetsDest, dir));
+  }
 }
 
-console.log(`\n${platform} ${name}: installed ${installed.length} files in ${path.relative(root, out)}`);
+console.log(`\n${platform}: installed ${installed.length} files in ${path.relative(root, out)}`);
 for (const file of installed.sort()) {
   console.log(`  ${file}  ${(fs.statSync(path.join(out, file)).size / 1024).toFixed(0)} KB`);
 }
-if (images) console.log(`  + ${images} images in ${path.relative(root, imageTarget)}`);
+if (images) {
+  const where = platform === 'ios' ? path.join(out, 'assets') : assetsDest;
+  console.log(`  + ${images} images in ${path.relative(root, where)}`);
+}
 console.log(`  source maps: ${path.relative(root, maps)}`);

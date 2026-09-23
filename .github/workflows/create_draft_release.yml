@@ -219,8 +219,8 @@ jobs:
           git checkout main
           git pull origin main
           # Entry bundles, their chunk files and images (removed chunks are staged too)
+          # Every entry and the chunks they share, from one build
           yarn bundle:android
-          yarn bundle:android:payment-methods
           git add -A ./app/src/main/assets ./app/src/main/res
 
           if ! git diff --staged --quiet; then
@@ -234,7 +234,6 @@ jobs:
           git checkout main
           git pull origin main
           yarn bundle:ios
-          yarn bundle:ios:payment-methods
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 

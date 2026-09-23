@@ -11,24 +11,27 @@ const require = createRequire(import.meta.url);
 /**
  * Re.Pack (Rspack) configuration for the Hyperswitch SDK bundles.
  *
- * The SDK ships one entry bundle per React host (`index.js` for payments,
- * `index.payment-methods.js` for the Payment Methods SDK,
- * `index.payment-method-management.js` for payment method management) plus a set of
- * separately loaded chunk files that sit next to it in the native package,
- * each named `<bundle name>.<chunk>.chunk.bundle` (e.g. `hyperswitch.sentry.chunk.bundle`):
+ * The SDK has one React host per product, each with its own entry bundle:
  *
- *   react-native.chunk.bundle   React Native + React runtime. An *initial* chunk:
- *                               the native host evaluates it before the entry
- *                               bundle (see HyperBundleLoader.kt / HyperReactNativeFactory.mm).
- *   sentry.chunk.bundle         @sentry/react-native, loaded on demand.
- *   paypal.chunk.bundle         @juspay-tech/react-native-hyperswitch-paypal
- *   netcetera-3ds.chunk.bundle  @juspay-tech/react-native-hyperswitch-netcetera-3ds
- *   scancard.chunk.bundle       @juspay-tech/react-native-hyperswitch-scancard
- *   vault.chunk.bundle          @juspay-tech/react-native-hyperswitch-vault
- *   vgs.chunk.bundle            @vgs/collect-react-native
+ *   hyperswitch.bundle                             index.js (payments)
+ *   hyperswitch-payment-methods.bundle             index.payment-methods.js
+ *   hyperswitch-payment-method-management.bundle   index.payment-method-management.js
  *
- *   optional-shared.chunk.bundle  code shared by the optional chunks
- *   location-data.chunk.bundle    country/state JSON
+ * `yarn bundle:*` (scripts/bundle.mjs) builds them in one compilation, so the
+ * code they have in common is one chunk file that all of them load, never a copy
+ * per entry. Chunk files are `hyperswitch.<chunk>.chunk.bundle`:
+ *
+ *   react-native     React Native + React. Initial: the native host evaluates it
+ *                    before the entry (HyperBundleLoader.kt, HyperReactNativeFactory.mm).
+ *   vendors          every other package the entries use from the start. Initial.
+ *   sentry           @sentry/react-native, loaded on demand.
+ *   paypal           @juspay-tech/react-native-hyperswitch-paypal
+ *   netcetera-3ds    @juspay-tech/react-native-hyperswitch-netcetera-3ds
+ *   scancard         @juspay-tech/react-native-hyperswitch-scancard
+ *   vault            @juspay-tech/react-native-hyperswitch-vault
+ *   vgs              @vgs/collect-react-native
+ *   optional-shared  code the on-demand chunks share
+ *   location-data    country/state JSON
  *
  * Chunk names come from the cache groups below (ReScript cannot emit
  * `webpackChunkName` comments). On-demand chunks are loaded through Re.Pack's
@@ -96,35 +99,68 @@ function escapeRegExp(value) {
 }
 
 /**
- * Entry files, one per React host. `yarn bundle:*` builds one at a time
- * (--entry-file). The dev server (`yarn start`) builds all of them in one
- * compilation, because each host asks it for its own
- * `<entry file>.bundle` (index, index.payment-methods, ...).
+ * Entry files, one per React host, by the name of the bundle the native side
+ * loads (`<name>.bundle`) and the dev-server request (`<entry file>.bundle`).
  */
-const ENTRIES = {
-  index: './index.js',
-  'index.payment-methods': './index.payment-methods.js',
-  'index.payment-method-management': './index.payment-method-management.js',
-};
+const ENTRIES = [
+  { bundle: 'hyperswitch', file: 'index' },
+  { bundle: 'hyperswitch-payment-methods', file: 'index.payment-methods' },
+  { bundle: 'hyperswitch-payment-method-management', file: 'index.payment-method-management' },
+];
+
+/**
+ * Chunks every entry needs before it can start. The native host evaluates them,
+ * in this order, before the entry (HyperBundleLoader.kt, HyperReactNativeFactory.mm).
+ */
+const INITIAL_CHUNKS = ['react-native', 'vendors'];
+
+/** Prefix of every chunk file: `hyperswitch.<chunk>.chunk.bundle`. */
+const CHUNK_PREFIX = 'hyperswitch';
+
+/**
+ * RepackPlugin without its output step. That step copies one entry to
+ * `--bundle-output` and refuses a compilation with several entries; the shared
+ * build (scripts/bundle.mjs) installs the files itself.
+ */
+class SharedBuildRepackPlugin {
+  constructor(config) {
+    this.config = config;
+  }
+
+  apply(compiler) {
+    const Output = Repack.plugins.OutputPlugin;
+    const apply = Output.prototype.apply;
+    Output.prototype.apply = () => {};
+    try {
+      new Repack.RepackPlugin(this.config).apply(compiler);
+    } finally {
+      Output.prototype.apply = apply;
+    }
+  }
+}
 
 export default Repack.defineRspackConfig((env) => {
   const { mode = 'production', platform = process.env.PLATFORM ?? 'android' } = env;
   const isProduction = mode === 'production';
   const isDevServer = Boolean(env.devServer);
-  const entry = isDevServer ? ENTRIES : env.entry ?? ENTRIES.index;
-  // Chunk files are prefixed with the entry bundle's name, so the payments and
-  // the payment methods bundles can share one assets/resources directory:
-  // `hyperswitch.bundle` + `hyperswitch.<chunk>.chunk.bundle`.
-  // The dev server shares its chunks between the entries: plain `hyperswitch`.
-  const bundleName = env.bundleFilename
-    ? path.basename(env.bundleFilename).replace(/\.(js)?bundle$/, '')
-    : isDevServer
-      ? 'hyperswitch'
-      : /payment-method-management/.test(entry)
-        ? 'hyperswitch-payment-method-management'
-        : /payment-methods/.test(entry)
-          ? 'hyperswitch-payment-methods'
-          : 'hyperswitch';
+  // `node scripts/bundle.mjs` (yarn bundle:*): every entry in one compilation, so
+  // react-native, sentry, vault, ... are one file each that all entries share.
+  const isSharedBuild = !isDevServer && process.env.HYPERSWITCH_SHARED_BUILD === '1';
+  // A plain `react-native bundle --entry-file ...` (Gradle's and Xcode's release
+  // steps): that one entry, its chunks prefixed with its bundle name.
+  const isSingleEntry = !isDevServer && !isSharedBuild;
+
+  const entry = isDevServer
+    ? Object.fromEntries(ENTRIES.map((e) => [e.file, `./${e.file}.js`]))
+    : isSharedBuild
+      ? Object.fromEntries(ENTRIES.map((e) => [e.bundle, `./${e.file}.js`]))
+      : env.entry ?? './index.js';
+
+  const chunkPrefix = isSingleEntry
+    ? env.bundleFilename
+      ? path.basename(env.bundleFilename).replace(/\.(js)?bundle$/, '')
+      : (ENTRIES.find((e) => entry === `./${e.file}.js`) ?? ENTRIES[0]).bundle
+    : CHUNK_PREFIX;
 
   const stubs = [
     [OPTIONAL_IMPORTED_PACKAGES, path.join(__dirname, 'src/chunks/missingOptionalModule.async.js')],
@@ -142,15 +178,18 @@ export default Repack.defineRspackConfig((env) => {
       // every other chunk, including the initial react-native chunk, is a
       // `<name>.chunk.bundle` file next to it.
       // Dev server: `<entry file>.bundle`, the name each host requests.
+      // Entries: `<name>.bundle` (the single-entry build is renamed to
+      // --bundle-output by Re.Pack). Initial chunks and every other chunk:
+      // `<prefix>.<chunk>.chunk.bundle`.
       filename: (pathData) =>
-        pathData.chunk && pathData.chunk.name === 'react-native'
-          ? `${bundleName}.[name].chunk.bundle`
-          : isDevServer
-            ? '[name].bundle'
-            : 'index.bundle',
-      chunkFilename: `${bundleName}.[name].chunk.bundle`,
-      // Both hosts (payments, payment methods) are separate JS realms, so one
-      // chunk-loading global is fine; keep it stable across releases.
+        pathData.chunk && INITIAL_CHUNKS.includes(pathData.chunk.name)
+          ? `${chunkPrefix}.[name].chunk.bundle`
+          : isSingleEntry
+            ? 'index.bundle'
+            : '[name].bundle',
+      chunkFilename: `${chunkPrefix}.[name].chunk.bundle`,
+      // The hosts are separate JS realms, so one chunk-loading global is fine;
+      // keep it stable across releases.
       chunkLoadingGlobal: 'hyperswitchChunks',
       uniqueName: 'hyperswitch',
     },
@@ -201,10 +240,10 @@ export default Repack.defineRspackConfig((env) => {
         cacheGroups: {
           default: false,
           defaultVendors: false,
-          // React Native + React. Extracted from every chunk so the runtime is
-          // shared and can be loaded as its own bundle before the entry.
-          // `@react-native/js-polyfills` stays in the entry: Re.Pack runs the
-          // polyfills before the startup that would load this chunk.
+          // React Native + React: one chunk every entry shares, evaluated by the
+          // native host before the entry. `@react-native/js-polyfills` and the
+          // SWC helpers it uses stay in each entry: Re.Pack runs the polyfills
+          // before the entry's startup, which is what waits for these chunks.
           reactNative: isProduction
             ? {
                 name: 'react-native',
@@ -212,6 +251,23 @@ export default Repack.defineRspackConfig((env) => {
                 chunks: 'all',
                 enforce: true,
                 priority: 100,
+              }
+            : false,
+          // Every other package any entry uses from the start: one shared chunk,
+          // also evaluated by the native host before the entry. It takes such a
+          // package from the on-demand chunks too (chunks: 'all'): they load
+          // after it, so a second copy there would only be dead weight.
+          // Packages used only through import() stay in their own chunks (below).
+          vendors: isProduction
+            ? {
+                name: 'vendors',
+                test: (module, { chunkGraph }) =>
+                  /[\\/]node_modules[\\/](?!@react-native[\\/]js-polyfills[\\/]|@swc[\\/]helpers[\\/])/.test(
+                    module.resource ?? ''
+                  ) && chunkGraph.getModuleChunks(module).some((chunk) => chunk.canBeInitial()),
+                chunks: 'all',
+                enforce: true,
+                priority: 90,
               }
             : false,
           ...Object.fromEntries(
@@ -242,15 +298,15 @@ export default Repack.defineRspackConfig((env) => {
       },
     },
     plugins: [
-      new Repack.RepackPlugin({
+      new (isSharedBuild ? SharedBuildRepackPlugin : Repack.RepackPlugin)({
         platform,
         // Every chunk is packaged with the SDK (assets on Android, resources on
         // iOS). Nothing is fetched from a remote at runtime.
         extraChunks: [{ include: /.*/, type: 'local' }],
       }),
       // Chunk files are evaluated as plain scripts. The React Native bundle
-      // defines `self` only after InitializeCore has run, but the react-native
-      // chunk is evaluated *before* the entry, so give every chunk the same
+      // defines `self` only after InitializeCore has run, but the initial chunks
+      // are evaluated *before* the entry, so give every chunk the same
       // global-object prelude Re.Pack gives the entry.
       new rspack.BannerPlugin({
         raw: true,

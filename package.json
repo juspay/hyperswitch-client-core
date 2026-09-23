@@ -13,9 +13,9 @@
     "ios": "react-native run-ios",
     "run:ios": "bundle && react-native run-ios",
     "android": "react-native run-android --appIdSuffix demoapp --main-activity .demoapp.MainActivity && yarn run adb",
-    "bundle:android": "node scripts/bundle.mjs --platform android --entry index.js --name hyperswitch --out android/app/src/main/assets --assets-dest android/app/src/main/res",
-    "bundle:rn:android": "node scripts/bundle.mjs --platform android --entry index.js --name hyperswitch --out ../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch/android/src/main/assets",
-    "bundle:ios": "node scripts/bundle.mjs --platform ios --entry index.js --name hyperswitch --out ios/hyperswitchSDK/Core/Resources",
+    "bundle:android": "node scripts/bundle.mjs --platform android --out android/app/src/main/assets --assets-dest android/app/src/main/res",
+    "bundle:rn:android": "node scripts/bundle.mjs --platform android --out ../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch/android/src/main/assets --entries hyperswitch",
+    "bundle:ios": "node scripts/bundle.mjs --platform ios --out ios/hyperswitchSDK/Core/Resources --entries hyperswitch,hyperswitch-payment-methods",
     "build:web": "rm -rf reactNativeWeb/dist/ && webpack --mode=production --config reactNativeWeb/webpack.config.js",
     "build:lib": "android/build-lib.sh",
     "clean": "rm -rf node_modules && rm -rf package-lock.json && rm -rf yarn.lock && yarn run clean:gradle && yarn run clean:pod",
@@ -38,11 +38,7 @@
     "prepare": "husky",
     "postinstall": "patch-package",
     "lint:secrets": "gitleaks detect --source . --no-banner --verbose",
-    "bundle:android:payment-methods": "node scripts/bundle.mjs --platform android --entry index.payment-methods.js --name hyperswitch-payment-methods --out android/app/src/main/assets --assets-dest android/app/src/main/res",
-    "bundle:ios:payment-methods": "node scripts/bundle.mjs --platform ios --entry index.payment-methods.js --name hyperswitch-payment-methods --out ios/hyperswitchSDK/Core/Resources",
-    "bundle:android:pmm": "node scripts/bundle.mjs --platform android --entry index.payment-method-management.js --name hyperswitch-payment-method-management --out android/app/src/main/assets --assets-dest android/app/src/main/res",
-    "bundle:ios:pmm": "node scripts/bundle.mjs --platform ios --entry index.payment-method-management.js --name hyperswitch-payment-method-management --out ios/hyperswitchSDK/Core/Resources",
-    "bundle:all": "yarn bundle:android && yarn bundle:android:payment-methods && yarn bundle:android:pmm && yarn bundle:ios && yarn bundle:ios:payment-methods"
+    "bundle:all": "yarn bundle:android && yarn bundle:ios"
   },
   "dependencies": {
     "@callstack/repack": "5.3.0",
