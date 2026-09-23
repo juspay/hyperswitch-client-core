@@ -10,13 +10,16 @@
 //
 //   bundleDir:    absolute directory the entry bundle was read from (an OTA
 //                 download, or the iOS resource bundle), or null for Android assets
-//   bundleFiles:  names of the files in bundleDir
-//   resourceDir:  absolute directory of the SDK's packaged chunks (iOS), or null
+//   bundleFiles:   names of the chunk files in bundleDir
+//   resourceDir:   absolute directory of the SDK's packaged chunks (iOS), or null
+//   resourceFiles: names of the chunk files in resourceDir (iOS), or null
 //
 // A chunk is read from:
 //   1. the Re.Pack dev server in development;
 //   2. bundleDir, when it holds that file;
 //   3. resourceDir, or else the platform default: Android assets or the iOS main bundle.
+// A chunk the app does not ship (an iOS subspec it does not use) resolves to nothing,
+// so its import() fails and the feature reports itself unavailable.
 
 // Bindings: @callstack/repack/client
 
@@ -62,6 +65,7 @@ type layout = {
   bundleDir: Nullable.t<string>,
   bundleFiles: Nullable.t<array<string>>,
   resourceDir: Nullable.t<string>,
+  resourceFiles: Nullable.t<array<string>>,
 }
 
 @val @scope("globalThis")
@@ -87,7 +91,7 @@ let nonEmpty = (value: Nullable.t<string>) =>
 
 let resolve = (scriptId: string, _caller: option<string>) => {
   let locator = if isDev {
-    {url: getDevServerURL(scriptId), cache: false}
+    Some({url: getDevServerURL(scriptId), cache: false})
   } else {
     let fileName = getWebpackContext()->chunkFileName(scriptId)
     let layout = layout->Nullable.toOption
@@ -103,16 +107,21 @@ let resolve = (scriptId: string, _caller: option<string>) => {
       }
     )
     switch bundled {
-    | Some(locator) => locator
+    | Some(_) => bundled
     | None =>
-      switch layout->Option.flatMap(layout => layout.resourceDir->nonEmpty) {
-      | Some(dir) => fileLocator(dir, fileName)
+      switch layout {
+      | Some({resourceDir, resourceFiles}) =>
+        switch (resourceDir->nonEmpty, resourceFiles->Nullable.toOption) {
+        | (Some(_), Some(files)) if !(files->Array.includes(fileName)) => None
+        | (Some(dir), _) => Some(fileLocator(dir, fileName))
+        | (None, _) => Some({url: urlOfString(`file:///${fileName}`), cache: false})
+        }
       // Relative: Android reads it from the assets, iOS from the main bundle.
-      | None => {url: urlOfString(`file:///${fileName}`), cache: false}
+      | None => Some({url: urlOfString(`file:///${fileName}`), cache: false})
       }
     }
   }
-  Promise.resolve(Some(locator))
+  Promise.resolve(locator)
 }
 
 let () = if repackRuntime->Nullable.toOption->Option.isSome {
