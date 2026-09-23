@@ -92,88 +92,109 @@ type cardNumberOptions = {
   unstyled?: bool,
 }
 
+// The vault package is a chunk of its own (hyperswitch.vault.chunk.bundle), loaded
+// when a card form first renders, never at startup. Each component below keeps
+// the vault component's props and renders it once the chunk is in, inside a
+// Suspense boundary of its own so a field loading never hides the form.
+type vaultModule
+
+external importVault: string => promise<vaultModule> = "import"
+
+// The literal specifier lets the bundler resolve and split the package.
+let loadVault = () => importVault("@juspay-tech/react-native-hyperswitch-vault")
+
+let fromVault = (pick: vaultModule => React.component<'props>): React.component<'props> => {
+  let component = React.lazy_(() => loadVault()->Promise.thenResolve(pick))
+  props => <React.Suspense fallback=React.null> {React.createElement(component, props)} </React.Suspense>
+}
+
 module CardForm = {
-  @module("@juspay-tech/react-native-hyperswitch-vault") @react.component
-  external make: (
-    ~ref: React.ref<Nullable.t<vaultFormHandle>>=?,
-    ~vaultDetails: JSON.t=?,
-    ~environment: string=?,
-    ~appearance: JSON.t=?,
+  type props = {
+    ref?: React.ref<Nullable.t<vaultFormHandle>>,
+    vaultDetails?: JSON.t,
+    environment?: string,
+    appearance?: JSON.t,
     // PMM parity with the web SDK: the management save always stamps the
     // payment-method-session confirm with `customer_acceptance`.
-    ~alwaysSendCustomerAcceptance: bool=?,
-    ~children: React.element,
-    ~onChange: cardFormChange => unit=?,
-    ~onReady: cardFormEvent => unit=?,
-  ) => React.element = "CardForm"
+    alwaysSendCustomerAcceptance?: bool,
+    children: React.element,
+    onChange?: cardFormChange => unit,
+    onReady?: cardFormEvent => unit,
+  }
+  @get external pick: vaultModule => React.component<props> = "CardForm"
+  let make = fromVault(pick)
 }
 
 module CardNumberField = {
-  @module("@juspay-tech/react-native-hyperswitch-vault") @react.component
-  external make: (
-    ~ref: fieldRef=?,
-    ~styles: fieldStyles=?,
-    ~placeholder: string=?,
-    ~labelBehavior: string=?,
-    ~errorDisplay: string=?,
-    ~cardBrandIcon: string=?,
-    ~unstyled: bool=?,
-    ~testID: string=?,
-    ~onChange: fieldChange => unit=?,
-    ~onFocus: fieldEvent => unit=?,
-    ~onBlur: fieldEvent => unit=?,
-    ~onReady: fieldEvent => unit=?,
-  ) => React.element = "CardNumberField"
+  type props = {
+    ref?: fieldRef,
+    styles?: fieldStyles,
+    placeholder?: string,
+    labelBehavior?: string,
+    errorDisplay?: string,
+    cardBrandIcon?: string,
+    unstyled?: bool,
+    testID?: string,
+    onChange?: fieldChange => unit,
+    onFocus?: fieldEvent => unit,
+    onBlur?: fieldEvent => unit,
+    onReady?: fieldEvent => unit,
+  }
+  @get external pick: vaultModule => React.component<props> = "CardNumberField"
+  let make = fromVault(pick)
 }
 
 module CardExpiryField = {
-  @module("@juspay-tech/react-native-hyperswitch-vault") @react.component
-  external make: (
-    ~ref: fieldRef=?,
-    ~styles: fieldStyles=?,
-    ~placeholder: string=?,
-    ~labelBehavior: string=?,
-    ~errorDisplay: string=?,
-    ~unstyled: bool=?,
-    ~testID: string=?,
-    ~onChange: fieldChange => unit=?,
-    ~onFocus: fieldEvent => unit=?,
-    ~onBlur: fieldEvent => unit=?,
-    ~onReady: fieldEvent => unit=?,
-  ) => React.element = "CardExpiryField"
+  type props = {
+    ref?: fieldRef,
+    styles?: fieldStyles,
+    placeholder?: string,
+    labelBehavior?: string,
+    errorDisplay?: string,
+    unstyled?: bool,
+    testID?: string,
+    onChange?: fieldChange => unit,
+    onFocus?: fieldEvent => unit,
+    onBlur?: fieldEvent => unit,
+    onReady?: fieldEvent => unit,
+  }
+  @get external pick: vaultModule => React.component<props> = "CardExpiryField"
+  let make = fromVault(pick)
 }
 
 module CardCVCField = {
-  @module("@juspay-tech/react-native-hyperswitch-vault") @react.component
-  external make: (
-    ~ref: fieldRef=?,
-    ~styles: fieldStyles=?,
-    ~placeholder: string=?,
-    ~labelBehavior: string=?,
-    ~errorDisplay: string=?,
-    ~unstyled: bool=?,
-    ~testID: string=?,
-    ~options: cardNumberOptions=?,
-    ~onChange: fieldChange => unit=?,
-    ~onFocus: fieldEvent => unit=?,
-    ~onBlur: fieldEvent => unit=?,
-    ~onReady: fieldEvent => unit=?,
-  ) => React.element = "CardCVCField"
+  type props = {
+    ref?: fieldRef,
+    styles?: fieldStyles,
+    placeholder?: string,
+    labelBehavior?: string,
+    errorDisplay?: string,
+    unstyled?: bool,
+    testID?: string,
+    options?: cardNumberOptions,
+    onChange?: fieldChange => unit,
+    onFocus?: fieldEvent => unit,
+    onBlur?: fieldEvent => unit,
+    onReady?: fieldEvent => unit,
+  }
+  @get external pick: vaultModule => React.component<props> = "CardCVCField"
+  let make = fromVault(pick)
 }
 
 module CardholderNameField = {
-  @module("@juspay-tech/react-native-hyperswitch-vault") @react.component
-  external make: (
-    ~ref: fieldRef=?,
-    ~styles: fieldStyles=?,
-    ~placeholder: string=?,
-    ~labelBehavior: string=?,
-    ~errorDisplay: string=?,
-    ~unstyled: bool=?,
-    ~testID: string=?,
-    ~onChange: fieldChange => unit=?,
-    ~onFocus: fieldEvent => unit=?,
-    ~onBlur: fieldEvent => unit=?,
-    ~onReady: fieldEvent => unit=?,
-  ) => React.element = "CardholderNameField"
+  type props = {
+    ref?: fieldRef,
+    styles?: fieldStyles,
+    placeholder?: string,
+    labelBehavior?: string,
+    errorDisplay?: string,
+    unstyled?: bool,
+    testID?: string,
+    onChange?: fieldChange => unit,
+    onFocus?: fieldEvent => unit,
+    onBlur?: fieldEvent => unit,
+    onReady?: fieldEvent => unit,
+  }
+  @get external pick: vaultModule => React.component<props> = "CardholderNameField"
+  let make = fromVault(pick)
 }
