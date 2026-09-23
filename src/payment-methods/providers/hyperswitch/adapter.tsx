@@ -12,37 +12,45 @@ import type {
   TokenizeResult,
 } from '../../core/types';
 import { SessionContext } from '../../session/SessionContext';
+import { loadVault } from '../sdkChunks';
 import { toVaultAppearance } from './appearance';
 import type { HyperswitchVaultData } from './types';
 
-declare const require: (moduleId: string) => unknown;
-
 type VaultSdk = any;
 
-let vaultSdk: VaultSdk = null;
-try {
-  vaultSdk = require('@juspay-tech/react-native-hyperswitch-vault') as VaultSdk;
-} catch {
-  vaultSdk = null;
+/* The vault SDK is a chunk of its own. Its namespace lands here through
+   loadHyperswitchVaultSdk(); Host and Field only render once the adapter has
+   been resolved, so they read it from the cache. */
+let vaultSdk: VaultSdk | null = null;
+
+export function loadHyperswitchVaultSdk(): Promise<void> {
+  if (vaultSdk != null) return Promise.resolve();
+  return loadVault().then((sdk: VaultSdk) => {
+    vaultSdk = sdk;
+  });
 }
 
-export const hyperswitchVaultSdkAvailable = vaultSdk != null;
+export function hyperswitchVaultSdkLoaded(): boolean {
+  return vaultSdk != null;
+}
 
-const {
-  CardForm: VaultCardForm,
-  CardNumberField: VaultCardNumberField,
-  CardExpiryField: VaultCardExpiryField,
-  CardCVCField: VaultCardCVCField,
-  CardholderNameField: VaultCardholderNameField,
-} = vaultSdk ?? ({} as VaultSdk);
+function vault(): VaultSdk {
+  if (vaultSdk == null) {
+    throw new Error(
+      'The @juspay-tech/react-native-hyperswitch-vault chunk is not loaded. ' +
+        'Await loadAdapter("hyperswitch") before rendering its fields.'
+    );
+  }
+  return vaultSdk;
+}
 
 const VAULT_TYPE = 'hyperswitch' as const;
 
-const FIELD_COMPONENT: Record<ElementType, unknown> = {
-  cardNumber: VaultCardNumberField,
-  cardExpiry: VaultCardExpiryField,
-  cardCvc: VaultCardCVCField,
-  cardholderName: VaultCardholderNameField,
+const FIELD_COMPONENT: Record<ElementType, string> = {
+  cardNumber: 'CardNumberField',
+  cardExpiry: 'CardExpiryField',
+  cardCvc: 'CardCVCField',
+  cardholderName: 'CardholderNameField',
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -110,6 +118,7 @@ const Host: ProviderAdapter['Host'] = ({
     else onError(new Error('The Hyperswitch vault form did not mount.'));
   }, [onReady, onError]);
 
+  const VaultCardForm = vault().CardForm;
   return (
     <VaultCardForm
       ref={formRef}
@@ -156,7 +165,7 @@ const Field: ProviderAdapter['Field'] = ({
   onBlur,
   testID,
 }) => {
-  const Component = FIELD_COMPONENT[elementType] as any;
+  const Component = vault()[FIELD_COMPONENT[elementType]] as any;
   if (!Component) return null;
 
   return (

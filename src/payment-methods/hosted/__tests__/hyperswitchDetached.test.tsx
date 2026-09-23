@@ -8,10 +8,7 @@ import { startCommands } from '../commands';
 import { FieldSurface } from '../FieldSurface';
 import { FormSurface } from '../FormSurface';
 import { getForm } from '../forms';
-import {
-  hyperswitchDetachedAvailable,
-  registerHostedAdapters,
-} from '../hyperswitchDetached';
+import { registerHostedAdapters } from '../hyperswitchDetached';
 import {
   FormEvent,
   PROTOCOL_VERSION,
@@ -68,7 +65,9 @@ function mockHost() {
     },
   };
   cleanups.push(startCommands(bridge));
-  cleanups.push(registerHostedAdapters());
+  /* Registration loads the vault chunk first; forms wait for it on their own. */
+  const registered = registerHostedAdapters();
+  cleanups.push(() => void registered.then((unregister) => unregister()));
 
   return {
     bridge,
@@ -152,9 +151,18 @@ const tokenize = (host: ReturnType<typeof mockHost>) =>
     });
   });
 
-const describeIfAvailable = hyperswitchDetachedAvailable
-  ? describe
-  : describe.skip;
+/* The vault's ./detached entry is resolved by the chunk loader at run time; a
+   vault release without it leaves nothing to test here. */
+function detachedEntryInstalled(): boolean {
+  try {
+    require.resolve('@juspay-tech/react-native-hyperswitch-vault/detached');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const describeIfAvailable = detachedEntryInstalled() ? describe : describe.skip;
 
 describeIfAvailable('hosted screens over the real Hyperswitch vault', () => {
   it('collects a card across three field screens and reports it as one form', async () => {

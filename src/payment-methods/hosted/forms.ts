@@ -9,6 +9,7 @@ import type {
 } from '../core/types';
 import { initPaymentMethodSession } from '../session/paymentMethodSession';
 import type { HostBridge } from './bridge';
+import { hostedAdaptersReady } from './hyperswitchDetached';
 import { FormEvent } from './protocol';
 import type { FormDescriptor } from './protocol';
 import type { HyperswitchConfiguration } from '../session/config';
@@ -97,11 +98,16 @@ export function openForm(
     emit(FormEvent.Error, { message });
   };
 
-  initPaymentMethodSession(withEnvironment(descriptor.hyper), {
-    sdkAuthorization: descriptor.sdkAuthorization,
-    vaultDetails: descriptor.vaultDetails,
-  }).then(
-    (session) => {
+  /* The entry registers its adapters while the first screens may already be
+     up: the form is not built until they are in. */
+  Promise.all([
+    initPaymentMethodSession(withEnvironment(descriptor.hyper), {
+      sdkAuthorization: descriptor.sdkAuthorization,
+      vaultDetails: descriptor.vaultDetails,
+    }),
+    hostedAdaptersReady(),
+  ]).then(
+    ([session]) => {
       if (closed) return;
 
       let instance: CardFormInstance;
@@ -125,7 +131,11 @@ export function openForm(
           emit(FormEvent.Ready, { elementType: 'cardForm' });
         } else if (core.status === 'error') {
           announced = true;
-          failWith('The card form could not be initialised.');
+          failWith(
+            core.error !== undefined
+              ? messageOf(core.error)
+              : 'The card form could not be initialised.'
+          );
         }
       };
       /* Card details (bin, last four) reach the form from its provider, not

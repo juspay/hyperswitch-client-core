@@ -1,6 +1,6 @@
 import { createFormCore } from '../core/formCore';
 import { attachCore } from '../core/formRegistry';
-import { resolveAdapter } from '../providers/registry';
+import { loadAdapter } from '../providers/registry';
 import { fetchVaultDetails } from './fetchVaultDetails';
 import type { HyperswitchConfiguration } from './config';
 import type {
@@ -27,52 +27,57 @@ export interface PaymentMethodSession {
   createCardForm(options?: CreateCardFormOptions): CardFormInstance;
 }
 
+/* Returns at once, initializing. The adapter (and, for a chunked provider,
+   its SDK) loads first; the collector is built once it has. Whatever fails
+   along the way puts the form in the error state a failed collector would. */
 function createCardForm(
   vaultDetails: VaultDetails,
   options: CreateCardFormOptions = {},
   config?: HyperswitchConfiguration
 ): CardFormInstance {
-  const adapter = resolveAdapter(vaultDetails.vaultType);
-
-  if (!adapter.createCollector) {
-    throw new Error(
-      `The ${vaultDetails.vaultType} SDK builds its client from a React provider, so its ` +
-        'fields cannot be mounted detached. Use <HyperPaymentMethodSession> with <CardForm> ' +
-        'for this vault.'
-    );
-  }
-
-  const data = adapter.validateVaultData(vaultDetails.vaultData);
   const core = createFormCore(
-    adapter,
+    vaultDetails.vaultType,
     options.appearance ? [options.appearance] : [],
     options.readyTimeoutMs
   );
 
-  adapter
-    .createCollector(data, {
-      appearances: core.appearances,
-      locale: options.locale,
-      environment: config?.environment,
-      customEndpoints: config?.customEndpoints,
-      onCardDetails: (details) => {
-        core.details = { ...core.details, ...details };
-        core.notify();
-      },
-    })
-    .then(
-      (collector) => {
-        core.collector = collector;
-        core.session.attachCollector(collector);
-        core.status = 'ready';
-        core.notify();
-      },
-      (error: unknown) => {
-        core.session.fail(error);
-        core.status = 'error';
-        core.notify();
+  const fail = (error: unknown) => {
+    core.session.fail(error);
+    core.error = error;
+    core.status = 'error';
+    core.notify();
+  };
+
+  loadAdapter(vaultDetails.vaultType)
+    .then((adapter) => {
+      if (!adapter.createCollector) {
+        throw new Error(
+          `The ${vaultDetails.vaultType} SDK builds its client from a React provider, so its ` +
+            'fields cannot be mounted detached. Use <HyperPaymentMethodSession> with <CardForm> ' +
+            'for this vault.'
+        );
       }
-    );
+
+      const data = adapter.validateVaultData(vaultDetails.vaultData);
+      core.attachAdapter(adapter);
+
+      return adapter.createCollector(data, {
+        appearances: core.appearances,
+        locale: options.locale,
+        environment: config?.environment,
+        customEndpoints: config?.customEndpoints,
+        onCardDetails: (details) => {
+          core.details = { ...core.details, ...details };
+          core.notify();
+        },
+      });
+    })
+    .then((collector) => {
+      core.collector = collector;
+      core.session.attachCollector(collector);
+      core.status = 'ready';
+      core.notify();
+    }, fail);
 
   const instance: CardFormInstance = {
     tokenize: (providerData?: unknown): Promise<TokenizeResult> =>

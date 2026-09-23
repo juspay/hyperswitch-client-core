@@ -10,16 +10,17 @@ type scanCardReturnType = {
 type scanCardReturnStatus = Succeeded(scanCardData) | Failed | Cancelled | None
 type module_ = {launchScanCard: (scanCardReturnType => unit) => unit, isAvailable: bool}
 
-@val external require: string => module_ = "require"
+// The package is bundled as its own chunk (scancard.chunk.bundle) and loaded on
+// the first scan. The literal specifier lets the bundler resolve and split it.
+external importScanCard: string => promise<module_> = "import"
 
-let (launchScanCardMod, isAvailable) = switch try {
-  require("@juspay-tech/react-native-hyperswitch-scancard")->Some
-} catch {
-| _ => None
-} {
-| Some(mod) => (mod.launchScanCard, mod.isAvailable)
-| None => (_ => (), false)
-}
+// Decided from the native module, so a host without scan card never loads the chunk.
+let isAvailable =
+  ReactNative.NativeModules.nativeModules
+  ->Dict.get("HyperswitchScancard")
+  ->Option.flatMap(Nullable.toOption)
+  ->Option.isSome
+
 let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
   switch scanCardReturnType.status {
   | "Succeeded" =>
@@ -33,10 +34,24 @@ let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
   | _ => None
   }
 }
+
 let launchScanCard = (callback: scanCardReturnStatus => unit) => {
-  try {
-    launchScanCardMod(data => callback(data->dictToScanCardReturnType))
-  } catch {
-  | _ => ()
+  if isAvailable {
+    importScanCard("@juspay-tech/react-native-hyperswitch-scancard")
+    ->Promise.then(mod => {
+      try {
+        mod.launchScanCard(data => callback(data->dictToScanCardReturnType))
+      } catch {
+      | _ => callback(Failed)
+      }
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      callback(Failed)
+      Promise.resolve()
+    })
+    ->ignore
+  } else {
+    callback(Failed)
   }
 }

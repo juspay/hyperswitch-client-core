@@ -66,7 +66,8 @@ let make = (~children) => {
   let s3Path = "/jsons/location/en.json"
   let (state, setState) = React.useState(_ => None)
   React.useEffect0(() => {
-    importJSON(`../../shared-code/assets/v2/${s3Path}`)
+    // Static path: the bundler needs a literal to put the JSON in its own chunk.
+    importJSON("../../shared-code/assets/v2/jsons/location/en.json")
     ->Promise.then(res => {
       setState(_ => Some(S3ApiHook.decodeJsonTocountryStateData(res)))
       Promise.resolve()

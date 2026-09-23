@@ -15,25 +15,82 @@ type module_ = {
   isAvailable: bool,
 }
 
-@val external require: string => module_ = "require"
+// The package is bundled as its own chunk (netcetera-3ds.chunk.bundle) and
+// loaded when the 3DS flow first needs it. The literal specifier lets the
+// bundler resolve and split it.
+external importNetcetera: string => promise<module_> = "import"
 
-let (
-  initialiseNetceteraSDK,
-  generateAReqParams,
-  recieveChallengeParamsFromRN,
-  generateChallenge,
-  isAvailable,
-) = switch try {
-  require("@juspay-tech/react-native-hyperswitch-netcetera-3ds")->Some
-} catch {
-| _ => None
-} {
-| Some(mod) => (
-    mod.initialiseNetceteraSDK,
-    mod.generateAReqParams,
-    mod.recieveChallengeParamsFromRN,
-    mod.generateChallenge,
-    mod.isAvailable,
-  )
-| None => ((_, _, _) => (), (_, _, _) => (), (_, _, _, _, _, _) => (), _ => (), false)
+// Decided from the native module, so a host without Netcetera never loads the chunk.
+let isAvailable =
+  ReactNative.NativeModules.nativeModules
+  ->Dict.get("HyperswitchNetcetera3ds")
+  ->Option.flatMap(Nullable.toOption)
+  ->Option.isSome
+
+let moduleUnavailable: statusType = {
+  status: "failure",
+  message: "Netcetera SDK dependency not added",
 }
+
+let emptyAReqParams: aReqParams = {
+  deviceData: "",
+  messageVersion: "",
+  sdkTransId: "",
+  sdkAppId: "",
+  sdkEphemeralKey: JSON.Encode.null,
+  sdkReferenceNo: "",
+}
+
+// Runs [call] on the loaded module. [onUnavailable] gets the failure status when
+// the chunk cannot be loaded or the call throws.
+let withModule = (onUnavailable: statusType => unit, call: module_ => unit) => {
+  if isAvailable {
+    importNetcetera("@juspay-tech/react-native-hyperswitch-netcetera-3ds")
+    ->Promise.then(mod => {
+      try {
+        call(mod)
+      } catch {
+      | _ => onUnavailable(moduleUnavailable)
+      }
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      onUnavailable(moduleUnavailable)
+      Promise.resolve()
+    })
+    ->ignore
+  } else {
+    onUnavailable(moduleUnavailable)
+  }
+}
+
+let initialiseNetceteraSDK = (apiKey, environment, callback: statusType => unit) =>
+  withModule(callback, mod => mod.initialiseNetceteraSDK(apiKey, environment, callback))
+
+let generateAReqParams = (messageVersion, directoryServerId, callback) =>
+  withModule(
+    status => callback(status, emptyAReqParams),
+    mod => mod.generateAReqParams(messageVersion, directoryServerId, callback),
+  )
+
+let recieveChallengeParamsFromRN = (
+  acsSignedContent,
+  acsRefNumber,
+  acsTransactionId,
+  threeDSServerTransId,
+  callback: statusType => unit,
+  threeDSRequestorAppURL,
+) =>
+  withModule(callback, mod =>
+    mod.recieveChallengeParamsFromRN(
+      acsSignedContent,
+      acsRefNumber,
+      acsTransactionId,
+      threeDSServerTransId,
+      callback,
+      threeDSRequestorAppURL,
+    )
+  )
+
+let generateChallenge = (callback: statusType => unit) =>
+  withModule(callback, mod => mod.generateChallenge(callback))
