@@ -95,20 +95,36 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Entry files, one per React host. `yarn bundle:*` builds one at a time
+ * (--entry-file). The dev server (`yarn start`) builds all of them in one
+ * compilation, because each host asks it for its own
+ * `<entry file>.bundle` (index, index.payment-methods, ...).
+ */
+const ENTRIES = {
+  index: './index.js',
+  'index.payment-methods': './index.payment-methods.js',
+  'index.payment-method-management': './index.payment-method-management.js',
+};
+
 export default Repack.defineRspackConfig((env) => {
   const { mode = 'production', platform = process.env.PLATFORM ?? 'android' } = env;
   const isProduction = mode === 'production';
-  const entry = env.entry ?? './index.js';
+  const isDevServer = Boolean(env.devServer);
+  const entry = isDevServer ? ENTRIES : env.entry ?? ENTRIES.index;
   // Chunk files are prefixed with the entry bundle's name, so the payments and
   // the payment methods bundles can share one assets/resources directory:
   // `hyperswitch.bundle` + `hyperswitch.<chunk>.chunk.bundle`.
+  // The dev server shares its chunks between the entries: plain `hyperswitch`.
   const bundleName = env.bundleFilename
     ? path.basename(env.bundleFilename).replace(/\.(js)?bundle$/, '')
-    : /payment-method-management/.test(entry)
-      ? 'hyperswitch-payment-method-management'
-      : /payment-methods/.test(entry)
-        ? 'hyperswitch-payment-methods'
-        : 'hyperswitch';
+    : isDevServer
+      ? 'hyperswitch'
+      : /payment-method-management/.test(entry)
+        ? 'hyperswitch-payment-method-management'
+        : /payment-methods/.test(entry)
+          ? 'hyperswitch-payment-methods'
+          : 'hyperswitch';
 
   const stubs = [
     [OPTIONAL_IMPORTED_PACKAGES, path.join(__dirname, 'src/chunks/missingOptionalModule.async.js')],
@@ -125,10 +141,13 @@ export default Repack.defineRspackConfig((env) => {
       // The entry chunk is the bundle the native host names (`--bundle-output`);
       // every other chunk, including the initial react-native chunk, is a
       // `<name>.chunk.bundle` file next to it.
+      // Dev server: `<entry file>.bundle`, the name each host requests.
       filename: (pathData) =>
         pathData.chunk && pathData.chunk.name === 'react-native'
           ? `${bundleName}.[name].chunk.bundle`
-          : 'index.bundle',
+          : isDevServer
+            ? '[name].bundle'
+            : 'index.bundle',
       chunkFilename: `${bundleName}.[name].chunk.bundle`,
       // Both hosts (payments, payment methods) are separate JS realms, so one
       // chunk-loading global is fine; keep it stable across releases.
