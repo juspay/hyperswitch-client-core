@@ -70,6 +70,30 @@ To run the playground, use the following commands based on the target platform:
 
 Upon successful setup, your application should be operational on your Android Emulator or iOS Simulator, assuming the emulator or simulator is configured properly. Additionally, the application can be executed directly from Android Studio or Xcode.
 
+### Web Demo with Demo Application
+
+The `yarn run web:demo` command provides a comprehensive local development environment that runs multiple servers concurrently:
+
+```sh
+yarn run web:demo
+```
+
+This command starts three servers simultaneously:
+
+1. **Main Web SDK Server** (`yarn web`) - Runs the core Hyperswitch SDK on the default webpack port
+2. **Mock Server** (`yarn server`) - Provides mock API responses for development and testing
+3. **Demo App Server** (port 8083) - A standalone demo application for testing the SDK
+
+#### Demo Application
+
+The Demo App is served on **localhost:8083** and provides:
+- A pre-configured test environment for the Hyperswitch SDK
+- Example payment flows and integration patterns
+- Real-time preview of SDK changes without needing to rebuild
+- Mock payment scenarios for development testing
+
+To access the demo app, navigate to [http://localhost:8083](http://localhost:8083) after running `yarn run web:demo`.
+
 ### Setup iOS local development
 
 The following table outlines the available configuration variables, their values, and descriptions:
