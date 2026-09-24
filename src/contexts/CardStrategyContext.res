@@ -1,6 +1,4 @@
-type refusal =
-  | UnreadableVaultingAction
-  | VaultUnavailable
+type refusal = UnreadableVaultingAction
 
 type strategy =
   | Pending
