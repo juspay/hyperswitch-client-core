@@ -1,10 +1,18 @@
 name: Create Draft Release
 
 on:
+  # Every merge into main. PRs are squash-merged as a single Conventional Commit
+  # (enforced by internal_linter.yml), so the commit type on main is what decides the bump:
+  #   feat -> minor | fix, perf, revert -> patch | BREAKING CHANGE -> major
+  #   chore, docs, refactor, style, test, ci, build -> no release
+  # The rules live in the "release" block of package.json.
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       shared_code:
-        description: 'Branch name for the shared-code'
+        description: 'Branch name for the shared-code (manual runs only)'
         required: true
         type: string
         default: 'main'
@@ -29,9 +37,22 @@ on:
 permissions:
   contents: write
 
+# Two merges landing back to back must not race on the bump. Queue them, and never cancel a
+# run mid-flight: an interrupted release can leave a tag pushed without its release commit.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: ubuntu-latest
+    # semantic-release pushes "chore(release): X.Y.Z [skip ci]" back to main, which is itself a
+    # push to main. GitHub honours [skip ci] natively; the second clause is a backstop so a
+    # change to the commit template can never turn this into a self-triggering loop.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (!contains(github.event.head_commit.message, '[skip ci]') &&
+      !startsWith(github.event.head_commit.message, 'chore(release):'))
     env:
       SENTRY_DSN: ${{ secrets.HYPERSWITCH_SENTRY_DSN }}
       SENTRY_ENV: 'production'
@@ -44,7 +65,9 @@ jobs:
       INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
 
     steps:
+      # Only relevant for manual runs. On a merge the gate is the PR review + branch rules.
       - name: Check Admin Permission
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/github-script@v7
         with:
           script: |
@@ -58,7 +81,7 @@ jobs:
                 repo,
                 username: actor
               });
-              
+
               if (permission.permission !== 'admin') {
                 core.setFailed(`User ${actor} does not have admin permission. Only repository admins can run this workflow.`);
               } else {
@@ -71,9 +94,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # On push take the branch tip rather than the triggering SHA. When two merges land
+          # close together the queued run must start from an up-to-date main, otherwise
+          # semantic-release aborts with "branch is behind" and that merge never gets released.
+          ref: ${{ github.event_name == 'push' && github.ref_name || github.ref }}
           fetch-depth: 0
           token: ${{ secrets.AUTORELEASE_PAT || github.token }}
-          submodules: recursive
+          # Submodules are only needed by the bundle rebuild, which is manual-run only.
+          submodules: ${{ github.event_name == 'workflow_dispatch' && 'recursive' || 'false' }}
 
       - name: Setup Node.js & Yarn
         uses: actions/setup-node@v4
@@ -111,8 +139,10 @@ jobs:
       - name: Capture Initial Version
         run: echo "INITIAL_VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
 
+      # Bumps package.json + CHANGELOG.md, commits them, and pushes the vX.Y.Z tag.
+      # No-ops (leaving the version untouched) when nothing since the last tag warrants a release.
       - name: Run Semantic Release (Auto Versioning)
-        if: github.event.inputs.versioning_type == 'auto'
+        if: github.event_name == 'push' || github.event.inputs.versioning_type == 'auto'
         run: npx semantic-release
 
       - name: Apply Custom Version
@@ -148,7 +178,7 @@ jobs:
           fi
 
       - name: Generate Release Notes
-        if: env.RELEASE_PERFORMED == 'true' && github.event.inputs.versioning_type == 'custom'
+        if: env.RELEASE_PERFORMED == 'true' && github.event.inputs.versioning_type == 'custom' && github.event.inputs.generate_release_notes == 'true'
         id: generate_notes
         run: |
           # Get the latest tag before the current one
@@ -161,22 +191,22 @@ jobs:
           if [ -n "$PREVIOUS_TAG" ]; then
             echo "### What's Changed" >> release_notes.md
             echo "" >> release_notes.md
-            
+
             # Generate commit list since last tag
             git log --pretty=format:"- %s (%h)" --no-merges --invert-grep --grep="\[skip ci\]" $PREVIOUS_TAG..HEAD >> release_notes.md
             echo "" >> release_notes.md
             echo "" >> release_notes.md
-            
+
             # Generate contributor list
             echo "### Contributors" >> release_notes.md
             git log --pretty=format:"- @%an" $PREVIOUS_TAG..HEAD | sort -u >> release_notes.md
             echo "" >> release_notes.md
-            
+
             # Statistics
             echo "### Statistics" >> release_notes.md
             echo "- Commits: $(git rev-list --count $PREVIOUS_TAG..HEAD)" >> release_notes.md
             echo "- Changed files: $(git diff --name-only $PREVIOUS_TAG..HEAD | wc -l)" >> release_notes.md
-            
+
             echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...v$CURRENT_VERSION" >> release_notes.md
           else
             echo "Initial release" >> release_notes.md
@@ -189,20 +219,57 @@ jobs:
             echo 'EOF'
           } >> $GITHUB_ENV
 
-      - name: Update Submodules to Latest
+      # Draft, never published: a human reviews the notes and hits Publish.
+      - name: Create Draft GitHub Release
         if: env.RELEASE_PERFORMED == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.AUTORELEASE_PAT || github.token }}
+        run: |
+          TAG="v${{ env.VERSION }}"
+
+          # The tag was pushed by semantic-release (or by the custom step) - make it visible here.
+          git fetch origin "refs/tags/$TAG:refs/tags/$TAG" --force 2>/dev/null || true
+
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists - nothing to do."
+            exit 0
+          fi
+
+          ARGS=(--draft --title "Release $TAG")
+
+          case "${{ env.VERSION }}" in
+            *-alpha*|*-beta*|*-rc*|*-dev*) ARGS+=(--prerelease) ;;
+          esac
+
+          if [ -s release_notes.md ]; then
+            ARGS+=(--notes-file release_notes.md)
+          elif [ "${{ github.event_name }}" = "push" ] || [ "${{ github.event.inputs.generate_release_notes }}" = "true" ]; then
+            # Let GitHub build "What's Changed" from the merged PRs between the two tags.
+            ARGS+=(--generate-notes)
+          else
+            ARGS+=(--notes "Release $TAG")
+          fi
+
+          gh release create "$TAG" "${ARGS[@]}"
+          echo "Created draft release $TAG"
+
+      # Bundle rebuilds push to juspay/hyperswitch-sdk-ios and hyperswitch-sdk-android (and the
+      # Android push chains into publish_android_release.yml). Far too heavy to run per merge,
+      # so both steps below stay manual-run only.
+      - name: Update Submodules to Latest
+        if: env.RELEASE_PERFORMED == 'true' && github.event_name == 'workflow_dispatch'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Update all submodules to their latest commits on their default branches
           git submodule update --init --recursive
-          SHARED_CODE_BRANCH="${{ github.event.inputs.shared_code }}"
+          SHARED_CODE_BRANCH="${{ github.event.inputs.shared_code || 'main' }}"
           cd shared-code
           git checkout $SHARED_CODE_BRANCH
           cd ..
       - name: Build and Update Bundles
-        if: env.RELEASE_PERFORMED == 'true'
+        if: env.RELEASE_PERFORMED == 'true' && github.event_name == 'workflow_dispatch'
         env:
           GIT_AUTHOR_NAME: github-actions[bot]
           GIT_AUTHOR_EMAIL: github-actions[bot]@users.noreply.github.com
@@ -242,15 +309,30 @@ jobs:
             git push origin main
           fi
 
-      # - name: Create GitHub Release
-      #   if: env.RELEASE_PERFORMED == 'true' && github.event.inputs.versioning_type == 'custom'
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: v${{ env.VERSION }}
-      #     release_name: Release v${{ env.VERSION }}
-      #     body: |
-      #       ${{ env.RELEASE_NOTES || format('## Release v{0}\n\nThis release was created using custom versioning.\n\n### What''s Changed\n- Updated Android bundle to v{0}\n- Updated iOS bundle to v{0}\n\nFor more details, please check the commit history.', env.VERSION) }}
-      #     draft: true
-      #     prerelease: ${{ contains(env.VERSION, '-alpha') || contains(env.VERSION, '-beta') || contains(env.VERSION, '-rc') || contains(env.VERSION, '-dev') }}
+      # always(), but only once the version check has actually run - otherwise an earlier
+      # failure would render a misleading "no bump" summary.
+      - name: Summarise Outcome
+        if: always() && env.RELEASE_PERFORMED != ''
+        run: |
+          if [ "${{ env.RELEASE_PERFORMED }}" = "true" ]; then
+            {
+              echo "### 🏷️ Released \`v${{ env.VERSION }}\`"
+              echo ""
+              echo "| | |"
+              echo "| --- | --- |"
+              echo "| Previous | \`${{ env.INITIAL_VERSION }}\` |"
+              echo "| New | \`${{ env.VERSION }}\` |"
+              echo "| Triggered by | \`${{ github.event_name }}\` |"
+              echo ""
+              echo "The draft release for this tag is under the **Releases** tab — review it and hit Publish."
+            } >> $GITHUB_STEP_SUMMARY
+          else
+            {
+              echo "### ⏭️ No version bump"
+              echo ""
+              echo "Version stays at \`${{ env.VERSION }}\`: nothing since the last tag warrants a release."
+              echo ""
+              echo "\`feat\` → minor · \`fix\`/\`perf\`/\`revert\` → patch · \`BREAKING CHANGE\` → major."
+              echo "\`chore\`, \`docs\`, \`refactor\`, \`style\`, \`test\`, \`ci\`, \`build\` do not bump the version."
+            } >> $GITHUB_STEP_SUMMARY
+          fi
