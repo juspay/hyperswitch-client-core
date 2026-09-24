@@ -213,7 +213,7 @@ let make = () => {
       } else {
         switch vaultDetails {
         | Some(details) => VaultCard(details)
-        | None => Refused(VaultUnavailable)
+        | None => DirectCard
         }
       }
     }
