@@ -33,7 +33,7 @@ let make = (
   let shadowStyle = ShadowHook.useGetShadowStyle(~shadowConfig, ())
   let localeObject = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let notifyValidationFailure = PaymentMethodManagementHooks.useNotifyValidationFailure()
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 

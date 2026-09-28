@@ -63,7 +63,7 @@ let make = () => {
   let updateSavedPaymentMethod = PaymentMethodSessionHooks.useUpdateSavedPaymentMethod()
   let localeObject = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
-  let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
+  let notifyValidationFailure = PaymentMethodManagementHooks.useNotifyValidationFailure()
 
   let isWidget = switch nativeProp.pmmState {
   | Some(SdkTypes.WidgetPaymentMethodsManagement) => true
@@ -167,7 +167,7 @@ let make = () => {
 
   React.useEffect0(() => {
     if isWidget {
-      let unsubscribe = NativeEventListener.setupWidgetActionListener(~onWidgetAction=(
+      let unsubscribe = PaymentMethodManagementHooks.setupWidgetActionListener(~onWidgetAction=(
         actionData: NativeModulesType.widgetActionData,
       ) => {
         switch actionData.actionType {

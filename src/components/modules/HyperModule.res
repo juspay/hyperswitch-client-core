@@ -7,9 +7,9 @@ type exitResultPayload = {
   message?: string,
 }
 
-// Typed externals into the TurboModule access layer (HyperModuleNative.ts,
-// used on native and web alike). It no-ops when the native module is
-// absent, so these are always safe to call.
+// Typed externals into the payments host's TurboModule access layer
+// (HyperModuleNative.ts, used on native and web alike). It no-ops when the
+// native module is absent, so these are always safe to call.
 module Native = {
   @module("./HyperModuleNative")
   external launchApplePay: (string, dictCallback) => unit = "launchApplePay"
@@ -21,8 +21,6 @@ module Native = {
   external launchGPay: (string, dictCallback) => unit = "launchGPay"
   @module("./HyperModuleNative")
   external exitPaymentsheet: (int, exitResultPayload, bool) => unit = "exitPaymentsheet"
-  @module("./HyperModuleNative")
-  external exitPaymentMethodManagement: (int, string, bool) => unit = "exitPaymentMethodManagement"
   @module("./HyperModuleNative")
   external exitWidgetPaymentsheet: (int, exitResultPayload, bool) => unit = "exitWidgetPaymentsheet"
   @module("./HyperModuleNative")
@@ -53,7 +51,14 @@ module Native = {
   external subscribeWidget: dictCallback => unit => unit = "subscribeWidget"
   @module("./HyperModuleNative")
   external subscribeConfirmEC: dictCallback => unit => unit = "subscribeConfirmEC"
-  @module("./HyperModuleNative")
+}
+
+module PaymentMethodManagementNative = {
+  @module("./PaymentMethodManagementModuleNative")
+  external exitPaymentMethodManagement: (int, string, bool) => unit = "exitPaymentMethodManagement"
+  @module("./PaymentMethodManagementModuleNative")
+  external notifyWidgetPaymentResult: (int, exitResultPayload) => unit = "notifyWidgetPaymentResult"
+  @module("./PaymentMethodManagementModuleNative")
   external subscribeTriggerWidgetAction: dictCallback => unit => unit =
     "subscribeTriggerWidgetAction"
 }
@@ -62,7 +67,6 @@ module Events = {
   let subscribeConfirm = Native.subscribeConfirm
   let subscribeWidget = Native.subscribeWidget
   let subscribeConfirmEC = Native.subscribeConfirmEC
-  let subscribeTriggerWidgetAction = Native.subscribeTriggerWidgetAction
 }
 
 let resStatusPayload = (apiResStatus: PaymentConfirmTypes.error): exitResultPayload => {
@@ -135,7 +139,7 @@ let useExitPaymentsheet = () => {
         | _ =>
           switch nativeProp.pmmState {
           | Some(_) =>
-            Native.exitPaymentMethodManagement(
+            PaymentMethodManagementNative.exitPaymentMethodManagement(
               nativeProp.rootTag,
               apiResStatus->stringifiedResStatus,
               reset,

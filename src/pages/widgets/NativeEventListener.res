@@ -3,7 +3,6 @@ let setupNativeEventListener = (eventName, handler) => {
   | "confirm" => HyperModule.Events.subscribeConfirm(handler)
   | "widget" => HyperModule.Events.subscribeWidget(handler)
   | "confirmEC" => HyperModule.Events.subscribeConfirmEC(handler)
-  | "triggerWidgetAction" => HyperModule.Events.subscribeTriggerWidgetAction(handler)
   | _ => () => ()
   }
 }
@@ -48,14 +47,3 @@ let setupExpressCheckoutListener = (
     onExpressCheckoutConfirm(responseFromJava)
   })
 }
-
-let setupWidgetActionListener = (~onWidgetAction: NativeModulesType.widgetActionData => unit) => {
-  setupNativeEventListener("triggerWidgetAction", dict => {
-    switch dict->NativeModulesType.widgetActionDataMapper {
-    | Some(actionData) => onWidgetAction(actionData)
-    | None => ()
-    }
-  })
-}
-
-
