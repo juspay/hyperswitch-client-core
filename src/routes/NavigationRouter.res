@@ -187,7 +187,7 @@ let make = () => {
 
   let paymentMethodOrder = nativeProp.configuration.paymentMethodOrder
   let hiddenPaymentMethods = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.hiddenPaymentMethods
-  let clientData = React.useMemo4(() => {
+  let parsedClientData = React.useMemo4(() => {
     switch (clientResponse, sdkConfigData) {
     | (Some(clientResp), Some(cfg)) =>
       Some(
@@ -213,12 +213,69 @@ let make = () => {
       } else {
         switch vaultDetails {
         | Some(details) => VaultCard(details)
-        | None => DirectCard
+        | None => Refused(VaultUnavailable)
         }
       }
     }
     strategy
   }, (vaultingAction, sessionAnswered, vaultDetails))
+
+  // A tokenize account without a usable vault cannot collect card data, so the new-card
+  // tile and CVC-required saved cards are removed instead of rendering a dead tile.
+  let cardsUnavailable = switch cardStrategy {
+  | Refused(VaultUnavailable) => true
+  | _ => false
+  }
+
+  // Same condition as AllApiDataModifier's isGroupByPMCard: saved cards render only
+  // inside the Card tab.
+  let groupingBehavior = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior
+  let savedCardsInCardTab = switch nativeProp.sdkState {
+  | PaymentSheet | WidgetPaymentSheet | HostedCheckout | TabSheet | WidgetTabSheet =>
+    groupingBehavior.groupByPaymentMethods && !groupingBehavior.displayInSeparateScreen
+  | _ => false
+  }
+
+  // A tokenize account's list waits for sessions, so cards are never shown and then
+  // pulled from under a selected tab. Sessions always answers (failures resolve to null).
+  let awaitingVaultDecision = switch vaultingAction {
+  | Some(PaymentUtils.TokenizeVaulting) => !sessionAnswered
+  | _ => false
+  }
+
+  // Kept apart from parsing so the sessions answer only re-runs the filter.
+  let clientData = React.useMemo4(() =>
+    if awaitingVaultDecision {
+      None
+    } else if cardsUnavailable {
+      parsedClientData->Option.map(data =>
+        data->ClientResponseType.withoutCards(~savedCardsInCardTab)
+      )
+    } else {
+      parsedClientData
+    }
+  , (parsedClientData, awaitingVaultDecision, cardsUnavailable, savedCardsInCardTab))
+
+  // Removing cards can leave nothing to pay with; exit the same way as an empty
+  // payment method list from the backend.
+  let noMethodsHandledFor = React.useRef(None)
+  React.useEffect3(() => {
+    switch clientData {
+    | Some(data)
+      if cardsUnavailable &&
+      data.payment_methods_enabled->Array.length === 0 &&
+      data.customer_payment_methods->Array.length === 0 &&
+      noMethodsHandledFor.current !== Some(requestId) =>
+      noMethodsHandledFor.current = Some(requestId)
+      if isDismissableSheet {
+        handleSuccessFailure(~apiResStatus=PaymentConfirmTypes.defaultNoPaymentMethodsError, ())
+      } else {
+        errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
+      }
+    | _ => ()
+    }
+    None
+  }, (clientData, cardsUnavailable, requestId))
 
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 

@@ -106,6 +106,27 @@ type clientResponse = {
   intent_data: intentData,
 }
 
+// Drops the new-card entry and every saved card that needs a CVC, for a payment that
+// cannot collect card data (vaulting_action=tokenize but sessions returned no usable
+// vault_details). Saved cards without a CVC confirm with their token alone, so they stay.
+// When the layout shows saved cards inside the Card tab, the card entry is kept while
+// such saved cards remain, so that tab can still list them.
+let withoutCards = (data: clientResponse, ~savedCardsInCardTab: bool): clientResponse => {
+  let customer_payment_methods =
+    data.customer_payment_methods->Array.filter(pm =>
+      pm.payment_method !== CARD || !pm.requires_cvv
+    )
+  let keepCardEntry =
+    savedCardsInCardTab && customer_payment_methods->Array.some(pm => pm.payment_method === CARD)
+  {
+    ...data,
+    payment_methods_enabled: data.payment_methods_enabled->Array.filter(pm =>
+      pm.payment_method !== CARD || keepCardEntry
+    ),
+    customer_payment_methods,
+  }
+}
+
 // ---- helpers (moved in from the legacy modules, retyped for the new types) ----
 
 let normalizeCardType = (paymentMethodStr: string, paymentMethodType: string) => {
