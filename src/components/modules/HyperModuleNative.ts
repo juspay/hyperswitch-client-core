@@ -1,29 +1,10 @@
 import NativeHyperModule from '../../specs/NativeHyperModule';
-import NativeHyperPMMModule from '../../specs/NativeHyperPMMModule';
 import type {
   PaymentResultEvent,
-  WidgetActionEvent,
   PaymentExitResult,
 } from '../../specs/NativeHyperModule';
 
-export type {
-  PaymentResultEvent,
-  WidgetActionEvent,
-  PaymentExitResult,
-};
-
-/**
- * Each React host registers exactly one payments-family TurboModule: PMM
- * surfaces (sheets and widgets) run in their own host whose bundle hosts
- * `HyperPMMModule` alone — `HyperModule` is not registered there, and vice
- * versa. Whichever module is present is therefore the right target, so no
- * realm flag or import-order guarantees are needed.
- */
-const resolveHyperModule = ():
-  | typeof NativeHyperPMMModule
-  | typeof NativeHyperModule
-  | null
-  | undefined => NativeHyperModule ?? NativeHyperPMMModule;
+export type {PaymentResultEvent, PaymentExitResult};
 
 const noop = () => {};
 
@@ -63,14 +44,6 @@ export const exitPaymentsheet = (
   NativeHyperModule?.exitPaymentsheet(rootTag, result, reset);
 };
 
-export const exitPaymentMethodManagement = (
-  rootTag: number,
-  result: string,
-  reset: boolean,
-): void => {
-  resolveHyperModule()?.exitPaymentMethodManagement?.(rootTag, result, reset);
-};
-
 export const exitWidgetPaymentsheet = (
   rootTag: number,
   result: PaymentExitResult,
@@ -102,7 +75,7 @@ export const notifyWidgetPaymentResult = (
   rootTag: number,
   result: PaymentExitResult,
 ): void => {
-  resolveHyperModule()?.notifyWidgetPaymentResult?.(rootTag, result);
+  NativeHyperModule?.notifyWidgetPaymentResult(rootTag, result);
 };
 
 export const emitPaymentEvent = (
@@ -110,7 +83,7 @@ export const emitPaymentEvent = (
   eventType: string,
   payload: Object,
 ): void => {
-  resolveHyperModule()?.emitPaymentEvent?.(rootTag, eventType, payload);
+  NativeHyperModule?.emitPaymentEvent(rootTag, eventType, payload);
 };
 
 export const onUpdateIntentEvent = (
@@ -152,10 +125,3 @@ export const subscribeWidget = (
 export const subscribeConfirmEC = (
   handler: (payload: PaymentResultEvent) => void,
 ): (() => void) => subscribe(NativeHyperModule, NativeHyperModule?.confirmEC, handler);
-
-export const subscribeTriggerWidgetAction = (
-  handler: (payload: WidgetActionEvent) => void,
-): (() => void) => {
-  const module = resolveHyperModule();
-  return subscribe(module, module?.triggerWidgetAction, handler);
-};

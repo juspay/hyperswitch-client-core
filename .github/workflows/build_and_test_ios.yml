@@ -50,14 +50,14 @@ jobs:
       - name: Dependency Install
         run: npm install
 
-      - name: Patch ApplePayViewManager for Detox compatibility
+      - name: Patch ApplePayView for Detox compatibility
         run: |
           # Remove the iOS 26.0 availability check that causes build issues in Detox
           # Keep only the else branch (PKPaymentButton with paymentButtonType)
           python3 << 'EOF'
           import re
 
-          file_path = 'ios/hyperswitchSDK/Core/ApplePay/ApplePayViewManager.swift'
+          file_path = 'ios/hyperswitchSDK/Core/ApplePay/ApplePayView.swift'
           with open(file_path, 'r') as f:
               content = f.read()
 
@@ -72,7 +72,7 @@ jobs:
           with open(file_path, 'w') as f:
               f.write(new_content)
 
-          print("Patched ApplePayViewManager.swift for Detox compatibility")
+          print("Patched ApplePayView.swift for Detox compatibility")
           EOF
 
       - name: Generate DS Root Certificate for Netcetera SDK
@@ -124,14 +124,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pods-
 
-      - name: Install CocoaPods
+      - name: Generate the Xcode project and install pods
         run: |
-          cd ios
-          if [ ! -d "Pods" ] || [ "${{ steps.cache-cocoapods.outputs.cache-hit }}" != "true" ]; then
-            rm -rf Pods Podfile.lock
-            pod install --repo-update
-          fi
-          cd ..
+          brew install xcodegen
           npm run bundle
 
       - name: Detox rebuild framework cache
