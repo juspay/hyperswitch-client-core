@@ -9,7 +9,14 @@ let make = (
   let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let localeObject = GetLocale.useGetLocalObj()
 
+  let {strategy} = React.useContext(CardStrategyContext.cardStrategyContext)
+
   let hasSavedCards = savedCardMethods->Array.length > 0
+  // A tokenize account without a vault cannot collect new cards; only saved ones are offered.
+  let savedOnly = switch strategy {
+  | Refused(VaultUnavailable) => true
+  | _ => false
+  }
 
   let (showSavedView, setShowSavedView) = React.useState(_ => hasSavedCards)
   let setShowSavedView = React.useCallback1(value => {
@@ -23,7 +30,7 @@ let make = (
 
   if !hasSavedCards {
     <PaymentMethod isScreenFocus paymentMethodData setConfirmButtonData />
-  } else if showSavedView {
+  } else if showSavedView || savedOnly {
     <>
       <SavedPaymentSheet
         isScreenFocus
@@ -32,16 +39,22 @@ let make = (
         merchantName
         animated=true
       />
-      {nativeProp.configuration.paymentMethodLayout.layoutType === Tabs ? <Space /> : React.null}
-      <ClickableTextElement
-        initialIconName="addwithcircle"
-        updateIconName={Some("cardv1")}
-        text=localeObject.addPaymentMethodLabel
-        isSelected=showSavedView
-        setIsSelected=setShowSavedView
-        textType={TextWrapper.LinkTextBold}
-        size=24.
-      />
+      {savedOnly
+        ? React.null
+        : <>
+            {nativeProp.configuration.paymentMethodLayout.layoutType === Tabs
+              ? <Space />
+              : React.null}
+            <ClickableTextElement
+              initialIconName="addwithcircle"
+              updateIconName={Some("cardv1")}
+              text=localeObject.addPaymentMethodLabel
+              isSelected=showSavedView
+              setIsSelected=setShowSavedView
+              textType={TextWrapper.LinkTextBold}
+              size=24.
+            />
+          </>}
       {nativeProp.configuration.paymentMethodLayout.layoutType === Accordion
         ? <Space height=20. />
         : React.null}
