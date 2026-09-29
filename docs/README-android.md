@@ -118,7 +118,7 @@ This automatically launches the Hyperswitch payment sheet and handles callbacks.
 |---|---|
 | Gradle sync fails | Click **Sync Project with Gradle Files** |
 | Backend not reachable from emulator | Use `http://10.0.2.2:5252` instead of `localhost` |
-| SDK build failed | Run `yarn run build:android:detox` (only if doing local SDK build) |
+| SDK build failed | Run `cd android && ./gradlew assembleDebug` (only if doing local SDK build) |
 | Emulator not starting | Enable virtualization (VT-x / AMD-V) in BIOS |
 
 ---
@@ -128,5 +128,5 @@ This automatically launches the Hyperswitch payment sheet and handles callbacks.
 - Don’t hardcode secret keys in the app. Use publishable keys on the client and your backend for secret operations.
 - Rebuild SDK only when making SDK changes.
 ```bash
-yarn run build:android:detox
+cd android && ./gradlew assembleDebug
 ```

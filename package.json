@@ -31,10 +31,6 @@
     "lint": "eslint .",
     "test": "jest",
     "typecheck:payment-methods": "tsc --noEmit -p src/payment-methods/tsconfig.json",
-    "build:android:detox": "npx detox build --configuration  android.emu.debug",
-    "build:ios:detox": "npx detox build --configuration ios.sim.debug",
-    "test:android": "npx detox test --configuration android.emu.debug  --loglevel trace --record-logs all",
-    "test:ios": "npx detox test --configuration ios.sim.debug  --loglevel trace --record-logs all",
     "prepare": "husky",
     "postinstall": "patch-package",
     "lint:secrets": "gitleaks detect --source . --no-banner --verbose",
@@ -112,7 +108,6 @@
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.3.0",
-    "detox": "^20.51.4",
     "dotenv": "^10.0.0",
     "esbuild": "^0.28.1",
     "eslint": "^8.19.0",
@@ -159,8 +154,7 @@
       "node"
     ],
     "testPathIgnorePatterns": [
-      "/node_modules/",
-      "<rootDir>/detox-tests/"
+      "/node_modules/"
     ],
     "transformIgnorePatterns": [
       "node_modules/(?!((jest-)?react-native|@react-native(-community)?|rescript|@rescript|rescript-react-native|@glennsl|react-native-svg|react-native-inappbrowser-reborn|@juspay-tech|use-latest-callback)/)"
@@ -261,8 +255,5 @@
   "engines": {
     "node": ">=22.11.0"
   },
-  "workspaces": [
-    "detox-tests"
-  ],
   "packageManager": "yarn@3.6.4"
 }

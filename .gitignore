@@ -115,10 +115,8 @@ hyperswitch-react-native/lib/bs/
 next-env.d.ts
 /out
 
-#detox
+#logs
 *.log
-*.trace.json
-*.detox.jsonl
 
 #mockData
 mockData.js
