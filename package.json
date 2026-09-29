@@ -44,9 +44,6 @@
     "bundle:android:payment-methods": "react-native bundle --reset-cache --platform android --dev false --entry-file index.payment-methods.js --bundle-output android/app/src/main/assets/hyperswitch-payment-methods.bundle"
   },
   "dependencies": {
-    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
-    "@juspay-tech/react-native-hyperswitch-paypal": "^1.0.2",
-    "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.3",
     "@juspay-tech/react-native-hyperswitch-vault": "1.0.1",
     "@sentry/react-native": "^8.18.0",
     "@vgs/collect-react-native": "^1.2.0",
@@ -56,6 +53,12 @@
     "react-native-inappbrowser-reborn": "^3.7.0",
     "react-native-safe-area-context": "^5.6.0",
     "react-native-svg": "^15.15.5"
+  },
+  "//": "Native bridges not installed for now: netcetera-3ds and scancard do not build with React Native 0.86, and the PayPal native button is not supported on the new architecture. To restore one, move it back into dependencies and run yarn.",
+  "disabledDependencies": {
+    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
+    "@juspay-tech/react-native-hyperswitch-paypal": "^1.0.2",
+    "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.3"
   },
   "codegenConfig": {
     "name": "HyperswitchClientCoreSpec",
