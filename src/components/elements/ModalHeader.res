@@ -56,7 +56,7 @@ let make = (~onModalClose, ~isLoading=false, ~isSavedPaymentScreen) => {
                   />
                 </View>
               : React.null}
-            <CustomPressable onPress={_ => onModalClose()}>
+            <CustomPressable onPress={_ => onModalClose()} testID=TestUtils.sheetCloseButtonTestId>
               <Icon name="close" width=16. height=16. fill=iconColor />
             </CustomPressable>
           </>}

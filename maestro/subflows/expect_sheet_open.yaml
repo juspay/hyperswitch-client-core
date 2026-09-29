@@ -1,0 +1,20 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# No payment happened: the sheet is still open and the host app has received no result.
+- assertVisible:
+    id: PayButtonTestId
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible: "Test Mode"
+      - assertVisible:
+          id: resultText
+          text: "Last used:.*"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # iOS has no sticky Pay button, so the header may have scrolled away; check the host instead.
+      # The host's status label stays in the hierarchy under the full-screen sheet.
+      - assertNotVisible: "Payment (complete|failed: .*|canceled\\.)"

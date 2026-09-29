@@ -146,6 +146,7 @@ let make = (
                 ?options
                 scrollEnabled=true
                 activeColor=component.selected.color
+                testID=TestUtils.paymentMethodTabBarTestId
               />}
         renderScene
         style={s({

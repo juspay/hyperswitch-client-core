@@ -1,29 +1,30 @@
-name: Test All / build_and_test_android (pull_request)
+name: E2E / Android (Maestro)
 
+# Maestro end-to-end flows (maestro/) on the Android demo app, against the Hyperswitch sandbox through
+# maestro/server/e2e-server.js. Pull requests run the flows tagged `smoke`; a manual run runs every flow.
+#
+# Secrets: each value is given only to the step that needs it, never to the whole job, so dependency
+# install scripts and the build never see them. Nothing is uploaded and no step prints a secret.
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
+  # TEMPORARY, test branch only: runs the job on a push to this branch. Not part of the real change.
+  push:
+    branches: [ci-test/maestro-e2e]
 
 permissions:
   contents: read
 
 jobs:
   e2e-android:
+    # Pull requests from forks get no repository secrets, so the flows could not reach the sandbox.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     env:
-      SENTRY_DSN: ${{ secrets.DETOX_SENTRY_DSN }}
-      SENTRY_ENV: 'production'
-      HYPERSWITCH_PRODUCTION_URL: ${{ secrets.HYPERSWITCH_PRODUCTION_URL }}
-      HYPERSWITCH_INTEG_URL: ${{ secrets.HYPERSWITCH_INTEG_URL }}
-      HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
-      HYPERSWITCH_LOGS_PATH: ${{ secrets.HYPERSWITCH_LOGS_PATH }}
-      PROD_ASSETS_END_POINT: ${{ secrets.PROD_ASSETS_END_POINT }}
-      SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
-      INTEG_ASSETS_END_POINT: ${{ secrets.INTEG_ASSETS_END_POINT }}
-      HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
-      HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
-      PROFILE_ID: ${{ secrets.PROFILE_ID }}
-      NETCETERA_SDK_API_KEY: ${{ secrets.NETCETERA_SDK_API_KEY }}
+      MAESTRO_CLI_NO_ANALYTICS: '1'
+      MAESTRO_TAG_ARGS: ${{ github.event_name == 'pull_request' && '--include-tags smoke' || '' }}
     steps:
       - name: Free Disk Space
         run: |
@@ -48,23 +49,20 @@ jobs:
           ref: main
           path: shared-code
 
+      - name: Checkout Android Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-android
+          ref: main
+          path: android
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          # cache: 'npm'
-          # cache-dependency-path: '**/package-lock.json'
+          node-version: 22
 
       - name: Install dependencies
         run: npm install
-
-      - name: Start server
-        run: |
-          nohup node mockServer.js &
-
-      - name: Check Server
-        run: |
-          curl http://localhost:5252/create-payment-intent
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -73,77 +71,46 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      # - name: Cache Detox build
-      #   id: cache-detox-build
-      #   uses: actions/cache@v3
-      #   with:
-      #     path: android/app/build
-      #     key: ${{ runner.os }}-detox-build
-      #     restore-keys: |
-      #       ${{ runner.os }}-detox-build
+      - name: Compile ReScript
+        run: npm run re:build
 
-      # - name: List branches
-      #   run: |
-      #     cd android
-      #     git fetch --all
-      #     git branch -r
+      - name: Build demo app
+        run: cd android && ./gradlew :demo-app:assembleDebug
 
-      - name: Checkout Android Repo
-        uses: actions/checkout@v4
-        with:
-          repository: juspay/hyperswitch-sdk-android
-          ref: main
-          path: android
-          fetch-depth: 0
-
-      - name: Patch AndroidManifest for Detox CI
-        run: |
-          DEMO_APP_MANIFEST="android/demo-app/src/main/AndroidManifest.xml"
-
-          if ! grep -q 'android:name=".DemoApplication"' "$DEMO_APP_MANIFEST"; then
-            sed -i '/<application/a\        android:name=".DemoApplication"' "$DEMO_APP_MANIFEST"
-            sed -i 's/android:usesCleartextTraffic="true">/android:usesCleartextTraffic="true"\n        tools:replace="android:name">/' "$DEMO_APP_MANIFEST"
-          fi
-
-      - name: Generate DS Root Certificate for Netcetera SDK
-        run: |
-          CERTIFICATE_STRING=${{ secrets.NETCETERA_DS_ROOT_CRT }}
-          OUTPUT_FILE="nca_demo_root.crt"
-          mkdir -p android/demo-app/src/main/assets
-          OUTPUT_PATH="android/demo-app/src/main/assets/$OUTPUT_FILE"
-          {
-            echo "-----BEGIN CERTIFICATE-----"
-            echo "$CERTIFICATE_STRING"
-            echo "-----END CERTIFICATE-----"
-          } > "$OUTPUT_PATH"
-          echo "Content has been successfully transferred to $OUTPUT_FILE."
-
-      - name: Generate & Supply JS Bundle to Test APK
-        run: |
-          npm run re:start
-
+      # The JS bundle only reads these URLs (no keys); Sentry stays off because SENTRY_DSN is not set.
       - name: Start Metro
+        env:
+          HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+          SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
         run: |
-          nohup npm run start &
+          nohup npm run start > metro.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:8081/status && break || sleep 2; done
 
-      - name: Detox build
-        run: npx detox build --configuration android.emu.ci.debug
+      - name: Start the e2e server
+        env:
+          HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+          HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+          HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
+          PROFILE_ID: ${{ secrets.PROFILE_ID }}
+        run: |
+          nohup node maestro/server/e2e-server.js > e2e-server.log 2>&1 &
+          for i in $(seq 1 15); do curl -sf -o /dev/null http://localhost:5252/health && break || sleep 2; done
+          curl -sf -o /dev/null http://localhost:5252/scenarios
 
-      - name: Detox test
+      - name: Install Maestro
+        env:
+          MAESTRO_VERSION: 2.10.0
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Maestro test
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
           arch: x86_64
           profile: medium_phone
           script: |
-            adb wait-for-device
-            sleep 15
-            adb devices
-            npx detox test --configuration android.emu.ci.debug --record-videos failing --take-screenshots failing --headless
-
-      - name: Upload Test Artifact - GitHub Action
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: artifacts
-          path: artifacts
+            adb reverse tcp:8081 tcp:8081
+            maestro/scripts/prepare-android-device.sh emulator-5554 android/demo-app/build/outputs/apk/debug/demo-app-debug.apk
+            maestro -p android test maestro/ $MAESTRO_TAG_ARGS

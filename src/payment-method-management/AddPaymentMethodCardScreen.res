@@ -316,6 +316,7 @@ let make = (
     {showBackButton
       ? <CustomPressable
           onPress={_ => onBack()}
+          testID=TestUtils.pmmBackButtonTestId
           style={s({paddingHorizontal: 24.->dp, paddingTop: 16.->dp, alignSelf: #"flex-start"})}>
           <Icon name={"arrow-back"} height=18. width=18. />
         </CustomPressable>

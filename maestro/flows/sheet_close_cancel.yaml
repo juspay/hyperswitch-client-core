@@ -1,0 +1,23 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Sheet - close button reports cancel
+tags:
+  - smoke
+  - pr
+  - sheet
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+# Guest checkout: no saved methods, the sheet opens on the new-card form.
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- tapOn:
+    id: SheetCloseButtonTestId
+- runFlow: ../subflows/expect_payment_cancelled.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method

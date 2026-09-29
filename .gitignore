@@ -115,12 +115,13 @@ hyperswitch-react-native/lib/bs/
 next-env.d.ts
 /out
 
-#detox
+#logs
 *.log
-*.trace.json
-*.detox.jsonl
 
 #mockData
 mockData.js
 
 *.tsbuildinfo
+
+# Maestro end-to-end run output (reports, screenshots, device logs)
+maestro-reports/

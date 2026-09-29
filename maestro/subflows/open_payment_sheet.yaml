@@ -1,0 +1,11 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Fresh intent for SCENARIO, then opens the payment sheet and waits until it has loaded.
+# Takes the same env as launch_host_app.yaml. Everything after this subflow is shared by both platforms.
+- runFlow: launch_host_app.yaml
+- runFlow: tap_launch_payment_sheet.yaml
+# The header shows "Test Mode" (non-production) once the sheet has loaded.
+- extendedWaitUntil:
+    visible: "Test Mode"
+    timeout: 60000
+- runFlow: dismiss_dev_overlays.yaml

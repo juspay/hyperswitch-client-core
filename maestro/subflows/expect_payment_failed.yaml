@@ -1,0 +1,20 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# The sheet closed and the host app received a failed payment.
+#   ERROR  regex the failure message must contain (default: any message)
+- runFlow:
+    file: wait_for_result.yaml
+    env:
+      OUTCOMES: paid
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          id: resultText
+          text: "${'Failed: .*(' + (typeof ERROR === 'undefined' ? '' : ERROR) + ').*'}"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: "${'Payment failed: .*(' + (typeof ERROR === 'undefined' ? '' : ERROR) + ').*'}"

@@ -1,0 +1,22 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Waits until the host app shows a final payment result, so a wrong outcome fails fast in the
+# expect_* subflow that follows instead of timing out.
+#   OUTCOMES  "any" (default) or "paid": completed/failed only, so a result left over from an earlier
+#             cancel in the same flow (e.g. reopening the sheet) is not mistaken for the new one.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: resultText
+            text: "${typeof OUTCOMES !== 'undefined' && OUTCOMES === 'paid' ? '(Completed|Failed): .*' : '(Completed|Failed|Cancelled): .*'}"
+          timeout: 120000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - extendedWaitUntil:
+          visible: "${typeof OUTCOMES !== 'undefined' && OUTCOMES === 'paid' ? 'Payment (complete|failed: .*)' : 'Payment (complete|failed: .*|canceled\\.)'}"
+          timeout: 120000

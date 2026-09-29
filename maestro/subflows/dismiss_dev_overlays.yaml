@@ -1,0 +1,31 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Debug builds only: React Native's LogBox toast ("Open debugger to view warnings.") sits over the
+# bottom of the sheet. On Android its container is taller than the visible toast and swallows taps on
+# rows above it (e.g. "Add new payment method"). Release bundles have no toast, so every step is optional.
+- runFlow:
+    when:
+      platform: Android
+      visible: "Open debugger to view warnings."
+    commands:
+      # The x is the only clickable child of the toast, to the right of the message.
+      - tapOn:
+          childOf: "!, Open debugger to view warnings."
+          rightOf: "Open debugger to view warnings."
+          optional: true
+- runFlow:
+    when:
+      platform: iOS
+      # iOS exposes the whole toast as one element labelled "!, Open debugger to view warnings.".
+      visible: ".*Open debugger to view warnings.*"
+    commands:
+      # The x is not in the iOS hierarchy. Tapping the toast hid it in earlier manual runs (RN 0.86);
+      # LogBoxButton's onPress calls openDebugger(), so if a Metro-hosted run ever keeps the toast,
+      # prefer the LocalBundle build (no LogBox) for iOS runs. Unverified here: no macOS host.
+      - tapOn:
+          text: ".*Open debugger to view warnings.*"
+          optional: true
+- extendedWaitUntil:
+    notVisible: ".*Open debugger to view warnings.*"
+    timeout: 5000
+    optional: true

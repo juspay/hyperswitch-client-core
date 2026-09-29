@@ -1,0 +1,82 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Selects the scenario, restarts the demo app so it creates a fresh payment intent, and waits until
+# the app is ready to launch the sheet. This file and open_payment_sheet.yaml are the only places
+# that know how the Android and iOS demo apps differ.
+#   SCENARIO       maestro/server/scenarios.js key (default: default)
+#   KEEP_SCENARIO  "true" keeps the active scenario and its fresh customer (second launch in a flow)
+#   MOCK_PORT      mock server port (default 5252); Android only
+#   READY          "false" skips the wait for the ready signal (flows that expect the app to fail)
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      # The iOS demo always calls http://localhost:5252 (HyperViewModel.swift), so a scenario set on
+      # another port would silently not apply.
+      - assertTrue:
+          condition: "${typeof MOCK_PORT === 'undefined' || MOCK_PORT == '5252'}"
+          label: "MOCK_PORT is Android-only; the iOS demo app always uses localhost:5252"
+- runFlow:
+    when:
+      true: "${typeof KEEP_SCENARIO === 'undefined' || KEEP_SCENARIO !== 'true'}"
+    commands:
+      - runScript: set_scenario.js
+- runFlow:
+    when:
+      true: "${typeof KEEP_SCENARIO !== 'undefined' && KEEP_SCENARIO === 'true'}"
+    commands:
+      - runScript: assert_scenario.js
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      # A redirect page left open by an earlier (failed) flow stays on top of the relaunched app.
+      - stopApp: com.android.chrome
+- launchApp:
+    stopApp: true
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - runFlow: ensure_android_server_url.yaml
+- runFlow:
+    when:
+      true: "${typeof READY === 'undefined' || READY !== 'false'}"
+    commands:
+      - runFlow:
+          when:
+            platform: Android
+          commands:
+            # "Last used: ..." is set once the payment session is ready (success or error text).
+            # The demo sometimes never finishes initialising the payment session after a launch:
+            # relaunch once, so that start-up hang does not fail the flow under test.
+            - retry:
+                maxRetries: 1
+                commands:
+                  - runFlow:
+                      when:
+                        notVisible:
+                          id: resultText
+                          text: "Last used:.*"
+                      commands:
+                        - runFlow:
+                            when:
+                              true: "${typeof output.launchAttempted !== 'undefined'}"
+                            commands:
+                              - launchApp:
+                                  stopApp: true
+                              - runFlow: ensure_android_server_url.yaml
+                  - evalScript: ${output.launchAttempted = true}
+                  - extendedWaitUntil:
+                      visible:
+                        id: resultText
+                        text: "Last used:.*"
+                      timeout: 45000
+            - evalScript: ${output.launchAttempted = undefined}
+      - runFlow:
+          when:
+            platform: iOS
+          commands:
+            - extendedWaitUntil:
+                visible: "Connected to Server"
+                timeout: 45000

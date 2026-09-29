@@ -87,6 +87,7 @@ let make = () => {
       padding: 2.->dp,
     })}>
     <CustomInput
+      name=TestUtils.cvcWidgetInputTestId
       state={cvcValue}
       setState={onCvcChange}
       placeholder={nativeProp.configuration.placeholder.cvv->Option.getOr(

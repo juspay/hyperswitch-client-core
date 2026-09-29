@@ -167,12 +167,17 @@ let make = (
                   <CustomPressable onPress=handleUpdate disabled=isUpdating>
                     <TextWrapper text={isUpdating ? "Saving ..." : "Save"} textType=LinkText />
                   </CustomPressable>
-                  <CustomPressable onPress=handleDelete style={s({marginStart: 16.->dp})}>
+                  <CustomPressable
+                    onPress=handleDelete
+                    style={s({marginStart: 16.->dp})}
+                    testID=TestUtils.pmmDeleteButtonTestId>
                     <Icon name={"delete-hollow"} height=18. width=18. />
                   </CustomPressable>
                 </>
               : React.null
-          : <CustomPressable onPress={_ => onManage(pmDetails.payment_method_token)}>
+          : <CustomPressable
+              onPress={_ => onManage(pmDetails.payment_method_token)}
+              testID=TestUtils.pmmManageButtonTestId>
               <Icon name={"manage"} height=18. width=18. />
             </CustomPressable>}
       </View>
