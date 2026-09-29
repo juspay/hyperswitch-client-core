@@ -74,17 +74,21 @@ jobs:
       - name: Compile ReScript
         run: npm run re:build
 
-      - name: Build demo app
-        run: cd android && ./gradlew :demo-app:assembleDebug
-
-      # The JS bundle only reads these URLs (no keys); Sentry stays off because SENTRY_DSN is not set.
-      - name: Start Metro
+      # The app runs this branch's JS without Metro. A debug build that cannot reach Metro loads the bundles
+      # packed in android/app/src/main/assets, which come from the android repo and can be older than this
+      # branch, so they are rebuilt here. Bundling only reads these URLs (no keys); Sentry stays off because
+      # SENTRY_DSN is not set.
+      - name: Bundle the JS into the demo app
         env:
           HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
           SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
         run: |
-          nohup npm run start > metro.log 2>&1 &
-          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:8081/status && break || sleep 2; done
+          npm run bundle:android
+          npm run bundle:android:pmm
+          npm run bundle:android:payment-methods
+
+      - name: Build demo app
+        run: cd android && ./gradlew :demo-app:assembleDebug
 
       - name: Start the e2e server
         env:
@@ -111,6 +115,5 @@ jobs:
           arch: x86_64
           profile: medium_phone
           script: |
-            adb reverse tcp:8081 tcp:8081
             maestro/scripts/prepare-android-device.sh emulator-5554 android/demo-app/build/outputs/apk/debug/demo-app-debug.apk
             maestro -p android test maestro/ $MAESTRO_TAG_ARGS

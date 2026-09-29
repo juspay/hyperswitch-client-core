@@ -170,8 +170,10 @@ Text selectors are full-match regexes. The saved-card mask is `●●●●` (U+
 
 ## CI
 
-`.github/workflows/build_and_test_android.yml` builds the Android demo app, starts the e2e server and Metro, and
-runs the flows on an API 35 emulator: the `smoke` flows on every pull request, every flow on a manual run.
+`.github/workflows/build_and_test_android.yml` bundles this branch's JS into the Android demo app and builds it,
+starts the e2e server, and runs the flows on an API 35 emulator: the `smoke` flows on every pull request, every
+flow on a manual run. CI does not use Metro: a debug build that cannot reach Metro loads the bundles packed in
+the android repo, which can be older than the branch under test.
 Pull requests from forks skip the job (they get no repository secrets). The job uploads nothing: device
 logs and the Metro log carry the sandbox publishable key and payment session tokens, and anything uploaded
 from this public repository can be downloaded by anyone signed in to GitHub. The job log names the failed
