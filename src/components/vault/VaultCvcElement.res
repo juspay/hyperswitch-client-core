@@ -145,6 +145,7 @@ let make = (
             ])}>
             <VaultInput
               elementType="cardCvc"
+              testID=TestUtils.savedCardCvcInputTestId
               height={inputHeight *. 0.9}
               reference=cvcRef
               label=localeObject.cvcTextLabel

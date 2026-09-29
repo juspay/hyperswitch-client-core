@@ -343,6 +343,9 @@ let make = (
       text={paymentMethodData.payment_method_type->CommonUtils.getDisplayName}
       borderRadius=buttonBorderRadius
       leftIcon=CustomIcon(<Icon name=buttonName width=24. height=32. fill=payNowButtonTextColor />)
+      testID=?{paymentMethodData.payment_method_type_wallet === PAYPAL
+        ? Some(TestUtils.payPalButtonTestId)
+        : None}
       onPress={_ => pressHandler()}>
       {switch paymentMethodData.payment_method_type_wallet {
       | SAMSUNG_PAY =>
