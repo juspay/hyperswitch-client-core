@@ -41,6 +41,7 @@ let make = (
         setIsSelected=setShowSavedView
         textType={TextWrapper.LinkTextBold}
         size=24.
+        testID=TestUtils.addNewPaymentMethodTestId
       />
       {nativeProp.configuration.paymentMethodLayout.layoutType === Accordion
         ? <Space height=20. />
@@ -58,6 +59,7 @@ let make = (
         setIsSelected={value => setShowSavedView(!value)}
         textType={TextWrapper.LinkTextBold}
         size=24.
+        testID=TestUtils.useSavedPaymentMethodsTestId
       />
       {nativeProp.configuration.paymentMethodLayout.layoutType === Accordion
         ? <Space height=20. />

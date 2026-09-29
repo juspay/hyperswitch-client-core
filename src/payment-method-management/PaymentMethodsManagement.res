@@ -46,7 +46,7 @@ module PmmSheetHeader = {
               />
             </View>
           : React.null}
-        <CustomPressable onPress={_ => onClose()}>
+        <CustomPressable onPress={_ => onClose()} testID=TestUtils.sheetCloseButtonTestId>
           <Icon name="close" width=16. height=16. fill=iconColor />
         </CustomPressable>
       </View>

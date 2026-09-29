@@ -51,6 +51,7 @@ module CVVComponent = {
               <TextWrapper text="CVC:" textType={ModalText} />
             </View>}
         <CustomInput
+          name=TestUtils.savedCardCvcInputTestId
           state={savedCardCvv->Option.getOr("")}
           setState={onCvvChange}
           placeholder={hideCardExpiry

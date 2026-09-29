@@ -119,6 +119,9 @@ let make = () => {
                     setIsSelected=setIsSavedPaymentScreen
                     textType={TextWrapper.LinkTextBold}
                     size=24.
+                    testID={isSavedPaymentScreen
+                      ? TestUtils.addNewPaymentMethodTestId
+                      : TestUtils.useSavedPaymentMethodsTestId}
                   />
                   <Space height=5. />
                 </>
