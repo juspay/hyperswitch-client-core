@@ -8,9 +8,9 @@ let make = (~isFocused: bool) => {
   let {input: stateInput} = ReactFinalForm.useField("payment_method_data.billing.address.state")
   let {input: postalCodeInput} = ReactFinalForm.useField("payment_method_data.billing.address.zip")
 
-  let country = countryInput.value->JSON.stringifyAny->Option.getOr("")
-  let state = stateInput.value->JSON.stringifyAny->Option.getOr("")
-  let postalCode = postalCodeInput.value->JSON.stringifyAny->Option.getOr("")
+  let country = countryInput.value->Option.getOr("")
+  let state = stateInput.value->Option.getOr("")
+  let postalCode = postalCodeInput.value->Option.getOr("")
 
   React.useEffect(() => {
     if isFocused {
