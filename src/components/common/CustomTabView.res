@@ -38,7 +38,7 @@ let make = (
     | Some(hoc) =>
       if hoc.name !== "loading" {
         let event = PaymentEvents.buildPaymentMethodStatusEvent(
-          ~paymentMethod=hoc.name,
+          ~paymentMethod=hoc.paymentMethod,
           ~paymentMethodType=hoc.paymentMethodType,
           ~isSavedPaymentMethod=false,
         )

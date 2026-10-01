@@ -5,6 +5,8 @@ type componentHoc = (
 
 type hoc = {
   name: string,
+  // API category (`payment_method`, e.g. "card", "pay_later"); `name` is only the tab label.
+  paymentMethod: string,
   paymentMethodType: string,
   componentHoc: componentHoc,
 }
@@ -40,6 +42,7 @@ let usePaymentMethodModifier = () => {
             [
               {
                 name: "Saved",
+                paymentMethod: "Saved",
                 paymentMethodType: "saved_payment_method",
                 componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) =>
                   <InitialLoader />,
@@ -62,6 +65,7 @@ let usePaymentMethodModifier = () => {
               ? [
                   {
                     name: "Saved",
+                    paymentMethod: "Saved",
                     paymentMethodType: "saved_payment_method",
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <SavedPaymentSheet
@@ -185,6 +189,7 @@ let usePaymentMethodModifier = () => {
                   )
                 : tabArr->Array.push({
                     name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                    paymentMethod: paymentMethodData.payment_method_str,
                     paymentMethodType: paymentMethodData.payment_method_type,
                     componentHoc: isGroupByPMCard
                       ? (~isScreenFocus, ~setConfirmButtonData) =>
@@ -198,6 +203,7 @@ let usePaymentMethodModifier = () => {
             | TabSheet | WidgetTabSheet =>
               tabArr->Array.push({
                 name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
+                paymentMethod: paymentMethodData.payment_method_str,
                 paymentMethodType: paymentMethodData.payment_method_type,
                 componentHoc: isGroupByPMCard
                   ? (~isScreenFocus, ~setConfirmButtonData) =>
@@ -225,6 +231,7 @@ let usePaymentMethodModifier = () => {
     | None =>
       let loadingTabElement = {
         name: "loading",
+        paymentMethod: "loading",
         paymentMethodType: "loading",
         componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) => <>
           <Space height=10. />
