@@ -1,0 +1,11 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: CI demo - deliberate failure (test branch only)
+tags:
+  - smoke
+---
+# TEST BRANCH ONLY: fails on purpose to show the CI failure summary and the screenshot artifact.
+- runFlow:
+    file: ../subflows/launch_host_app.yaml
+    env:
+      SCENARIO: guest
+- assertVisible: "This text is not on the screen (deliberate failure)"

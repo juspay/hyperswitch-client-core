@@ -174,10 +174,15 @@ Text selectors are full-match regexes. The saved-card mask is `●●●●` (U+
 starts the e2e server, and runs the flows on an API 35 emulator: the `smoke` flows on every pull request, every
 flow on a manual run. CI does not use Metro: a debug build that cannot reach Metro loads the bundles packed in
 the android repo, which can be older than the branch under test.
-Pull requests from forks skip the job (they get no repository secrets). The job uploads nothing: device
-logs and the Metro log carry the sandbox publishable key and payment session tokens, and anything uploaded
-from this public repository can be downloaded by anyone signed in to GitHub. The job log names the failed
-flow and the failing step; run that flow locally for screenshots and logs.
+Pull requests from forks skip the job (they get no repository secrets).
+
+Results: the run's **Summary** page shows a table of every flow (✅/❌, file, duration, failure reason),
+failed flows first (`maestro/scripts/ci-report.js`, from Maestro's JUnit report). When a flow fails, the
+screenshots of the failed flows are uploaded as the `maestro-failure-screenshots` artifact (bottom of the
+Summary page, kept 7 days; the last screenshot in each folder is the moment it failed). Only screenshots are
+uploaded: device and Maestro logs stay on the runner, because they can carry the sandbox publishable key and
+payment session tokens, and anything uploaded from this public repository can be downloaded by anyone signed
+in to GitHub. For logs, run the failed flow locally.
 
 ## Things that already cost time
 

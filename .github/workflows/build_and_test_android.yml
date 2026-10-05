@@ -4,7 +4,8 @@ name: E2E / Android (Maestro)
 # maestro/server/e2e-server.js. Pull requests run the flows tagged `smoke`; a manual run runs every flow.
 #
 # Secrets: each value is given only to the step that needs it, never to the whole job, so dependency
-# install scripts and the build never see them. Nothing is uploaded and no step prints a secret.
+# install scripts and the build never see them. No step prints a secret. The only upload is the
+# screenshots of failed flows; device and Maestro logs stay on the runner (they can carry keys).
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -109,6 +110,7 @@ jobs:
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Maestro test
+        id: maestro
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -116,4 +118,18 @@ jobs:
           profile: medium_phone
           script: |
             maestro/scripts/prepare-android-device.sh emulator-5554 android/demo-app/build/outputs/apk/debug/demo-app-debug.apk
-            maestro -p android test maestro/ $MAESTRO_TAG_ARGS
+            maestro -p android test maestro/ $MAESTRO_TAG_ARGS --format junit --output maestro-reports/report.xml --test-output-dir maestro-reports/output
+
+      # Results table on the run's Summary page (and in this step's log), failed flows first.
+      - name: Test summary
+        if: always() && steps.maestro.conclusion != 'skipped'
+        run: node maestro/scripts/ci-report.js maestro-reports/report.xml maestro-reports/output maestro-reports/failure-screenshots
+
+      - name: Upload screenshots of failed flows
+        if: failure() && steps.maestro.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-failure-screenshots
+          path: maestro-reports/failure-screenshots/
+          retention-days: 7
+          if-no-files-found: ignore
