@@ -28,7 +28,6 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let showAlert = AlertHook.useAlerts()
-  let logger = LoggerHook.useLoggerHook()
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let localeObj = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -262,7 +261,6 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodData.payment_method_type,
-      ~paymentExperience=paymentMethodData.payment_experience,
       ~isCardPayment={paymentMethodData.payment_method === CARD},
       (),
     )->ignore
@@ -382,16 +380,6 @@ let make = (
 
       switch paymentMethodData {
       | Some(paymentMethodData) =>
-        logger(
-          ~logType=DEBUG,
-          ~value=paymentMethodData.payment_method_type,
-          ~category=USER_EVENT,
-          ~paymentMethod=paymentMethodData.payment_method_type,
-          ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
-          ~paymentExperience=paymentMethodData.payment_experience,
-          (),
-        )
-
         let status = handleWalletPayments(APPLE_PAY, var)
 
         switch status {
@@ -517,29 +505,25 @@ let make = (
             showAlert(~errorType="warning", ~message="Waiting for Sessions API")
             notifyNotReady()
           } else {
-            logger(
-              ~logType=DEBUG,
-              ~value="apple_pay",
-              ~category=USER_EVENT,
-              ~paymentMethod="apple_pay",
-              ~eventName=APPLE_PAY_STARTED_FROM_JS,
-              (),
-            )
-
             let doLaunchApplePay = () => {
+              let startedAt = Date.now()
+              SdkLogger.logFunction(
+                ~event=LaunchApplePay,
+                ~outcome=Started,
+                ~paymentMethod=Wallet(ApplePay),
+              )
               let timerId = setTimeout(() => {
                 setLoading(FillingDetails)
                 showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
                 notifyWidgetResult(
                   PaymentConfirmTypes.walletFailedError("Apple Pay Error, Please try again"),
                 )
-                logger(
-                  ~logType=DEBUG,
-                  ~value="apple_pay",
-                  ~category=USER_EVENT,
-                  ~paymentMethod="apple_pay",
-                  ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-                  (),
+                SdkLogger.logFunction(
+                  ~event=LaunchApplePay,
+                  ~outcome=TimedOut,
+                  ~startedAt,
+                  ~timeoutMs=5000,
+                  ~paymentMethod=Wallet(ApplePay),
                 )
               }, 5000)
 
@@ -552,15 +536,19 @@ let make = (
                     ->Dict.fromArray
                     ->JSON.Encode.object
                     ->JSON.stringify,
-                    confirmApplePay,
+                    var => {
+                      SdkLogger.logFunction(
+                        ~event=LaunchApplePay,
+                        ~outcome=Done,
+                        ~startedAt,
+                        ~paymentMethod=Wallet(ApplePay),
+                      )
+                      confirmApplePay(var)
+                    },
                     _ => {
-                      logger(
-                        ~logType=DEBUG,
-                        ~value="apple_pay",
-                        ~category=USER_EVENT,
-                        ~paymentMethod="apple_pay",
-                        ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                        (),
+                      SdkLogger.logLifecycle(
+                        ~event=WalletStageReached({stage: SheetStarted}),
+                        ~paymentMethod=Wallet(ApplePay),
                       )
                     },
                     _ => {

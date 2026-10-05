@@ -175,7 +175,6 @@ let make = (~setConfirmButtonData) => {
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=payment_method_type,
-      ~paymentExperience=payment_experience,
       ~isCardPayment={payment_method === CARD},
       (),
     )->ignore
