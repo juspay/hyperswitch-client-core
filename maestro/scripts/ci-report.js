@@ -36,9 +36,33 @@ const cell = text => text.replace(/\r?\n/g, ' ').replace(/\|/g, '\\|').trim();
 const lines = [];
 let failed = [];
 
+// Flow folders Maestro wrote so far. Only flows that failed have a screenshots/ folder.
+const flowDirs = fs.existsSync(outputDir)
+  ? fs
+      .readdirSync(outputDir)
+      .map(run => path.join(outputDir, run))
+      .filter(runDir => fs.statSync(runDir).isDirectory())
+      .flatMap(runDir => fs.readdirSync(runDir).map(flow => ({flow, dir: path.join(runDir, flow)})))
+      .filter(({dir}) => fs.statSync(dir).isDirectory())
+  : [];
+
 if (!fs.existsSync(reportPath)) {
+  // The run stopped (cancelled or timed out) before Maestro wrote its report: list what is known.
+  const stopped = flowDirs.filter(({dir}) => fs.existsSync(path.join(dir, 'screenshots')));
   lines.push('## Maestro end-to-end results', '');
-  lines.push('No report: the test step stopped before Maestro wrote one. See the "Maestro test" step log.');
+  lines.push(
+    '**⚠️ The run stopped before Maestro wrote its report** (cancelled or timed out), so this list is partial. ' +
+      'See the "Maestro test" step log for every flow.',
+    '',
+  );
+  if (stopped.length > 0) {
+    lines.push('Flows that had failed by then:', '');
+    stopped.forEach(({flow}) => lines.push(`- ❌ ${cell(flow)}`));
+    lines.push(
+      '',
+      'Screenshots: **Artifacts → `maestro-failure-screenshots`** at the bottom of this page.',
+    );
+  }
 } else {
   const xml = fs.readFileSync(reportPath, 'utf8');
   const suite = (xml.match(/<testsuite\b[^>]*>/) || [''])[0];
@@ -81,20 +105,14 @@ if (!fs.existsSync(reportPath)) {
 
 // Screenshots of failed flows only: Maestro writes a screenshots/ folder only for flows that failed.
 let copied = 0;
-if (fs.existsSync(outputDir)) {
-  for (const run of fs.readdirSync(outputDir)) {
-    const runDir = path.join(outputDir, run);
-    if (!fs.statSync(runDir).isDirectory()) continue;
-    for (const flow of fs.readdirSync(runDir)) {
-      const shots = path.join(runDir, flow, 'screenshots');
-      if (!fs.existsSync(shots)) continue;
-      const target = path.join(screenshotsDir, flow.replace(/[^\w .()-]/g, '_'));
-      fs.mkdirSync(target, {recursive: true});
-      for (const file of fs.readdirSync(shots).filter(f => f.endsWith('.png'))) {
-        fs.copyFileSync(path.join(shots, file), path.join(target, file));
-        copied += 1;
-      }
-    }
+for (const {flow, dir} of flowDirs) {
+  const shots = path.join(dir, 'screenshots');
+  if (!fs.existsSync(shots)) continue;
+  const target = path.join(screenshotsDir, flow.replace(/[^\w .()-]/g, '_'));
+  fs.mkdirSync(target, {recursive: true});
+  for (const file of fs.readdirSync(shots).filter(f => f.endsWith('.png'))) {
+    fs.copyFileSync(path.join(shots, file), path.join(target, file));
+    copied += 1;
   }
 }
 

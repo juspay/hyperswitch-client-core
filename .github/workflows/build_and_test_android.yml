@@ -25,7 +25,8 @@ jobs:
     timeout-minutes: 60
     env:
       MAESTRO_CLI_NO_ANALYTICS: '1'
-      MAESTRO_TAG_ARGS: ${{ github.event_name == 'pull_request' && '--include-tags smoke' || '' }}
+      # TEMPORARY, test branch only: run just the deliberate-failure flow to check the summary and screenshots.
+      MAESTRO_TAG_ARGS: '--include-tags ci-demo'
     steps:
       - name: Free Disk Space
         run: |
@@ -126,7 +127,7 @@ jobs:
         run: node maestro/scripts/ci-report.js maestro-reports/report.xml maestro-reports/output maestro-reports/failure-screenshots
 
       - name: Upload screenshots of failed flows
-        if: failure() && steps.maestro.outcome == 'failure'
+        if: always() && (steps.maestro.outcome == 'failure' || steps.maestro.outcome == 'cancelled')
         uses: actions/upload-artifact@v4
         with:
           name: maestro-failure-screenshots
