@@ -43,7 +43,6 @@ let useHandleSuccessFailure = () => {
 
 let useRetrieveHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
 
   (type_, clientSecret, publishableKey, ~isForceSync=false) => {
@@ -66,20 +65,13 @@ let useRetrieveHook = () => {
             : "false"}&client_secret=${clientSecret}`
       }
 
-      APIUtils.fetchApiWrapper(
-        ~uri,
-        ~method=#GET,
-        ~headers,
-        ~eventName=RETRIEVE_CALL,
-        ~apiLogWrapper,
-      )
+      APIUtils.fetchApiWrapper(~uri, ~method=#GET, ~headers, ~event=RetrievePaymentIntent)
     }
   }
 }
 
 let useFetchClientData = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   () => {
     switch WebKit.platform {
@@ -100,8 +92,7 @@ let useFetchClientData = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.CLIENT_LIST_CALL,
-        ~apiLogWrapper,
+        ~event=ClientList,
       )
     }
   }
@@ -110,7 +101,6 @@ let useFetchClientData = () => {
 let useSessionTokenHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   (~wallet=[]) => {
     switch WebKit.platform {
     | #next => Promise.resolve(Next.sessionsRes)
@@ -130,8 +120,7 @@ let useSessionTokenHook = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.SESSIONS_CALL,
-        ~apiLogWrapper,
+        ~event=Sessions,
       )
     }
   }
@@ -140,22 +129,19 @@ let useSessionTokenHook = () => {
 //add a hook for /sdk-config
 let useSdkConfigHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   () => {
     let uri = `${baseUrl}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${nativeProp.paymentSessionConfig.clientSecret}`
 
-    APIUtils.fetchApiWrapper(
+    APIUtils.fetchStaticAsset(
       ~uri,
-      ~method=#GET,
       ~headers=Utils.getHeader(
         ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
         ~appId=nativeProp.sdkParams.appId,
         ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
         (),
       ),
-      ~eventName=LoggerTypes.CONFIG_CALL,
-      ~apiLogWrapper,
+      ~event=SdkConfigs,
     )
   }
 }
@@ -164,7 +150,6 @@ let usePostSessionTokensHook = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   (
     ~paymentMethodData: ClientResponseType.paymentMethodEnabled,
     ~sessionObject: SessionsType.sessions,
@@ -194,8 +179,7 @@ let usePostSessionTokensHook = () => {
         ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
         (),
       ),
-      ~eventName=POST_SESSION_TOKENS_CALL,
-      ~apiLogWrapper,
+      ~event=PostSessionTokens,
     )
   }
 }
@@ -258,7 +242,6 @@ let useRedirectHook = () => {
   let retrievePayment = useRetrieveHook()
   let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()
   let redirectionFailureHandler = BrowserRedirectionHooks.useBrowserRedirectionFailedHook()
-  let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
@@ -270,7 +253,6 @@ let useRedirectHook = () => {
     ~clientSecret: string,
     ~errorCallback: (~errorMessage: error, ~closeSDK: bool, unit) => unit,
     ~paymentMethod,
-    ~paymentExperience: option<array<ClientResponseType.paymentExperience>>=?,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     ~isCardPayment=false,
     (),
@@ -333,17 +315,13 @@ let useRedirectHook = () => {
 
     let handleDefaultPaymentFlows = (~status, ~reUri, ~error: error) => {
       let terminalStatusHandler = () => {status, message: "", code: "", type_: ""}
+      let loggedPaymentMethod = body->LoggerPaymentMethod.fromRequestBody
 
       switch status {
       | "succeeded" =>
-        logger(
-          ~logType=INFO,
-          ~value="",
-          ~category=USER_EVENT,
-          ~eventName=PAYMENT_SUCCESS,
-          ~paymentMethod,
-          ~paymentExperience?,
-          (),
+        SdkLogger.logLifecycle(
+          ~event=PaymentSucceeded({status: status}),
+          ~paymentMethod=?loggedPaymentMethod,
         )
         responseCallback(~paymentStatus=PaymentSuccess, ~status=terminalStatusHandler())
 
@@ -354,14 +332,12 @@ let useRedirectHook = () => {
         responseCallback(~paymentStatus=ProcessingPayments, ~status=terminalStatusHandler())
       | "requires_customer_action" =>
         terminalStatusHandler()->ignore
-        logger(
-          ~logType=INFO,
-          ~category=USER_EVENT,
-          ~value="",
-          ~internalMetadata=reUri,
-          ~eventName=REDIRECTING_USER,
-          ~paymentMethod,
-          (),
+        SdkLogger.logLifecycle(
+          ~event=CustomerRedirectStarted({
+            nextAction: "redirect_to_url",
+            redirectOrigin: reUri->LoggerUtils.urlOrigin,
+          }),
+          ~paymentMethod=?loggedPaymentMethod,
         )
         browserRedirectionHandler(
           ~clientSecret,
@@ -374,14 +350,13 @@ let useRedirectHook = () => {
         )->ignore
 
       | statusVal =>
-        logger(
-          ~logType=ERROR,
-          ~value={statusVal ++ error.message->Option.getOr("")},
-          ~category=USER_EVENT,
-          ~eventName=PAYMENT_FAILED,
-          ~paymentMethod,
-          ~paymentExperience?,
-          (),
+        SdkLogger.logLifecycle(
+          ~event=PaymentFailed({status: statusVal}),
+          ~details=[
+            ("error_message", error.message),
+            ("error_code", error.code),
+          ]->LoggerUtils.stringDetails,
+          ~paymentMethod=?loggedPaymentMethod,
         )
         errorCallback(~errorMessage=error, ~closeSDK=true, ())
         terminalStatusHandler()->ignore
@@ -513,7 +488,6 @@ let useEligibilityCheckHook = () => {
 
 let useSavePaymentMethod = () => {
   let baseUrl = GlobalHooks.useGetBaseUrl()()
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   (~body: PaymentConfirmTypes.redirectType) => {
@@ -529,9 +503,8 @@ let useSavePaymentMethod = () => {
         ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
         (),
       ),
-      ~eventName=LoggerTypes.ADD_PAYMENT_METHOD_CALL,
+      ~event=SavePaymentMethod,
       ~body=body->JSON.stringifyAny->Option.getOr(""),
-      ~apiLogWrapper,
     )
   }
 }

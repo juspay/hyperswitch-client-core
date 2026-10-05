@@ -7,13 +7,12 @@ let useVaultCardSubmit = () => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
-  let logger = LoggerHook.useLoggerHook()
 
   let inFlightRef = React.useRef(false)
   let loadingRef = React.useRef(loading)
   loadingRef.current = loading
 
-  React.useCallback6((~formId: string, ~shape: shape, ~onTokenized: Dict.t<JSON.t> => unit) => {
+  React.useCallback5((~formId: string, ~shape: shape, ~onTokenized: Dict.t<JSON.t> => unit) => {
     let refuse = () => {
       setShowErrors(formId, true)
       notifyValidationFailure()
@@ -54,12 +53,10 @@ let useVaultCardSubmit = () => {
           setLoading(FillingDetails)
           refuse()
         | Failed({message, reason}) =>
-          logger(
-            ~logType=ERROR,
-            ~value=`Vault tokenize result refused: ${reason}`,
-            ~category=USER_ERROR,
-            ~eventName=VAULT_TOKENIZE,
-            (),
+          SdkLogger.logLifecycle(
+            ~event=VaultFlowFailed({reason: TokenizationFailed}),
+            ~details=[("refusal_reason", reason->JSON.Encode.string)],
+            ~paymentMethod=Card,
           )
           fail(message)
         }
@@ -71,5 +68,5 @@ let useVaultCardSubmit = () => {
       })
       ->ignore
     }
-  }, (getFormState, setShowErrors, setLoading, notifyValidationFailure, handleSuccessFailure, logger))
+  }, (getFormState, setShowErrors, setLoading, notifyValidationFailure, handleSuccessFailure))
 }

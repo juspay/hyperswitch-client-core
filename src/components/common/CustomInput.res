@@ -71,7 +71,6 @@ let make = (
 
   let (showPass, setShowPass) = React.useState(_ => secureTextEntry)
   let (isFocused, setIsFocused) = React.useState(_ => false)
-  let logger = LoggerHook.useLoggerHook()
   let fontFamily = FontFamily.useCustomFontFamily()
 
   let shadowStyle = enableShadow ? getShadowStyle : empty
@@ -228,14 +227,14 @@ let make = (
           onFocus={_ => {
             setIsFocused(_ => true)
             onFocus()
-            logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
+            SdkLogger.logUser(~event=FieldFocused({field: name === "" ? placeholder : name}))
           }}
           onBlur={_ => {
             // TODO: remove invalid input (string with only space) eg: "      "
             state->String.trim == "" ? setState("") : ()
             onBlur()
             setIsFocused(_ => false)
-            logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
+            SdkLogger.logUser(~event=FieldBlurred({field: name === "" ? placeholder : name}))
           }}
           editable
           pointerEvents

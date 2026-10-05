@@ -10,7 +10,6 @@ let usePayment = (
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let logger = LoggerHook.useLoggerHook()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let showAlert = AlertHook.useAlerts()
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
@@ -45,16 +44,21 @@ let usePayment = (
     (),
   ) => {
     if WebKit.platform === #ios {
+      let startedAt = Date.now()
+      SdkLogger.logFunction(
+        ~event=LaunchApplePay,
+        ~outcome=Started,
+        ~paymentMethod=Wallet(ApplePay),
+      )
       let timerId = setTimeout(() => {
         setLoading(FillingDetails)
         showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-        logger(
-          ~logType=DEBUG,
-          ~value="apple_pay",
-          ~category=USER_EVENT,
-          ~paymentMethod="apple_pay",
-          ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-          (),
+        SdkLogger.logFunction(
+          ~event=LaunchApplePay,
+          ~outcome=TimedOut,
+          ~startedAt,
+          ~timeoutMs=5000,
+          ~paymentMethod=Wallet(ApplePay),
         )
       }, 5000)
       HyperModule.launchApplePay(
@@ -65,15 +69,19 @@ let usePayment = (
         ->Dict.fromArray
         ->JSON.Encode.object
         ->JSON.stringify,
-        applePayResponseHandler,
+        var => {
+          SdkLogger.logFunction(
+            ~event=LaunchApplePay,
+            ~outcome=Done,
+            ~startedAt,
+            ~paymentMethod=Wallet(ApplePay),
+          )
+          applePayResponseHandler(var)
+        },
         _ => {
-          logger(
-            ~logType=DEBUG,
-            ~value="apple_pay",
-            ~category=USER_EVENT,
-            ~paymentMethod="apple_pay",
-            ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-            (),
+          SdkLogger.logLifecycle(
+            ~event=WalletStageReached({stage: SheetStarted}),
+            ~paymentMethod=Wallet(ApplePay),
           )
         },
         _ => {
@@ -100,12 +108,10 @@ let usePayment = (
     ) => unit,
     (),
   ) => {
-    logger(
-      ~logType=INFO,
-      ~value="Samsung Pay Button Clicked",
-      ~category=USER_EVENT,
-      ~eventName=SAMSUNG_PAY,
-      (),
+    SdkLogger.logFunction(
+      ~event=LaunchSamsungPay,
+      ~outcome=Started,
+      ~paymentMethod=Wallet(SamsungPay),
     )
     SamsungPayModule.presentSamsungPayPaymentSheet(samsungPayResponseHandler)
   }

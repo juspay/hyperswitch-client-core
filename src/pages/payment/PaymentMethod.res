@@ -230,7 +230,6 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodData.payment_method_type,
-      ~paymentExperience=paymentMethodData.payment_experience,
       ~isCardPayment={paymentMethodData.payment_method === CARD},
       (),
     )->ignore

@@ -97,29 +97,7 @@ let handleDefaultPaymentFlows = (
 
   switch status {
   | "succeeded" =>
-    logWrapper(
-      ~logType=INFO,
-      ~eventName=PAYMENT_SUCCESS,
-      ~url="",
-      ~customLogUrl=GlobalHooks.getLoggingUrl(
-        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-          SdkTypes.defaultCustomEndpointsConfig,
-        ),
-        ~environment=nativeProp.hyperswitchConfig.environment,
-      ),
-      ~category=API,
-      ~statusCode="",
-      ~apiLogType=None,
-      ~data=JSON.Encode.null,
-      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~paymentId="",
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=0.,
-      ~latency=0.,
-      ~version=nativeProp.sdkParams.sdkVersion,
-      (),
-    )
+    SdkLogger.logLifecycle(~event=PaymentSucceeded({status: status}))
     responseCallback(~status=terminalStatusHandler())
   | "requires_capture"
   | "processing"
@@ -129,28 +107,11 @@ let handleDefaultPaymentFlows = (
   | "requires_customer_action" =>
     terminalStatusHandler()->ignore
 
-    logWrapper(
-      ~logType=INFO,
-      ~eventName=REDIRECTING_USER,
-      ~url=reUri,
-      ~customLogUrl=GlobalHooks.getLoggingUrl(
-        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-          SdkTypes.defaultCustomEndpointsConfig,
-        ),
-        ~environment=nativeProp.hyperswitchConfig.environment,
-      ),
-      ~category=API,
-      ~statusCode="",
-      ~apiLogType=None,
-      ~data=JSON.Encode.null,
-      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~paymentId="",
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=0.,
-      ~latency=0.,
-      ~version=nativeProp.sdkParams.sdkVersion,
-      (),
+    SdkLogger.logLifecycle(
+      ~event=CustomerRedirectStarted({
+        nextAction: "redirect_to_url",
+        redirectOrigin: reUri->LoggerUtils.urlOrigin,
+      }),
     )
     browserRedirectionHandler(
       ~nativeProp,
@@ -160,29 +121,13 @@ let handleDefaultPaymentFlows = (
       ~useEphemeralWebSession=true,
     )->ignore
 
-  | _statusVal =>
-    logWrapper(
-      ~logType=ERROR,
-      ~eventName=PAYMENT_FAILED,
-      ~url=reUri,
-      ~customLogUrl=GlobalHooks.getLoggingUrl(
-        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-          SdkTypes.defaultCustomEndpointsConfig,
-        ),
-        ~environment=nativeProp.hyperswitchConfig.environment,
-      ),
-      ~category=API,
-      ~statusCode="",
-      ~apiLogType=None,
-      ~data=JSON.Encode.null,
-      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~paymentId="",
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=0.,
-      ~latency=0.,
-      ~version=nativeProp.sdkParams.sdkVersion,
-      (),
+  | statusVal =>
+    SdkLogger.logLifecycle(
+      ~event=PaymentFailed({status: statusVal}),
+      ~details=[
+        ("error_message", error.message),
+        ("error_code", error.code),
+      ]->LoggerUtils.stringDetails,
     )
     errorCallback(~errorMessage=error)
     terminalStatusHandler()->ignore
@@ -570,29 +515,19 @@ let processRequest = async (
         )
       }
     | APPLE_PAY =>
+      let startedAt = Date.now()
+      SdkLogger.logFunction(
+        ~event=LaunchApplePay,
+        ~outcome=Started,
+        ~paymentMethod=Wallet(ApplePay),
+      )
       let timerId = setTimeout(() => {
-        logWrapper(
-          ~logType=DEBUG,
-          ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-          ~url="",
-          ~customLogUrl=GlobalHooks.getLoggingUrl(
-            ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-              SdkTypes.defaultCustomEndpointsConfig,
-            ),
-            ~environment=nativeProp.hyperswitchConfig.environment,
-          ),
-          ~category=API,
-          ~statusCode="",
-          ~apiLogType=None,
-          ~data=JSON.Encode.null,
-          ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-          ~paymentId="",
-          ~paymentMethod=None,
-          ~paymentExperience=None,
-          ~timestamp=0.,
-          ~latency=0.,
-          ~version=nativeProp.sdkParams.sdkVersion,
-          (),
+        SdkLogger.logFunction(
+          ~event=LaunchApplePay,
+          ~outcome=TimedOut,
+          ~startedAt,
+          ~timeoutMs=5000,
+          ~paymentMethod=Wallet(ApplePay),
         )
         headlessModule.exitHeadless(
           nativeProp.rootTag,
@@ -615,31 +550,18 @@ let processRequest = async (
         ->JSON.Encode.object
         ->JSON.stringify,
         var => {
+          SdkLogger.logFunction(
+            ~event=LaunchApplePay,
+            ~outcome=Done,
+            ~startedAt,
+            ~paymentMethod=Wallet(ApplePay),
+          )
           applePayCallback(var)->ignore
         },
         _ => {
-          logWrapper(
-            ~logType=DEBUG,
-            ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-            ~url="",
-            ~customLogUrl=GlobalHooks.getLoggingUrl(
-              ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-                SdkTypes.defaultCustomEndpointsConfig,
-              ),
-              ~environment=nativeProp.hyperswitchConfig.environment,
-            ),
-            ~category=API,
-            ~statusCode="",
-            ~apiLogType=None,
-            ~data=JSON.Encode.null,
-            ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-            ~paymentId="",
-            ~paymentMethod=None,
-            ~paymentExperience=None,
-            ~timestamp=0.,
-            ~latency=0.,
-            ~version=nativeProp.sdkParams.sdkVersion,
-            (),
+          SdkLogger.logLifecycle(
+            ~event=WalletStageReached({stage: SheetStarted}),
+            ~paymentMethod=Wallet(ApplePay),
           )
         },
         _ => {

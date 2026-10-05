@@ -5,7 +5,7 @@
 let make = (~props, ~rootTag, ~children) => {
   let nativeProp = SdkTypes.nativeJsonToRecord(props, rootTag)
   <NativePropContext nativeProp>
-    <LoggerContext>
+    <SdkLoggerSession>
       <SafeAreaContext>
         <ThemeContext appearance=nativeProp.configuration.appearance>
           <LocaleStringDataContext locale=nativeProp.configuration.locale>
@@ -19,6 +19,6 @@ let make = (~props, ~rootTag, ~children) => {
           </LocaleStringDataContext>
         </ThemeContext>
       </SafeAreaContext>
-    </LoggerContext>
+    </SdkLoggerSession>
   </NativePropContext>
 }

@@ -922,40 +922,25 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
 
 let useFetchDataFromS3WithGZipDecoding = () => {
   let apiFunction = APIUtils.fetchApi
-  let logger = LoggerHook.useLoggerHook()
   let baseUrl = GlobalHooks.useGetAssetUrlWithVersion()()
 
-  (~s3Path: string, ~decodeJsonToRecord, ~cache=false) => {
+  (~s3Path: string, ~decodeJsonToRecord, ~cache=false, ~event: SdkLogger.staticAssetEvent) => {
     let endpoint = if cache {
       `${baseUrl}${s3Path}`
     } else {
       let timestamp = Js.Date.now()->Float.toString
       `${baseUrl}${s3Path}?v=${timestamp}`
     }
-    logger(
-      ~logType=INFO,
-      ~value=`S3 API called - ${endpoint}`,
-      ~category=API,
-      ~eventName=S3_API,
-      (),
-    )
     let headers = Dict.make()
     headers->Dict.set("Accept-Encoding", "br, gzip")
-    apiFunction(~uri=endpoint, ~method_=#GET, ~headers, ~dontUseDefaultHeader=true)
+    SdkLogger.observeStaticAsset(~event, ~url=endpoint, ~call=() =>
+      apiFunction(~uri=endpoint, ~method_=#GET, ~headers, ~dontUseDefaultHeader=true)
+    )
     ->Promise.then(resp => resp->Fetch.Response.json)
     ->Promise.then(data => {
       let countryStaterecord = decodeJsonToRecord(data)
       Promise.resolve(Some(countryStaterecord))
     })
-    ->Promise.catch(_ => {
-      logger(
-        ~logType=ERROR,
-        ~value=`S3 API failed - ${endpoint}`,
-        ~category=API,
-        ~eventName=S3_API,
-        (),
-      )
-      Promise.resolve(None)
-    })
+    ->Promise.catch(_ => Promise.resolve(None))
   }
 }

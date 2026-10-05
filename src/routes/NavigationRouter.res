@@ -16,7 +16,6 @@ let make = () => {
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
   let error = ErrorHooks.useErrorWarningValidationOnLoad()
   let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
-  let logger = LoggerHook.useLoggerHook()
 
   let isDismissableSheet = switch nativeProp.sdkState {
   | PaymentSheet
@@ -30,12 +29,14 @@ let make = () => {
   }
 
   React.useEffect1(() => {
-    let launchTime = nativeProp.sdkParams.launchTime->Option.getOr(Date.now())
-    let latency = Date.now() -. launchTime
-    let appId = nativeProp.sdkParams.appId->Option.getOr("") ++ ".hyperswitch://"
-    logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
+    SdkLogger.logLifecycle(
+      ~event=AppRendered,
+      ~durationMs=?nativeProp.sdkParams.launchTime->Option.map(launchTime =>
+        Date.now() -. launchTime
+      ),
+    )
     error()
-    None
+    Some(SdkLogger.stopIdleTracking)
   }, [nativeProp])
 
   let sessionCredentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
