@@ -4,20 +4,26 @@ open Style
 @react.component
 let make = (~onScanCard, ~expireRef, ~cvvRef) => {
   let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
-  let logger = LoggerHook.useLoggerHook()
   let showAlert = AlertHook.useAlerts()
 
-  let scanCardCallback = (scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
+  let scanCardCallback = (~startedAt, scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
+    let logResult = (~outcome, result) =>
+      SdkLogger.logFunction(
+        ~event=LaunchScanCard,
+        ~outcome,
+        ~startedAt,
+        ~details=[("result", result->JSON.Encode.string)],
+        ~paymentMethod=Card,
+      )
     switch scanCardReturnType {
     | Succeeded(data) => {
         onScanCard(data.pan, `${data.expiryMonth} / ${data.expiryYear}`, expireRef, cvvRef)
-        logger(~logType=INFO, ~value="Succeeded", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+        logResult(~outcome=Done, "SUCCEEDED")
       }
-    | Cancelled =>
-      logger(~logType=WARNING, ~value="Cancelled", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+    | Cancelled => logResult(~outcome=Done, "CANCELLED")
     | Failed => {
         showAlert(~errorType="warning", ~message="Failed to scan card")
-        logger(~logType=ERROR, ~value="Failed", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+        logResult(~outcome=Failed, "FAILED")
       }
     | _ => showAlert(~errorType="warning", ~message="Failed to scan card")
     }
@@ -42,8 +48,10 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
         justifyContent: #center,
       })}
       onPress={_pressEvent => {
-        ScanCardModule.launchScanCard(scanCardCallback)
-        logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+        SdkLogger.logUser(~event=CardScanRequested, ~paymentMethod=Card)
+        let startedAt = Date.now()
+        SdkLogger.logFunction(~event=LaunchScanCard, ~outcome=Started, ~paymentMethod=Card)
+        ScanCardModule.launchScanCard(status => scanCardCallback(~startedAt, status))
       }}>
       <Icon name={"CAMERA"} height=26. width=26. fill=primaryColor />
     </CustomPressable>
