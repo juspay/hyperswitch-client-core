@@ -120,3 +120,28 @@ let errorWarning = {
   noData: NO_DATA(Error, Static("There is no customer default saved payment method data")),
   noPMLData: NO_PML_DATA(Error, Static("No Payment Method available")),
 }
+
+let merchantIssueOf = (key: errorKey): option<MerchantLogger.merchantIssue> =>
+  switch key {
+  | INVALID_PK(_) => Some(InvalidPublishableKey)
+  | DEPRECATED_LOADSTRIPE(_) => Some(DeprecatedMethod)
+  | REQUIRED_PARAMETER(_) => Some(MissingParameter)
+  | UNKNOWN_KEY(_) => Some(UnknownOptionKey)
+  | UNKNOWN_VALUE(_) => Some(UnsupportedOptionValue)
+  | TYPE_BOOL_ERROR(_) => Some(ExpectedBoolean)
+  | TYPE_STRING_ERROR(_) => Some(ExpectedString)
+  | INVALID_FORMAT(_) | INVALID_CL(_) => Some(MalformedValue)
+  | USED_CL(_) => Some(CalledAfterSessionEnd)
+  | NO_PML_DATA(_) => Some(ConnectorMisconfigured)
+  | NO_DATA(_) => None
+  }
+
+let logMerchantIssue = (key: errorKey, ~dynamicStr as param="") =>
+  key
+  ->merchantIssueOf
+  ->Option.forEach(issue =>
+    MerchantLogger.logMerchantIssue(
+      ~issue,
+      ~details=param === "" ? [] : [("param", param->JSON.Encode.string)],
+    )
+  )

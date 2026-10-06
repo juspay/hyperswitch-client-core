@@ -14,8 +14,46 @@ type walletStatus =
   | Failed(string)
   | Simulated
 
+let walletPaymentMethod = (walletType: SdkTypes.payment_method_type_wallet): option<
+  LoggerPaymentMethod.paymentMethod,
+> =>
+  switch walletType {
+  | GOOGLE_PAY => Some(Wallet(GooglePay))
+  | APPLE_PAY => Some(Wallet(ApplePay))
+  | PAYPAL => Some(Wallet(Paypal))
+  | SAMSUNG_PAY => Some(Wallet(SamsungPay))
+  | NONE => None
+  }
+
+// Every wallet sheet result is parsed here, so this is the single place it is logged.
+let logWalletResult = (walletType: SdkTypes.payment_method_type_wallet, status: walletStatus) =>
+  walletType
+  ->walletPaymentMethod
+  ->Option.forEach(paymentMethod =>
+    switch status {
+    | Success(_) => SdkLogger.logLifecycle(~event=WalletTokenReceived, ~paymentMethod)
+    | Cancelled => SdkLogger.logLifecycle(~event=WalletFlowExited, ~paymentMethod)
+    | Failed(_) =>
+      SdkLogger.logLifecycle(
+        ~event=WalletFlowFailed({
+          reason: switch walletType {
+          | PAYPAL => PaymentDataFailed
+          | _ => SheetFailed
+          },
+        }),
+        ~paymentMethod,
+      )
+    | Simulated =>
+      SdkLogger.logLifecycle(
+        ~event=WalletFlowFailed({reason: BrowserUnsupported}),
+        ~paymentMethod,
+        ~message="Apple Pay is not supported in Simulated Environment",
+      )
+    }
+  )
+
 let useProcessPayButtonResult = () => {
-  (walletType: SdkTypes.payment_method_type_wallet, var) => {
+  let parse = (walletType: SdkTypes.payment_method_type_wallet, var) => {
     switch walletType {
     | GOOGLE_PAY =>
       let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
@@ -148,5 +186,10 @@ let useProcessPayButtonResult = () => {
       }
     | _ => Cancelled
     }
+  }
+  (walletType, var) => {
+    let status = parse(walletType, var)
+    logWalletResult(walletType, status)
+    status
   }
 }

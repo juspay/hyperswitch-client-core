@@ -151,6 +151,91 @@ let eventDetails = (event): details =>
   ->Option.flatMap(payload => normalize("", payload)->JSON.Decode.object)
   ->Option.mapOr([], Dict.toArray)
 
+let maskAll = (_: string) => true
+let maskNone = (_: string) => false
+
+let redactedValue = text => (text === "" ? "***EMPTY***" : "***REDACTED***")->JSON.Encode.string
+
+let configSnapshot = (
+  config: JSON.t,
+  ~isSensitive: string => bool,
+  ~maxBytes=LoggerConfig.maxConfigBytes,
+): details => {
+  let budget = ref(maxBytes)
+  let truncated = ref(false)
+  let omitted = []
+  let charge = cost =>
+    cost <= budget.contents
+      ? {
+          budget := budget.contents - cost
+          true
+        }
+      : false
+  let omit = path => {
+    truncated := true
+    if omitted->Array.length < LoggerConfig.maxConfigOmitted {
+      omitted->Array.push(path->JSON.Encode.string)
+    }
+    None
+  }
+  let rec walk = (value, path, depth) =>
+    switch value->JSON.Decode.string {
+    | Some(text) => {
+        let text = isSensitive(path) ? redactedValue(text) : text->truncate->JSON.Encode.string
+        charge(text->JSON.Decode.string->Option.getOr("")->String.length + 2)
+          ? Some(text)
+          : omit(path)
+      }
+    | None =>
+      switch value->jsonKind {
+      | 1 => None
+      | 0 => charge(value->JSON.stringify->String.length) ? Some(value) : omit(path)
+      | _ if Type.typeof(value) === #function => None
+      | _ if depth >= LoggerConfig.maxConfigDepth =>
+        charge(9) ? Some("[depth]"->JSON.Encode.string) : omit(path)
+      | 2 if charge(2) => {
+          let items = value->asArray
+          let out = []
+          items->Array.forEachWithIndex((item, index) =>
+            if index < LoggerConfig.maxConfigArrayItems && charge(1) {
+              walk(item, path, depth + 1)->Option.forEach(item => out->Array.push(item))
+            }
+          )
+          if items->Array.length > LoggerConfig.maxConfigArrayItems {
+            omit(
+              `${path}[${(items->Array.length - LoggerConfig.maxConfigArrayItems)
+                  ->Int.toString} more]`,
+            )->ignore
+          }
+          Some(out->JSON.Encode.array)
+        }
+      | 3 if charge(2) => {
+          let out = Dict.make()
+          value
+          ->asDict
+          ->Dict.forEachWithKey((item, key) => {
+            let itemPath = path === "" ? key : `${path}.${key}`
+            if charge(key->String.length + 4) {
+              walk(item, itemPath, depth + 1)->Option.forEach(item => out->Dict.set(key, item))
+            } else {
+              omit(itemPath)->ignore
+            }
+          })
+          Some(out->JSON.Encode.object)
+        }
+      | _ => omit(path)
+      }
+    }
+  let snapshot = walk(config, "", 0)->Option.getOr(JSON.Encode.null)
+  truncated.contents
+    ? [
+        ("config", snapshot),
+        ("config_truncated", true->JSON.Encode.bool),
+        ("config_omitted", omitted->JSON.Encode.array),
+      ]
+    : [("config", snapshot)]
+}
+
 let mergeDetails = (~data: details, ~details: details): details => {
   let typedKeys = data->Array.map(((key, _)) => key)
   data->Array.concat(

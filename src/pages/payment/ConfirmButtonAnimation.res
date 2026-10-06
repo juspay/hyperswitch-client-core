@@ -1,7 +1,7 @@
 open ReactNative
 open Style
 @react.component
-let make = (~handlePress, ~paymentMethod, ~displayText="Pay Now", ()) => {
+let make = (~handlePress, ~displayText="Pay Now", ()) => {
   let localeObject = GetLocale.useGetLocalObj()
 
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
@@ -11,14 +11,6 @@ let make = (~handlePress, ~paymentMethod, ~displayText="Pay Now", ()) => {
     buttonBorderRadius,
     buttonBorderWidth,
   } = ThemebasedStyle.useThemeBasedStyle()
-  React.useEffect0(() => {
-    SdkLogger.logState(
-      ~event=PayButtonMounted,
-      ~details=[("payment_method_type", paymentMethod->JSON.Encode.string)],
-    )
-    None
-  })
-
   <View style={s({alignItems: #center})}>
     <Space height=10. />
     <CustomButton

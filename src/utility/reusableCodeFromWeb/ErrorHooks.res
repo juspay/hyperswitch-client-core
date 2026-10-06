@@ -1,6 +1,7 @@
 let useShowErrorOrWarning = () => {
   let customAlert = AlertHook.useAlerts()
   (inputKey: ErrorUtils.errorKey, ~dynamicStr="", ()) => {
+    inputKey->ErrorUtils.logMerchantIssue(~dynamicStr)
     let (type_, str) = switch inputKey {
     | INVALID_PK(var) => var
     | DEPRECATED_LOADSTRIPE(var) => var

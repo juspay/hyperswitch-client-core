@@ -166,15 +166,82 @@ let useExitWidget = () => {
   }
 }
 
-let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) => {
-  Native.startApplePay("", startCallback)
-  Native.presentApplePay("", presentCallback)
-  Native.launchApplePay(requestObj, callback)
-}
+let applePayStatus = (result: Dict.t<JSON.t>) =>
+  result->Dict.get("status")->Option.flatMap(JSON.Decode.string)
 
-let launchGPay = (requestObj: string, callback) => {
-  Native.launchGPay(requestObj, callback)
-}
+let applePayFailure = result =>
+  switch result->applePayStatus {
+  | Some(("Failed" | "Error") as status) =>
+    Some(LoggerUtils.summary(~name=`APPLE_PAY_${status}`->LoggerUtils.screamingSnakeCase))
+  | _ => None
+  }
+
+let applePayDetails = result => [("status", result->applePayStatus)]->LoggerUtils.stringDetails
+
+// The promise only feeds the logger; native callbacks still run synchronously.
+let launchApplePay = (requestObj: string, callback, startCallback, presentCallback) =>
+  SdkLogger.observeFunction(
+    ~event=LaunchApplePay,
+    ~timeoutMs=LoggerConfig.userGatedTimeoutMs,
+    ~failureOf=applePayFailure,
+    ~detailsOf=applePayDetails,
+    ~paymentMethod=Wallet(ApplePay),
+    ~call=() =>
+      Promise.make((resolve, _) => {
+        Native.startApplePay(
+          "",
+          result => {
+            SdkLogger.logLifecycle(
+              ~event=WalletStageReached({stage: SheetStarted}),
+              ~paymentMethod=Wallet(ApplePay),
+            )
+            startCallback(result)
+          },
+        )
+        Native.presentApplePay("", presentCallback)
+        Native.launchApplePay(
+          requestObj,
+          result => {
+            resolve(result)
+            callback(result)
+          },
+        )
+      }),
+  )->ignore
+
+let googlePayError = (result: Dict.t<JSON.t>) =>
+  result->Dict.get("error")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
+
+// The native error text can quote the payment data, so only its kind is logged.
+let googlePayFailure = result =>
+  switch result->googlePayError {
+  | "" | "Cancel" => None
+  | _ => Some(LoggerUtils.summary(~name="GOOGLE_PAY_FAILED"))
+  }
+
+let googlePayDetails = result => [
+  ("status", (result->googlePayError === "Cancel" ? "cancelled" : "success")->JSON.Encode.string),
+]
+
+// The promise only feeds the logger; native callbacks still run synchronously.
+let launchGPay = (requestObj: string, callback) =>
+  SdkLogger.observeFunction(
+    ~event=LaunchGooglePay,
+    ~timeoutMs=LoggerConfig.userGatedTimeoutMs,
+    ~failureOf=googlePayFailure,
+    ~detailsOf=googlePayDetails,
+    ~paymentMethod=Wallet(GooglePay),
+    ~call=() =>
+      Promise.make((resolve, _) =>
+        Native.launchGPay(
+          requestObj,
+          result => {
+            resolve(result)
+            callback(result)
+          },
+        )
+      ),
+  )->ignore
 
 let updateWidgetHeight = (height: int) => {
   Native.updateWidgetHeight(height)

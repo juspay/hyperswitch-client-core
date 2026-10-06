@@ -265,6 +265,7 @@ let useRedirectHook = () => {
       ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
       (),
     )
+    let loggedPaymentMethod = body->LoggerPaymentMethod.fromRequestBody
 
     let handleInvokeThreeDSFlow = (~nextAction) => {
       let netceteraSDKApiKey = nativeProp.configuration.netceteraSDKApiKey->Option.getOr("")
@@ -295,13 +296,25 @@ let useRedirectHook = () => {
     }
 
     let handleThirdPartySDKSessionFlow = (~nextAction) => {
-      // TODO: add event loggers for analytics
       let session_token = Option.getOr(nextAction, defaultNextAction).session_token
       let openProps = getOpenProps(retrievePayment, responseCallback, errorCallback)
+      let paymentMethod = LoggerPaymentMethod.OpenBanking(Plaid)
       switch session_token {
       | Some(token) =>
-        Plaid.create({token: token.open_banking_session_token})
-        Plaid.open_(openProps)->ignore
+        SdkLogger.observeFunction(~event=PlaidCreate, ~paymentMethod, ~call=() =>
+          Plaid.create({token: token.open_banking_session_token})
+        )
+        Plaid.open_({
+          ...openProps,
+          onSuccess: SdkLogger.observeFunctionCallback(
+            ~event=OnSuccess,
+            ~paymentMethod,
+            ~callback=openProps.onSuccess,
+          ),
+          onExit: ?openProps.onExit->Option.map(callback =>
+            SdkLogger.observeFunctionCallback(~event=OnExit, ~paymentMethod, ~callback)
+          ),
+        })->ignore
       | None => ()
       }
     }
@@ -315,14 +328,9 @@ let useRedirectHook = () => {
 
     let handleDefaultPaymentFlows = (~status, ~reUri, ~error: error) => {
       let terminalStatusHandler = () => {status, message: "", code: "", type_: ""}
-      let loggedPaymentMethod = body->LoggerPaymentMethod.fromRequestBody
 
       switch status {
       | "succeeded" =>
-        SdkLogger.logLifecycle(
-          ~event=PaymentSucceeded({status: status}),
-          ~paymentMethod=?loggedPaymentMethod,
-        )
         responseCallback(~paymentStatus=PaymentSuccess, ~status=terminalStatusHandler())
 
       | "requires_capture"
@@ -349,15 +357,7 @@ let useRedirectHook = () => {
           ~paymentMethod,
         )->ignore
 
-      | statusVal =>
-        SdkLogger.logLifecycle(
-          ~event=PaymentFailed({status: statusVal}),
-          ~details=[
-            ("error_message", error.message),
-            ("error_code", error.code),
-          ]->LoggerUtils.stringDetails,
-          ~paymentMethod=?loggedPaymentMethod,
-        )
+      | _ =>
         errorCallback(~errorMessage=error, ~closeSDK=true, ())
         terminalStatusHandler()->ignore
       }
@@ -368,8 +368,29 @@ let useRedirectHook = () => {
         (nextAction->Option.getOr(defaultNextAction)).ddc_data->Option.getOr(
           DdcTypes.defaultDdcData,
         )
+      if iframeUrl === "" {
+        SdkLogger.logLifecycle(
+          ~event=DdcFailed({reason: MissingUrl}),
+          ~paymentMethod=?loggedPaymentMethod,
+        )
+      } else {
+        SdkLogger.logLifecycle(~event=DdcStarted, ~paymentMethod=?loggedPaymentMethod)
+      }
+      let startedAt = Date.now()
       HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
         if rawMessage === "" {
+          // Native answers "" both on its timeout and when the bridge fails early.
+          if iframeUrl !== "" {
+            if Date.now() -. startedAt >= timeoutMs->Int.toFloat {
+              SdkLogger.logLifecycle(~event=DdcTimedOut, ~paymentMethod=?loggedPaymentMethod)
+            } else {
+              SdkLogger.logLifecycle(
+                ~event=DdcFailed({reason: UnreadableResponse}),
+                ~paymentMethod=?loggedPaymentMethod,
+                ~message="DDC bridge closed without a message before the timeout",
+              )
+            }
+          }
           errorCallback(
             ~errorMessage={
               status: "failed",
@@ -381,7 +402,16 @@ let useRedirectHook = () => {
             (),
           )
         } else {
-          let parsed = rawMessage->JSON.parseExn->Utils.getDictFromJson
+          let json = try rawMessage->JSON.parseExn catch {
+          | exn =>
+            SdkLogger.logLifecycle(
+              ~event=DdcFailed({reason: UnreadableResponse}),
+              ~exn,
+              ~paymentMethod=?loggedPaymentMethod,
+            )
+            LoggerRuntime.rethrow(exn)
+          }
+          let parsed = json->Utils.getDictFromJson
           let nextActionType =
             parsed
             ->Dict.get("next_action")
@@ -398,6 +428,7 @@ let useRedirectHook = () => {
             ->Option.getOr("")
           switch nextActionType {
           | "redirect_to_url" if redirectUrl !== "" =>
+            SdkLogger.logLifecycle(~event=DdcCompleted, ~paymentMethod=?loggedPaymentMethod)
             if (
               redirectUrl->String.includes("status=succeeded") ||
               redirectUrl->String.includes("status=processing") ||
@@ -416,6 +447,13 @@ let useRedirectHook = () => {
             ) {
               redirectionFailureHandler(~errorCallback)
             } else {
+              SdkLogger.logLifecycle(
+                ~event=CustomerRedirectStarted({
+                  nextAction: "redirect_to_url",
+                  redirectOrigin: redirectUrl->LoggerUtils.urlOrigin,
+                }),
+                ~paymentMethod=?loggedPaymentMethod,
+              )
               browserRedirectionHandler(
                 ~clientSecret,
                 ~publishableKey,
@@ -426,6 +464,13 @@ let useRedirectHook = () => {
               )->ignore
             }
           | _ =>
+            let reason: SdkLogger.ddcFailure =
+              nextActionType === "redirect_to_url" ? MissingRedirectUrl : InvalidNextAction
+            SdkLogger.logLifecycle(
+              ~event=DdcFailed({reason: reason}),
+              ~details=[("next_action", nextActionType->JSON.Encode.string)],
+              ~paymentMethod=?loggedPaymentMethod,
+            )
             errorCallback(
               ~errorMessage={
                 status: "failed",
@@ -471,17 +516,37 @@ let useEligibilityCheckHook = () => {
         ->Dict.fromArray
         ->JSON.Encode.object
         ->JSON.stringify
-      APIUtils.fetchApi(
-        ~uri,
-        ~bodyStr=body,
-        ~method_=#POST,
-        ~headers=Utils.getHeader(
-          ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
-          ~appId=nativeProp.sdkParams.appId,
-          ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
-          (),
-        ),
-      )->Promise.then(response => response->Fetch.Response.json)
+      SdkLogger.observeApi(
+        ~event=PaymentMethodEligibility,
+        ~url=uri,
+        ~failureOf=LoggerUtils.httpBodyFailure,
+        ~detailsOf=LoggerUtils.httpBodyDetails,
+        ~details=body->LoggerUtils.payloadDetails,
+        ~call=async () => {
+          let response = await APIUtils.fetchApi(
+            ~uri,
+            ~bodyStr=body,
+            ~method_=#POST,
+            ~headers=Utils.getHeader(
+              ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
+              ~appId=nativeProp.sdkParams.appId,
+              ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
+              (),
+            ),
+          )
+          let data = await response->Fetch.Response.json
+          (response, data)
+        },
+      )
+      ->Promise.then(((_, data)) => Promise.resolve(data))
+      ->Promise.catch(exn => {
+        SdkLogger.logLifecycle(
+          ~event=EligibilityCheckFailed,
+          ~details=[("check", paymentMethodType->JSON.Encode.string)],
+          ~exn,
+        )
+        LoggerRuntime.rethrow(exn)
+      })
     }
   }
 }

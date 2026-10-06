@@ -44,21 +44,13 @@ let usePayment = (
     (),
   ) => {
     if WebKit.platform === #ios {
-      let startedAt = Date.now()
-      SdkLogger.logFunction(
-        ~event=LaunchApplePay,
-        ~outcome=Started,
-        ~paymentMethod=Wallet(ApplePay),
-      )
       let timerId = setTimeout(() => {
         setLoading(FillingDetails)
         showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-        SdkLogger.logFunction(
-          ~event=LaunchApplePay,
-          ~outcome=TimedOut,
-          ~startedAt,
-          ~timeoutMs=5000,
+        SdkLogger.logLifecycle(
+          ~event=WalletFlowFailed({reason: SheetFailed}),
           ~paymentMethod=Wallet(ApplePay),
+          ~message="Apple Pay sheet was not presented within 5 s",
         )
       }, 5000)
       HyperModule.launchApplePay(
@@ -69,21 +61,8 @@ let usePayment = (
         ->Dict.fromArray
         ->JSON.Encode.object
         ->JSON.stringify,
-        var => {
-          SdkLogger.logFunction(
-            ~event=LaunchApplePay,
-            ~outcome=Done,
-            ~startedAt,
-            ~paymentMethod=Wallet(ApplePay),
-          )
-          applePayResponseHandler(var)
-        },
-        _ => {
-          SdkLogger.logLifecycle(
-            ~event=WalletStageReached({stage: SheetStarted}),
-            ~paymentMethod=Wallet(ApplePay),
-          )
-        },
+        applePayResponseHandler,
+        _ => (),
         _ => {
           clearTimeout(timerId)
         },
@@ -108,11 +87,6 @@ let usePayment = (
     ) => unit,
     (),
   ) => {
-    SdkLogger.logFunction(
-      ~event=LaunchSamsungPay,
-      ~outcome=Started,
-      ~paymentMethod=Wallet(SamsungPay),
-    )
     SamsungPayModule.presentSamsungPayPaymentSheet(samsungPayResponseHandler)
   }
 

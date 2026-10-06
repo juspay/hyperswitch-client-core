@@ -193,6 +193,9 @@ let make = (~children) => {
     setInitialValueCountry(_ => country)
   }, [setInitialValueCountry])
 
+  // Tab forms re-resolve their fields on every render; log each method's fields once.
+  let loggedFieldMethods = React.useRef(Set.make())
+
   let getRequiredFieldsForTabs = (
     paymentMethodData: ClientResponseType.paymentMethodEnabled,
     formData,
@@ -238,6 +241,53 @@ let make = (~children) => {
       configParams,
       intentData,
     )
+
+    let fieldsKey = `${paymentMethodData.payment_method_str}|${paymentMethodData.payment_method_type}`
+    if (
+      isScreenFocus &&
+      superpositionConfig.raw_configs->Option.isSome &&
+      !(loggedFieldMethods.current->Set.has(fieldsKey))
+    ) {
+      loggedFieldMethods.current->Set.add(fieldsKey)
+      SdkLogger.logState(
+        ~event=DynamicFieldsChanged,
+        ~paymentMethod=?LoggerPaymentMethod.fromPair(
+          ~method=paymentMethodData.payment_method_str,
+          ~methodType=paymentMethodData.payment_method_type,
+        ),
+        ~details=[
+          ("superposition_base_context", configParams->LoggerUtils.anyToJson),
+          ("eligible_connectors", eligibleConnectors->JSON.Encode.array),
+          ("field_count", missingRequiredFields->Array.length->JSON.Encode.int),
+          (
+            "fields",
+            missingRequiredFields
+            ->Array.map(field =>
+              [
+                ("field_type", (field.fieldRenderType :> string)->JSON.Encode.string),
+                ("write_path", field.confirmRequestWritePath->JSON.Encode.string),
+                (
+                  "intent_data_read_path",
+                  field.intentDataReadPath->Option.mapOr(JSON.Null, JSON.Encode.string),
+                ),
+                ("is_required", field.isRequired->JSON.Encode.bool),
+                (
+                  "validation_rule_type",
+                  field.validationRuleType->Option.mapOr(JSON.Null, JSON.Encode.string),
+                ),
+                (
+                  "validation_regex_pattern",
+                  field.validationRegexPattern->Option.mapOr(JSON.Null, JSON.Encode.string),
+                ),
+              ]
+              ->Dict.fromArray
+              ->JSON.Encode.object
+            )
+            ->JSON.Encode.array,
+          ),
+        ],
+      )
+    }
 
     let initialValues = applyCountryDefaults(
       ~missingRequiredFields,

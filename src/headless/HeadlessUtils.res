@@ -161,6 +161,7 @@ let retrieveAPICall = (nativeProp: SdkTypes.nativeProp) => {
 }
 
 let errorOnApiCalls = (inputKey: ErrorUtils.errorKey, ~dynamicStr="") => {
+  inputKey->ErrorUtils.logMerchantIssue(~dynamicStr)
   let (type_, str) = switch inputKey {
   | INVALID_PK(var) => var
   | DEPRECATED_LOADSTRIPE(var) => var

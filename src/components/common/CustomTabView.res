@@ -17,6 +17,29 @@ module MemoizedScene = {
   let make = React.memo(Scene.make)
 }
 
+// A hoc carries only payment_method_type, which some methods share (e.g. "ach" under
+// bank_debit and bank_transfer); the logged payment method is set only when it is unambiguous.
+let logPaymentMethodSelected = (
+  hoc: AllApiDataModifier.hoc,
+  clientData: option<ClientResponseType.clientResponse>,
+) =>
+  switch clientData
+  ->Option.mapOr([], data => data.payment_methods_enabled)
+  ->Array.filter(method => method.payment_method_type === hoc.paymentMethodType) {
+  | [] => ()
+  | [{payment_method_str, payment_method_type}] =>
+    SdkLogger.logUser(
+      ~event=PaymentMethodSelected({
+        method: payment_method_str === "card" ? payment_method_str : payment_method_type,
+      }),
+      ~paymentMethod=?LoggerPaymentMethod.fromPair(
+        ~method=payment_method_str,
+        ~methodType=payment_method_type,
+      ),
+    )
+  | _ => SdkLogger.logUser(~event=PaymentMethodSelected({method: hoc.paymentMethodType}))
+  }
+
 @react.component
 let make = (
   ~hocComponentArr: array<AllApiDataModifier.hoc>=[],
@@ -24,10 +47,23 @@ let make = (
   ~setConfirmButtonData,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  let (clientData, _, _) = React.useContext(AllApiDataContextNew.allApiDataContext)
   let layout = nativeProp.configuration.paymentMethodLayout
 
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
+  // The pager can report the same index more than once per change; log each change once.
+  // Refs keep the callback identity as stable as it was before logging.
+  let loggedIndex = React.useRef(0)
+  let selectionSource = React.useRef((hocComponentArr, clientData))
+  selectionSource.current = (hocComponentArr, clientData)
   let setIndexInFocus = React.useCallback1(index => {
+    if index !== loggedIndex.current {
+      loggedIndex.current = index
+      let (hocComponentArr, clientData) = selectionSource.current
+      hocComponentArr
+      ->Array.get(index)
+      ->Option.forEach(hoc => hoc->logPaymentMethodSelected(clientData))
+    }
     setIndexInFocus(_ => index)
   }, [setIndexInFocus])
 

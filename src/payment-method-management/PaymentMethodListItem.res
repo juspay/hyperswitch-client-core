@@ -109,7 +109,24 @@ let make = (
   | None => false
   }
 
+  let handleSelect = _ => {
+    SdkLogger.logUser(
+      ~event=SavedMethodSelected({requiresCvv: pmDetails.requires_cvv, isCardExpired}),
+      ~paymentMethod=?LoggerPaymentMethod.fromPair(
+        ~method=pmDetails.payment_method_type,
+        ~methodType=pmDetails.payment_method_subtype,
+      ),
+    )
+    onSelect(pmDetails.payment_method_token)
+  }
+
+  let handleManage = _ => {
+    SdkLogger.logUser(~event=ViewOpened({view: ManageSavedMethod}))
+    onManage(pmDetails.payment_method_token)
+  }
+
   let handleDelete = _ => {
+    SdkLogger.logUser(~event=SavedMethodDeleteRequested)
     deletePaymentMethod(~paymentMethodToken=pmDetails.payment_method_token)
     ->Promise.then(res => {
       if res->ErrorUtils.isError || res == JSON.Encode.null {
@@ -123,6 +140,7 @@ let make = (
   }
 
   let handleUpdate = _ => {
+    SdkLogger.logUser(~event=SavedMethodUpdateRequested)
     setIsUpdating(_ => true)
     let cardDetails =
       [
@@ -151,7 +169,7 @@ let make = (
       borderBottomWidth: isLast ? 0. : 0.8,
       borderBottomColor: component.borderColor,
     })}>
-    <CustomPressable onPress={_ => onSelect(pmDetails.payment_method_token)}>
+    <CustomPressable onPress=handleSelect>
       <View style={s({flexDirection: #row, flexWrap: #nowrap, alignItems: #center})}>
         <View style={s({opacity: isCardExpired ? 0.7 : 1.})}>
           <CustomRadioButton selected=isActive color=primaryColor />
@@ -172,7 +190,7 @@ let make = (
                   </CustomPressable>
                 </>
               : React.null
-          : <CustomPressable onPress={_ => onManage(pmDetails.payment_method_token)}>
+          : <CustomPressable onPress=handleManage>
               <Icon name={"manage"} height=18. width=18. />
             </CustomPressable>}
       </View>

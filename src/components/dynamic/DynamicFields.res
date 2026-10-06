@@ -65,7 +65,10 @@ let make = (
           | _ => localeObject.savePaymentDetails
           }}
           isSelected=isSaveDetailsSelected
-          setIsSelected=setIsSaveDetailsSelected
+          setIsSelected={enabled => {
+            SdkLogger.logUser(~event=FieldToggled({field: "save_details", enabled}))
+            setIsSaveDetailsSelected(enabled)
+          }}
           textType={ModalText}
         />
       </ReactNative.View>
@@ -113,7 +116,10 @@ let make = (
             updateIconName=Some("checkboxNotClicked")
             text=localeObject.saveCardDetails
             isSelected=isNicknameSelected
-            setIsSelected=setIsNicknameSelected
+            setIsSelected={enabled => {
+              SdkLogger.logUser(~event=FieldToggled({field: "save_details", enabled}))
+              setIsNicknameSelected(enabled)
+            }}
             textType={ModalText}
             // disableScreenSwitch=true
           />

@@ -138,8 +138,6 @@ let make = (
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message=`Samsung Pay Error, Please try again ${error_message}`)
     }
-
-    SdkLogger.logFunction(~event=LaunchSamsungPay, ~outcome=Done, ~paymentMethod=Wallet(SamsungPay))
   }
 
   let confirmApplePay = (var: dict<JSON.t>) => {
@@ -222,6 +220,13 @@ let make = (
         } else {
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+          SdkLogger.logLifecycle(
+            ~event=WalletFlowFailed({
+              reason: ConnectorUnsupported,
+              connector: ?Some(sessionObject.connector)->Utils.getNonEmptyOption,
+            }),
+            ~paymentMethod=Wallet(Paypal),
+          )
         }
       | APPLE_PAY =>
         if (
@@ -230,23 +235,18 @@ let make = (
         ) {
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Waiting for Sessions API")
-        } else {
-          let startedAt = Date.now()
-          SdkLogger.logFunction(
-            ~event=LaunchApplePay,
-            ~outcome=Started,
+          SdkLogger.logLifecycle(
+            ~event=WalletFlowFailed({reason: ClientUnavailable}),
             ~paymentMethod=Wallet(ApplePay),
           )
-
+        } else {
           let timerId = setTimeout(() => {
             setLoading(FillingDetails)
             showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-            SdkLogger.logFunction(
-              ~event=LaunchApplePay,
-              ~outcome=TimedOut,
-              ~startedAt,
-              ~timeoutMs=5000,
+            SdkLogger.logLifecycle(
+              ~event=WalletFlowFailed({reason: SheetFailed}),
               ~paymentMethod=Wallet(ApplePay),
+              ~message="Apple Pay sheet was not presented within 5 s",
             )
           }, 5000)
 
@@ -258,21 +258,8 @@ let make = (
             ->Dict.fromArray
             ->JSON.Encode.object
             ->JSON.stringify,
-            var => {
-              SdkLogger.logFunction(
-                ~event=LaunchApplePay,
-                ~outcome=Done,
-                ~startedAt,
-                ~paymentMethod=Wallet(ApplePay),
-              )
-              confirmApplePay(var)
-            },
-            _ => {
-              SdkLogger.logLifecycle(
-                ~event=WalletStageReached({stage: SheetStarted}),
-                ~paymentMethod=Wallet(ApplePay),
-              )
-            },
+            confirmApplePay,
+            _ => (),
             _ => {
               clearTimeout(timerId)
             },

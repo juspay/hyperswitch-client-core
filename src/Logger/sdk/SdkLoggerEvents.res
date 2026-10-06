@@ -2,143 +2,487 @@ open! LoggerTypes
 
 // Lifecycle
 
-type walletStage = SheetStarted
+type walletStage =
+  | ConfirmRequestReceived
+  | OneClickDeclined
+  | SheetStarted
 
-type vaultFailure = TokenizationFailed
+type walletFlow =
+  | Normal
+  | Delayed
+  | ThirdParty
+  | PaypalSdkTabs
+
+type walletFailure =
+  | MissingIntent
+  | MissingCurrency
+  | MissingNonce
+  | ConnectorUnsupported
+  | ClientUnavailable
+  | BrowserUnsupported
+  | PaymentsNotAllowed
+  | ClientCreationFailed
+  | AvailabilityCheckFailed
+  | ListenerSetupFailed
+  | MessageHandlingFailed
+  | PaymentDataFailed
+  | SdkMountFailed
+  | SheetFailed
+
+type vaultFailure =
+  | FieldBindingFailed
+  | FieldMountFailed
+  | FieldUpdateFailed
+  | FieldUnmountFailed
+  | FormCreationFailed
+  | TokenizationFailed
+
+type threeDsMethodFailure =
+  | MissingContainer
+  | FormSubmitFailed
+  | IframeLoadFailed
+
+type threeDsPopupFailure = MessageHandlingFailed
+
+type ddcFailure =
+  | MissingUrl
+  | MissingRedirectUrl
+  | InvalidNextAction
+  | UnreadableResponse
 
 type walletStageData = {stage: walletStage, connector?: string}
+
+type walletFlowData = {flow: walletFlow, connector?: string}
+
+type walletFailureData = {reason: walletFailure, connector?: string}
 
 type vaultFailureData = {reason: vaultFailure}
 
 type transStatusData = {transStatus: string}
 
+type threeDsMethodFailureData = {reason: threeDsMethodFailure}
+
+type threeDsPopupFailureData = {reason: threeDsPopupFailure}
+
+type ddcFailureData = {reason: ddcFailure}
+
 type paymentOutcomeData = {status: string, manualRetryAllowed?: bool}
 
+type bankAuthSyncFailureData = {status: string}
+
 type customerRedirectData = {nextAction: string, redirectMode?: string, redirectOrigin: string}
+
+type nextActionFailureData = {nextAction: string, recovered: bool}
+
+type unknownPaymentMethodData = {value: string}
+
+type unsupportedConnectorData = {connector: string}
+
+type paymentStatusUnknownData = {inferred: bool}
+
+type validationFailureData = {reason: string}
+
+type blockedOperation =
+  | PaymentConfirm
+  | PaymentSync
+  | PaymentCompleteAuthorize
+  | PaymentPostSessionTokens
+  | PaymentMethodSave
+  | PaymentMethodUpdate
+  | IntentUpdate
+
+type operationBlockedData = {operation: blockedOperation, reason: string}
+
+type paymentMethodSaveOperation =
+  | Save
+  | Update
+
+type paymentMethodSaveData = {operation: paymentMethodSaveOperation}
+
+type paymentMethodSaveOutcomeData = {operation: paymentMethodSaveOperation, status: string}
+
+type retryExhaustionData = {operation: string, attempts: int}
 
 type sdkClosedData = {status: string}
 
 type idleData = {idleMs: int}
 
 type lifecycleEvent =
+  | ElementIframeMounted
+  | ElementInitReceived
   | AppRendered
   | PaymentAttempted
   | PaymentSucceeded(paymentOutcomeData)
   | PaymentFailed(paymentOutcomeData)
   | PaymentRejected
+  | PaymentStatusUnknown(paymentStatusUnknownData)
+  | PaymentRetriesExhausted(retryExhaustionData)
+  | PaymentErrorHandlingFailed
+  | PaymentStatusPollExhausted
+  | PaymentMethodSaveRejected(paymentMethodSaveData)
+  | PaymentMethodSaveSucceeded(paymentMethodSaveOutcomeData)
+  | PaymentMethodSaveFailed(paymentMethodSaveOutcomeData)
+  | OperationBlocked(operationBlockedData)
+  | FormValidationFailed(validationFailureData)
+  | WalletFlowResolved(walletFlowData)
   | WalletStageReached(walletStageData)
+  | WalletFlowFailed(walletFailureData)
+  | WalletFlowExited
+  | WalletTokenReceived
   | VaultFlowFailed(vaultFailureData)
+  | BankAuthSyncFailed(bankAuthSyncFailureData)
+  | BankAuthConnectorUnsupported(unsupportedConnectorData)
   | CustomerRedirectStarted(customerRedirectData)
+  | NextActionUnsupported(nextActionFailureData)
+  | ThreeDsPopupRequested
+  | ThreeDsPopupFailed(threeDsPopupFailureData)
   | ThreeDsChallengeShown(transStatusData)
   | ThreeDsFrictionlessResolved(transStatusData)
+  | ThreeDsAuthContainerMissing(transStatusData)
   | ThreeDsAuthRequestFailed
+  | ThreeDsMethodStarted
+  | ThreeDsMethodCompleted
+  | ThreeDsMethodSkipped
+  | ThreeDsMethodFailed(threeDsMethodFailureData)
+  | ThreeDsMethodTimedOut
+  | DdcStarted
+  | DdcCompleted
+  | DdcFailed(ddcFailureData)
+  | DdcTimedOut
+  | QrCodeShown
+  | QrCodeExpired
+  | VoucherShown
+  | BankTransferShown
+  | PaymentMethodUnresolved(unknownPaymentMethodData)
+  | CountryDataServedFromBundle
+  | CountryDataUnavailable
+  | EligibilityCheckCancelled
+  | EligibilityCheckFailed
+  // Mobile only
   | ThreeDsSdkUnavailable
   | SdkClosed(sdkClosedData)
   | CustomerWentIdle(idleData)
 
-let vaultFailureSeverity = (reason): severity =>
+let walletFailureSeverity = (reason: walletFailure): severity =>
   switch reason {
-  | TokenizationFailed => Error
+  | BrowserUnsupported => Debug
+  | MissingIntent
+  | MissingCurrency
+  | ConnectorUnsupported
+  | PaymentsNotAllowed
+  | ClientCreationFailed
+  | AvailabilityCheckFailed
+  | ListenerSetupFailed
+  | SdkMountFailed =>
+    Warning
+  | MissingNonce
+  | ClientUnavailable
+  | MessageHandlingFailed
+  | PaymentDataFailed
+  | SheetFailed =>
+    Error
   }
 
-let lifecycleSeverity = (value): severity =>
+let threeDsMethodFailureSeverity = (reason: threeDsMethodFailure): severity =>
+  switch reason {
+  | MissingContainer | FormSubmitFailed => Error
+  | IframeLoadFailed => Warning
+  }
+
+let vaultFailureSeverity = (reason: vaultFailure): severity =>
+  switch reason {
+  | FieldBindingFailed
+  | FieldMountFailed
+  | FormCreationFailed
+  | FieldUpdateFailed
+  | FieldUnmountFailed
+  | TokenizationFailed =>
+    Error
+  }
+
+let lifecycleSeverity = (value: lifecycleEvent): severity =>
   switch value {
-  | WalletStageReached(_) => Debug
+  | ElementIframeMounted
+  | WalletFlowResolved(_)
+  | WalletStageReached(_)
+  | ThreeDsPopupRequested
+  | ThreeDsMethodStarted
+  | ThreeDsMethodCompleted
+  | ThreeDsMethodSkipped
+  | DdcStarted
+  | DdcCompleted
+  | CountryDataServedFromBundle
+  | EligibilityCheckCancelled =>
+    Debug
+  | SdkClosed(_) | CustomerWentIdle(_) => Info
+  | ThreeDsSdkUnavailable => Warning
+  | ElementInitReceived
   | AppRendered
   | PaymentAttempted
   | PaymentSucceeded(_)
   | PaymentFailed(_)
+  | PaymentMethodSaveSucceeded(_)
+  | PaymentMethodSaveFailed(_)
+  | WalletTokenReceived
   | CustomerRedirectStarted(_)
   | ThreeDsChallengeShown(_)
   | ThreeDsFrictionlessResolved(_)
-  | SdkClosed(_)
-  | CustomerWentIdle(_) =>
+  | QrCodeShown
+  | VoucherShown
+  | BankTransferShown =>
     Info
-  | ThreeDsSdkUnavailable => Warning
-  | PaymentRejected | ThreeDsAuthRequestFailed => Error
+  | ThreeDsMethodTimedOut
+  | DdcTimedOut
+  | BankAuthConnectorUnsupported(_)
+  | PaymentMethodUnresolved(_)
+  | PaymentStatusUnknown(_)
+  | WalletFlowExited
+  | QrCodeExpired
+  | OperationBlocked(_)
+  | PaymentStatusPollExhausted
+  | FormValidationFailed(_)
+  | EligibilityCheckFailed =>
+    Warning
+  | PaymentRetriesExhausted(_) => Error
+  | PaymentErrorHandlingFailed
+  | PaymentMethodSaveRejected(_)
+  | PaymentRejected
+  | ThreeDsAuthContainerMissing(_)
+  | ThreeDsAuthRequestFailed
+  | BankAuthSyncFailed(_)
+  | CountryDataUnavailable
+  | DdcFailed(_) =>
+    Error
+  | ThreeDsPopupFailed(_) => Error
+  | NextActionUnsupported({recovered}) => recovered ? Warning : Error
   | VaultFlowFailed({reason}) => reason->vaultFailureSeverity
+  | WalletFlowFailed({reason}) => reason->walletFailureSeverity
+  | ThreeDsMethodFailed({reason}) => reason->threeDsMethodFailureSeverity
   }
 
 // State
 
-type stateEvent =
-  | CardCoBadgeDetected
-  | PayButtonMounted
+type cardFormScope = PaymentForm | VaultForm
 
-let stateSeverity = (value): severity =>
+type loaderState = Loading | SemiLoaded | Loaded | LoadFailed
+
+type networkData = {online: bool}
+
+type cardFormData = {scope: cardFormScope}
+
+type cardFieldData = {scope: cardFormScope, field: string}
+
+type loaderSource = IframeMount | PaymentMethodsList | SdkConfigs
+
+type loaderData = {state: loaderState, source: loaderSource}
+
+type clickToPayViewData = {view: string}
+
+type updateIntentData = {inProgress: bool}
+
+type formCompletionData = {savedMethod: bool}
+
+type merchantControlData = {control: string}
+
+type stateEvent =
+  | NetworkStatusChanged(networkData)
+  | ElementOptionsChanged
+  | LoaderStateChanged(loaderData)
+  | CardFormCreated(cardFormData)
+  | CardFormDestroyed(cardFormData)
+  | CardFieldCreated(cardFieldData)
+  | CardFieldUnmounted(cardFieldData)
+  | CardCoBadgeDetected
+  | MerchantControlReceived(merchantControlData)
+  | DynamicFieldsChanged
+  | PaymentFormCompleted(formCompletionData)
+  | UpdateIntentProgressChanged(updateIntentData)
+  | ClickToPayViewChanged(clickToPayViewData)
+
+let stateSeverity = (value: stateEvent): severity =>
   switch value {
-  | PayButtonMounted => Info
-  | CardCoBadgeDetected => Debug
+  | LoaderStateChanged({state: LoadFailed}) => Error
+  | LoaderStateChanged({state: Loaded}) => Info
+  | NetworkStatusChanged({online}) => online ? Debug : Warning
+  | LoaderStateChanged(_)
+  | ElementOptionsChanged
+  | CardFormCreated(_)
+  | CardFormDestroyed(_)
+  | CardFieldCreated(_)
+  | CardFieldUnmounted(_)
+  | CardCoBadgeDetected
+  | MerchantControlReceived(_)
+  | DynamicFieldsChanged
+  | PaymentFormCompleted(_)
+  | UpdateIntentProgressChanged(_)
+  | ClickToPayViewChanged(_) =>
+    Debug
   }
 
 // User
 
-type openedView = CardSchemeMenu
+type view =
+  | SavedMethodList
+  | MorePaymentMethods
+  | InstallmentOptions
 
-type submitSource = PayButton
+type openedView =
+  | NewPaymentMethods
+  | ManageSavedMethod
+  | ClickToPayIdentityChange
+  | CardSchemeMenu
+
+type submitSource =
+  | PayButton
+  | SaveCardButton
+  | MerchantApi
+
+type verificationSource =
+  | ClickToPayOtp
+  | ClickToPayIdentity
 
 type fieldData = {field: string}
+
+type fieldToggleData = {field: string, enabled: bool}
+
+type methodData = {method: string}
+
+type savedMethodSelectionData = {requiresCvv: bool, isCardExpired: bool}
+
+type viewData = {view: view, expanded: bool}
 
 type openedViewData = {view: openedView}
 
 type submitData = {source: submitSource}
 
+type verificationData = {
+  source: verificationSource,
+  provider: option<string>,
+}
+
 type userEvent =
+  | PaymentMethodSelected(methodData)
+  | CardSchemeSelected(methodData)
+  | SavedMethodSelected(savedMethodSelectionData)
+  | SavedMethodUpdateRequested
+  | SavedMethodDeleteRequested
   | PaymentSubmitted(submitData)
+  | CustomerVerificationSubmitted(verificationData)
+  | BankDetailsConfirmed
   | ExpressCheckoutClicked
-  | CardScanRequested
+  | VoucherDownloadRequested
+  | QrCodeCopyRequested
+  | ThreeDsPopupDismissed
+  | ClickToPayOtpResendRequested
+  | FieldToggled(fieldToggleData)
   | FieldFocused(fieldData)
   | FieldBlurred(fieldData)
+  | ViewToggled(viewData)
   | ViewOpened(openedViewData)
+  // Mobile only
+  | CardScanRequested
 
-let userSeverity = (value): severity =>
+let userSeverity = (value: userEvent): severity =>
   switch value {
+  | PaymentMethodSelected(_)
+  | CardSchemeSelected(_)
+  | SavedMethodSelected(_)
+  | SavedMethodUpdateRequested
+  | SavedMethodDeleteRequested
   | PaymentSubmitted(_)
+  | CustomerVerificationSubmitted(_)
   | ExpressCheckoutClicked
+  | ThreeDsPopupDismissed
+  | VoucherDownloadRequested
+  | QrCodeCopyRequested
+  | BankDetailsConfirmed
+  | ClickToPayOtpResendRequested
   | CardScanRequested =>
     Info
+  | FieldToggled(_)
   | FieldFocused(_)
   | FieldBlurred(_)
+  | ViewToggled(_)
   | ViewOpened(_) =>
     Debug
   }
 
 // Api
 
+type vaultTokenizeScope =
+  | SaveCardCvc
+  | FullCard
+
+type vaultTokenizeData = {scope: vaultTokenizeScope}
+
 type apiEvent =
   | RetrievePaymentIntent
   | ConfirmCall
+  | ConfirmPayoutCall
+  | CompleteAuthorize
   | PostSessionTokens
   | Sessions
   | Authentication
-  | ThreeDsAuthorize
   | PollStatus
   | PaymentMethodsList
+  | CreateCustomerPaymentMethods
+  | RetrievePaymentMethodSession
   | SavePaymentMethod
   | UpdatePaymentMethod
   | DeletePaymentMethod
+  | PaymentMethodEligibility
+  | PaymentMethodsAuthLink
+  | PaymentMethodsAuthExchange
+  | TaxCalculation
   | ClientList
+  | VaultTokenization(vaultTokenizeData)
+  // Mobile only
+  | ThreeDsAuthorize
 
-let apiSeverity = value =>
+let apiSeverity = (value: apiEvent) =>
   switch value {
   | Sessions
+  | TaxCalculation
+  | PaymentMethodEligibility
   | PollStatus => softFailure
   | RetrievePaymentIntent
   | ConfirmCall
+  | ConfirmPayoutCall
+  | CompleteAuthorize
   | PostSessionTokens
   | Authentication
-  | ThreeDsAuthorize
   | PaymentMethodsList
+  | CreateCustomerPaymentMethods
+  | RetrievePaymentMethodSession
   | SavePaymentMethod
   | UpdatePaymentMethod
   | DeletePaymentMethod
-  | ClientList => defaultSeverity
+  | PaymentMethodsAuthLink
+  | PaymentMethodsAuthExchange
+  | ClientList
+  | VaultTokenization(_)
+  | ThreeDsAuthorize => defaultSeverity
   }
 
 // Function
 
 type functionEvent =
+  | LoadPaymentSheet
+  | LoadPaymentData
+  | IsReadyToPay
+  | FinishApplePaymentV2
+  | ExecuteGooglePayment
+  | BraintreeClientCreate
+  | BraintreeApplePayCreate
+  | KlarnaInit
+  | KlarnaLoad
+  | PaypalButtonsRender
+  | PlaidCreate
+  | VaultFormCreate
+  // Mobile only
   | LaunchApplePay
+  | LaunchGooglePay
+  | LaunchPaypal
   | LaunchSamsungPay
   | LaunchScanCard
   | InitialiseNetcetera
@@ -146,10 +490,23 @@ type functionEvent =
   | ReceiveChallengeParams
   | GenerateChallenge
 
-let functionSeverity = value =>
+let functionSeverity = (value: functionEvent) =>
   switch value {
-  | LaunchScanCard => quietSuccessSoftFailure
+  | IsReadyToPay | LaunchScanCard => quietSuccessSoftFailure
+  | LoadPaymentSheet
+  | LoadPaymentData
+  | FinishApplePaymentV2
+  | ExecuteGooglePayment
+  | BraintreeClientCreate
+  | BraintreeApplePayCreate
+  | KlarnaInit
+  | KlarnaLoad
+  | PaypalButtonsRender
+  | PlaidCreate
+  | VaultFormCreate
   | LaunchApplePay
+  | LaunchGooglePay
+  | LaunchPaypal
   | LaunchSamsungPay
   | InitialiseNetcetera
   | GenerateAreqParams
@@ -157,15 +514,109 @@ let functionSeverity = value =>
   | GenerateChallenge => quietSuccess
   }
 
+// Function callback
+
+type functionCallbackEvent =
+  | OnValidateMerchant
+  | OnPaymentAuthorized
+  | OnShippingContactSelected
+  | OnCancel
+  | OnPaymentDataChanged
+  | CreateOrder
+  | CreateBillingAgreement
+  | OnApprove
+  | OnShippingAddressChange
+  | OnError
+  | OnClick
+  | OnLoad
+  | OnSuccess
+  | OnExit
+
+let functionCallbackSeverity = (value: functionCallbackEvent) =>
+  switch value {
+  | OnShippingContactSelected
+  | OnShippingAddressChange
+  | OnPaymentDataChanged
+  | OnClick
+  | OnCancel
+  | OnExit
+  | OnLoad => quietSuccessSoftFailure
+  | OnValidateMerchant
+  | OnPaymentAuthorized
+  | CreateOrder
+  | CreateBillingAgreement
+  | OnApprove
+  | OnSuccess
+  | OnError => quietSuccess
+  }
+
+// Resource
+
+type resourceEvent =
+  | GooglePayScript
+  | SamsungPayScript
+  | ApplePayScript
+  | PaypalScript
+  | PazeScript
+  | KlarnaScript
+  | TrustpayScript
+  | BraintreeClientScript
+  | BraintreeApplePayScript
+  | PmAuthConnectorScript
+  | VaultScript
+  | FontStylesheet
+
+let resourceSeverity = (value: resourceEvent) =>
+  switch value {
+  | VaultScript => quietSuccess
+  | GooglePayScript
+  | SamsungPayScript
+  | ApplePayScript
+  | PaypalScript
+  | PazeScript
+  | KlarnaScript
+  | TrustpayScript
+  | BraintreeClientScript
+  | BraintreeApplePayScript
+  | PmAuthConnectorScript
+  | FontStylesheet => quietSuccessSoftFailure
+  }
+
 // Static asset
 
 type staticAssetEvent =
   | CountryStateData
-  | LocaleStrings
+  | CountryStateDataFallback
   | SdkConfigs
+  // Mobile only
+  | LocaleStrings
 
-let staticAssetSeverity = value =>
+let staticAssetSeverity = (value: staticAssetEvent) =>
   switch value {
   | SdkConfigs => quietSuccess
   | CountryStateData | LocaleStrings => quietAll
+  | CountryStateDataFallback => quietSuccessSoftFailure
+  }
+
+// Crash
+
+type crashOrigin =
+  | ErrorBoundary
+  | UncaughtError
+  | UnhandledRejection
+  | EntryPoint
+  | ElementConstructor
+  | ParentWindowMessage
+  | MerchantCallback
+
+let crashSeverity = (origin: crashOrigin): severity =>
+  switch origin {
+  | ErrorBoundary
+  | UncaughtError
+  | UnhandledRejection
+  | EntryPoint
+  | ElementConstructor
+  | ParentWindowMessage
+  | MerchantCallback =>
+    Error
   }

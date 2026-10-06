@@ -30,7 +30,6 @@ let make = (~confirmButtonData) => {
     <ConfirmButton
       loading=confirmButtonData.loading
       handlePress=confirmButtonData.handlePress
-      paymentMethod=confirmButtonData.payment_method_type
       errorText=confirmButtonData.errorText
     />
   </UIUtils.RenderIf>

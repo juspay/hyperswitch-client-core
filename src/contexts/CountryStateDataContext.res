@@ -44,7 +44,12 @@ module WrapperProvider = {
             Promise.resolve()
           }
         })
-        ->Promise.catch(_ => {
+        ->Promise.catch(exn => {
+          if initialData.countries->Array.length > 0 {
+            SdkLogger.logLifecycle(~event=CountryDataServedFromBundle)
+          } else {
+            SdkLogger.logLifecycle(~event=CountryDataUnavailable, ~exn)
+          }
           setState(_ => Localdata(initialData))
           Promise.resolve()
         })

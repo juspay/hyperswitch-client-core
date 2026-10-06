@@ -38,7 +38,12 @@ let make = (
         updateIconName={Some("cardv1")}
         text=localeObject.addPaymentMethodLabel
         isSelected=showSavedView
-        setIsSelected=setShowSavedView
+        setIsSelected={value => {
+          if !value {
+            SdkLogger.logUser(~event=ViewOpened({view: NewPaymentMethods}))
+          }
+          setShowSavedView(value)
+        }}
         textType={TextWrapper.LinkTextBold}
         size=24.
       />

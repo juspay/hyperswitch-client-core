@@ -3,17 +3,48 @@ open ThreeDsUtils
 open SdkStatusMessages
 let isInitialisedPromiseRef = ref(None)
 
+let netceteraFailure = (status: statusType) =>
+  status->isStatusSuccess
+    ? None
+    : Some(
+        LoggerUtils.summary(
+          ~name=switch status.status {
+          | "" => "UNKNOWN_STATUS"
+          | status => status->LoggerUtils.screamingSnakeCase
+          },
+          ~message=status.message,
+        ),
+      )
+
+// Netcetera reports failures as a returned status, so the logger classifies it
+// instead of waiting for a rejection.
+let observeNetcetera = (~event, ~details=?, ~timeoutMs=?, ~statusOf, ~call) =>
+  SdkLogger.observeFunction(
+    ~event,
+    ~details?,
+    ~timeoutMs?,
+    ~failureOf=result => result->statusOf->netceteraFailure,
+    ~detailsOf=result => [("status", (result->statusOf).status->JSON.Encode.string)],
+    ~paymentMethod=Card,
+    ~call,
+  )
+
 let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
   switch isInitialisedPromiseRef.contents {
   | Some(promiseVal) => promiseVal
   | None => {
-      let promiseVal = Promise.make((resolve, _reject) => {
-        Netcetera3dsModule.initialiseNetceteraSDK(
-          netceteraSDKApiKey,
-          sdkEnvironment->sdkEnvironmentToStrMapper,
-          status => resolve(status),
-        )
-      })
+      let promiseVal = observeNetcetera(
+        ~event=InitialiseNetcetera,
+        ~statusOf=status => status,
+        ~call=() =>
+          Promise.make((resolve, _reject) => {
+            Netcetera3dsModule.initialiseNetceteraSDK(
+              netceteraSDKApiKey,
+              sdkEnvironment->sdkEnvironmentToStrMapper,
+              status => resolve(status),
+            )
+          }),
+      )
 
       isInitialisedPromiseRef := Some(promiseVal)
       promiseVal
@@ -21,28 +52,9 @@ let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
   }
 }
 
-let logNetceteraStatus = (~event, ~startedAt, ~details=[], status: statusType) => {
-  let succeeded = status->isStatusSuccess
-  SdkLogger.logFunction(
-    ~event,
-    ~outcome=succeeded ? Done : Failed,
-    ~startedAt,
-    ~details=details->Array.concat([("status", status.status->JSON.Encode.string)]),
-    ~paymentMethod=Card,
-    ~message=?succeeded ? None : Some(status.message),
-  )
-}
-
 let useInitNetcetera = () => {
   (~netceteraSDKApiKey, ~sdkEnvironment: GlobalVars.envType) => {
-    let startedAt = Date.now()
-    SdkLogger.logFunction(~event=InitialiseNetcetera, ~outcome=Started, ~paymentMethod=Card)
-    initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
-    ->Promise.then(promiseVal => {
-      logNetceteraStatus(~event=InitialiseNetcetera, ~startedAt, promiseVal)
-      Promise.resolve(promiseVal)
-    })
-    ->ignore
+    initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)->ignore
   }
 }
 
@@ -76,6 +88,9 @@ let useExternalThreeDs = () => {
       ~onPollCompletion: (~isFinalRetrieve: bool=?) => unit,
     ) => {
       if pollCount >= pollConfig.frequency {
+        if pollCount > 0 {
+          SdkLogger.logLifecycle(~event=PaymentStatusPollExhausted, ~paymentMethod=Card)
+        }
         onPollCompletion()
       } else {
         setLoading(ProcessingPayments)
@@ -158,7 +173,8 @@ let useExternalThreeDs = () => {
         }->ignore
         Promise.resolve()
       })
-      ->Promise.catch(_ => {
+      ->Promise.catch(exn => {
+        SdkLogger.logLifecycle(~event=PaymentErrorHandlingFailed, ~exn, ~paymentMethod=Card)
         onFailure(retrievePaymentStatus.apiCallFailure)
         Promise.resolve()
       })
@@ -196,43 +212,40 @@ let useExternalThreeDs = () => {
       ->Promise.catch(_ => Promise.resolve(true))
     }
 
-    let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
+    let sendChallengeParamsAndGenerateChallenge = async (~challengeParams) => {
       let threeDSRequestorAppURL = Utils.getReturnUrl(
         ~appId,
         ~appURL=challengeParams.threeDSRequestorAppURL,
         ~useAppUrl=true,
       )
-      Promise.make((resolve, reject) => {
-        let startedAt = Date.now()
-        SdkLogger.logFunction(~event=ReceiveChallengeParams, ~outcome=Started, ~paymentMethod=Card)
-        Netcetera3dsModule.recieveChallengeParamsFromRN(
-          challengeParams.acsSignedContent,
-          challengeParams.acsRefNumber,
-          challengeParams.acsTransactionId,
-          challengeParams.threeDSServerTransId,
-          status => {
-            logNetceteraStatus(
-              ~event=ReceiveChallengeParams,
-              ~startedAt,
-              ~details=[("requestor_app_url", threeDSRequestorAppURL)]->LoggerUtils.stringDetails,
-              status,
+      let status = await observeNetcetera(
+        ~event=ReceiveChallengeParams,
+        ~details=[("requestor_app_url", threeDSRequestorAppURL)]->LoggerUtils.stringDetails,
+        ~statusOf=status => status,
+        ~call=() =>
+          Promise.make((resolve, _reject) => {
+            Netcetera3dsModule.recieveChallengeParamsFromRN(
+              challengeParams.acsSignedContent,
+              challengeParams.acsRefNumber,
+              challengeParams.acsTransactionId,
+              challengeParams.threeDSServerTransId,
+              resolve,
+              threeDSRequestorAppURL,
             )
-            if status->isStatusSuccess {
-              let startedAt = Date.now()
-              SdkLogger.logFunction(~event=GenerateChallenge, ~outcome=Started, ~paymentMethod=Card)
-              Netcetera3dsModule.generateChallenge(status => {
-                logNetceteraStatus(~event=GenerateChallenge, ~startedAt, status)
-
-                resolve()
-              })
-            } else {
-              retrieveAndShowStatus()
-              reject()
-            }
-          },
-          threeDSRequestorAppURL,
+          }),
+      )
+      if status->isStatusSuccess {
+        let _ = await observeNetcetera(
+          ~event=GenerateChallenge,
+          ~timeoutMs=LoggerConfig.userGatedTimeoutMs,
+          ~statusOf=status => status,
+          ~call=() =>
+            Promise.make((resolve, _reject) => Netcetera3dsModule.generateChallenge(resolve)),
         )
-      })
+      } else {
+        retrieveAndShowStatus()
+        Exn.raiseError("Netcetera rejected the challenge parameters")
+      }
     }
 
     let hsThreeDsAuthCall = (aReqParams: aReqParams) => {
@@ -291,29 +304,23 @@ let useExternalThreeDs = () => {
     }
 
     let startNetcetera3DSFlow = () => {
-      let startedAt = Date.now()
-      SdkLogger.logFunction(~event=InitialiseNetcetera, ~outcome=Started, ~paymentMethod=Card)
       initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
       ->Promise.then(statusInfo => {
-        logNetceteraStatus(~event=InitialiseNetcetera, ~startedAt, statusInfo)
-
         if statusInfo->isStatusSuccess {
-          Promise.make((resolve, _reject) => {
-            let startedAt = Date.now()
-            SdkLogger.logFunction(~event=GenerateAreqParams, ~outcome=Started, ~paymentMethod=Card)
-            Netcetera3dsModule.generateAReqParams(
-              threeDsData.messageVersion,
-              threeDsData.directoryServerId,
-              (status, aReqParams) => {
-                logNetceteraStatus(~event=GenerateAreqParams, ~startedAt, status)
-                if status->isStatusSuccess {
-                  resolve(Make3DsCall(aReqParams))
-                } else {
-                  resolve(RetrieveAgain)
-                }
-              },
-            )
-          })
+          observeNetcetera(
+            ~event=GenerateAreqParams,
+            ~statusOf=((status, _)) => status,
+            ~call=() =>
+              Promise.make((resolve, _reject) => {
+                Netcetera3dsModule.generateAReqParams(
+                  threeDsData.messageVersion,
+                  threeDsData.directoryServerId,
+                  (status, aReqParams) => resolve((status, aReqParams)),
+                )
+              }),
+          )->Promise.thenResolve(((status, aReqParams)) =>
+            status->isStatusSuccess ? Make3DsCall(aReqParams) : RetrieveAgain
+          )
         } else {
           Promise.resolve(RetrieveAgain)
         }

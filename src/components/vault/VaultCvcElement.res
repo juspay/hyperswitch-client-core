@@ -73,6 +73,12 @@ let make = (
   }
 
   let onFormError = (error: JSON.t) => {
+    SdkLogger.logLifecycle(
+      ~event=VaultFlowFailed({reason: FormCreationFailed}),
+      ~exn=error->Exn.anyToExnInternal,
+      ~details=[("vault", vaultDetails.vaultTypeStr->JSON.Encode.string)],
+      ~paymentMethod=Card,
+    )
     setFormValid(formId, false)
     let msg =
       error

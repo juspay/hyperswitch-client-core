@@ -42,6 +42,17 @@ let make = (~setConfirmButtonData) => {
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
   let notifyNotReady = UseWidgetActions.useNotifyNotReady()
+  let loggedPaymentMethod = LoggerPaymentMethod.fromPair(
+    ~method=payment_method_str,
+    ~methodType=payment_method_type,
+  )
+  let logValidationFailure = () =>
+    SdkLogger.logLifecycle(
+      ~event=FormValidationFailed({
+        reason: PaymentConfirmTypes.formValidationError.message->Option.getOr(""),
+      }),
+      ~paymentMethod=?loggedPaymentMethod,
+    )
 
   let (formData, setFormDataState) = React.useState(_ => Dict.make())
 
@@ -205,6 +216,7 @@ let make = (~setConfirmButtonData) => {
         | None => ()
         }
         setShowErrors(vaultFormId, true)
+        logValidationFailure()
         notifyValidationFailure()
       }
     | _ =>
@@ -219,6 +231,7 @@ let make = (~setConfirmButtonData) => {
         | Some(methods) => methods.submit()
         | None => ()
         }
+        logValidationFailure()
         notifyValidationFailure()
       }
     }
@@ -232,6 +245,7 @@ let make = (~setConfirmButtonData) => {
     ~hasRequiredFields=missingRequiredFields->Array.length > 0,
     ~isFormValid=effectiveFormValid,
     ~isPristine,
+    ~paymentMethod=?loggedPaymentMethod,
   )
 
   let credentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)

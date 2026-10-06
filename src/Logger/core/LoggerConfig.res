@@ -25,3 +25,8 @@ let minimumRank = 0
 @inline let maxRowTextLength = 1024
 @inline let maxDetailBytes = 8192
 @inline let maxPayloadFields = 120
+
+@inline let maxConfigBytes = 2048
+@inline let maxConfigDepth = 6
+@inline let maxConfigArrayItems = 20
+@inline let maxConfigOmitted = 10

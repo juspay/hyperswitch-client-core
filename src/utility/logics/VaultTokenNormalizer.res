@@ -139,3 +139,40 @@ let normalizeSavedCardTokenizeResult = (result: VaultBindings.tokenizeResult): o
       | None => refuse("vgs: echo lacks card_cvc")
       },
   )
+
+let tokenizationFailure = (status, result) =>
+  status === "success"
+    ? None
+    : Some(
+        result
+        ->LoggerUtils.summarizeErrorResponse
+        ->Option.getOr(LoggerUtils.summary(~name=status->LoggerUtils.screamingSnakeCase)),
+      )
+
+let observeTokenization = (~scope, ~vault=?, ~statusOf, call) => {
+  let event = SdkLogger.VaultTokenization({scope: scope})
+  let details = vault->Option.mapOr([], vault => [("vault", vault->JSON.Encode.string)])
+  let startedAt = Date.now()
+  let tokenization = call()
+  SdkLogger.logApi(~event, ~outcome=Started, ~details, ~paymentMethod=Card)
+  tokenization
+  ->Promise.thenResolve(result =>
+    switch tokenizationFailure(result->statusOf, result) {
+    | None => SdkLogger.logApi(~event, ~outcome=Done, ~details, ~startedAt, ~paymentMethod=Card)
+    | Some(error) =>
+      SdkLogger.logApi(
+        ~event,
+        ~outcome=Failed,
+        ~details=details->Array.concat(error->LoggerUtils.errorDetails),
+        ~startedAt,
+        ~paymentMethod=Card,
+      )
+    }
+  )
+  ->Promise.catch(exn => {
+    SdkLogger.logApi(~event, ~outcome=Failed, ~details, ~startedAt, ~exn, ~paymentMethod=Card)
+    Promise.resolve()
+  })
+  ->ignore
+  tokenization
+}

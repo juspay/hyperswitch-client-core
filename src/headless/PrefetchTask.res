@@ -93,7 +93,7 @@ let make = (~props, ~rootTag) => {
   let nativeProp = SdkTypes.nativeJsonToRecord(props, rootTag)
 
   <NativePropContext nativeProp>
-    <SdkLoggerSession>
+    <SdkLoggerSession props>
       <Runner />
     </SdkLoggerSession>
   </NativePropContext>

@@ -108,6 +108,15 @@ let make = () => {
       ? None
       : Some(localeObject.inCompleteCVCErrorText)
 
+  let logCvcValidationFailure = () =>
+    SdkLogger.logLifecycle(
+      ~event=FormValidationFailed({
+        reason: cvcNumber == ""
+          ? localeObject.enterFieldsText
+          : localeObject.enterValidDetailsText,
+      }),
+    )
+
   let handleCvcConfirm = _ => {
     setIsCvcSubmitting(_ => true)
     let cardDetails =
@@ -116,6 +125,14 @@ let make = () => {
     ->Promise.then(res => {
       setIsCvcSubmitting(_ => false)
       if res->ErrorUtils.isError || res == JSON.Encode.null {
+        if res->ErrorUtils.isError {
+          SdkLogger.logLifecycle(
+            ~event=PaymentMethodSaveRejected({operation: Update}),
+            ~failure=res,
+            ~details=res->LoggerUtils.intentErrorDetails,
+            ~paymentMethod=Card,
+          )
+        }
         handleSuccessFailure(
           ~apiResStatus={
             type_: "payment_method_session",
@@ -127,6 +144,27 @@ let make = () => {
         )
       } else {
         let dict = res->Utils.getDictFromJson
+        switch dict
+        ->Utils.getObj("authentication_details", Dict.make())
+        ->Utils.getString("status", "") {
+        | "succeeded" as status =>
+          SdkLogger.logLifecycle(
+            ~event=PaymentMethodSaveSucceeded({operation: Update, status}),
+            ~paymentMethod=Card,
+          )
+        | "failed" as status =>
+          SdkLogger.logLifecycle(
+            ~event=PaymentMethodSaveFailed({operation: Update, status}),
+            ~paymentMethod=Card,
+          )
+        | "" =>
+          SdkLogger.logLifecycle(
+            ~event=PaymentStatusUnknown({inferred: true}),
+            ~paymentMethod=Card,
+            ~message="Empty authentication status in payment method session response; treated as succeeded",
+          )
+        | _ => ()
+        }
         handleSuccessFailure(
           ~apiResStatus={
             type_: "payment_method_session",
@@ -158,10 +196,14 @@ let make = () => {
       | None => handleCvcConfirm()
       | Some(error) => {
           setCvcError(_ => Some(error))
+          logCvcValidationFailure()
           notifyValidationFailure()
         }
       }
     } else {
+      SdkLogger.logLifecycle(
+        ~event=FormValidationFailed({reason: localeObject.selectPaymentMethodText}),
+      )
       notifyValidationFailure()
     }
 
@@ -173,6 +215,7 @@ let make = () => {
         switch actionData.actionType {
         | ConfirmPayment =>
           if actionData.rootTag == nativeProp.rootTag {
+            SdkLogger.logUser(~event=PaymentSubmitted({source: MerchantApi}))
             confirmActionRef.current()
           }
         | ConfirmCvcPayment => ()
@@ -293,16 +336,21 @@ let make = () => {
         text={"Save card"}
         loadingText="Saving"
         buttonState={isAddSaving || isCvcSubmitting ? LoadingButton : Normal}
-        onPress={_ =>
+        onPress={_ => {
+          SdkLogger.logUser(~event=PaymentSubmitted({source: SaveCardButton}))
           if isAddScreen {
             addConfirmRef.current->Option.map(save => save())->Option.getOr()
           } else {
             switch validateCvc() {
             | None => handleCvcConfirm()
 
-            | Some(error) => setCvcError(_ => Some(error))
+            | Some(error) => {
+                setCvcError(_ => Some(error))
+                logCvcValidationFailure()
+              }
             }
-          }}
+          }
+        }}
       />
     </View>
 

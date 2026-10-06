@@ -28,6 +28,14 @@ let make = (
     fontScale,
   } = ThemebasedStyle.useThemeBasedStyle()
   let fontFamily = FontFamily.useCustomFontFamily()
+  let onFocus = event => {
+    SdkLogger.logUser(~event=FieldFocused({field: elementType}))
+    onFocus(event)
+  }
+  let onBlur = event => {
+    SdkLogger.logUser(~event=FieldBlurred({field: elementType}))
+    onBlur(event)
+  }
   let animatedValue = AnimatedValue.useAnimatedValue(0.)
   let lifted = active || !empty
   React.useEffect1(() => {

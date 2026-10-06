@@ -39,10 +39,43 @@ let dictToPaypalCallbackStatus = (result: paypalCallbackResult) => {
   }
 }
 
-let launchPayPal = (requestObj: string, callback: paypalCallbackStatus => unit) => {
-  try {
-    launchPayPalMod(requestObj, data => callback(data->dictToPaypalCallbackStatus))
-  } catch {
-  | _ => callback(Failed("PayPal module not available"))
+let paypalFailure = status =>
+  switch status {
+  | Failed(message) =>
+    Some(LoggerUtils.summary(~name="PAYPAL_FAILED", ~message=message->LoggerUtils.truncate))
+  | Succeeded(_) | Cancelled => None
   }
-}
+
+// Logs only the outcome, never the order or payer ids.
+let paypalDetails = status => [
+  (
+    "status",
+    switch status {
+    | Succeeded(_) => "success"
+    | Cancelled => "cancelled"
+    | Failed(_) => "failed"
+    }->JSON.Encode.string,
+  ),
+]
+
+// The promise only feeds the logger; native callbacks still run synchronously.
+let launchPayPal = (requestObj: string, callback: paypalCallbackStatus => unit) =>
+  SdkLogger.observeFunction(
+    ~event=LaunchPaypal,
+    ~timeoutMs=LoggerConfig.userGatedTimeoutMs,
+    ~failureOf=paypalFailure,
+    ~detailsOf=paypalDetails,
+    ~paymentMethod=Wallet(Paypal),
+    ~call=() =>
+      Promise.make((resolve, _) => {
+        let callback = status => {
+          resolve(status)
+          callback(status)
+        }
+        try {
+          launchPayPalMod(requestObj, data => callback(data->dictToPaypalCallbackStatus))
+        } catch {
+        | _ => callback(Failed("PayPal module not available"))
+        }
+      }),
+  )->ignore

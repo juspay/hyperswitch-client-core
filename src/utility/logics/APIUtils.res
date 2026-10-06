@@ -49,6 +49,37 @@ let fetchApi = (
   })
 }
 
+// Web's terminal-outcome rule, applied to every confirm or retrieve response the backend accepted.
+let logPaymentOutcome = (data, ~event: SdkLogger.apiEvent) =>
+  LoggerUtils.safeRun(() => {
+    let dict = data->Utils.getDictFromJson
+    let status = dict->Utils.getString("status", "")
+    let outcome: SdkLogger.paymentOutcomeData = {
+      status,
+      manualRetryAllowed: dict->Utils.getBool("manual_retry_allowed", false),
+    }
+    let paymentMethod = LoggerPaymentMethod.fromPair(
+      ~method=dict->Utils.getString("payment_method", ""),
+      ~methodType=dict->Utils.getString("payment_method_type", ""),
+    )
+    switch (status, event) {
+    | ("succeeded", _) => SdkLogger.logLifecycle(~event=PaymentSucceeded(outcome), ~paymentMethod?)
+    | ("failed", _) =>
+      SdkLogger.logLifecycle(
+        ~event=PaymentFailed(outcome),
+        ~details=data->LoggerUtils.intentErrorDetails,
+        ~paymentMethod?,
+      )
+    | ("", ConfirmCall | PostSessionTokens) =>
+      SdkLogger.logLifecycle(
+        ~event=PaymentStatusUnknown({inferred: false}),
+        ~paymentMethod?,
+        ~message="Payment response had an empty status",
+      )
+    | _ => ()
+    }
+  })
+
 let handleApiCall = async (
   ~uri,
   ~body=?,
@@ -61,7 +92,7 @@ let handleApiCall = async (
 ) => {
   let bodyStr = body->Option.getOr("")
   let isIntentCall = switch event {
-  | ConfirmCall | RetrievePaymentIntent => true
+  | ConfirmCall | RetrievePaymentIntent | PostSessionTokens => true
   | _ => false
   }
   let paymentMethod = switch event {
@@ -83,6 +114,9 @@ let handleApiCall = async (
       },
     )
     if response->Fetch.Response.ok {
+      if isIntentCall {
+        data->logPaymentOutcome(~event)
+      }
       processSuccess(data)
     } else {
       if event == ConfirmCall {

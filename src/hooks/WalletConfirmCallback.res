@@ -17,6 +17,13 @@ let useWalletConfirmCallback = () => {
         if shouldProceed {
           onProceed()
         } else {
+          SdkLogger.logLifecycle(
+            ~event=WalletStageReached({stage: OneClickDeclined}),
+            ~paymentMethod=?switch paymentMethodType {
+            | "" | "wallet" => None
+            | methodType => LoggerPaymentMethod.fromPair(~method="wallet", ~methodType)
+            },
+          )
           onAbort()
         }
       })

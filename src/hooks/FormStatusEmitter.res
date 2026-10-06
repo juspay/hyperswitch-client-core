@@ -5,6 +5,7 @@ let useFormStatusEmitter = (
   ~hasRequiredFields: bool,
   ~isFormValid: bool,
   ~isPristine: bool,
+  ~paymentMethod: option<LoggerPaymentMethod.paymentMethod>=?,
 ) => {
   let emitter = PaymentEvents.usePaymentEventEmitter()
   let prevStatusRef = React.useRef(None)
@@ -30,4 +31,20 @@ let useFormStatusEmitter = (
       None
     }
   }, (isFocused, hasRequiredFields, isFormValid, isPristine))
+
+  let isComplete = !hasRequiredFields || isFormValid
+  let wasComplete = React.useRef(false)
+  let sawIncomplete = React.useRef(false)
+
+  React.useEffect2(() => {
+    if isFocused {
+      if !isComplete {
+        sawIncomplete.current = true
+      } else if !wasComplete.current && sawIncomplete.current {
+        SdkLogger.logState(~event=PaymentFormCompleted({savedMethod: false}), ~paymentMethod?)
+      }
+    }
+    wasComplete.current = isComplete
+    None
+  }, (isComplete, isFocused))
 }

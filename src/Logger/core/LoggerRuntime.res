@@ -306,7 +306,6 @@ let emitPhase = (
   ~data=?,
   ~details=?,
   ~startedAt=?,
-  ~timeoutMs=?,
   ~exn=?,
   ~paymentMethod=?,
   ~message=?,
@@ -321,7 +320,6 @@ let emitPhase = (
       ~failureClass=exn->Option.isSome ? Threw : ReturnedFailure,
       ~error=?exn->Option.map(LoggerUtils.summarizeUnknown),
     )
-  | TimedOut => step(~outcome, ~durationMs, ~timeoutMs?)
   | outcome => step(~outcome, ~durationMs)
   }->emitStep(~category, ~spec, ~severity, ~data?, ~details?, ~paymentMethod?, ~message?)
 }
@@ -457,3 +455,56 @@ let observe = (
     }
   }
 }
+
+// Returns a function with the same type as `fn` that forwards every argument
+// (and `this`) through `run`. Arity-agnostic, so one wrapper serves handlers
+// of any argument count. Non-functions are returned untouched, and the
+// original `length` is preserved for SDKs that inspect handler arity.
+let forwardInvocation: ('fn, (unit => 'value) => 'value) => 'fn = %raw(`
+  function (fn, run) {
+    if (typeof fn !== "function") {
+      return fn;
+    }
+    var wrapped = function () {
+      var self = this;
+      var args = arguments;
+      return run(function () {
+        return fn.apply(self, args);
+      });
+    };
+    try {
+      Object.defineProperty(wrapped, "length", { value: fn.length });
+    } catch (_) {}
+    return wrapped;
+  }
+`)
+
+let observeCallback = (
+  ~category,
+  ~spec,
+  ~severity,
+  ~data=?,
+  ~details=?,
+  ~timeoutMs=?,
+  ~failureOf=?,
+  ~paymentMethod=?,
+  ~source=?,
+  ~message=?,
+  ~callback: 'fn,
+): 'fn =>
+  callback->forwardInvocation(invoke =>
+    observe(
+      ~category,
+      ~spec,
+      ~severity,
+      ~data?,
+      ~details?,
+      ~timeoutMs?,
+      ~failureOf?,
+      ~paymentMethod?,
+      ~source?,
+      ~syncOutcome=Triggered,
+      ~message?,
+      ~call=invoke,
+    )
+  )

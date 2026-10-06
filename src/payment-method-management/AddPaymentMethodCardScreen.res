@@ -85,8 +85,14 @@ let make = (
       )
       copy
     })
-  let onFieldFocus = (event: VaultDirectBindings.fieldEvent) => setFocus(event.elementType, true)
-  let onFieldBlur = (event: VaultDirectBindings.fieldEvent) => setFocus(event.elementType, false)
+  let onFieldFocus = (event: VaultDirectBindings.fieldEvent) => {
+    SdkLogger.logUser(~event=FieldFocused({field: event.elementType}))
+    setFocus(event.elementType, true)
+  }
+  let onFieldBlur = (event: VaultDirectBindings.fieldEvent) => {
+    SdkLogger.logUser(~event=FieldBlurred({field: event.elementType}))
+    setFocus(event.elementType, false)
+  }
 
   let focusOf = elementType => focusStates->Dict.get(elementType)->Option.getOr(untouched)
   let isActive = elementType => focusOf(elementType).active
@@ -141,6 +147,16 @@ let make = (
   let errorLine = messages => <ErrorText text={firstSome(messages)} />
 
   let refuse = () => {
+    SdkLogger.logLifecycle(
+      ~event=FormValidationFailed({
+        reason: ["cardNumber", "cardExpiry", "cardCvc"]->Array.some(field =>
+          problemOf(field) === Some(Empty)
+        )
+          ? localeObject.enterFieldsText
+          : localeObject.enterValidDetailsText,
+      }),
+      ~paymentMethod=Card,
+    )
     setShowErrors(_ => true)
     notifyValidationFailure()
   }
@@ -180,7 +196,14 @@ let make = (
       setIsSaving(_ => true)
       setLoading(ProcessingPayments)
       switch cardFormRef.current->Nullable.toOption {
-      | None => inFlightRef.current = false
+      | None =>
+        SdkLogger.logLifecycle(
+          ~event=VaultFlowFailed({reason: FormCreationFailed}),
+          ~details=[("vault", "hyperswitch"->JSON.Encode.string)],
+          ~paymentMethod=Card,
+          ~message="Vault form not initialized at submit",
+        )
+        inFlightRef.current = false
       | Some(handle) =>
         let paymentMethodData =
           nickName
@@ -191,16 +214,31 @@ let make = (
             ->Dict.fromArray
             ->JSON.Encode.object
           )
-        handle.VaultDirectBindings.tokenize(paymentMethodData)
+        VaultTokenNormalizer.observeTokenization(
+          ~scope=FullCard,
+          ~vault="hyperswitch",
+          ~statusOf=(result: VaultDirectBindings.tokenizeResult) => result.status,
+          () => handle.VaultDirectBindings.tokenize(paymentMethodData),
+        )
         ->Promise.then(result => {
           inFlightRef.current = false
           switch result.status {
-          | "success" => notifySaved()
+          | "success" =>
+            SdkLogger.logLifecycle(
+              ~event=PaymentMethodSaveSucceeded({operation: Save, status: "succeeded"}),
+              ~paymentMethod=Card,
+            )
+            notifySaved()
           | "validation_error" =>
             setLoading(FillingDetails)
             setIsSaving(_ => false)
             refuse()
           | _ =>
+            SdkLogger.logLifecycle(
+              ~event=PaymentMethodSaveRejected({operation: Save}),
+              ~failure=result,
+              ~paymentMethod=Card,
+            )
             let message = switch result.error {
             | Some(error) => error.VaultDirectBindings.message
             | None => VaultTokenNormalizer.fallbackMessage
@@ -210,8 +248,17 @@ let make = (
           }
           Promise.resolve()
         })
-        ->Promise.catch(_ => {
+        ->Promise.catch(error => {
           inFlightRef.current = false
+          SdkLogger.logLifecycle(
+            ~event=VaultFlowFailed({reason: TokenizationFailed}),
+            ~details=[
+              ("vault", "hyperswitch"->JSON.Encode.string),
+              ("operation", "save_card"->JSON.Encode.string),
+            ],
+            ~exn=error,
+            ~paymentMethod=Card,
+          )
           setLoading(FillingDetails)
           notifyFailed(VaultTokenNormalizer.fallbackMessage)
           Promise.resolve()

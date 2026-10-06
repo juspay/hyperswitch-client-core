@@ -102,7 +102,9 @@ module RedirectionHooks = {
         let {nextAction, status, error} = itemToObjMapper(confirmResponse)
         handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
       } catch {
-      | _ => errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
+      | exn =>
+        SdkLogger.logLifecycle(~event=PaymentErrorHandlingFailed, ~exn)
+        errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
       }
     }
   }

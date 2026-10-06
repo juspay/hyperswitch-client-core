@@ -19,6 +19,7 @@ module CardSchemeSelectionPopoverElement = {
           <CustomPressable
             key={index->Int.toString}
             onPress={_ => {
+              SdkLogger.logUser(~event=CardSchemeSelected({method: item}), ~paymentMethod=Card)
               setCardBrand(item)
               toggleVisibility()
             }}>
