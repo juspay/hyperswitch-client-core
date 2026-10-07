@@ -46,6 +46,20 @@ let make = (
   let expiryRef = React.useRef(Nullable.null)
   let cvcRef = React.useRef(Nullable.null)
   let cardFormRef = React.useRef(Nullable.null)
+  let vaultUnavailable = VaultDirectBindings.useUnavailable()
+  let logger = LoggerHook.useLoggerHook()
+  React.useEffect1(() => {
+    if vaultUnavailable {
+      logger(
+        ~logType=ERROR,
+        ~value="@juspay-tech/react-native-hyperswitch-vault is not in this build: card fields are shown as ghost marks",
+        ~category=USER_ERROR,
+        ~eventName=VAULT_TOKENIZE,
+        (),
+      )
+    }
+    None
+  }, [vaultUnavailable])
   let completedRef = React.useRef(Dict.make())
   let inFlightRef = React.useRef(false)
   let (formFields, setFormFields) = React.useState(() => None)
@@ -138,7 +152,9 @@ let make = (
   }
   let firstSome = messages =>
     messages->Array.reduce(None, (acc, m) => acc->Option.isSome ? acc : m)
-  let errorLine = messages => <ErrorText text={firstSome(messages)} />
+  // Without the vault package the fields are ghost marks: nothing to correct.
+  let errorLine = messages =>
+    vaultUnavailable ? React.null : <ErrorText text={firstSome(messages)} />
 
   let refuse = () => {
     setShowErrors(_ => true)

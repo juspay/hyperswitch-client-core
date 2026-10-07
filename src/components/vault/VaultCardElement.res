@@ -17,6 +17,7 @@ let make = (
   let {getFormState, setFormValid} = React.useContext(CardStrategyContext.cardStrategyContext)
   let {eligibilityStatus} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let emitter = PaymentEvents.usePaymentEventEmitter()
+  let logger = LoggerHook.useLoggerHook()
   let {showErrors} = getFormState(formId)
 
   let numberRef = React.useRef(Nullable.null)
@@ -24,6 +25,7 @@ let make = (
   let cvcRef = React.useRef(Nullable.null)
   let completedRef = React.useRef(Dict.make())
   let (mountError, setMountError) = React.useState(() => None)
+  let (unavailable, setUnavailable) = React.useState(() => false)
   let (formFields, setFormFields) = React.useState(() => Dict.make())
   let (focusStates, setFocusStates) = React.useState(() => Dict.make())
   let (expiryFullyTyped, setExpiryFullyTyped) = React.useState(() => false)
@@ -100,7 +102,13 @@ let make = (
       ->Option.flatMap(JSON.Decode.string)
       ->Utils.getNonEmptyOption
       ->Option.getOr(VaultTokenNormalizer.fallbackMessage)
-    setMountError(_ => Some(msg))
+    if VaultBindings.isProviderUnavailable(error) {
+      // Not the shopper's to read: the fields turn into ghost marks.
+      logger(~logType=ERROR, ~value=msg, ~category=USER_ERROR, ~eventName=VAULT_TOKENIZE, ())
+      setUnavailable(_ => true)
+    } else {
+      setMountError(_ => Some(msg))
+    }
   }
 
   let setFocus = (elementType, active) =>
@@ -132,6 +140,7 @@ let make = (
     }
   let expiryInvalidComplete = expiryFullyTyped && problemOf("cardExpiry") === Some(Invalid)
   let looksValid = elementType =>
+    unavailable ||
     problemOf(elementType)->Option.isNone ||
       ((!isTouched(elementType) || isActive(elementType)) &&
         !(elementType === "cardExpiry" && expiryInvalidComplete))
@@ -223,7 +232,7 @@ let make = (
     }
   }
 
-  let errorLine = messages => <ErrorText text={firstSome(messages)} />
+  let errorLine = messages => unavailable ? React.null : <ErrorText text={firstSome(messages)} />
 
   let isVgs = switch vaultDetails.config {
   | VaultDetailsType.VgsVault(_) => true
@@ -284,6 +293,7 @@ let make = (
               <VaultInput
                   elementType="cardNumber"
                   height=inputHeight
+                  unavailable
                   reference=numberRef
                   label=localeObject.cardNumberLabel
                   active={isActive("cardNumber")}
@@ -325,6 +335,7 @@ let make = (
                 <VaultInput
                   elementType="cardExpiry"
                   height=inputHeight
+                  unavailable
                   reference=expiryRef
                   label=localeObject.validThruText
                   active={isActive("cardExpiry")}
@@ -358,6 +369,7 @@ let make = (
                   <VaultInput
                   elementType="cardCvc"
                   height=inputHeight
+                  unavailable
                   reference=cvcRef
                   label=localeObject.cvcTextLabel
                   active={isActive("cardCvc")}

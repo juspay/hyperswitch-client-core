@@ -18,40 +18,47 @@ import type {
 
 export interface FormCore {
   readonly vaultType: VaultType;
-  readonly adapter: ProviderAdapter;
+  /* Null until its SDK chunk has loaded; the fields draw placeholders meanwhile. */
+  adapter: ProviderAdapter | null;
   readonly appearances: readonly Appearance[];
   readonly unstyled?: boolean;
   collector: unknown | undefined;
   status: FormStatus;
+  /* Why the status is 'error', for whoever reports it. */
+  error: unknown | undefined;
   readonly session: FormSession;
   readonly fields: Partial<Record<ElementType, FieldChange>>;
   readonly mounted: MountedFields;
   details: Partial<CardDetails>;
   subscribe(listener: () => void): () => void;
   notify(): void;
+  attachAdapter(adapter: ProviderAdapter): void;
   registerField(elementType: ElementType, options?: FieldOptions): void;
   forgetField(elementType: ElementType): void;
   reportChange(change: FieldChange): void;
   tokenize(providerData?: unknown): Promise<TokenizeResult>;
 }
 
+/* The adapter comes later, through attachAdapter, once its chunk has loaded:
+   the core exists from the start so a form handle can be bound at once. */
 export function createFormCore(
-  adapter: ProviderAdapter,
+  vaultType: VaultType,
   appearances: readonly Appearance[],
   readyTimeoutMs?: number
 ): FormCore {
   const listeners = new Set<() => void>();
   const session = createFormSession(
-    adapter,
-    readyTimeoutMs !== undefined ? { readyTimeoutMs } : {}
+    null,
+    readyTimeoutMs !== undefined ? { vaultType, readyTimeoutMs } : { vaultType }
   );
 
   const core: FormCore = {
-    vaultType: adapter.vaultType,
-    adapter,
+    vaultType,
+    adapter: null,
     appearances,
     collector: undefined,
     status: 'initializing',
+    error: undefined,
     session,
     fields: {},
     mounted: {},
@@ -63,6 +70,11 @@ export function createFormCore(
     },
     notify() {
       listeners.forEach((listener) => listener());
+    },
+    attachAdapter(adapter) {
+      core.adapter = adapter;
+      session.attachAdapter(adapter);
+      core.notify();
     },
     registerField(elementType, options) {
       core.mounted[elementType] = mountedField(elementType, options);

@@ -7,19 +7,28 @@ type scanCardReturnType = {
   status: string,
   data: scanCardData,
 }
-type scanCardReturnStatus = Succeeded(scanCardData) | Failed | Cancelled | None
+// Unavailable: the package is not in this build (or failed to load), which is not
+// the shopper's to hear about.
+type scanCardReturnStatus = Succeeded(scanCardData) | Failed | Cancelled | Unavailable | None
 type module_ = {launchScanCard: (scanCardReturnType => unit) => unit, isAvailable: bool}
 
-@val external require: string => module_ = "require"
+// The package is bundled as its own chunk (hyperswitch.scancard.chunk.bundle) and
+// loaded on the first scan, through a wrapper that makes a missing or failing package
+// "not available" instead of an error (src/chunks/OptionalPackage.res).
+external importWrapper: string => promise<OptionalPackage.wrapper> = "import"
 
-let (launchScanCardMod, isAvailable) = switch try {
-  require("@juspay-tech/react-native-hyperswitch-scancard")->Some
-} catch {
-| _ => None
-} {
-| Some(mod) => (mod.launchScanCard, mod.isAvailable)
-| None => (_ => (), false)
-}
+let importScanCard = (): promise<module_> =>
+  importWrapper("../../chunks/ScanCardPackage.bs.js")->OptionalPackage.unwrap(
+    "@juspay-tech/react-native-hyperswitch-scancard",
+  )
+
+// Decided from the native module, so a host without scan card never loads the chunk.
+let isAvailable =
+  ReactNative.NativeModules.nativeModules
+  ->Dict.get("HyperswitchScancard")
+  ->Option.flatMap(Nullable.toOption)
+  ->Option.isSome
+
 let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
   switch scanCardReturnType.status {
   | "Succeeded" =>
@@ -33,10 +42,24 @@ let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
   | _ => None
   }
 }
+
 let launchScanCard = (callback: scanCardReturnStatus => unit) => {
-  try {
-    launchScanCardMod(data => callback(data->dictToScanCardReturnType))
-  } catch {
-  | _ => ()
+  if isAvailable {
+    importScanCard()
+    ->Promise.then(mod => {
+      try {
+        mod.launchScanCard(data => callback(data->dictToScanCardReturnType))
+      } catch {
+      | _ => callback(Failed)
+      }
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      callback(Unavailable)
+      Promise.resolve()
+    })
+    ->ignore
+  } else {
+    callback(Unavailable)
   }
 }

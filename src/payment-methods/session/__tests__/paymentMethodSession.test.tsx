@@ -8,6 +8,18 @@ import {
 } from '@jest/globals';
 import { render, screen, act, waitFor } from '@testing-library/react-native';
 
+/* The VGS SDK chunk is absent from this build: its import rejects. Tests that
+   need a working vgs form register a mock adapter, which wins over the chunk. */
+jest.mock(
+  '@vgs/collect-react-native',
+  () => {
+    const err = new Error("Cannot find module '@vgs/collect-react-native'");
+    (err as { code?: string }).code = 'MODULE_NOT_FOUND';
+    throw err;
+  },
+  { virtual: true }
+);
+
 import { Hyperswitch } from '../init';
 import { registerAdapter } from '../../providers/registry';
 import { CardNumberField, CardExpiryField, CardCVCField } from '../../fields';
@@ -137,9 +149,51 @@ describe('hyper.initPaymentMethodSession', () => {
       vaultDetails: { vaultType: 'skyflow', vaultData: {} },
     });
 
-    expect(() => session.createCardForm()).toThrow(
+    const cardForm = session.createCardForm();
+    expect(cardForm.status).toBe('initializing');
+
+    await waitFor(() => expect(cardForm.status).toBe('error'));
+    const result = await cardForm.tokenize();
+    expect(result.status).toBe('error');
+    expect(result.status !== 'success' && result.error.message).toMatch(
       /cannot be mounted detached.*<CardForm>/s
     );
+  });
+
+  it('puts the form in the error state when the provider SDK chunk cannot be loaded', async () => {
+    /* Nothing registered for vgs: its chunk is asked for, and fails to load. */
+    const hyper = await Hyperswitch.init({ publishableKey: 'pk_test' });
+    const session = await hyper.initPaymentMethodSession({
+      vaultDetails: details(),
+    });
+
+    const cardForm = session.createCardForm();
+    expect(cardForm.status).toBe('initializing');
+
+    await waitFor(() => expect(cardForm.status).toBe('error'));
+    const result = await cardForm.tokenize();
+    expect(result.status).toBe('error');
+    expect(result.status !== 'success' && result.error.message).toMatch(
+      /@vgs\/collect-react-native.*not installed/s
+    );
+  });
+
+  it('loads the adapter first, then builds the collector, while the handle stays usable', async () => {
+    const onTokenize = jest.fn();
+    installMock({ vaultType: 'vgs', readyDelayMs: 20, onTokenize });
+    const hyper = await Hyperswitch.init({ publishableKey: 'pk_test' });
+    const session = await hyper.initPaymentMethodSession({
+      vaultDetails: details(),
+    });
+
+    const cardForm = session.createCardForm({ readyTimeoutMs: 1000 });
+    expect(cardForm.status).toBe('initializing');
+
+    /* Called before the adapter has even landed: waits, then tokenizes. */
+    const result = await cardForm.tokenize();
+    expect(result.status).toBe('success');
+    expect(onTokenize).toHaveBeenCalledTimes(1);
+    expect(cardForm.status).toBe('ready');
   });
 
   it('rejects when neither sdkAuthorization nor vaultDetails is given', async () => {

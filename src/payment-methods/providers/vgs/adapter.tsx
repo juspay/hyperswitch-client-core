@@ -6,24 +6,36 @@ import type { ProviderAdapter } from '../../core/ProviderAdapter';
 import { errorResult, messageOf } from '../../core/results';
 import type { ElementType, TokenizeResult } from '../../core/types';
 import type { VgsTokenizeOptions, VgsVaultData } from './types';
-
-declare const require: (moduleId: string) => unknown;
+import { loadVgs } from '../sdkChunks';
 
 type VgsSdk = any;
+type VGSCollect = any;
 
+/* The VGS SDK is a chunk of its own. Its namespace lands here through
+   loadVgsSdk(); Host, Field and createCollector only run once the adapter has
+   been resolved, so they read it from the cache. */
 let vgsSdk: VgsSdk | null = null;
-try {
-  vgsSdk = require('@vgs/collect-react-native') as VgsSdk;
-} catch {
-  vgsSdk = null;
+
+export function loadVgsSdk(): Promise<void> {
+  if (vgsSdk != null) return Promise.resolve();
+  return loadVgs().then((sdk: VgsSdk) => {
+    vgsSdk = sdk;
+  });
 }
 
-export const vgsSdkAvailable = vgsSdk != null;
+export function vgsSdkLoaded(): boolean {
+  return vgsSdk != null;
+}
 
-const { VGSCollect, VGSTextInput, VGSCardInput, VGSCVCInput } =
-  vgsSdk ?? ({} as VgsSdk);
-
-type VGSCollect = InstanceType<VgsSdk['VGSCollect']>;
+function vgs(): VgsSdk {
+  if (vgsSdk == null) {
+    throw new Error(
+      'The @vgs/collect-react-native chunk is not loaded. ' +
+        'Await loadAdapter("vgs") before using its fields.'
+    );
+  }
+  return vgsSdk;
+}
 
 const VAULT_TYPE = 'vgs' as const;
 
@@ -37,9 +49,10 @@ const FIELD_CONFIG: Record<
   cardholderName: { fieldName: 'card_holder', type: 'cardHolderName' },
 };
 
-const FIELD_COMPONENT: Partial<Record<ElementType, typeof VGSTextInput>> = {
-  cardNumber: VGSCardInput,
-  cardCvc: VGSCVCInput,
+/* Inputs with a component of their own; the rest use VGSTextInput. */
+const FIELD_COMPONENT: Partial<Record<ElementType, 'VGSCardInput' | 'VGSCVCInput'>> = {
+  cardNumber: 'VGSCardInput',
+  cardCvc: 'VGSCVCInput',
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -67,6 +80,7 @@ const Host: ProviderAdapter['Host'] = ({
 
   useEffect(() => {
     try {
+      const { VGSCollect } = vgs();
       const collector = new VGSCollect(data.vaultId, data.environment);
       if (data.routeId) collector.setRouteId(data.routeId);
       collectorRef.current = collector;
@@ -146,7 +160,10 @@ const Field: ProviderAdapter['Field'] = ({
     textStyle: styles?.input as object | undefined,
     onStateChange: handleState,
   };
-  const Specialized = FIELD_COMPONENT[elementType];
+  const sdk = vgs();
+  const specialized = FIELD_COMPONENT[elementType];
+  const Specialized = specialized ? sdk[specialized] : undefined;
+  const VGSTextInput = sdk.VGSTextInput;
   return Specialized ? (
     <Specialized {...common} containerHeight={containerHeight} />
   ) : (
@@ -209,6 +226,7 @@ const tokenize: ProviderAdapter['tokenize'] = async (
 
 const createCollector = async (vaultData: unknown): Promise<VGSCollect> => {
   const data = vaultData as VgsVaultData;
+  const { VGSCollect } = vgs();
   const collector = new VGSCollect(data.vaultId, data.environment);
   if (data.routeId) collector.setRouteId(data.routeId);
   if (data.cname) await collector.setCname(data.cname);

@@ -20,16 +20,22 @@ type module_ = {
   isAvailable: bool,
 }
 
-@val external require: string => module_ = "require"
+// The package is bundled as its own chunk (hyperswitch.paypal.chunk.bundle) and
+// loaded on first use, through a wrapper that makes a missing or failing package
+// "not available" instead of an error (src/chunks/OptionalPackage.res).
+external importWrapper: string => promise<OptionalPackage.wrapper> = "import"
 
-let (launchPayPalMod, isAvailable) = switch try {
-  require("@juspay-tech/react-native-hyperswitch-paypal")->Some
-} catch {
-| _ => None
-} {
-| Some(mod) => (mod.launchPayPal, mod.isAvailable)
-| None => ((_, _) => (), false)
-}
+let importPaypal = (): promise<module_> =>
+  importWrapper("../../chunks/PaypalPackage.bs.js")->OptionalPackage.unwrap(
+    "@juspay-tech/react-native-hyperswitch-paypal",
+  )
+
+// Decided from the native module, so a host without PayPal never loads the chunk.
+let isAvailable =
+  ReactNative.NativeModules.nativeModules
+  ->Dict.get("HyperswitchPaypal")
+  ->Option.flatMap(Nullable.toOption)
+  ->Option.isSome
 
 let dictToPaypalCallbackStatus = (result: paypalCallbackResult) => {
   switch result.status {
@@ -40,9 +46,25 @@ let dictToPaypalCallbackStatus = (result: paypalCallbackResult) => {
 }
 
 let launchPayPal = (requestObj: string, callback: paypalCallbackStatus => unit) => {
-  try {
-    launchPayPalMod(requestObj, data => callback(data->dictToPaypalCallbackStatus))
-  } catch {
-  | _ => callback(Failed("PayPal module not available"))
+  // Shown to the shopper: the same words as a PayPal payment the SDK cannot route,
+  // never that a package is missing from the build.
+  let unavailable = () => callback(Failed("Payment Method Unavailable"))
+  if isAvailable {
+    importPaypal()
+    ->Promise.then(mod => {
+      try {
+        mod.launchPayPal(requestObj, data => callback(data->dictToPaypalCallbackStatus))
+      } catch {
+      | _ => unavailable()
+      }
+      Promise.resolve()
+    })
+    ->Promise.catch(_ => {
+      unavailable()
+      Promise.resolve()
+    })
+    ->ignore
+  } else {
+    unavailable()
   }
 }

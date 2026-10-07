@@ -360,7 +360,8 @@ describe('hosted payment methods: what it refuses', () => {
     expect(host.form(FormEvent.Error)[0]!.payload.message).toMatch(
       /cannot be mounted detached/
     );
-    expect(getForm(FORM_ID)?.instance).toBeUndefined();
+    expect(getForm(FORM_ID)?.failed).toBe(true);
+    expect(getForm(FORM_ID)?.instance?.status).toBe('error');
   });
 
   it('reports unusable props to the right place', async () => {
