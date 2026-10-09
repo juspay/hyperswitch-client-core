@@ -113,6 +113,7 @@ app.get('/create-payment-intent', async (req, res) => {
     const paymentData = {
       ...mockData.paymentIntentBody,
       amount: 100,
+      currency: 'USD',
     };
 
     if (process.env.HYPERSWITCH_CUSTOMER_ID) {
