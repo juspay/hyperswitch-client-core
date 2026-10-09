@@ -780,8 +780,8 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
         },
         buttonSize: switch getString(payPalDict, "buttonSize", "") {
         | "small" => SMALL
-        | "large" => LARGE
-        | _ => MEDIUM
+        | "medium" => MEDIUM
+        | _ => LARGE
         },
         buttonStyle: getOptionalObj(payPalDict, "buttonStyle")->Option.map(s => {
           let payPalThemeBaseStyle: payPalThemeBaseStyle = {
