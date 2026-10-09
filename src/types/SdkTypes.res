@@ -397,6 +397,7 @@ type nativeProp = {
   updateIntent: option<updateIntentProp>,
   widgetConfirm: option<widgetConfirmProp>,
   cvcConfirm: option<cvcConfirmProp>,
+  rawConfigurationJson: JSON.t,
 }
 
 let defaultAppearance: appearance = {
@@ -895,6 +896,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
   let hc = getObj(d, "hyperswitchConfig", Dict.make())
   let ps = getObj(d, "paymentSessionConfig", Dict.make())
   let sp = getObj(d, "sdkParams", Dict.make())
+  let configurationDict = getObj(d, "configuration", Dict.make())
 
   let sdkAuthorization = switch getOptionString(ps, "sdkAuthorization") {
   | Some("") | None => None
@@ -950,7 +952,7 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       }),
     },
     configuration: parseConfigurationDict(
-      getObj(d, "configuration", Dict.make()),
+      configurationDict,
       getString(d, "type", "")->parseSdkState === PaymentSheet,
     ),
     updateIntent: d
@@ -996,5 +998,6 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
       | _ => None
       }
     ),
+    rawConfigurationJson: configurationDict->JSON.Encode.object,
   }
 }
