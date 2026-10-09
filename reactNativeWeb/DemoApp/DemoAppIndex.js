@@ -166,7 +166,6 @@ let defaultProps = {
     //   cvv: 'CVC',
     // },
     // redirectionInfo: 'hidden',
-    // stickyPayButton: true,
     // alwaysSendCustomerAcceptance: true,
     // paymentMethodsConfig: [{ paymentMethod: 'card', message: '' }, { paymentMethod: 'wallet', message: '' }],
     // opensCardScannerAutomatically: false,

@@ -48,10 +48,7 @@ let make = () => {
   <FullScreenSheetWrapper
     isSavedPaymentScreen
     isLoading
-    renderScrollView={!(isSavedPaymentScreen && displayInSeparateScreen)}
-    stickyFooter=?{nativeProp.configuration.stickyPayButton
-      ? Some(<GlobalConfirmButton confirmButtonData />)
-      : None}>
+    renderScrollView={!(isSavedPaymentScreen && displayInSeparateScreen)}>
     {switch sheetType {
     | ButtonSheet =>
       switch (
@@ -133,8 +130,6 @@ let make = () => {
       }
     | DynamicFieldsSheet => <DynamicComponent setConfirmButtonData />
     }}
-    <UIUtils.RenderIf condition={!nativeProp.configuration.stickyPayButton}>
-      <GlobalConfirmButton confirmButtonData />
-    </UIUtils.RenderIf>
+    <GlobalConfirmButton confirmButtonData />
   </FullScreenSheetWrapper>
 }

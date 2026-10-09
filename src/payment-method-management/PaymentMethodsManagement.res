@@ -419,7 +419,8 @@ let make = () => {
           justifyContent: #"flex-end",
           paddingTop: (insets.top +. SafeAreaContext.topGap)->dp,
         })}>
-        <CustomView onDismiss=onModalClose>
+        <CustomView
+          onDismiss=onModalClose sheetBackground={s({backgroundColor: component.background})}>
           <View
             style={s({
               flexShrink: 1.,

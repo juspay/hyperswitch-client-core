@@ -9,6 +9,7 @@ let make = (
   ~closeOnClickOutSide=true,
   ~modalPosition=#bottom,
   ~bottomModalWidth=100.->pct,
+  ~sheetBackground=?,
   (),
 ) => {
   let modalPosStyle = array([
@@ -51,6 +52,7 @@ let make = (
     //     }
     //   }}>
     <CustomKeyboardAvoidingView
+      ?sheetBackground
       style={s({
         width: bottomModalWidth,
         borderRadius: 15.,
@@ -99,14 +101,12 @@ module Wrapper = {
     ~onModalClose,
     ~width=100.->pct,
     ~children=React.null,
-    ~stickyFooter=?,
     ~isLoading,
     ~renderScrollView=true,
     ~isSavedPaymentScreen,
   ) => {
     let {bgColor, sheetContentPadding, borderRadius} = ThemebasedStyle.useThemeBasedStyle()
     let insets = SafeAreaContext.useSafeAreaInsets()
-    let bottomInset = insets.bottom +. SafeAreaContext.bottomGap
 
     let style = React.useMemo0(() => {
       let style = [s({flexGrow: 1., width}), bgColor]
@@ -116,48 +116,25 @@ module Wrapper = {
       array(style)
     })
 
-    // The sticky footer carries the bottom inset for branding image
-    let contentBottomInset = stickyFooter->Option.isSome ? 0. : bottomInset
-
     let contentStyle = s({
       minHeight: 250.->dp,
       paddingHorizontal: sheetContentPadding->dp,
       paddingTop: sheetContentPadding->dp,
-      paddingBottom: contentBottomInset->dp,
+      paddingBottom: (insets.bottom +. SafeAreaContext.bottomGap)->dp,
     })
 
-    let getStickyFooter = style =>
-      switch stickyFooter {
-      | Some(component) => <View style> component </View>
-      | None => React.null
-      }
-
     renderScrollView
-      ? <View style={array([s({flexShrink: 1.}), style])}>
-          <ScrollView
-            contentContainerStyle=contentStyle
-            keyboardShouldPersistTaps={#handled}
-            showsVerticalScrollIndicator=false>
-            <ModalHeader onModalClose isLoading isSavedPaymentScreen />
-            children
-          </ScrollView>
-          {getStickyFooter(
-            s({
-              paddingHorizontal: sheetContentPadding->dp,
-              paddingTop: (sheetContentPadding /. 2.)->dp,
-              paddingBottom: bottomInset->dp,
-            }),
-          )}
-        </View>
+      ? <ScrollView
+          contentContainerStyle=contentStyle
+          keyboardShouldPersistTaps={#handled}
+          showsVerticalScrollIndicator=false
+          style>
+          <ModalHeader onModalClose isLoading isSavedPaymentScreen />
+          children
+        </ScrollView>
       : <View style={array([s({maxHeight: 100.->pct}), contentStyle, style])}>
           <ModalHeader onModalClose isLoading isSavedPaymentScreen />
           children
-          {getStickyFooter(
-            s({
-              paddingTop: (sheetContentPadding /. 2.)->dp,
-              paddingBottom: bottomInset->dp,
-            }),
-          )}
         </View>
   }
 }
