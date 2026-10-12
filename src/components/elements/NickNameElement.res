@@ -53,6 +53,6 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid, ~accessible) => {
     | Some(text) => !isFocus ? <ErrorText text=Some(text) /> : React.null
     | None => React.null
     }}
-    <Space height=5. />
+    <Space height=10. />
   </>
 }
