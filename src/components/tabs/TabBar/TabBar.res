@@ -251,7 +251,7 @@ let make = (
   ~scrollEnabled=?,
   ~jumpTo,
   ~navigationState,
-  ~position,
+  ~position as _,
   ~activeColor=?,
   ~bounces=?,
   ~contentContainerStyle=?,
@@ -421,7 +421,6 @@ let make = (
       <>
         {gap > 0. && index > 0 ? <Space width={gap} /> : React.null}
         <TabBarItem
-          position
           route
           navigationState
           ?testID
@@ -450,7 +449,6 @@ let make = (
     },
     (
       isLoading,
-      position,
       navigationState,
       options,
       activeColor,
@@ -483,8 +481,7 @@ let make = (
         flexDirection: #row,
         flexWrap: #nowrap,
         marginVertical: (sheetContentPadding -. 6.)->dp,
-        marginLeft: (sheetContentPadding -. 6.)->dp,
-        paddingRight: (sheetContentPadding -. 6.)->dp,
+        paddingHorizontal: (sheetContentPadding -. 6.)->dp,
       }),
       // scrollEnabled->Option.getOr(false) ? s({width: tabBarWidth->dp}) : empty,
       contentContainerStyle->Option.getOr(empty),
@@ -528,7 +525,7 @@ let make = (
   <Animated.View
     ref={containerRef->ReactNative.Ref.value}
     onLayout
-    style={array([s({zIndex: 1, marginRight: 20.->dp}), style->Option.getOr(empty)])}>
+    style={array([s({zIndex: 1}), style->Option.getOr(empty)])}>
     <View style={s({overflow: #scroll})}>
       <Animated.FlatList
         data={routes}
