@@ -60,7 +60,6 @@ let make = (
   let onIndexChangeRef = React.useRef(onIndexChange)
   let onTabSelectRef = React.useRef(onTabSelect)
   let currentIndexRef = React.useRef(index)
-  let pendingIndexRef = React.useRef(None)
 
   let swipeVelocityThreshold = 0.15
   let swipeDistanceThreshold = layout.width /. 1.75
@@ -70,41 +69,28 @@ let make = (
 
     let {timing, stiffness, damping, mass, overshootClamping} = defaultTransitionSpec
 
+    currentIndexRef.current = index
+
     if animate {
-      Animated.parallel(
-        [
-          timing(
-            panX,
-            {
-              toValue: offset->Animated.Value.Spring.fromRawValue,
-              stiffness,
-              damping,
-              mass,
-              overshootClamping,
-              useNativeDriver: useNativeAnimations,
-            },
-          ),
-        ],
-        {stopTogether: false},
-      )->Animated.start(~endCallback=result => {
-        if result.finished {
-          onIndexChangeRef.current(index)
-          switch onTabSelectRef.current {
-          | Some(fn) => fn({index: index})
-          | None => ()
-          }
-          pendingIndexRef.current = None
-        }
-      })
-      pendingIndexRef.current = Some(index)
+      timing(
+        panX,
+        {
+          toValue: offset->Animated.Value.Spring.fromRawValue,
+          stiffness,
+          damping,
+          mass,
+          overshootClamping,
+          useNativeDriver: useNativeAnimations,
+        },
+      )->Animated.start
     } else {
       panX->Animated.Value.setValue(offset)
-      onIndexChangeRef.current(index)
-      switch onTabSelectRef.current {
-      | Some(fn) => fn({index: index})
-      | None => ()
-      }
-      pendingIndexRef.current = None
+    }
+
+    onIndexChangeRef.current(index)
+    switch onTabSelectRef.current {
+    | Some(fn) => fn({index: index})
+    | None => ()
     }
   })
 
@@ -128,7 +114,6 @@ let make = (
     }
 
     if layout.width != 0. && currentIndexRef.current !== index {
-      currentIndexRef.current = index
       jumpToIndex(index, animationEnabled)
     }
     None
@@ -139,7 +124,10 @@ let make = (
       Math.abs(gestureState.vx) > Math.abs(gestureState.vy *. 2.)
   }
 
-  let canMoveScreen = (event, gestureState: PanResponder.gestureState) => {
+  let canMoveScreen = TabViewType.useLatestCallback((
+    event,
+    gestureState: PanResponder.gestureState,
+  ) => {
     if !swipeEnabled {
       false
     } else {
@@ -153,9 +141,9 @@ let make = (
       ((diffX >= deadZone && currentIndexRef.current > 0) ||
         (diffX <= -.deadZone && currentIndexRef.current < routes->Array.length - 1))
     }
-  }
+  })
 
-  let startGesture = (_, _) => {
+  let startGesture = TabViewType.useLatestCallback((_, _) => {
     switch onSwipeStart {
     | Some(fn) => fn()
     | None => ()
@@ -166,10 +154,13 @@ let make = (
     }
 
     panX->Animated.Value.stopAnimation
-    panX->Animated.Value.setOffset(panX->getValue)
-  }
+    panX->Animated.Value.extractOffset
+  })
 
-  let respondToGesture = (_, gestureState: PanResponder.gestureState) => {
+  let respondToGesture = TabViewType.useLatestCallback((
+    _,
+    gestureState: PanResponder.gestureState,
+  ) => {
     let diffX = if layoutDirection == #rtl {
       -.gestureState.dx
     } else {
@@ -194,9 +185,12 @@ let make = (
     }
 
     panX->Animated.Value.setValue(diffX)
-  }
+  })
 
-  let finishGesture = (_, gestureState: PanResponder.gestureState) => {
+  let finishGesture = TabViewType.useLatestCallback((
+    _,
+    gestureState: PanResponder.gestureState,
+  ) => {
     panX->Animated.Value.flattenOffset
 
     switch onSwipeEnd {
@@ -204,10 +198,7 @@ let make = (
     | None => ()
     }
 
-    let currentIndex = switch pendingIndexRef.current {
-    | Some(value) => value
-    | None => currentIndexRef.current
-    }
+    let currentIndex = currentIndexRef.current
 
     let nextIndex = if (
       Math.abs(gestureState.dx) > Math.abs(gestureState.dy) &&
@@ -229,14 +220,13 @@ let make = (
         ),
       )
 
-      currentIndexRef.current = index->Int.fromFloat
       Float.isFinite(index) ? index->Int.fromFloat : currentIndex
     } else {
       currentIndex
     }
 
     jumpToIndex(nextIndex, true)
-  }
+  })
 
   let subscribe = TabViewType.useLatestCallback(listener => {
     listeners.current->Set.add(listener)
@@ -253,32 +243,35 @@ let make = (
       )
 
     jumpToIndex(index, animationEnabled)
-    onIndexChange(index)
   })
 
-  let panHandlers = PanResponder.create({
-    onMoveShouldSetPanResponder: canMoveScreen,
-    onMoveShouldSetPanResponderCapture: canMoveScreen,
-    onPanResponderGrant: startGesture,
-    onPanResponderMove: respondToGesture,
-    onPanResponderTerminate: finishGesture,
-    onPanResponderRelease: finishGesture,
-    onPanResponderTerminationRequest: (_, _) => true,
-  })->PanResponder.panHandlers
+  let panHandlers = React.useMemo0(() =>
+    PanResponder.create({
+      onMoveShouldSetPanResponder: canMoveScreen,
+      onMoveShouldSetPanResponderCapture: canMoveScreen,
+      onPanResponderGrant: startGesture,
+      onPanResponderMove: respondToGesture,
+      onPanResponderTerminate: finishGesture,
+      onPanResponderRelease: finishGesture,
+      onPanResponderTerminationRequest: (_, _) => true,
+    })->PanResponder.panHandlers
+  )
 
   let maxTranslate = layout.width *. (routes->Array.length - 1)->Int.toFloat
-  let translateX = Animated.Value.multiply(
-    panX->Animated.Interpolation.interpolate({
-      inputRange: [-.maxTranslate, 0.],
-      outputRange: [-.maxTranslate, 0.]->Animated.Interpolation.fromFloatArray,
-      extrapolate: #clamp,
-    }),
-    if layoutDirection == #rtl {
-      -1.->Animated.Value.create
-    } else {
-      1.->Animated.Value.create
-    },
-  )
+  let translateX = React.useMemo3(() =>
+    Animated.Value.multiply(
+      panX->Animated.Interpolation.interpolate({
+        inputRange: [-.maxTranslate, 0.],
+        outputRange: [-.maxTranslate, 0.]->Animated.Interpolation.fromFloatArray,
+        extrapolate: #clamp,
+      }),
+      if layoutDirection == #rtl {
+        -1.->Animated.Value.create
+      } else {
+        1.->Animated.Value.create
+      },
+    )
+  , (panX, maxTranslate, layoutDirection))
 
   let position = React.useMemo2(() => {
     if layout.width != 0. {
