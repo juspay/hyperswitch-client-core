@@ -122,3 +122,6 @@ next-env.d.ts
 mockData.js
 
 *.tsbuildinfo
+
+# Maestro end-to-end run output (reports, screenshots, device logs)
+maestro-reports/

@@ -1,0 +1,31 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Widget - CVC widget confirms the last-used saved card
+tags:
+  - smoke
+  - pr
+  - widget
+  - saved
+  - android-only
+---
+- runFlow:
+    file: ../subflows/open_android_widget.yaml
+    env:
+      SCENARIO: saved_card_multiple
+- tapOn:
+    id: CvcWidgetInputTestId
+- inputText: "123"
+- runFlow:
+    file: ../subflows/hide_keyboard.yaml
+    env:
+      KEYBOARD_DISMISS: widget
+- runFlow:
+    file: ../subflows/tap_host_button.yaml
+    env:
+      BUTTON_ID: confirmLastUsedWithCVCButton
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      # Mastercard 4444 was saved last, so it is the last-used card (Visa 4242 is the default).
+      EXPECT_LAST4: "4444"

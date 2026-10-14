@@ -1,0 +1,30 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - generic decline reported to host
+tags:
+  - smoke
+  - pr
+  - card
+  - decline
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+# Stripe test card that is always declined.
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "4000000000000002"
+- runFlow: ../subflows/pay.yaml
+- runFlow:
+    file: ../subflows/expect_payment_failed.yaml
+    env:
+      ERROR: "(?i)declined"
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: failed

@@ -1,0 +1,66 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Closes the keyboard after typing.
+# Default: taps the sheet header's "Test Mode" badge (same text on both platforms and on every sheet
+# screen; the sheet's ScrollView drops focus on that tap).
+#   KEYBOARD_DISMISS  "widget": Android only, for inputs embedded in the native widget demo screen
+#                     (WidgetActivity), which has no "Test Mode" badge. Presses the keyboard's Enter key,
+#                     then taps "Or pay using" (text inside the payment element) if the keyboard is still up.
+# Never use Maestro's hideKeyboard on the widget screen: on Android it sends Back, which closes
+# WidgetActivity, with or without the keyboard up.
+# Android keyboard detection: while the keyboard is shown its views are in the hierarchy
+# (resource-id com.google.android.inputmethod.latin:id/...), so id ".*inputmethod.*" means "keyboard up".
+- runFlow:
+    when:
+      platform: Android
+      true: "${typeof KEYBOARD_DISMISS !== 'undefined' && KEYBOARD_DISMISS === 'widget'}"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: ".*inputmethod.*"
+          commands:
+            - pressKey: Enter
+      - runFlow:
+          when:
+            visible:
+              id: ".*inputmethod.*"
+          commands:
+            - runFlow:
+                when:
+                  visible: "Or pay using"
+                commands:
+                  - tapOn: "Or pay using"
+- runFlow:
+    when:
+      true: "${typeof KEYBOARD_DISMISS === 'undefined' || KEYBOARD_DISMISS !== 'widget'}"
+    commands:
+      - runFlow:
+          when:
+            platform: iOS
+            visible:
+              id: CardNumberInputTestId
+          commands:
+            # iOS has no sticky Pay button: with the keyboard up the header can scroll above the sheet,
+            # and a tap there lands on the dimmed backdrop, which cancels. Drag the form down first.
+            - swipe:
+                from:
+                  id: CardNumberInputTestId
+                direction: DOWN
+                duration: 400
+      - runFlow:
+          when:
+            visible: "Test Mode"
+          commands:
+            - tapOn: "Test Mode"
+      # Android: "Test Mode" is only off-screen when the keyboard has pushed the content up (e.g. while
+      # typing a nickname low in the sheet). Back then only closes the keyboard; without a keyboard it
+      # would close the sheet, so it is sent only while the keyboard is up.
+      - runFlow:
+          when:
+            platform: Android
+            notVisible: "Test Mode"
+            visible:
+              id: ".*inputmethod.*"
+          commands:
+            - hideKeyboard
