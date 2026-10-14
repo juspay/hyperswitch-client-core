@@ -1,0 +1,138 @@
+name: E2E / Android (Maestro)
+
+# Maestro end-to-end flows (maestro/) on the Android demo app, against the Hyperswitch sandbox through
+# maestro/server/e2e-server.js. Pull requests run the flows tagged `smoke`; a manual run runs every flow.
+#
+# Secrets: each value is given only to the step that needs it, never to the whole job, so dependency
+# install scripts and the build never see them. No step prints a secret. The only upload is the
+# screenshots of failed flows; device and Maestro logs stay on the runner (they can carry keys).
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-android:
+    # Pull requests from forks get no repository secrets, so the flows could not reach the sandbox.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      MAESTRO_CLI_NO_ANALYTICS: '1'
+      MAESTRO_TAG_ARGS: ${{ github.event_name == 'pull_request' && '--include-tags smoke' || '' }}
+    steps:
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /opt/hostedtoolcache
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Shared Code Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-utils
+          ref: main
+          path: shared-code
+
+      - name: Checkout Android Repo
+        uses: actions/checkout@v4
+        with:
+          repository: juspay/hyperswitch-sdk-android
+          ref: main
+          path: android
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          cache: gradle
+          distribution: temurin
+          java-version: 17
+
+      - name: Compile ReScript
+        run: npm run re:build
+
+      # The app runs this branch's JS without Metro. A debug build that cannot reach Metro loads the bundles
+      # packed in android/app/src/main/assets, which come from the android repo and can be older than this
+      # branch, so they are rebuilt here. Bundling only reads these URLs (no keys); Sentry stays off because
+      # SENTRY_DSN is not set.
+      - name: Bundle the JS into the demo app
+        env:
+          HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+          SANDBOX_ASSETS_END_POINT: ${{ secrets.SANDBOX_ASSETS_END_POINT }}
+        run: |
+          npm run bundle:android
+          npm run bundle:android:pmm
+          npm run bundle:android:payment-methods
+
+      - name: Build demo app
+        run: cd android && ./gradlew :demo-app:assembleDebug
+
+      # Before the e2e server starts, so the downloaded install script never runs while the keys are loaded.
+      - name: Install Maestro
+        env:
+          MAESTRO_VERSION: 2.10.0
+        run: |
+          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+      - name: Start the e2e server
+        env:
+          HYPERSWITCH_SANDBOX_URL: ${{ secrets.HYPERSWITCH_SANDBOX_URL }}
+          HYPERSWITCH_PUBLISHABLE_KEY: ${{ secrets.HYPERSWITCH_PUBLISHABLE_KEY }}
+          HYPERSWITCH_SECRET_KEY: ${{ secrets.HYPERSWITCH_SECRET_KEY }}
+          PROFILE_ID: ${{ secrets.PROFILE_ID }}
+        run: |
+          nohup node maestro/server/e2e-server.js > e2e-server.log 2>&1 &
+          for i in $(seq 1 15); do curl -sf -o /dev/null http://localhost:5252/health && break || sleep 2; done
+          curl -sf -o /dev/null http://localhost:5252/scenarios
+
+      - name: Maestro test
+        id: maestro
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: medium_phone
+          script: |
+            maestro/scripts/prepare-android-device.sh emulator-5554 android/demo-app/build/outputs/apk/debug/demo-app-debug.apk
+            maestro -p android test maestro/ $MAESTRO_TAG_ARGS --format junit --output maestro-reports/report.xml --test-output-dir maestro-reports/output
+
+      # Labels the failure screenshots with the failing step and reason (ci-report.js skips the label without it).
+      - name: Install ImageMagick
+        if: always() && (steps.maestro.outcome == 'failure' || steps.maestro.outcome == 'cancelled')
+        run: command -v convert >/dev/null 2>&1 || command -v magick >/dev/null 2>&1 || (sudo apt-get update -qq && sudo apt-get install -y -qq imagemagick >/dev/null)
+
+      # Results table on the run's Summary page (and in this step's log), failed flows first.
+      - name: Test summary
+        if: always() && steps.maestro.conclusion != 'skipped'
+        run: node maestro/scripts/ci-report.js maestro-reports/report.xml maestro-reports/output maestro-reports/failure-screenshots
+
+      - name: Upload screenshots of failed flows
+        if: always() && (steps.maestro.outcome == 'failure' || steps.maestro.outcome == 'cancelled')
+        uses: actions/upload-artifact@v4
+        with:
+          name: maestro-failure-screenshots
+          path: maestro-reports/failure-screenshots/
+          retention-days: 7
+          if-no-files-found: ignore

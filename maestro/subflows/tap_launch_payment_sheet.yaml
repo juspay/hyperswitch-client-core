@@ -1,0 +1,14 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Taps the host app's "Launch Payment Sheet" button (run launch_host_app.yaml first).
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn:
+          id: launchButton
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Launch Payment Sheet"

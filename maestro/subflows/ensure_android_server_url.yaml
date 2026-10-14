@@ -1,0 +1,23 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Android only. The demo app persists its server URL; point it at this mock server if it isn't
+# already, then restart so the first intent fetch uses it. MOCK_PORT defaults to 5252.
+- assertTrue:
+    condition: "${maestro.platform == 'android'}"
+    label: "Android-only subflow (the iOS demo app has no such screen or control)"
+- extendedWaitUntil:
+    visible:
+      id: ipAddressInput
+    timeout: 20000
+- runFlow:
+    when:
+      notVisible:
+        id: ipAddressInput
+        text: "${'http://10.0.2.2:' + (typeof MOCK_PORT === 'undefined' ? '5252' : MOCK_PORT)}"
+    commands:
+      - tapOn:
+          id: ipAddressInput
+      - eraseText: 60
+      - inputText: "${'http://10.0.2.2:' + (typeof MOCK_PORT === 'undefined' ? '5252' : MOCK_PORT)}"
+      - launchApp:
+          stopApp: true

@@ -5,6 +5,8 @@
   "scripts": {
     "start": "react-native start --reset-cache --client-logs",
     "server": "node mockServer.js",
+    "e2e:server": "node maestro/server/e2e-server.js",
+    "e2e:android": "PATH=$PATH:$HOME/.maestro/bin MAESTRO_CLI_NO_ANALYTICS=1 maestro -p android test maestro/ --format html-detailed --output maestro-reports/android.html --test-output-dir maestro-reports/android",
     "re:start": "rescript build -w",
     "re:format": "rescript format -all",
     "web": "NODE_ENV=development webpack serve --mode=development --config reactNativeWeb/webpack.config.js",
