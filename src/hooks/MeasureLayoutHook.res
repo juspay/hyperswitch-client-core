@@ -16,7 +16,7 @@ let useMeasureLayout = (
 
   let onMeasureLatest = TabViewType.useLatestCallback((newLayout: layout) => {
     setLayout(currentLayout => {
-      if currentLayout.width === newLayout.width && currentLayout.height === newLayout.height {
+      if currentLayout.width === newLayout.width {
         currentLayout
       } else {
         newLayout

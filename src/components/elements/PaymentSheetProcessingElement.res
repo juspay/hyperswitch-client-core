@@ -3,44 +3,20 @@ open Style
 
 @react.component
 let make = () => {
-  let {component} = ThemebasedStyle.useThemeBasedStyle()
-  let localeObject = GetLocale.useGetLocalObj()
-
-  let (paymentProcessingText, setPaymentProcessingText) = React.useState(_ => ".")
-
-  React.useEffect1(() => {
-    let intervalId = setTimeout(() => {
-      let newState = switch paymentProcessingText {
-      | "." => ".."
-      | ".." => "..."
-      | "..." => "."
-      | _ => ""
-      }
-      setPaymentProcessingText(_ => newState)
-    }, 800)
-
-    Some(() => clearTimeout(intervalId))
-  }, [paymentProcessingText])
+  let {primaryColor} = ThemebasedStyle.useThemeBasedStyle()
+  let spinnerColor =
+    ThemebasedStyle.useAppearanceColors()
+    ->Option.flatMap(colors => colors.loaderForeground)
+    ->Utils.getNonEmptyOption
+    ->Option.getOr(primaryColor)
 
   <View
-    style={array([
-      s({
-        alignItems: #center,
-        backgroundColor: component.background,
-        justifyContent: #center,
-        height: 100.->pct,
-        width: 100.->pct,
-      }),
-    ])}>
-    <TubeSpinner size=60. />
-    <Space />
-    <View style={s({display: #flex, flexDirection: #row})}>
-      <TextWrapper text={localeObject.processingRequestText} textType={HeadingBold} />
-      <View style={s({marginLeft: 2.->dp, width: 20.->dp})}>
-        <TextWrapper text={paymentProcessingText} textType={HeadingBold} />
-      </View>
-    </View>
-    <Space height=15. />
-    <TextWrapper text={localeObject.processingRequestSubtext} textType={ModalText} />
+    style={s({
+      alignItems: #center,
+      justifyContent: #center,
+      height: 100.->pct,
+      width: 100.->pct,
+    })}>
+    <ActivityIndicator animating=true size=Large color=spinnerColor />
   </View>
 }

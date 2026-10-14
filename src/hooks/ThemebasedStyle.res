@@ -1255,6 +1255,12 @@ let some = (~override, ~fn, ~default) => {
   | None => default
   }
 }
+let appearanceColorsFor = (appearance: SdkTypes.appearance, ~isDarkMode): option<SdkTypes.colors> =>
+  switch appearance.colors {
+  | Some({light, dark}) => isDarkMode ? dark : light
+  | None => None
+  }
+
 let itemToObj = (
   themeObj: themeBasedStyleObj,
   appearance: SdkTypes.appearance,
@@ -1262,10 +1268,7 @@ let itemToObj = (
   locale: option<LocaleDataType.localeTypes>,
   isDarkMode: bool,
 ) => {
-  let appearanceColor: option<SdkTypes.colors> = switch appearance.colors {
-  | Some({light, dark}) => isDarkMode ? dark : light
-  | None => None
-  }
+  let appearanceColor = appearanceColorsFor(appearance, ~isDarkMode)
   let btnColor: option<SdkTypes.primaryButtonColor> = switch appearance.primaryButton {
   | Some(btn) =>
     switch btn.primaryButtonColor {
@@ -1344,7 +1347,7 @@ let itemToObj = (
       ~defaultProp=themeObj.loadingBgColor,
     ),
     loadingFgColor: getStrProp(
-      ~overRideProp=fromColor(c => c.loaderBackground),
+      ~overRideProp=fromColor(c => c.loaderForeground),
       ~defaultProp=themeObj.loadingFgColor,
     ),
     bgTransparentColor: styles["light_bgTransparentColor"],
@@ -1653,6 +1656,15 @@ let useThemeBasedStyle = () => {
     )
   }
   themerecordOverridedWithAppObj
+}
+
+// Merchant-set appearance colors for the current mode, without theme defaults.
+let useAppearanceColors = () => {
+  let (themeType, _) = React.useContext(ThemeContext.themeContext)
+  switch themeType {
+  | Light(appearance) => appearanceColorsFor(appearance, ~isDarkMode=false)
+  | Dark(appearance) => appearanceColorsFor(appearance, ~isDarkMode=true)
+  }
 }
 //for custom light and dark styles
 // let useCustomThemeBasedStyle = (~lightStyle, ~darkStyle, ~defaultStyle=?, ()) => {

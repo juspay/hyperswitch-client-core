@@ -6,5 +6,7 @@ type props = {
   style?: ReactNative.Style.t,
 }
 
-// PayPal is not available on the new architecture yet; render nothing until it is.
-let make: React.component<props> = _ => React.null
+@module("@juspay-tech/react-native-hyperswitch-paypal")
+external paypalButton: React.component<props> = "PaypalButton"
+
+let make = paypalButton

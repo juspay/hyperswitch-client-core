@@ -40,9 +40,9 @@
     "bundle:android:payment-methods": "react-native bundle --reset-cache --platform android --dev false --entry-file index.payment-methods.js --bundle-output android/app/src/main/assets/hyperswitch-payment-methods.bundle"
   },
   "dependencies": {
-    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.2.2",
-    "@juspay-tech/react-native-hyperswitch-paypal": "^1.0.2",
-    "@juspay-tech/react-native-hyperswitch-scancard": "^0.2.3",
+    "@juspay-tech/react-native-hyperswitch-netcetera-3ds": "^0.3.1",
+    "@juspay-tech/react-native-hyperswitch-paypal": "^1.1.1",
+    "@juspay-tech/react-native-hyperswitch-scancard": "^0.3.1",
     "@juspay-tech/react-native-hyperswitch-vault": "1.0.1",
     "@sentry/react-native": "^8.18.0",
     "@vgs/collect-react-native": "^1.2.0",
