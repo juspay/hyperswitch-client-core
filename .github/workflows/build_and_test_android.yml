@@ -4,8 +4,8 @@ name: E2E / Android (Maestro)
 # maestro/server/e2e-server.js. Pull requests run the flows tagged `smoke`; a manual run runs every flow.
 #
 # Secrets: each value is given only to the step that needs it, never to the whole job, so dependency
-# install scripts and the build never see them. No step prints a secret. The only upload is the
-# screenshots of failed flows; device and Maestro logs stay on the runner (they can carry keys).
+# install scripts and the build never see them. No step prints a secret. The only upload is screenshots
+# and step lists of every flow (evidence); device and Maestro logs stay on the runner (they can carry keys).
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -126,13 +126,14 @@ jobs:
       # Results table on the run's Summary page (and in this step's log), failed flows first.
       - name: Test summary
         if: always() && steps.maestro.conclusion != 'skipped'
-        run: node maestro/scripts/ci-report.js maestro-reports/report.xml maestro-reports/output maestro-reports/failure-screenshots
+        run: node maestro/scripts/ci-report.js maestro-reports/report.xml maestro-reports/output maestro-reports/screenshots
 
-      - name: Upload screenshots of failed flows
-        if: always() && (steps.maestro.outcome == 'failure' || steps.maestro.outcome == 'cancelled')
+      # Evidence for every flow, passed or failed: screenshots, step lists and the sandbox record.
+      - name: Upload screenshots
+        if: always() && steps.maestro.conclusion != 'skipped'
         uses: actions/upload-artifact@v4
         with:
-          name: maestro-failure-screenshots
-          path: maestro-reports/failure-screenshots/
-          retention-days: 7
+          name: maestro-screenshots
+          path: maestro-reports/screenshots/
+          retention-days: 90
           if-no-files-found: ignore

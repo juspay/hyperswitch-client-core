@@ -42,4 +42,15 @@ if (typeof EXPECT_AMOUNT !== 'undefined' && String(payment.amount) !== String(EX
 if (problems.length > 0) {
   throw new Error('Backend payment ' + payment.paymentId + ': ' + problems.join('; ') + ' :: ' + res.body)
 }
+// Evidence for the CI report: ci-report.js reads this one line from maestro.log (the log itself is never
+// uploaded). Only these fields, no ids or keys.
+console.log('E2E_PROOF ' + JSON.stringify({
+  status: payment.status,
+  connector: payment.connector,
+  cardNetwork: payment.cardNetwork,
+  cardLast4: payment.cardLast4,
+  authenticationType: payment.authenticationType,
+  amount: payment.amount,
+  currency: payment.currency,
+}))
 output.backendPayment = payment
