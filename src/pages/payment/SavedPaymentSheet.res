@@ -628,23 +628,23 @@ let make = (
     }
   }
 
-  React.useEffect1(() => {
-    switch selectedToken {
-    | Some(token) =>
+  React.useEffect2(() => {
+    switch (isScreenFocus, selectedToken) {
+    | (true, Some(token)) =>
       let event = PaymentEvents.buildPaymentMethodStatusEvent(
         ~paymentMethod=token.payment_method_str,
         ~paymentMethodType=token.payment_method_type,
         ~isSavedPaymentMethod=true,
       )
       emitter.emitPaymentMethodStatus(~event)
-    | None => ()
+    | _ => ()
     }
     None
-  }, [selectedToken])
+  }, (selectedToken, isScreenFocus))
 
-  React.useEffect4(() => {
-    switch selectedToken {
-    | Some(token) =>
+  React.useEffect5(() => {
+    switch (isScreenFocus, selectedToken) {
+    | (true, Some(token)) =>
       let isFormComplete = switch token.payment_method {
       | CARD =>
         if isVaultCvc {
@@ -687,10 +687,10 @@ let make = (
         emitter.emitCardInfo(~info)
       | None => ()
       }
-    | None => ()
+    | _ => prevStatusRef.current = None
     }
     None
-  }, (selectedToken, savedCardCvv, isVaultCvc, vaultCvcValid))
+  }, (selectedToken, savedCardCvv, isVaultCvc, vaultCvcValid, isScreenFocus))
 
   // The credentials key is a dep so the stored closure is rebuilt after updateIntent moves
   // the session to a new intent; otherwise it would confirm the old one.

@@ -231,7 +231,7 @@ let make = (
     | Some(sectionKey) =>
       switch hocComponentArr->Array.get(sectionKey) {
       | Some(hoc) =>
-        if hoc.name !== "loading" {
+        if hoc.name !== "loading" && hoc.paymentMethodType !== "saved_payment_method" {
           let event = PaymentEvents.buildPaymentMethodStatusEvent(
             ~paymentMethod=hoc.paymentMethod,
             ~paymentMethodType=hoc.paymentMethodType,

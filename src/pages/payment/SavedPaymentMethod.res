@@ -1,6 +1,5 @@
 open ReactNative
 open Style
-open PaymentEvents
 
 module CVVComponent = {
   @react.component
@@ -337,7 +336,6 @@ module PaymentMethodListView = {
     let logoConfig = nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.groupingBehavior.displayInSeparateSection
       ? logoConfig
       : None
-    let emitter = PaymentEvents.usePaymentEventEmitter()
 
     <CustomPressable
       onPress={_ => {
@@ -346,12 +344,6 @@ module PaymentMethodListView = {
         }
         setSelectedToken(Some(savedPaymentMethod))
         setIsScreenFocus(true)
-        let event = PaymentEvents.buildPaymentMethodStatusEvent(
-          ~paymentMethod=savedPaymentMethod.payment_method_str,
-          ~paymentMethodType=savedPaymentMethod.payment_method_type,
-          ~isSavedPaymentMethod=true,
-        )
-        emitter.emitPaymentMethodStatus(~event)
       }}
       style={s({
         minHeight: 60.->dp,

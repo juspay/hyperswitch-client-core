@@ -36,7 +36,7 @@ let make = (
   React.useEffect2(() => {
     switch hocComponentArr->Array.get(indexInFocus) {
     | Some(hoc) =>
-      if hoc.name !== "loading" {
+      if hoc.name !== "loading" && hoc.paymentMethodType !== "saved_payment_method" {
         let event = PaymentEvents.buildPaymentMethodStatusEvent(
           ~paymentMethod=hoc.paymentMethod,
           ~paymentMethodType=hoc.paymentMethodType,

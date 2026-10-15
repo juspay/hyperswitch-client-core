@@ -6,7 +6,7 @@ let emitToNative = (~rootTag: int, ~eventType: string, ~payload: JSON.t) => {
 
 // Lifecycle events (ready/focus/blur) need no subscription; they live in ElementEventsContext.
 let emitIfSubscribed = (nativeProp: SdkTypes.nativeProp, eventType, buildPayload) =>
-  if shouldEmitEvent(~eventType, ~subscribedEvents=nativeProp.configuration.subscribedEvents) {
+  if shouldEmitEvent(~eventType, ~subscriptionEvents=nativeProp.configuration.subscriptionEvents) {
     emitToNative(
       ~rootTag=nativeProp.rootTag,
       ~eventType=PaymentEventTypes.eventToString(eventType),
