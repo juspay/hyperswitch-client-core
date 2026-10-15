@@ -7,7 +7,11 @@ import {
   afterEach,
 } from '@jest/globals';
 
-import { fetchVaultDetails, readVaultDetails } from '../fetchVaultDetails';
+import {
+  fetchVaultDetails,
+  readVaultDetails,
+  safeBaseUrl,
+} from '../fetchVaultDetails';
 import { decodeBase64, readAuthorizationClaims } from '../sdkAuthorization';
 
 const authorization = (claims: string) =>
@@ -218,6 +222,33 @@ describe('fetchVaultDetails', () => {
     expect(fetchMock.mock.calls[0]![0]).toBe(
       'https://integ.acme.test/v1/payment-method-sessions/0a_pms_0192'
     );
+  });
+
+  it('never sends sdkAuthorization to an address it cannot trust', async () => {
+    const refused: Array<[string, 'PROD' | 'SANDBOX' | 'INTEG' | undefined]> = [
+      ['http://vault.acme.test', 'SANDBOX'],
+      ['http://localhost:5252', 'PROD'],
+      ['http://localhost:5252', undefined],
+      ['http://localhost.evil.test', 'SANDBOX'],
+      ['https://user:pass@vault.acme.test', 'PROD'],
+      ['https://vault.acme.test/?next=x', 'PROD'],
+      ['https://vault.acme.test/#x', 'PROD'],
+      ['ftp://vault.acme.test', 'SANDBOX'],
+      ['javascript:alert(1)', 'SANDBOX'],
+      ['vault.acme.test', 'PROD'],
+      ['//vault.acme.test', 'PROD'],
+    ];
+    for (const [endpoint, environment] of refused) {
+      expect(safeBaseUrl(endpoint, environment)).toBeUndefined();
+    }
+
+    expect(safeBaseUrl('https://vault.acme.test/api/', 'PROD')).toBe(
+      'https://vault.acme.test/api'
+    );
+    expect(safeBaseUrl('http://localhost:5252', 'SANDBOX')).toBe(
+      'http://localhost:5252'
+    );
+    expect(safeBaseUrl('http://10.0.2.2:5252/', 'INTEG')).toBe('http://10.0.2.2:5252');
   });
 
   it('uses the PROD host and explicit customEndpoints', async () => {

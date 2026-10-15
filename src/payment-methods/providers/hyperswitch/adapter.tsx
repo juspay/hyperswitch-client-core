@@ -56,8 +56,8 @@ function validateVaultData(raw: unknown): HyperswitchVaultData {
     !raw.sdkAuthorization
   ) {
     throw new Error(
-      'Hyperswitch vaultData requires a non-empty string "sdkAuthorization". Received: ' +
-        JSON.stringify(raw)
+      'Hyperswitch vaultData requires a non-empty string "sdkAuthorization". Received keys: ' +
+        (isRecord(raw) ? Object.keys(raw).join(', ') || 'none' : typeof raw)
     );
   }
   return raw as unknown as HyperswitchVaultData;
@@ -122,12 +122,12 @@ const Host: ProviderAdapter['Host'] = ({
       // customEndpoints={customEndpoints}
       locale={locale}
       appearance={appearance}
+      autofill={form?.autofill}
       onChange={(event: any) => {
         const payload = event?.payload ?? {};
         const details: Partial<CardDetails> = {
           bin: payload.bin ?? null,
           extendedBin: payload.extendedBin ?? null,
-          last4: payload.last4 ?? null,
           brand: payload.brand ?? null,
           expiryMonth: payload.expiryMonth ?? null,
           expiryYear: payload.expiryYear ?? null,
@@ -155,12 +155,14 @@ const Field: ProviderAdapter['Field'] = ({
   onFocus,
   onBlur,
   testID,
+  fieldRef,
 }) => {
   const Component = FIELD_COMPONENT[elementType] as any;
   if (!Component) return null;
 
   return (
     <Component
+      ref={fieldRef}
       testID={testID}
       styles={styles}
       placeholder={placeholder}

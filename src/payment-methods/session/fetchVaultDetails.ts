@@ -151,7 +151,26 @@ export function readVaultDetails(
   };
 }
 
-function resolveBaseUrl(options: FetchVaultDetailsOptions): string | undefined {
+const LOOPBACK_HOSTS = ['localhost', '127.0.0.1', '10.0.2.2'];
+
+export function safeBaseUrl(
+  endpoint: string,
+  environment: FetchVaultDetailsOptions['environment']
+): string | undefined {
+  const match = /^(https?):\/\/([^/?#@\s]+)((?:\/[^?#\s]*)?)$/i.exec(endpoint);
+  if (!match) return undefined;
+  const [, scheme, authority, path] = match;
+  if (scheme!.toLowerCase() === 'http') {
+    const host = authority!.replace(/:\d+$/, '').toLowerCase();
+    const cleartextAllowed = environment === 'SANDBOX' || environment === 'INTEG';
+    if (!cleartextAllowed || !LOOPBACK_HOSTS.includes(host)) return undefined;
+  }
+  return `${scheme!.toLowerCase()}://${authority}${path ?? ''}`.replace(/\/+$/, '');
+}
+
+type BaseUrl = { ok: true; url: string | undefined } | { ok: false };
+
+function resolveBaseUrl(options: FetchVaultDetailsOptions): BaseUrl {
   const custom = options.customEndpoints;
   const explicit =
     custom && 'commonEndpoint' in custom
@@ -159,8 +178,11 @@ function resolveBaseUrl(options: FetchVaultDetailsOptions): string | undefined {
       : custom?.overrideEndpoints?.customBackendEndpoint;
 
   const trimmed = explicit?.trim();
-  if (trimmed) return trimmed.replace(/\/+$/, '');
-  return DEFAULT_BASE_URL[options.environment ?? 'PROD'];
+  if (trimmed) {
+    const url = safeBaseUrl(trimmed, options.environment);
+    return url === undefined ? { ok: false } : { ok: true, url };
+  }
+  return { ok: true, url: DEFAULT_BASE_URL[options.environment ?? 'PROD'] };
 }
 
 export async function fetchVaultDetails(
@@ -169,7 +191,15 @@ export async function fetchVaultDetails(
   const claims = readAuthorizationClaims(options.sdkAuthorization);
   if (!claims.ok) return claims;
 
-  const baseUrl = resolveBaseUrl(options);
+  const resolved = resolveBaseUrl(options);
+  if (!resolved.ok) {
+    return {
+      ok: false,
+      message:
+        'customEndpoints must be an https address with no credentials, query or fragment (http only to this machine, outside PROD).',
+    };
+  }
+  const baseUrl = resolved.url;
   if (!baseUrl) {
     return {
       ok: false,

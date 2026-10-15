@@ -49,8 +49,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function validateVaultData(raw: unknown): VgsVaultData {
   if (!isRecord(raw) || typeof raw.vaultId !== 'string' || !raw.vaultId) {
     throw new Error(
-      'VGS vaultData requires a non-empty string "vaultId". Received: ' +
-        JSON.stringify(raw)
+      'VGS vaultData requires a non-empty string "vaultId". Received keys: ' +
+        (isRecord(raw) ? Object.keys(raw).join(', ') || 'none' : typeof raw)
     );
   }
   return raw as unknown as VgsVaultData;

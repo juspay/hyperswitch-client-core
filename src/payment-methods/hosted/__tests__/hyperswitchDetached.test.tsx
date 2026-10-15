@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach } from '@jest/globals';
 import { render, waitFor, act } from '@testing-library/react-native';
+import { StyleSheet } from 'react-native';
 
 import { mockFetch } from '../../__fixtures__/mockFetch';
 import type { ElementType } from '../../core/types';
@@ -84,7 +85,10 @@ function mockHost() {
   };
 }
 
-function mount(host: ReturnType<typeof mockHost>) {
+function mount(
+  host: ReturnType<typeof mockHost>,
+  extra: { form?: object; cardNumber?: object } = {}
+) {
   const form = render(
     <FormSurface
       bridge={host.bridge}
@@ -98,6 +102,7 @@ function mount(host: ReturnType<typeof mockHost>) {
           vaultType: 'hyperswitch',
           vaultData: { sdkAuthorization: AUTH, environment: 'SANDBOX' },
         },
+        ...extra.form,
       }}
     />
   );
@@ -111,6 +116,7 @@ function mount(host: ReturnType<typeof mockHost>) {
           protocolVersion: PROTOCOL_VERSION,
           formId: FORM_ID,
           elementType,
+          ...(elementType === 'cardNumber' ? extra.cardNumber : undefined),
         }}
       />
     );
@@ -169,9 +175,10 @@ describeIfAvailable('hosted screens over the real Hyperswitch vault', () => {
     const latest = host.of(FormEvent.Change).at(-1)!.payload;
     expect(latest.payload).toMatchObject({
       bin: '424242',
-      last4: '4242',
+      extendedBin: '42424242',
       brand: expect.stringMatching(/visa/i),
     });
+    expect(latest.payload).not.toHaveProperty('last4');
     expect(Object.keys(latest.fields).sort()).toEqual([
       'cardCvc',
       'cardExpiry',
@@ -212,6 +219,160 @@ describeIfAvailable('hosted screens over the real Hyperswitch vault', () => {
       String((confirms[0]![1] as { body?: unknown } | undefined)?.body)
     ).toContain(PAN);
     expect(host.of(FormEvent.CommandResult)).toHaveLength(1);
+  });
+
+  it('sends the card to the vault and nowhere else', async () => {
+    const host = mockHost();
+    const network = mockNetwork({
+      body: {
+        associated_payment_methods: [
+          { payment_method_token: { type: 'payment_method_id', data: 'pm_test_1' } },
+        ],
+      },
+    });
+    const { typeCard } = mount(host, { form: { vaultDetails: undefined, sdkAuthorization: AUTH } });
+    await typeCard();
+    await waitFor(() =>
+      expect(host.of(FormEvent.Change).at(-1)?.payload.complete).toBe(true)
+    );
+    await act(async () => {
+      host.send({ rootTag: FORM_TAG, formId: FORM_ID, commandId: 'net-1', name: 'tokenize' });
+    });
+    await waitFor(() => expect(host.replyTo('net-1')?.ok).toBe(true));
+
+    const calls = (globalThis.fetch as unknown as { mock: { calls: unknown[][] } }).mock.calls;
+    const api = network.apiCalls() as Array<[string, { method?: string; body?: string; headers?: Record<string, string> }]>;
+    const carriesCard = (text: unknown) =>
+      typeof text === 'string' && (text.includes(PAN) || text.includes(CVC));
+
+    expect(api.map(([url, init]) => `${init?.method ?? 'GET'} ${url}`)).toEqual([
+      'GET https://app.hyperswitch.io/api/v1/payment-method-sessions/0a_pms_0192',
+      'POST https://app.hyperswitch.io/api/v1/payment-method-sessions/0a_pms_0192/confirm',
+    ]);
+    const [lookup, confirm] = api;
+    expect(lookup![1]?.body).toBeUndefined();
+    expect(lookup![1]?.headers?.Authorization).toBe(AUTH);
+    expect(confirm![1]?.headers?.Authorization).toBe(AUTH);
+    expect(JSON.parse(confirm![1]!.body!)).toEqual({
+      payment_method_type: 'card',
+      payment_method_data: {
+        card: { card_number: PAN, card_exp_month: '12', card_exp_year: '2030', card_cvc: CVC },
+      },
+    });
+    for (const [url, init] of calls as Array<[unknown, { body?: unknown } | undefined]>) {
+      expect(carriesCard(url)).toBe(false);
+      if (init !== confirm![1]) expect(carriesCard(init?.body)).toBe(false);
+    }
+    /* Everything else the vault fetched is a brand icon. */
+    for (const [url] of calls) {
+      if (!api.some(([apiUrl]) => apiUrl === url)) expect(String(url)).toMatch(/\.svg$/);
+    }
+    expect(JSON.stringify(host.sent)).not.toContain(PAN);
+    expect(JSON.stringify(host.sent)).not.toContain(CVC);
+  });
+
+  it('never sends the host the same form change twice in a row', async () => {
+    const host = mockHost();
+    mockNetwork();
+    const { typeCard } = mount(host);
+    await typeCard();
+    await waitFor(() =>
+      expect(host.of(FormEvent.Change).at(-1)?.payload.complete).toBe(true)
+    );
+
+    const sent = host.of(FormEvent.Change).map((e) => JSON.stringify(e.payload));
+    expect(sent.length).toBeGreaterThan(0);
+    sent.forEach((change, index) => {
+      if (index > 0) expect(change).not.toBe(sent[index - 1]);
+    });
+  });
+
+  it('draws the fields the way the host asked for', async () => {
+    const host = mockHost();
+    mockNetwork();
+    /* As CardFormAppearance and CardFieldStyle build them on both platforms. */
+    const { views } = mount(host, {
+      form: {
+        appearance: {
+          colors: { light: { componentText: '#101010' }, dark: { componentText: '#F5F5F5' } },
+          shapes: { borderRadius: 12 },
+          font: { family: 'Inter' },
+        },
+      },
+      cardNumber: { styles: { input: { color: '#FF0000' } } },
+    });
+    await waitFor(() =>
+      expect(views.cardCvc.queryByTestId(INPUT.cardCvc!) !== null).toBe(true)
+    );
+
+    const styleOf = (view: ReturnType<typeof render>, testID: string) =>
+      StyleSheet.flatten(view.getByTestId(testID).props.style) as Record<string, unknown>;
+
+    /* The form's type reaches every field... */
+    expect(styleOf(views.cardExpiry, INPUT.cardExpiry!).fontFamily).toBe('Inter');
+    expect(styleOf(views.cardExpiry, INPUT.cardExpiry!).color).toBe('#101010');
+    /* ...and a field's own style wins over it. */
+    expect(styleOf(views.cardNumber, INPUT.cardNumber!).color).toBe('#FF0000');
+  });
+
+  it('offers a saved card only when the host asks for it', async () => {
+    const host = mockHost();
+    mockNetwork();
+    const plain = mount(host);
+    await waitFor(() =>
+      expect(plain.views.cardCvc.queryByTestId(INPUT.cardCvc!) !== null).toBe(true)
+    );
+    const propsOf = (view: ReturnType<typeof render>, testID: string) =>
+      view.getByTestId(testID).props as Record<string, unknown>;
+
+    /* A card field says it holds a one-time code, so no keyboard offers a card. */
+    expect(propsOf(plain.views.cardNumber, INPUT.cardNumber!).autoComplete).toBe('off');
+    expect(propsOf(plain.views.cardNumber, INPUT.cardNumber!).textContentType).toBe(
+      'oneTimeCode'
+    );
+    plain.form.unmount();
+
+    const asked = mount(mockHost(), { form: { autofill: true } });
+    await waitFor(() =>
+      expect(asked.views.cardCvc.queryByTestId(INPUT.cardCvc!) !== null).toBe(true)
+    );
+    expect(propsOf(asked.views.cardNumber, INPUT.cardNumber!).autoComplete).toBe('cc-number');
+    expect(propsOf(asked.views.cardNumber, INPUT.cardNumber!).textContentType).toBe(
+      'creditCardNumber'
+    );
+    expect(propsOf(asked.views.cardExpiry, INPUT.cardExpiry!).autoComplete).toBe('cc-exp');
+    expect(propsOf(asked.views.cardCvc, INPUT.cardCvc!).autoComplete).toBe('cc-csc');
+  });
+
+  it('clears a field when the host asks, in the vault and not only in its answer', async () => {
+    const host = mockHost();
+    mockNetwork();
+    const { views, typeCard } = mount(host);
+    await typeCard();
+    await waitFor(() =>
+      expect(host.of(FormEvent.Change).at(-1)?.payload.complete).toBe(true)
+    );
+
+    await act(async () => {
+      host.send({
+        rootTag: FORM_TAG,
+        formId: FORM_ID,
+        commandId: 'clear-1',
+        name: 'clear',
+        elementType: 'cardNumber',
+      });
+    });
+    await waitFor(() => expect(host.replyTo('clear-1')?.ok).toBe(true));
+
+    await waitFor(() =>
+      expect(views.cardNumber.getByTestId(INPUT.cardNumber!).props.value).toBe('')
+    );
+    await waitFor(() => {
+      const latest = host.of(FormEvent.Change).at(-1)?.payload;
+      expect(latest.complete).toBe(false);
+      expect(latest.payload.last4 ?? null).toBeNull();
+      expect(latest.payload.bin ?? null).toBeNull();
+    });
   });
 
   it('clears the card when the form screen stops', async () => {

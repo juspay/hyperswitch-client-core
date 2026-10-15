@@ -56,8 +56,8 @@ function validateVaultData(raw: unknown): EvervaultVaultData {
     !raw.appId
   ) {
     throw new Error(
-      'Evervault vaultData requires non-empty string "teamId" and "appId". Received: ' +
-        JSON.stringify(raw)
+      'Evervault vaultData requires non-empty string "teamId" and "appId". Received keys: ' +
+        (isRecord(raw) ? Object.keys(raw).join(', ') || 'none' : typeof raw)
     );
   }
   return raw as unknown as EvervaultVaultData;
@@ -76,8 +76,6 @@ function cardDetailsOf(payload: any): Partial<CardDetails> {
       : null;
   return {
     bin: typeof card.bin === 'string' && card.bin ? card.bin : null,
-    last4:
-      typeof card.lastFour === 'string' && card.lastFour ? card.lastFour : null,
     brand: canonicalBrand(card.brand) ?? null,
     expiryMonth,
     expiryYear: fourDigitYear(card.expiry?.year),

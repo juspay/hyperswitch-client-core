@@ -31,7 +31,6 @@ export function tokenizedCardOf(
 ): TokenizedCard | undefined {
   const card: TokenizedCard = {};
   if (details.bin) card.bin = details.bin;
-  if (details.last4) card.last4 = details.last4;
   if (details.brand) card.brand = details.brand;
   if (details.expiryMonth) card.expiryMonth = details.expiryMonth;
   if (details.expiryYear) card.expiryYear = details.expiryYear;

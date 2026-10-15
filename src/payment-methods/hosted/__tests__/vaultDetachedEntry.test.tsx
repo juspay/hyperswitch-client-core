@@ -125,6 +125,42 @@ describeIfAvailable('vault ./detached', () => {
     expect(JSON.stringify(changes)).not.toContain(PAN);
   });
 
+  it('keeps the card out of reach of whoever holds the handle', async () => {
+    const { form, host, changes, type } = mountForm();
+    await type();
+    await waitFor(() => expect(changes.at(-1)?.complete).toBe(true));
+
+    const seen = new Set<unknown>();
+    const strings: string[] = [];
+    const keys: string[] = [];
+    const walk = (value: unknown) => {
+      if (typeof value === 'string') strings.push(value);
+      if (value === null || typeof value !== 'object' || seen.has(value)) return;
+      seen.add(value);
+      for (const key of Reflect.ownKeys(value)) {
+        if (typeof key === 'string') keys.push(key);
+        walk((value as Record<PropertyKey, unknown>)[key]);
+      }
+    };
+    walk(form);
+    walk(form.getState());
+    type Drawn = { props: unknown; children: Array<Drawn | string> };
+    const walkDrawn = (node: Drawn) => {
+      walk(node.props);
+      for (const child of node.children) {
+        if (typeof child === 'string') strings.push(child);
+        else walkDrawn(child);
+      }
+    };
+    walkDrawn(host.UNSAFE_root as Drawn);
+    walk((form.Field as (props: unknown) => unknown)({ children: null }));
+
+    expect(strings.filter((text) => text.replace(/\s/g, '').includes(PAN))).toEqual([]);
+    expect(keys).not.toContain('store');
+    expect(keys).not.toContain('cvc');
+    expect(keys).toContain('form');
+  });
+
   it('tokenizes once, from the host, with the card the fields collected', async () => {
     const { form, changes, type } = mountForm();
     await type();
@@ -159,6 +195,209 @@ describeIfAvailable('vault ./detached', () => {
     await waitFor(() =>
       expect(number.getByTestId('CardNumberInputTestId').props.value).toBe('')
     );
+  });
+
+  it('takes nothing typed after the host is gone', async () => {
+    const { host, number, changes, type } = mountForm();
+    await type();
+    await waitFor(() => expect(changes.at(-1)?.complete).toBe(true));
+    await act(async () => {
+      host.unmount();
+    });
+    await waitFor(() =>
+      expect(number.getByTestId('CardNumberInputTestId').props.value).toBe('')
+    );
+
+    /* A field in another root can outlive its form by a moment. */
+    await act(async () => {
+      number.getByTestId('CardNumberInputTestId').props.onChangeText(PAN);
+    });
+    expect(number.getByTestId('CardNumberInputTestId').props.value).toBe('');
+  });
+
+  it('clears the card once the vault has it, and keeps it when the vault refuses', async () => {
+    const kept = mountForm();
+    await kept.type();
+    await waitFor(() => expect(kept.changes.at(-1)?.complete).toBe(true));
+    network.restore();
+    network = mockFetch({ ok: false, status: 500 });
+    await act(async () => {
+      expect((await kept.form.tokenize()).status).not.toBe('success');
+    });
+    expect(
+      kept.number.getByTestId('CardNumberInputTestId').props.value
+    ).not.toBe('');
+    kept.host.unmount();
+
+    network.restore();
+    network = mockFetch({
+      body: {
+        associated_payment_methods: [
+          { payment_method_token: { type: 'payment_method_id', data: 'pm_test_1' } },
+        ],
+      },
+    });
+    const cleared = mountForm();
+    await cleared.type();
+    await waitFor(() => expect(cleared.changes.at(-1)?.complete).toBe(true));
+    await act(async () => {
+      expect((await cleared.form.tokenize()).status).toBe('success');
+    });
+    await waitFor(() => {
+      expect(
+        cleared.number.getByTestId('CardNumberInputTestId').props.value
+      ).toBe('');
+      expect(cleared.cvc.getByTestId('CVCInputTestId').props.value).toBe('');
+    });
+    expect(cleared.changes.at(-1)?.complete).toBe(false);
+  });
+
+  it("holds no card in the vault's own state once the vault has it, nor after the host is gone", async () => {
+    network.restore();
+    network = mockFetch({
+      body: {
+        associated_payment_methods: [
+          { payment_method_token: { type: 'payment_method_id', data: 'pm_test_1' } },
+        ],
+      },
+    });
+    const { form, host, number, expiry, cvc, changes, type } = mountForm();
+    await type();
+    await waitFor(() => expect(changes.at(-1)?.complete).toBe(true));
+
+    type Fiber = {
+      memoizedProps: unknown;
+      memoizedState: unknown;
+      child: Fiber | null;
+      sibling: Fiber | null;
+    };
+    const fibersOf = (view: ReturnType<typeof render>): Fiber[] => {
+      const out: Fiber[] = [];
+      const visit = (fiber: Fiber | null) => {
+        if (!fiber) return;
+        out.push(fiber);
+        visit(fiber.child);
+        visit(fiber.sibling);
+      };
+      visit((view.UNSAFE_root as unknown as { _fiber: Fiber })._fiber);
+      return out;
+    };
+    const held = (view: ReturnType<typeof render>): string[] => {
+      const out: string[] = [];
+      const seen = new Set<unknown>();
+      const walk = (value: unknown) => {
+        if (typeof value === 'string') out.push(value);
+        if (value === null || typeof value !== 'object' || seen.has(value)) return;
+        seen.add(value);
+        for (const key of Object.keys(value as object)) {
+          if (
+            key === '_owner' ||
+            key === 'return' ||
+            key === 'stateNode' ||
+            key === '_reactInternals' ||
+            key === 'alternate'
+          ) {
+            continue;
+          }
+          walk((value as Record<string, unknown>)[key]);
+        }
+      };
+      for (const fiber of fibersOf(view)) {
+        walk(fiber.memoizedProps);
+        let hook = fiber.memoizedState as { memoizedState?: unknown; next?: unknown } | null;
+        while (hook && typeof hook === 'object' && 'next' in hook) {
+          walk(hook.memoizedState);
+          hook = hook.next as typeof hook;
+        }
+      }
+      return out;
+    };
+    const controllerOf = (view: ReturnType<typeof render>): Record<string, any> => {
+      for (const fiber of fibersOf(view)) {
+        const value = (fiber.memoizedProps as { value?: Record<string, unknown> } | null)?.value;
+        if (value && typeof value === 'object' && 'controller' in value) {
+          return value.controller as Record<string, any>;
+        }
+      }
+      throw new Error('The vault provider was not found in the tree.');
+    };
+    const views = () => [number, expiry, cvc];
+    const withoutSpaces = (text: string) => text.replace(/\s/g, '');
+    const holdsCard = () =>
+      views().flatMap(held).filter((text) => withoutSpaces(text).includes(PAN));
+
+    /* Sanity: while the card is being entered, the vault's state does hold it. */
+    expect(withoutSpaces(controllerOf(number).cardDetails().cardNumber)).toBe(PAN);
+    expect(holdsCard().length).toBeGreaterThan(0);
+
+    await act(async () => {
+      expect((await form.tokenize()).status).toBe('success');
+    });
+    await waitFor(() => {
+      expect(controllerOf(number).cardDetails()).toEqual({
+        cardNumber: '',
+        expiryMonth: '',
+        expiryYear: '',
+        cvc: '',
+      });
+    });
+    expect(controllerOf(number).values.cardNumber).toBe('');
+    expect(controllerOf(number).values.cvc).toBe('');
+    expect(holdsCard()).toEqual([]);
+
+    /* Typed again, then the host goes: the store is wiped and sealed, so no root can
+       reach the card any more, and nothing typed after lands anywhere. */
+    await type();
+    await waitFor(() => expect(changes.at(-1)?.complete).toBe(true));
+    await act(async () => {
+      host.unmount();
+    });
+    await waitFor(() => {
+      expect(controllerOf(number).cardDetails()).toEqual({
+        cardNumber: '',
+        expiryMonth: '',
+        expiryYear: '',
+        cvc: '',
+      });
+    });
+    await act(async () => {
+      number.getByTestId('CardNumberInputTestId').props.onChangeText(PAN);
+    });
+    expect(controllerOf(number).cardDetails().cardNumber).toBe('');
+    expect(holdsCard()).toEqual([]);
+  });
+
+  it('hands out a handle that cannot be altered', () => {
+    const form = createDetachedCardForm({});
+    expect(Object.isFrozen(form)).toBe(true);
+    expect(() => {
+      'use strict';
+      (form as { tokenize: unknown }).tokenize = () => PAN;
+    }).toThrow();
+  });
+
+  it('shows no more of a number than PCI truncation allows', async () => {
+    const { number, changes } = mountForm();
+    const enter = (text: string) =>
+      act(async () => {
+        number.getByTestId('CardNumberInputTestId').props.onChangeText(text);
+      });
+    const summary = () => changes.at(-1)?.payload ?? {};
+
+    /* Sixteen digits that are not a valid number: no last four. */
+    await enter('4242424242424241');
+    await waitFor(() => expect(summary().bin).toBe('424242'));
+    expect(summary().last4 ?? null).toBeNull();
+
+    await enter(PAN);
+    await waitFor(() => expect(summary().last4).toBe('4242'));
+    expect(summary().extendedBin).toBe('42424242');
+
+    /* American Express is fifteen digits: first six and last four, never eight. */
+    await enter('378282246310005');
+    await waitFor(() => expect(summary().last4).toBe('0005'));
+    expect(summary().bin).toBe('378282');
+    expect(summary().extendedBin ?? null).toBeNull();
   });
 
   it('refuses to tokenize when no host is mounted', async () => {

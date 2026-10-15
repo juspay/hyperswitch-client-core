@@ -61,8 +61,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function validateVaultData(raw: unknown): BasisTheoryVaultData {
   if (!isRecord(raw) || typeof raw.apiKey !== 'string' || !raw.apiKey) {
     throw new Error(
-      'Basis Theory vaultData requires a non-empty string "apiKey". Received: ' +
-        JSON.stringify(raw)
+      'Basis Theory vaultData requires a non-empty string "apiKey". Received keys: ' +
+        (isRecord(raw) ? Object.keys(raw).join(', ') || 'none' : typeof raw)
     );
   }
   return raw as unknown as BasisTheoryVaultData;

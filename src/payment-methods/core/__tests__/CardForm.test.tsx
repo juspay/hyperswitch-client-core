@@ -197,7 +197,6 @@ describe('CardForm', () => {
       vaultType: 'evervault',
       cardDetails: {
         bin: '424242',
-        last4: '4242',
         brand: 'Visa',
         expiryMonth: '12',
         expiryYear: '2030',
@@ -220,7 +219,6 @@ describe('CardForm', () => {
 
     expect(result?.status === 'success' && result.card).toEqual({
       bin: '424242',
-      last4: '4242',
       brand: 'Visa',
       expiryMonth: '12',
       expiryYear: '2030',
@@ -377,7 +375,7 @@ describe('CardForm', () => {
       readyDelayMs: 0,
       fieldState: { empty: false, valid: true, brand: 'visa' },
       /* What a host reports once eight digits are typed — six for `bin`, eight for `extendedBin`. */
-      cardDetails: { bin: '424242', extendedBin: '42424242', last4: '4242' },
+      cardDetails: { bin: '424242', extendedBin: '42424242' },
     });
     const formChanges: CardFormChange[] = [];
     render(
@@ -396,7 +394,7 @@ describe('CardForm', () => {
     expect(formChanges.at(-1)!.payload).toMatchObject({
       bin: '424242',
       extendedBin: '42424242',
-      last4: '4242',
+      last4: null,
     });
   });
 

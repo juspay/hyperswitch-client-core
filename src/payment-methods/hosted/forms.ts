@@ -45,6 +45,7 @@ export interface HostedForm {
 }
 
 const forms = new Map<FormId, HostedForm>();
+const lastChange = new Map<FormId, string>();
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((listener) => listener());
 
@@ -109,6 +110,7 @@ export function openForm(
         instance = session.createCardForm({
           appearance: descriptor.appearance,
           locale: descriptor.locale,
+          autofill: descriptor.autofill,
           readyTimeoutMs: descriptor.readyTimeoutMs,
         });
       } catch (error) {
@@ -152,6 +154,7 @@ export function openForm(
     closed = true;
     stopWatching?.();
     forms.delete(formId);
+    lastChange.delete(formId);
     notify();
   };
 }
@@ -176,9 +179,10 @@ export function fieldChanged(formId: FormId, bridge: HostBridge): void {
   const form = forms.get(formId);
   const core = form?.instance ? coreOf(form.instance) : undefined;
   if (!form || !core) return;
-  bridge.emitForm(
-    form.rootTag,
-    FormEvent.Change,
-    buildChange(core.fields, core.details)
-  );
+
+  const change = buildChange(core.fields, core.details);
+  const text = JSON.stringify(change);
+  if (lastChange.get(formId) === text) return;
+  lastChange.set(formId, text);
+  bridge.emitForm(form.rootTag, FormEvent.Change, change);
 }

@@ -47,6 +47,7 @@ export interface FormDescriptor extends DescriptorBase {
   vaultDetails?: VaultDetails;
   appearance?: Appearance;
   locale?: string;
+  autofill?: boolean;
   readyTimeoutMs?: number;
 }
 

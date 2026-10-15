@@ -70,8 +70,8 @@ function validateVaultData(raw: unknown): SkyflowVaultData {
   ) {
     throw new Error(
       'Skyflow vaultData requires non-empty string "vaultId", "vaultUrl" and "table". ' +
-        'Received: ' +
-        JSON.stringify(raw)
+        'Received keys: ' +
+        (isRecord(raw) ? Object.keys(raw).join(', ') || 'none' : typeof raw)
     );
   }
   return raw as unknown as SkyflowVaultData;

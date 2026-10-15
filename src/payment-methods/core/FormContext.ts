@@ -19,6 +19,7 @@ export interface FormContextValue {
 
   appearances: readonly Appearance[];
   unstyled?: boolean;
+  autofill?: boolean;
   tokenize: (providerData?: unknown) => Promise<TokenizeResult>;
 
   reportChange: (change: FieldChange) => void;

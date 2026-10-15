@@ -446,7 +446,7 @@ describe('saved-card CVC', () => {
 
   it('keeps the incoming result.card alongside the saved card', async () => {
     const ref = renderSavedCard(saved('tok_saved', 'Visa'), undefined, {
-      cardDetails: { last4: '4242', brand: 'Visa' },
+      cardDetails: { bin: '424242', brand: 'Visa' },
     });
 
     await waitFor(() =>
@@ -455,7 +455,7 @@ describe('saved-card CVC', () => {
 
     const result = await tokenizeVia(ref);
     expect(result?.status === 'success' && result.card).toEqual({
-      last4: '4242',
+      bin: '424242',
       brand: 'Visa',
     });
     expect(dataOf(result)?.savedCard).toEqual({

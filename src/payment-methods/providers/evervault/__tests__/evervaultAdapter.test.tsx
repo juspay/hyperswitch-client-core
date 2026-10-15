@@ -134,7 +134,7 @@ describe('evervaultAdapter', () => {
     const last = changes.at(-1)!;
     expect(last.eventName).toBe('cardDetailsChange');
     expect(last.payload.bin).toBe('424242');
-    expect(last.payload.last4).toBe('4242');
+    expect(last.payload.last4).toBeNull();
     expect(last.payload.brand).toBe('Visa');
     expect(last.payload.expiryMonth).toBe('12');
     expect(last.payload.expiryYear).toBe('2030');

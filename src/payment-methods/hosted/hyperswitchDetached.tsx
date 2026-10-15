@@ -67,6 +67,7 @@ export const hyperswitchDetachedAdapter: ProviderAdapter = {
       environment: data.environment ?? context?.environment ?? 'PROD',
       customEndpoints: context?.customEndpoints,
       locale: context?.locale,
+      autofill: context?.autofill,
       appearance:
         layers.length > 0 ? toVaultAppearance(layers, scheme) : undefined,
       onChange: (event: { payload?: Partial<CardDetails> }) => {
@@ -74,7 +75,6 @@ export const hyperswitchDetachedAdapter: ProviderAdapter = {
         context?.onCardDetails({
           bin: payload.bin ?? null,
           extendedBin: payload.extendedBin ?? null,
-          last4: payload.last4 ?? null,
           brand: payload.brand ?? null,
           expiryMonth: payload.expiryMonth ?? null,
           expiryYear: payload.expiryYear ?? null,

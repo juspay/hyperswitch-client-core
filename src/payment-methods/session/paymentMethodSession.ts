@@ -19,6 +19,7 @@ export interface PaymentMethodSessionOptions {
 export interface CreateCardFormOptions {
   appearance?: Appearance;
   locale?: string;
+  autofill?: boolean;
   readyTimeoutMs?: number;
 }
 
@@ -55,8 +56,12 @@ function createCardForm(
       locale: options.locale,
       environment: config?.environment,
       customEndpoints: config?.customEndpoints,
+      autofill: options.autofill,
       onCardDetails: (details) => {
-        core.details = { ...core.details, ...details };
+        const next = { ...core.details, ...details };
+        const keys = Object.keys(next) as Array<keyof typeof next>;
+        if (keys.every((key) => next[key] === core.details[key])) return;
+        core.details = next;
         core.notify();
       },
     })

@@ -135,7 +135,7 @@ export interface FieldChange {
 export interface CardDetails {
   bin: string | null;
   extendedBin: string | null;
-  last4: string | null;
+  last4: null;
   brand: string | null;
   expiryMonth: string | null;
   expiryYear: string | null;

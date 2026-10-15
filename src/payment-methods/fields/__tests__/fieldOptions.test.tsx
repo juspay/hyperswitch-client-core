@@ -201,7 +201,7 @@ describe.skip('DEFERRED: CardForm.onChange coalescing and lifecycle', () => {
   const fieldState = { empty: false, valid: true, brand: 'visa' };
 
   it('emits one envelope per task with a consistent payload, and never one per field report', async () => {
-    useMock({ fieldState, cardDetails: { bin: '424242', last4: '4242' } });
+    useMock({ fieldState, cardDetails: { bin: '424242' } });
     const changes: CardFormChange[] = [];
     render(
       <CardForm vaultDetails={details} onChange={(e) => changes.push(e)}>
@@ -217,7 +217,7 @@ describe.skip('DEFERRED: CardForm.onChange coalescing and lifecycle', () => {
     expect(changes).toHaveLength(2);
     expect(changes[0]!).toMatchObject({
       eventName: 'cardDetailsChange',
-      payload: { bin: '424242', last4: '4242' },
+      payload: { bin: '424242' },
       fields: {},
     });
     expect(changes[1]!).toMatchObject({
@@ -225,7 +225,6 @@ describe.skip('DEFERRED: CardForm.onChange coalescing and lifecycle', () => {
       eventName: 'cardDetailsChange',
       payload: {
         bin: '424242',
-        last4: '4242',
         brand: 'Visa',
         isCardNumberComplete: true,
       },

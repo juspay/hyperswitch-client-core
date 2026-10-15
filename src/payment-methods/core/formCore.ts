@@ -84,7 +84,9 @@ export function createFormCore(
       core.notify();
       if (result.status !== 'success') return result;
 
-      const card = tokenizedCardOf(core.details);
+      const tracked = tokenizedCardOf(core.details);
+      const card =
+        tracked || result.card ? { ...tracked, ...result.card } : undefined;
       return withSavedCard(
         card ? { ...result, card } : result,
         savedCardOf(core.mounted)

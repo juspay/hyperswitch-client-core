@@ -61,6 +61,7 @@ export interface CardFormProps {
   vaultDetails?: VaultDetails;
 
   appearance?: Appearance;
+  autofill?: boolean;
 
   unstyled?: boolean;
 
@@ -104,7 +105,7 @@ export function buildChange(
     payload: {
       bin: details.bin ?? null,
       extendedBin: details.extendedBin ?? null,
-      last4: details.last4 ?? null,
+      last4: null,
       brand: details.brand ?? number?.brand ?? null,
       expiryMonth,
       expiryYear,
@@ -126,6 +127,7 @@ export const CardForm = forwardRef<CardFormHandle, CardFormProps>(
     {
       vaultDetails,
       appearance,
+      autofill,
       unstyled,
       id,
       onReady,
@@ -305,7 +307,9 @@ export const CardForm = forwardRef<CardFormHandle, CardFormProps>(
         setStatus(formSession.status);
         if (result.status !== 'success') return result;
 
-        const card = tokenizedCardOf(detailsRef.current);
+        const tracked = tokenizedCardOf(detailsRef.current);
+        const card =
+          tracked || result.card ? { ...tracked, ...result.card } : undefined;
         return withSavedCard(
           card ? { ...result, card } : result,
           savedCardOf(mounted)
@@ -350,6 +354,7 @@ export const CardForm = forwardRef<CardFormHandle, CardFormProps>(
         collector,
         status,
         appearances,
+        autofill,
         unstyled,
         tokenize,
         reportChange,
@@ -362,6 +367,7 @@ export const CardForm = forwardRef<CardFormHandle, CardFormProps>(
         collector,
         status,
         appearances,
+        autofill,
         unstyled,
         tokenize,
         reportChange,

@@ -18,6 +18,8 @@
     "bundle:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/hyperswitch.bundle",
     "bundle:rn:android": "react-native bundle  --reset-cache --platform android --dev false --entry-file index.js --bundle-output ../react-native-hyperswitch/packages/@juspay-tech/react-native-hyperswitch/android/src/main/assets/hyperswitch.bundle",
     "bundle:ios": "react-native bundle --reset-cache --platform ios --dev false --entry-file index.js --bundle-output ios/hyperswitchSDK/Core/Resources/hyperswitch.bundle",
+    "bundle:pm:android": "HYPERSWITCH_BUNDLE=payment-methods react-native bundle --reset-cache --platform android --dev false --entry-file index.payment-methods.js --bundle-output android/app/src/main/assets/hyperswitch-payment-methods.bundle",
+    "bundle:pm:ios": "HYPERSWITCH_BUNDLE=payment-methods react-native bundle --reset-cache --platform ios --dev false --entry-file index.payment-methods.js --bundle-output ios/hyperswitchSDK/PaymentMethods/Resources/hyperswitch-payment-methods.bundle",
     "build:web": "rm -rf reactNativeWeb/dist/ && webpack --mode=production --config reactNativeWeb/webpack.config.js",
     "build:lib": "android/build-lib.sh",
     "clean": "rm -rf node_modules && rm -rf package-lock.json && rm -rf yarn.lock && yarn run clean:gradle && yarn run clean:pod",

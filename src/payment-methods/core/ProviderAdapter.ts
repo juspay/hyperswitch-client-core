@@ -62,6 +62,7 @@ export interface CollectorContext {
   locale?: string;
   environment?: HyperswitchEnvironment;
   customEndpoints?: CommonEndpoint | OverrideEndpoints;
+  autofill?: boolean;
   onCardDetails: (details: Partial<CardDetails>) => void;
 }
 
