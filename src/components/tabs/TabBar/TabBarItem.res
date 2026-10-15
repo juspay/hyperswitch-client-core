@@ -6,44 +6,6 @@ let defaultInactiveColor = Color.rgba(~r=0, ~g=0, ~b=0, ~a=0.5)
 let iconSize = 24
 let androidRippleDefault = {"borderless": true}
 
-let getActiveOpacity = (
-  position: Animated.value<Animated.calculated>,
-  routesLength: int,
-  tabIndex: int,
-) => {
-  if routesLength > 1 {
-    let inputRange = Array.fromInitializer(~length=routesLength, i => i->Int.toFloat)
-
-    position->Animated.Interpolation.interpolate({
-      inputRange,
-      outputRange: inputRange
-      ->Array.map(i => i->Float.toInt === tabIndex ? 1.0 : 0.0)
-      ->Animated.Interpolation.fromFloatArray,
-    })
-  } else {
-    1.->Animated.Value.create->Animated.Value.add(0.->Animated.Value.create)
-  }
-}
-
-let getInactiveOpacity = (
-  position: Animated.value<Animated.calculated>,
-  routesLength: int,
-  tabIndex: int,
-) => {
-  if routesLength > 1 {
-    let inputRange = Array.fromInitializer(~length=routesLength, i => i->Int.toFloat)
-
-    position->Animated.Interpolation.interpolate({
-      inputRange,
-      outputRange: inputRange
-      ->Array.map(i => i->Float.toInt === tabIndex ? 0.0 : 1.0)
-      ->Animated.Interpolation.fromFloatArray,
-    })
-  } else {
-    0.->Animated.Value.create->Animated.Value.add(0.->Animated.Value.create)
-  }
-}
-
 module TabBarItemInternal = {
   @react.component
   let make = (
@@ -54,13 +16,12 @@ module TabBarItemInternal = {
     ~onLongPress: option<Event.pressEvent => unit>,
     ~onPress: option<Event.pressEvent => unit>,
     ~isFocused: bool,
-    ~position: Animated.value<Animated.calculated>,
     ~style: option<Style.t>,
     ~inactiveColor: option<Color.t>,
     ~activeColor: option<Color.t>,
     ~labelStyle: option<Style.t>,
     ~onLayout: option<Event.layoutEvent => unit>,
-    ~index: int,
+    ~index as _: int,
     ~pressColor: option<Color.t>,
     ~pressOpacity as _: option<float>,
     ~defaultTabWidth: option<float>,
@@ -68,7 +29,6 @@ module TabBarItemInternal = {
     ~badge: option<React.component<TabViewType.badgeProps>>,
     ~href: option<string>,
     ~labelText,
-    ~routesLength,
     ~android_ripple,
     ~labelAllowFontScaling,
     ~route: TabViewType.route,
@@ -107,36 +67,20 @@ module TabBarItemInternal = {
       }
     }
 
-    let activeOpacity = getActiveOpacity(position, routesLength, index)
-    let inactiveOpacity = getInactiveOpacity(position, routesLength, index)
-
-    let iconElement = React.useMemo6(() => {
+    let iconElement = React.useMemo5(() => {
       switch icon {
       | None => React.null
       | Some(customIcon) =>
-        let inactiveIcon = customIcon({
-          focused: false,
-          color: inactiveColorFinal,
-          size: iconSize,
-          route,
-        })
-
-        let activeIcon = customIcon({focused: true, color: activeColorFinal, size: iconSize, route})
-
         <View style={s({margin: 2.->dp})}>
-          <Animated.View style={s({opacity: inactiveOpacity->Animated.StyleProp.float})}>
-            {inactiveIcon}
-          </Animated.View>
-          <Animated.View
-            style={array([
-              StyleSheet.absoluteFill,
-              s({opacity: activeOpacity->Animated.StyleProp.float}),
-            ])}>
-            {activeIcon}
-          </Animated.View>
+          {customIcon({
+            focused: isFocused,
+            color: isFocused ? activeColorFinal : inactiveColorFinal,
+            size: iconSize,
+            route,
+          })}
         </View>
       }
-    }, (activeColorFinal, activeOpacity, icon, inactiveColorFinal, inactiveOpacity, route))
+    }, (activeColorFinal, icon, inactiveColorFinal, isFocused, route))
 
     let renderLabel = React.useCallback7(focused => {
       switch label {
@@ -223,16 +167,8 @@ module TabBarItemInternal = {
         {iconElement}
         <Space height=2. />
         <View>
-          <Animated.View style={s({opacity: inactiveOpacity->Animated.StyleProp.float})}>
-            {renderLabel(false)}
-          </Animated.View>
-          <Animated.View
-            style={array([
-              StyleSheet.absoluteFill,
-              s({opacity: activeOpacity->Animated.StyleProp.float}),
-            ])}>
-            {renderLabel(true)}
-          </Animated.View>
+          <View style={s({opacity: 0.})}> {renderLabel(true)} </View>
+          <View style={StyleSheet.absoluteFill}> {renderLabel(isFocused)} </View>
         </View>
         {switch badge {
         | Some(customBadge) =>
@@ -252,7 +188,6 @@ module MemoizedTabBarItemInternal = {
     prevProps.index === nextProps.index &&
     prevProps.route.key === nextProps.route.key &&
     prevProps.isLoading === nextProps.isLoading &&
-    prevProps.position === nextProps.position &&
     prevProps.label === nextProps.label
   })
 }
@@ -264,7 +199,6 @@ let make = (
   ~onLayout,
   ~navigationState: TabViewType.navigationState,
   ~route: TabViewType.route,
-  ~position,
   ~activeColor=?,
   ~inactiveColor=?,
   ~pressColor=?,
@@ -304,7 +238,6 @@ let make = (
     onLongPress=onLongPressLatest
     onPress=onPressLatest
     isFocused={navigationState.index === tabIndex}
-    position
     style
     inactiveColor
     activeColor
@@ -318,7 +251,6 @@ let make = (
     badge
     href
     labelText
-    routesLength={navigationState.routes->Array.length}
     android_ripple
     labelAllowFontScaling
     route

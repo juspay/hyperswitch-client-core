@@ -232,7 +232,6 @@ type configurationType = {
   displaySavedPaymentMethods: bool,
   displayDefaultSavedPaymentIcon: bool,
   displayPayButton: bool,
-  stickyPayButton: bool,
   disableBranding: bool,
   preloadCardElement: bool,
   primaryButtonLabel: option<string>,
@@ -673,7 +672,6 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     displaySavedPaymentMethods: getBool(configObj, "displaySavedPaymentMethods", true),
     displayDefaultSavedPaymentIcon: getBool(configObj, "displayDefaultSavedPaymentIcon", true),
     displayPayButton: getBool(configObj, "displayPayButton", displayPayButton),
-    stickyPayButton: getBool(configObj, "stickyPayButton", false),
     disableBranding: getBool(configObj, "disableBranding", false),
     preloadCardElement: getBool(configObj, "preloadCardElement", false),
     primaryButtonLabel: getOptionString(configObj, "primaryButtonLabel"),
@@ -780,8 +778,8 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
         },
         buttonSize: switch getString(payPalDict, "buttonSize", "") {
         | "small" => SMALL
-        | "large" => LARGE
-        | _ => MEDIUM
+        | "medium" => MEDIUM
+        | _ => LARGE
         },
         buttonStyle: getOptionalObj(payPalDict, "buttonStyle")->Option.map(s => {
           let payPalThemeBaseStyle: payPalThemeBaseStyle = {

@@ -2,7 +2,7 @@ open ReactNative
 open Style
 
 @react.component
-let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~stickyFooter=?) => {
+let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen) => {
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
   let insets = SafeAreaContext.useSafeAreaInsets()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -17,7 +17,7 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
       )
     }, 300)->ignore
   })
-  let {paymentSheetOverlay} = ThemebasedStyle.useThemeBasedStyle()
+  let {paymentSheetOverlay, bgColor} = ThemebasedStyle.useThemeBasedStyle()
 
   let entranceGate = React.useContext(EntranceGate.context)
   let sheetFlex = AnimatedValue.useAnimatedValue(0.)
@@ -77,9 +77,8 @@ let make = (~children, ~isLoading, ~renderScrollView, ~isSavedPaymentScreen, ~st
           flexGrow: 1.,
           maxHeight: 100.->pct,
         })}>
-        <CustomView onDismiss=onModalClose>
-          <CustomView.Wrapper
-            onModalClose isLoading renderScrollView isSavedPaymentScreen ?stickyFooter>
+        <CustomView onDismiss=onModalClose sheetBackground=bgColor>
+          <CustomView.Wrapper onModalClose isLoading renderScrollView isSavedPaymentScreen>
             {children}
           </CustomView.Wrapper>
         </CustomView>

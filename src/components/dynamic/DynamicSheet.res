@@ -70,6 +70,7 @@ let make = (~children, ~handlePress) => {
             })}
           />
           <CustomKeyboardAvoidingView
+            sheetBackground=bgColor
             style={s({
               width: 100.->pct,
               borderRadius: 15.,
