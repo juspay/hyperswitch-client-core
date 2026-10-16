@@ -119,7 +119,9 @@ module Wrapper = {
       minHeight: 250.->dp,
       paddingHorizontal: sheetContentPadding->dp,
       paddingTop: sheetContentPadding->dp,
-      // paddingBottom: viewPortContants.bottomInset->dp,
+      // The sticky footer pads for the bottom inset itself; without one the content must,
+      // or the pay button sits under the navigation bar.
+      paddingBottom: (stickyFooter->Option.isSome ? 0. : viewPortContants.bottomInset)->dp,
     })
 
     let getStickyFooter = style =>
