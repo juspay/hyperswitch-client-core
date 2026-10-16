@@ -2,4 +2,6 @@ appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp
 ---
 # Cross-checks the backend record of the scenario's latest intent (see check_backend_payment.js):
 # EXPECT_STATUS, and optionally EXPECT_LAST4 / EXPECT_NETWORK.
+# Evidence for the CI report (ci-report.js): the screen the flow ended on.
+- takeScreenshot: result
 - runScript: check_backend_payment.js

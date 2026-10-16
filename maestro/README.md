@@ -176,14 +176,22 @@ flow on a manual run. CI does not use Metro: a debug build that cannot reach Met
 the android repo, which can be older than the branch under test.
 Pull requests from forks skip the job (they get no repository secrets).
 
-Results: the run's **Summary** page shows a table of every flow (✅/❌, file, duration, failing step, reason),
-failed flows first (`maestro/scripts/ci-report.js`, from Maestro's JUnit report). When a flow fails, the
-`maestro-failure-screenshots` artifact (bottom of the Summary page, kept 7 days) has one folder per failed flow:
-`FAILED - screen at failure.png` (the screen when it failed, with the step and reason on a red banner),
-`README.txt` (the steps it ran, ✅/❌) and `all-screenshots/`. Only screenshots and step names are uploaded:
-device and Maestro logs stay on the runner, because they can carry the sandbox publishable key and payment
-session tokens, and anything uploaded from this public repository can be downloaded by anyone signed in to
-GitHub. For logs, run the failed flow locally.
+Results: the run's **Summary** page shows a table of every flow (✅/❌, file, duration, sandbox record, failing
+step, reason), failed flows first (`maestro/scripts/ci-report.js`, from Maestro's JUnit report). The sandbox
+record is the payment as the Hyperswitch sandbox recorded it (status, card, connector, authentication, amount),
+read back by the flow after it ran (`check_backend_payment.js`), so a pass means the sandbox agrees, not only the
+app's screen.
+
+Evidence: every run uploads the `maestro-screenshots` artifact (bottom of the Summary page, kept 90 days):
+- `passed/<flow>/`: `1 - before-pay.png` (the sheet as it was submitted), `2 - result.png` (the screen the flow
+  ended on) and `README.txt` (sandbox record and the steps it ran, ✅). The screenshots come from `takeScreenshot`
+  in `pay.yaml` and `check_backend_payment.yaml`.
+- `failed/<flow>/`: `FAILED - screen at failure.png` (the screen when it failed, with the step and reason on a red
+  banner), `README.txt` (the steps it ran, ✅/❌) and `all-screenshots/`.
+
+Only screenshots, step names and the sandbox record are uploaded: device and Maestro logs stay on the runner,
+because they can carry the sandbox publishable key and payment session tokens, and anything uploaded from this
+public repository can be downloaded by anyone signed in to GitHub. For logs, run the flow locally.
 
 ## Things that already cost time
 

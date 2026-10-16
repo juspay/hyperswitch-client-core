@@ -8,5 +8,7 @@ appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp
       id: PayButtonTestId
     direction: DOWN
     timeout: 10000
+# Evidence for the CI report (ci-report.js): the sheet as it is submitted.
+- takeScreenshot: before-pay
 - tapOn:
     id: PayButtonTestId
