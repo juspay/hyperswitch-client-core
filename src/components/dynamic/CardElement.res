@@ -46,6 +46,7 @@ let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~createFieldValidator,
   ~formatValue,
+  ~isFocused,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
   ~checkEligibility: option<string> => unit=_ => (),
@@ -207,10 +208,12 @@ let make = (
       let brand = cardNetworkInput.value->Option.getOr("")
 
       React.useEffect(() => {
-        let info = PaymentEvents.buildCardInfo(~cardNumber, ~expiry=expireDate, ~cvc, ~brand)
-        emitter.emitCardInfo(~info)
+        if isFocused {
+          let info = PaymentEvents.buildCardInfo(~cardNumber, ~expiry=expireDate, ~cvc, ~brand)
+          emitter.emitCardInfo(~info)
+        }
         None
-      }, (cardNumber, expireDate, cvc, brand))
+      }, (isFocused, cardNumber, expireDate, cvc, brand))
 
       React.useEffect1(() => {
         let isValid = cardValid(cardNumber, brand)

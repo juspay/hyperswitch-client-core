@@ -11,6 +11,7 @@ let make = (
   ~fields: array<SuperpositionTypes.fieldConfig>,
   ~vaultDetails: VaultDetailsType.vaultDetails,
   ~formId: string,
+  ~isFocused,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
 ) => {
@@ -27,6 +28,14 @@ let make = (
   let (formFields, setFormFields) = React.useState(() => Dict.make())
   let (focusStates, setFocusStates) = React.useState(() => Dict.make())
   let (expiryFullyTyped, setExpiryFullyTyped) = React.useState(() => false)
+  let (cardInfo, setCardInfo) = React.useState(() => (None: option<PaymentEvents.cardInfo>))
+
+  React.useEffect2(() => {
+    if isFocused {
+      cardInfo->Option.forEach(info => emitter.emitCardInfo(~info))
+    }
+    None
+  }, (isFocused, cardInfo))
 
   let {
     component,
@@ -88,7 +97,7 @@ let make = (
       isCardNumberValid: p.isCardNumberValid,
       isExpiryValid: p.isExpiryValid,
     }
-    emitter.emitCardInfo(~info)
+    setCardInfo(_ => Some(info))
   }
 
   let onFormError = (error: JSON.t) => {
