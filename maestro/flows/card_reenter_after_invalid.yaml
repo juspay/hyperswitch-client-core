@@ -1,0 +1,35 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - fixing an invalid number clears the error and the payment goes through
+tags:
+  - nightly
+  - card
+  - validation
+  - android-only
+---
+# Android only: clearing a field needs eraseText, and on iOS text typed after eraseText
+# never reaches the field (see README).
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- tapOn:
+    id: CardNumberInputTestId
+- inputText: "4242424242424241"
+- tapOn:
+    id: ExpiryInputTestId
+- extendedWaitUntil:
+    visible: "Card number is invalid\\."
+    timeout: 10000
+- runFlow: ../subflows/fill_card.yaml
+- assertNotVisible: "Card number is invalid\\."
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

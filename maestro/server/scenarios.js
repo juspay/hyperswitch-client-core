@@ -70,6 +70,12 @@ module.exports = {
     account: 'DEFAULT',
     description: 'No changes: mockServer.js creates the intent (mockData and .env), as with yarn server.',
   },
+  new_customer: {
+    account: 'DEFAULT',
+    customer: 'fresh',
+    body: base,
+    description: 'Fresh customer: no saved methods, card form first, "Save card details" offered.',
+  },
   guest: {
     account: 'DEFAULT',
     customer: 'none',
@@ -106,5 +112,11 @@ module.exports = {
     customer: 'fresh',
     body: {...base, authentication_type: 'three_ds'},
     description: '3DS requested; the connector test card decides frictionless vs challenge.',
+  },
+  manual_capture: {
+    account: 'DEFAULT',
+    customer: 'fresh',
+    body: {...base, capture_method: 'manual'},
+    description: 'Authorise only: the SDK should report requires_capture.',
   },
 };

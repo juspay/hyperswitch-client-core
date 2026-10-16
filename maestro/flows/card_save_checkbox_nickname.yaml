@@ -1,0 +1,27 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Save card - ticking the box shows the nickname field, unticking hides it
+tags:
+  - pr
+  - card
+  - saved
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: new_customer
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- assertNotVisible: "Card Nickname.*"
+- runFlow: ../subflows/dismiss_dev_overlays.yaml
+- tapOn:
+    id: SaveCardCheckboxTestId
+- extendedWaitUntil:
+    visible: "Card Nickname.*"
+    timeout: 5000
+- tapOn:
+    id: SaveCardCheckboxTestId
+- extendedWaitUntil:
+    notVisible: "Card Nickname.*"
+    timeout: 5000

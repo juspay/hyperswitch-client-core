@@ -101,8 +101,9 @@ Look at the failure screenshot, `commands.json` and the `Tapping on element` lin
 | --- | --- |
 | `smoke` | the pull-request gate (CI runs these on every pull request) |
 | `pr` | fast and deterministic |
+| `nightly` | slower, or depends on what the sandbox connector supports (card brand matrix); not in `pr` |
 | `android-only` | the behaviour or the Maestro command only exists on Android (system Back, the widget demo) |
-| `card`, `saved`, `sheet`, `host`, `widget`, `validation`, `decline`, `3ds` | area |
+| `card`, `saved`, `sheet`, `host`, `widget`, `validation`, `decline`, `brand`, `3ds` | area |
 
 ## e2e server and scenarios
 
@@ -131,9 +132,10 @@ intent on launch. Every flow sets its scenario.
 | Scenario | Intent |
 | --- | --- |
 | `default` | no changes: `mockServer.js` creates the intent |
+| `new_customer` | fresh customer, no saved methods ("Save card details" offered) |
 | `guest` | no customer |
 | `saved_card` / `saved_card_multiple` | fresh customer with a saved Visa 4242 (+ Mastercard 4444, last used; 4242 set as default), saved server-side |
-| `no_three_ds`, `three_ds` | fresh customer; authentication variants |
+| `no_three_ds`, `three_ds`, `manual_capture` | fresh customer; authentication / capture variants |
 
 A fresh customer id is created when the scenario is set and kept until the next `POST /scenario`. A flow can pay,
 relaunch with `KEEP_SCENARIO: "true"` and see what was saved; `assert_scenario.js` guards against a server restart

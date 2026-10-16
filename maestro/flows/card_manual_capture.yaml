@@ -1,0 +1,26 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - manual capture reports requires_capture
+tags:
+  - pr
+  - card
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: manual_capture
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow: ../subflows/fill_card.yaml
+- runFlow: ../subflows/pay.yaml
+# The SDK closes with the non-terminal status; iOS shows every completed status as "Payment complete".
+- runFlow:
+    file: ../subflows/expect_payment_succeeded.yaml
+    env:
+      STATUS: requires_capture
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_capture
+      EXPECT_LAST4: "4242"
