@@ -16,8 +16,9 @@ let useUpdateIntentListener = () => {
   React.useEffect0(() => {
     // PMM sessions are vault-only (no PaymentIntent), so update-intent never
     // applies; their props carry `pmmState` and `sdkState` parses to NoView.
+    // A hosted card form stays bound to the payment it opened with, as on the web.
     let followsIntent = switch nativeProp.sdkState {
-    | CvcWidget | NoView => false
+    | CvcWidget | CardWidget | NoView => false
     | _ => true
     }
 
