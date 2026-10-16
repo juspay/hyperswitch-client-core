@@ -4,7 +4,6 @@ open AllPaymentHelperHooks
 let useHandleSuccessFailure = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {exit} = HyperModule.useExitPaymentsheet()
-  let exitCard = HyperModule.useExitCard()
   let exitWidget = HyperModule.useExitWidget()
   (~apiResStatus: error, ~closeSDK=true, ~reset=true, ()) => {
     switch nativeProp.sdkState {
@@ -15,7 +14,14 @@ let useHandleSuccessFailure = () => {
       if closeSDK {
         exit(apiResStatus, reset)
       }
-    | CardWidget => exitCard(apiResStatus)
+    // A hosted card form's own failures (its data could not load): an `error` event for that form.
+    // Its confirm outcomes never come through here; CardWidget reports those per attempt.
+    | CardWidget =>
+      HyperModule.emitPaymentEvent(
+        nativeProp.rootTag,
+        "error",
+        apiResStatus->CardWidgetFlow.paymentErrorOf->CardWidgetFlow.errorJson,
+      )
     | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet =>
       if closeSDK {
         exit(apiResStatus, reset)
