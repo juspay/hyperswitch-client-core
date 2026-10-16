@@ -1,0 +1,31 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - the payment record holds the entered card, expiry and type
+tags:
+  - nightly
+  - card
+---
+# The typed card must reach the backend unchanged.
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "4242424242424242"
+      EXPIRY: "1230"
+      CVC: "123"
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"
+      EXPECT_EXPIRY: "12/30"
+      EXPECT_PM_TYPE: credit
+      EXPECT_NETWORK: visa

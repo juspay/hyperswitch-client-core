@@ -1,0 +1,29 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - UnionPay success
+tags:
+  - nightly
+  - card
+  - brand
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "6200000000000005"
+      CVC: "123"
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "0005"
+      # The sandbox records UnionPay test cards on the Discover network they clear through in the US.
+      EXPECT_NETWORK: "union ?pay|discover"

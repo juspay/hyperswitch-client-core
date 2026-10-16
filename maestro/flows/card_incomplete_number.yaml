@@ -1,0 +1,28 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - incomplete number blocks payment
+tags:
+  - pr
+  - card
+  - validation
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+# Guest checkout: no saved methods, the sheet opens on the new-card form.
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "4242424242"
+- runFlow: ../subflows/pay.yaml
+# There is no separate "incomplete" message; an incomplete number is reported as invalid.
+- assertVisible: "Card number is invalid."
+- runFlow: ../subflows/expect_sheet_open.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method

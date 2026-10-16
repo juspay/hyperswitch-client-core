@@ -1,0 +1,29 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Save card - a nickname with more than 2 digits blocks Pay
+tags:
+  - pr
+  - card
+  - saved
+  - validation
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: new_customer
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow: ../subflows/fill_card.yaml
+- tapOn:
+    id: SaveCardCheckboxTestId
+- tapOn: "Card Nickname.*"
+- inputText: "card123"
+- runFlow: ../subflows/hide_keyboard.yaml
+- runFlow: ../subflows/pay.yaml
+- assertVisible: "Nickname cannot have more than 2 digits"
+- runFlow: ../subflows/expect_sheet_open.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method
