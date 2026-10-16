@@ -9,6 +9,10 @@ let make = (~props) => {
   let headlessModule = HeadlessCommon.makeHeadlessModule()
   let reRegisterCallback = ref(() => ())
   let nativeProp = nativeJsonToRecord(props, 0)
+  Sentry.setPaymentTags(
+    ~paymentId=nativeProp.paymentSessionConfig.paymentId,
+    ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
+  )
 
   // In HeadlessTask, CVC comes from the native callback response (response["cvc"])
   let getCvc = (response: JSON.t) => {
