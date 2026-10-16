@@ -54,13 +54,22 @@ let make = (~children, ~style, ~keyboardVerticalOffset=48.) => {
     updateBottomIfNecessary()->ignore
   }
 
+  let onKeyboardHide = _ => {
+    keyboardEvent.current = None
+    updateBottomIfNecessary()->ignore
+  }
+
   let onLayoutChange = (event: Event.layoutEvent) => {
     let oldFrame = frame.current
-    frame.current = Some(event.nativeEvent.layout)
+    let layout = event.nativeEvent.layout
+    frame.current = Some(layout)
 
     switch oldFrame {
     | Some(frame) =>
-      if frame.height !== event.nativeEvent.layout.height {
+      if frame.width !== layout.width {
+        keyboardEvent.current = None
+      }
+      if frame.height !== layout.height || frame.width !== layout.width {
         updateBottomIfNecessary()->ignore
       }
     | None => updateBottomIfNecessary()->ignore
@@ -74,7 +83,7 @@ let make = (~children, ~style, ~keyboardVerticalOffset=48.) => {
     } else {
       subscriptions->Array.pushMany([
         Keyboard.addListener(#keyboardDidShow, onKeyboardChange),
-        Keyboard.addListener(#keyboardDidHide, onKeyboardChange),
+        Keyboard.addListener(#keyboardDidHide, onKeyboardHide),
       ])
     }
 

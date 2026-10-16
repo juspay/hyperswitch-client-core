@@ -12,12 +12,15 @@ let make = (~size=18., ~selected, ~color="#006DF9") => {
       alignItems: #center,
       justifyContent: #center,
     })}>
+    // Keep the fill colour and toggle opacity: on Android (new arch) a background that changes
+    // from transparent to a colour after mount drops borderRadius and draws a square.
     <View
       style={s({
         height: (size -. 8.)->dp,
         width: (size -. 8.)->dp,
         borderRadius: (size -. 8.) /. 2.,
-        backgroundColor: selected ? color : "transparent",
+        backgroundColor: color,
+        opacity: selected ? 1. : 0.,
       })}
     />
   </View>

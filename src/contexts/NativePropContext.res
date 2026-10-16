@@ -15,6 +15,14 @@ let make = (~nativeProp: SdkTypes.nativeProp, ~children) => {
     setState(_ => nativeProp)
     None
   }, [nativeProp])
+
+  // paymentId can change after mount (updateIntent), so re-tag on every change.
+  let paymentId = state.paymentSessionConfig.paymentId
+  let publishableKey = state.hyperswitchConfig.publishableKey
+  React.useEffect2(() => {
+    Sentry.setPaymentTags(~paymentId, ~publishableKey)
+    None
+  }, (paymentId, publishableKey))
   let setState = React.useCallback1(val => {
     setState(_ => val)
   }, [setState])

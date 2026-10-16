@@ -32,6 +32,7 @@ type module_ = {
   wrap: React.element => React.element,
   flush: unit => Promise.t<unit>,
   close: unit => Promise.t<unit>,
+  setTag: (string, string) => unit,
 }
 
 @val external require: string => module_ = "require"
@@ -51,6 +52,7 @@ let sentryReactNative = switch try {
     wrap: component => component,
     flush: () => Promise.resolve(),
     close: () => Promise.resolve(),
+    setTag: (_, _) => (),
   }
 }
 
@@ -93,6 +95,22 @@ let initiateSentry = (~dsn: option<string>, ~environment: string) => {
         tracesSampleRate: 1.0,
       })
     | None => ()
+    }
+  } catch {
+  | _ => ()
+  }
+}
+
+// Tags are scope-global, so every event captured after this call carries
+// them. Empty values are skipped so a missing prop never overwrites a tag
+// set by an earlier, complete one.
+let setPaymentTags = (~paymentId: string, ~publishableKey: string) => {
+  try {
+    if paymentId !== "" {
+      sentryReactNative.setTag("payment_id", paymentId)
+    }
+    if publishableKey !== "" {
+      sentryReactNative.setTag("publishable_key", publishableKey)
     }
   } catch {
   | _ => ()
