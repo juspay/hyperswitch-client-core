@@ -12,7 +12,7 @@ let make = (~props, ~rootTag) => {
   <ErrorBoundary rootTag level=FallBackScreen.Top>
     <ContextWrapper props rootTag>
       <PortalHost>
-        <View style={s({flex: 1.})}> <PMMangementNavigatorRouter /> </View>
+        <View style={s({flex: 1.})} onStartShouldSetResponderCapture={_ => {SdkFunnelLogger.interaction("touch"); false}}> <PMMangementNavigatorRouter /> </View>
       </PortalHost>
     </ContextWrapper>
   </ErrorBoundary>

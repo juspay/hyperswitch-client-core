@@ -2,6 +2,19 @@ open ReactNative
 open Style
 open PaymentEvents
 
+// A saved card stays usable through its whole expiry month (same as PaymentMethodListItem).
+let isSavedCardExpired = (token: ClientResponseType.customerPaymentMethod) =>
+  switch token.card {
+  | Some(card) =>
+    card.expiry_year != "" &&
+    card.expiry_month != "" && {
+      let expiryDate = Date.fromString(`${card.expiry_year}-${card.expiry_month}`)
+      expiryDate->Date.setMonth(expiryDate->Date.getMonth + 1)
+      expiryDate->Date.getTime < Date.make()->Date.getTime
+    }
+  | None => false
+  }
+
 @react.component
 let make = (
   ~customerPaymentMethods: ClientResponseType.customerPaymentMethods,
@@ -28,7 +41,6 @@ let make = (
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   let showAlert = AlertHook.useAlerts()
-  let logger = LoggerHook.useLoggerHook()
   let redirectHook = AllPaymentHooks.useRedirectHook()
   let localeObj = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
@@ -55,6 +67,31 @@ let make = (
   let setSelectedToken = React.useCallback1(token => {
     setSelectedToken(_ => token)
   }, [setSelectedToken])
+
+  let selectSavedMethod = React.useCallback2(token => {
+    token->Option.forEach((token: ClientResponseType.customerPaymentMethod) =>
+      SdkLogger.logUser(
+        ~event=SavedMethodSelected({
+          requiresCvv: token.requires_cvv,
+          isCardExpired: token->isSavedCardExpired,
+        }),
+        ~details=[
+          (
+            "card_index",
+            customerPaymentMethods
+            ->Array.findIndex(method => method.payment_method_id === token.payment_method_id)
+            ->JSON.Encode.int,
+          ),
+          ("list_source", "saved_methods"->JSON.Encode.string),
+        ],
+        ~paymentMethod=?LoggerPaymentMethod.fromPair(
+          ~method=token.payment_method_str,
+          ~methodType=token.payment_method_type,
+        ),
+      )
+    )
+    setSelectedToken(token)
+  }, (customerPaymentMethods, setSelectedToken))
 
   let vaultCvcFormId = selectedToken->Option.mapOr("", VaultCvcElement.formIdFor)
   let isVaultCvc = switch (selectedToken, strategy) {
@@ -262,7 +299,6 @@ let make = (
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=paymentMethodData.payment_method_type,
-      ~paymentExperience=paymentMethodData.payment_experience,
       ~isCardPayment={paymentMethodData.payment_method === CARD},
       (),
     )->ignore
@@ -382,16 +418,6 @@ let make = (
 
       switch paymentMethodData {
       | Some(paymentMethodData) =>
-        logger(
-          ~logType=DEBUG,
-          ~value=paymentMethodData.payment_method_type,
-          ~category=USER_EVENT,
-          ~paymentMethod=paymentMethodData.payment_method_type,
-          ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
-          ~paymentExperience=paymentMethodData.payment_experience,
-          (),
-        )
-
         let status = handleWalletPayments(APPLE_PAY, var)
 
         switch status {
@@ -469,6 +495,10 @@ let make = (
           if !vaultCvcValid {
             setShowErrors(vaultCvcFormId, true)
             setLoading(FillingDetails)
+            SdkLogger.logLifecycle(
+              ~event=FormValidationFailed({reason: localeObj.enterValidDetailsText}),
+              ~paymentMethod=Card,
+            )
             notifyValidationFailure()
           } else {
             submitVaultCard(~formId=vaultCvcFormId, ~shape=SavedCardCvc, ~onTokenized=vaultPmd =>
@@ -495,6 +525,14 @@ let make = (
                   setSavedCardCvv(_ => Some(""))
                 }
                 setLoading(FillingDetails)
+                SdkLogger.logLifecycle(
+                  ~event=FormValidationFailed({
+                    reason: savedCardCvv->Option.getOr("") === ""
+                      ? localeObj.enterFieldsText
+                      : localeObj.enterValidDetailsText,
+                  }),
+                  ~paymentMethod=Card,
+                )
                 notifyValidationFailure()
               }
             : processRequestSaved(token)
@@ -515,17 +553,12 @@ let make = (
           ) {
             setLoading(FillingDetails)
             showAlert(~errorType="warning", ~message="Waiting for Sessions API")
+            SdkLogger.logLifecycle(
+              ~event=WalletFlowFailed({reason: ClientUnavailable}),
+              ~paymentMethod=Wallet(ApplePay),
+            )
             notifyNotReady()
           } else {
-            logger(
-              ~logType=DEBUG,
-              ~value="apple_pay",
-              ~category=USER_EVENT,
-              ~paymentMethod="apple_pay",
-              ~eventName=APPLE_PAY_STARTED_FROM_JS,
-              (),
-            )
-
             let doLaunchApplePay = () => {
               let timerId = setTimeout(() => {
                 setLoading(FillingDetails)
@@ -533,13 +566,10 @@ let make = (
                 notifyWidgetResult(
                   PaymentConfirmTypes.walletFailedError("Apple Pay Error, Please try again"),
                 )
-                logger(
-                  ~logType=DEBUG,
-                  ~value="apple_pay",
-                  ~category=USER_EVENT,
-                  ~paymentMethod="apple_pay",
-                  ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-                  (),
+                SdkLogger.logLifecycle(
+                  ~event=WalletFlowFailed({reason: SheetFailed}),
+                  ~paymentMethod=Wallet(ApplePay),
+                  ~message="Apple Pay sheet was not presented within 5 s",
                 )
               }, 5000)
 
@@ -553,16 +583,7 @@ let make = (
                     ->JSON.Encode.object
                     ->JSON.stringify,
                     confirmApplePay,
-                    _ => {
-                      logger(
-                        ~logType=DEBUG,
-                        ~value="apple_pay",
-                        ~category=USER_EVENT,
-                        ~paymentMethod="apple_pay",
-                        ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                        (),
-                      )
-                    },
+                    _ => (),
                     _ => {
                       clearTimeout(timerId)
                     },
@@ -621,9 +642,17 @@ let make = (
       }
     | _ =>
       setLoading(FillingDetails)
-      if showDisclaimer && !isSaveCardCheckboxSelected {
+      let termsPending = showDisclaimer && !isSaveCardCheckboxSelected
+      if termsPending {
         setErrorText(_ => Some("Please accept the terms and conditions to continue."))
       }
+      SdkLogger.logLifecycle(
+        ~event=FormValidationFailed({
+          reason: termsPending
+            ? "Please accept the terms and conditions to continue."
+            : localeObj.selectPaymentMethodText,
+        }),
+      )
       notifyValidationFailure()
     }
   }
@@ -669,6 +698,16 @@ let make = (
       let statusStr = PaymentEventTypes.formStatusValueToString(status)
 
       if prevStatusRef.current !== Some(statusStr) {
+        let filling = PaymentEventTypes.formStatusValueToString(PaymentEventTypes.Filling)
+        if isFormComplete && prevStatusRef.current === Some(filling) {
+          SdkLogger.logState(
+            ~event=PaymentFormCompleted({savedMethod: true}),
+            ~paymentMethod=?LoggerPaymentMethod.fromPair(
+              ~method=token.payment_method_str,
+              ~methodType=token.payment_method_type,
+            ),
+          )
+        }
         prevStatusRef.current = Some(statusStr)
         let event = PaymentEvents.buildFormStatusEvent(~status)
         emitter.emitFormStatus(~event)
@@ -756,7 +795,7 @@ let make = (
       <SavedPaymentMethod
         customerPaymentMethods
         selectedToken
-        setSelectedToken
+        setSelectedToken=selectSavedMethod
         savedCardCvv
         setSavedCardCvv
         isScreenFocus

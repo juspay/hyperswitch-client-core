@@ -50,6 +50,22 @@ let make = (
   let localeObject = GetLocale.useGetLocalObj()
   let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
 
+  // Native currently shows the complete state list; report discarded merchant options.
+  React.useEffect1(() => {
+    fields->Array.forEach(field => {
+      if (
+        field.fieldRenderType === State && field.dropdownOptions->Option.getOr([])->Array.length > 0
+      ) {
+        MerchantLogger.logMerchantIssue(
+          ~issue=DynamicFieldsConfig,
+          ~details=[("field", field.confirmRequestWritePath->JSON.Encode.string)],
+          ~message="State dropdown options are not supported on mobile; showing the complete state list.",
+        )
+      }
+    })
+    None
+  }, [fields])
+
   let renderFieldInput = (
     field: SuperpositionTypes.fieldConfig,
     {input, meta}: ReactFinalForm.Field.fieldProps,

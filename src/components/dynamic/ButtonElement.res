@@ -11,7 +11,6 @@ let make = (
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let showAlert = AlertHook.useAlerts()
-  let logger = LoggerHook.useLoggerHook()
   let {
     paypalButonColor,
     googlePayButtonColor,
@@ -139,27 +138,9 @@ let make = (
       setLoading(FillingDetails)
       showAlert(~errorType="error", ~message=`Samsung Pay Error, Please try again ${error_message}`)
     }
-
-    logger(
-      ~logType=INFO,
-      ~value=`SPAY result from native`,
-      ~category=USER_EVENT,
-      ~eventName=SAMSUNG_PAY,
-      (),
-    )
   }
 
   let confirmApplePay = (var: dict<JSON.t>) => {
-    logger(
-      ~logType=DEBUG,
-      ~value=paymentMethodData.payment_method_type,
-      ~category=USER_EVENT,
-      ~paymentMethod=paymentMethodData.payment_method_type,
-      ~eventName=APPLE_PAY_CALLBACK_FROM_NATIVE,
-      ~paymentExperience=paymentMethodData.payment_experience,
-      (),
-    )
-
     let status = handleWalletPayments(APPLE_PAY, var)
 
     switch status {
@@ -192,14 +173,12 @@ let make = (
     emitter.emitPaymentMethodStatus(~event)
 
     setLoading(ProcessingPayments)
-    logger(
-      ~logType=INFO,
-      ~value=paymentMethodData.payment_method_type,
-      ~category=USER_EVENT,
-      ~paymentMethod=paymentMethodData.payment_method_type,
-      ~eventName=PAYMENT_METHOD_CHANGED,
-      ~paymentExperience=paymentMethodData.payment_experience,
-      (),
+    SdkLogger.logUser(
+      ~event=ExpressCheckoutClicked,
+      ~paymentMethod=?LoggerPaymentMethod.fromPair(
+        ~method=paymentMethodData.payment_method_str,
+        ~methodType=paymentMethodData.payment_method_type,
+      ),
     )
 
     let doProceed = () => {
@@ -241,6 +220,13 @@ let make = (
         } else {
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Payment Method Unavailable")
+          SdkLogger.logLifecycle(
+            ~event=WalletFlowFailed({
+              reason: ConnectorUnsupported,
+              connector: ?Some(sessionObject.connector)->Utils.getNonEmptyOption,
+            }),
+            ~paymentMethod=Wallet(Paypal),
+          )
         }
       | APPLE_PAY =>
         if (
@@ -249,28 +235,18 @@ let make = (
         ) {
           setLoading(FillingDetails)
           showAlert(~errorType="warning", ~message="Waiting for Sessions API")
-        } else {
-          logger(
-            ~logType=DEBUG,
-            ~value=paymentMethodData.payment_method_type,
-            ~category=USER_EVENT,
-            ~paymentMethod=paymentMethodData.payment_method_type,
-            ~eventName=APPLE_PAY_STARTED_FROM_JS,
-            ~paymentExperience=paymentMethodData.payment_experience,
-            (),
+          SdkLogger.logLifecycle(
+            ~event=WalletFlowFailed({reason: ClientUnavailable}),
+            ~paymentMethod=Wallet(ApplePay),
           )
-
+        } else {
           let timerId = setTimeout(() => {
             setLoading(FillingDetails)
             showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-            logger(
-              ~logType=DEBUG,
-              ~value=paymentMethodData.payment_method_type,
-              ~category=USER_EVENT,
-              ~paymentMethod=paymentMethodData.payment_method_type,
-              ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-              ~paymentExperience=paymentMethodData.payment_experience,
-              (),
+            SdkLogger.logLifecycle(
+              ~event=WalletFlowFailed({reason: SheetFailed}),
+              ~paymentMethod=Wallet(ApplePay),
+              ~message="Apple Pay sheet was not presented within 5 s",
             )
           }, 5000)
 
@@ -283,30 +259,13 @@ let make = (
             ->JSON.Encode.object
             ->JSON.stringify,
             confirmApplePay,
-            _ => {
-              logger(
-                ~logType=DEBUG,
-                ~value=paymentMethodData.payment_method_type,
-                ~category=USER_EVENT,
-                ~paymentMethod=paymentMethodData.payment_method_type,
-                ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-                ~paymentExperience=paymentMethodData.payment_experience,
-                (),
-              )
-            },
+            _ => (),
             _ => {
               clearTimeout(timerId)
             },
           )
         }
-      | SAMSUNG_PAY =>
-        logger(
-          ~logType=INFO,
-          ~value="Samsung Pay Button Clicked",
-          ~category=USER_EVENT,
-          ~eventName=SAMSUNG_PAY,
-          (),
-        )
+      | SAMSUNG_PAY => ()
       // SamsungPayModule.presentSamsungPayPaymentSheet(confirmSamsungPay)
       | _ => {
           setLoading(FillingDetails)

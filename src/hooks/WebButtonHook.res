@@ -35,7 +35,11 @@ let usePayButton = () => {
 
         let paymentClient = Window.google(token.environment)
         let buttonProps: Window.buttonProps = {
-          onClick: () => onGooglePayButtonClick(),
+          onClick: SdkLogger.observeFunctionCallback(
+            ~event=OnClick,
+            ~paymentMethod=Wallet(GooglePay),
+            ~callback=() => onGooglePayButtonClick(),
+          ),
           buttonType: switch nativeProp.configuration.walletButtons.googlePay.buttonType {
           | BUY => "buy"
           | BOOK => "book"

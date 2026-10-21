@@ -7,6 +7,22 @@ type level = Top | Screen | Widget
 let make = (~error: Sentry.fallbackArg, ~level: level, ~rootTag) => {
   let {simplyExit} = HyperModule.useExitPaymentsheet()
 
+  React.useEffect0(() => {
+    let details = [
+      ("boundary_level", level->LoggerUtils.variantName->JSON.Encode.string),
+      (
+        "component_stack",
+        error.componentStack
+        ->LoggerUtils.anyToJson
+        ->JSON.stringify
+        ->String.slice(~start=0, ~end=2048)
+        ->JSON.Encode.string,
+      ),
+    ]
+    SdkLogger.logCrash(~origin=ErrorBoundary, ~details, ~exn=error.error->Exn.anyToExnInternal)
+    None
+  })
+
   switch level {
   | Top =>
     <SafeAreaView

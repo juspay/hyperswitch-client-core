@@ -28,6 +28,19 @@ let make = (
     fontScale,
   } = ThemebasedStyle.useThemeBasedStyle()
   let fontFamily = FontFamily.useCustomFontFamily()
+  let onFocus = event => {
+    SdkLogger.logUser(~event=FieldFocused({field: elementType}))
+    onFocus(event)
+  }
+  let onBlur = event => {
+    SdkLogger.logUser(~event=FieldBlurred({field: elementType}))
+    onBlur(event)
+  }
+  let logReady = VaultLoggerHook.useFieldLogger(~elementType)
+  let onReady = event => {
+    logReady()
+    onReady->Option.forEach(callback => callback(event))
+  }
   let animatedValue = AnimatedValue.useAnimatedValue(0.)
   let lifted = active || !empty
   React.useEffect1(() => {
@@ -103,11 +116,11 @@ let make = (
       {switch elementType {
       | "cardNumber" =>
         <VaultBindings.CardNumberField
-          ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange ?onReady
+          ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange onReady
         />
       | "cardExpiry" =>
         <VaultBindings.CardExpiryField
-          ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange ?onReady
+          ref=reference unstyled styles placeholder="" testID onFocus onBlur ?onChange onReady
         />
       | _ =>
         <VaultBindings.CardCVCField
@@ -119,7 +132,7 @@ let make = (
           onFocus
           onBlur
           ?onChange
-          ?onReady
+          onReady
           ?options
         />
       }}

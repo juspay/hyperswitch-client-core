@@ -1,14 +1,7 @@
 open ReactNative
 open Style
 @react.component
-let make = (
-  ~handlePress,
-  ~paymentMethod,
-  ~paymentExperience=?,
-  ~customerPaymentExperience=?,
-  ~displayText="Pay Now",
-  (),
-) => {
+let make = (~handlePress, ~displayText="Pay Now", ()) => {
   let localeObject = GetLocale.useGetLocalObj()
 
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
@@ -18,21 +11,6 @@ let make = (
     buttonBorderRadius,
     buttonBorderWidth,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let logger = LoggerHook.useLoggerHook()
-
-  React.useEffect0(() => {
-    logger(
-      ~logType=INFO,
-      ~value="",
-      ~category=USER_EVENT,
-      ~eventName=PAYMENT_DATA_FILLED,
-      ~paymentMethod,
-      ~paymentExperience?,
-      (),
-    )
-    None
-  })
-
   <View style={s({alignItems: #center})}>
     <Space height=10. />
     <CustomButton
@@ -49,16 +27,7 @@ let make = (
       text={displayText == "Pay Now" ? localeObject.payNowButton : displayText}
       testID={TestUtils.payButtonTestId}
       onPress={_ => {
-        logger(
-          ~logType=INFO,
-          ~value="",
-          ~category=USER_EVENT,
-          ~eventName=PAYMENT_ATTEMPT,
-          ~paymentMethod,
-          ~paymentExperience?,
-          ~customerPaymentExperience?,
-          (),
-        )
+        SdkLogger.logUser(~event=PaymentSubmitted({source: PayButton}))
         handlePress()
       }}
     />

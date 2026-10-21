@@ -17,6 +17,14 @@ let make = (
   ~android_ripple=?,
   ~unstable_pressDelay=?,
 ) => {
+  let onPress = onPress->Option.map(callback => event => {
+    SdkFunnelLogger.interaction("press")
+    callback(event)
+  })
+  let onLongPress = onLongPress->Option.map(callback => event => {
+    SdkFunnelLogger.interaction("long_press")
+    callback(event)
+  })
   <Pressable
     ?onPress
     ?onLongPress

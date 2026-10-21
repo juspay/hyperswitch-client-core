@@ -73,7 +73,6 @@ module BrowserRedirectionHooks = {
 
 module RedirectionHooks = {
   let useRedirectionHelperHook = () => {
-    let apiLogWrapper = LoggerHook.useApiLogWrapper()
     async (
       ~body,
       ~errorCallback,
@@ -89,17 +88,18 @@ module RedirectionHooks = {
       try {
         let jsonResponse = await APIUtils.fetchApiWrapper(
           ~body,
-          ~eventName=LoggerTypes.CONFIRM_CALL,
+          ~event=ConfirmCall,
           ~headers,
           ~method=#POST,
           ~uri,
-          ~apiLogWrapper,
         )
         let confirmResponse = jsonResponse->Utils.getDictFromJson
         let {nextAction, status, error} = itemToObjMapper(confirmResponse)
         handleApiRes(~status, ~reUri=nextAction.redirectToUrl, ~error, ~nextAction)
       } catch {
-      | _ => errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
+      | exn =>
+        SdkLogger.logLifecycle(~event=PaymentErrorHandlingFailed, ~exn)
+        errorCallback(~errorMessage=defaultConfirmError, ~closeSDK=false, ())
       }
     }
   }

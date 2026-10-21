@@ -482,6 +482,7 @@ let make = (
         condition={customerPaymentMethods->Array.length > maxVisibleItems && showMore}>
         <MoreButton
           handleMoreToggle={() => {
+            SdkLogger.logUser(~event=ViewToggled({view: SavedMethodList, expanded: true}))
             setIsScreenFocus(true)
             setShowMore(_ => false)
           }}

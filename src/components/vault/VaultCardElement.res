@@ -61,7 +61,10 @@ let make = (
     (vaultDetails, nativeProp.hyperswitchConfig.environment),
   )
 
+  let logFormChange = VaultLoggerHook.useFormLogger(~formId)
+
   let onFormChange = (event: VaultBindings.cardFormChange) => {
+    logFormChange(event)
     setFormValid(formId, event.complete && event.valid)
     setFormFields(_ => event.fields)
     let p = event.payload
@@ -92,6 +95,12 @@ let make = (
   }
 
   let onFormError = (error: JSON.t) => {
+    SdkLogger.logLifecycle(
+      ~event=VaultFlowFailed({reason: FormCreationFailed}),
+      ~exn=error->Exn.anyToExnInternal,
+      ~details=[("vault", vaultDetails.vaultTypeStr->JSON.Encode.string)],
+      ~paymentMethod=Card,
+    )
     setFormValid(formId, false)
     let msg =
       error

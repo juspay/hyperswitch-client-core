@@ -110,9 +110,7 @@ let make = (~children, ~handlePress) => {
                   <TextWrapper text="Additional Fields" textType={HeadingBold} />
                 </View>
                 {children}
-                <ConfirmButtonAnimation
-                  paymentMethod="Address Sheet" handlePress displayText="Submit"
-                />
+                <ConfirmButtonAnimation handlePress displayText="Submit" />
               </View>
             </ScrollView>
           </CustomKeyboardAvoidingView>

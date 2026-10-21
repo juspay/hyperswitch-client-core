@@ -2,15 +2,15 @@
 let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let showErrorOrWarning = ErrorHooks.useShowErrorOrWarning()
-  let logger = LoggerHook.useLoggerHook()
 
   React.useEffect(() => {
-    let launchTime = nativeProp.sdkParams.launchTime->Option.getOr(Date.now())
-    let latency = Date.now() -. launchTime
-    let appId = nativeProp.sdkParams.appId->Option.getOr("") ++ ".hyperswitch://"
-
-    logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
-    None
+    SdkLogger.logLifecycle(
+      ~event=AppRendered,
+      ~durationMs=?nativeProp.sdkParams.launchTime->Option.map(launchTime =>
+        Date.now() -. launchTime
+      ),
+    )
+    Some(SdkLogger.stopIdleTracking)
   }, [nativeProp])
 
   let showSessionError = () => {

@@ -3,18 +3,24 @@ type shape =
   | SavedCardCvc
 
 let useVaultCardSubmit = () => {
-  let {getFormState, setShowErrors} = React.useContext(CardStrategyContext.cardStrategyContext)
+  let {strategy, getFormState, setShowErrors} = React.useContext(
+    CardStrategyContext.cardStrategyContext,
+  )
   let (loading, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let localeObject = GetLocale.useGetLocalObj()
   let handleSuccessFailure = AllPaymentHooks.useHandleSuccessFailure()
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
-  let logger = LoggerHook.useLoggerHook()
 
   let inFlightRef = React.useRef(false)
   let loadingRef = React.useRef(loading)
   loadingRef.current = loading
 
-  React.useCallback6((~formId: string, ~shape: shape, ~onTokenized: Dict.t<JSON.t> => unit) => {
+  React.useCallback7((~formId: string, ~shape: shape, ~onTokenized: Dict.t<JSON.t> => unit) => {
     let refuse = () => {
+      SdkLogger.logLifecycle(
+        ~event=FormValidationFailed({reason: localeObject.enterValidDetailsText}),
+        ~paymentMethod=Card,
+      )
       setShowErrors(formId, true)
       notifyValidationFailure()
     }
@@ -41,7 +47,19 @@ let useVaultCardSubmit = () => {
       inFlightRef.current = true
       setLoading(ProcessingPayments)
       let settle = () => inFlightRef.current = false
-      VaultBindings.tokenizeForm(formId)
+      let vault = switch strategy {
+      | VaultCard({vaultTypeStr}) => Some(vaultTypeStr)
+      | _ => None
+      }
+      VaultTokenNormalizer.observeTokenization(
+        ~scope=switch shape {
+        | WholeCard => FullCard
+        | SavedCardCvc => SaveCardCvc
+        },
+        ~vault?,
+        ~statusOf=(result: VaultBindings.tokenizeResult) => result.status,
+        () => VaultBindings.tokenizeForm(formId),
+      )
       ->Promise.thenResolve(result => {
         settle()
         let outcome = switch shape {
@@ -54,22 +72,34 @@ let useVaultCardSubmit = () => {
           setLoading(FillingDetails)
           refuse()
         | Failed({message, reason}) =>
-          logger(
-            ~logType=ERROR,
-            ~value=`Vault tokenize result refused: ${reason}`,
-            ~category=USER_ERROR,
-            ~eventName=VAULT_TOKENIZE,
-            (),
+          SdkLogger.logLifecycle(
+            ~event=VaultFlowFailed({reason: TokenizationFailed}),
+            ~details=[("refusal_reason", reason->JSON.Encode.string)],
+            ~paymentMethod=Card,
           )
           fail(message)
         }
       })
-      ->Promise.catch(_ => {
+      ->Promise.catch(error => {
         settle()
+        SdkLogger.logLifecycle(
+          ~event=VaultFlowFailed({reason: TokenizationFailed}),
+          ~details=vault->Option.mapOr([], vault => [("vault", vault->JSON.Encode.string)]),
+          ~exn=error,
+          ~paymentMethod=Card,
+        )
         fail(VaultTokenNormalizer.fallbackMessage)
         Promise.resolve()
       })
       ->ignore
     }
-  }, (getFormState, setShowErrors, setLoading, notifyValidationFailure, handleSuccessFailure, logger))
+  }, (
+    strategy,
+    getFormState,
+    setShowErrors,
+    setLoading,
+    notifyValidationFailure,
+    handleSuccessFailure,
+    localeObject,
+  ))
 }
