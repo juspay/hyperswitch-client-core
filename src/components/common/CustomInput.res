@@ -72,6 +72,7 @@ let make = (
   let (showPass, setShowPass) = React.useState(_ => secureTextEntry)
   let (isFocused, setIsFocused) = React.useState(_ => false)
   let logger = LoggerHook.useLoggerHook()
+  let (onFieldFocus, onFieldBlur) = ElementEventsContext.useFieldFocus()
   let fontFamily = FontFamily.useCustomFontFamily()
 
   let shadowStyle = enableShadow ? getShadowStyle : empty
@@ -228,12 +229,14 @@ let make = (
           onFocus={_ => {
             setIsFocused(_ => true)
             onFocus()
+            onFieldFocus()
             logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=FOCUS, ())
           }}
           onBlur={_ => {
             // TODO: remove invalid input (string with only space) eg: "      "
             state->String.trim == "" ? setState("") : ()
             onBlur()
+            onFieldBlur()
             setIsFocused(_ => false)
             logger(~logType=INFO, ~value=placeholder, ~category=USER_EVENT, ~eventName=BLUR, ())
           }}
