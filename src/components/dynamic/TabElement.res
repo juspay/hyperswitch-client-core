@@ -53,9 +53,15 @@ let make = (
     enabledCardSchemes,
     accessible,
     defaultCountry,
+    logDynamicFieldsRendered,
   ) = React.useMemo4(_ => {
     getRequiredFieldsForTabs(paymentMethodData, formData, isScreenFocus)
   }, (paymentMethodData.payment_method_type, getRequiredFieldsForTabs, country, isScreenFocus))
+
+  React.useEffect(() => {
+    logDynamicFieldsRendered()
+    None
+  }, [logDynamicFieldsRendered])
 
   let isVaultCard = switch (paymentMethodData.payment_method, strategy) {
   | (CARD, CardStrategyContext.VaultCard(_)) => true
