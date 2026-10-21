@@ -71,6 +71,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          # TEMP: build from v1.9.0-patch branch for patch release. Revert after release.
+          ref: v1.9.0-patch
           fetch-depth: 0
           token: ${{ secrets.AUTORELEASE_PAT || github.token }}
           submodules: recursive
@@ -216,21 +218,21 @@ jobs:
           cd android
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout main
-          git pull origin main
+          git checkout 1.3.0-patch.1
+          git pull origin 1.3.0-patch.1
           yarn bundle:android
           git add ./app/src/main/assets/hyperswitch.bundle
 
           if ! git diff --staged --quiet; then
             git commit -m "chore(release): v${{ env.VERSION }} Android Bundle update [skip ci]"
-            git push origin main
+            git push origin 1.3.0-patch.1
           fi
           cd ..
 
           # Update iOS bundle only
           cd ios
-          git checkout main
-          git pull origin main
+          git checkout fix/appearance-locale
+          git pull origin fix/appearance-locale
           yarn bundle:ios
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -239,7 +241,7 @@ jobs:
 
           if ! git diff --staged --quiet; then
             git commit -m "chore(release): v${{ env.VERSION }} iOS Bundle update [skip ci]"
-            git push origin main
+            git push origin fix/appearance-locale
           fi
 
       # - name: Create GitHub Release
