@@ -1,0 +1,29 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - a guest sees no saved methods, toggle or save checkbox
+tags:
+  - pr
+  - saved
+  - card
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- assertNotVisible:
+    id: AddNewPaymentMethodTestId
+- assertNotVisible:
+    id: UseSavedPaymentMethodsTestId
+- assertNotVisible:
+    id: SaveCardCheckboxTestId
+- assertNotVisible: "Save card details"
+- runFlow: ../subflows/fill_card.yaml
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded

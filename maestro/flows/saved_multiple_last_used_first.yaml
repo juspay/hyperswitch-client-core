@@ -1,0 +1,22 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - the last-used card is listed first and preselected
+tags:
+  - nightly
+  - saved
+---
+# saved_card_multiple saves Visa 4242 first and Mastercard 4444 last.
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card_multiple
+- extendedWaitUntil:
+    visible: "●●●● 4444"
+    timeout: 20000
+- assertVisible:
+    text: "●●●● 4242"
+    below: "●●●● 4444"
+# The CVC input belongs to the preselected card and sits on its row, to the right of the number.
+- assertVisible:
+    id: SavedCardCvcInputTestId
+    rightOf: "●●●● 4444"
+    above: "●●●● 4242"
