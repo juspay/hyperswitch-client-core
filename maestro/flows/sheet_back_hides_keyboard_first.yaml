@@ -1,0 +1,38 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Sheet - Android Back with the keyboard up only hides the keyboard
+tags:
+  - pr
+  - sheet
+  - android-only
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- tapOn:
+    id: CardNumberInputTestId
+# Back must arrive while the keyboard is up; sent earlier it closes the sheet. The keyboard's views are in
+# the hierarchy while it is shown (resource-id com.google.android.inputmethod.latin:id/...).
+- extendedWaitUntil:
+    visible:
+      id: ".*inputmethod.*"
+    timeout: 10000
+# The keyboard's views appear while it is still animating in; Back sent then closes the sheet.
+- waitForAnimationToEnd:
+    timeout: 5000
+- back
+- extendedWaitUntil:
+    notVisible:
+      id: ".*inputmethod.*"
+    timeout: 10000
+- runFlow: ../subflows/expect_sheet_open.yaml
+- back
+- runFlow: ../subflows/expect_payment_cancelled.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method

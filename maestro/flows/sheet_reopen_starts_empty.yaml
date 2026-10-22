@@ -1,0 +1,34 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Sheet - closing and reopening the sheet starts with an empty card form
+tags:
+  - nightly
+  - sheet
+  - card
+---
+# Card details must not survive a closed sheet.
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow: ../subflows/fill_card.yaml
+- tapOn:
+    id: SheetCloseButtonTestId
+- runFlow: ../subflows/expect_payment_cancelled.yaml
+- runFlow: ../subflows/tap_launch_payment_sheet.yaml
+- extendedWaitUntil:
+    visible: "Test Mode"
+    timeout: 60000
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- assertNotVisible:
+    id: CardNumberInputTestId
+    text: ".*\\d.*"
+- assertNotVisible:
+    id: ExpiryInputTestId
+    text: ".*\\d.*"
