@@ -1,0 +1,27 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - choosing the other saved card charges that card
+tags:
+  - pr
+  - saved
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card_multiple
+- extendedWaitUntil:
+    visible: "●●●● 4444"
+    timeout: 20000
+- assertVisible: "●●●● 4242"
+# The most recently used card (the Mastercard, seeded last) is preselected; pick the Visa instead.
+- tapOn: "●●●● 4242"
+- tapOn:
+    id: SavedCardCvcInputTestId
+- inputText: "123"
+- runFlow: ../subflows/hide_keyboard.yaml
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

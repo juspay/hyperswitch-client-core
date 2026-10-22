@@ -1,0 +1,25 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Boot - payment session initialises and the host can launch the sheet
+tags:
+  - nightly
+  - boot
+---
+# launch_host_app waits for the host's ready signal (Android "Last used: ...", iOS
+# "Connected to Server"); the Launch button must then be enabled.
+- runFlow:
+    file: ../subflows/launch_host_app.yaml
+    env:
+      SCENARIO: default
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          id: launchButton
+          enabled: true
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: "Connected to Server"
+      - assertVisible: "Launch Payment Sheet"
