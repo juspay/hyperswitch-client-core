@@ -47,6 +47,7 @@ let useWidgetActions = (~confirmButtonData: GlobalConfirmButton.confirmButtonDat
         switch confirmButtonData.credentialsKey {
         | Some(key) if key === credentialsKey =>
           handled.current = attempt
+          SdkLogger.logUser(~event=PaymentSubmitted({source: MerchantApi}))
           confirmButtonData.handlePress()
         | Some(_) if held.current !== attempt =>
           held.current = attempt

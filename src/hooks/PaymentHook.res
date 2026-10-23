@@ -10,7 +10,6 @@ let usePayment = (
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   // let (allApiData, _) = React.useContext(AllApiDataContext.allApiDataContext)
-  let logger = LoggerHook.useLoggerHook()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let showAlert = AlertHook.useAlerts()
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
@@ -48,13 +47,10 @@ let usePayment = (
       let timerId = setTimeout(() => {
         setLoading(FillingDetails)
         showAlert(~errorType="warning", ~message="Apple Pay Error, Please try again")
-        logger(
-          ~logType=DEBUG,
-          ~value="apple_pay",
-          ~category=USER_EVENT,
-          ~paymentMethod="apple_pay",
-          ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-          (),
+        SdkLogger.logLifecycle(
+          ~event=WalletFlowFailed({reason: SheetFailed}),
+          ~paymentMethod=Wallet(ApplePay),
+          ~message="Apple Pay sheet was not presented within 5 s",
         )
       }, 5000)
       HyperModule.launchApplePay(
@@ -66,16 +62,7 @@ let usePayment = (
         ->JSON.Encode.object
         ->JSON.stringify,
         applePayResponseHandler,
-        _ => {
-          logger(
-            ~logType=DEBUG,
-            ~value="apple_pay",
-            ~category=USER_EVENT,
-            ~paymentMethod="apple_pay",
-            ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-            (),
-          )
-        },
+        _ => (),
         _ => {
           clearTimeout(timerId)
         },
@@ -100,13 +87,6 @@ let usePayment = (
     ) => unit,
     (),
   ) => {
-    logger(
-      ~logType=INFO,
-      ~value="Samsung Pay Button Clicked",
-      ~category=USER_EVENT,
-      ~eventName=SAMSUNG_PAY,
-      (),
-    )
     SamsungPayModule.presentSamsungPayPaymentSheet(samsungPayResponseHandler)
   }
 

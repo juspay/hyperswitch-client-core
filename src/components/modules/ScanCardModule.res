@@ -33,10 +33,34 @@ let dictToScanCardReturnType = (scanCardReturnType: scanCardReturnType) => {
   | _ => None
   }
 }
-let launchScanCard = (callback: scanCardReturnStatus => unit) => {
-  try {
-    launchScanCardMod(data => callback(data->dictToScanCardReturnType))
-  } catch {
-  | _ => ()
+let scanFailure = result =>
+  switch result {
+  | Failed | None => Some(LoggerUtils.summary(~name="SCAN_FAILED"))
+  | Succeeded(_) | Cancelled => None
   }
-}
+
+// Logs only the outcome's constructor, never the scanned card data.
+let scanDetails = result => [("result", result->LoggerUtils.variantConstructor->JSON.Encode.string)]
+
+let launchScanCard = (callback: scanCardReturnStatus => unit) =>
+  SdkLogger.observeFunction(
+    ~event=LaunchScanCard,
+    ~timeoutMs=LoggerConfig.userGatedTimeoutMs,
+    ~failureOf=scanFailure,
+    ~detailsOf=scanDetails,
+    ~paymentMethod=Card,
+    ~call=() =>
+      Promise.make((resolve, reject) =>
+        try {
+          launchScanCardMod(
+            data => {
+              let result = data->dictToScanCardReturnType
+              resolve(result)
+              callback(result)
+            },
+          )
+        } catch {
+        | error => reject(error)
+        }
+      ),
+  )->ignore

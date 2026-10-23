@@ -45,6 +45,7 @@ module Rect = {
 @react.component
 let make = (~height="45", ~width="100%", ~speed=1.3, ~radius=None, ~style) => {
   let {borderRadius, loadingBgColor, loadingFgColor} = ThemebasedStyle.useThemeBasedStyle()
+  React.useEffect0(() => {SdkFunnelLogger.shimmerShown(); None})
   let br = switch radius {
   | Some(var) => var
   | None => borderRadius

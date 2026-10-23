@@ -45,6 +45,17 @@ let make = (
 
   let notifyValidationFailure = UseWidgetActions.useNotifyValidationFailure()
   let notifyNotReady = UseWidgetActions.useNotifyNotReady()
+  let loggedPaymentMethod = LoggerPaymentMethod.fromPair(
+    ~method=paymentMethodData.payment_method_str,
+    ~methodType=paymentMethodData.payment_method_type,
+  )
+  let logValidationFailure = () =>
+    SdkLogger.logLifecycle(
+      ~event=FormValidationFailed({
+        reason: PaymentConfirmTypes.formValidationError.message->Option.getOr(""),
+      }),
+      ~paymentMethod=?loggedPaymentMethod,
+    )
 
   let (
     requiredFields,
@@ -87,6 +98,7 @@ let make = (
           | None => ()
           }
           setShowErrors(vaultFormId, true)
+          logValidationFailure()
           notifyValidationFailure()
         }
       | _ =>
@@ -101,6 +113,7 @@ let make = (
           | Some(methods: ReactFinalForm.Form.formMethods) => methods.submit()
           | None => ()
           }
+          logValidationFailure()
           notifyValidationFailure()
         }
       }
@@ -120,6 +133,7 @@ let make = (
     ~hasRequiredFields=requiredFields->Array.length > 0,
     ~isFormValid=effectiveFormValid,
     ~isPristine,
+    ~paymentMethod=?loggedPaymentMethod,
   )
 
   // handlePress closes over processRequest, which reads isSaveDetailsSelected; it must be

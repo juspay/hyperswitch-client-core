@@ -1,6 +1,5 @@
 let useFetchPaymentMethodSessionList = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   () => {
     switch nativeProp.paymentSessionConfig.pmSessionId {
@@ -14,8 +13,7 @@ let useFetchPaymentMethodSessionList = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.SESSIONS_CALL,
-        ~apiLogWrapper,
+        ~event=PaymentMethodsList,
       )
     | None => Promise.resolve(JSON.Null)
     }
@@ -24,7 +22,6 @@ let useFetchPaymentMethodSessionList = () => {
 
 let useDeletePaymentMethodSession = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   (~paymentMethodToken: string) => {
     switch nativeProp.paymentSessionConfig.pmSessionId {
@@ -38,9 +35,8 @@ let useDeletePaymentMethodSession = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.DELETE_PAYMENT_METHODS_CALL,
+        ~event=DeletePaymentMethod,
         ~body={"payment_method_token": paymentMethodToken}->JSON.stringifyAny->Option.getOr(""),
-        ~apiLogWrapper,
       )
     | None => Promise.resolve(JSON.Null)
     }
@@ -49,7 +45,6 @@ let useDeletePaymentMethodSession = () => {
 
 let useUpdateSavedPaymentMethod = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   (~paymentMethodToken: string, ~cardDetails: JSON.t) => {
     switch nativeProp.paymentSessionConfig.pmSessionId {
@@ -72,9 +67,8 @@ let useUpdateSavedPaymentMethod = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.UPDATE_PAYMENT_METHOD_CALL,
+        ~event=UpdatePaymentMethod,
         ~body,
-        ~apiLogWrapper,
       )
     | None => Promise.resolve(JSON.Null)
     }
@@ -83,7 +77,6 @@ let useUpdateSavedPaymentMethod = () => {
 
 let useConfirmPaymentMethodSession = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let baseUrl = GlobalHooks.useGetBaseUrl()()
   (~body: JSON.t) => {
     switch nativeProp.paymentSessionConfig.pmSessionId {
@@ -97,9 +90,8 @@ let useConfirmPaymentMethodSession = () => {
           ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr(""),
           (),
         ),
-        ~eventName=LoggerTypes.CONFIRM_CALL,
+        ~event=SavePaymentMethod,
         ~body=body->JSON.stringify,
-        ~apiLogWrapper,
       )
     | None => Promise.resolve(JSON.Null)
     }

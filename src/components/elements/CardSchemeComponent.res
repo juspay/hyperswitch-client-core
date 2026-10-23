@@ -5,16 +5,8 @@ module CardSchemeSelectionPopoverElement = {
   @react.component
   let make = (~eligibleCardSchemes, ~setCardBrand, ~toggleVisibility) => {
     let localeObject = GetLocale.useGetLocalObj()
-    let logger = LoggerHook.useLoggerHook()
-
     React.useEffect0(() => {
-      logger(
-        ~logType=INFO,
-        ~value="CardSchemeMenu expanded",
-        ~category=USER_EVENT,
-        ~eventName=CARD_SCHEME_SELECTION,
-        (),
-      )
+      SdkLogger.logUser(~event=ViewOpened({view: CardSchemeMenu}), ~paymentMethod=Card)
       None
     })
 
@@ -27,6 +19,7 @@ module CardSchemeSelectionPopoverElement = {
           <CustomPressable
             key={index->Int.toString}
             onPress={_ => {
+              SdkLogger.logUser(~event=CardSchemeSelected({method: item}), ~paymentMethod=Card)
               setCardBrand(item)
               toggleVisibility()
             }}>
@@ -51,8 +44,6 @@ let make = (
   ~setCardBrand,
   ~cardBrandIcon: LayoutTypes.cardBrandVisibility,
 ) => {
-  let logger = LoggerHook.useLoggerHook()
-
   let dropDownIconWidth = AnimatedValue.useAnimatedValue(0.)
   let fadeAnim = AnimatedValue.useAnimatedValue(1.)
 
@@ -167,13 +158,7 @@ let make = (
     )->Animated.start
 
     if showCardSchemeDropDown {
-      logger(
-        ~logType=INFO,
-        ~value="Card detected as co-badged",
-        ~category=USER_EVENT,
-        ~eventName=CARD_SCHEME_SELECTION,
-        (),
-      )
+      SdkLogger.logState(~event=CardCoBadgeDetected, ~paymentMethod=Card)
     }
 
     None

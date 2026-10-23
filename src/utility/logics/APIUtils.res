@@ -1,7 +1,5 @@
-open LoggerTypes
-
-/* React Native gives Android's OkHttp client no transport timeouts 
-   at all (iOS's NSURLSession defaults to 60 s)*/ 
+/* React Native gives Android's OkHttp client no transport timeouts
+ at all (iOS's NSURLSession defaults to 60 s) */
 let requestTimeoutMs = 60_000
 
 let fetchApi = (
@@ -51,106 +49,132 @@ let fetchApi = (
   })
 }
 
+// Web's terminal-outcome rule, applied to every confirm or retrieve response the backend accepted.
+let logPaymentOutcome = (data, ~event: SdkLogger.apiEvent, ~context: LoggerContext.t) =>
+  LoggerUtils.safeRun(() => {
+    let dict = data->Utils.getDictFromJson
+    let status = dict->Utils.getString("status", "")
+    let outcome: SdkLogger.paymentOutcomeData = {
+      status,
+      manualRetryAllowed: dict->Utils.getBool("manual_retry_allowed", false),
+    }
+    let paymentMethod = LoggerPaymentMethod.fromPair(
+      ~method=dict->Utils.getString("payment_method", ""),
+      ~methodType=dict->Utils.getString("payment_method_type", ""),
+    )
+    switch (status, event) {
+    | ("succeeded", _) =>
+      SdkLogger.logLifecycle(~event=PaymentSucceeded(outcome), ~context, ~paymentMethod?)
+    | ("failed", _) =>
+      SdkLogger.logLifecycle(
+        ~event=PaymentFailed(outcome),
+        ~context,
+        ~details=data->LoggerUtils.intentErrorDetails,
+        ~paymentMethod?,
+      )
+    | ("", ConfirmCall | PostSessionTokens) =>
+      SdkLogger.logLifecycle(
+        ~event=PaymentStatusUnknown({inferred: false}),
+        ~context,
+        ~paymentMethod?,
+        ~message="Payment response had an empty status",
+      )
+    | _ => ()
+    }
+  })
+
 let handleApiCall = async (
   ~uri,
   ~body=?,
   ~headers,
-  ~eventName,
+  ~event: SdkLogger.apiEvent,
   ~method,
-  ~apiLogWrapper: (
-    ~logType: LoggerTypes.logType,
-    ~eventName: LoggerTypes.eventName,
-    ~url: string,
-    ~statusCode: string,
-    ~apiLogType: LoggerTypes.apiLogType,
-    ~data: Core__JSON.t,
-    ~paymentMethod: string=?,
-    ~paymentExperience: array<ClientResponseType.paymentExperience>=?,
-    unit,
-  ) => unit,
   ~processSuccess: Core__JSON.t => 'a,
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
 ) => {
+  let bodyStr = body->Option.getOr("")
+  let isIntentCall = switch event {
+  | ConfirmCall | RetrievePaymentIntent | PostSessionTokens => true
+  | _ => false
+  }
+  let paymentMethod = switch event {
+  | ConfirmCall => bodyStr->LoggerPaymentMethod.fromRequestBody
+  | _ => None
+  }
   try {
-    let initEventName = LoggerTypes.getApiInitEvent(eventName)
-    switch initEventName {
-    | Some(eventName) =>
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName,
-        ~url=uri,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
-    | _ => ()
-    }
-
-    let data = await fetchApi(~uri, ~method_=method, ~headers, ~bodyStr=body->Option.getOr(""))
-
-    let statusCode = data->Fetch.Response.status->string_of_int
-
-    if statusCode->String.charAt(0) === "2" {
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName,
-        ~url=uri,
-        ~statusCode,
-        ~apiLogType=Response,
-        ~data=JSON.Encode.null,
-        (),
-      )
-      let json = await data->Fetch.Response.json
-      processSuccess(json)
+    let pending = SdkLogger.observeApi(
+      ~event,
+      ~url=uri,
+      ~failureOf=LoggerUtils.httpBodyFailure,
+      ~detailsOf=isIntentCall ? LoggerUtils.intentResponseDetails : LoggerUtils.httpBodyDetails,
+      ~details=bodyStr->LoggerUtils.payloadDetails,
+      ~paymentMethod?,
+      ~call=async () => {
+        let context = LoggerContext.current()
+        let startedAt = Date.now()
+        let response = await fetchApi(~uri, ~method_=method, ~headers, ~bodyStr)
+        let data = try await response->Fetch.Response.json catch {
+        | error => {
+            // An HTTP response exists even when its JSON is unreadable. Preserve
+            // the original parse failure and application's processCatch behavior.
+            if event === ConfirmCall || event === ConfirmPayoutCall {
+              SdkFunnelLogger.log(
+                ~event=PaymentConfirmResponse({
+                  attemptId: context.attemptId,
+                  outcome: "unreadable",
+                  statusCode: response->Fetch.Response.status,
+                }),
+                ~context,
+                ~extra=[("response_body_unreadable", true->JSON.Encode.bool)],
+                ~durationMs=Date.now() -. startedAt,
+                ~paymentMethod?,
+              )
+            }
+            LoggerRuntime.rethrow(error)
+          }
+        }
+        (response, data)
+      },
+    )
+    let context = LoggerContext.current()
+    let (response, data) = await pending
+    if response->Fetch.Response.ok {
+      if isIntentCall {
+        data->logPaymentOutcome(~event, ~context)
+      }
+      processSuccess(data)
     } else {
-      let error = await data->Fetch.Response.json
-      let value =
-        [
-          ("url", uri->JSON.Encode.string),
-          ("statusCode", statusCode->JSON.Encode.string),
-          ("response", error),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-
-      apiLogWrapper(
-        ~logType=ERROR,
-        ~eventName,
-        ~url=uri,
-        ~statusCode,
-        ~apiLogType=Err,
-        ~data=value,
-        (),
-      )
-      processError(error)
+      if event == ConfirmCall {
+        SdkLogger.logLifecycle(~event=PaymentRejected, ~context, ~failure=data, ~paymentMethod?)
+      }
+      processError(data)
     }
   } catch {
-  | err =>
-    apiLogWrapper(
-      ~logType=ERROR,
-      ~eventName,
-      ~url=uri,
-      ~statusCode="504",
-      ~apiLogType=NoResponse,
-      ~data=err->Utils.getError(`API call failed: ${uri}`),
-      (),
-    )
-    processCatch(JSON.Encode.null)
+  | _ => processCatch(JSON.Encode.null)
   }
 }
 
-let fetchApiWrapper = (~uri, ~body=?, ~headers, ~eventName, ~method, ~apiLogWrapper) => {
+let fetchApiWrapper = (~uri, ~body=?, ~headers, ~event, ~method) => {
   handleApiCall(
     ~uri,
     ~body?,
     ~headers,
-    ~eventName,
+    ~event,
     ~method,
-    ~apiLogWrapper,
     ~processSuccess=json => json,
     ~processError=error => error,
     ~processCatch=_ => JSON.Encode.null,
   )
+}
+
+let fetchStaticAsset = async (~uri, ~headers, ~event: SdkLogger.staticAssetEvent) => {
+  try {
+    let response = await SdkLogger.observeStaticAsset(~event, ~url=uri, ~call=() =>
+      fetchApi(~uri, ~method_=#GET, ~headers)
+    )
+    await response->Fetch.Response.json
+  } catch {
+  | _ => JSON.Encode.null
+  }
 }

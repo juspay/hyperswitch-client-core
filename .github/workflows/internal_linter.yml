@@ -118,7 +118,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
@@ -136,6 +136,11 @@ jobs:
             echo "💡 Please fix all ReScript warnings before merging."
             exit 1
           fi
+
+      - name: Check shared web logger contracts and behavior
+        run: |
+          node scripts/check-logger-parity.cjs
+          npm test -- --runInBand src/Logger
 
   all-checks-passed:
     runs-on: ubuntu-latest

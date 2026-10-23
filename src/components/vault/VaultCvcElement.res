@@ -67,12 +67,21 @@ let make = (
     },
   }
 
+  let logFormChange = VaultLoggerHook.useFormLogger(~formId, ~savedMethod=true)
+
   let onFormChange = (event: VaultBindings.cardFormChange) => {
+    logFormChange(event)
     setFormValid(formId, event.complete && event.valid)
     setCvcState(_ => event.fields->Dict.get("cardCvc"))
   }
 
   let onFormError = (error: JSON.t) => {
+    SdkLogger.logLifecycle(
+      ~event=VaultFlowFailed({reason: FormCreationFailed}),
+      ~exn=error->Exn.anyToExnInternal,
+      ~details=[("vault", vaultDetails.vaultTypeStr->JSON.Encode.string)],
+      ~paymentMethod=Card,
+    )
     setFormValid(formId, false)
     let msg =
       error

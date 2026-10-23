@@ -5,6 +5,17 @@ let useNetworkStatus = () => {
 
   let showConnected = React.useRef(false)
 
+  // The first check only logs when it finds the device offline; later checks log transitions.
+  let lastOnline = React.useRef(None)
+  let logOnline = online =>
+    switch lastOnline.current {
+    | Some(last) if last === online => ()
+    | None if online => lastOnline.current = Some(true)
+    | _ =>
+      lastOnline.current = Some(online)
+      SdkLogger.logState(~event=NetworkStatusChanged({online: online}))
+    }
+
   let checkConnectivity = async () => {
     try {
       let headers = Dict.make()
@@ -20,6 +31,7 @@ let useNetworkStatus = () => {
 
       let statusCode = response->Fetch.Response.status->string_of_int
       let connected = statusCode->String.charAt(0) === "2"
+      logOnline(connected)
       setIsConnected(_ => connected)
 
       if !connected {
@@ -34,6 +46,7 @@ let useNetworkStatus = () => {
     } catch {
     | _ =>
       showConnected.current = true
+      logOnline(false)
       setIsConnected(_ => false)
       showBanner(~message="No internet connection", ~bannerType=#error)
     }

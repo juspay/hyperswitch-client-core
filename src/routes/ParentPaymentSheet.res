@@ -113,7 +113,12 @@ let make = () => {
                       ? localeObject.addPaymentMethodLabel
                       : localeObject.useExisitingSavedCards}
                     isSelected=isSavedPaymentScreen
-                    setIsSelected=setIsSavedPaymentScreen
+                    setIsSelected={isSaved => {
+                      if !isSaved {
+                        SdkLogger.logUser(~event=ViewOpened({view: NewPaymentMethods}))
+                      }
+                      setIsSavedPaymentScreen(isSaved)
+                    }}
                     textType={TextWrapper.LinkTextBold}
                     size=24.
                     testID={isSavedPaymentScreen

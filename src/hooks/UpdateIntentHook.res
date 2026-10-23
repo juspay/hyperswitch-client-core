@@ -23,8 +23,12 @@ let useUpdateIntentListener = () => {
 
     let handle = (event: SessionStore.sessionEvent) =>
       switch event {
-      | IntentUpdating => setLoading(ProcessingPaymentsWithOverlay)
-      | IntentUpdateEnded => setLoading(FillingDetails)
+      | IntentUpdating =>
+        SdkLogger.logState(~event=UpdateIntentProgressChanged({inProgress: true}))
+        setLoading(ProcessingPaymentsWithOverlay)
+      | IntentUpdateEnded =>
+        SdkLogger.logState(~event=UpdateIntentProgressChanged({inProgress: false}))
+        setLoading(FillingDetails)
       | IntentSwitched(paymentSessionConfig) =>
         setNativeProp({...nativePropRef.current, paymentSessionConfig})
         setRevision(revision => revision + 1)

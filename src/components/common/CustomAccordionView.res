@@ -179,6 +179,11 @@ let make = (
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
   let handleSectionToggle = (sectionKey: int) => {
+    if !(expandedSections->Array.includes(sectionKey)) {
+      hocComponentArr
+      ->Array.get(sectionKey)
+      ->Option.forEach(hoc => hoc->CustomTabView.logPaymentMethodSelected(clientData))
+    }
     setExpandedSections(prevExpanded => {
       if allowMultipleExpanded {
         if prevExpanded->Array.includes(sectionKey) {
@@ -263,6 +268,7 @@ let make = (
       condition={allSections->Array.length > maxVisibleItems && showMore && hasData}>
       <MoreButton
         handleMoreToggle={() => {
+          SdkLogger.logUser(~event=ViewToggled({view: MorePaymentMethods, expanded: true}))
           setShowMore(_ => false)
         }}
       />
