@@ -178,6 +178,11 @@ flow on a manual run. CI does not use Metro: a debug build that cannot reach Met
 the android repo, which can be older than the branch under test.
 Pull requests from forks skip the job (they get no repository secrets).
 
+Maestro is installed from its GitHub release and checked against the release's SHA-256 before it is unpacked: to
+upgrade, change `MAESTRO_VERSION` and `MAESTRO_SHA256` together (the hash is in the release's
+`checksums_sha256.txt`). `MAESTRO_API_URL` points at a closed local port, so Maestro's version check and crash
+reports, which carry the install's id, stay on the runner.
+
 Results: the run's **Summary** page shows a table of every flow (✅/❌, file, duration, sandbox record, failing
 step, reason), failed flows first (`maestro/scripts/ci-report.js`, from Maestro's JUnit report). The sandbox
 record is the payment as the Hyperswitch sandbox recorded it (status, card, connector, authentication, amount),
@@ -220,6 +225,8 @@ public repository can be downloaded by anyone signed in to GitHub. For logs, run
 - **Debugging a failure:** `--test-output-dir <dir>` keeps `commands.json`, `maestro.log` (`Tapping on element`
   lines show what was hit), screenshots, hierarchy JSON and `logs/device-logcat.txt`. Maestro clears logcat at the
   start of each run, so read the crash or JS log from there.
-- **Maestro analytics:** set `MAESTRO_CLI_NO_ANALYTICS=1`. Record videos with `maestro record --local` only.
+- **Maestro analytics:** set `MAESTRO_CLI_NO_ANALYTICS=1`. It does not stop the version check and crash reports
+  to api.copilot.mobile.dev; `MAESTRO_API_URL=http://127.0.0.1:9` keeps those local too (`maestro test` does not
+  use that API). Record videos with `maestro record --local` only.
 - **Keep run output local.** `maestro-reports/` (gitignored) holds device logs with the sandbox publishable key
   and payment session tokens; do not attach it to issues or pull requests. Screenshots show only the app.
