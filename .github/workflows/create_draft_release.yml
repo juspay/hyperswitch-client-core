@@ -83,7 +83,7 @@ jobs:
       - name: Install Dependencies
         run: |
           corepack enable
-          yarn install
+          yarn install --immutable
 
       - name: Validate Custom Version Input
         if: github.event.inputs.versioning_type == 'custom'
@@ -113,7 +113,7 @@ jobs:
 
       - name: Run Semantic Release (Auto Versioning)
         if: github.event.inputs.versioning_type == 'auto'
-        run: npx semantic-release
+        run: yarn semantic-release
 
       - name: Apply Custom Version
         if: github.event.inputs.versioning_type == 'custom'
