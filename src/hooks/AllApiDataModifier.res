@@ -5,7 +5,8 @@ type componentHoc = (
 
 type hoc = {
   name: string,
-  paymentMethodType: string,
+  // Saved/grouped views own their selection; loading has no payment method.
+  selectionEvent: option<PaymentEventData.paymentMethodStatusEvent>,
   componentHoc: componentHoc,
 }
 
@@ -40,7 +41,7 @@ let usePaymentMethodModifier = () => {
             [
               {
                 name: "Saved",
-                paymentMethodType: "saved_payment_method",
+                selectionEvent: None,
                 componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) =>
                   <InitialLoader />,
               },
@@ -62,7 +63,7 @@ let usePaymentMethodModifier = () => {
               ? [
                   {
                     name: "Saved",
-                    paymentMethodType: "saved_payment_method",
+                    selectionEvent: None,
                     componentHoc: (~isScreenFocus, ~setConfirmButtonData) =>
                       <SavedPaymentSheet
                         isScreenFocus
@@ -172,6 +173,13 @@ let usePaymentMethodModifier = () => {
             let savedCardMethods =
               clientData.customer_payment_methods->Array.filter(m => m.payment_method === CARD)
 
+            let selectionEvent = isGroupByPMCard
+              ? None
+              : Some(PaymentEvents.buildPaymentMethodStatusEvent(
+                  ~paymentMethod=paymentMethodData.payment_method_str,
+                  ~paymentMethodType=paymentMethodData.payment_method_type,
+                ))
+
             switch nativeProp.sdkState {
             | PaymentSheet | WidgetPaymentSheet | HostedCheckout =>
               Types.defaultButtonElementArr->Array.includes(paymentMethodData.payment_method_type)
@@ -185,7 +193,7 @@ let usePaymentMethodModifier = () => {
                   )
                 : tabArr->Array.push({
                     name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
-                    paymentMethodType: paymentMethodData.payment_method_type,
+                    selectionEvent,
                     componentHoc: isGroupByPMCard
                       ? (~isScreenFocus, ~setConfirmButtonData) =>
                           <SavedCardToggleTab
@@ -198,7 +206,7 @@ let usePaymentMethodModifier = () => {
             | TabSheet | WidgetTabSheet =>
               tabArr->Array.push({
                 name: paymentMethodData.payment_method_type->CommonUtils.getDisplayName,
-                paymentMethodType: paymentMethodData.payment_method_type,
+                selectionEvent,
                 componentHoc: isGroupByPMCard
                   ? (~isScreenFocus, ~setConfirmButtonData) =>
                       <SavedCardToggleTab
@@ -225,7 +233,7 @@ let usePaymentMethodModifier = () => {
     | None =>
       let loadingTabElement = {
         name: "loading",
-        paymentMethodType: "loading",
+        selectionEvent: None,
         componentHoc: (~isScreenFocus as _, ~setConfirmButtonData as _) => <>
           <Space height=10. />
           <CustomLoader />

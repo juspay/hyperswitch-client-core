@@ -8,8 +8,8 @@ let make = () => {
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
   let (cvcValue, setCvcValue) = React.useState(_ => "")
   let cvcValueRef = React.useRef("")
-  let (isFocused, setIsFocused) = React.useState(_ => false)
   let emitter = PaymentEvents.usePaymentEventEmitter()
+  let markReady = ElementEventsContext.useMarkReady()
   let localeObject = GetLocale.useGetLocalObj()
   let {component, dangerColor, primaryColor} = ThemebasedStyle.useThemeBasedStyle()
 
@@ -28,21 +28,12 @@ let make = () => {
     cvcValueRef.current = formatted
   }
 
-  let emitCvcStatusEvent = (~focused: bool, ~blur: bool) => {
-    emitter.emitCvcStatus(
-      ~event={
-        isCvcFocused: Some(focused),
-        isCvcBlur: Some(blur),
-        isCvcEmpty,
-        isCvcComplete,
-      },
-    )
-  }
-
   let headlessModule = HeadlessCommon.makeHeadlessModule()
 
   React.useEffect0(() => {
     setLoading(LoadingContext.FillingDetails)
+    // No API calls, so the CVC widget is ready on mount.
+    markReady()
     None
   })
   let confirmAttempt = nativeProp.cvcConfirm->Option.map(c => c.attempt)->Option.getOr(-1)
@@ -73,10 +64,11 @@ let make = () => {
     None
   }, [confirmAttempt])
 
-  React.useEffect1(_ => {
-    emitCvcStatusEvent(~focused=isFocused, ~blur=!isFocused)
+  // No focus fields here: focus and blur are the element's lifecycle events.
+  React.useEffect2(() => {
+    emitter.emitCvcStatus(~event=PaymentEvents.buildCvcStatusEvent(~isCvcEmpty, ~isCvcComplete))
     None
-  }, [cvcValue])
+  }, (isCvcEmpty, isCvcComplete))
 
   <View
     style={s({
@@ -100,14 +92,6 @@ let make = () => {
       isValid={isCvcValid}
       secureTextEntry=true
       textColor={isCvcValid ? component.color : dangerColor}
-      onFocus={() => {
-        setIsFocused(_ => true)
-        emitCvcStatusEvent(~focused=true, ~blur=false)
-      }}
-      onBlur={() => {
-        setIsFocused(_ => false)
-        emitCvcStatusEvent(~focused=false, ~blur=true)
-      }}
       iconRight=?{nativeProp.configuration.paymentMethodLayout.savedMethodCustomization.cvcIcon ===
         Hidden
         ? None
