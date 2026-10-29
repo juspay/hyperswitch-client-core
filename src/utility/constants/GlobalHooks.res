@@ -2,7 +2,6 @@ open EnvTypes
 
 let backendPath = "/api"
 let logsPath = "/api/logs/sdk"
-let nonProdLogsPath = "/logs/sdk"
 let assetsPath = "/assets/v2"
 
 let getUrlFromNativeProp = (~urlType, ~customEndpoints: SdkTypes.customEndpointsConfig) => {
@@ -33,14 +32,14 @@ let getDefaultBaseUrl = (~urlType, ~environment: GlobalVars.envType) => {
   | #logs =>
     switch environment {
     | PROD => process.env["HYPERSWITCH_PRODUCTION_URL"] ++ logsPath
-    | SANDBOX => process.env["HYPERSWITCH_SANDBOX_URL"] ++ nonProdLogsPath
-    | INTEG => process.env["HYPERSWITCH_INTEG_URL"] ++ nonProdLogsPath
+    | SANDBOX => process.env["HYPERSWITCH_SANDBOX_URL"] ++ logsPath
+    | INTEG => process.env["HYPERSWITCH_INTEG_URL"] ++ logsPath
     }
   | #backend =>
     switch environment {
     | PROD => process.env["HYPERSWITCH_PRODUCTION_URL"] ++ backendPath
-    | SANDBOX => process.env["HYPERSWITCH_SANDBOX_URL"]
-    | INTEG => process.env["HYPERSWITCH_INTEG_URL"]
+    | SANDBOX => process.env["HYPERSWITCH_SANDBOX_URL"] ++ backendPath
+    | INTEG => process.env["HYPERSWITCH_INTEG_URL"] ++ backendPath
     }
   }
 }

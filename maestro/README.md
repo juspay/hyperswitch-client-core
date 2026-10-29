@@ -47,7 +47,7 @@ digits, network), not only what the host app displays, so "the right card was ch
 | Thing | Check / start |
 | --- | --- |
 | Maestro CLI 2.10.0 | `curl -fsSL https://get.maestro.mobile.dev \| bash`; `export PATH="$PATH:$HOME/.maestro/bin" MAESTRO_CLI_NO_ANALYTICS=1`; `maestro --version` |
-| `.env` | copy `.en`. Needs sandbox `HYPERSWITCH_PUBLISHABLE_KEY`, `HYPERSWITCH_SECRET_KEY`, `PROFILE_ID`, **and** `HYPERSWITCH_SANDBOX_URL=https://sandbox.hyperswitch.io`, `SANDBOX_ASSETS_END_POINT=https://beta.hyperswitch.io`. Without the two URLs the debug bundle has no backend and every sheet fails with "Unable to load the payment configuration". |
+| `.env` | copy `.en`. Needs sandbox `HYPERSWITCH_PUBLISHABLE_KEY`, `HYPERSWITCH_SECRET_KEY`, `PROFILE_ID`, **and** `HYPERSWITCH_SANDBOX_URL=https://app.hyperswitch.io`, `SANDBOX_ASSETS_END_POINT=https://beta.hyperswitch.io` (origins: no path, no trailing slash). Without the two URLs the debug bundle has no backend and every sheet fails with "Unable to load the payment configuration". |
 | e2e server | `yarn e2e:server` → `curl localhost:5252/health`. Use it instead of `yarn server` (both use port 5252). Restart it after editing `.env` or `maestro/server/scenarios.js`. |
 | Metro | `yarn start`; Android debug builds load the JS from it. Restart with `--reset-cache` after changing `.env`: values are inlined at bundle time. |
 | Sentry | leave `SENTRY_DSN` empty in `.env` while running flows, so test crashes and logs are not sent to Sentry |
