@@ -29,6 +29,7 @@ type dynamicFieldsData = {
     array<string>,
     bool,
     string,
+    unit => unit,
   ),
   getRequiredFieldsForButton: (
     ClientResponseType.paymentMethodEnabled,
@@ -58,7 +59,7 @@ let dynamicFieldsContext = React.createContext({
   formDataRef: None,
   sheetType: ButtonSheet,
   setSheetType: _ => (),
-  getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false, ""),
+  getRequiredFieldsForTabs: (_, _, _) => ([], Dict.make(), false, [], false, "", () => ()),
   getRequiredFieldsForButton: (_, _, _, _, _, _) => (true, Dict.make(), ""),
   country: SdkTypes.defaultCountry,
   setCountry: _ => (),
@@ -170,6 +171,9 @@ let make = (~children) => {
   let getSuperpositionFinalFields = ConfigurationService.useConfigurationService(
     ~rawConfigs=superpositionConfig.raw_configs,
   )
+  let logDynamicFieldsRendered = DynamicFieldsUtils.useLogDynamicFieldsRendered(
+    ~rawConfigs=superpositionConfig.raw_configs,
+  )
 
   let (profile_id, processor_merchant_id, organization_id) = SdkConfigParser.getProfileContext(
     superpositionConfig.context_used,
@@ -258,6 +262,11 @@ let make = (~children) => {
       PaymentUtils.getCardNetworks(paymentMethodData.card_networks->Some),
       isScreenFocus,
       defaultCountry,
+      () => {
+        if isScreenFocus {
+          logDynamicFieldsRendered(missingRequiredFields, configParams, eligibleConnectors)
+        }
+      },
     )
   }
 
@@ -377,6 +386,8 @@ let make = (~children) => {
     )
 
     let isFieldsMissing = missingRequiredFields->Array.length > 0
+
+    logDynamicFieldsRendered(missingRequiredFields, configParams, eligibleConnectors)
 
     if isFieldsMissing {
       setWalletData(
