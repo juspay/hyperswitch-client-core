@@ -1,8 +1,8 @@
 open EnvTypes
 
 let backendPath = "/api"
-let logsPath = "/api/logs/sdk"
-let nonProdLogsPath = "/logs/sdk"
+let logsPath = SharedLoggerConfig.defaults.logsPath
+let nonProdLogsPath = SharedLoggerConfig.defaults.nonProdLogsPath
 let assetsPath = "/assets/v2"
 
 let getUrlFromNativeProp = (~urlType, ~customEndpoints: SdkTypes.customEndpointsConfig) => {
@@ -75,16 +75,12 @@ let useGetAssetUrlWithVersion = () => {
     )
 }
 
-let getLoggingUrl = (~customEndpoints, ~environment) => {
-  switch (
-    getUrlFromNativeProp(~urlType=#backend, ~customEndpoints),
-    getUrlFromNativeProp(~urlType=#logs, ~customEndpoints),
-  ) {
-  | (Some(_), None) => None
-  | (_, Some(url)) => Some(url)
-  | (None, None) => Some(getDefaultBaseUrl(~urlType=#logs, ~environment))
-  }
-}
+let getLoggingUrl = (~customEndpoints, ~environment) =>
+  SharedLoggerConfig.selectNativeEndpoint(
+    ~customBackend=getUrlFromNativeProp(~urlType=#backend, ~customEndpoints),
+    ~customLogs=getUrlFromNativeProp(~urlType=#logs, ~customEndpoints),
+    ~defaultUrl=() => getDefaultBaseUrl(~urlType=#logs, ~environment),
+  )
 
 let useGetLoggingUrl = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)

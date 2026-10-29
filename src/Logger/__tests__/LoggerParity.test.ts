@@ -10,6 +10,22 @@ describe('web logger parity', () => {
     expect(() => checkParity()).not.toThrow();
   });
 
+  it('checks the schema version from the shared config defaults', () => {
+    const changed = JSON.parse(JSON.stringify(baseline));
+    changed.schemaVersion += 1;
+    expect(() => checkParity(undefined, changed)).toThrow(
+      'shared schema version drifted',
+    );
+  });
+
+  it('checks wire types resolved through the shared-code include', () => {
+    const changed = JSON.parse(JSON.stringify(baseline));
+    changed.core.rowValue = '{schemaVersion:int,requiredField:string}';
+    expect(() => checkParity(undefined, changed)).toThrow(
+      'core.rowValue: payload fields drifted',
+    );
+  });
+
   it('rejects an incompatible shared payload contract', () => {
     const changed = JSON.parse(JSON.stringify(baseline));
     changed.sdk.paymentOutcomeData =

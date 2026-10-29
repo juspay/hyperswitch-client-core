@@ -8,9 +8,7 @@ let make = (~props: option<JSON.t>=?, ~children) => {
     SdkLogger.adoptSessionFromNativeProp(nativeProp)
     props->Option.forEach(props => MerchantLogger.logNativeProps(~nativeProp, ~props))
     previous.current->Option.forEach(previous =>
-      if (
-        previous.configuration->JSON.stringifyAny !== nativeProp.configuration->JSON.stringifyAny
-      ) {
+      if previous.configuration->JSON.stringifyAny !== nativeProp.configuration->JSON.stringifyAny {
         SdkLogger.logState(~event=ElementOptionsChanged)
       }
     )

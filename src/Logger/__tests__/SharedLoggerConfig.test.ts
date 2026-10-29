@@ -1,0 +1,49 @@
+import * as Config from '../../../shared-code/sdk-utils/logging/SharedLoggerConfig.bs.js';
+
+describe('shared logger host policies', () => {
+  it('preserves distinct masking policies and web array-path overrides', () => {
+    expect(Config.Native.shouldMaskField('locale')).toBe(false);
+    expect(Config.Web.shouldMaskField('locale')).toBe(true);
+    expect(Config.Native.shouldMaskField('wallets.layout')).toBe(true);
+    expect(Config.Web.shouldMaskField('wallets.layout')).toBe(false);
+    expect(Config.Web.shouldMaskField('wallets[2].walletReturnUrl')).toBe(true);
+    expect(
+      Config.Web.shouldMaskField(
+        'paymentMethodsConfig[0].paymentMethodTypes[1].message.value',
+      ),
+    ).toBe(true);
+    expect(Config.Web.shouldMaskField('terms.card')).toBe(false);
+    expect(Config.Native.shouldMaskField('terms.card')).toBe(true);
+  });
+
+  it('preserves the platform-specific DDC milestone severity', () => {
+    expect(Config.Native.ddcStartedSeverity).toBe('INFO');
+    expect(Config.Web.ddcStartedSeverity).toBe('DEBUG');
+  });
+
+  it('suppresses the native default when only a custom backend is supplied', () => {
+    const fallback = jest.fn(() => 'default');
+    expect(Config.selectNativeEndpoint('backend', undefined, fallback)).toBeUndefined();
+    expect(fallback).not.toHaveBeenCalled();
+    expect(Config.selectNativeEndpoint('backend', '', fallback)).toBe('');
+    expect(fallback).not.toHaveBeenCalled();
+    expect(Config.selectNativeEndpoint(undefined, undefined, fallback)).toBe('default');
+    expect(fallback).toHaveBeenCalledTimes(1);
+  });
+
+  it('isolates native transport state while preserving prepared header identity', () => {
+    const first = Config.makeTransport();
+    const second = Config.makeTransport();
+    first.endpoint.contents = 'native endpoint';
+    first.headers.contents.custom = 'header';
+    expect(second.endpoint.contents).toBe('');
+    expect(second.headers.contents).toEqual({});
+    const headers = {Authorization: 'retained', 'Content-Type': 'old'};
+    expect(Config.prepareNativeHeaders(headers, 'ios')).toBe(headers);
+    expect(headers).toEqual({
+      Authorization: 'retained',
+      'Content-Type': 'application/json',
+      'X-Client-Platform': 'ios',
+    });
+  });
+});
