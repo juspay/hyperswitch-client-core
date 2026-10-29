@@ -130,8 +130,6 @@ A new **npm script** was added to make GitLeaks easy to run locally.
 
 This allows developers to run:
 ```bash
-npm run lint:secrets
-# or
 yarn lint:secrets
 ```
 
@@ -162,7 +160,7 @@ GitLeaks rules are designed to detect any accidental exposure of `.env` variable
 To check for exposed credentials in your code:
 
 ```bash
-npm run lint:secrets
+yarn lint:secrets
 ```
 
 Output Example:
