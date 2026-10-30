@@ -1,0 +1,22 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - closing the saved-methods screen reports cancel
+tags:
+  - pr
+  - saved
+  - sheet
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card
+- extendedWaitUntil:
+    visible:
+      id: SavedCardCvcInputTestId
+    timeout: 20000
+- tapOn:
+    id: SheetCloseButtonTestId
+- runFlow: ../subflows/expect_payment_cancelled.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method

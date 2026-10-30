@@ -1,0 +1,27 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Sheet - header shows the saved-methods label, then the new-method label
+tags:
+  - nightly
+  - sheet
+  - saved
+---
+# Android: "Saved payment method" / "Select a payment method".
+# iOS: "Payment methods" / "Select payment method".
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card
+- extendedWaitUntil:
+    visible:
+      id: AddNewPaymentMethodTestId
+    timeout: 20000
+- assertVisible: "Saved payment methods?|Payment methods"
+- assertNotVisible: "Select (a )?payment method"
+- runFlow: ../subflows/dismiss_dev_overlays.yaml
+- tapOn:
+    id: AddNewPaymentMethodTestId
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 10000
+- assertVisible: "Select (a )?payment method"

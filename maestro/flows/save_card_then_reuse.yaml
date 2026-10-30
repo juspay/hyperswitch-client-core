@@ -1,0 +1,39 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Save card - "Save card details" stores the card for the next checkout
+tags:
+  - pr
+  - saved
+  - card
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: new_customer
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow: ../subflows/fill_card.yaml
+- tapOn:
+    id: SaveCardCheckboxTestId
+# Ticking the box reveals the optional nickname field.
+- extendedWaitUntil:
+    visible: "Card Nickname.*"
+    timeout: 5000
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"
+# Same customer, new intent: the saved card is offered first.
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      KEEP_SCENARIO: "true"
+- extendedWaitUntil:
+    visible:
+      id: AddNewPaymentMethodTestId
+    timeout: 20000
+- assertVisible: "●●●● 4242"
