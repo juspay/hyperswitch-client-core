@@ -276,15 +276,31 @@ let registerEventListener = (str: string, callback) => {
   map->Map.set(str, callback)
 }
 
+type messageSource
+@get external eventSource: ReactEvent.Form.t => Nullable.t<messageSource> = "source"
+@val external currentWindow: messageSource = "window"
+@val @scope("window") external parentWindow: messageSource = "parent"
+
+// Native WebViews post to this window and an embedding page posts from
+// window.parent. Messages from any other frame, popup or opener are ignored.
+let isTrustedMessageSource = event =>
+  switch event->eventSource->Nullable.toOption {
+  | Some(source) => source === currentWindow || source === parentWindow
+  | None => false
+  }
+
 let useEventListener = () => {
   React.useEffect0(() => {
     let handleMessage = event => {
       try {
-        let optionalJson =
+        let optionalJson = if isTrustedMessageSource(event) {
           event
           ->data
           ->JSON.parseExn
           ->JSON.Decode.object
+        } else {
+          None
+        }
 
         map
         ->Map.keys
