@@ -58,22 +58,23 @@ jobs:
           echo "Found libraries: $LIBS"
           echo "libraries=$LIBS" >> $GITHUB_OUTPUT
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.4
+
+      # Installs exactly what yarn.lock pins, before any signing or publishing secret is on the runner.
+      - name: Dependency Install
+        run: |
+          corepack enable
+          yarn install --immutable
+          yarn re:build
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          server-id: central
-          server-username: ${{secrets.ANDROID_CENTRAL_TOKEN_USERNAME }}
-          server-password: ${{ secrets.ANDROID_CENTRAL_TOKEN_PASSWORD }}
-          gpg-private-key: ${{ secrets.ANDROID_GPG_SIGNING_KEY }}
-          gpg-passphrase: ${{ secrets.ANDROID_GPG_SIGNING_KEY_PASSWORD }}
-
-      - name: Dependency Install
-        run: |
-          # Install dependencies using npm
-          npm i
-          npm run re:start
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -99,6 +100,12 @@ jobs:
         run: |
           sed -i 's|<string name="hyperOTAEndPoint">.*</string>|<string name="hyperOTAEndPoint">'"$PROD_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
           sed -i 's|<string name="hyperOTASandBoxEndPoint">.*</string>|<string name="hyperOTASandBoxEndPoint">'"$SANDBOX_ASSETS_END_POINT_WITH_VERSION"'</string>|' ./app/src/main/res/values/strings.xml 2>/dev/null
+
+      # build-lib.sh signs with the default gpg key; imported last so earlier steps never see it.
+      - name: Import signing key
+        env:
+          GPG_SIGNING_KEY: ${{ secrets.ANDROID_GPG_SIGNING_KEY }}
+        run: echo "$GPG_SIGNING_KEY" | gpg --batch --import
 
       - name: Build and Publish
         working-directory: ./android

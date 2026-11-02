@@ -119,17 +119,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22.23.4
-          cache: 'npm'
 
       - name: Install dependencies
         run: |
           echo "📦 Installing dependencies..."
-          npm install
+          corepack enable
+          yarn install --immutable
 
       - name: Compile ReScript and fail on warnings
         run: |
           echo "🔧 Compiling ReScript..."
-          if npm run re:check; then
+          if yarn re:check; then
             echo "✅ ReScript compilation successful!"
           else
             echo "❌ ReScript compilation failed with warnings!"
