@@ -23,6 +23,10 @@ jobs:
     timeout-minutes: 90
     env:
       MAESTRO_CLI_NO_ANALYTICS: '1'
+      # Maestro's version check and crash reports go to api.copilot.mobile.dev with this install's id, and no
+      # setting turns them off (not even MAESTRO_DISABLE_UPDATE_CHECK). A closed local port keeps them on the
+      # runner; `maestro test` does not use this API.
+      MAESTRO_API_URL: http://127.0.0.1:9
       MAESTRO_TAG_ARGS: ${{ github.event_name == 'pull_request' && '--include-tags smoke' || '' }}
     steps:
       - name: Free Disk Space
@@ -55,10 +59,12 @@ jobs:
           ref: main
           path: android
 
+      # An exact version, so a newer Node only arrives through a reviewed change. With `22`, every run would take
+      # the newest 22.x (the runner's tool cache is removed above).
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 22.23.4
 
       - name: Install dependencies
         run: npm install
@@ -89,12 +95,20 @@ jobs:
       - name: Build demo app
         run: cd android && ./gradlew :demo-app:assembleDebug
 
-      # Before the e2e server starts, so the downloaded install script never runs while the keys are loaded.
+      # Before the e2e server starts, so nothing downloaded here runs while the keys are loaded. The release zip is
+      # checked against its SHA-256 before it is unpacked. To upgrade, change both values: the hash is in the
+      # release's checksums_sha256.txt.
       - name: Install Maestro
         env:
           MAESTRO_VERSION: 2.10.0
+          MAESTRO_SHA256: 29b675e10cc12080e445e9bfb2e2b4e4dfb9c0f2e30d5884120d258b5e1cd991
         run: |
-          curl -fsSL "https://get.maestro.mobile.dev" | bash
+          curl -fsSL -o "$RUNNER_TEMP/maestro.zip" "https://github.com/mobile-dev-inc/maestro/releases/download/cli-$MAESTRO_VERSION/maestro.zip"
+          echo "$MAESTRO_SHA256  $RUNNER_TEMP/maestro.zip" | sha256sum -c -
+          unzip -q "$RUNNER_TEMP/maestro.zip" -d "$RUNNER_TEMP"
+          mkdir -p "$HOME/.maestro"
+          rm -rf "$HOME/.maestro/bin" "$HOME/.maestro/lib"
+          mv "$RUNNER_TEMP/maestro/bin" "$RUNNER_TEMP/maestro/lib" "$HOME/.maestro/"
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
 
       - name: Start the e2e server
@@ -108,9 +122,11 @@ jobs:
           for i in $(seq 1 15); do curl -sf -o /dev/null http://localhost:5252/health && break || sleep 2; done
           curl -sf -o /dev/null http://localhost:5252/scenarios
 
+      # The emulator action is pinned to the commit of its v2.38.0 release: it runs while the e2e server holds the
+      # keys, and a tag can be moved to other code.
       - name: Maestro test
         id: maestro
-        uses: reactivecircus/android-emulator-runner@v2
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         with:
           api-level: 35
           arch: x86_64

@@ -31,9 +31,9 @@ const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
 const PROFILE_ID = process.env.PROFILE_ID;
 // Same base URL rule as mockServer.js.
 const HYPERSWITCH_BASE_URL =
-  process.env.HYPERSWITCH_SANDBOX_URL ||
-  process.env.HYPERSWITCH_INTEG_URL ||
-  'https://sandbox.hyperswitch.io';
+  (process.env.HYPERSWITCH_SANDBOX_URL ||
+    process.env.HYPERSWITCH_INTEG_URL ||
+    'https://app.hyperswitch.io') + '/api';
 
 const log = (...args) => console.log('[e2e-server]', ...args);
 const logError = (...args) => console.error('[e2e-server]', ...args);
