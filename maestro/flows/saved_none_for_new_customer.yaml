@@ -1,0 +1,19 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - a customer without saved methods gets the new-method screen and no saved link
+tags:
+  - nightly
+  - saved
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: new_customer
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- assertVisible: "Select (a )?payment method"
+- assertNotVisible:
+    id: AddNewPaymentMethodTestId
+- assertNotVisible:
+    id: UseSavedPaymentMethodsTestId

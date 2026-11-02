@@ -1,0 +1,22 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - Pay without the CVC is blocked
+tags:
+  - pr
+  - saved
+  - validation
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card
+- extendedWaitUntil:
+    visible:
+      id: SavedCardCvcInputTestId
+    timeout: 20000
+- runFlow: ../subflows/pay.yaml
+- assertVisible: "Your card.s security code is incomplete."
+- runFlow: ../subflows/expect_sheet_open.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method

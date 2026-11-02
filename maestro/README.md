@@ -103,7 +103,7 @@ Look at the failure screenshot, `commands.json` and the `Tapping on element` lin
 | `pr` | fast and deterministic |
 | `nightly` | slower, or depends on what the sandbox connector supports (card brand matrix); not in `pr` |
 | `android-only` | the behaviour or the Maestro command only exists on Android (system Back, the widget demo) |
-| `card`, `saved`, `sheet`, `host`, `widget`, `validation`, `decline`, `brand`, `3ds` | area |
+| `card`, `saved`, `sheet`, `boot`, `host`, `widget`, `validation`, `decline`, `brand`, `3ds` | area |
 
 ## e2e server and scenarios
 
