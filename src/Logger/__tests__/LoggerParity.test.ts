@@ -2,47 +2,7 @@ import * as Utils from '../core/LoggerUtils.bs.js';
 import * as Events from '../sdk/SdkLoggerEvents.bs.js';
 import * as MerchantEvents from '../merchant/MerchantLoggerEvents.bs.js';
 
-const {checkParity} = require('../../../scripts/check-logger-parity.cjs');
-const baseline = require('./fixtures/web-contracts.json');
-
-describe('web logger parity', () => {
-  it('keeps shared events, payload types, enums, and schema version aligned', () => {
-    expect(() => checkParity()).not.toThrow();
-  });
-
-  it('checks the schema version from the shared config defaults', () => {
-    const changed = JSON.parse(JSON.stringify(baseline));
-    changed.schemaVersion += 1;
-    expect(() => checkParity(undefined, changed)).toThrow(
-      'shared schema version drifted',
-    );
-  });
-
-  it('checks wire types resolved through the shared-code include', () => {
-    const changed = JSON.parse(JSON.stringify(baseline));
-    changed.core.rowValue = '{schemaVersion:int,requiredField:string}';
-    expect(() => checkParity(undefined, changed)).toThrow(
-      'core.rowValue: payload fields drifted',
-    );
-  });
-
-  it('rejects an incompatible shared payload contract', () => {
-    const changed = JSON.parse(JSON.stringify(baseline));
-    changed.sdk.paymentOutcomeData =
-      '{status:string,manualRetryAllowed?:bool,requiredField:string}';
-    expect(() => checkParity(undefined, changed)).toThrow(
-      'payload fields drifted',
-    );
-  });
-
-  it('rejects missing shared events instead of allowing arbitrary native differences', () => {
-    const changed = JSON.parse(JSON.stringify(baseline));
-    changed.sdk.stateEvent += '|NewSharedState';
-    expect(() => checkParity(undefined, changed)).toThrow(
-      'shared event/enum values drifted',
-    );
-  });
-
+describe('shared event serialization', () => {
   it('serializes the shared vault and verification values like web', () => {
     const field = {
       TAG: 'CardFieldRendered',

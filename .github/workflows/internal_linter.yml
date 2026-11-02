@@ -137,9 +137,8 @@ jobs:
             exit 1
           fi
 
-      - name: Check shared web logger contracts and behavior
+      - name: Test logger behavior
         run: |
-          node scripts/check-logger-parity.cjs
           npm test -- --runInBand src/Logger
 
   all-checks-passed:

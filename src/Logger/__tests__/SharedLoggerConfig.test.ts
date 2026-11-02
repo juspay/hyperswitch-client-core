@@ -47,3 +47,28 @@ describe('shared logger host policies', () => {
     });
   });
 });
+
+describe('typed Web defaults and explicit overrides', () => {
+  it('uses the shared record for absent overrides', () => {
+    expect(Config.Web.resolveEnabled(undefined)).toBe(Config.defaults.enableLogging);
+    expect(Config.Web.resolveEndpoint(undefined)).toBe(Config.defaults.endpoint);
+    expect(Config.Web.resolveMinimumRank(undefined)).toBe(Config.defaults.minimumRank);
+    expect(Config.Web.resolveMaxRowsPerEventName(undefined)).toBe(Config.defaults.maxRowsPerEventName);
+    expect(Config.Web.resolveMaxUserEventsPerName(undefined)).toBe(Config.defaults.maxUserEventsPerName);
+  });
+
+  it('preserves explicit false, zero and empty strings without truthiness fallbacks', () => {
+    expect(Config.Web.resolveEnabled(false)).toBe(false);
+    expect(Config.Web.resolveEnabled(true)).toBe(true);
+    expect(Config.Web.resolveMaxRowsPerEventName(0)).toBe(0);
+    expect(Config.Web.resolveMaxUserEventsPerName(0)).toBe(0);
+    expect(Config.Web.resolveEndpoint('')).toBe('');
+    expect(Config.Web.resolveMinimumRank('')).toBe(0);
+  });
+
+  it('retains endpoint trimming and the existing severity mapping', () => {
+    expect(Config.Web.resolveEndpoint(' https://logs.test/ingest ')).toBe('https://logs.test/ingest');
+    expect(Config.Web.resolveMinimumRank(' warning ')).toBe(2);
+    expect(Config.Web.resolveMinimumRank('SILENT')).toBe(4);
+  });
+});

@@ -329,7 +329,84 @@ describe('SDK funnel milestones', () => {
     expect(rows('lifecycle.authentication_started')).toHaveLength(1);
     SDK.logLifecycle('DdcStarted');
     expect(rows('lifecycle.ddc_started')[0].log_type).toBe('INFO');
+  });  const lifecycleProps = (authorization: string, paymentId: string, rootTag: number, secret = '') => {
+    const props = nativeProps('');
+    return {...props, rootTag,
+      sdkParams: {...props.sdkParams, sessionTag: rootTag - 1},
+      paymentSessionConfig: {...props.paymentSessionConfig,
+        sdkAuthorization: authorization || undefined, clientSecret: secret, paymentId},
+    };
+  };
+  const milestones = () => {
+    Funnel.mounted();
+    SDK.logLifecycle('AppRendered');
+    Funnel.rendered(3, false);
+    Funnel.interaction('touch');
+  };
+  const expectMilestones = (count: number) => {
+    for (const name of ['sdk_init', 'sdk_mounted', 'sdk_rendered', 'first_user_interaction']) {
+      expect(rows(`lifecycle.${name}`)).toHaveLength(count);
+    }
+  };
+
+  it.each(['pay_first', 'pay_second'])(
+    'rearms after Android close/reload/open with changed authorization (%s)', paymentId => {
+      const a = lifecycleProps(`test-authorization-${generation}-a`, 'pay_first', 101);
+      SDK.adoptSessionFromNativeProp(a);
+      milestones();
+      SDK.logLifecycle({TAG: 'SdkClosed', _0: {status: 'cancelled'}});
+      jest.advanceTimersByTime(500);
+      const b = lifecycleProps(`test-authorization-${generation}-b`, paymentId, 201);
+      SDK.adoptSessionFromNativeProp(b);
+      milestones(); milestones();
+      expectMilestones(2);
+      expect(rows().every(row => row.session_id === '')).toBe(true);
+      expect(details(rows('lifecycle.sdk_rendered')[1]).sdk_elapsed_ms).toBe(0);
+      expect(JSON.stringify(rows())).not.toContain('test-authorization');
+    },
+  );
+
+  it('keeps once state on same-auth rerender/reopen, payment-only changes and secret changes', () => {
+    const a = lifecycleProps(`test-authorization-${generation}`, 'pay_first', 301, 'test-old-secret');
+    SDK.adoptSessionFromNativeProp(a); milestones();
+    SDK.logLifecycle({TAG: 'SdkClosed', _0: {status: 'cancelled'}});
+    const same = {...a, rootTag: 401, paymentSessionConfig: {
+      ...a.paymentSessionConfig, paymentId: 'pay_other', clientSecret: 'test-new-secret',
+    }};
+    SDK.adoptSessionFromNativeProp(same); milestones();
+    SDK.adoptSessionFromNativeProp({...same}); milestones();
+    expectMilestones(1);
   });
+
+  it('uses changed client secret only when SDK authorization is absent', () => {
+    SDK.adoptSessionFromNativeProp(lifecycleProps('', 'pay_first', 501, `test-secret-${generation}-a`));
+    milestones();
+    SDK.adoptSessionFromNativeProp(lifecycleProps('', 'pay_first', 601, `test-secret-${generation}-b`));
+    milestones();
+    expectMilestones(2);
+    expect(details(rows('lifecycle.sdk_init')[0]).credential_type).toBe('CLIENT_SECRET');
+    expect(JSON.stringify(rows())).not.toContain('test-secret');
+  });
+
+  it('keeps a late operation tied to its captured payment after authorization reset', async () => {
+    SDK.adoptSessionFromNativeProp(lifecycleProps(`test-late-${generation}-a`, 'pay_old', 701));
+    milestones();
+    const started = Context.current();
+    let resolve: (value: any) => void;
+    const pending = new Promise(done => { resolve = done; });
+    const returned = SDK.observeApi('ClientList', 'https://api.example.test/client', undefined,
+      () => undefined, () => [], undefined, undefined, () => pending);
+    SDK.logLifecycle({TAG: 'SdkClosed', _0: {status: 'cancelled'}});
+    SDK.adoptSessionFromNativeProp(lifecycleProps(`test-late-${generation}-b`, 'pay_new', 801));
+    milestones();
+    expect(Context.current()).not.toBe(started);
+    expect(started.paymentId).toBe('pay_old');
+    resolve!({ok: true}); await returned; await Promise.resolve(); await Promise.resolve();
+    expect(rows('api.request_done.client_list')[0].payment_id).toBe('pay_old');
+    expect(Context.current().paymentId).toBe('pay_new');
+    expectMilestones(2);
+  });
+
 });
 
 describe('startup API readiness', () => {
@@ -365,4 +442,5 @@ describe('startup API readiness', () => {
     degraded('Sessions', false);
     expect(ready).toHaveBeenCalledWith(true);
   });
+
 });
