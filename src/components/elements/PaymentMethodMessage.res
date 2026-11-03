@@ -25,6 +25,7 @@ let make = (~paymentMethod, ~paymentMethodType) => {
   let message = PaymentMessageUtils.resolve(
     nativeProp.configuration.paymentMethodsConfig,
     ~paymentMethod,
+    ~paymentMethodType,
   )
   let content = React.useMemo2(() => {
     message->Option.mapOr({PaymentMessageUtils.segments: [], warnings: []}, message =>
