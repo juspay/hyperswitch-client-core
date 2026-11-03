@@ -680,12 +680,11 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     | Some(str) => LocaleDataType.localeStringToType(str)
     | None => Some(En)
     },
-    subscribedEvents: Array.concat(
-      configObj->getArray("subscriptionEvents"),
-      configObj->getArray("subscribedEvents"),
-    )
-    ->Array.filterMap(JSON.Decode.string)
-    ->Array.map(PaymentEventTypes.eventFromString),
+    subscribedEvents: configObj
+    ->Dict.get("subscribedEvents")
+    ->Option.flatMap(JSON.Decode.array)
+    ->Option.getOr([])
+    ->Array.map(e => e->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString),
     customer: configObj
     ->Dict.get("customer")
     ->Option.flatMap(JSON.Decode.object)
