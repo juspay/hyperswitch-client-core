@@ -219,9 +219,7 @@ type walletButtonsConfiguration = {
   payPal: payPalConfiguration,
 }
 
-type displayMode = [#default_sdk_message | #custom_message | #hidden]
-type customMessage = {value: option<string>, displayMode: displayMode}
-type paymentMethodConfig = {paymentMethod: string, message: customMessage}
+type paymentMethodConfig = PaymentMessageTypes.paymentMethodConfig
 
 type configurationType = {
   appearance: appearance,
@@ -682,11 +680,12 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     | Some(str) => LocaleDataType.localeStringToType(str)
     | None => Some(En)
     },
-    subscribedEvents: configObj
-    ->Dict.get("subscribedEvents")
-    ->Option.flatMap(JSON.Decode.array)
-    ->Option.getOr([])
-    ->Array.map(e => e->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString),
+    subscribedEvents: Array.concat(
+      configObj->getArray("subscriptionEvents"),
+      configObj->getArray("subscribedEvents"),
+    )
+    ->Array.filterMap(JSON.Decode.string)
+    ->Array.map(PaymentEventTypes.eventFromString),
     customer: configObj
     ->Dict.get("customer")
     ->Option.flatMap(JSON.Decode.object)
@@ -807,21 +806,7 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     | _ => Hidden
     },
     alwaysSendCustomerAcceptance: getBool(configObj, "alwaysSendCustomerAcceptance", false),
-    paymentMethodsConfig: configObj
-    ->Dict.get("paymentMethodsConfig")
-    ->Option.flatMap(JSON.Decode.array)
-    ->Option.getOr([])
-    ->Array.filterMap(item =>
-      item
-      ->JSON.Decode.object
-      ->Option.map(obj => {
-        paymentMethod: getString(obj, "paymentMethod", ""),
-        message: switch getOptionString(obj, "message") {
-        | Some(str) => {value: Some(str), displayMode: #custom_message}
-        | None => {value: None, displayMode: #default_sdk_message}
-        },
-      })
-    ),
+    paymentMethodsConfig: PaymentMessageUtils.readConfigs(configObj),
     opensCardScannerAutomatically: getBool(configObj, "opensCardScannerAutomatically", false),
     paymentMethodOrder: configObj
     ->Dict.get("paymentMethodOrder")
