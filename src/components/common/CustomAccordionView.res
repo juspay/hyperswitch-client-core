@@ -229,16 +229,8 @@ let make = (
   React.useEffect2(() => {
     switch expandedSections->Array.get(0) {
     | Some(sectionKey) =>
-      switch hocComponentArr->Array.get(sectionKey) {
-      | Some(hoc) =>
-        if hoc.name !== "loading" {
-          let event = PaymentEvents.buildPaymentMethodStatusEvent(
-            ~paymentMethod=hoc.name,
-            ~paymentMethodType=hoc.paymentMethodType,
-            ~isSavedPaymentMethod=false,
-          )
-          emitter.emitPaymentMethodStatus(~event)
-        }
+      switch hocComponentArr->Array.get(sectionKey)->Option.flatMap(hoc => hoc.selectionEvent) {
+      | Some(event) => emitter.emitPaymentMethodStatus(~event)
       | None => ()
       }
     | None => ()

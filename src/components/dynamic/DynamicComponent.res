@@ -263,6 +263,7 @@ let make = (~setConfirmButtonData) => {
       isCardPayment
       enabledCardSchemes
       accessible=true
+      isFocused=true
       vaultFormId
     />
   </ReactNative.View>

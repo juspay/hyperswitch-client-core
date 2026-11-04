@@ -23,7 +23,7 @@ let defaultProps = {
     primaryButtonLabel: 'Pay Now',
     netceteraSDKApiKey: '',
     locale: 'en',
-    subscribedEvents: ['onSuccess', 'onFailed', 'onCancelled'],
+    subscriptionEvents: ['paymentMethodChange', 'formStatusChange'],
     // splitCardFields: true,
     paymentMethodLayout: {
       // type: 'accordion',

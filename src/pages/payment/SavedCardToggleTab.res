@@ -16,6 +16,24 @@ let make = (
     setShowSavedView(_ => value)
   }, [setShowSavedView])
 
+  let emitter = PaymentEvents.usePaymentEventEmitter()
+  React.useEffect5(() => {
+    if isScreenFocus && (!hasSavedCards || !showSavedView) {
+      let event = PaymentEvents.buildPaymentMethodStatusEvent(
+        ~paymentMethod=paymentMethodData.payment_method_str,
+        ~paymentMethodType=paymentMethodData.payment_method_type,
+      )
+      emitter.emitPaymentMethodStatus(~event)
+    }
+    None
+  }, (
+    isScreenFocus,
+    hasSavedCards,
+    showSavedView,
+    paymentMethodData.payment_method_str,
+    paymentMethodData.payment_method_type,
+  ))
+
   let merchantName =
     clientData
     ->Option.map(data => data.intent_data.merchant_name)

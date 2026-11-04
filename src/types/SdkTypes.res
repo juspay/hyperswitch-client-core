@@ -239,7 +239,7 @@ type configurationType = {
   savedPaymentSheetHeaderLabel: option<string>,
   netceteraSDKApiKey: option<string>,
   locale: option<LocaleDataType.localeTypes>,
-  subscribedEvents: array<PaymentEventTypes.events>,
+  subscriptionEvents: array<PaymentEventTypes.events>,
   customer: option<customerConfiguration>,
   placeholder: placeholder,
   billingDetails: option<addressDetails>,
@@ -682,8 +682,8 @@ let parseConfigurationDict = (configObj: Dict.t<JSON.t>, displayPayButton) => {
     | Some(str) => LocaleDataType.localeStringToType(str)
     | None => Some(En)
     },
-    subscribedEvents: configObj
-    ->Dict.get("subscribedEvents")
+    subscriptionEvents: configObj
+    ->Dict.get("subscriptionEvents")
     ->Option.flatMap(JSON.Decode.array)
     ->Option.getOr([])
     ->Array.map(e => e->JSON.Decode.string->Option.getOr("")->PaymentEventTypes.eventFromString),
