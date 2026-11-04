@@ -4,6 +4,9 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5252;
+// Loopback only by default: this server holds the secret key. Set HOST=0.0.0.0
+// to reach it from a physical device on your network.
+const HOST = process.env.HOST || '127.0.0.1';
 
 let mockData;
 try {
@@ -51,7 +54,21 @@ const logger = {
   },
 };
 
-app.use(cors());
+// Only local pages (e.g. the web demo on localhost:8083) may call this server
+// from a browser. Requests without an Origin header (native apps, curl) are
+// allowed; requests from any other site are refused before they run.
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/;
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && !LOCAL_ORIGIN.test(origin)) {
+    return res.status(403).json({
+      error: 'Origin not allowed',
+      timestamp: new Date().toISOString(),
+    });
+  }
+  next();
+});
+app.use(cors({origin: LOCAL_ORIGIN}));
 app.use(express.json());
 
 const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
@@ -334,6 +351,13 @@ app.post('/update-payment', async (req, res) => {
   try {
     const {paymentId, ...updateFields} = req.body;
 
+    if (typeof paymentId !== 'string' || !/^[A-Za-z0-9_-]+$/.test(paymentId)) {
+      return res.status(400).json({
+        error: 'Invalid paymentId',
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     logger.debug('Updating payment intent with data', updateFields);
 
     const response = await makeHyperswitchRequest(`/payments/${paymentId}`, {
@@ -380,8 +404,13 @@ app.use((req, res) => {
 });
 
 app
-  .listen(PORT, '0.0.0.0', () => {
-    logger.info(`🚀 Hyperswitch server running on port ${PORT}`);
+  .listen(PORT, HOST, () => {
+    logger.info(`🚀 Hyperswitch server running on ${HOST}:${PORT}`);
+    if (!['127.0.0.1', 'localhost', '::1'].includes(HOST)) {
+      logger.warn(
+        `Listening on ${HOST}: anyone on your network can create payments with your secret key.`,
+      );
+    }
     logger.info(`📋 Health check: http://localhost:${PORT}/health`);
     logger.info(
       `💳 Create payment: POST http://localhost:${PORT}/create-payment-intent`,
