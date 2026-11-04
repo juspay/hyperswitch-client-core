@@ -1,12 +1,27 @@
 open ReactNative
 open Style
 
+/* The wrappers send "100" to "900"; anything else is ignored. */
+let toFontWeight = (weight): option<Style.fontWeight> =>
+  switch weight {
+  | "100" => Some(#100)
+  | "200" => Some(#200)
+  | "300" => Some(#300)
+  | "400" => Some(#400)
+  | "500" => Some(#500)
+  | "600" => Some(#600)
+  | "700" => Some(#700)
+  | "800" => Some(#800)
+  | "900" => Some(#900)
+  | _ => None
+  }
+
 /* Element style (already merged over elementStyles.action) wins; the theme fills the rest. */
 let actionStyle = (style: PaymentMessageTypes.elementStyle, ~linkColor, ~fontScale) =>
   s({
     color: style.color->Option.getOr(linkColor),
     fontSize: ?style.fontSize->Option.map(size => size *. fontScale),
-    fontWeight: ?style.fontWeight->Option.map(weight => (weight :> Style.fontWeight)),
+    fontWeight: ?style.fontWeight->Option.flatMap(toFontWeight),
     fontStyle: ?style.fontStyle,
     textDecorationLine: ?style.textDecoration->Option.map(decoration =>
       (decoration :> Style.textDecorationLine)
@@ -27,23 +42,15 @@ let make = (~paymentMethod, ~paymentMethodType) => {
     ~paymentMethod,
     ~paymentMethodType,
   )
-  let content = React.useMemo2(() => {
-    message->Option.mapOr({PaymentMessageUtils.segments: [], warnings: []}, message =>
-      PaymentMessageUtils.renderContent(message, ~subscribed)
-    )
+  let segments = React.useMemo2(() => {
+    message->Option.mapOr([], message => PaymentMessageUtils.renderContent(message, ~subscribed))
   }, (message, subscribed))
-  React.useEffect1(() => {
-    content.warnings->Array.forEach(warning =>
-      PaymentMessageUtils.warn(paymentMethod ++ "." ++ paymentMethodType ++ ": " ++ warning)
-    )
-    None
-  }, [content])
 
-  if content.segments->Array.length == 0 {
+  if segments->Array.length == 0 {
     React.null
   } else {
     <TextWrapper textType=ModalTextBold overrideStyle=Some(s({marginBottom: 15.->dp}))>
-      {content.segments
+      {segments
       ->Array.mapWithIndex((segment, index) =>
         switch segment {
         | Text(text) => React.string(text)
