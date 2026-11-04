@@ -1,0 +1,28 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - American Express rejects a 3-digit CVC
+tags:
+  - pr
+  - card
+  - validation
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+# Guest checkout: no saved methods, the sheet opens on the new-card form.
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "378282246310005"
+      CVC: "123"
+- runFlow: ../subflows/pay.yaml
+- assertVisible: "Your card.s security code is invalid."
+- runFlow: ../subflows/expect_sheet_open.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method

@@ -1,0 +1,37 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Android widget demo (WidgetActivity) is a native ScrollView with React Native elements embedded in it.
+# Scrolls until the host control with id BUTTON_ID is on screen, taps it, then scrolls back to the top
+# so the host's resultText is visible again.
+# Swipes start on the host's own native buttons: a swipe that starts on an embedded element (the default,
+# screen-centre swipe) is consumed by React Native and the page does not move.
+# (repeat/while is used because scrollUntilVisible does not evaluate ${...} in its selector in 2.10.)
+- assertTrue:
+    condition: "${maestro.platform == 'android'}"
+    label: "Android-only subflow (the iOS demo app has no such screen or control)"
+- repeat:
+    while:
+      notVisible:
+        id: "${BUTTON_ID}"
+    times: 4
+    commands:
+      - swipe:
+          from:
+            id: "confirmButton2|reloadButton2|updateIntent|getLastUsedButton|getDefaultSavedMethodButton"
+          direction: UP
+          duration: 600
+- tapOn:
+    id: "${BUTTON_ID}"
+- repeat:
+    while:
+      notVisible:
+        id: resultText
+    times: 4
+    commands:
+      - swipe:
+          from:
+            id: "confirmButton2|reloadButton2|updateIntent|getLastUsedButton|getDefaultSavedMethodButton|confirmLastUsedWithCVCButton|confirmDefaultWithCVCButton"
+          direction: DOWN
+          duration: 600
+          # A confirm can open a redirect or 3DS page on top of the host; nothing to scroll then.
+          optional: true

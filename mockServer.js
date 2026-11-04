@@ -58,9 +58,9 @@ const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
 const HYPERSWITCH_PUBLISHABLE_KEY = process.env.HYPERSWITCH_PUBLISHABLE_KEY;
 const PROFILE_ID = process.env.PROFILE_ID;
 const HYPERSWITCH_BASE_URL =
-  process.env.HYPERSWITCH_SANDBOX_URL ||
-  process.env.HYPERSWITCH_INTEG_URL ||
-  'https://sandbox.hyperswitch.io';
+  (process.env.HYPERSWITCH_SANDBOX_URL ||
+    process.env.HYPERSWITCH_INTEG_URL ||
+    'https://app.hyperswitch.io') + '/api';
 const NETCETERA_SDK_API_KEY = process.env.NETCETERA_SDK_API_KEY;
 
 // PMM (payment method session) uses the same env keys/account as payments.

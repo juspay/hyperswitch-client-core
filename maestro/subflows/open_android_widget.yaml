@@ -1,0 +1,20 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Android only: opens the demo's "Launch Widget" screen (WidgetActivity), which fetches its own intent
+# for SCENARIO and embeds a PaymentElement plus a CVC widget. Takes the same env as launch_host_app.yaml.
+- assertTrue:
+    condition: "${maestro.platform == 'android'}"
+    label: "Android-only subflow (the iOS demo app has no such screen or control)"
+- runFlow: launch_host_app.yaml
+- tapOn:
+    id: launchWidgetLayout
+- extendedWaitUntil:
+    visible: "Widget Demo"
+    timeout: 20000
+# The host enables its buttons once the elements are bound.
+- extendedWaitUntil:
+    visible:
+      id: confirmButton2
+      enabled: true
+    timeout: 45000
+- runFlow: dismiss_dev_overlays.yaml

@@ -1,0 +1,70 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Types into the new-card form, then hides the keyboard. Pass "" to leave a field empty.
+#   CARD_NUMBER  digits only (default 4242424242424242)
+#   EXPIRY       MMYY digits; "0444" renders as 04 / 44 (default 0444)
+#   CVC          (default 123)
+# Each field is re-checked after typing and retyped once if the text did not land: in about 1 of 60
+# fills the expiry stayed empty while focus was auto-advancing from the completed card number.
+# Types field after field like a person: focus has usually auto-advanced to the next field already, and
+# tapping it keeps that focus. Closing the keyboard in between would blur the (still empty) next field and
+# flash its "cannot be empty" error. The keyboard is closed once, at the end. (The SDK keeps the focused
+# field in view, and the next field sits right beside it.)
+- runFlow:
+    when:
+      true: "${typeof CARD_NUMBER === 'undefined' || CARD_NUMBER !== ''}"
+    commands:
+      - retry:
+          maxRetries: 1
+          commands:
+            - tapOn:
+                id: CardNumberInputTestId
+            # iOS: text typed after eraseText never reaches the field; fields start empty there.
+            - runFlow:
+                when:
+                  platform: Android
+                commands:
+                  - eraseText: 30
+            - inputText: "${typeof CARD_NUMBER === 'undefined' ? '4242424242424242' : CARD_NUMBER}"
+            - assertVisible:
+                id: CardNumberInputTestId
+                text: ".*\\d{4}.*"
+- runFlow:
+    when:
+      true: "${typeof EXPIRY === 'undefined' || EXPIRY !== ''}"
+    commands:
+      - retry:
+          maxRetries: 1
+          commands:
+            - tapOn:
+                id: ExpiryInputTestId
+            # iOS: text typed after eraseText never reaches the field; fields start empty there.
+            - runFlow:
+                when:
+                  platform: Android
+                commands:
+                  - eraseText: 10
+            - inputText: "${typeof EXPIRY === 'undefined' ? '0444' : EXPIRY}"
+            - assertVisible:
+                id: ExpiryInputTestId
+                text: ".*\\d.*"
+- runFlow:
+    when:
+      true: "${typeof CVC === 'undefined' || CVC !== ''}"
+    commands:
+      - retry:
+          maxRetries: 1
+          commands:
+            - tapOn:
+                id: CVCInputTestId
+            # iOS: text typed after eraseText never reaches the field; fields start empty there.
+            - runFlow:
+                when:
+                  platform: Android
+                commands:
+                  - eraseText: 6
+            - inputText: "${typeof CVC === 'undefined' ? '123' : CVC}"
+            - assertVisible:
+                id: CVCInputTestId
+                text: ".+"
+- runFlow: hide_keyboard.yaml

@@ -1,0 +1,34 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - a short CVC is rejected, the corrected CVC pays
+tags:
+  - pr
+  - saved
+  - validation
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card
+- extendedWaitUntil:
+    visible:
+      id: SavedCardCvcInputTestId
+    timeout: 20000
+- tapOn:
+    id: SavedCardCvcInputTestId
+- inputText: "12"
+- runFlow: ../subflows/hide_keyboard.yaml
+- runFlow: ../subflows/pay.yaml
+- assertVisible: "Your card.s security code is incomplete."
+- runFlow: ../subflows/expect_sheet_open.yaml
+- tapOn:
+    id: SavedCardCvcInputTestId
+- inputText: "3"
+- runFlow: ../subflows/hide_keyboard.yaml
+- assertNotVisible: "Your card.s security code is incomplete."
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

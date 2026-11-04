@@ -1,0 +1,16 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# The sheet closed and the host app received a cancellation.
+- runFlow: wait_for_result.yaml
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          id: resultText
+          text: "Cancelled: cancelled"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: "Payment canceled\\."

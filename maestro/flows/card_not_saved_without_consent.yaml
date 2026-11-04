@@ -1,0 +1,38 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Save card - card is not saved when the box is left unticked
+tags:
+  - pr
+  - saved
+  - card
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: new_customer
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow: ../subflows/fill_card.yaml
+- assertVisible:
+    id: SaveCardCheckboxTestId
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"
+# Same customer, new intent: nothing was saved, so the sheet opens on the new-card form.
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      KEEP_SCENARIO: "true"
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- assertNotVisible:
+    id: AddNewPaymentMethodTestId
+- assertNotVisible:
+    id: UseSavedPaymentMethodsTestId

@@ -1,0 +1,36 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Sheet - Pay with the keyboard still open works on the first tap
+tags:
+  - nightly
+  - sheet
+  - android-only
+---
+# Android only: there the sheet moves up with the keyboard, so Pay stays visible above it.
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- tapOn:
+    id: CardNumberInputTestId
+- inputText: "4242424242424242"
+- tapOn:
+    id: ExpiryInputTestId
+- inputText: "0444"
+- tapOn:
+    id: CVCInputTestId
+- inputText: "123"
+- assertVisible:
+    id: ".*inputmethod.*"
+- runFlow: ../subflows/dismiss_dev_overlays.yaml
+- tapOn:
+    id: PayButtonTestId
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

@@ -1,0 +1,31 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - success without 3DS
+tags:
+  - smoke
+  - pr
+  - card
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+# A fresh customer has no saved methods, so the sheet opens on the new-card form.
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- runFlow: ../subflows/fill_card.yaml
+# The inputs reformat while typing; check nothing was dropped or reordered.
+- assertVisible:
+    id: CardNumberInputTestId
+    text: "4242 ?4242 ?4242 ?4242"
+- assertVisible:
+    id: ExpiryInputTestId
+    text: "04 ?/ ?44"
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

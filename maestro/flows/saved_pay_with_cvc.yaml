@@ -1,0 +1,28 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - pay with CVC re-entry
+tags:
+  - smoke
+  - pr
+  - saved
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card
+# A customer with saved methods lands on the saved-methods screen.
+- extendedWaitUntil:
+    visible:
+      id: AddNewPaymentMethodTestId
+    timeout: 20000
+- assertVisible: "●●●● 4242"
+- tapOn:
+    id: SavedCardCvcInputTestId
+- inputText: "123"
+- runFlow: ../subflows/hide_keyboard.yaml
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

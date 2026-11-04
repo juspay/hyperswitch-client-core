@@ -1,0 +1,30 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - month above 12 is rewritten as 0X and the payment uses it
+tags:
+  - pr
+  - card
+  - validation
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+# formatCardExpiryNumber turns "13" into "01 / 3", so typing 1-3-4 gives 01/34.
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      EXPIRY: "134"
+- assertVisible:
+    id: ExpiryInputTestId
+    text: "01 / 34"
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

@@ -1,0 +1,29 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - invalid number blocks payment
+tags:
+  - smoke
+  - pr
+  - card
+  - validation
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+# Guest checkout: no saved methods, the sheet opens on the new-card form.
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+# Fails the Luhn check.
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "4242424242424241"
+- runFlow: ../subflows/pay.yaml
+- assertVisible: "Card number is invalid."
+- runFlow: ../subflows/expect_sheet_open.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method

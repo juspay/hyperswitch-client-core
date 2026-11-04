@@ -1,0 +1,31 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Sheet - after a cancel the same session opens again and pays
+tags:
+  - pr
+  - sheet
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+- tapOn:
+    id: SheetCloseButtonTestId
+- runFlow: ../subflows/expect_payment_cancelled.yaml
+# Same intent, no reload.
+- runFlow: ../subflows/tap_launch_payment_sheet.yaml
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 60000
+- runFlow: ../subflows/dismiss_dev_overlays.yaml
+- runFlow: ../subflows/fill_card.yaml
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded

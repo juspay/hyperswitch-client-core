@@ -1,0 +1,14 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# Taps the sheet's Pay button ("Pay Now" on Android, "Purchase ($2.00)" on iOS).
+- runFlow: dismiss_dev_overlays.yaml
+# Android pins the button to the bottom (stickyPayButton); on iOS it scrolls with the content.
+- scrollUntilVisible:
+    element:
+      id: PayButtonTestId
+    direction: DOWN
+    timeout: 10000
+# Evidence for the CI report (ci-report.js): the sheet as it is submitted.
+- takeScreenshot: before-pay
+- tapOn:
+    id: PayButtonTestId

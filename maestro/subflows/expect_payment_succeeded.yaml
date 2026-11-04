@@ -1,0 +1,21 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+---
+# The sheet closed and the host app received a successful payment. Only success is accepted.
+#   STATUS  Android only: expected PaymentResult.Completed data (default succeeded). iOS reports every
+#           completed status as "Payment complete".
+- runFlow:
+    file: wait_for_result.yaml
+    env:
+      OUTCOMES: paid
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - assertVisible:
+          id: resultText
+          text: "${'Completed: ' + (typeof STATUS === 'undefined' ? 'succeeded' : STATUS)}"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - assertVisible: "Payment complete"

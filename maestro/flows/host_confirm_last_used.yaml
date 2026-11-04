@@ -1,0 +1,24 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Host - Confirm with Last Used PM pays with the saved card, no sheet
+tags:
+  - smoke
+  - pr
+  - host
+  - saved
+  - android-only
+---
+- runFlow:
+    file: ../subflows/launch_host_app.yaml
+    env:
+      SCENARIO: saved_card
+- assertVisible:
+    id: resultText
+    text: "Last used: Visa - 4242"
+- tapOn:
+    id: confirmButton
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4242"

@@ -1,0 +1,33 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Saved card - pay with a different new card
+tags:
+  - smoke
+  - pr
+  - saved
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: saved_card
+- extendedWaitUntil:
+    visible:
+      id: AddNewPaymentMethodTestId
+    timeout: 20000
+- tapOn:
+    id: AddNewPaymentMethodTestId
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 10000
+# A Mastercard, so the backend check proves the new card (not the saved Visa) was charged.
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "5555555555554444"
+- runFlow: ../subflows/pay.yaml
+- runFlow: ../subflows/expect_payment_succeeded.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: succeeded
+      EXPECT_LAST4: "4444"

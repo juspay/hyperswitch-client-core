@@ -1,0 +1,29 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Card - insufficient funds decline
+tags:
+  - pr
+  - card
+  - decline
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: no_three_ds
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+# Stripe test card declined with insufficient_funds.
+- runFlow:
+    file: ../subflows/fill_card.yaml
+    env:
+      CARD_NUMBER: "4000000000009995"
+- runFlow: ../subflows/pay.yaml
+- runFlow:
+    file: ../subflows/expect_payment_failed.yaml
+    env:
+      ERROR: "(?i)insufficient"
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: failed

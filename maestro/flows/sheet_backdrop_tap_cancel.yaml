@@ -1,0 +1,30 @@
+appId: "${maestro.platform == 'ios' ? 'io.hyperswitch' : 'io.hyperswitch.demoapp'}"
+name: Sheet - tapping the dimmed area above the sheet reports cancel
+tags:
+  - pr
+  - sheet
+---
+- runFlow:
+    file: ../subflows/open_payment_sheet.yaml
+    env:
+      SCENARIO: guest
+- extendedWaitUntil:
+    visible:
+      id: CardNumberInputTestId
+    timeout: 20000
+# The host screen stays behind the dimmed backdrop; tapping its title lands on the backdrop.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - tapOn: "Hyperswitch Demo"
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - tapOn: "Reload Client Secret"
+- runFlow: ../subflows/expect_payment_cancelled.yaml
+- runFlow:
+    file: ../subflows/check_backend_payment.yaml
+    env:
+      EXPECT_STATUS: requires_payment_method
