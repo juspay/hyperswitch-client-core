@@ -377,12 +377,22 @@ type sdkParams = {
 type updateIntentPhase = UpdateIntentInit | UpdateIntentComplete | UpdateIntentCancelled
 type updateIntentProp = {attempt: int, phase: updateIntentPhase}
 
-type widgetConfirmProp = {attempt: int}
+// `savedCardToken`: a hosted card form paying with a saved card names it here (its payment_token);
+// the vault only tokenizes the CVC, as the sheet's own saved-card CVC does.
+type widgetConfirmProp = {attempt: int, savedCardToken?: string}
 type cvcConfirmProp = {
   attempt: int,
   sdkAuthorization: string,
   paymentToken: string,
   billing: option<JSON.t>,
+}
+
+// The hosted card form a CardWidget drives. `appearance` and `locale` are the merchant's own,
+// passed through untouched to the payment-methods form.
+type cardFormProp = {
+  formId: string,
+  appearance: option<JSON.t>,
+  locale: option<string>,
 }
 
 type nativeProp = {
@@ -396,6 +406,7 @@ type nativeProp = {
   updateIntent: option<updateIntentProp>,
   widgetConfirm: option<widgetConfirmProp>,
   cvcConfirm: option<cvcConfirmProp>,
+  cardForm?: cardFormProp,
 }
 
 let defaultAppearance: appearance = {
@@ -969,8 +980,12 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
     widgetConfirm: d
     ->Dict.get("widgetConfirm")
     ->Option.flatMap(JSON.Decode.object)
-    ->Option.flatMap(c => getOptionInt(c, "attempt"))
-    ->Option.map((attempt): widgetConfirmProp => {attempt: attempt}),
+    ->Option.flatMap(c =>
+      getOptionInt(c, "attempt")->Option.map((attempt): widgetConfirmProp => {
+        attempt,
+        savedCardToken: ?getOptionString(c, "savedCardToken")->Option.filter(token => token !== ""),
+      })
+    ),
     cvcConfirm: d
     ->Dict.get("cvcConfirm")
     ->Option.flatMap(JSON.Decode.object)
@@ -993,6 +1008,28 @@ let nativeJsonToRecord = (jsonFromNative, rootTag) => {
         )
       | _ => None
       }
+    ),
+    cardForm: ?(
+      d
+      ->Dict.get("cardForm")
+      ->Option.flatMap(JSON.Decode.object)
+      ->Option.flatMap(c =>
+        switch getOptionString(c, "formId") {
+        | Some(formId) if formId !== "" =>
+          Some(
+            (
+              {
+                formId,
+                appearance: c->Dict.get("appearance")->Option.flatMap(appearance =>
+                  appearance->JSON.Decode.object->Option.map(_ => appearance)
+                ),
+                locale: getOptionString(c, "locale"),
+              }: cardFormProp
+            ),
+          )
+        | _ => None
+        }
+      )
     ),
   }
 }
