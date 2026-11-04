@@ -43,6 +43,7 @@ module GiftCardListComponent = {
       enabledCardSchemes,
       accessible,
       _,
+      logDynamicFieldsRendered,
     ) = React.useMemo3(_ => {
       switch selectedGiftCardType {
       | Some(selectedGiftCardType) =>
@@ -50,12 +51,17 @@ module GiftCardListComponent = {
           payment_method_type => payment_method_type.payment_method_type === selectedGiftCardType,
         ) {
         | Some(data) => getRequiredFieldsForTabs(data, formData, true)
-        | None => ([], Dict.make(), false, [], true, "")
+        | None => ([], Dict.make(), false, [], true, "", () => ())
         }
 
-      | None => ([], Dict.make(), false, [], true, "")
+      | None => ([], Dict.make(), false, [], true, "", () => ())
       }
     }, (selectedGiftCardType, getRequiredFieldsForTabs, country))
+
+    React.useEffect1(() => {
+      logDynamicFieldsRendered()
+      None
+    }, [logDynamicFieldsRendered])
 
     <View style={s({paddingHorizontal: 22.->dp, paddingBottom: 20.->dp})}>
       <Space />
