@@ -217,6 +217,19 @@ let generateSavedCardConfirmBody = (
     merged->Dict.toArray->Array.length > 0 ? Some(merged->JSON.Encode.object) : None
   },
   payment_type: ?payment_type_str,
+  customer_acceptance: ?(
+    payment_type_str === Some("new_mandate") || payment_type_str === Some("setup_mandate")
+      ? Some({
+          {
+            acceptance_type: "online",
+            accepted_at: Date.now()->Date.fromTime->Date.toISOString,
+            online: {
+              user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
+            },
+          }
+        })
+      : None
+  ),
   browser_info: {
     user_agent: Utils.resolveUserAgent(~userAgent=nativeProp.sdkParams.userAgent),
     accept_header: "text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/webp,image\/apng,*\/*;q=0.8",
