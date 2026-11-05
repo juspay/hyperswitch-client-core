@@ -111,6 +111,11 @@ export const emitPaymentEvent = (
   NativeHyperModule?.emitPaymentEvent(rootTag, eventType, payload);
 };
 
+/* Optional call: a newer bundle can run on a native SDK without this method. */
+export const emitMessageAction = (rootTag: number, index: number): void => {
+  NativeHyperModule?.emitMessageAction?.(rootTag, index);
+};
+
 export const onUpdateIntentEvent = (
   rootTag: number,
   eventType: string,

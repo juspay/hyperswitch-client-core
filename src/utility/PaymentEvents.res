@@ -10,7 +10,6 @@ type emitterFunctions = {
   emitFormStatus: (~event: formStatusEvent) => unit,
   emitPaymentMethodInfoAddress: (~info: paymentMethodInfoAddress) => unit,
   emitCvcStatus: (~event: cvcStatusEvent) => unit,
-  emitCustomMessageElementClicked: (~event: PaymentMessageTypes.elementClickedEvent) => unit,
 }
 
 let usePaymentEventEmitter = (): emitterFunctions => {
@@ -78,29 +77,11 @@ let usePaymentEventEmitter = (): emitterFunctions => {
     }
   }
 
-  let emitCustomMessageElementClicked = (~event: PaymentMessageTypes.elementClickedEvent) => {
-    if shouldEmitEvent(~eventType=CustomMessageElementClicked, ~subscribedEvents) {
-      let payload =
-        [
-          ("key", event.key->JSON.Encode.string),
-          ("type", event.\"type"->JSON.Encode.string),
-          ("paymentMethod", event.paymentMethod->JSON.Encode.string),
-          ("paymentMethodType", event.paymentMethodType->JSON.Encode.string),
-        ]->Dict.fromArray
-      emitToNative(
-        ~rootTag=nativeProp.rootTag,
-        ~eventType=PaymentEventTypes.eventToString(CustomMessageElementClicked),
-        ~payload=payload->JSON.Encode.object,
-      )
-    }
-  }
-
   {
     emitCardInfo,
     emitPaymentMethodStatus,
     emitFormStatus,
     emitPaymentMethodInfoAddress,
     emitCvcStatus,
-    emitCustomMessageElementClicked,
   }
 }
