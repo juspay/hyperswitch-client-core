@@ -32,11 +32,6 @@ let actionStyle = (style: PaymentMessageTypes.elementStyle, ~linkColor, ~fontSca
 let make = (~paymentMethod, ~paymentMethodType) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {linkColor, fontScale} = ThemebasedStyle.useThemeBasedStyle()
-  let emitter = PaymentEvents.usePaymentEventEmitter()
-  let subscribed = PaymentEventData.shouldEmitEvent(
-    ~eventType=CustomMessageElementClicked,
-    ~subscribedEvents=nativeProp.configuration.subscribedEvents,
-  )
   let message = PaymentMessageUtils.resolve(
     nativeProp.configuration.paymentMethodsConfig,
     ~paymentMethod,
@@ -50,7 +45,15 @@ let make = (~paymentMethod, ~paymentMethodType) => {
   | _ => ([], {})
   }
 
-  if segments->Array.length == 0 {
+  /* Empty text alone would still reserve the message's margin. */
+  let visible = segments->Array.some(segment =>
+    switch segment {
+    | Text(text) => text != ""
+    | Action(_) => true
+    }
+  )
+
+  if !visible {
     React.null
   } else {
     <TextWrapper textType=ModalTextBold overrideStyle=Some(s({marginBottom: 15.->dp}))>
@@ -58,7 +61,6 @@ let make = (~paymentMethod, ~paymentMethodType) => {
       ->Array.mapWithIndex((segment, index) =>
         switch segment {
         | Text(text) => React.string(text)
-        | Action({text}) if !subscribed => React.string(text)
         | Action({text, style, index: actionIndex}) =>
           <Text
             key={Int.toString(index)}
@@ -70,7 +72,7 @@ let make = (~paymentMethod, ~paymentMethodType) => {
             )}
             onPress={event => {
               event->Event.PressEvent.stopPropagation
-              emitter.emitCustomMessageElementClicked(~event={index: actionIndex})
+              HyperModule.emitMessageAction(nativeProp.rootTag, actionIndex)
             }}>
             {React.string(text)}
           </Text>

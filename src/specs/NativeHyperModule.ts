@@ -70,6 +70,8 @@ export interface Spec extends TurboModule {
     eventType: string,
     payload: CodegenTypes.UnsafeObject,
   ): void;
+  /* A tapped payment method message action; separate from payment events. */
+  emitMessageAction(rootTag: CodegenTypes.Int32, index: CodegenTypes.Int32): void;
   onUpdateIntentEvent(
     rootTag: CodegenTypes.Int32,
     eventType: string,
