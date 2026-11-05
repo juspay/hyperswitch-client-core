@@ -32,17 +32,18 @@ let actionStyle = (style: PaymentMessageTypes.elementStyle, ~linkColor, ~fontSca
 let make = (~paymentMethod, ~paymentMethodType) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {linkColor, fontScale} = ThemebasedStyle.useThemeBasedStyle()
-  let message = PaymentMessageUtils.resolve(
+  let resolved = PaymentMessageUtils.resolve(
     nativeProp.configuration.paymentMethodsConfig,
     ~paymentMethod,
     ~paymentMethodType,
   )
-  let (segments, defaultStyle) = switch message {
-  | Some(message) if PaymentMessageUtils.displayModeOf(message) === #custom_message => (
+  let (segments, defaultStyle, tapPaymentMethodType) = switch resolved {
+  | Some((message, tapType)) if PaymentMessageUtils.displayModeOf(message) === #custom_message => (
       message.value->Option.getOr([]),
       message.elementStyles.action,
+      tapType,
     )
-  | _ => ([], {})
+  | _ => ([], {}, "")
   }
 
   /* Empty text alone would still reserve the message's margin. */
@@ -72,7 +73,13 @@ let make = (~paymentMethod, ~paymentMethodType) => {
             )}
             onPress={event => {
               event->Event.PressEvent.stopPropagation
-              HyperModule.emitMessageAction(nativeProp.rootTag, actionIndex)
+              HyperModule.emitMessageAction(
+                nativeProp.rootTag,
+                paymentMethod,
+                tapPaymentMethodType,
+                actionIndex,
+                text,
+              )
             }}>
             {React.string(text)}
           </Text>

@@ -112,8 +112,20 @@ export const emitPaymentEvent = (
 };
 
 /* Optional call: a newer bundle can run on a native SDK without this method. */
-export const emitMessageAction = (rootTag: number, index: number): void => {
-  NativeHyperModule?.emitMessageAction?.(rootTag, index);
+export const emitMessageAction = (
+  rootTag: number,
+  paymentMethod: string,
+  paymentMethodType: string,
+  index: number,
+  text: string,
+): void => {
+  NativeHyperModule?.emitMessageAction?.(
+    rootTag,
+    paymentMethod,
+    paymentMethodType,
+    index,
+    text,
+  );
 };
 
 export const onUpdateIntentEvent = (
