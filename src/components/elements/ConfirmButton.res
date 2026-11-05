@@ -3,8 +3,6 @@ let make = (
   ~loading,
   ~handlePress: unit => unit,
   ~paymentMethod: string,
-  ~paymentExperience=?,
-  ~customerPaymentExperience=?,
   ~errorText=None,
 ) => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -18,8 +16,6 @@ let make = (
       : <ConfirmButtonAnimation
           handlePress
           paymentMethod
-          ?paymentExperience
-          ?customerPaymentExperience
           displayText={switch nativeProp.configuration.primaryButtonLabel {
           | Some(str) => str
           | None =>

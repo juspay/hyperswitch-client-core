@@ -4,8 +4,6 @@ open Style
 let make = (
   ~handlePress,
   ~paymentMethod,
-  ~paymentExperience=?,
-  ~customerPaymentExperience=?,
   ~displayText="Pay Now",
   (),
 ) => {
@@ -18,20 +16,7 @@ let make = (
     buttonBorderRadius,
     buttonBorderWidth,
   } = ThemebasedStyle.useThemeBasedStyle()
-  let logger = LoggerHook.useLoggerHook()
-
-  React.useEffect0(() => {
-    logger(
-      ~logType=INFO,
-      ~value="",
-      ~category=USER_EVENT,
-      ~eventName=PAYMENT_DATA_FILLED,
-      ~paymentMethod,
-      ~paymentExperience?,
-      (),
-    )
-    None
-  })
+  let loggedPaymentMethod = paymentMethod->LoggerPaymentMethod.ofTypeName
 
   <View style={s({alignItems: #center})}>
     <Space height=10. />
@@ -49,16 +34,7 @@ let make = (
       text={displayText == "Pay Now" ? localeObject.payNowButton : displayText}
       testID={TestUtils.payButtonTestId}
       onPress={_ => {
-        logger(
-          ~logType=INFO,
-          ~value="",
-          ~category=USER_EVENT,
-          ~eventName=PAYMENT_ATTEMPT,
-          ~paymentMethod,
-          ~paymentExperience?,
-          ~customerPaymentExperience?,
-          (),
-        )
+        SdkLogger.logUser(~event=PaymentSubmitted({source: PayButton}), ~paymentMethod=?loggedPaymentMethod)
         handlePress()
       }}
     />

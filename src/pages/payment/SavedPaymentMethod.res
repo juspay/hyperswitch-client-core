@@ -51,6 +51,7 @@ module CVVComponent = {
               <TextWrapper text="CVC:" textType={ModalText} />
             </View>}
         <CustomInput
+          logName=LoggerFieldName.cardCvc
           name=TestUtils.savedCardCvcInputTestId
           state={savedCardCvv->Option.getOr("")}
           setState={onCvvChange}
@@ -343,6 +344,18 @@ module PaymentMethodListView = {
       onPress={_ => {
         if !isPaymentMethodSelected {
           setSavedCardCvv(_ => None)
+          SdkLogger.logUser(
+            ~event=SavedMethodSelected({
+              requiresCvv: savedPaymentMethod.requires_cvv,
+              isCardExpired: savedPaymentMethod.card->Option.mapOr(false, card =>
+                Utils.isSavedCardExpired(~expiryMonth=card.expiry_month, ~expiryYear=card.expiry_year)
+              ),
+            }),
+            ~paymentMethod=?LoggerPaymentMethod.fromPair(
+              ~method=savedPaymentMethod.payment_method_str,
+              ~methodType=savedPaymentMethod.payment_method_type,
+            ),
+          )
         }
         setSelectedToken(Some(savedPaymentMethod))
         setIsScreenFocus(true)

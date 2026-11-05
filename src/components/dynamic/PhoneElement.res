@@ -16,6 +16,7 @@ module SinglePhoneInput = {
     )
     <View style={s({marginBottom: gap->dp})}>
       <CustomInput
+        logName={config.confirmRequestWritePath->LoggerFieldName.ofWritePath}
         state={input.value->Option.getOr("")}
         setState={value => input.onChange(value)}
         placeholder={FieldLabelResolver.resolvePlaceholder(config, getLocalized)}
@@ -121,6 +122,7 @@ let make = (
               phoneCodeInput.onChange(value()->Option.getOr(""))
             }
             <CustomPicker
+              logName={phoneCodeConfig.confirmRequestWritePath->LoggerFieldName.ofWritePath}
               style={s({flex: 0.36, minWidth: 25.->dp})}
               value=phoneCodeInput.value
               setValue=handlePickerChange
@@ -147,6 +149,7 @@ let make = (
               phoneNumberInput.onChange(value)
             }
             <CustomInput
+              logName={phoneNumberConfig.confirmRequestWritePath->LoggerFieldName.ofWritePath}
               style={s({flex: 1.})}
               state={phoneNumberInput.value->Option.getOr("")}
               setState=handleInputChange

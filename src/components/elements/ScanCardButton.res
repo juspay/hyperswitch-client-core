@@ -4,20 +4,29 @@ open Style
 @react.component
 let make = (~onScanCard, ~expireRef, ~cvvRef) => {
   let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
-  let logger = LoggerHook.useLoggerHook()
   let showAlert = AlertHook.useAlerts()
+  let scanStartedAt = React.useRef(Date.now())
+
+  let logScanResult = (~outcome, ~details=?) =>
+    SdkLogger.logFunction(
+      ~event=LaunchScanCard,
+      ~outcome,
+      ~startedAt=scanStartedAt.current,
+      ~details?,
+      ~paymentMethod=Card,
+    )
 
   let scanCardCallback = (scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
     switch scanCardReturnType {
     | Succeeded(data) => {
         onScanCard(data.pan, `${data.expiryMonth} / ${data.expiryYear}`, expireRef, cvvRef)
-        logger(~logType=INFO, ~value="Succeeded", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+        logScanResult(~outcome=Done)
       }
     | Cancelled =>
-      logger(~logType=WARNING, ~value="Cancelled", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+      logScanResult(~outcome=Returned, ~details=[("cancelled", true->JSON.Encode.bool)])
     | Failed => {
         showAlert(~errorType="warning", ~message="Failed to scan card")
-        logger(~logType=ERROR, ~value="Failed", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
+        logScanResult(~outcome=Failed)
       }
     | _ => showAlert(~errorType="warning", ~message="Failed to scan card")
     }
@@ -42,8 +51,10 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
         justifyContent: #center,
       })}
       onPress={_pressEvent => {
+        SdkLogger.logUser(~event=CardScanRequested, ~paymentMethod=Card)
+        scanStartedAt.current = Date.now()
+        SdkLogger.logFunction(~event=LaunchScanCard, ~outcome=Started, ~paymentMethod=Card)
         ScanCardModule.launchScanCard(scanCardCallback)
-        logger(~logType=INFO, ~value="Launch", ~category=USER_EVENT, ~eventName=SCAN_CARD, ())
       }}>
       <Icon name={"CAMERA"} height=26. width=26. fill=primaryColor />
     </CustomPressable>

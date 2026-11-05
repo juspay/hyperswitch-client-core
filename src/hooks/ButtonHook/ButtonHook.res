@@ -14,6 +14,18 @@ type walletStatus =
   | Failed(string)
   | Simulated
 
+// Reports the result of a native wallet sheet with the shared wallet events.
+let logWalletResult = (status: walletStatus, ~paymentMethod) =>
+  PaymentFlowLogger.logWalletResult(
+    switch status {
+    | Success(_, _, _) => TokenReceived
+    | Cancelled => Exited
+    | Simulated => NotSupported
+    | Failed(message) => SheetFailed(message)
+    },
+    ~paymentMethod,
+  )
+
 let useProcessPayButtonResult = () => {
   (walletType: SdkTypes.payment_method_type_wallet, var) => {
     switch walletType {

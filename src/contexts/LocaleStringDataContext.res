@@ -16,6 +16,7 @@ let make = (~children, ~locale) => {
     fetchDataFromS3WithGZipDecoding(
       ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
       ~s3Path=`${path}/${LocaleDataType.localeTypeToString(locale)}.json`,
+      ~observed=SdkStaticAsset(LocaleStrings),
     )
     ->Promise.then(res => {
       switch res {
@@ -29,6 +30,10 @@ let make = (~children, ~locale) => {
       fetchDataFromS3WithGZipDecoding(
         ~decodeJsonToRecord=S3ApiHook.getLocaleStringsFromJson,
         ~s3Path=`${path}/${LocaleDataType.localeTypeToString(Some(En))}.json`,
+        ~observed=SdkStaticAsset(LocaleStrings),
+        ~details=[
+          ("fallback_for_locale", LocaleDataType.localeTypeToString(locale)->JSON.Encode.string),
+        ],
       )
       ->Promise.then(
         res => {

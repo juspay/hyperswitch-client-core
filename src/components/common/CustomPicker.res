@@ -20,6 +20,7 @@ let make = (
   ~onBlur,
   ~animate=?,
   ~accessible=?,
+  ~logName="",
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -42,6 +43,7 @@ let make = (
   <View ?style>
     <CustomPressable disabled onPress={_ => setIsModalVisible(prev => !prev)}>
       <CustomInput
+        logName=logName
         state={switch items->Array.find(x =>
           x.value == value->Option.getOr("") || x.label == value->Option.getOr("")
         ) {
@@ -117,6 +119,7 @@ let make = (
             </CustomPressable>
           </View>
           <CustomInput
+            logName={logName === "" ? "" : logName ++ "_search"}
             reference={Some(searchInputRef)}
             placeholder={"Search " ++ placeholderText} // MARK: add Search to locale
             state={searchInput->Option.getOr("")}

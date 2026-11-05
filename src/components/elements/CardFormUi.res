@@ -88,6 +88,7 @@ let make = (
         // <Icon name={isCardNumberValid ? "cvvimage" : "error-card"} height=45. width=45. />
         <Animated.View style={s({flex: {cardNumInputFlex->Animated.StyleProp.float}})}>
           <CustomInput
+            logName=LoggerFieldName.cardNumber
             fontSize=13.
             enableShadow=false
             reference={Some(cardRef)}
@@ -136,6 +137,7 @@ let make = (
         </Animated.View>
         <Animated.View style={s({flex: {expireInputFlex->Animated.StyleProp.float}})}>
           <CustomInput
+            logName=LoggerFieldName.cardExpiry
             enableShadow=false
             fontSize=12.
             reference={Some(expireRef)}
@@ -171,6 +173,7 @@ let make = (
         </Animated.View>
         <Animated.View style={s({flex: {cvvInputFlex->Animated.StyleProp.float}})}>
           <CustomInput
+            logName=LoggerFieldName.cardCvc
             fontSize=13.
             enableShadow=false
             reference={Some(cvvRef)}
@@ -209,6 +212,7 @@ let make = (
         {isZipAvailable
           ? <Animated.View style={s({flex: {zipInputFlex->Animated.StyleProp.float}})}>
               <CustomInput
+                logName=LoggerFieldName.postalCode
                 enableShadow=false
                 fontSize=13.
                 reference={Some(zipRef)}

@@ -98,14 +98,7 @@ let make = (
 
   let isCardExpired = switch pmDetails.card {
   | Some(card) =>
-    card.expiry_year != "" &&
-    card.expiry_month != "" && {
-      let expiryDate = Date.fromString(`${card.expiry_year}-${card.expiry_month}`)
-      // A saved card stays usable through its whole expiry month, so compare
-      // against the start of the following month (same as payments saved cards).
-      expiryDate->Date.setMonth(expiryDate->Date.getMonth + 1)
-      expiryDate->Date.getTime < Date.make()->Date.getTime
-    }
+    Utils.isSavedCardExpired(~expiryMonth=card.expiry_month, ~expiryYear=card.expiry_year)
   | None => false
   }
 
@@ -200,6 +193,7 @@ let make = (
                 <TextWrapper text="CVC:" textType={ModalText} />
               </View>
               <CustomInput
+                logName=LoggerFieldName.cardCvc
                 state=cvcNumber
                 setState={val => {
                   setCvcError(_ => None)
@@ -247,6 +241,7 @@ let make = (
           <View style={s({flexDirection: #row, flexWrap: #nowrap})}>
             <View style={s({flex: 1.})}>
               <CustomInput
+                logName=LoggerFieldName.cardNumber
                 state={pmDetails.card
                 ->Option.map(card => `**** **** **** ${card.last4_digits}`)
                 ->Option.getOr("")}
@@ -259,6 +254,7 @@ let make = (
             <Space width=10. />
             <View style={s({flex: 1.})}>
               <CustomInput
+                logName=LoggerFieldName.cardExpiry
                 state={pmDetails.card
                 ->Option.map(card => `${card.expiry_month} / ${card.expiry_year->CommonUtils.twoDigitYear}`)
                 ->Option.getOr("")}
@@ -271,6 +267,7 @@ let make = (
           </View>
           <Space height=10. />
           <CustomInput
+            logName=LoggerFieldName.cardHolderName
             state=cardHolderName
             setState={val => setCardHolderName(_ => val)}
             placeholder=localeObject.cardHolderName
@@ -278,6 +275,7 @@ let make = (
           />
           <Space height=10. />
           <CustomInput
+            logName=LoggerFieldName.nickname
             state=nickName
             setState={val => setNickName(_ => val)}
             placeholder=localeObject.nicknamePlaceholder

@@ -60,6 +60,7 @@ module GiftCardListComponent = {
     <View style={s({paddingHorizontal: 22.->dp, paddingBottom: 20.->dp})}>
       <Space />
       <CustomPicker
+        logName="gift_card_type"
         value=selectedGiftCardType
         setValue=setSelectedGiftCardType
         placeholderText="Gift Card"
