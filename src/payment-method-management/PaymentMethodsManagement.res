@@ -188,6 +188,7 @@ let make = () => {
     fetchPaymentMethodSessionList()
     ->Promise.then(res => {
       if res->ErrorUtils.isError || res == JSON.Encode.null {
+        SdkFunnelLogger.loadFailed(~failure=res)
         setScreenState(_ => ErrorState)
       } else {
         let data = res->PaymentMethodSessionTypes.itemToObjMapper
@@ -200,10 +201,12 @@ let make = () => {
           ->Option.getOr("")
         )
         setScreenState(_ => Loaded)
+        SdkFunnelLogger.rendered()
       }
       Promise.resolve()
     })
     ->Promise.catch(_ => {
+      SdkFunnelLogger.loadFailed()
       setScreenState(_ => ErrorState)
       Promise.resolve()
     })

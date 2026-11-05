@@ -21,21 +21,46 @@ let initialisedNetceteraOnce = (~netceteraSDKApiKey, ~sdkEnvironment) => {
   }
 }
 
+let statusDetails = (status: statusType) => [
+  ("status", status.status->JSON.Encode.string),
+  ("status_message", status.message->JSON.Encode.string),
+]
+
+// Logs the start of a Netcetera SDK call and returns a function that logs its reported status.
+let startNetceteraCall = event => {
+  let startedAt = Date.now()
+  SdkLogger.logFunction(~event, ~outcome=Started, ~paymentMethod=Card)
+  (status: statusType) =>
+    SdkLogger.logFunction(
+      ~event,
+      ~outcome=status->isStatusSuccess ? Done : Failed,
+      ~startedAt,
+      ~details=status->statusDetails,
+      ~paymentMethod=Card,
+    )
+}
+
+// Initialisation runs once; later calls reuse its result.
+let observedNetceteraInit = (~netceteraSDKApiKey, ~sdkEnvironment) => {
+  let reused = isInitialisedPromiseRef.contents->Option.isSome
+  let logStatus = reused
+    ? (status: statusType) =>
+        SdkLogger.logFunction(
+          ~event=InitialiseNetcetera,
+          ~outcome=status->isStatusSuccess ? Reused : Failed,
+          ~details=status->statusDetails,
+          ~paymentMethod=Card,
+        )
+    : startNetceteraCall(InitialiseNetcetera)
+  initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)->Promise.then(status => {
+    logStatus(status)
+    Promise.resolve(status)
+  })
+}
+
 let useInitNetcetera = () => {
-  let logger = LoggerHook.useLoggerHook()
   (~netceteraSDKApiKey, ~sdkEnvironment: GlobalVars.envType) => {
-    initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
-    ->Promise.then(promiseVal => {
-      logger(
-        ~logType=INFO,
-        ~value=promiseVal->JSON.stringifyAny->Option.getOr(""),
-        ~category=USER_EVENT,
-        ~eventName=NETCETERA_SDK,
-        (),
-      )
-      Promise.resolve(promiseVal)
-    })
-    ->ignore
+    observedNetceteraInit(~netceteraSDKApiKey, ~sdkEnvironment)->ignore
   }
 }
 
@@ -45,8 +70,6 @@ type threeDsAuthCallDecision =
   | FrictionlessFlow
 
 let useExternalThreeDs = () => {
-  let logger = LoggerHook.useLoggerHook()
-  let apiLogWrapper = LoggerHook.useApiLogWrapper()
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
 
   (
@@ -71,45 +94,14 @@ let useExternalThreeDs = () => {
       ~onPollCompletion: (~isFinalRetrieve: bool=?) => unit,
     ) => {
       if pollCount >= pollConfig.frequency {
+        SdkLogger.logLifecycle(~event=PaymentStatusPollExhausted, ~paymentMethod=Card)
         onPollCompletion()
       } else {
         setLoading(ProcessingPayments)
         let uri = `${baseUrl}/poll/status/${pollConfig.pollId}`
-        apiLogWrapper(
-          ~logType=INFO,
-          ~eventName=POLL_STATUS_CALL_INIT,
-          ~url=uri,
-          ~statusCode="",
-          ~apiLogType=Request,
-          ~data=JSON.Encode.null,
-          (),
-        )
-
-        let logInfo = (~statusCode, ~apiLogType, ~data) => {
-          apiLogWrapper(
-            ~logType=INFO,
-            ~eventName=POLL_STATUS_CALL,
-            ~url=uri,
-            ~statusCode,
-            ~apiLogType,
-            ~data,
-            (),
-          )
-        }
-        let logError = (~statusCode, ~apiLogType, ~data) => {
-          apiLogWrapper(
-            ~logType=ERROR,
-            ~eventName=POLL_STATUS_CALL,
-            ~url=uri,
-            ~statusCode,
-            ~apiLogType,
-            ~data,
-            (),
-          )
-        }
 
         let headers = getAuthCallHeaders(~publishableKey, ~sdkAuthorization, ())
-        APIUtils.fetchApi(~uri, ~headers, ~method_=#GET)
+        APIUtils.fetchObserved(~observed=SdkApi(PollStatus), ~uri, ~headers, ~method_=#GET)
         ->Promise.then(data => {
           let statusCode = data->Fetch.Response.status->string_of_int
           if statusCode->String.charAt(0) === "2" {
@@ -121,15 +113,6 @@ let useExternalThreeDs = () => {
                 ->Utils.getDictFromJson
                 ->ExternalThreeDsTypes.pollResponseItemToObjMapper
 
-              let logData =
-                [
-                  ("url", uri->JSON.Encode.string),
-                  ("statusCode", statusCode->JSON.Encode.string),
-                  ("response", pollResponse.status->JSON.Encode.string),
-                ]
-                ->Dict.fromArray
-                ->JSON.Encode.object
-              logInfo(~statusCode, ~apiLogType=Response, ~data=logData)
               if pollResponse.status === "completed" {
                 Promise.resolve()
               } else {
@@ -150,23 +133,10 @@ let useExternalThreeDs = () => {
               }
             })
           } else {
-            data
-            ->Fetch.Response.json
-            ->Promise.thenResolve(res => {
-              logError(~statusCode, ~apiLogType=Err, ~data=res)
-            })
-            ->ignore
             Promise.resolve()
           }
         })
-        ->Promise.catch(err => {
-          logError(
-            ~statusCode="504",
-            ~apiLogType=NoResponse,
-            ~data=err->Utils.getError(`Netcetera Error`),
-          )
-          Promise.resolve()
-        })
+        ->Promise.catch(_ => Promise.resolve())
         ->Promise.finally(_ => {
           onPollCompletion()
         })
@@ -175,15 +145,6 @@ let useExternalThreeDs = () => {
     }
 
     let rec retrieveAndShowStatus = (~isFinalRetrieve=?) => {
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName=RETRIEVE_CALL_INIT,
-        ~url=baseUrl,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
       setLoading(ProcessingPayments)
 
       retrievePayment(Types.Payment, clientSecret, publishableKey)
@@ -194,10 +155,15 @@ let useExternalThreeDs = () => {
           let status = res->Utils.getDictFromJson->Utils.getString("status", "")
           let isFinalRetrieve = isFinalRetrieve->Option.getOr(true)
           switch status {
-          | "processing" | "succeeded" => onSuccess(retrievePaymentStatus.successMsg)
-          | "failed" => onFailure(retrievePaymentStatus.errorMsg)
+          | "processing" | "succeeded" =>
+            PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card)
+            onSuccess(retrievePaymentStatus.successMsg)
+          | "failed" =>
+            PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card)
+            onFailure(retrievePaymentStatus.errorMsg)
           | _ =>
             if isFinalRetrieve {
+              PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card)
               onFailure(retrievePaymentStatus.errorMsg)
             } else {
               shortPollExternalThreeDsAuthStatus(
@@ -218,64 +184,29 @@ let useExternalThreeDs = () => {
     }
 
     let hsAuthorizeCall = (~authorizeUrl) => {
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName=AUTHORIZE_CALL_INIT,
-        ~url=authorizeUrl,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
       let headers = switch sdkAuthorization->String.length > 0 {
       | true =>
         [("Content-Type", "application/json"), ("Authorization", sdkAuthorization)]->Dict.fromArray
       | false => [("Content-Type", "application/json")]->Dict.fromArray
       }
-      APIUtils.fetchApi(~uri=authorizeUrl, ~bodyStr="", ~headers, ~method_=#POST)
+      APIUtils.fetchObserved(
+        ~observed=SdkApi(ThreeDsAuthorize),
+        ~uri=authorizeUrl,
+        ~bodyStr="",
+        ~headers,
+        ~method_=#POST,
+        ~paymentMethod=Card,
+      )
       ->Promise.then(async data => {
         setLoading(ProcessingPayments)
         let statusCode = data->Fetch.Response.status->string_of_int
-        if statusCode->String.charAt(0) === "2" {
-          apiLogWrapper(
-            ~logType=INFO,
-            ~eventName=AUTHORIZE_CALL,
-            ~url=authorizeUrl,
-            ~statusCode,
-            ~apiLogType=Response,
-            ~data=JSON.Encode.null,
-            (),
-          )
-        } else {
-          await data
-          ->Fetch.Response.json
-          ->Promise.thenResolve(error => {
-            apiLogWrapper(
-              ~logType=ERROR,
-              ~eventName=AUTHORIZE_CALL,
-              ~url=authorizeUrl,
-              ~statusCode,
-              ~apiLogType=Err,
-              ~data=error,
-              (),
-            )
-          })
+        if statusCode->String.charAt(0) !== "2" {
+          // An unreadable error body still ends the flow with a final retrieve, as before.
+          let _ = await data->Fetch.Response.json
         }
         false
       })
-      ->Promise.catch(err => {
-        apiLogWrapper(
-          ~logType=ERROR,
-          ~eventName=AUTHORIZE_CALL,
-          ~url=authorizeUrl,
-          ~statusCode="504",
-          ~apiLogType=NoResponse,
-          ~data=err->Utils.getError(`Netcetera Error`),
-          (),
-        )
-
-        Promise.resolve(true)
-      })
+      ->Promise.catch(_ => Promise.resolve(true))
     }
 
     let sendChallengeParamsAndGenerateChallenge = (~challengeParams) => {
@@ -285,34 +216,18 @@ let useExternalThreeDs = () => {
         ~useAppUrl=true,
       )
       Promise.make((resolve, reject) => {
+        let logChallengeParams = startNetceteraCall(ReceiveChallengeParams)
         Netcetera3dsModule.recieveChallengeParamsFromRN(
           challengeParams.acsSignedContent,
           challengeParams.acsRefNumber,
           challengeParams.acsTransactionId,
           challengeParams.threeDSServerTransId,
           status => {
-            logger(
-              ~logType=INFO,
-              ~value={
-                "status": status.status,
-                "message": status.message,
-                "threeDSRequestorAppURL": threeDSRequestorAppURL,
-              }
-              ->JSON.stringifyAny
-              ->Option.getOr(""),
-              ~category=USER_EVENT,
-              ~eventName=NETCETERA_SDK,
-              (),
-            )
+            logChallengeParams(status)
             if status->isStatusSuccess {
+              let logChallenge = startNetceteraCall(GenerateChallenge)
               Netcetera3dsModule.generateChallenge(status => {
-                logger(
-                  ~logType=INFO,
-                  ~value=status->JSON.stringifyAny->Option.getOr(""),
-                  ~category=USER_EVENT,
-                  ~eventName=NETCETERA_SDK,
-                  (),
-                )
+                logChallenge(status)
 
                 resolve()
               })
@@ -331,54 +246,52 @@ let useExternalThreeDs = () => {
       let bodyStr = generateAuthenticationCallBody(clientSecret, ~sdkAuthorization, aReqParams)
       let headers = getAuthCallHeaders(~publishableKey, ~sdkAuthorization, ())
 
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName=AUTHENTICATION_CALL_INIT,
-        ~url=uri,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
+      APIUtils.fetchObserved(
+        ~observed=SdkApi(Authentication),
+        ~uri,
+        ~bodyStr,
+        ~headers,
+        ~method_=#POST,
+        ~paymentMethod=Card,
       )
-
-      APIUtils.fetchApi(~uri, ~bodyStr, ~headers, ~method_=#POST)
       ->Promise.then(data => {
         let statusCode = data->Fetch.Response.status->string_of_int
         if statusCode->String.charAt(0) === "2" {
           data
           ->Fetch.Response.json
           ->Promise.thenResolve(res => {
-            apiLogWrapper(
-              ~logType=INFO,
-              ~eventName=AUTHENTICATION_CALL,
-              ~url=uri,
-              ~statusCode,
-              ~apiLogType=Response,
-              ~data=JSON.Encode.null,
-              (),
-            )
             let authResponse = res->authResponseItemToObjMapper
 
             switch authResponse {
             | AUTH_RESPONSE(challengeParams) =>
-              logger(
-                ~logType=INFO,
-                ~value=challengeParams.transStatus,
-                ~category=USER_EVENT,
-                ~eventName=DISPLAY_THREE_DS_SDK,
-                (),
-              )
+              let transStatus: SdkLogger.transStatusData = {
+                transStatus: challengeParams.transStatus,
+              }
               switch challengeParams.transStatus {
-              | "C" => GenerateChallenge({challengeParams: challengeParams})
-              | _ => FrictionlessFlow
+              | "C" =>
+                SdkLogger.logLifecycle(
+                  ~event=ThreeDsChallengeShown(transStatus),
+                  ~paymentMethod=Card,
+                )
+                GenerateChallenge({challengeParams: challengeParams})
+              | _ =>
+                SdkLogger.logLifecycle(
+                  ~event=ThreeDsFrictionlessResolved(transStatus),
+                  ~paymentMethod=Card,
+                )
+                FrictionlessFlow
               }
             | AUTH_ERROR(errObj) => {
-                logger(
-                  ~logType=ERROR,
-                  ~value=errObj.errorMessage,
-                  ~category=USER_EVENT,
-                  ~eventName=DISPLAY_THREE_DS_SDK,
-                  (),
+                SdkLogger.logLifecycle(
+                  ~event=ThreeDsAuthRequestFailed,
+                  ~details=[
+                    ("error_code", errObj.errorCode->JSON.Encode.string),
+                    (
+                      "error_message",
+                      errObj.errorMessage->NativeLoggerUtils.truncate->JSON.Encode.string,
+                    ),
+                  ],
+                  ~paymentMethod=Card,
                 )
                 FrictionlessFlow
               }
@@ -388,57 +301,37 @@ let useExternalThreeDs = () => {
           data
           ->Fetch.Response.json
           ->Promise.thenResolve(err => {
-            apiLogWrapper(
-              ~logType=ERROR,
-              ~eventName=AUTHENTICATION_CALL,
-              ~url=uri,
-              ~statusCode,
-              ~apiLogType=Err,
-              ~data=err,
-              (),
+            SdkLogger.logLifecycle(
+              ~event=ThreeDsAuthRequestFailed,
+              ~failure=err,
+              ~paymentMethod=Card,
             )
             FrictionlessFlow
           })
         }
       })
       ->Promise.catch(err => {
-        apiLogWrapper(
-          ~logType=ERROR,
-          ~eventName=AUTHENTICATION_CALL,
-          ~url=uri,
-          ~statusCode="504",
-          ~apiLogType=NoResponse,
-          ~data=err->Utils.getError(`Netcetera Error`),
-          (),
+        SdkLogger.logLifecycle(
+          ~event=ThreeDsAuthRequestFailed,
+          ~exn=err,
+          ~paymentMethod=Card,
+          ~message="3DS authentication request or its response handling failed",
         )
         Promise.resolve(FrictionlessFlow)
       })
     }
 
     let startNetcetera3DSFlow = () => {
-      initialisedNetceteraOnce(~netceteraSDKApiKey, ~sdkEnvironment)
+      observedNetceteraInit(~netceteraSDKApiKey, ~sdkEnvironment)
       ->Promise.then(statusInfo => {
-        logger(
-          ~logType=INFO,
-          ~value=statusInfo->JSON.stringifyAny->Option.getOr(""),
-          ~category=USER_EVENT,
-          ~eventName=NETCETERA_SDK,
-          (),
-        )
-
         if statusInfo->isStatusSuccess {
           Promise.make((resolve, _reject) => {
+            let logAReqParams = startNetceteraCall(GenerateAreqParams)
             Netcetera3dsModule.generateAReqParams(
               threeDsData.messageVersion,
               threeDsData.directoryServerId,
               (status, aReqParams) => {
-                logger(
-                  ~logType=INFO,
-                  ~value=status->JSON.stringifyAny->Option.getOr(""),
-                  ~category=USER_EVENT,
-                  ~eventName=NETCETERA_SDK,
-                  (),
-                )
+                logAReqParams(status)
                 if status->isStatusSuccess {
                   resolve(Make3DsCall(aReqParams))
                 } else {
@@ -467,12 +360,9 @@ let useExternalThreeDs = () => {
     let checkSDKPresence = () => {
       Promise.make((resolve, reject) => {
         if !Netcetera3dsModule.isAvailable {
-          logger(
-            ~logType=DEBUG,
-            ~value="Netcetera SDK dependency not added",
-            ~category=USER_EVENT,
-            ~eventName=NETCETERA_SDK,
-            (),
+          SdkLogger.logLifecycle(
+            ~event=ThreeDsSdkUnavailable({sdk: Netcetera}),
+            ~message="Netcetera SDK dependency not added",
           )
           onFailure(externalThreeDsModuleStatus.errorMsg)
           reject()

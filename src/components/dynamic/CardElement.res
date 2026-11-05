@@ -266,6 +266,7 @@ let make = (
                 marginBottom: ?(splitCardFields ? Some(gap->dp) : None),
               })}>
               <CustomInput
+                logName=LoggerFieldName.cardNumber
                 name={TestUtils.cardNumberInputTestId}
                 reference=Some(cardRef)
                 state={cardNumberInput.value->Option.getOr("")}
@@ -340,6 +341,7 @@ let make = (
               })}>
               <View style={s({flex: 1.})}>
                 <CustomInput
+                  logName=LoggerFieldName.cardExpiry
                   name={TestUtils.expiryInputTestId}
                   reference={Some(expireRef)}
                   state=expireDate
@@ -400,6 +402,7 @@ let make = (
               <UIUtils.RenderIf condition={hasCvc}>
                 <View style={s({flex: 1.})}>
                   <CustomInput
+                    logName=LoggerFieldName.cardCvc
                     name={TestUtils.cvcInputTestId}
                     reference={Some(cvvRef)}
                     borderTopWidth={splitCardFields ? borderWidth : borderWidth /. 2.}

@@ -70,6 +70,7 @@ let make = (
             }
             <>
               <CustomPicker
+                logName={currencyConfig.confirmRequestWritePath->LoggerFieldName.ofWritePath}
                 value=currencyInput.value
                 setValue=handlePickerChange
                 items={currencyConfig.dropdownOptions
@@ -111,6 +112,7 @@ let make = (
             })
             <>
               <CustomPicker
+                logName={networkConfig.confirmRequestWritePath->LoggerFieldName.ofWritePath}
                 value={switch networkInput.value {
                 | None | Some("") => networkInput.value
                 | Some(network) =>

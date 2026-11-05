@@ -27,9 +27,16 @@ let make = (
   let layout = nativeProp.configuration.paymentMethodLayout
 
   let (indexInFocus, setIndexInFocus) = React.useState(_ => 0)
-  let setIndexInFocus = React.useCallback1(index => {
+  let setIndexInFocus = React.useCallback3(index => {
+    if index !== indexInFocus {
+      hocComponentArr
+      ->Array.get(index)
+      ->Option.forEach(hoc =>
+        PaymentFlowLogger.logPaymentMethodSelected(~paymentMethodType=hoc.paymentMethodType)
+      )
+    }
     setIndexInFocus(_ => index)
-  }, [setIndexInFocus])
+  }, (setIndexInFocus, indexInFocus, hocComponentArr))
 
   let emitter = PaymentEvents.usePaymentEventEmitter()
 

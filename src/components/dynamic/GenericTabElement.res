@@ -75,6 +75,7 @@ let make = (
     | Country =>
       <>
         <CustomPicker
+          logName={field.confirmRequestWritePath->LoggerFieldName.ofWritePath}
           value=input.value
           setValue=handlePickerChange
           items={switch countryStateData {
@@ -103,6 +104,7 @@ let make = (
         }
         <>
           <CustomPicker
+            logName={field.confirmRequestWritePath->LoggerFieldName.ofWritePath}
             value={switch input.value {
             | None | Some("") => input.value
             | Some(value) =>
@@ -130,6 +132,7 @@ let make = (
     | BankNamesSelect if field.dropdownOptions->Option.getOr([])->Array.length > 0 =>
       <>
         <CustomPicker
+          logName={field.confirmRequestWritePath->LoggerFieldName.ofWritePath}
           value=input.value
           setValue=handlePickerChange
           items={field.dropdownOptions
@@ -153,6 +156,7 @@ let make = (
     | _ =>
       <>
         <CustomInput
+          logName={field.confirmRequestWritePath->LoggerFieldName.ofWritePath}
           state={input.value->Option.getOr("")}
           setState=handleInputChange
           placeholder

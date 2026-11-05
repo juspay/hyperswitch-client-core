@@ -23,15 +23,19 @@ module WrapperProvider = {
   ) => {
     let (state, setState) = React.useState(_ => Localdata(initialData))
     let countryStateDataHook = S3ApiHook.useFetchDataFromS3WithGZipDecoding()
+    let assetUrl = GlobalHooks.useGetAssetUrlWithVersion()()
     let isDataFetched = React.useRef(false)
-    let logger = LoggerHook.useLoggerHook()
 
     let fetchCountryStateData = () => {
       if !isDataFetched.current {
         ///do not change the ordering of the code below
         isDataFetched.current = true
         setState(_ => Loading)
-        countryStateDataHook(~decodeJsonToRecord=S3ApiHook.decodeJsonTocountryStateData, ~s3Path)
+        countryStateDataHook(
+          ~decodeJsonToRecord=S3ApiHook.decodeJsonTocountryStateData,
+          ~s3Path,
+          ~observed=SdkStaticAsset(CountryStateData),
+        )
         ->Promise.then(res => {
           let fetchedData = res->Option.getExn
           if fetchedData.countries->Js.Array2.length == 0 {
@@ -42,18 +46,13 @@ module WrapperProvider = {
           }
         })
         ->Promise.catch(_ => {
+          SdkLogger.logLifecycle(~event=CountryDataServedFromBundle)
           setState(_ => Localdata(initialData))
           Promise.resolve()
         })
         ->ignore
       } else {
-        logger(
-          ~logType=INFO,
-          ~value="tried to call country state api call agian",
-          ~category=API,
-          ~eventName=S3_API,
-          (),
-        )
+        NativeSdkLogger.logStaticAssetReused(~event=CountryStateData, ~url=`${assetUrl}${s3Path}`)
       }
     }
 

@@ -48,6 +48,9 @@ module CombinedNameInput = {
     }
     <View style={s({marginBottom: gap->dp})}>
       <CustomInput
+        logName={isCardPayment
+          ? LoggerFieldName.cardHolderName
+          : firstNameConfig.confirmRequestWritePath->LoggerFieldName.ofWritePath}
         state=inputValue
         setState=handleInputChange
         placeholder={isCardPayment ? "Card Holder Name" : "Full Name"}
@@ -93,6 +96,7 @@ module SingleNameInput = {
     )
     <View style={s({marginBottom: gap->dp})}>
       <CustomInput
+        logName={config.confirmRequestWritePath->LoggerFieldName.ofWritePath}
         state={input.value->Option.getOr("")}
         setState={value => input.onChange(value)}
         placeholder={FieldLabelResolver.resolvePlaceholder(config, getLocalized)}

@@ -1,184 +1,28 @@
 open SdkTypes
 
-let sendLogs = async (logFile, customLogUrl) => {
-  switch customLogUrl {
-  | Some(uri) =>
-    if WebKit.platform != #next {
-      let data = logFile->LoggerUtils.logFileToObj->JSON.stringify
-      try {
-        let _ = await APIUtils.fetchApi(
-          ~uri,
-          ~method_=#POST,
-          ~bodyStr=data,
-          ~headers=Dict.make(),
-          ~mode=#"no-cors",
-        )
-      } catch {
-      | _ => ()
-      }
-    }
-  | None => ()
-  }
-}
-
-let logWrapper = (
-  ~logType: LoggerTypes.logType,
-  ~eventName: LoggerTypes.eventName,
-  ~url: string,
-  ~statusCode: string,
-  ~apiLogType: option<LoggerTypes.apiLogType>,
-  ~category,
-  ~data: JSON.t,
-  ~paymentMethod: option<string>,
-  ~paymentExperience: option<string>,
-  ~publishableKey: string,
-  ~paymentId: string,
-  ~timestamp,
-  ~latency,
-  ~customLogUrl,
-  ~version,
-  (),
-) => {
-  let (value, internalMetadata) = switch apiLogType {
-  | None => ([], [])
-  | Some(Request) => ([("url", url->JSON.Encode.string)], [])
-  | Some(Response) => (
-      [("url", url->JSON.Encode.string), ("statusCode", statusCode->JSON.Encode.string)],
-      [("response", data)],
-    )
-  | Some(NoResponse) => (
-      [
-        ("url", url->JSON.Encode.string),
-        ("statusCode", "504"->JSON.Encode.string),
-        ("response", data),
-      ],
-      [("response", data)],
-    )
-  | Some(Err) => (
-      [
-        ("url", url->JSON.Encode.string),
-        ("statusCode", statusCode->JSON.Encode.string),
-        ("response", data),
-      ],
-      [("response", data)],
-    )
-  }
-  let logFile: LoggerTypes.logFile = {
-    logType,
-    timestamp: timestamp->Float.toString,
-    sessionId: "",
-    version,
-    codePushVersion: VersionInfo.version,
-    clientCoreVersion: VersionInfo.version,
-    component: MOBILE,
-    value: value->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-    internalMetadata: internalMetadata->Dict.fromArray->JSON.Encode.object->JSON.stringify,
-    category,
-    paymentId,
-    merchantId: publishableKey,
-    platform: ReactNative.Platform.os->JSON.stringifyAny->Option.getOr("headless"),
-    userAgent: "userAgent",
-    eventName,
-    firstEvent: true,
-    source: Headless->sdkStateToStrMapper,
-    paymentMethod: paymentMethod->Option.getOr(""),
-    ?paymentExperience,
-    latency: latency->Float.toString,
-  }
-  sendLogs(logFile, customLogUrl)->ignore
-}
-
-let apiLogWrapper = (
-  ~nativeProp,
+let handleApiCall = (
   ~uri,
-  ~paymentId,
-  ~eventName,
-  ~data=JSON.Encode.null,
-  ~logType: LoggerTypes.logType=INFO,
-  ~statusCode="",
-  ~apiLogType=Some(LoggerTypes.Request),
-) => {
-  let initTimestamp = Date.now()
-  logWrapper(
-    ~logType,
-    ~eventName,
-    ~url=uri,
-    ~customLogUrl=GlobalHooks.getLoggingUrl(
-      ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-        SdkTypes.defaultCustomEndpointsConfig,
-      ),
-      ~environment=nativeProp.hyperswitchConfig.environment,
-    ),
-    ~category=API,
-    ~statusCode,
-    ~apiLogType,
-    ~data,
-    ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-    ~paymentId,
-    ~paymentMethod=None,
-    ~paymentExperience=None,
-    ~timestamp=initTimestamp,
-    ~latency=0.,
-    ~version=nativeProp.sdkParams.sdkVersion,
-    (),
-  )
-}
-
-let handleApiCall = async (
-  ~uri,
-  ~eventName,
+  ~observed,
   ~body=?,
   ~headers,
-  ~nativeProp: SdkTypes.nativeProp,
   ~method,
+  ~paymentMethod=?,
   ~processSuccess: Core__JSON.t => 'a,
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
-) => {
-  let paymentId = nativeProp.paymentSessionConfig.paymentId
-  try {
-    let initEventName = LoggerTypes.getApiInitEvent(eventName)
-    switch initEventName {
-    | Some(CONFIRM_CALL_INIT) =>
-      apiLogWrapper(~eventName=PAYMENT_ATTEMPT, ~uri, ~paymentId, ~nativeProp)
-    | Some(eventName) => apiLogWrapper(~eventName, ~uri, ~paymentId, ~nativeProp)
-
-    | _ => ()
-    }
-    let data = await APIUtils.fetchApi(
-      ~uri,
-      ~method_=method,
-      ~headers,
-      ~bodyStr=body->Option.getOr(""),
-    )
-
-    let statusCode = data->Fetch.Response.status->string_of_int
-
-    if statusCode->String.charAt(0) === "2" {
-      let json = await data->Fetch.Response.json
-      apiLogWrapper(~eventName, ~uri, ~paymentId, ~nativeProp, ~logType=INFO)
-      processSuccess(json)
-    } else {
-      let error = await data->Fetch.Response.json
-      apiLogWrapper(~eventName, ~uri, ~paymentId, ~nativeProp, ~logType=ERROR, ~statusCode)
-      processError(error)
-    }
-  } catch {
-  | err => {
-      apiLogWrapper(
-        ~eventName,
-        ~uri,
-        ~paymentId,
-        ~nativeProp,
-        ~logType=ERROR,
-        ~statusCode="504",
-        ~data=err->Utils.getError(`API call failed: ${uri}`),
-        ~apiLogType=Some(NoResponse),
-      )
-      processCatch(JSON.Encode.null)
-    }
-  }
-}
+) =>
+  APIUtils.handleApiCall(
+    ~uri,
+    ~body?,
+    ~headers,
+    ~observed,
+    ~method,
+    ~paymentMethod?,
+    ~source=Headless,
+    ~processSuccess,
+    ~processError,
+    ~processCatch,
+  )
 
 let getBaseUrl = nativeProp => {
   GlobalHooks.getUrl(
@@ -204,8 +48,7 @@ let fetchClientData = nativeProp => {
   | Some(uri) =>
     handleApiCall(
       ~uri,
-      ~nativeProp,
-      ~eventName=CLIENT_LIST_CALL,
+      ~observed=SdkApi(ClientList),
       ~method=#GET,
       ~headers=Utils.getHeader(
         ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
@@ -249,8 +92,7 @@ let sessionAPICall = nativeProp => {
   handleApiCall(
     ~uri,
     ~method=#POST,
-    ~nativeProp,
-    ~eventName=SESSIONS_CALL,
+    ~observed=SdkApi(Sessions),
     ~headers,
     ~body,
     ~processSuccess=json => json,
@@ -273,8 +115,7 @@ let sdkConfigAPICall = (nativeProp: SdkTypes.nativeProp) => {
 
   handleApiCall(
     ~uri,
-    ~nativeProp,
-    ~eventName=LoggerTypes.CONFIG_CALL,
+    ~observed=SdkStaticAsset(SdkConfigs),
     ~method=#GET,
     ~headers=Utils.getHeader(
       ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
@@ -303,16 +144,29 @@ let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) =
     ),
     (),
   )
+  let paymentMethod = body->LoggerPaymentMethod.fromRequestBody
+  SdkLogger.logLifecycle(
+    ~event=SdkLogger.PaymentAttempted,
+    ~details=[("content_length", body->String.length->JSON.Encode.int)],
+    ~paymentMethod?,
+    ~source=Headless,
+  )
 
   handleApiCall(
     ~uri,
     ~method=#POST,
     ~headers,
-    ~nativeProp,
-    ~eventName=CONFIRM_CALL,
+    ~observed=SdkApi(ConfirmCall),
+    ~paymentMethod?,
     ~body,
-    ~processSuccess=json => Some(json),
-    ~processError=error => Some(error),
+    ~processSuccess=json => {
+      PaymentFlowLogger.logConfirmResponded(json, ~paymentMethod?, ~source=Headless)
+      Some(json)
+    },
+    ~processError=error => {
+      PaymentFlowLogger.logConfirmRejected(error, ~paymentMethod?, ~source=Headless)
+      Some(error)
+    },
     ~processCatch=_ => Some(JSON.Encode.null),
   )
 }
@@ -335,8 +189,7 @@ let retrieveAPICall = (nativeProp: SdkTypes.nativeProp) => {
     ~uri,
     ~method=#GET,
     ~headers,
-    ~nativeProp,
-    ~eventName=RETRIEVE_CALL,
+    ~observed=SdkApi(RetrievePaymentIntent),
     ~processSuccess=json => Some(json),
     ~processError=error => Some(error),
     ~processCatch=_ => Some(JSON.Encode.null),

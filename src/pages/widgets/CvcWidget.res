@@ -87,6 +87,7 @@ let make = () => {
       padding: 2.->dp,
     })}>
     <CustomInput
+      logName=LoggerFieldName.cardCvc
       name=TestUtils.cvcWidgetInputTestId
       state={cvcValue}
       setState={onCvcChange}

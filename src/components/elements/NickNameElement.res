@@ -23,6 +23,7 @@ let make = (~nickname, ~setNickname, ~setIsNicknameValid, ~accessible) => {
   <>
     <Space />
     <CustomInput
+      logName=LoggerFieldName.nickname
       state={nickname->Option.getOr("")}
       setState={str => onChange(str)}
       placeholder={localeObject.nicknamePlaceholder}
