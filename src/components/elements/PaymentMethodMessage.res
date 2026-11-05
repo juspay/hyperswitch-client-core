@@ -42,9 +42,13 @@ let make = (~paymentMethod, ~paymentMethodType) => {
     ~paymentMethod,
     ~paymentMethodType,
   )
-  let segments = React.useMemo2(() => {
-    message->Option.mapOr([], message => PaymentMessageUtils.renderContent(message, ~subscribed))
-  }, (message, subscribed))
+  let (segments, defaultStyle) = switch message {
+  | Some(message) if PaymentMessageUtils.displayModeOf(message) === #custom_message => (
+      message.value->Option.getOr([]),
+      message.elementStyles.action,
+    )
+  | _ => ([], {})
+  }
 
   if segments->Array.length == 0 {
     React.null
@@ -54,18 +58,21 @@ let make = (~paymentMethod, ~paymentMethodType) => {
       ->Array.mapWithIndex((segment, index) =>
         switch segment {
         | Text(text) => React.string(text)
-        | CallbackAction({key, label, style}) =>
+        | Action({text}) if !subscribed => React.string(text)
+        | Action({text, style, index: actionIndex}) =>
           <Text
             key={Int.toString(index)}
             accessibilityRole=#button
-            style={actionStyle(style, ~linkColor, ~fontScale)}
+            style={actionStyle(
+              PaymentMessageUtils.mergeStyles(defaultStyle, style),
+              ~linkColor,
+              ~fontScale,
+            )}
             onPress={event => {
               event->Event.PressEvent.stopPropagation
-              emitter.emitCustomMessageElementClicked(
-                ~event={key, \"type": "action", paymentMethod, paymentMethodType},
-              )
+              emitter.emitCustomMessageElementClicked(~event={index: actionIndex})
             }}>
-            {React.string(label)}
+            {React.string(text)}
           </Text>
         }
       )

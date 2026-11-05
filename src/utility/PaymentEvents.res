@@ -80,13 +80,7 @@ let usePaymentEventEmitter = (): emitterFunctions => {
 
   let emitCustomMessageElementClicked = (~event: PaymentMessageTypes.elementClickedEvent) => {
     if shouldEmitEvent(~eventType=CustomMessageElementClicked, ~subscribedEvents) {
-      let payload =
-        [
-          ("key", event.key->JSON.Encode.string),
-          ("type", event.\"type"->JSON.Encode.string),
-          ("paymentMethod", event.paymentMethod->JSON.Encode.string),
-          ("paymentMethodType", event.paymentMethodType->JSON.Encode.string),
-        ]->Dict.fromArray
+      let payload = [("index", event.index->JSON.Encode.int)]->Dict.fromArray
       emitToNative(
         ~rootTag=nativeProp.rootTag,
         ~eventType=PaymentEventTypes.eventToString(CustomMessageElementClicked),
