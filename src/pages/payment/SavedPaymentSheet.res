@@ -716,6 +716,19 @@ let make = (
             initialIconName="checkboxClicked"
             updateIconName=Some("checkboxNotClicked")
             text={localeObj.cardTermsPart1 ++ merchantName ++ localeObj.cardTermsPart2}
+            // As on web, the card message's custom text replaces the terms label.
+            label=?{PaymentMethodMessage.customContent(
+              nativeProp.configuration.paymentMethodsConfig,
+              ~paymentMethod="card",
+              ~paymentMethodType="",
+            )->Option.map(content =>
+              <PaymentMethodMessage.Content
+                paymentMethod="card"
+                content
+                textType=TextWrapper.ModalText
+                overrideStyle=Some(s({flex: 1.}))
+              />
+            )}
             isSelected={isSaveCardCheckboxSelected}
             setIsSelected={setSaveCardChecboxSelected}
             textType={TextWrapper.ModalText}

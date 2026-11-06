@@ -33,8 +33,25 @@ let make = (~isLoading=true, ~elementArr, ~showDisclaimer=false, ~hideDivider=fa
       <>
         <Space />
         {elementArr->React.array}
+        /* As on web: the wallet message replaces the disclaimer, or hides it. */
         <UIUtils.RenderIf condition={showDisclaimer}>
-          <WalletDisclaimer />
+          {switch PaymentMessageUtils.resolve(
+            nativeProp.configuration.paymentMethodsConfig,
+            ~paymentMethod="wallet",
+            ~paymentMethodType="",
+          ) {
+          | Some((message, _)) =>
+            switch PaymentMessageUtils.displayModeOf(message) {
+            | #hidden => React.null
+            | #custom_message =>
+              <>
+                <Space height=10. />
+                <PaymentMethodMessage paymentMethod="wallet" paymentMethodType="" />
+              </>
+            | #default_sdk_message => <WalletDisclaimer />
+            }
+          | None => <WalletDisclaimer />
+          }}
         </UIUtils.RenderIf>
         <UIUtils.RenderIf condition={!hideDivider}>
           <Space height=15. />
