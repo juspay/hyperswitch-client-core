@@ -16,16 +16,29 @@ let toFontWeight = (weight): option<Style.fontWeight> =>
   | _ => None
   }
 
+/* The wrappers send "normal"/"italic" and "none"/"underline"; anything else is ignored. */
+let toFontStyle = (fontStyle): option<Style.fontStyle> =>
+  switch fontStyle {
+  | "normal" => Some(#normal)
+  | "italic" => Some(#italic)
+  | _ => None
+  }
+
+let toTextDecoration = (decoration): option<Style.textDecorationLine> =>
+  switch decoration {
+  | "none" => Some(#none)
+  | "underline" => Some(#underline)
+  | _ => None
+  }
+
 /* Element style (already merged over elementStyles.action) wins; the theme fills the rest. */
 let actionStyle = (style: PaymentMessageTypes.elementStyle, ~linkColor, ~fontScale) =>
   s({
     color: style.color->Option.getOr(linkColor),
     fontSize: ?style.fontSize->Option.map(size => size *. fontScale),
     fontWeight: ?style.fontWeight->Option.flatMap(toFontWeight),
-    fontStyle: ?style.fontStyle,
-    textDecorationLine: ?style.textDecoration->Option.map(decoration =>
-      (decoration :> Style.textDecorationLine)
-    ),
+    fontStyle: ?style.fontStyle->Option.flatMap(toFontStyle),
+    textDecorationLine: ?style.textDecoration->Option.flatMap(toTextDecoration),
   })
 
 @react.component
