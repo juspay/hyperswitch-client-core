@@ -767,7 +767,7 @@ let make = (
     </View>
     {showDisclaimer && hasCvcInput
       ? <View style={s({paddingHorizontal: 2.->dp})}>
-          // <Space />
+          <Space />
           <ClickableTextElement
             disabled={false}
             initialIconName="checkboxClicked"
