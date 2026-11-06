@@ -41,40 +41,34 @@ let actionStyle = (style: PaymentMessageTypes.elementStyle, ~linkColor, ~fontSca
     textDecorationLine: ?style.textDecoration->Option.flatMap(toTextDecoration),
   })
 
-@react.component
-let make = (~paymentMethod, ~paymentMethodType) => {
-  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let {linkColor, fontScale} = ThemebasedStyle.useThemeBasedStyle()
-  let resolved = PaymentMessageUtils.resolve(
-    nativeProp.configuration.paymentMethodsConfig,
-    ~paymentMethod,
-    ~paymentMethodType,
-  )
-  let (segments, defaultStyle, tapPaymentMethodType) = switch resolved {
-  | Some((message, tapType)) if PaymentMessageUtils.displayModeOf(message) === #custom_message => (
-      message.value->Option.getOr([]),
-      message.elementStyles.action,
-      tapType,
+/* A shown custom message: its segments and the payment method type a tap reports. */
+let customContent = (configs, ~paymentMethod, ~paymentMethodType) =>
+  switch PaymentMessageUtils.resolve(configs, ~paymentMethod, ~paymentMethodType) {
+  | Some((message, tapType)) if PaymentMessageUtils.displayModeOf(message) === #custom_message =>
+    let segments = message.value->Option.getOr([])
+    /* Empty text alone would still reserve the message's space. */
+    segments->Array.some(segment =>
+      switch segment {
+      | Text(text) => text != ""
+      | Action(_) => true
+      }
     )
-  | _ => ([], {}, "")
+      ? Some((segments, message.elementStyles.action, tapType))
+      : None
+  | _ => None
   }
 
-  /* Empty text alone would still reserve the message's margin. */
-  let visible = segments->Array.some(segment =>
-    switch segment {
-    | Text(text) => text != ""
-    | Action(_) => true
-    }
-  )
-
-  if !visible {
-    React.null
-  } else {
-    <TextWrapper textType=ModalTextBold overrideStyle=Some(s({marginBottom: 15.->dp}))>
+module Content = {
+  @react.component
+  let make = (~paymentMethod, ~content, ~textType, ~overrideStyle) => {
+    let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+    let {linkColor, fontScale} = ThemebasedStyle.useThemeBasedStyle()
+    let (segments, defaultStyle, tapPaymentMethodType) = content
+    <TextWrapper textType overrideStyle>
       {segments
       ->Array.mapWithIndex((segment, index) =>
         switch segment {
-        | Text(text) => React.string(text)
+        | PaymentMessageTypes.Text(text) => React.string(text)
         | Action({text, style, index: actionIndex}) =>
           <Text
             key={Int.toString(index)}
@@ -100,5 +94,21 @@ let make = (~paymentMethod, ~paymentMethodType) => {
       )
       ->React.array}
     </TextWrapper>
+  }
+}
+
+@react.component
+let make = (~paymentMethod, ~paymentMethodType) => {
+  let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
+  switch customContent(
+    nativeProp.configuration.paymentMethodsConfig,
+    ~paymentMethod,
+    ~paymentMethodType,
+  ) {
+  | Some(content) =>
+    <Content
+      paymentMethod content textType=ModalTextBold overrideStyle=Some(s({marginBottom: 15.->dp}))
+    />
+  | None => React.null
   }
 }

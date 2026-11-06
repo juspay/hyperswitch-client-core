@@ -245,9 +245,12 @@ let make = (
       />
     | _ => React.null
     }}
-    <PaymentMethodMessage
-      paymentMethod=paymentMethodData.payment_method_str
-      paymentMethodType=paymentMethodData.payment_method_type
-    />
+    /* Wallet buttons share one message below them, rendered by WalletView. */
+    <UIUtils.RenderIf condition={methodType !== ELEMENT}>
+      <PaymentMethodMessage
+        paymentMethod=paymentMethodData.payment_method_str
+        paymentMethodType=paymentMethodData.payment_method_type
+      />
+    </UIUtils.RenderIf>
   </ErrorBoundary>
 }
