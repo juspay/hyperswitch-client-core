@@ -34,6 +34,8 @@ module Native = {
   @module("./HyperModuleNative")
   external emitPaymentEvent: (int, string, JSON.t) => unit = "emitPaymentEvent"
   @module("./HyperModuleNative")
+  external emitMessageAction: (int, string, string, int, string) => unit = "emitMessageAction"
+  @module("./HyperModuleNative")
   external onUpdateIntentEvent: (int, string, string) => unit = "onUpdateIntentEvent"
   @module("./HyperModuleNative")
   external openIframeBridge: (string, int, string => unit) => unit = "openIframeBridge"
@@ -98,6 +100,9 @@ type useExitPaymentsheetReturnType = {
 let emitPaymentEvent = (rootTag: int, eventType: string, payload: JSON.t) => {
   Native.emitPaymentEvent(rootTag, eventType, payload)
 }
+
+let emitMessageAction = (rootTag: int, paymentMethod, paymentMethodType, index: int, text) =>
+  Native.emitMessageAction(rootTag, paymentMethod, paymentMethodType, index, text)
 
 let onUpdateIntentEvent = (rootTag: int, type_: string, result: string) => {
   Native.onUpdateIntentEvent(rootTag, type_, result)

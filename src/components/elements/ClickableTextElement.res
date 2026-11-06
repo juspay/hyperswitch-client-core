@@ -6,6 +6,7 @@ let make = (
   ~initialIconName,
   ~updateIconName=None,
   ~text,
+  ~label=?,
   ~isSelected,
   ~setIsSelected,
   ~textType,
@@ -26,14 +27,18 @@ let make = (
       initialIconName updateIconName isSelected fill={isLink ? linkColor : primaryColor} ?size
     />
     <Space width=gap />
-    <TextWrapper
-      text
-      textType
-      overrideStyle={if isLink {
-        Some(s({flex: 1., color: ?Some(linkColor)}))
-      } else {
-        Some(s({flex: 1.}))
-      }}
-    />
+    {switch label {
+    | Some(label) => label
+    | None =>
+      <TextWrapper
+        text
+        textType
+        overrideStyle={if isLink {
+          Some(s({flex: 1., color: ?Some(linkColor)}))
+        } else {
+          Some(s({flex: 1.}))
+        }}
+      />
+    }}
   </CustomPressable>
 }

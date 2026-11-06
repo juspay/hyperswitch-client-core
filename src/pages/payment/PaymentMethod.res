@@ -256,22 +256,12 @@ let make = (
       />
     | _ => React.null
     }}
-    {switch nativeProp.configuration.paymentMethodsConfig->Array.find(paymentMethodConfig => {
-      paymentMethodConfig.paymentMethod == paymentMethodData.payment_method_str
-    }) {
-    | Some(config) =>
-      switch config.message.value {
-      | Some(text) =>
-        <UIUtils.RenderIf condition={text != ""}>
-          <TextWrapper
-            text
-            textType={ModalTextBold}
-            overrideStyle=Some(ReactNative.Style.s({marginBottom: 15.->ReactNative.Style.dp}))
-          />
-        </UIUtils.RenderIf>
-      | None => React.null
-      }
-    | None => React.null
-    }}
+    /* Wallet buttons share one message below them, rendered by WalletView. */
+    <UIUtils.RenderIf condition={methodType !== ELEMENT}>
+      <PaymentMethodMessage
+        paymentMethod=paymentMethodData.payment_method_str
+        paymentMethodType=paymentMethodData.payment_method_type
+      />
+    </UIUtils.RenderIf>
   </ErrorBoundary>
 }
