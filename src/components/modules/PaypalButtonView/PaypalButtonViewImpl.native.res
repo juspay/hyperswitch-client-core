@@ -7,4 +7,6 @@ type props = {
 }
 
 @module("@juspay-tech/react-native-hyperswitch-paypal")
-external make: React.component<props> = "PaypalButton"
+external paypalButton: React.component<props> = "PaypalButton"
+
+let make = paypalButton
