@@ -72,7 +72,7 @@ module Content = {
         | Action({text, style, index: actionIndex}) =>
           <Text
             key={Int.toString(index)}
-            accessibilityRole=#button
+            accessibilityRole=#link
             style={actionStyle(
               PaymentMessageUtils.mergeStyles(defaultStyle, style),
               ~linkColor,
