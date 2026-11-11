@@ -52,23 +52,40 @@ let adoptProps = (nativeProp: SdkTypes.nativeProp, ~headless) => {
       ~appId=nativeProp.sdkParams.appId,
       (),
     )
-  if !headless {
-    LoggerRuntime.currentSource := nativeProp->SdkTypes.nativePropLogSource
-  } else if LoggerRuntime.currentSource.contents === "UNKNOWN" {
-    LoggerRuntime.currentSource := SharedLoggerRuntime.Headless->SharedLoggerRuntime.sourceName
-  }
+  let rootTag = nativeProp.rootTag
+  let source = headless
+    ? SharedLoggerRuntime.Headless->SharedLoggerRuntime.sourceName
+    : nativeProp->SdkTypes.nativePropLogSource
+  LoggerRuntime.currentSource := source
   LoggerRuntime.setDevice(
     ~version=nativeProp.sdkParams.sdkVersion,
     ~appId=nativeProp.sdkParams.appId->Option.getOr(""),
     ~userAgent=nativeProp.sdkParams.userAgent->Option.getOr(""),
   )
-  LoggerContext.setSessionData(
-    ~sessionId=nativeProp.sdkParams.sessionId,
-    ~merchantId=nativeProp.hyperswitchConfig.publishableKey,
-    ~paymentId=nativeProp.paymentSessionConfig.paymentId,
-    ~pmSessionId=?nativeProp.paymentSessionConfig.pmSessionId,
-    (),
-  )
+  let anotherRootActive =
+    LoggerRuntime.activeRoot.contents->Option.mapOr(false, active => active !== rootTag)
+  if anotherRootActive {
+    // Another root was active: take this root's identity as it is, not merged with that one.
+    LoggerContext.switchTo({
+      sessionId: nativeProp.sdkParams.sessionId,
+      merchantId: nativeProp.hyperswitchConfig.publishableKey,
+      paymentId: nativeProp.paymentSessionConfig.paymentId,
+      pmSessionId: nativeProp.paymentSessionConfig.pmSessionId->Option.getOr(""),
+      authenticationId: "",
+      scoped: false,
+    })
+  } else {
+    LoggerContext.setSessionData(
+      ~sessionId=nativeProp.sdkParams.sessionId,
+      ~merchantId=nativeProp.hyperswitchConfig.publishableKey,
+      ~paymentId=nativeProp.paymentSessionConfig.paymentId,
+      ~pmSessionId=?nativeProp.paymentSessionConfig.pmSessionId,
+      (),
+    )
+  }
+  LoggerRuntime.registerRoot(~rootTag, ~source, ~context=LoggerContext.current(), ~headless)
+  LoggerRuntime.activeRoot := Some(rootTag)
+  LoggerRuntime.rememberSource()
   if !headless {
     SdkFunnelLogger.init(
       ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization,

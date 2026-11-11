@@ -96,6 +96,63 @@ let setDevice = (~version, ~appId, ~userAgent) => {
 
 let isEnabled = SharedLoggerEmitter.isEnabled
 
+// Several React roots can run at once (for example a widget sheet and the CVC widget), each with
+// its own source and payment. The active root is the one that last got props or user input.
+type root = {source: string, context: LoggerContext.t, headless: bool}
+let roots: Dict.t<root> = Dict.make()
+let activeRoot: ref<option<int>> = ref(None)
+
+let isActiveRoot = rootTag => activeRoot.contents->Option.mapOr(false, active => active === rootTag)
+
+// The source each identity object belongs to. Shared `observe` keeps the identity a request
+// started with, so its reply gets the source of the root that sent it, even if another root
+// with the same payment is active by then.
+let contextSources: WeakMap.t<LoggerContext.t, string> = WeakMap.make()
+
+let rememberSource = () =>
+  contextSources->WeakMap.set(LoggerContext.current(), currentSource.contents)->ignore
+
+let registerRoot = (~rootTag: int, ~source, ~context, ~headless) =>
+  roots->Dict.set(rootTag->Int.toString, {source, context, headless})
+
+let unregisterRoot = (rootTag: int) => {
+  roots->Dict.delete(rootTag->Int.toString)
+  if rootTag->isActiveRoot {
+    activeRoot := None
+  }
+}
+
+let activateRoot = (rootTag: int) =>
+  switch roots->Dict.get(rootTag->Int.toString) {
+  | Some(root) if !(rootTag->isActiveRoot) =>
+    activeRoot := Some(rootTag)
+    currentSource := root.source
+    LoggerContext.switchTo(root.context)
+    rememberSource()
+  | _ => ()
+  }
+
+let belongsTo = (root, context: LoggerContext.t) =>
+  (context.paymentId !== "" && root.context.paymentId === context.paymentId) ||
+    (context.pmSessionId !== "" && root.context.pmSessionId === context.pmSessionId)
+
+// The source of the root a row's payment belongs to, so late API replies keep their own source.
+let sourceOf = (context: LoggerContext.t) => {
+  let active =
+    activeRoot.contents
+    ->Option.flatMap(rootTag => roots->Dict.get(rootTag->Int.toString))
+    ->Option.filter(root => root->belongsTo(context))
+  switch active {
+  | Some(root) => Some(root.source)
+  | None =>
+    let all = roots->Dict.valuesToArray
+    switch all->Array.find(root => !root.headless && root->belongsTo(context)) {
+    | Some(root) => Some(root.source)
+    | None => all->Array.find(root => root->belongsTo(context))->Option.map(root => root.source)
+    }
+  }
+}
+
 // Idle detection: when an interactive SDK screen is mounted and nothing is logged for two
 // minutes, report that the customer went idle once.
 let idleTimeoutMs = 2 * 60 * 1000
@@ -104,7 +161,7 @@ let idleTimer = ref(None)
 let idleReporting = ref(false)
 let onIdle = ref((~idleMs as _: int) => ())
 // Told about every user event, for the first-interaction milestone.
-let onUserEvent = ref((~interaction as _: string) => ())
+let onUserEvent = ref((~interaction as _: string, ~data as _: LoggerTypes.details) => ())
 
 let cancelIdle = () =>
   idleTimer.contents->Option.forEach(timer => {
@@ -166,12 +223,26 @@ let emit = (
     ~durationMs?,
     ~paymentMethod?,
     ~context?,
-    ~source=source->Option.mapOr(currentSource.contents, SharedLoggerRuntime.sourceName),
+    ~source=switch source {
+    | Some(source) => source->SharedLoggerRuntime.sourceName
+    | None =>
+      let identity = context->Option.getOr(LoggerContext.current())
+      switch contextSources->WeakMap.get(identity) {
+      | Some(source) => source
+      | None =>
+        identity
+        ->LoggerContext.fillFrom(LoggerContext.current())
+        ->sourceOf
+        ->Option.getOr(currentSource.contents)
+      }
+    },
     ~message=?message->Option.map(NativeLoggerUtils.maskPii),
     ~once,
   )
   if category === SharedLoggerTypes.User {
-    NativeLoggerUtils.safeRun(() => onUserEvent.contents(~interaction=spec.subject))
+    NativeLoggerUtils.safeRun(() =>
+      onUserEvent.contents(~interaction=spec.subject, ~data=data->Option.getOr([]))
+    )
   }
 }
 

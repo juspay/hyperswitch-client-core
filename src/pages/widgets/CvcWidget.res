@@ -49,6 +49,11 @@ let make = () => {
   React.useEffect1(() => {
     switch nativeProp.cvcConfirm {
     | Some({sdkAuthorization, paymentToken, billing}) =>
+      SdkLogger.logUser(
+        ~event=PaymentSubmitted({source: MerchantApi}),
+        ~details=[("attempt", confirmAttempt->JSON.Encode.int)],
+        ~paymentMethod=Card,
+      )
       let isCvcCompleteNow = Validation.checkCardCVC(cvcValueRef.current, cardNetwork)
       if !isCvcCompleteNow {
         let cvcValidationError: PaymentConfirmTypes.error = {
@@ -57,7 +62,10 @@ let make = () => {
           code: "cvc_validation_failed",
           message: "CVC is not complete. Please enter a valid CVC.",
         }
-        headlessModule.exitHeadless(nativeProp.rootTag, cvcValidationError->HyperModule.resStatusPayload)
+        headlessModule.exitHeadless(
+          nativeProp.rootTag,
+          cvcValidationError->HyperModule.resStatusPayload,
+        )
       } else {
         HeadlessCommon.confirmCardPayment(
           headlessModule,
@@ -65,7 +73,7 @@ let make = () => {
           ~sdkAuthorization,
           ~paymentToken,
           ~cvc=cvcValueRef.current->JSON.Encode.string,
-          ~billing=?billing,
+          ~billing?,
         )
       }
     | None => ()

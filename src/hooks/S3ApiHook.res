@@ -921,6 +921,7 @@ let getLocaleStringsFromJson: Js.Json.t => localeStrings = jsonData => {
 }
 
 let useFetchDataFromS3WithGZipDecoding = () => {
+  let activateLoggerRoot = LoggerRootContext.useActivateRoot()
   let baseUrl = GlobalHooks.useGetAssetUrlWithVersion()()
 
   (
@@ -930,6 +931,7 @@ let useFetchDataFromS3WithGZipDecoding = () => {
     ~details=?,
     ~cache=false,
   ) => {
+    activateLoggerRoot()
     let endpoint = if cache {
       `${baseUrl}${s3Path}`
     } else {

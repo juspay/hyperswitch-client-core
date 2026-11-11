@@ -18,6 +18,8 @@ type launch = {
   mutable mounted: bool,
   mutable settled: bool,
   mutable interacted: bool,
+  // Identity of the root that started the launch; startup rows use it, whichever root is active.
+  mutable identity: option<LoggerContext.t>,
 }
 
 let current = {
@@ -27,6 +29,7 @@ let current = {
   mounted: false,
   settled: false,
   interacted: false,
+  identity: None,
 }
 
 let sinceLaunch = () => current.launchTime->Option.map(launchTime => Date.now() -. launchTime)
@@ -35,7 +38,10 @@ let isActive = () => current.credential !== ""
 
 let init = (~sdkAuthorization, ~clientSecret, ~launchTime) => {
   let (credential, credentialType) = switch (sdkAuthorization, clientSecret) {
-  | (Some(sdkAuthorization), _) if sdkAuthorization !== "" => (sdkAuthorization, "SDK_AUTHORIZATION")
+  | (Some(sdkAuthorization), _) if sdkAuthorization !== "" => (
+      sdkAuthorization,
+      "SDK_AUTHORIZATION",
+    )
   | (_, clientSecret) if clientSecret !== "" => (clientSecret, "CLIENT_SECRET")
   | _ => ("", "")
   }
@@ -51,10 +57,11 @@ let init = (~sdkAuthorization, ~clientSecret, ~launchTime) => {
     current.mounted = false
     current.settled = false
     current.interacted = false
+    current.identity = Some(LoggerContext.current())
     SdkLogger.logLifecycle(
       ~event=ElementInitReceived,
       ~details=[("credential_type", credentialType->JSON.Encode.string)],
-      ~durationMs=?(isNewNativeLaunch ? sinceLaunch() : None),
+      ~durationMs=?isNewNativeLaunch ? sinceLaunch() : None,
     )
   }
 }
@@ -64,6 +71,7 @@ let logLoader = (state: SdkLogger.loaderState, ~source: SdkLogger.loaderSource, 
     ~event=LoaderStateChanged({state, source}),
     ~durationMs=?sinceLaunch(),
     ~failure?,
+    ~context=?current.identity,
   )
 
 // The SDK screen is mounted and shows its loading shimmer.
@@ -89,9 +97,16 @@ let loadFailed = (~failure=?) =>
     logLoader(LoadFailed, ~source=PaymentMethodsList, ~failure?)
   }
 
-// Called for every user event; reports the first one of the launch.
-let userInteracted = (~interaction) =>
-  if isActive() && !current.interacted {
+// A confirm sent by the merchant's app is not the shopper interacting.
+let isMerchantSubmit = (data: SharedLoggerTypes.details) =>
+  data->Array.some(((key, value)) =>
+    key === "source" &&
+      value->JSON.Decode.string->Option.mapOr(false, source => source === "MERCHANT_API")
+  )
+
+// Called for every user event; reports the first shopper interaction of the launch.
+let userInteracted = (~interaction, ~data) =>
+  if isActive() && !current.interacted && !(data->isMerchantSubmit) {
     current.interacted = true
     SdkLogger.logLifecycle(
       ~event=FirstUserInteraction({interaction: interaction}),

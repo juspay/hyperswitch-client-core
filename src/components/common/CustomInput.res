@@ -73,6 +73,7 @@ let make = (
   let (showPass, setShowPass) = React.useState(_ => secureTextEntry)
   let (isFocused, setIsFocused) = React.useState(_ => false)
   let fontFamily = FontFamily.useCustomFontFamily()
+  let activateLoggerRoot = LoggerRootContext.useActivateRoot()
 
   let shadowStyle = enableShadow ? getShadowStyle : empty
 
@@ -228,6 +229,7 @@ let make = (
           onFocus={_ => {
             setIsFocused(_ => true)
             onFocus()
+            activateLoggerRoot()
             SdkLogger.logUser(~event=FieldFocused({field: logName}))
           }}
           onBlur={_ => {
@@ -235,6 +237,7 @@ let make = (
             state->String.trim == "" ? setState("") : ()
             onBlur()
             setIsFocused(_ => false)
+            activateLoggerRoot()
             SdkLogger.logUser(
               ~event=FieldBlurred({field: logName}),
               ~details=LoggerFieldName.blurDetails(~field=logName, ~value=state),

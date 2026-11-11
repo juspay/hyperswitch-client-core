@@ -15,6 +15,9 @@ let onSessionChange = ref(() => ())
 
 let current = () => context.contents
 
+// Makes another React root's identity current as it is, without merging the previous one.
+let switchTo = (next: t) => context := next
+
 let keep = (existing, incoming) =>
   switch incoming->Option.map(String.trim) {
   | Some("") | None => existing

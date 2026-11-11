@@ -3,7 +3,10 @@ let make = () => {
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let showErrorOrWarning = ErrorHooks.useShowErrorOrWarning()
 
+  let activateLoggerRoot = LoggerRootContext.useActivateRoot()
+
   React.useEffect(() => {
+    activateLoggerRoot()
     SdkFunnelLogger.mounted()
     None
   }, [nativeProp])

@@ -17,7 +17,9 @@ let make = (
   ~android_ripple=?,
   ~unstable_pressDelay=?,
 ) => {
+  let activateLoggerRoot = LoggerRootContext.useActivateRoot()
   <Pressable
+    onPressIn={_ => activateLoggerRoot()}
     ?onPress
     ?onLongPress
     children=?{children->Option.map(children => _ => children)}

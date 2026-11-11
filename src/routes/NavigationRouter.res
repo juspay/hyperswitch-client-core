@@ -28,7 +28,10 @@ let make = () => {
   | _ => false
   }
 
+  let activateLoggerRoot = LoggerRootContext.useActivateRoot()
+
   React.useEffect1(() => {
+    activateLoggerRoot()
     SdkFunnelLogger.mounted()
     error()
     None
@@ -242,27 +245,27 @@ let make = () => {
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
-   <CardStrategyContext strategy=cardStrategy>
-    // TODO: Pass DynamicFieldsContext to only required components.
-    // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
-    <DynamicFieldsContext>
-      {switch nativeProp.sdkState {
-      | PaymentSheet
-      | TabSheet
-      | ButtonSheet
-      | WidgetPaymentSheet
-      | WidgetTabSheet
-      | WidgetButtonSheet =>
-        <ParentPaymentSheet />
-      | HostedCheckout => <HostedCheckout />
-      | CardWidget => <CardWidget />
-      | CustomWidget(walletType) => <CustomWidget walletType />
-      | ExpressCheckoutWidget => <ExpressCheckoutWidget />
-      | CvcWidget => <CvcWidget />
-      | Headless
-      | NoView => React.null
-      }}
-    </DynamicFieldsContext>
-   </CardStrategyContext>
+    <CardStrategyContext strategy=cardStrategy>
+      // TODO: Pass DynamicFieldsContext to only required components.
+      // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
+      <DynamicFieldsContext>
+        {switch nativeProp.sdkState {
+        | PaymentSheet
+        | TabSheet
+        | ButtonSheet
+        | WidgetPaymentSheet
+        | WidgetTabSheet
+        | WidgetButtonSheet =>
+          <ParentPaymentSheet />
+        | HostedCheckout => <HostedCheckout />
+        | CardWidget => <CardWidget />
+        | CustomWidget(walletType) => <CustomWidget walletType />
+        | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+        | CvcWidget => <CvcWidget />
+        | Headless
+        | NoView => React.null
+        }}
+      </DynamicFieldsContext>
+    </CardStrategyContext>
   </AllApiDataContextNew>
 }

@@ -9,6 +9,9 @@ let make = (~headless=false, ~children) => {
     NativeLoggerAdapter.adoptProps(nativeProp, ~headless)
   }
 
+  let rootTag = nativeProp.rootTag
+  React.useEffect1(() => Some(() => LoggerRuntime.unregisterRoot(rootTag)), [rootTag])
+
   React.useEffect1(() =>
     if headless {
       None
@@ -18,5 +21,5 @@ let make = (~headless=false, ~children) => {
     }
   , [headless])
 
-  children
+  <LoggerRootContext.Provider value={Some(rootTag)}> children </LoggerRootContext.Provider>
 }

@@ -1,5 +1,5 @@
-/* React Native gives Android's OkHttp client no transport timeouts 
-   at all (iOS's NSURLSession defaults to 60 s)*/ 
+/* React Native gives Android's OkHttp client no transport timeouts
+ at all (iOS's NSURLSession defaults to 60 s) */
 let requestTimeoutMs = 60_000
 
 // Builds the request (default headers, body, 60 s abort) and hands it to `send`.
@@ -18,35 +18,38 @@ let fetchWith = (
   }
 
   let body = switch method_ {
-  | #GET => Promise.resolve(None)
-  | _ => Promise.resolve(Some(Fetch.Body.string(bodyStr)))
+  | #GET => None
+  | _ => Some(Fetch.Body.string(bodyStr))
   }
 
   open Promise
 
-  body->then(body => {
-    let controller = Fetch.AbortController.make()
-    let deadline = setTimeout(() => controller->Fetch.AbortController.abort, requestTimeoutMs)
-    send(
-      (
-        {
-          method: method_,
-          ?body,
-          headers: Fetch.Headers.fromObject(headers->Utils.getJsonObjectFromRecord),
-          ?mode,
-          signal: controller->Fetch.AbortController.signal,
-        }: Fetch.Request.init
-      ),
-    )
-    ->catch(err => {
-      clearTimeout(deadline)
-      exception Error(string)
-      Promise.reject(Error(err->Utils.getError(`API call failed: ${uri}`)->JSON.stringify))
-    })
-    ->then(resp => {
-      clearTimeout(deadline)
-      Promise.resolve(resp)
-    })
+  let controller = Fetch.AbortController.make()
+  let deadline = setTimeout(() => controller->Fetch.AbortController.abort, requestTimeoutMs)
+  // Started right away (not a tick later), so a logged request keeps the identity of the root
+  // that made it. A synchronous throw still becomes a rejection, as before.
+  let request = try send(
+    (
+      {
+        method: method_,
+        ?body,
+        headers: Fetch.Headers.fromObject(headers->Utils.getJsonObjectFromRecord),
+        ?mode,
+        signal: controller->Fetch.AbortController.signal,
+      }: Fetch.Request.init
+    ),
+  ) catch {
+  | error => Promise.reject(error)
+  }
+  request
+  ->catch(err => {
+    clearTimeout(deadline)
+    exception Error(string)
+    Promise.reject(Error(err->Utils.getError(`API call failed: ${uri}`)->JSON.stringify))
+  })
+  ->then(resp => {
+    clearTimeout(deadline)
+    Promise.resolve(resp)
   })
 }
 
