@@ -197,12 +197,12 @@ let logPaymentMethodSelected = (~paymentMethodType) =>
   }
 
 // Result of a native wallet sheet (Apple Pay, Google Pay, PayPal, Samsung Pay).
-type walletResult = TokenReceived | Exited | NotSupported | SheetFailed(string)
+type walletResult = TokenReceived | Cancelled | NotSupported | SheetFailed(string)
 
 let logWalletResult = (result, ~paymentMethod, ~source=?, ~context=?) =>
   switch result {
   | TokenReceived => lifecycle(~event=WalletTokenReceived, ~paymentMethod, ~source?, ~context?)
-  | Exited =>
+  | Cancelled =>
     lifecycle(
       ~event=WalletFlowExited,
       ~paymentMethod,

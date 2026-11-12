@@ -10,6 +10,17 @@ let shippingName = "shipping_name"
 let postalCode = "postal"
 let phone = "phone"
 let nickname = "user_card_nick_name"
+let email = "email"
+let dateDay = "date_day"
+let dateMonth = "date_month"
+let dateYear = "date_year"
+let giftCardType = "gift_card_type"
+
+// For inputs that were not given a field name.
+let unknown = ""
+
+// The search box of a picker, named after the picker's field.
+let searchOf = field => field === unknown ? unknown : field ++ "_search"
 
 let ofWritePath = writePath =>
   switch writePath {

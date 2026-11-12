@@ -85,11 +85,19 @@ let checksBody = (event: SdkLogger.apiEvent) =>
   | _ => false
   }
 
-let observe = (observed, ~uri, ~bodyStr, ~details=[], ~paymentMethod=?, ~source=?, request) => {
+let observe = (
+  observed,
+  ~uri,
+  ~bodyStr,
+  ~details=[],
+  ~paymentMethod=?,
+  ~source=?,
+  ~context=?,
+  request,
+) => {
   let details =
     bodyStr
     ->NativeLoggerUtils.payloadDetails
-    ->Array.concat(bodyStr->LoggerPaymentMethod.experienceDetails)
     ->Array.concat(details)
   switch observed {
   | SdkApi(event) =>
@@ -100,10 +108,11 @@ let observe = (observed, ~uri, ~bodyStr, ~details=[], ~paymentMethod=?, ~source=
       ~details,
       ~paymentMethod?,
       ~source?,
+      ~context?,
       ~checkBody=event->checksBody,
     )
   | PaymentMethodSessionApi(event) =>
-    PaymentMethodSessionLogger.observeApi(~event, ~url=uri, ~request, ~details)
+    PaymentMethodSessionLogger.observeApi(~event, ~url=uri, ~request, ~details, ~context?)
   | SdkStaticAsset(event) => SdkLogger.observeStaticAsset(~event, ~url=uri, ~request, ~details)
   }
 }
@@ -119,10 +128,11 @@ let fetchObserved = (
   ~details=?,
   ~paymentMethod=?,
   ~source=?,
+  ~context=?,
 ) =>
   fetchWith(
     ~send=request =>
-      observed->observe(~uri, ~bodyStr, ~details?, ~paymentMethod?, ~source?, request),
+      observed->observe(~uri, ~bodyStr, ~details?, ~paymentMethod?, ~source?, ~context?, request),
     ~uri,
     ~bodyStr,
     ~headers,
@@ -138,6 +148,7 @@ let handleApiCall = async (
   ~method,
   ~paymentMethod=?,
   ~source=?,
+  ~context=?,
   ~processSuccess: Core__JSON.t => 'a,
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
@@ -151,6 +162,7 @@ let handleApiCall = async (
       ~bodyStr=body->Option.getOr(""),
       ~paymentMethod?,
       ~source?,
+      ~context?,
     )
 
     let statusCode = data->Fetch.Response.status->string_of_int

@@ -20,7 +20,7 @@ let make = (
   ~onBlur,
   ~animate=?,
   ~accessible=?,
-  ~logName="",
+  ~logName=LoggerFieldName.unknown,
 ) => {
   let (isModalVisible, setIsModalVisible) = React.useState(_ => false)
   let (searchInput, setSearchInput) = React.useState(_ => None)
@@ -119,7 +119,7 @@ let make = (
             </CustomPressable>
           </View>
           <CustomInput
-            logName={logName === "" ? "" : logName ++ "_search"}
+            logName={logName->LoggerFieldName.searchOf}
             reference={Some(searchInputRef)}
             placeholder={"Search " ++ placeholderText} // MARK: add Search to locale
             state={searchInput->Option.getOr("")}

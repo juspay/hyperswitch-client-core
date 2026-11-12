@@ -7,6 +7,7 @@ let handleApiCall = (
   ~headers,
   ~method,
   ~paymentMethod=?,
+  ~context=?,
   ~processSuccess: Core__JSON.t => 'a,
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
@@ -19,6 +20,7 @@ let handleApiCall = (
     ~method,
     ~paymentMethod?,
     ~source=Headless,
+    ~context?,
     ~processSuccess,
     ~processError,
     ~processCatch,
@@ -47,6 +49,7 @@ let fetchClientData = nativeProp => {
   switch uri {
   | Some(uri) =>
     handleApiCall(
+      ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
       ~uri,
       ~observed=SdkApi(ClientList),
       ~method=#GET,
@@ -90,6 +93,8 @@ let sessionAPICall = nativeProp => {
     ->JSON.stringify
 
   handleApiCall(
+
+    ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
     ~uri,
     ~method=#POST,
     ~observed=SdkApi(Sessions),
@@ -114,6 +119,8 @@ let sdkConfigAPICall = (nativeProp: SdkTypes.nativeProp) => {
   let uri = `${getBaseUrl(nativeProp)}/v1/sdk/configs/${WebKit.platformGroup}/sdk_config.json?client_secret=${clientSecret}`
 
   handleApiCall(
+
+    ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
     ~uri,
     ~observed=SdkStaticAsset(SdkConfigs),
     ~method=#GET,
@@ -147,14 +154,15 @@ let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) =
   let paymentMethod = body->LoggerPaymentMethod.fromRequestBody
   SdkLogger.logLifecycle(
     ~event=SdkLogger.PaymentAttempted,
-    ~details=[("content_length", body->String.length->JSON.Encode.int)]->Array.concat(
-      body->LoggerPaymentMethod.experienceDetails,
-    ),
+    ~details=[("content_length", body->String.length->JSON.Encode.int)],
     ~paymentMethod?,
     ~source=Headless,
+    ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
   )
 
   handleApiCall(
+
+    ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
     ~uri,
     ~method=#POST,
     ~headers,
@@ -162,11 +170,21 @@ let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) =
     ~paymentMethod?,
     ~body,
     ~processSuccess=json => {
-      PaymentFlowLogger.logConfirmResponded(json, ~paymentMethod?, ~source=Headless)
+      PaymentFlowLogger.logConfirmResponded(
+        json,
+        ~paymentMethod?,
+        ~source=Headless,
+        ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
+      )
       Some(json)
     },
     ~processError=error => {
-      PaymentFlowLogger.logConfirmRejected(error, ~paymentMethod?, ~source=Headless)
+      PaymentFlowLogger.logConfirmRejected(
+        error,
+        ~paymentMethod?,
+        ~source=Headless,
+        ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
+      )
       Some(error)
     },
     ~processCatch=_ => Some(JSON.Encode.null),
@@ -188,6 +206,7 @@ let retrieveAPICall = (nativeProp: SdkTypes.nativeProp) => {
     (),
   )
   handleApiCall(
+    ~context=?LoggerRuntime.rootContext(nativeProp.rootTag),
     ~uri,
     ~method=#GET,
     ~headers,

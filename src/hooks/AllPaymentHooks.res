@@ -267,6 +267,8 @@ let useRedirectHook = () => {
     ~paymentMethod,
     ~responseCallback: (~paymentStatus: LoadingContext.sdkPaymentState, ~status: error) => unit,
     ~isCardPayment=false,
+    // The payment experience of the chosen method (for example "redirect_to_url"), for the logs.
+    ~paymentExperience: option<string>=?,
     (),
   ) => {
     let uriPram = nativeProp.paymentSessionConfig.paymentId
@@ -484,8 +486,10 @@ let useRedirectHook = () => {
       ~durationMs=?funnel.sinceRendered(),
       ~event=PaymentAttempted,
       ~details=[("content_length", body->String.length->JSON.Encode.int)]->Array.concat(
-      body->LoggerPaymentMethod.experienceDetails,
-    ),
+        paymentExperience->Option.mapOr([], experience => [
+          ("payment_experience", experience->JSON.Encode.string),
+        ]),
+      ),
       ~paymentMethod=?loggedPaymentMethod,
     )
     redirectionHandler(~body, ~errorCallback, ~handleApiRes, ~headers, ~uri)->ignore

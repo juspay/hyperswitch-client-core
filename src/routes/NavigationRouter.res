@@ -34,6 +34,10 @@ let make = () => {
   React.useEffect1(() => {
     activateLoggerRoot()
     funnel.mounted()
+    // The CVC widget needs none of the startup requests below, so it is usable once mounted.
+    if nativeProp.sdkState === CvcWidget {
+      funnel.rendered()
+    }
     error()
     None
   }, [nativeProp])

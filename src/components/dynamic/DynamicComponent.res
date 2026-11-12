@@ -35,6 +35,11 @@ let make = (~setConfirmButtonData) => {
   let vaultFormId = "sheet-" ++ paymentMethodData.payment_method_type
   let payment_method_type = paymentMethodData.payment_method_type
   let payment_method_type_wallet = paymentMethodData.payment_method_type_wallet
+  // Logged with the payment attempt, as main did: the first experience the method offers.
+  let paymentExperience =
+    paymentMethodData.payment_experience
+    ->Array.get(0)
+    ->Option.map(experience => experience.payment_experience_type)
 
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
@@ -175,6 +180,7 @@ let make = (~setConfirmButtonData) => {
       ~responseCallback,
       ~paymentMethod=payment_method_type,
       ~isCardPayment={payment_method === CARD},
+      ~paymentExperience?,
       (),
     )->ignore
   }

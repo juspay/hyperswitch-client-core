@@ -87,7 +87,7 @@ module DatePicker = {
       <View style={s({flexDirection: #row, gap: 8.->dp})}>
         <View style={s({flex: 1.})}>
           <CustomPicker
-            logName="date_day"
+            logName=LoggerFieldName.dateDay
             value={Some(day)}
             setValue={v => setDay(_ => v()->Option.getOr(""))}
             items=dayItems
@@ -101,7 +101,7 @@ module DatePicker = {
         </View>
         <View style={s({flex: 1.})}>
           <CustomPicker
-            logName="date_month"
+            logName=LoggerFieldName.dateMonth
             value={Some(month)}
             setValue={v => setMonth(_ => v()->Option.getOr(""))}
             items=monthItems
@@ -115,7 +115,7 @@ module DatePicker = {
         </View>
         <View style={s({flex: 1.})}>
           <CustomPicker
-            logName="date_year"
+            logName=LoggerFieldName.dateYear
             value={Some(year)}
             setValue={v => setYear(_ => v()->Option.getOr(""))}
             items=yearItems

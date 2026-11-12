@@ -5,28 +5,19 @@ open Style
 let make = (~onScanCard, ~expireRef, ~cvvRef) => {
   let {primaryColor, component} = ThemebasedStyle.useThemeBasedStyle()
   let showAlert = AlertHook.useAlerts()
-  let scanStartedAt = React.useRef(Date.now())
-
-  let logScanResult = (~outcome, ~details=?) =>
-    SdkLogger.logFunction(
-      ~event=LaunchScanCard,
-      ~outcome,
-      ~startedAt=scanStartedAt.current,
-      ~details?,
-      ~paymentMethod=Card,
-    )
-
-  let scanCardCallback = (scanCardReturnType: ScanCardModule.scanCardReturnStatus) => {
+  let scanCardCallback = (
+    scanCardReturnType: ScanCardModule.scanCardReturnStatus,
+    ~scan: NativeSdkLogger.call,
+  ) => {
     switch scanCardReturnType {
     | Succeeded(data) => {
         onScanCard(data.pan, `${data.expiryMonth} / ${data.expiryYear}`, expireRef, cvvRef)
-        logScanResult(~outcome=Done)
+        scan.done()
       }
-    | Cancelled =>
-      logScanResult(~outcome=Returned, ~details=[("cancelled", true->JSON.Encode.bool)])
+    | Cancelled => scan.returned([("cancelled", true->JSON.Encode.bool)])
     | Failed => {
         showAlert(~errorType="warning", ~message="Failed to scan card")
-        logScanResult(~outcome=Failed)
+        scan.failed()
       }
     | _ => showAlert(~errorType="warning", ~message="Failed to scan card")
     }
@@ -52,9 +43,8 @@ let make = (~onScanCard, ~expireRef, ~cvvRef) => {
       })}
       onPress={_pressEvent => {
         SdkLogger.logUser(~event=CardScanRequested, ~paymentMethod=Card)
-        scanStartedAt.current = Date.now()
-        SdkLogger.logFunction(~event=LaunchScanCard, ~outcome=Started, ~paymentMethod=Card)
-        ScanCardModule.launchScanCard(scanCardCallback)
+        let scan = NativeSdkLogger.startCall(~event=LaunchScanCard, ~paymentMethod=Card)
+        ScanCardModule.launchScanCard(result => result->scanCardCallback(~scan))
       }}>
       <Icon name={"CAMERA"} height=26. width=26. fill=primaryColor />
     </CustomPressable>

@@ -19,7 +19,7 @@ let logWalletResult = (status: walletStatus, ~paymentMethod) =>
   PaymentFlowLogger.logWalletResult(
     switch status {
     | Success(_, _, _) => TokenReceived
-    | Cancelled => Exited
+    | Cancelled => Cancelled
     | Simulated => NotSupported
     | Failed(message) => SheetFailed(message)
     },

@@ -104,6 +104,7 @@ let adoptProps = (nativeProp: SdkTypes.nativeProp, ~headless) => {
       ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization,
       ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~launchTime=nativeProp.sdkParams.launchTime,
+      ~layout=nativeProp.configuration.paymentMethodLayout,
     )
   }
 }
