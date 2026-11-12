@@ -103,6 +103,19 @@ let make = () => {
     ~email=?,
     (),
   ) => {
+    // The payment data is filled in (main's PAYMENT_DATA_FILLED). The confirm and its outcome
+    // (main's PAYMENT_ATTEMPT, PAYMENT_SUCCESS and PAYMENT_FAILED) are logged by `fetchAndRedirect`
+    // as payment_attempted, payment_succeeded and payment_failed.
+    SdkLogger.logState(
+      ~event=PaymentFormCompleted({savedMethod: false}),
+      ~paymentMethod=?LoggerPaymentMethod.fromPair(
+        ~method=payment_method,
+        ~methodType=payment_method_type,
+      ),
+    )
+
+    // main's PAYMENT_FAILED: logged by `fetchAndRedirect` (payment_failed / payment_rejected /
+    // payment_status_unknown) before this is called.
     let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       setConfirm(_ => false)
 
@@ -111,6 +124,8 @@ let make = () => {
       handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
 
+    // main's PAYMENT_ATTEMPT and PAYMENT_SUCCESS: logged by `fetchAndRedirect` (payment_attempted
+    // when confirm is sent, payment_succeeded on success) before this is called.
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       setConfirm(_ => false)
 
