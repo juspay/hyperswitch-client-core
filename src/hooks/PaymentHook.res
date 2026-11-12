@@ -59,7 +59,7 @@ let usePayment = (
         ->JSON.Encode.object
         ->JSON.stringify,
         applePayResponseHandler,
-        _ => (),
+        _ => applePayLaunch.bridged(),
         _ => {
           clearTimeout(timerId)
           applePayLaunch.presented()

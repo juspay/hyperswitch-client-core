@@ -147,7 +147,9 @@ let confirmAPICall = (nativeProp: SdkTypes.nativeProp, body, sdkAuthorization) =
   let paymentMethod = body->LoggerPaymentMethod.fromRequestBody
   SdkLogger.logLifecycle(
     ~event=SdkLogger.PaymentAttempted,
-    ~details=[("content_length", body->String.length->JSON.Encode.int)],
+    ~details=[("content_length", body->String.length->JSON.Encode.int)]->Array.concat(
+      body->LoggerPaymentMethod.experienceDetails,
+    ),
     ~paymentMethod?,
     ~source=Headless,
   )

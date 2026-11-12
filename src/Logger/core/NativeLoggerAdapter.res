@@ -16,12 +16,15 @@ let configure = () =>
       isEnabled: LoggerRuntime.isEnabled,
       shouldLogMerchantConfig: () => true,
       getContext: LoggerContext.current,
-      setSession: (~sessionId=?, ~merchantId=?, ()) =>
-        LoggerContext.setSessionData(~sessionId?, ~merchantId?, ()),
+      // The session id is set from native props only (see LoggerSession), so it cannot change
+      // halfway through a session.
+      setSession: (~sessionId as _: option<string>=?, ~merchantId=?, ()) =>
+        LoggerContext.setSessionData(~merchantId?, ()),
       summarizeExn: NativeLoggerUtils.summarizeExn,
       summarizeUnknown: NativeLoggerUtils.summarizeUnknown,
       rethrow: NativeLoggerUtils.rethrow,
-      defaultTimeoutMs: LoggerConfig.defaultTimeoutMs,
+      // No logger timeout on native: requests end on their own (APIUtils cancels them at 60 s).
+      defaultTimeoutMs: 0,
     })
   }
 
@@ -44,14 +47,23 @@ let adoptProps = (nativeProp: SdkTypes.nativeProp, ~headless) => {
   LoggerConfig.configure(
     ~enableLogging=WebKit.platform !== #next && endpoint->String.trim !== "",
     ~logEndpoint=endpoint,
+    // DEBUG rows are not uploaded in production, so they cannot push useful rows out of the queue
+    // or use up the per-event caps.
+    ~loggingLevel=switch nativeProp.hyperswitchConfig.environment {
+    | PROD => "INFO"
+    | SANDBOX | INTEG => "DEBUG"
+    },
     (),
   )
-  NativeLoggerQueue.headers :=
-    Utils.getHeader(
+  NativeLoggerQueue.register(
+    ~merchantId=nativeProp.hyperswitchConfig.publishableKey,
+    ~endpoint,
+    ~headers=Utils.getHeader(
       ~apiKey=nativeProp.hyperswitchConfig.publishableKey,
       ~appId=nativeProp.sdkParams.appId,
       (),
-    )
+    ),
+  )
   let rootTag = nativeProp.rootTag
   let source = headless
     ? SharedLoggerRuntime.Headless->SharedLoggerRuntime.sourceName
@@ -67,7 +79,7 @@ let adoptProps = (nativeProp: SdkTypes.nativeProp, ~headless) => {
   if anotherRootActive {
     // Another root was active: take this root's identity as it is, not merged with that one.
     LoggerContext.switchTo({
-      sessionId: nativeProp.sdkParams.sessionId,
+      sessionId: nativeProp.sdkParams.sessionId->LoggerSession.resolve,
       merchantId: nativeProp.hyperswitchConfig.publishableKey,
       paymentId: nativeProp.paymentSessionConfig.paymentId,
       pmSessionId: nativeProp.paymentSessionConfig.pmSessionId->Option.getOr(""),
@@ -76,7 +88,7 @@ let adoptProps = (nativeProp: SdkTypes.nativeProp, ~headless) => {
     })
   } else {
     LoggerContext.setSessionData(
-      ~sessionId=nativeProp.sdkParams.sessionId,
+      ~sessionId=nativeProp.sdkParams.sessionId->LoggerSession.resolve,
       ~merchantId=nativeProp.hyperswitchConfig.publishableKey,
       ~paymentId=nativeProp.paymentSessionConfig.paymentId,
       ~pmSessionId=?nativeProp.paymentSessionConfig.pmSessionId,
@@ -88,6 +100,7 @@ let adoptProps = (nativeProp: SdkTypes.nativeProp, ~headless) => {
   LoggerRuntime.rememberSource()
   if !headless {
     SdkFunnelLogger.init(
+      ~rootTag,
       ~sdkAuthorization=nativeProp.paymentSessionConfig.sdkAuthorization,
       ~clientSecret=nativeProp.paymentSessionConfig.clientSecret,
       ~launchTime=nativeProp.sdkParams.launchTime,

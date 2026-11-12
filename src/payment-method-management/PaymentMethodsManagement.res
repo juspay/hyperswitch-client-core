@@ -58,6 +58,7 @@ module PmmSheetHeader = {
 
 @react.component
 let make = () => {
+  let funnel = SdkFunnelLogger.useFunnel()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {
     bgColor,
@@ -196,7 +197,7 @@ let make = () => {
     fetchPaymentMethodSessionList()
     ->Promise.then(res => {
       if res->ErrorUtils.isError || res == JSON.Encode.null {
-        SdkFunnelLogger.loadFailed(~failure=res)
+        funnel.loadFailed(~failure=res, ())
         setScreenState(_ => ErrorState)
       } else {
         let data = res->PaymentMethodSessionTypes.itemToObjMapper
@@ -209,12 +210,12 @@ let make = () => {
           ->Option.getOr("")
         )
         setScreenState(_ => Loaded)
-        SdkFunnelLogger.rendered()
+        funnel.rendered()
       }
       Promise.resolve()
     })
     ->Promise.catch(_ => {
-      SdkFunnelLogger.loadFailed()
+      funnel.loadFailed()
       setScreenState(_ => ErrorState)
       Promise.resolve()
     })

@@ -1,6 +1,7 @@
 open PaymentConfirmTypes
 module BrowserRedirectionHooks = {
   let useBrowserRedirectionSuccessHook = () => {
+    let loggerIdentity = LoggerRootContext.useRootIdentity()
     (~s, ~errorCallback, ~responseCallback) => {
       if s == JSON.Encode.null {
         errorCallback(~errorMessage=PaymentConfirmTypes.defaultConfirmError, ~closeSDK=true, ())
@@ -12,7 +13,7 @@ module BrowserRedirectionHooks = {
           ->Option.flatMap(JSON.Decode.string)
           ->Option.getOr("")
 
-        PaymentFlowLogger.logOutcome(~status)
+        PaymentFlowLogger.logOutcome(~status, ~context=?loggerIdentity())
         switch status {
         | "succeeded" =>
           responseCallback(
@@ -74,6 +75,7 @@ module BrowserRedirectionHooks = {
 
 module RedirectionHooks = {
   let useRedirectionHelperHook = () => {
+    let loggerIdentity = LoggerRootContext.useRootIdentity()
     async (
       ~body,
       ~errorCallback,
@@ -96,11 +98,11 @@ module RedirectionHooks = {
           ~method=#POST,
           ~uri,
           ~processSuccess=json => {
-            PaymentFlowLogger.logConfirmResponded(json, ~paymentMethod?)
+            PaymentFlowLogger.logConfirmResponded(json, ~paymentMethod?, ~context=?loggerIdentity())
             json
           },
           ~processError=error => {
-            PaymentFlowLogger.logConfirmRejected(error, ~paymentMethod?)
+            PaymentFlowLogger.logConfirmRejected(error, ~paymentMethod?, ~context=?loggerIdentity())
             error
           },
           ~processCatch=_ => JSON.Encode.null,

@@ -1,5 +1,6 @@
 @react.component
 let make = () => {
+  let funnel = SdkFunnelLogger.useFunnel()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   let sessionFetchers = SessionDataHook.useSessionFetchers()
@@ -32,7 +33,7 @@ let make = () => {
 
   React.useEffect1(() => {
     activateLoggerRoot()
-    SdkFunnelLogger.mounted()
+    funnel.mounted()
     error()
     None
   }, [nativeProp])
@@ -70,7 +71,7 @@ let make = () => {
       let sessionsApplied = ref(false)
       let reportRenderedWhenReady = () =>
         if clientApplied.contents && configApplied.contents && sessionsApplied.contents {
-          SdkFunnelLogger.rendered()
+          funnel.rendered()
         }
       let exitSheetOnce = (~apiResStatus) =>
         if !terminalErrorFired.contents {
@@ -80,7 +81,7 @@ let make = () => {
 
       let handleClientResponse = clientResp => {
         if ErrorUtils.isError(clientResp) {
-          SdkFunnelLogger.loadFailed(~failure=clientResp)
+          funnel.loadFailed(~failure=clientResp, ())
           if isDismissableSheet {
             exitSheetOnce(
               ~apiResStatus={
@@ -94,7 +95,7 @@ let make = () => {
             errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))), ())
           }
         } else if clientResp == JSON.Encode.null {
-          SdkFunnelLogger.loadFailed()
+          funnel.loadFailed()
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfirmError)
         } else {
           // Both lists now arrive in ONE response, so an empty payment_methods_enabled
@@ -108,10 +109,10 @@ let make = () => {
             clientApplied := true
             reportRenderedWhenReady()
           } else if isDismissableSheet {
-            SdkFunnelLogger.loadFailed()
+            funnel.loadFailed()
             exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultNoPaymentMethodsError)
           } else {
-            SdkFunnelLogger.loadFailed()
+            funnel.loadFailed()
             errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
           }
         }
@@ -119,14 +120,14 @@ let make = () => {
 
       let handleSdkConfigResponse = configResponse => {
         if ErrorUtils.isError(configResponse) {
-          SdkFunnelLogger.loadFailed(~failure=configResponse)
+          funnel.loadFailed(~failure=configResponse, ())
           // sdk_config now supplies payment_experience + required fields, so a
           // config failure means the sheet cannot render/confirm correctly.
           // Treat it as terminal (like the null/invalid cases below) instead of a
           // non-blocking alert — otherwise the config-gated memo strands the UI.
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
         } else if configResponse == JSON.Encode.null {
-          SdkFunnelLogger.loadFailed()
+          funnel.loadFailed()
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
         } else {
           let parsed = SdkConfigParser.itemToObjMapper(configResponse)
@@ -136,7 +137,7 @@ let make = () => {
             configApplied := true
             reportRenderedWhenReady()
           } else {
-            SdkFunnelLogger.loadFailed()
+            funnel.loadFailed()
             exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
           }
         }

@@ -31,7 +31,8 @@ let logFunction = (~event: SdkLogger.functionEvent, ~outcome, ~startedAt=?, ~sou
 
 // The native Apple Pay launch: init when launched, done when the sheet is presented, timed out
 // when the presentation timer fires first. Only the first of done or timed out is logged.
-type applePayLaunch = {presented: unit => unit, timedOut: unit => unit}
+// `bridged` logs that the native module received the request (main's APPLE_PAY_BRIDGE_SUCCESS).
+type applePayLaunch = {bridged: unit => unit, presented: unit => unit, timedOut: unit => unit}
 
 let startApplePayLaunch = (~source=?) => {
   let startedAt = Date.now()
@@ -43,6 +44,12 @@ let startApplePayLaunch = (~source=?) => {
     }
   logFunction(~event=LaunchApplePay, ~outcome=SharedLoggerTypes.Started, ~source?)
   {
+    bridged: () =>
+      SdkLogger.logLifecycle(
+        ~event=WalletStageReached({stage: BridgeReached}),
+        ~paymentMethod=SharedLoggerPaymentMethod.Wallet(ApplePay),
+        ~source?,
+      ),
     presented: () => settle(SharedLoggerTypes.Done),
     timedOut: () =>
       settle(SharedLoggerTypes.TimedOut, ~message="Apple Pay sheet was not presented in time"),

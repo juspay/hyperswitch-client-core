@@ -9,7 +9,9 @@ let empty: t = {
   scoped: false,
 }
 
-let context = ref(empty)
+// Starts with the generated session id, so rows logged before any screen sets its identity carry
+// the same id as the rest (native ids replace it when a screen brings one).
+let context = ref({...empty, sessionId: LoggerSession.generatedId()})
 
 let onSessionChange = ref(() => ())
 

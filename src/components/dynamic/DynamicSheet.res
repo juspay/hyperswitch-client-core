@@ -111,7 +111,7 @@ let make = (~children, ~handlePress) => {
                 </View>
                 {children}
                 <ConfirmButtonAnimation
-                  paymentMethod="" handlePress displayText="Submit"
+                  paymentMethod="" handlePress displayText="Submit" logSubmit=false
                 />
               </View>
             </ScrollView>

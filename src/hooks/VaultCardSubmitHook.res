@@ -70,11 +70,6 @@ let useVaultCardSubmit = () => {
             ~startedAt,
             ~details=[("reason", reason->JSON.Encode.string)],
           )
-          PaymentMethodSessionLogger.logLifecycle(
-            ~event=VaultFlowFailed({reason: TokenizationFailed}),
-            ~details=[("reason", reason->JSON.Encode.string)],
-            ~paymentMethod=Card,
-          )
           fail(message)
         }
       })

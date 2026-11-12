@@ -18,25 +18,30 @@ type launch = {
   mutable mounted: bool,
   mutable settled: bool,
   mutable interacted: bool,
+  // When the payment methods were shown, for the render-to-pay latency of payment attempts.
+  mutable renderedAt: option<float>,
   // Identity of the root that started the launch; startup rows use it, whichever root is active.
   mutable identity: option<LoggerContext.t>,
 }
 
-let current = {
-  credential: "",
-  nativeLaunchTime: None,
-  launchTime: None,
-  mounted: false,
-  settled: false,
-  interacted: false,
-  identity: None,
-}
+// One launch per React root, so a second screen (for example the CVC widget) does not reset the
+// first one's funnel.
+let launches: Dict.t<launch> = Dict.make()
 
-let sinceLaunch = () => current.launchTime->Option.map(launchTime => Date.now() -. launchTime)
+let keyOf = (rootTag: int) => rootTag->Int.toString
 
-let isActive = () => current.credential !== ""
+let launchOf = rootTag => rootTag->Option.flatMap(rootTag => launches->Dict.get(rootTag->keyOf))
 
-let init = (~sdkAuthorization, ~clientSecret, ~launchTime) => {
+let forget = (rootTag: int) => launches->Dict.delete(rootTag->keyOf)
+
+let sinceLaunch = (launch: launch) =>
+  launch.launchTime->Option.map(launchTime => Date.now() -. launchTime)
+
+let isActive = (launch: launch) => launch.credential !== ""
+
+// A launch starts with a new credential, or with a new native launch time for the same
+// credential (the sheet opened again).
+let init = (~rootTag, ~sdkAuthorization, ~clientSecret, ~launchTime) => {
   let (credential, credentialType) = switch (sdkAuthorization, clientSecret) {
   | (Some(sdkAuthorization), _) if sdkAuthorization !== "" => (
       sdkAuthorization,
@@ -45,57 +50,87 @@ let init = (~sdkAuthorization, ~clientSecret, ~launchTime) => {
   | (_, clientSecret) if clientSecret !== "" => (clientSecret, "CLIENT_SECRET")
   | _ => ("", "")
   }
-  if credential !== "" && credential !== current.credential {
-    current.credential = credential
+  let previous = launches->Dict.get(rootTag->keyOf)
+  let isNewNativeLaunch = previous =>
+    launchTime->Option.isSome &&
+      !Option.equal(launchTime, previous.nativeLaunchTime, (a, b) => a === b)
+  let isNewLaunch = switch previous {
+  | None => true
+  | Some(previous) => credential !== previous.credential || previous->isNewNativeLaunch
+  }
+  if credential !== "" && isNewLaunch {
     // A new credential with the same native launch time (for example a switched payment
     // intent) is a new launch that starts now.
-    let isNewNativeLaunch =
-      launchTime->Option.isSome &&
-        !Option.equal(launchTime, current.nativeLaunchTime, (a, b) => a === b)
-    current.launchTime = isNewNativeLaunch ? launchTime : Some(Date.now())
-    current.nativeLaunchTime = launchTime
-    current.mounted = false
-    current.settled = false
-    current.interacted = false
-    current.identity = Some(LoggerContext.current())
+    let fromNative = switch previous {
+    | Some(previous) => previous->isNewNativeLaunch
+    | None => launchTime->Option.isSome
+    }
+    let launch = {
+      credential,
+      nativeLaunchTime: launchTime,
+      launchTime: fromNative ? launchTime : Some(Date.now()),
+      mounted: false,
+      settled: false,
+      interacted: false,
+      renderedAt: None,
+      identity: Some(LoggerContext.current()),
+    }
+    launches->Dict.set(rootTag->keyOf, launch)
     SdkLogger.logLifecycle(
       ~event=ElementInitReceived,
       ~details=[("credential_type", credentialType->JSON.Encode.string)],
-      ~durationMs=?isNewNativeLaunch ? sinceLaunch() : None,
+      ~durationMs=?fromNative ? launch->sinceLaunch : None,
+      ~context=?launch.identity,
     )
   }
 }
 
-let logLoader = (state: SdkLogger.loaderState, ~source: SdkLogger.loaderSource, ~failure=?) =>
+let logLoader = (
+  launch: launch,
+  state: SdkLogger.loaderState,
+  ~source: SdkLogger.loaderSource,
+  ~failure=?,
+) =>
   SdkLogger.logState(
     ~event=LoaderStateChanged({state, source}),
-    ~durationMs=?sinceLaunch(),
+    ~durationMs=?launch->sinceLaunch,
     ~failure?,
-    ~context=?current.identity,
+    ~context=?launch.identity,
   )
 
-// The SDK screen is mounted and shows its loading shimmer.
-let mounted = () =>
-  if isActive() && !current.mounted && !current.settled {
-    current.mounted = true
-    logLoader(Loading, ~source=PaymentMethodsList)
+let markMounted = launch =>
+  if launch->isActive && !launch.mounted && !launch.settled {
+    launch.mounted = true
+    launch->logLoader(Loading, ~source=PaymentMethodsList)
   }
+
+// The SDK screen is mounted and shows its loading shimmer.
+let mounted = (~rootTag) => rootTag->launchOf->Option.forEach(markMounted)
 
 // Startup API calls are done and the payment methods are shown.
-let rendered = () =>
-  if isActive() && !current.settled {
-    mounted()
-    current.settled = true
-    logLoader(Loaded, ~source=PaymentMethodsList)
-  }
+let rendered = (~rootTag) =>
+  rootTag
+  ->launchOf
+  ->Option.forEach(launch =>
+    if launch->isActive && !launch.settled {
+      launch->markMounted
+      launch.settled = true
+      launch.renderedAt = Some(Date.now())
+      launch->logLoader(Loaded, ~source=PaymentMethodsList)
+    }
+  )
 
 // Startup failed, so the payment methods cannot be shown.
-let loadFailed = (~failure=?) =>
-  if isActive() && !current.settled {
-    mounted()
-    current.settled = true
-    logLoader(LoadFailed, ~source=PaymentMethodsList, ~failure?)
-  }
+let loadFailed = (~rootTag, ~failure=?) =>
+  rootTag
+  ->launchOf
+  ->Option.forEach(launch =>
+    if launch->isActive && !launch.settled {
+      launch->markMounted
+      launch.settled = true
+      launch->logLoader(LoadFailed, ~source=PaymentMethodsList, ~failure?)
+    }
+  )
 
 // A confirm sent by the merchant's app is not the shopper interacting.
 let isMerchantSubmit = (data: SharedLoggerTypes.details) =>
@@ -104,12 +139,44 @@ let isMerchantSubmit = (data: SharedLoggerTypes.details) =>
       value->JSON.Decode.string->Option.mapOr(false, source => source === "MERCHANT_API")
   )
 
-// Called for every user event; reports the first shopper interaction of the launch.
+// Called for every user event; reports the first shopper interaction of the launch of the root
+// the shopper is using (user input makes its root the active one).
 let userInteracted = (~interaction, ~data) =>
-  if isActive() && !current.interacted && !(data->isMerchantSubmit) {
-    current.interacted = true
-    SdkLogger.logLifecycle(
-      ~event=FirstUserInteraction({interaction: interaction}),
-      ~durationMs=?sinceLaunch(),
-    )
-  }
+  LoggerRuntime.activeRoot.contents
+  ->launchOf
+  ->Option.forEach(launch =>
+    if launch->isActive && !launch.interacted && !(data->isMerchantSubmit) {
+      launch.interacted = true
+      SdkLogger.logLifecycle(
+        ~event=FirstUserInteraction({interaction: interaction}),
+        ~durationMs=?launch->sinceLaunch,
+        ~context=?launch.identity,
+      )
+    }
+  )
+
+// Time since the root's payment methods were shown (main's render-to-pay latency).
+let sinceRendered = (~rootTag) =>
+  rootTag
+  ->launchOf
+  ->Option.flatMap(launch => launch.renderedAt)
+  ->Option.map(renderedAt => Date.now() -. renderedAt)
+
+// The funnel of the root a component belongs to, so components call `funnel.rendered()` without
+// knowing about roots.
+type funnel = {
+  mounted: unit => unit,
+  rendered: unit => unit,
+  loadFailed: (~failure: JSON.t=?, unit) => unit,
+  sinceRendered: unit => option<float>,
+}
+
+let useFunnel = () => {
+  let rootTag = React.useContext(LoggerRootContext.context)
+  React.useMemo1(() => {
+    mounted: () => mounted(~rootTag),
+    rendered: () => rendered(~rootTag),
+    loadFailed: (~failure=?, ()) => loadFailed(~rootTag, ~failure?),
+    sinceRendered: () => sinceRendered(~rootTag),
+  }, [rootTag])
+}

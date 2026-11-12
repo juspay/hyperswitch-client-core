@@ -552,7 +552,7 @@ let processRequest = async (
         var => {
           applePayCallback(var)->ignore
         },
-        _ => (),
+        _ => applePayLaunch.bridged(),
         _ => {
           clearTimeout(timerId)
           applePayLaunch.presented()

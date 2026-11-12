@@ -71,6 +71,7 @@ type threeDsAuthCallDecision =
 
 let useExternalThreeDs = () => {
   let (_, setLoading) = React.useContext(LoadingContext.loadingContext)
+  let loggerIdentity = LoggerRootContext.useRootIdentity()
 
   (
     ~baseUrl,
@@ -156,14 +157,14 @@ let useExternalThreeDs = () => {
           let isFinalRetrieve = isFinalRetrieve->Option.getOr(true)
           switch status {
           | "processing" | "succeeded" =>
-            PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card)
+            PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card, ~context=?loggerIdentity())
             onSuccess(retrievePaymentStatus.successMsg)
           | "failed" =>
-            PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card)
+            PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card, ~context=?loggerIdentity())
             onFailure(retrievePaymentStatus.errorMsg)
           | _ =>
             if isFinalRetrieve {
-              PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card)
+              PaymentFlowLogger.logOutcome(~status, ~paymentMethod=Card, ~context=?loggerIdentity())
               onFailure(retrievePaymentStatus.errorMsg)
             } else {
               shortPollExternalThreeDsAuthStatus(

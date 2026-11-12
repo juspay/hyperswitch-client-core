@@ -5,6 +5,8 @@ let make = (
   ~handlePress,
   ~paymentMethod,
   ~displayText="Pay Now",
+  // Off for buttons that only submit fields (for example the address sheet), not a payment.
+  ~logSubmit=true,
   (),
 ) => {
   let localeObject = GetLocale.useGetLocalObj()
@@ -34,7 +36,12 @@ let make = (
       text={displayText == "Pay Now" ? localeObject.payNowButton : displayText}
       testID={TestUtils.payButtonTestId}
       onPress={_ => {
-        SdkLogger.logUser(~event=PaymentSubmitted({source: PayButton}), ~paymentMethod=?loggedPaymentMethod)
+        if logSubmit {
+          SdkLogger.logUser(
+            ~event=PaymentSubmitted({source: PayButton}),
+            ~paymentMethod=?loggedPaymentMethod,
+          )
+        }
         handlePress()
       }}
     />

@@ -1,5 +1,6 @@
 @react.component
 let make = () => {
+  let funnel = SdkFunnelLogger.useFunnel()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let showErrorOrWarning = ErrorHooks.useShowErrorOrWarning()
 
@@ -7,7 +8,7 @@ let make = () => {
 
   React.useEffect(() => {
     activateLoggerRoot()
-    SdkFunnelLogger.mounted()
+    funnel.mounted()
     None
   }, [nativeProp])
 

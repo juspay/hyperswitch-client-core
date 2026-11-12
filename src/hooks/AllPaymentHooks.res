@@ -198,6 +198,7 @@ let useBrowserHook = () => {
   let redirectionSuccessHandler = BrowserRedirectionHooks.useBrowserRedirectionSuccessHook()
   let redirectionCancelHandler = BrowserRedirectionHooks.useBrowserRedirectionCancelHook()
   let redirectionFailureHandler = BrowserRedirectionHooks.useBrowserRedirectionFailedHook()
+  let loggerIdentity = LoggerRootContext.useRootIdentity()
   async (
     ~clientSecret,
     ~publishableKey,
@@ -208,7 +209,7 @@ let useBrowserHook = () => {
     ~useEphemeralWebSession=false,
   ) => {
     let loggedPaymentMethod = paymentMethod->Option.flatMap(LoggerPaymentMethod.ofTypeName)
-    PaymentFlowLogger.logRedirectStarted(~url=openUrl, ~paymentMethod=?loggedPaymentMethod)
+    PaymentFlowLogger.logRedirectStarted(~context=?loggerIdentity(), ~url=openUrl, ~paymentMethod=?loggedPaymentMethod)
     let res = await BrowserHook.openUrl(
       openUrl,
       Utils.getReturnUrl(
@@ -219,7 +220,7 @@ let useBrowserHook = () => {
       ~useEphemeralWebSession,
       ~appearance=nativeProp.configuration.appearance,
     )
-    res.status->PaymentFlowLogger.logRedirectReturned(~paymentMethod=?loggedPaymentMethod)
+    res.status->PaymentFlowLogger.logRedirectReturned(~context=?loggerIdentity(), ~paymentMethod=?loggedPaymentMethod)
 
     switch res.status {
     | Success => {
@@ -255,6 +256,8 @@ let useRedirectHook = () => {
   let handleNativeThreeDS = NetceteraThreeDsHooks.useExternalThreeDs()
   let getOpenProps = PlaidHelperHook.usePlaidProps()
   let redirectionHandler = RedirectionHooks.useRedirectionHelperHook()
+  let loggerIdentity = LoggerRootContext.useRootIdentity()
+  let funnel = SdkFunnelLogger.useFunnel()
 
   (
     ~body: string,
@@ -332,7 +335,11 @@ let useRedirectHook = () => {
       switch nextAction {
       | None => ()
       | Some(_data) =>
-        SdkLogger.logLifecycle(~event=BankTransferShown, ~paymentMethod=?loggedPaymentMethod)
+        SdkLogger.logLifecycle(
+          ~event=BankTransferShown,
+          ~paymentMethod=?loggedPaymentMethod,
+          ~context=?loggerIdentity(),
+        )
         setLoading(ProcessingPayments)
       }
     }
@@ -342,7 +349,7 @@ let useRedirectHook = () => {
 
       switch status {
       | "succeeded" =>
-        PaymentFlowLogger.logOutcome(~status, ~paymentMethod=?loggedPaymentMethod)
+        PaymentFlowLogger.logOutcome(~context=?loggerIdentity(), ~status, ~paymentMethod=?loggedPaymentMethod)
         responseCallback(~paymentStatus=PaymentSuccess, ~status=terminalStatusHandler())
 
       | "requires_capture"
@@ -363,7 +370,7 @@ let useRedirectHook = () => {
         )->ignore
 
       | statusVal =>
-        PaymentFlowLogger.logOutcome(
+        PaymentFlowLogger.logOutcome(~context=?loggerIdentity(), 
           ~status=statusVal,
           ~details=PaymentErrorLoggerDetails.ofError(error),
           ~paymentMethod=?loggedPaymentMethod,
@@ -378,10 +385,10 @@ let useRedirectHook = () => {
         (nextAction->Option.getOr(defaultNextAction)).ddc_data->Option.getOr(
           DdcTypes.defaultDdcData,
         )
-      PaymentFlowLogger.logDdcStarted(~iframeUrl, ~paymentMethod=?loggedPaymentMethod)
+      PaymentFlowLogger.logDdcStarted(~context=?loggerIdentity(), ~iframeUrl, ~paymentMethod=?loggedPaymentMethod)
       HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
         if rawMessage === "" {
-          PaymentFlowLogger.logDdcNoResult(~timeoutMs, ~paymentMethod=?loggedPaymentMethod)
+          PaymentFlowLogger.logDdcNoResult(~context=?loggerIdentity(), ~timeoutMs, ~paymentMethod=?loggedPaymentMethod)
           errorCallback(
             ~errorMessage={
               status: "failed",
@@ -395,7 +402,7 @@ let useRedirectHook = () => {
         } else {
           let parsed =
             rawMessage
-            ->PaymentFlowLogger.parseDdcResult(~paymentMethod=?loggedPaymentMethod)
+            ->PaymentFlowLogger.parseDdcResult(~context=?loggerIdentity(), ~paymentMethod=?loggedPaymentMethod)
             ->Utils.getDictFromJson
           let nextActionType =
             parsed
@@ -411,7 +418,7 @@ let useRedirectHook = () => {
             ->Option.flatMap(d => d->Dict.get("url"))
             ->Option.flatMap(JSON.Decode.string)
             ->Option.getOr("")
-          PaymentFlowLogger.logDdcResult(
+          PaymentFlowLogger.logDdcResult(~context=?loggerIdentity(), 
             ~nextActionType,
             ~redirectUrl,
             ~paymentMethod=?loggedPaymentMethod,
@@ -434,7 +441,7 @@ let useRedirectHook = () => {
               redirectUrl->String.includes("status=failed") ||
                 redirectUrl->String.includes("status=requires_payment_method")
             ) {
-              PaymentFlowLogger.logDdcPaymentFailed(~paymentMethod=?loggedPaymentMethod)
+              PaymentFlowLogger.logDdcPaymentFailed(~context=?loggerIdentity(), ~paymentMethod=?loggedPaymentMethod)
               redirectionFailureHandler(~errorCallback)
             } else {
               browserRedirectionHandler(
@@ -473,8 +480,12 @@ let useRedirectHook = () => {
     }
 
     SdkLogger.logLifecycle(
+      ~context=?loggerIdentity(),
+      ~durationMs=?funnel.sinceRendered(),
       ~event=PaymentAttempted,
-      ~details=[("content_length", body->String.length->JSON.Encode.int)],
+      ~details=[("content_length", body->String.length->JSON.Encode.int)]->Array.concat(
+      body->LoggerPaymentMethod.experienceDetails,
+    ),
       ~paymentMethod=?loggedPaymentMethod,
     )
     redirectionHandler(~body, ~errorCallback, ~handleApiRes, ~headers, ~uri)->ignore

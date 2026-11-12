@@ -77,11 +77,31 @@ type observed =
   | PaymentMethodSessionApi(PaymentMethodSessionLogger.apiEvent)
   | SdkStaticAsset(SdkLogger.staticAssetEvent)
 
+// Calls whose API row also checks that a successful body is readable, so an unreadable reply is
+// logged as a failed request instead of `done`. Only these, since the body is parsed twice.
+let checksBody = (event: SdkLogger.apiEvent) =>
+  switch event {
+  | ConfirmCall | RetrievePaymentIntent | Authentication | Sessions => true
+  | _ => false
+  }
+
 let observe = (observed, ~uri, ~bodyStr, ~details=[], ~paymentMethod=?, ~source=?, request) => {
-  let details = bodyStr->NativeLoggerUtils.payloadDetails->Array.concat(details)
+  let details =
+    bodyStr
+    ->NativeLoggerUtils.payloadDetails
+    ->Array.concat(bodyStr->LoggerPaymentMethod.experienceDetails)
+    ->Array.concat(details)
   switch observed {
   | SdkApi(event) =>
-    SdkLogger.observeApi(~event, ~url=uri, ~request, ~details, ~paymentMethod?, ~source?)
+    SdkLogger.observeApi(
+      ~event,
+      ~url=uri,
+      ~request,
+      ~details,
+      ~paymentMethod?,
+      ~source?,
+      ~checkBody=event->checksBody,
+    )
   | PaymentMethodSessionApi(event) =>
     PaymentMethodSessionLogger.observeApi(~event, ~url=uri, ~request, ~details)
   | SdkStaticAsset(event) => SdkLogger.observeStaticAsset(~event, ~url=uri, ~request, ~details)
@@ -135,13 +155,8 @@ let handleApiCall = async (
 
     let statusCode = data->Fetch.Response.status->string_of_int
 
-    if statusCode->String.charAt(0) === "2" {
-      let json = await data->Fetch.Response.json
-      processSuccess(json)
-    } else {
-      let error = await data->Fetch.Response.json
-      processError(error)
-    }
+    let json = await data->Fetch.Response.json
+    statusCode->String.charAt(0) === "2" ? processSuccess(json) : processError(json)
   } catch {
   | _ => processCatch(JSON.Encode.null)
   }

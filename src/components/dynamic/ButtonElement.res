@@ -251,7 +251,7 @@ let make = (
             ->JSON.Encode.object
             ->JSON.stringify,
             confirmApplePay,
-            _ => (),
+            _ => applePayLaunch.bridged(),
             _ => {
               clearTimeout(timerId)
               applePayLaunch.presented()

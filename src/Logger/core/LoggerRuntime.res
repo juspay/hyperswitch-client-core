@@ -65,6 +65,7 @@ let pageHref = isNativeApp ? "" : detectHref()->rowText
 let platformOf = (~version, ~appId, ~userAgent): SharedLoggerEmitter.platform => {
   component: "MOBILE",
   version,
+  clientCoreVersion: VersionInfo.version,
   appId,
   platform: WebKit.platformString->SharedLoggerEvent.screamingSnakeCase,
   userAgent: userAgent->rowText,
@@ -121,6 +122,13 @@ let unregisterRoot = (rootTag: int) => {
     activeRoot := None
   }
 }
+
+// The identity a root registered with, for rows that must keep it whichever root is active.
+let rootContext = (rootTag: int) =>
+  roots->Dict.get(rootTag->Int.toString)->Option.map(root => root.context)
+
+let headlessContext = () =>
+  roots->Dict.valuesToArray->Array.find(root => root.headless)->Option.map(root => root.context)
 
 let activateRoot = (rootTag: int) =>
   switch roots->Dict.get(rootTag->Int.toString) {
@@ -214,7 +222,7 @@ let emit = (
     emitter.contents,
     ~category,
     ~spec,
-    ~severity,
+    ~severity=NativeSeverity.adjust(~category, ~spec, ~severity, ~data=data->Option.getOr([])),
     ~data=?data->Option.map(NativeLoggerUtils.maskDetails),
     ~details=?details->Option.map(NativeLoggerUtils.maskDetails),
     ~verbatim=?verbatim->Option.map(NativeLoggerUtils.maskDetails),
