@@ -34,16 +34,8 @@ let make = (
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
   React.useEffect2(() => {
-    switch hocComponentArr->Array.get(indexInFocus) {
-    | Some(hoc) =>
-      if hoc.name !== "loading" {
-        let event = PaymentEvents.buildPaymentMethodStatusEvent(
-          ~paymentMethod=hoc.name,
-          ~paymentMethodType=hoc.paymentMethodType,
-          ~isSavedPaymentMethod=false,
-        )
-        emitter.emitPaymentMethodStatus(~event)
-      }
+    switch hocComponentArr->Array.get(indexInFocus)->Option.flatMap(hoc => hoc.selectionEvent) {
+    | Some(event) => emitter.emitPaymentMethodStatus(~event)
     | None => ()
     }
     None

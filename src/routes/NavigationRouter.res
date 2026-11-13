@@ -17,6 +17,7 @@ let make = () => {
   let error = ErrorHooks.useErrorWarningValidationOnLoad()
   let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
   let logger = LoggerHook.useLoggerHook()
+  let markReady = ElementEventsContext.useMarkReady()
 
   let isDismissableSheet = switch nativeProp.sdkState {
   | PaymentSheet
@@ -67,6 +68,8 @@ let make = () => {
       let exitSheetOnce = (~apiResStatus) =>
         if !terminalErrorFired.contents {
           terminalErrorFired := true
+          // A failed load still settles the element: ready, then the failure.
+          markReady()
           handleSuccessFailure(~apiResStatus, ())
         }
 
@@ -201,6 +204,14 @@ let make = () => {
     | _ => None
     }
   }, (clientResponse, sdkConfigData, paymentMethodOrder, hiddenPaymentMethods))
+
+  // ElementEventsContext sends `ready` once, so updateIntent refetches don't repeat it.
+  React.useEffect1(() => {
+    if clientData->Option.isSome {
+      markReady()
+    }
+    None
+  }, [clientData])
 
   let cardStrategy = React.useMemo3(() => {
     let strategy: CardStrategyContext.strategy = switch vaultingAction {

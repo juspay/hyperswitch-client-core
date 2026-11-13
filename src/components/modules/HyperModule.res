@@ -100,7 +100,18 @@ type useExitPaymentsheetReturnType = {
   simplyExit: (PaymentConfirmTypes.error, int, bool) => unit,
 }
 let emitPaymentEvent = (rootTag: int, eventType: string, payload: JSON.t) => {
-  Native.emitPaymentEvent(rootTag, eventType, payload)
+  if ReactNative.Platform.os == #web {
+    [
+      ("type", eventType->JSON.Encode.string),
+      ("payload", payload),
+    ]
+    ->Dict.fromArray
+    ->JSON.Encode.object
+    ->JSON.stringify
+    ->Window.postMessageToParent("*")
+  } else {
+    Native.emitPaymentEvent(rootTag, eventType, payload)
+  }
 }
 
 let emitMessageAction = (rootTag: int, paymentMethod, paymentMethodType, index: int, text) =>

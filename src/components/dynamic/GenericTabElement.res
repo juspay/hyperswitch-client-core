@@ -49,6 +49,18 @@ let make = (
   let {country, setCountry} = React.useContext(DynamicFieldsContext.dynamicFieldsContext)
   let localeObject = GetLocale.useGetLocalObj()
   let getLocalized = key => GetLocale.lookupLocaleString(localeObject, key)
+  let form = ReactFinalForm.useForm()
+
+  // The state field of the same address as `countryField` (billing with billing, shipping with shipping).
+  let addressPrefix = path => path->String.slice(~start=0, ~end=path->String.lastIndexOf("."))
+  let stateFieldPathFor = (countryField: SuperpositionTypes.fieldConfig) =>
+    fields
+    ->Array.find(f =>
+      f.fieldRenderType === State &&
+        addressPrefix(f.confirmRequestWritePath) ===
+          addressPrefix(countryField.confirmRequestWritePath)
+    )
+    ->Option.map(f => f.confirmRequestWritePath)
 
   let renderFieldInput = (
     field: SuperpositionTypes.fieldConfig,
@@ -60,9 +72,15 @@ let make = (
     let handlePickerChange = (value: unit => option<string>) => {
       let data = value()
       if field.fieldRenderType === Country {
-        setCountry(Some(data->Option.getOr(nativeProp.sdkParams.country)))
+        let newCountry = data->Option.getOr(nativeProp.sdkParams.country)
+        let countryChanged = input.value->Option.getOr("") !== newCountry
+        setCountry(Some(newCountry))
         setTimeout(() => {
-          input.onChange(data->Option.getOr(nativeProp.sdkParams.country))
+          input.onChange(newCountry)
+          // A state from the previous country is no longer valid; clear it rather than keep it hidden.
+          if countryChanged {
+            stateFieldPathFor(field)->Option.forEach(path => form.change(path, ""))
+          }
         }, 0)->ignore
       } else {
         input.onChange(data->Option.getOr(""))

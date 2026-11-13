@@ -56,6 +56,7 @@ let make = (
             createFieldValidator
             formatValue
             isCardPayment
+            isFocused
             enabledCardSchemes
             ?accessible
             checkEligibility

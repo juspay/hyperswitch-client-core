@@ -13,6 +13,7 @@ let make = (
   ~createFieldValidator,
   ~formatValue,
   ~isCardPayment,
+  ~isFocused,
   ~enabledCardSchemes: array<string>=[],
   ~accessible=?,
   ~checkEligibility: option<string> => unit=_ => (),
@@ -25,10 +26,18 @@ let make = (
     switch strategy {
     | DirectCard =>
       <CardElement
-        fields createFieldValidator formatValue enabledCardSchemes ?accessible checkEligibility
+        fields
+        createFieldValidator
+        formatValue
+        enabledCardSchemes
+        ?accessible
+        checkEligibility
+        isFocused
       />
     | VaultCard(vaultDetails) =>
-      <VaultCardElement fields vaultDetails formId=vaultFormId enabledCardSchemes ?accessible />
+      <VaultCardElement
+        fields vaultDetails formId=vaultFormId enabledCardSchemes ?accessible isFocused
+      />
     | Pending => React.null
     | Refused(_) => <ErrorText text=PaymentConfirmTypes.defaultConfigError.message />
     }

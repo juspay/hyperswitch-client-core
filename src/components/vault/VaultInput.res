@@ -28,6 +28,16 @@ let make = (
     fontScale,
   } = ThemebasedStyle.useThemeBasedStyle()
   let fontFamily = FontFamily.useCustomFontFamily()
+  // Vault fields bypass CustomInput, so they join the element's focus tracking here.
+  let (onFieldFocus, onFieldBlur) = ElementEventsContext.useFieldFocus()
+  let onFocus = (ev: VaultBindings.fieldEvent) => {
+    onFocus(ev)
+    onFieldFocus()
+  }
+  let onBlur = (ev: VaultBindings.fieldEvent) => {
+    onBlur(ev)
+    onFieldBlur()
+  }
   let animatedValue = AnimatedValue.useAnimatedValue(0.)
   let lifted = active || !empty
   React.useEffect1(() => {

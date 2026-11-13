@@ -27,6 +27,8 @@ let useFormStatusEmitter = (
         None
       }
     } else {
+      // Another active method can publish a different status while this form is hidden.
+      prevStatusRef.current = None
       None
     }
   }, (isFocused, hasRequiredFields, isFormValid, isPristine))
