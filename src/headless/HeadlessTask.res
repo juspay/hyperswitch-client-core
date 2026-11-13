@@ -64,9 +64,9 @@ module SavedPaymentMethods = {
   let make = (~props, ~rootTag) => {
     let nativeProp = nativeJsonToRecord(props, rootTag)
     <NativePropContext nativeProp>
-      <LoggerContext>
+      <LoggerProvider headless=true>
         <Runner />
-      </LoggerContext>
+      </LoggerProvider>
     </NativePropContext>
   }
 }

@@ -32,20 +32,22 @@ module PmmSheetHeader = {
       })}>
       <TextWrapper text={"Saved payment methods"} textType={HeadingBold} />
       <View style={s({flexDirection: #row, alignItems: #center})}>
-        {// Same Test Mode badge as the payment sheet's ModalHeader.
-        nativeProp.hyperswitchConfig.environment !== GlobalVars.PROD
-          ? <View
-              style={s({
-                backgroundColor: "#ffdd93",
-                marginEnd: 10.->dp,
-                padding: 5.->dp,
-                borderRadius: 5.,
-              })}>
-              <TextWrapper
-                textType={ModalTextBold} text="Test Mode" overrideStyle=Some(s({color: "black"}))
-              />
-            </View>
-          : React.null}
+        {
+          // Same Test Mode badge as the payment sheet's ModalHeader.
+          nativeProp.hyperswitchConfig.environment !== GlobalVars.PROD
+            ? <View
+                style={s({
+                  backgroundColor: "#ffdd93",
+                  marginEnd: 10.->dp,
+                  padding: 5.->dp,
+                  borderRadius: 5.,
+                })}>
+                <TextWrapper
+                  textType={ModalTextBold} text="Test Mode" overrideStyle=Some(s({color: "black"}))
+                />
+              </View>
+            : React.null
+        }
         <CustomPressable onPress={_ => onClose()} testID=TestUtils.sheetCloseButtonTestId>
           <Icon name="close" width=16. height=16. fill=iconColor />
         </CustomPressable>
@@ -56,8 +58,15 @@ module PmmSheetHeader = {
 
 @react.component
 let make = () => {
+  let funnel = SdkFunnelLogger.useFunnel()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
-  let {bgColor, borderWidth, borderRadius, component, paymentSheetOverlay} = ThemebasedStyle.useThemeBasedStyle()
+  let {
+    bgColor,
+    borderWidth,
+    borderRadius,
+    component,
+    paymentSheetOverlay,
+  } = ThemebasedStyle.useThemeBasedStyle()
   let insets = SafeAreaContext.useSafeAreaInsets()
   let fetchPaymentMethodSessionList = PaymentMethodSessionHooks.useFetchPaymentMethodSessionList()
   let updateSavedPaymentMethod = PaymentMethodSessionHooks.useUpdateSavedPaymentMethod()
@@ -188,6 +197,7 @@ let make = () => {
     fetchPaymentMethodSessionList()
     ->Promise.then(res => {
       if res->ErrorUtils.isError || res == JSON.Encode.null {
+        funnel.loadFailed(~failure=res, ())
         setScreenState(_ => ErrorState)
       } else {
         let data = res->PaymentMethodSessionTypes.itemToObjMapper
@@ -200,10 +210,12 @@ let make = () => {
           ->Option.getOr("")
         )
         setScreenState(_ => Loaded)
+        funnel.rendered()
       }
       Promise.resolve()
     })
     ->Promise.catch(_ => {
+      funnel.loadFailed()
       setScreenState(_ => ErrorState)
       Promise.resolve()
     })

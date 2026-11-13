@@ -1,7 +1,6 @@
 open ReactNative
 open Style
 open SdkTypes
-open LoggerTypes
 
 @react.component
 let make = () => {
@@ -14,7 +13,6 @@ let make = () => {
   let (confirm, setConfirm) = React.useState(_ => false)
   let (savedCardCvv, setSavedCardCvv) = React.useState(_ => None)
   let fetchAndRedirect = AllPaymentHooks.useRedirectHook()
-  let logger = LoggerHook.useLoggerHook()
   let buttomFlex = AnimatedValue.useAnimatedValue(1.)
   let localeObj = GetLocale.useGetLocalObj()
 
@@ -105,51 +103,34 @@ let make = () => {
     ~email=?,
     (),
   ) => {
-    let errorCallback = (~errorMessage, ~closeSDK, ()) => {
+    // The payment data is filled in (main's PAYMENT_DATA_FILLED). The confirm and its outcome
+    // (main's PAYMENT_ATTEMPT, PAYMENT_SUCCESS and PAYMENT_FAILED) are logged by `fetchAndRedirect`
+    // as payment_attempted, payment_succeeded and payment_failed.
+    SdkLogger.logState(
+      ~event=PaymentFormCompleted({savedMethod: false}),
+      ~paymentMethod=?LoggerPaymentMethod.fromPair(
+        ~method=payment_method,
+        ~methodType=payment_method_type,
+      ),
+    )
+
+    // main's PAYMENT_FAILED: logged by `fetchAndRedirect` (payment_failed / payment_rejected /
+    // payment_status_unknown) before this is called.
+    let errorCallback = (~errorMessage: PaymentConfirmTypes.error, ~closeSDK, ()) => {
       setConfirm(_ => false)
-      logger(
-        ~logType=INFO,
-        ~value="ECW API Error",
-        ~category=USER_EVENT,
-        ~eventName=PAYMENT_FAILED,
-        ~paymentMethod=payment_method_type,
-        (),
-      )
 
       setLoading(FillingDetails)
 
       handleSuccessFailure(~apiResStatus=errorMessage, ~closeSDK, ())
     }
 
+    // main's PAYMENT_ATTEMPT and PAYMENT_SUCCESS: logged by `fetchAndRedirect` (payment_attempted
+    // when confirm is sent, payment_succeeded on success) before this is called.
     let responseCallback = (~paymentStatus: LoadingContext.sdkPaymentState, ~status) => {
       setConfirm(_ => false)
 
-      logger(
-        ~logType=INFO,
-        ~value="ECW API Response Data Filled",
-        ~category=USER_EVENT,
-        ~eventName=PAYMENT_DATA_FILLED,
-        ~paymentMethod=payment_method_type,
-        (),
-      )
-      logger(
-        ~logType=INFO,
-        ~value="ECW API Attempt",
-        ~category=USER_EVENT,
-        ~eventName=PAYMENT_ATTEMPT,
-        ~paymentMethod=payment_method_type,
-        (),
-      )
       switch paymentStatus {
       | PaymentSuccess => {
-          logger(
-            ~logType=INFO,
-            ~value="ECW API Success",
-            ~category=USER_EVENT,
-            ~eventName=PAYMENT_SUCCESS,
-            ~paymentMethod=payment_method_type,
-            (),
-          )
           setLoading(PaymentSuccess)
           AnimationUtils.animateFlex(
             ~flexval=buttomFlex,

@@ -122,6 +122,15 @@ let make = (
     ~isPristine,
   )
 
+  PaymentFormLogger.useFormCompletion(
+    ~complete=effectiveFormValid && (isVaultCard || !isPristine),
+    ~enabled=isScreenFocus,
+    ~paymentMethod=?LoggerPaymentMethod.fromPair(
+      ~method=paymentMethodData.payment_method_str,
+      ~methodType=paymentMethodData.payment_method_type,
+    ),
+  )
+
   // handlePress closes over processRequest, which reads isSaveDetailsSelected; it must be
   // a dep here or the confirm button keeps a stale closure and never sends customer_acceptance.
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
@@ -133,7 +142,6 @@ let make = (
         credentialsKey,
         handlePress,
         payment_method_type: paymentMethodData.payment_method_type,
-        payment_experience: paymentMethodData.payment_experience,
         errorText: None,
       }
       setConfirmButtonData(confirmButton)

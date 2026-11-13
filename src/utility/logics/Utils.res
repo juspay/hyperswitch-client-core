@@ -479,3 +479,13 @@ let resolveUserAgent = (~userAgent: option<string>) =>
     | #web | #next => ""
     }
   }
+
+// A saved card stays usable through its whole expiry month, so compare
+// against the start of the following month (same as payments saved cards).
+let isSavedCardExpired = (~expiryMonth, ~expiryYear) =>
+  expiryYear != "" &&
+  expiryMonth != "" && {
+    let expiryDate = Date.fromString(`${expiryYear}-${expiryMonth}`)
+    expiryDate->Date.setMonth(expiryDate->Date.getMonth + 1)
+    expiryDate->Date.getTime < Date.make()->Date.getTime
+  }

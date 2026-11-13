@@ -1,10 +1,10 @@
-open LoggerTypes
-
-/* React Native gives Android's OkHttp client no transport timeouts 
-   at all (iOS's NSURLSession defaults to 60 s)*/ 
+/* React Native gives Android's OkHttp client no transport timeouts
+ at all (iOS's NSURLSession defaults to 60 s) */
 let requestTimeoutMs = 60_000
 
-let fetchApi = (
+// Builds the request (default headers, body, 60 s abort) and hands it to `send`.
+let fetchWith = (
+  ~send: Fetch.Request.init => promise<Fetch.Response.t>,
   ~uri,
   ~bodyStr: string="",
   ~headers=Dict.make(),
@@ -18,137 +18,170 @@ let fetchApi = (
   }
 
   let body = switch method_ {
-  | #GET => Promise.resolve(None)
-  | _ => Promise.resolve(Some(Fetch.Body.string(bodyStr)))
+  | #GET => None
+  | _ => Some(Fetch.Body.string(bodyStr))
   }
 
   open Promise
 
-  body->then(body => {
-    let controller = Fetch.AbortController.make()
-    let deadline = setTimeout(() => controller->Fetch.AbortController.abort, requestTimeoutMs)
-    Fetch.fetch(
-      uri,
-      (
-        {
-          method: method_,
-          ?body,
-          headers: Fetch.Headers.fromObject(headers->Utils.getJsonObjectFromRecord),
-          ?mode,
-          signal: controller->Fetch.AbortController.signal,
-        }: Fetch.Request.init
-      ),
-    )
-    ->catch(err => {
-      clearTimeout(deadline)
-      exception Error(string)
-      Promise.reject(Error(err->Utils.getError(`API call failed: ${uri}`)->JSON.stringify))
-    })
-    ->then(resp => {
-      clearTimeout(deadline)
-      Promise.resolve(resp)
-    })
+  let controller = Fetch.AbortController.make()
+  let deadline = setTimeout(() => controller->Fetch.AbortController.abort, requestTimeoutMs)
+  // Started right away (not a tick later), so a logged request keeps the identity of the root
+  // that made it. A synchronous throw still becomes a rejection, as before.
+  let request = try send(
+    (
+      {
+        method: method_,
+        ?body,
+        headers: Fetch.Headers.fromObject(headers->Utils.getJsonObjectFromRecord),
+        ?mode,
+        signal: controller->Fetch.AbortController.signal,
+      }: Fetch.Request.init
+    ),
+  ) catch {
+  | error => Promise.reject(error)
+  }
+  request
+  ->catch(err => {
+    clearTimeout(deadline)
+    exception Error(string)
+    Promise.reject(Error(err->Utils.getError(`API call failed: ${uri}`)->JSON.stringify))
+  })
+  ->then(resp => {
+    clearTimeout(deadline)
+    Promise.resolve(resp)
   })
 }
+
+let fetchApi = (
+  ~uri,
+  ~bodyStr: string="",
+  ~headers=Dict.make(),
+  ~method_: Fetch.method,
+  ~mode: option<Fetch.requestMode>=?,
+  ~dontUseDefaultHeader=false,
+) =>
+  fetchWith(
+    ~send=request => Fetch.fetch(uri, request),
+    ~uri,
+    ~bodyStr,
+    ~headers,
+    ~method_,
+    ~mode?,
+    ~dontUseDefaultHeader,
+  )
+
+// Which shared logger observes a request.
+type observed =
+  | SdkApi(SdkLogger.apiEvent)
+  | PaymentMethodSessionApi(PaymentMethodSessionLogger.apiEvent)
+  | SdkStaticAsset(SdkLogger.staticAssetEvent)
+
+// Calls whose API row also checks that a successful body is readable, so an unreadable reply is
+// logged as a failed request instead of `done`. Only these, since the body is parsed twice.
+let checksBody = (event: SdkLogger.apiEvent) =>
+  switch event {
+  | ConfirmCall | RetrievePaymentIntent | Authentication | Sessions => true
+  | _ => false
+  }
+
+let observe = (
+  observed,
+  ~uri,
+  ~bodyStr,
+  ~details=[],
+  ~paymentMethod=?,
+  ~source=?,
+  ~context=?,
+  request,
+) => {
+  let details =
+    bodyStr
+    ->NativeLoggerUtils.payloadDetails
+    ->Array.concat(details)
+  switch observed {
+  | SdkApi(event) =>
+    SdkLogger.observeApi(
+      ~event,
+      ~url=uri,
+      ~request,
+      ~details,
+      ~paymentMethod?,
+      ~source?,
+      ~context?,
+      ~checkBody=event->checksBody,
+    )
+  | PaymentMethodSessionApi(event) =>
+    PaymentMethodSessionLogger.observeApi(~event, ~url=uri, ~request, ~details, ~context?)
+  | SdkStaticAsset(event) => SdkLogger.observeStaticAsset(~event, ~url=uri, ~request, ~details)
+  }
+}
+
+// `fetchApi` with the request logged by the shared logger (init, done, failed, timed out).
+let fetchObserved = (
+  ~observed,
+  ~uri,
+  ~bodyStr="",
+  ~headers=Dict.make(),
+  ~method_: Fetch.method,
+  ~dontUseDefaultHeader=false,
+  ~details=?,
+  ~paymentMethod=?,
+  ~source=?,
+  ~context=?,
+) =>
+  fetchWith(
+    ~send=request =>
+      observed->observe(~uri, ~bodyStr, ~details?, ~paymentMethod?, ~source?, ~context?, request),
+    ~uri,
+    ~bodyStr,
+    ~headers,
+    ~method_,
+    ~dontUseDefaultHeader,
+  )
 
 let handleApiCall = async (
   ~uri,
   ~body=?,
   ~headers,
-  ~eventName,
+  ~observed,
   ~method,
-  ~apiLogWrapper: (
-    ~logType: LoggerTypes.logType,
-    ~eventName: LoggerTypes.eventName,
-    ~url: string,
-    ~statusCode: string,
-    ~apiLogType: LoggerTypes.apiLogType,
-    ~data: Core__JSON.t,
-    ~paymentMethod: string=?,
-    ~paymentExperience: array<ClientResponseType.paymentExperience>=?,
-    unit,
-  ) => unit,
+  ~paymentMethod=?,
+  ~source=?,
+  ~context=?,
   ~processSuccess: Core__JSON.t => 'a,
   ~processError: Core__JSON.t => 'a,
   ~processCatch: Core__JSON.t => 'a,
 ) => {
   try {
-    let initEventName = LoggerTypes.getApiInitEvent(eventName)
-    switch initEventName {
-    | Some(eventName) =>
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName,
-        ~url=uri,
-        ~statusCode="",
-        ~apiLogType=Request,
-        ~data=JSON.Encode.null,
-        (),
-      )
-    | _ => ()
-    }
-
-    let data = await fetchApi(~uri, ~method_=method, ~headers, ~bodyStr=body->Option.getOr(""))
+    let data = await fetchObserved(
+      ~observed,
+      ~uri,
+      ~method_=method,
+      ~headers,
+      ~bodyStr=body->Option.getOr(""),
+      ~paymentMethod?,
+      ~source?,
+      ~context?,
+    )
 
     let statusCode = data->Fetch.Response.status->string_of_int
 
-    if statusCode->String.charAt(0) === "2" {
-      apiLogWrapper(
-        ~logType=INFO,
-        ~eventName,
-        ~url=uri,
-        ~statusCode,
-        ~apiLogType=Response,
-        ~data=JSON.Encode.null,
-        (),
-      )
-      let json = await data->Fetch.Response.json
-      processSuccess(json)
-    } else {
-      let error = await data->Fetch.Response.json
-      let value =
-        [
-          ("url", uri->JSON.Encode.string),
-          ("statusCode", statusCode->JSON.Encode.string),
-          ("response", error),
-        ]
-        ->Dict.fromArray
-        ->JSON.Encode.object
-
-      apiLogWrapper(
-        ~logType=ERROR,
-        ~eventName,
-        ~url=uri,
-        ~statusCode,
-        ~apiLogType=Err,
-        ~data=value,
-        (),
-      )
-      processError(error)
-    }
+    let json = await data->Fetch.Response.json
+    statusCode->String.charAt(0) === "2" ? processSuccess(json) : processError(json)
   } catch {
-  | err =>
-    apiLogWrapper(
-      ~logType=ERROR,
-      ~eventName,
-      ~url=uri,
-      ~statusCode="504",
-      ~apiLogType=NoResponse,
-      ~data=err->Utils.getError(`API call failed: ${uri}`),
-      (),
-    )
-    processCatch(JSON.Encode.null)
+  | _ => processCatch(JSON.Encode.null)
   }
 }
 
-let fetchApiWrapper = (~uri, ~body=?, ~headers, ~eventName, ~method, ~apiLogWrapper) => {
+let fetchApiWrapper = (~uri, ~body=?, ~headers, ~observed, ~method, ~paymentMethod=?) => {
   handleApiCall(
     ~uri,
     ~body?,
     ~headers,
-    ~eventName,
+    ~observed,
     ~method,
-    ~apiLogWrapper,
+    ~paymentMethod?,
     ~processSuccess=json => json,
     ~processError=error => error,
     ~processCatch=_ => JSON.Encode.null,

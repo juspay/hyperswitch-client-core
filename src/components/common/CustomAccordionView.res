@@ -179,6 +179,13 @@ let make = (
   let emitter = PaymentEvents.usePaymentEventEmitter()
 
   let handleSectionToggle = (sectionKey: int) => {
+    if !(expandedSections->Array.includes(sectionKey)) {
+      hocComponentArr
+      ->Array.get(sectionKey)
+      ->Option.forEach(hoc =>
+        PaymentFlowLogger.logPaymentMethodSelected(~paymentMethodType=hoc.paymentMethodType)
+      )
+    }
     setExpandedSections(prevExpanded => {
       if allowMultipleExpanded {
         if prevExpanded->Array.includes(sectionKey) {

@@ -4,8 +4,6 @@ type confirmButtonData = {
   credentialsKey?: string,
   handlePress: unit => unit,
   payment_method_type: string,
-  payment_experience?: array<ClientResponseType.paymentExperience>,
-  customer_payment_experience?: array<PaymentMethodType.payment_experience_type>,
   errorText: option<string>,
 }
 
@@ -31,8 +29,6 @@ let make = (~confirmButtonData) => {
       loading=confirmButtonData.loading
       handlePress=confirmButtonData.handlePress
       paymentMethod=confirmButtonData.payment_method_type
-      paymentExperience=?confirmButtonData.payment_experience
-      customerPaymentExperience=?confirmButtonData.customer_payment_experience
       errorText=confirmButtonData.errorText
     />
   </UIUtils.RenderIf>

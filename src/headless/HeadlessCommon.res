@@ -6,6 +6,10 @@ type headlessModule = {
   exitHeadless: (int, HyperModule.exitResultPayload) => unit,
 }
 
+// The identity of this headless screen, so its payment rows keep its payment even when another
+// SDK screen becomes active while the payment runs.
+let loggerIdentity = (nativeProp: SdkTypes.nativeProp) => LoggerRuntime.rootContext(nativeProp.rootTag)
+
 let makeHeadlessModule = (): headlessModule => {
   {
     getPaymentSession: HyperHeadless.getPaymentSession,
@@ -35,6 +39,7 @@ let browserRedirectionHandler = async (
   ~errorCallback,
   ~useEphemeralWebSession=false,
 ) => {
+  PaymentFlowLogger.logRedirectStarted(~context=?nativeProp->loggerIdentity, ~url=openUrl, ~source=Headless)
   let res = await BrowserHook.openUrl(
     openUrl,
     Utils.getCustomReturnAppUrl(~appId=nativeProp.sdkParams.appId),
@@ -42,6 +47,7 @@ let browserRedirectionHandler = async (
     ~useEphemeralWebSession,
     ~appearance=nativeProp.configuration.appearance,
   )
+  res.status->PaymentFlowLogger.logRedirectReturned(~context=?nativeProp->loggerIdentity, ~source=Headless)
 
   switch res.status {
   | Success => {
@@ -56,6 +62,7 @@ let browserRedirectionHandler = async (
           ->Option.flatMap(d => d->Dict.get("status"))
           ->Option.flatMap(JSON.Decode.string)
           ->Option.getOr("")
+        PaymentFlowLogger.logOutcome(~context=?nativeProp->loggerIdentity, ~status, ~source=Headless)
         switch status {
         | "succeeded"
         | "processing"
@@ -97,29 +104,7 @@ let handleDefaultPaymentFlows = (
 
   switch status {
   | "succeeded" =>
-    logWrapper(
-      ~logType=INFO,
-      ~eventName=PAYMENT_SUCCESS,
-      ~url="",
-      ~customLogUrl=GlobalHooks.getLoggingUrl(
-        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-          SdkTypes.defaultCustomEndpointsConfig,
-        ),
-        ~environment=nativeProp.hyperswitchConfig.environment,
-      ),
-      ~category=API,
-      ~statusCode="",
-      ~apiLogType=None,
-      ~data=JSON.Encode.null,
-      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~paymentId="",
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=0.,
-      ~latency=0.,
-      ~version=nativeProp.sdkParams.sdkVersion,
-      (),
-    )
+    PaymentFlowLogger.logOutcome(~context=?nativeProp->loggerIdentity, ~status, ~source=Headless)
     responseCallback(~status=terminalStatusHandler())
   | "requires_capture"
   | "processing"
@@ -129,29 +114,6 @@ let handleDefaultPaymentFlows = (
   | "requires_customer_action" =>
     terminalStatusHandler()->ignore
 
-    logWrapper(
-      ~logType=INFO,
-      ~eventName=REDIRECTING_USER,
-      ~url=reUri,
-      ~customLogUrl=GlobalHooks.getLoggingUrl(
-        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-          SdkTypes.defaultCustomEndpointsConfig,
-        ),
-        ~environment=nativeProp.hyperswitchConfig.environment,
-      ),
-      ~category=API,
-      ~statusCode="",
-      ~apiLogType=None,
-      ~data=JSON.Encode.null,
-      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~paymentId="",
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=0.,
-      ~latency=0.,
-      ~version=nativeProp.sdkParams.sdkVersion,
-      (),
-    )
     browserRedirectionHandler(
       ~nativeProp,
       ~openUrl=reUri,
@@ -161,28 +123,10 @@ let handleDefaultPaymentFlows = (
     )->ignore
 
   | _statusVal =>
-    logWrapper(
-      ~logType=ERROR,
-      ~eventName=PAYMENT_FAILED,
-      ~url=reUri,
-      ~customLogUrl=GlobalHooks.getLoggingUrl(
-        ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-          SdkTypes.defaultCustomEndpointsConfig,
-        ),
-        ~environment=nativeProp.hyperswitchConfig.environment,
-      ),
-      ~category=API,
-      ~statusCode="",
-      ~apiLogType=None,
-      ~data=JSON.Encode.null,
-      ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-      ~paymentId="",
-      ~paymentMethod=None,
-      ~paymentExperience=None,
-      ~timestamp=0.,
-      ~latency=0.,
-      ~version=nativeProp.sdkParams.sdkVersion,
-      (),
+    PaymentFlowLogger.logOutcome(~context=?nativeProp->loggerIdentity, 
+      ~status,
+      ~details=PaymentErrorLoggerDetails.ofError(error),
+      ~source=Headless,
     )
     errorCallback(~errorMessage=error)
     terminalStatusHandler()->ignore
@@ -199,8 +143,10 @@ let handleInvokeDDCFlow = (
     (nextAction->Option.getOr(PaymentConfirmTypes.defaultNextAction)).ddc_data->Option.getOr(
       DdcTypes.defaultDdcData,
     )
+  PaymentFlowLogger.logDdcStarted(~context=?nativeProp->loggerIdentity, ~iframeUrl, ~source=Headless)
   HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
     if rawMessage === "" {
+      PaymentFlowLogger.logDdcNoResult(~context=?nativeProp->loggerIdentity, ~timeoutMs, ~source=Headless)
       errorCallback(
         ~errorMessage=(
           {
@@ -212,7 +158,8 @@ let handleInvokeDDCFlow = (
         ),
       )
     } else {
-      let parsed = rawMessage->JSON.parseExn->Utils.getDictFromJson
+      let parsed =
+        rawMessage->PaymentFlowLogger.parseDdcResult(~context=?nativeProp->loggerIdentity, ~source=Headless)->Utils.getDictFromJson
 
       let nextActionObj =
         parsed
@@ -224,6 +171,7 @@ let handleInvokeDDCFlow = (
       let redirectUrl =
         nextActionObj->Dict.get("url")->Option.flatMap(JSON.Decode.string)->Option.getOr("")
 
+      PaymentFlowLogger.logDdcResult(~context=?nativeProp->loggerIdentity, ~nextActionType, ~redirectUrl, ~source=Headless)
       switch nextActionType {
       | "redirect_to_url" if redirectUrl !== "" =>
         if (
@@ -241,6 +189,7 @@ let handleInvokeDDCFlow = (
                 ->Option.flatMap(d => d->Dict.get("status"))
                 ->Option.flatMap(JSON.Decode.string)
                 ->Option.getOr("")
+              PaymentFlowLogger.logOutcome(~context=?nativeProp->loggerIdentity, ~status, ~source=Headless)
               responseCallback(
                 ~status=({status, message: "", code: "", type_: ""}: PaymentConfirmTypes.error),
               )
@@ -250,6 +199,7 @@ let handleInvokeDDCFlow = (
           redirectUrl->String.includes("status=failed") ||
             redirectUrl->String.includes("status=requires_payment_method")
         ) {
+          PaymentFlowLogger.logDdcPaymentFailed(~context=?nativeProp->loggerIdentity, ~source=Headless)
           errorCallback(
             ~errorMessage=(
               {status: "failed", message: "", type_: "", code: ""}: PaymentConfirmTypes.error
@@ -390,8 +340,10 @@ let confirmGPay = (
   nativeProp,
 ) => {
   let paymentData = var->PaymentConfirmTypes.itemToObjMapperJava
+  let paymentMethod = LoggerPaymentMethod.Wallet(GooglePay)
   switch paymentData.error {
   | "" =>
+    TokenReceived->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
     let json = paymentData.paymentMethodData->JSON.parseExn
     let obj =
       json
@@ -425,12 +377,14 @@ let confirmGPay = (
     ->(confirmCall(headlessModule, _, nativeProp, None))
     ->ignore
   | "Cancel" =>
+    Cancelled->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
     // The customer dismissed the sheet: the confirm waiting in native is answered as cancelled.
     headlessModule.exitHeadless(
       nativeProp.rootTag,
       PaymentConfirmTypes.walletCancelledError->HyperModule.resStatusPayload,
     )
   | err =>
+    SheetFailed(err)->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
     headlessModule.exitHeadless(
       nativeProp.rootTag,
       {message: err, status: "failed"}->HyperModule.resStatusPayload,
@@ -444,22 +398,26 @@ let confirmApplePay = (
   data: ClientResponseType.customerPaymentMethod,
   nativeProp,
 ) => {
+  let paymentMethod = LoggerPaymentMethod.Wallet(ApplePay)
   switch var
   ->Dict.get("status")
   ->Option.getOr(JSON.Encode.null)
   ->JSON.Decode.string
   ->Option.getOr("") {
   | "Cancelled" =>
+    Cancelled->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
     headlessModule.exitHeadless(
       nativeProp.rootTag,
       PaymentConfirmTypes.walletCancelledError->HyperModule.resStatusPayload,
     )
   | "Failed" =>
+    SheetFailed("failed")->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
     headlessModule.exitHeadless(
       nativeProp.rootTag,
       {message: "failed", status: "failed"}->HyperModule.resStatusPayload,
     )
   | "Error" =>
+    SheetFailed("error")->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
     headlessModule.exitHeadless(
       nativeProp.rootTag,
       {message: "failed", status: "failed"}->HyperModule.resStatusPayload,
@@ -477,11 +435,13 @@ let confirmApplePay = (
         "Simulated Identifier",
       ) == "Simulated Identifier"
     ) {
+      NotSupported->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
       headlessModule.exitHeadless(
         nativeProp.rootTag,
         {message: "Simulated Identifier", status: "failed"}->HyperModule.resStatusPayload,
       )
     } else {
+      TokenReceived->PaymentFlowLogger.logWalletResult(~context=?nativeProp->loggerIdentity, ~paymentMethod, ~source=Headless)
       let paymentData =
         [
           ("payment_data", payment_data),
@@ -570,30 +530,9 @@ let processRequest = async (
         )
       }
     | APPLE_PAY =>
+      let applePayLaunch = NativeSdkLogger.startApplePayLaunch(~source=Headless, ~context=?nativeProp->loggerIdentity)
       let timerId = setTimeout(() => {
-        logWrapper(
-          ~logType=DEBUG,
-          ~eventName=APPLE_PAY_PRESENT_FAIL_FROM_NATIVE,
-          ~url="",
-          ~customLogUrl=GlobalHooks.getLoggingUrl(
-            ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-              SdkTypes.defaultCustomEndpointsConfig,
-            ),
-            ~environment=nativeProp.hyperswitchConfig.environment,
-          ),
-          ~category=API,
-          ~statusCode="",
-          ~apiLogType=None,
-          ~data=JSON.Encode.null,
-          ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-          ~paymentId="",
-          ~paymentMethod=None,
-          ~paymentExperience=None,
-          ~timestamp=0.,
-          ~latency=0.,
-          ~version=nativeProp.sdkParams.sdkVersion,
-          (),
-        )
+        applePayLaunch.timedOut()
         headlessModule.exitHeadless(
           nativeProp.rootTag,
           getDefaultError->HyperModule.resStatusPayload,
@@ -617,33 +556,10 @@ let processRequest = async (
         var => {
           applePayCallback(var)->ignore
         },
-        _ => {
-          logWrapper(
-            ~logType=DEBUG,
-            ~eventName=APPLE_PAY_BRIDGE_SUCCESS,
-            ~url="",
-            ~customLogUrl=GlobalHooks.getLoggingUrl(
-              ~customEndpoints=nativeProp.hyperswitchConfig.customEndpoints->Option.getOr(
-                SdkTypes.defaultCustomEndpointsConfig,
-              ),
-              ~environment=nativeProp.hyperswitchConfig.environment,
-            ),
-            ~category=API,
-            ~statusCode="",
-            ~apiLogType=None,
-            ~data=JSON.Encode.null,
-            ~publishableKey=nativeProp.hyperswitchConfig.publishableKey,
-            ~paymentId="",
-            ~paymentMethod=None,
-            ~paymentExperience=None,
-            ~timestamp=0.,
-            ~latency=0.,
-            ~version=nativeProp.sdkParams.sdkVersion,
-            (),
-          )
-        },
+        _ => applePayLaunch.bridged(),
         _ => {
           clearTimeout(timerId)
+          applePayLaunch.presented()
         },
       )
     | _ => ()

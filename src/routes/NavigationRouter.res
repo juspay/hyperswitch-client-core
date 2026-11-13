@@ -1,5 +1,6 @@
 @react.component
 let make = () => {
+  let funnel = SdkFunnelLogger.useFunnel()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
 
   let sessionFetchers = SessionDataHook.useSessionFetchers()
@@ -16,7 +17,6 @@ let make = () => {
   let (loading, _) = React.useContext(LoadingContext.loadingContext)
   let error = ErrorHooks.useErrorWarningValidationOnLoad()
   let errorOnApiCalls = ErrorHooks.useShowErrorOrWarning()
-  let logger = LoggerHook.useLoggerHook()
 
   let isDismissableSheet = switch nativeProp.sdkState {
   | PaymentSheet
@@ -29,11 +29,15 @@ let make = () => {
   | _ => false
   }
 
+  let activateLoggerRoot = LoggerRootContext.useActivateRoot()
+
   React.useEffect1(() => {
-    let launchTime = nativeProp.sdkParams.launchTime->Option.getOr(Date.now())
-    let latency = Date.now() -. launchTime
-    let appId = nativeProp.sdkParams.appId->Option.getOr("") ++ ".hyperswitch://"
-    logger(~logType=INFO, ~value=appId, ~category=USER_EVENT, ~eventName=APP_RENDERED, ~latency, ())
+    activateLoggerRoot()
+    funnel.mounted()
+    // The CVC widget needs none of the startup requests below, so it is usable once mounted.
+    if nativeProp.sdkState === CvcWidget {
+      funnel.rendered()
+    }
     error()
     None
   }, [nativeProp])
@@ -64,6 +68,15 @@ let make = () => {
         }
 
       let terminalErrorFired = ref(false)
+
+      // The sheet is rendered once the client data, SDK config and sessions are all applied.
+      let clientApplied = ref(false)
+      let configApplied = ref(false)
+      let sessionsApplied = ref(false)
+      let reportRenderedWhenReady = () =>
+        if clientApplied.contents && configApplied.contents && sessionsApplied.contents {
+          funnel.rendered()
+        }
       let exitSheetOnce = (~apiResStatus) =>
         if !terminalErrorFired.contents {
           terminalErrorFired := true
@@ -72,6 +85,7 @@ let make = () => {
 
       let handleClientResponse = clientResp => {
         if ErrorUtils.isError(clientResp) {
+          funnel.loadFailed(~failure=clientResp, ())
           if isDismissableSheet {
             exitSheetOnce(
               ~apiResStatus={
@@ -85,6 +99,7 @@ let make = () => {
             errorOnApiCalls(INVALID_PK((Error, Static(ErrorUtils.getErrorMessage(clientResp)))), ())
           }
         } else if clientResp == JSON.Encode.null {
+          funnel.loadFailed()
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfirmError)
         } else {
           // Both lists now arrive in ONE response, so an empty payment_methods_enabled
@@ -95,9 +110,13 @@ let make = () => {
           let hasSavedMethods = dict->Utils.getArray("customer_payment_methods")->Array.length > 0
           if hasEnabledMethods || hasSavedMethods {
             setClientResponse(_ => Some(clientResp))
+            clientApplied := true
+            reportRenderedWhenReady()
           } else if isDismissableSheet {
+            funnel.loadFailed()
             exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultNoPaymentMethodsError)
           } else {
+            funnel.loadFailed()
             errorOnApiCalls(ErrorUtils.errorWarning.noPMLData, ())
           }
         }
@@ -105,19 +124,24 @@ let make = () => {
 
       let handleSdkConfigResponse = configResponse => {
         if ErrorUtils.isError(configResponse) {
+          funnel.loadFailed(~failure=configResponse, ())
           // sdk_config now supplies payment_experience + required fields, so a
           // config failure means the sheet cannot render/confirm correctly.
           // Treat it as terminal (like the null/invalid cases below) instead of a
           // non-blocking alert — otherwise the config-gated memo strands the UI.
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
         } else if configResponse == JSON.Encode.null {
+          funnel.loadFailed()
           exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
         } else {
           let parsed = SdkConfigParser.itemToObjMapper(configResponse)
           if PaymentUtils.isValidSdkConfig(parsed) {
             setVaultingAction(_ => Some(PaymentUtils.readVaultingAction(configResponse)))
             setSdkConfigData(_ => Some(parsed))
+            configApplied := true
+            reportRenderedWhenReady()
           } else {
+            funnel.loadFailed()
             exitSheetOnce(~apiResStatus=PaymentConfirmTypes.defaultConfigError)
           }
         }
@@ -128,6 +152,9 @@ let make = () => {
 
       let handleSessionTokenResponse = sessionTokenData => {
         setSessionAnswered(_ => true)
+        // Wallet sessions are optional: any answer completes startup.
+        sessionsApplied := true
+        reportRenderedWhenReady()
         setVaultDetails(_ => VaultDetailsType.parseVaultDetails(sessionTokenData))
         if sessionTokenData->ErrorUtils.isError {
           if sessionTokenData->ErrorUtils.getErrorCode == "\"IR_16\"" {
@@ -223,27 +250,27 @@ let make = () => {
   BackHandlerHook.useBackHandler(~loading, ~sdkState=nativeProp.sdkState)
 
   <AllApiDataContextNew clientData sessionTokenData sdkConfigData>
-   <CardStrategyContext strategy=cardStrategy>
-    // TODO: Pass DynamicFieldsContext to only required components.
-    // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
-    <DynamicFieldsContext>
-      {switch nativeProp.sdkState {
-      | PaymentSheet
-      | TabSheet
-      | ButtonSheet
-      | WidgetPaymentSheet
-      | WidgetTabSheet
-      | WidgetButtonSheet =>
-        <ParentPaymentSheet />
-      | HostedCheckout => <HostedCheckout />
-      | CardWidget => <CardWidget />
-      | CustomWidget(walletType) => <CustomWidget walletType />
-      | ExpressCheckoutWidget => <ExpressCheckoutWidget />
-      | CvcWidget => <CvcWidget />
-      | Headless
-      | NoView => React.null
-      }}
-    </DynamicFieldsContext>
-   </CardStrategyContext>
+    <CardStrategyContext strategy=cardStrategy>
+      // TODO: Pass DynamicFieldsContext to only required components.
+      // GO to NavigatorRouter.res and wrap only the components which require DynamicFieldsContext.
+      <DynamicFieldsContext>
+        {switch nativeProp.sdkState {
+        | PaymentSheet
+        | TabSheet
+        | ButtonSheet
+        | WidgetPaymentSheet
+        | WidgetTabSheet
+        | WidgetButtonSheet =>
+          <ParentPaymentSheet />
+        | HostedCheckout => <HostedCheckout />
+        | CardWidget => <CardWidget />
+        | CustomWidget(walletType) => <CustomWidget walletType />
+        | ExpressCheckoutWidget => <ExpressCheckoutWidget />
+        | CvcWidget => <CvcWidget />
+        | Headless
+        | NoView => React.null
+        }}
+      </DynamicFieldsContext>
+    </CardStrategyContext>
   </AllApiDataContextNew>
 }

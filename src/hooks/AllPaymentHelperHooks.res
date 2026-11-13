@@ -1,6 +1,7 @@
 open PaymentConfirmTypes
 module BrowserRedirectionHooks = {
   let useBrowserRedirectionSuccessHook = () => {
+    let loggerIdentity = LoggerRootContext.useRootIdentity()
     (~s, ~errorCallback, ~responseCallback) => {
       if s == JSON.Encode.null {
         errorCallback(~errorMessage=PaymentConfirmTypes.defaultConfirmError, ~closeSDK=true, ())
@@ -12,6 +13,7 @@ module BrowserRedirectionHooks = {
           ->Option.flatMap(JSON.Decode.string)
           ->Option.getOr("")
 
+        PaymentFlowLogger.logOutcome(~status, ~context=?loggerIdentity())
         switch status {
         | "succeeded" =>
           responseCallback(
@@ -73,7 +75,7 @@ module BrowserRedirectionHooks = {
 
 module RedirectionHooks = {
   let useRedirectionHelperHook = () => {
-    let apiLogWrapper = LoggerHook.useApiLogWrapper()
+    let loggerIdentity = LoggerRootContext.useRootIdentity()
     async (
       ~body,
       ~errorCallback,
@@ -87,13 +89,23 @@ module RedirectionHooks = {
       ~uri,
     ) => {
       try {
-        let jsonResponse = await APIUtils.fetchApiWrapper(
+        let paymentMethod = body->LoggerPaymentMethod.fromRequestBody
+        let jsonResponse = await APIUtils.handleApiCall(
           ~body,
-          ~eventName=LoggerTypes.CONFIRM_CALL,
+          ~observed=SdkApi(ConfirmCall),
+          ~paymentMethod?,
           ~headers,
           ~method=#POST,
           ~uri,
-          ~apiLogWrapper,
+          ~processSuccess=json => {
+            PaymentFlowLogger.logConfirmResponded(json, ~paymentMethod?, ~context=?loggerIdentity())
+            json
+          },
+          ~processError=error => {
+            PaymentFlowLogger.logConfirmRejected(error, ~paymentMethod?, ~context=?loggerIdentity())
+            error
+          },
+          ~processCatch=_ => JSON.Encode.null,
         )
         let confirmResponse = jsonResponse->Utils.getDictFromJson
         let {nextAction, status, error} = itemToObjMapper(confirmResponse)

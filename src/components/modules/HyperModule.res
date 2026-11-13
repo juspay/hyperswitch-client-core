@@ -119,28 +119,27 @@ let notifyWidgetPaymentResult = (rootTag: int, result: exitResultPayload) => {
 }
 
 let useExitPaymentsheet = () => {
-  let logger = LoggerHook.useLoggerHook()
   let (nativeProp, _) = React.useContext(NativePropContext.nativePropContext)
   let {exitPaymentSheet} = WebKit.useWebKit()
 
   let exit = (apiResStatus: PaymentConfirmTypes.error, reset) => {
     Sentry.flushSentry()
-    logger(
-      ~logType=INFO,
-      ~value=nativeProp.sdkParams.appId->Option.getOr(""),
-      ~category=USER_EVENT,
-      ~eventName=SDK_CLOSED,
-      (),
+    SdkLogger.logLifecycle(
+      ~event=SdkClosed,
+      ~details={
+        let status = apiResStatus.status->Option.getOr("")
+        [("status", status->JSON.Encode.string)]->Array.concat(
+          status === "succeeded" ? [] : apiResStatus->PaymentErrorLoggerDetails.ofError,
+        )
+      },
     )
+    LoggerRuntime.cancelIdle()
+    NativeLoggerUtils.safeRun(LoggerQueue.drain)
     ReactNative.Platform.os == #web
       ? exitPaymentSheet(apiResStatus->stringifiedResStatus)
       : switch nativeProp.sdkState {
         | WidgetPaymentSheet | WidgetButtonSheet =>
-          Native.exitWidgetPaymentsheet(
-            nativeProp.rootTag,
-            apiResStatus->resStatusPayload,
-            reset,
-          )
+          Native.exitWidgetPaymentsheet(nativeProp.rootTag, apiResStatus->resStatusPayload, reset)
         | _ =>
           switch nativeProp.pmmState {
           | Some(_) =>
@@ -150,11 +149,7 @@ let useExitPaymentsheet = () => {
               reset,
             )
           | None =>
-            Native.exitPaymentsheet(
-              nativeProp.rootTag,
-              apiResStatus->resStatusPayload,
-              reset,
-            )
+            Native.exitPaymentsheet(nativeProp.rootTag, apiResStatus->resStatusPayload, reset)
           }
         }
   }

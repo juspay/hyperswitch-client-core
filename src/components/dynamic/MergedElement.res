@@ -41,6 +41,7 @@ let make = (
           }
           <>
             <CustomInput
+              logName=LoggerFieldName.email
               state={input.value->Option.getOr("")}
               setState=handleInputChange
               placeholder={emailFields

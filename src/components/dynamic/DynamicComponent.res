@@ -35,7 +35,11 @@ let make = (~setConfirmButtonData) => {
   let vaultFormId = "sheet-" ++ paymentMethodData.payment_method_type
   let payment_method_type = paymentMethodData.payment_method_type
   let payment_method_type_wallet = paymentMethodData.payment_method_type_wallet
-  let payment_experience = paymentMethodData.payment_experience
+  // Logged with the payment attempt, as main did: the first experience the method offers.
+  let paymentExperience =
+    paymentMethodData.payment_experience
+    ->Array.get(0)
+    ->Option.map(experience => experience.payment_experience_type)
 
   let {sheetContentPadding} = ThemebasedStyle.useThemeBasedStyle()
   let redirectHook = AllPaymentHooks.useRedirectHook()
@@ -175,8 +179,8 @@ let make = (~setConfirmButtonData) => {
       ~errorCallback,
       ~responseCallback,
       ~paymentMethod=payment_method_type,
-      ~paymentExperience=payment_experience,
       ~isCardPayment={payment_method === CARD},
+      ~paymentExperience?,
       (),
     )->ignore
   }
@@ -235,6 +239,15 @@ let make = (~setConfirmButtonData) => {
     ~isPristine,
   )
 
+  PaymentFormLogger.useFormCompletion(
+    ~complete=effectiveFormValid && (isVaultCard || !isPristine),
+    ~enabled=true,
+    ~paymentMethod=?LoggerPaymentMethod.fromPair(
+      ~method=payment_method_str,
+      ~methodType=payment_method_type,
+    ),
+  )
+
   let credentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
   React.useEffect5(() => {
     let confirmButton = {
@@ -242,7 +255,6 @@ let make = (~setConfirmButtonData) => {
       credentialsKey,
       handlePress,
       payment_method_type,
-      payment_experience,
       errorText: None,
     }
     setConfirmButtonData(confirmButton)

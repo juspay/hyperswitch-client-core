@@ -37,6 +37,8 @@ let useWidgetActions = (~confirmButtonData: GlobalConfirmButton.confirmButtonDat
   let attempt = nativeProp.widgetConfirm->Option.map(c => c.attempt)->Option.getOr(-1)
   let credentialsKey = PaymentUtils.getSessionCredentialsKey(nativeProp)
   let handled = React.useRef(-1)
+  // An attempt can be held back for a render; it is still one confirm from native.
+  let logged = React.useRef(-1)
   // The attempt that was held back for a render, and the state that brings that render about.
   let held = React.useRef(-1)
   let (heldRender, setHeldRender) = React.useState(_ => 0)
@@ -44,6 +46,14 @@ let useWidgetActions = (~confirmButtonData: GlobalConfirmButton.confirmButtonDat
     if attempt >= 0 && handled.current !== attempt {
       switch nativeProp.sdkState {
       | WidgetPaymentSheet | WidgetTabSheet | WidgetButtonSheet =>
+        if logged.current !== attempt {
+          logged.current = attempt
+          SdkLogger.logUser(
+            ~event=PaymentSubmitted({source: MerchantApi}),
+            ~details=[("attempt", attempt->JSON.Encode.int)],
+            ~paymentMethod=?confirmButtonData.payment_method_type->LoggerPaymentMethod.ofTypeName,
+          )
+        }
         switch confirmButtonData.credentialsKey {
         | Some(key) if key === credentialsKey =>
           handled.current = attempt
