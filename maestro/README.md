@@ -122,8 +122,8 @@ With no scenario selected the demo apps get exactly what `yarn server` gives the
 
 Both servers listen on `127.0.0.1` only, so nothing else on the network can reach them (their answers carry the
 publishable key, and `mockServer.js` creates payments with the secret key). The Android emulator reaches the
-host's loopback as `10.0.2.2`. `mockServer.js` listens on `0.0.0.0` by itself; `loopback-only.js`, preloaded
-when the e2e server starts it, keeps it on `127.0.0.1` without changing the file.
+host's loopback as `10.0.2.2`. `mockServer.js` listens on `127.0.0.1` unless `HOST` is set; `loopback-only.js`,
+preloaded when the e2e server starts it, keeps it on `127.0.0.1` even if `HOST=0.0.0.0` is set.
 
 `maestro/server/scenarios.js` defines the payment intent each flow gets (options at the top of the file).
 `open_payment_sheet.yaml` sends `SCENARIO` to the server **before** `launchApp`, because the app creates its
