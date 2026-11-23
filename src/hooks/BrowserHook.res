@@ -50,6 +50,16 @@ module InAppBrowser = {
   external isAvailable: unit => promise<bool> = "isAvailable"
 }
 
+// Reads the exact `status` parameter, so values like `payment_status=succeeded` or a
+// `status=succeeded` buried inside another parameter's value are not treated as the outcome.
+let getRedirectStatus = (url: string) =>
+  url
+  ->String.replaceRegExp(%re("/[?#]/g"), "&")
+  ->String.split("&")
+  ->Array.find(param => param->String.startsWith("status="))
+  ->Option.map(param => param->String.sliceToEnd(~start=7))
+  ->Option.getOr("")
+
 let openUrl = (
   url,
   returnUrl,
@@ -159,11 +169,12 @@ let openUrl = (
   }->Promise.then(res => {
     try {
       let message = WebKit.platform === #ios ? res.url->Option.getOr("") : res.message
+      let status = message->getRedirectStatus
       if (
-        message->String.includes("status=succeeded") ||
-        message->String.includes("status=processing") ||
-        message->String.includes("status=requires_capture") ||
-        message->String.includes("status=partially_captured")
+        status === "succeeded" ||
+        status === "processing" ||
+        status === "requires_capture" ||
+        status === "partially_captured"
       ) {
         let resP = message->String.split("&")
         let am = (resP[2]->Option.getOr("")->String.split("="))[1]->Option.getOr("")
@@ -173,10 +184,7 @@ let openUrl = (
           status: Success,
         }
         Promise.resolve(browserRes)
-      } else if (
-        message->String.includes("status=failed") ||
-          message->String.includes("status=requires_payment_method")
-      ) {
+      } else if status === "failed" || status === "requires_payment_method" {
         let resP = message->String.split("&")
         let am = (resP[2]->Option.getOr("")->String.split("="))[1]->Option.getOr("")
         let browserRes = {

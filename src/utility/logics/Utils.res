@@ -436,6 +436,15 @@ let getSdkAuthorizationData = (sdkAuthorization: string) => {
   }
 }
 
+// API-supplied URLs must be absolute https (http allowed outside PROD for local testing) and carry no credentials.
+let isSafeApiSuppliedUrl = (url: string, ~env: GlobalVars.envType) => {
+  let pattern = switch env {
+  | PROD => %re("/^https:\/\/[^\/?#@\\\s]+(?:[\/?#]|$)/i")
+  | SANDBOX | INTEG => %re("/^https?:\/\/[^\/?#@\\\s]+(?:[\/?#]|$)/i")
+  }
+  pattern->RegExp.test(url)
+}
+
 let rec pruneUnusedFieldsFromDict = (
   dict: Dict.t<JSON.t>,
   parentPath: string,

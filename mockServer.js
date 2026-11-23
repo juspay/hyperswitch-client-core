@@ -4,6 +4,8 @@ require('dotenv').config();
 
 const app = express();
 const PORT = process.env.PORT || 5252;
+// Bind to loopback by default; set HOST=0.0.0.0 to test from a physical device on the LAN.
+const HOST = process.env.HOST || '127.0.0.1';
 
 let mockData;
 try {
@@ -51,7 +53,25 @@ const logger = {
   },
 };
 
-app.use(cors());
+// Only local dev origins (plus any listed in CORS_ALLOWED_ORIGINS) may call this server from a
+// browser. Requests without an Origin header (native apps, curl) are unaffected.
+const CORS_ALLOWED_ORIGINS = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean);
+const LOCAL_ORIGIN = /^https?:\/\/(localhost|127\.0\.0\.1|10\.0\.2\.2)(:\d+)?$/;
+
+app.use(
+  cors({
+    origin: (origin, callback) =>
+      callback(
+        null,
+        !origin ||
+          LOCAL_ORIGIN.test(origin) ||
+          CORS_ALLOWED_ORIGINS.includes(origin),
+      ),
+  }),
+);
 app.use(express.json());
 
 const HYPERSWITCH_SECRET_KEY = process.env.HYPERSWITCH_SECRET_KEY;
@@ -380,7 +400,7 @@ app.use((req, res) => {
 });
 
 app
-  .listen(PORT, '0.0.0.0', () => {
+  .listen(PORT, HOST, () => {
     logger.info(`🚀 Hyperswitch server running on port ${PORT}`);
     logger.info(`📋 Health check: http://localhost:${PORT}/health`);
     logger.info(

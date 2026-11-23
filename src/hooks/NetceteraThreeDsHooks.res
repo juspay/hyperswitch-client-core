@@ -484,6 +484,16 @@ let useExternalThreeDs = () => {
     let handleNativeThreeDs = async () => {
       let isFinalRetrieve = try {
         await checkSDKPresence()
+
+        // The authenticated 3DS calls must only target safe, API-supplied URLs.
+        if (
+          !(
+            threeDsData.threeDsAuthenticationUrl->Utils.isSafeApiSuppliedUrl(~env=sdkEnvironment)
+          ) ||
+          !(threeDsData.threeDsAuthorizeUrl->Utils.isSafeApiSuppliedUrl(~env=sdkEnvironment))
+        ) {
+          Exn.raiseError("Unsafe 3DS URL")
+        }
         let aReqParams = await startNetcetera3DSFlow()
         let authCallDecision = await hsThreeDsAuthCall(aReqParams)
 
