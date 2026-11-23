@@ -197,6 +197,8 @@ let useApiLogWrapper = () => {
     ~paymentExperience=?,
     (),
   ) => {
+    let url = url->LoggerUtils.redactUrl
+    let data = data->LoggerUtils.redactSensitiveData
     let (value, internalMetadata) = switch apiLogType {
     | Request => ([("url", url->JSON.Encode.string)], [])
     | Response => (

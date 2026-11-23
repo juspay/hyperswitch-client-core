@@ -393,7 +393,12 @@ let useRedirectHook = () => {
         (nextAction->Option.getOr(defaultNextAction)).ddc_data->Option.getOr(
           DdcTypes.defaultDdcData,
         )
-      HyperModule.openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
+      // Never load an unvalidated URL into the bridge; an unsafe URL fails like a DDC timeout.
+      let openIframeBridge =
+        iframeUrl->Utils.isSafeApiSuppliedUrl(~env=nativeProp.hyperswitchConfig.environment)
+          ? HyperModule.openIframeBridge
+          : (_, _, callback) => callback("")
+      openIframeBridge(iframeUrl, timeoutMs, rawMessage => {
         if rawMessage === "" {
           errorCallback(
             ~errorMessage={

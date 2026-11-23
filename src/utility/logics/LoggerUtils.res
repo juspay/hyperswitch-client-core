@@ -5,6 +5,50 @@ let eventToStrMapper = (eventName: eventName) => {
 }
 
 let sdkVersionRef = ref(PACKAGE_JSON_NOT_STARTED)
+
+// Keys whose values must never leave the device through remote logging.
+let sensitiveLogKeys = [
+  "client_secret",
+  "sdk_authorization",
+  "ephemeral_key",
+  "authorization",
+  "api-key",
+  "api_key",
+  "card_number",
+  "card_cvc",
+  "card_holder_name",
+  "email",
+  "phone",
+  "phone_number",
+  "first_name",
+  "last_name",
+  "line1",
+  "line2",
+  "line3",
+  "zip",
+]
+
+let redactedValue = "REDACTED"
+
+let rec redactSensitiveData = (json: JSON.t): JSON.t =>
+  switch json->JSON.Classify.classify {
+  | Object(dict) =>
+    dict
+    ->Dict.toArray
+    ->Array.map(((key, value)) => (
+      key,
+      sensitiveLogKeys->Array.includes(key->String.toLowerCase)
+        ? redactedValue->JSON.Encode.string
+        : value->redactSensitiveData,
+    ))
+    ->Dict.fromArray
+    ->JSON.Encode.object
+  | Array(arr) => arr->Array.map(redactSensitiveData)->JSON.Encode.array
+  | _ => json
+  }
+
+let redactUrl = (url: string) =>
+  url->String.replaceRegExp(%re("/(client_secret=)[^&#]*/gi"), "$1" ++ redactedValue)
 let logFileToObj = logFile => {
   [
     ("timestamp", logFile.timestamp->JSON.Encode.string),

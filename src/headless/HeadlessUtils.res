@@ -39,6 +39,8 @@ let logWrapper = (
   ~version,
   (),
 ) => {
+  let url = url->LoggerUtils.redactUrl
+  let data = data->LoggerUtils.redactSensitiveData
   let (value, internalMetadata) = switch apiLogType {
   | None => ([], [])
   | Some(Request) => ([("url", url->JSON.Encode.string)], [])

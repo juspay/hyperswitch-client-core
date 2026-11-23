@@ -276,15 +276,25 @@ let registerEventListener = (str: string, callback) => {
   map->Map.set(str, callback)
 }
 
+// Only accept messages posted by this window (native bridge), its embedding parent, or a
+// source-less native WebMessage. Rejects openers, popups and other frames.
+let isTrustedMessageSource: ReactEvent.Form.t => bool = %raw(`
+  function (event) {
+    var source = event.source;
+    return source == null || source === window || source === window.parent;
+  }
+`)
+
 let useEventListener = () => {
   React.useEffect0(() => {
     let handleMessage = event => {
       try {
-        let optionalJson =
-          event
-          ->data
-          ->JSON.parseExn
-          ->JSON.Decode.object
+        let optionalJson = isTrustedMessageSource(event)
+          ? event
+            ->data
+            ->JSON.parseExn
+            ->JSON.Decode.object
+          : None
 
         map
         ->Map.keys

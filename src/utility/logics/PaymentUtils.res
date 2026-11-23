@@ -315,13 +315,24 @@ let getSessionCredentialsKey = (nativeProp: SdkTypes.nativeProp) =>
       "",
     )}`
 
+// sdkAuthorization claims are unsigned: never let them contradict the merchant-supplied key.
+let hasConflictingPublishableKey = (nativeProp: SdkTypes.nativeProp, sdkAuthorization) =>
+  switch (
+    nativeProp.hyperswitchConfig.publishableKey,
+    Utils.getSdkAuthorizationData(sdkAuthorization).publishableKey,
+  ) {
+  | ("", _) | (_, None) => false
+  | (nativePublishableKey, Some(publishableKey)) => nativePublishableKey !== publishableKey
+  }
+
 let withSdkAuthorization = (
   nativeProp: SdkTypes.nativeProp,
   sdkAuthorization: string,
 ): SdkTypes.nativeProp =>
   if (
     sdkAuthorization === "" ||
-      nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("") === sdkAuthorization
+    nativeProp.paymentSessionConfig.sdkAuthorization->Option.getOr("") === sdkAuthorization ||
+    hasConflictingPublishableKey(nativeProp, sdkAuthorization)
   ) {
     nativeProp
   } else {
