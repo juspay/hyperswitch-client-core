@@ -101,29 +101,15 @@ let make = (
           AddressUtils.getStateData(statesAndCountryVal.states, country)
         | _ => []
         }
-        <>
-          <CustomPicker
-            value={switch input.value {
-            | None | Some("") => input.value
-            | Some(value) =>
-              items
-              ->Array.find(c => c.value === value || c.label === value)
-              ->Option.map(c => c.label)
-            }}
-            setValue=handlePickerChange
-            items
-            placeholderText=placeholder
-            isValid={meta.error->Option.isNone || !meta.touched || meta.active}
-            isLoading=false
-            onFocus={_ => input.onFocus()}
-            onBlur={_ => input.onBlur()}
-            ?accessible
-          />
-          {switch (meta.error, meta.touched, meta.active) {
-          | (Some(error), true, false) => <ErrorText text={Some(error)} />
-          | _ => React.null
-          }}
-        </>
+        <StateDropdownField
+          field
+          fieldProps={{input, meta}}
+          country
+          items
+          isCountryStateDataLoading={countryStateData === Loading}
+          placeholder
+          ?accessible
+        />
       }
     | Dropdown
     | LanguagePreference
