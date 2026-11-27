@@ -93,11 +93,11 @@ let make = (~props) => {
       generateWalletConfirmBody(~data, ~nativeProp, ~payment_method_data)
       ->confirmCall(nativeProp)
       ->ignore
-    | "Cancel" => reRegisterCallback.contents()
-
-    // headlessModule.exitHeadless(
-    //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
-    // )
+    | "Cancel" =>
+      reRegisterCallback.contents()
+      headlessModule.exitHeadless(
+        PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
+      )
     | err =>
       headlessModule.exitHeadless(
         {message: err, status: "failed"}->HyperModule.stringifiedResStatus,
@@ -115,11 +115,11 @@ let make = (~props) => {
     ->Option.getOr(JSON.Encode.null)
     ->JSON.Decode.string
     ->Option.getOr("") {
-    | "Cancelled" => reRegisterCallback.contents()
-
-    // headlessModule.exitHeadless(
-    //   PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
-    // )
+    | "Cancelled" =>
+      reRegisterCallback.contents()
+      headlessModule.exitHeadless(
+        PaymentConfirmTypes.defaultCancelError->HyperModule.stringifiedResStatus,
+      )
     | "Failed" =>
       headlessModule.exitHeadless(
         {message: "failed", status: "failed"}->HyperModule.stringifiedResStatus,
